@@ -1,7 +1,8 @@
 use ic_cdk_macros::*;
 use ic_types::Principal;
 use crate::domain::chat::Message;
-use crate::handlers::*;
+use crate::queries::*;
+use crate::updates::*;
 
 #[update]
 fn send_message(recipient: Principal, text: String) {

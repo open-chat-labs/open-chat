@@ -1,4 +1,5 @@
 mod api;
 mod domain;
-mod handlers;
+mod queries;
+mod updates;
 mod upgrade;
