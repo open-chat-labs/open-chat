@@ -46,24 +46,21 @@ function generateWebpackConfigForCanister(name, info) {
     },
     resolve: {
       alias: aliases,
+      extensions: ['.tsx', '.ts', '.js']
     },
     output: {
       filename: "[name].js",
       path: path.join(__dirname, "dist", name),
     },
+    module: {
+     rules: [
+       { test: /\.([jt]s)x?$/, loader: "ts-loader", exclude: /node_modules/ },
+       { test: /\.css$/, loader: "css-loader", exclude: /node_modules/ },
+     ]
+    },
+    plugins: [
 
-    // Depending in the language or framework you are using for
-    // front-end development, add module loaders to the default
-    // webpack configuration. For example, if you are using React
-    // modules and CSS as described in the "Adding a stylesheet"
-    // tutorial, uncomment the following lines:
-    // module: {
-    //  rules: [
-    //    { test: /\.(js|ts)x?$/, loader: "ts-loader" },
-    //    { test: /\.css$/, use: ['style-loader','css-loader'] }
-    //  ]
-    // },
-    plugins: [],
+    ],
   };
 }
 

@@ -1,6 +1,9 @@
-target/
 .dfx/
-Cargo.lock
-**/*.rs.bk
-node_modules/
+target/
 dist/
+node_modules/
+
+**/*.rs.bk
+
+Cargo.lock
+package-lock.json

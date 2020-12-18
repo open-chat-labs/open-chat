@@ -17,7 +17,7 @@
         "user_mgmt"
       ],
       "frontend": {
-        "entrypoint": "src/open_chat_assets/public/index.js"
+        "entrypoint": "src/open_chat_assets/public/index.tsx"
       },
       "source": [
         "dist/open_chat_assets/"
