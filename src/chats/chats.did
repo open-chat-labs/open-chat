@@ -1,0 +1,12 @@
+type Message = 
+    record {
+        id: nat64;
+        timestamp: nat64;
+        sent_by_me: bool;
+        text: text;
+    }
+
+service : {
+    send_message: (principal, text) -> ();
+    get_messages: (principal, nat64) -> (vec Message) query;
+}

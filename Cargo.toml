@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "src/chats",
+    "src/shared",
+    "src/user_mgmt"
+]

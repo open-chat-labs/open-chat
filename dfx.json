@@ -1,0 +1,35 @@
+{
+  "canisters": {
+    "chats": {
+      "type": "custom",
+      "candid": "src/chats/chats.did",
+      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --release --package chats"
+    },
+    "user_mgmt": {
+      "type": "custom",
+      "candid": "src/user_mgmt/user_mgmt.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
+      "build": "cargo build --target wasm32-unknown-unknown --release --package user_mgmt"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "dfx": "0.6.14",
+  "networks": {
+    "ic": {
+      "providers": [
+        "https://gw.dfinity.network"
+      ],
+      "type": "persistent"
+    },
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}
