@@ -3,14 +3,26 @@
     "chats": {
       "type": "custom",
       "candid": "src/chats/chats.did",
-      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/chats.wasm",
       "build": "cargo build --target wasm32-unknown-unknown --release --package chats"
     },
     "user_mgmt": {
       "type": "custom",
       "candid": "src/user_mgmt/user_mgmt.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt.wasm",
       "build": "cargo build --target wasm32-unknown-unknown --release --package user_mgmt"
+    },
+    "open_chat_assets": {
+      "dependencies": [
+        "user_mgmt"
+      ],
+      "frontend": {
+        "entrypoint": "src/open_chat_assets/public/index.js"
+      },
+      "source": [
+        "dist/open_chat_assets/"
+      ],
+      "type": "assets"
     }
   },
   "defaults": {

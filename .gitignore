@@ -2,3 +2,5 @@ target/
 .dfx/
 Cargo.lock
 **/*.rs.bk
+node_modules/
+dist/
