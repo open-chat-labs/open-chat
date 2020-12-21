@@ -1,15 +1,16 @@
+use crate::domain::chat_list::{ChatId, ChatList};
 use ic_cdk::{api, storage};
-use ic_types::Principal;
-use crate::domain::chat_list::ChatList;
 
-pub fn update(recipient: Principal, text: String) {
-    let me = ic_cdk::caller();
+pub fn update(chat_id: ChatId, text: String) -> bool {
 
     let chat_list: &mut ChatList = storage::get_mut();
+    let me = ic_cdk::caller();
 
-    let chat = chat_list.get_or_add_chat(me.clone(), recipient);
+    if let Some(chat) = chat_list.get_mut(chat_id, &me) {
+        let timestamp = api::time() as u64;
+        chat.push_message(&me, text, timestamp);    
+        return true;
+    }
 
-    let timestamp = api::time() as u64;
-
-    chat.push_message(&me, text, timestamp);
+    false
 }

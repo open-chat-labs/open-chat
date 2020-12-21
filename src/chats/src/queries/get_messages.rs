@@ -1,15 +1,13 @@
 use ic_cdk::storage;
-use ic_types::Principal;
-use crate::domain::chat_list::ChatList;
+use crate::domain::chat_list::{ChatId, ChatList};
 use crate::domain::chat::Message;
 
-pub fn query(from_user: Principal, from_index: usize) -> Vec<Message> {
-    let me = ic_cdk::caller();
+pub fn query(chat_id: ChatId, from_index: usize) -> Option<Vec<Message>> {
 
     let chat_list: &mut ChatList = storage::get_mut();
+    let me = ic_cdk::caller();
 
-    match chat_list.get(from_user, me.clone()) {
-        Some(c) => c.get_messages(&me, from_index),
-        None => Vec::new()
-    }
+    let chat = chat_list.get(chat_id, &me)?;
+
+    Some(chat.get_messages(&me, from_index))
 }
