@@ -18,6 +18,10 @@ impl Chat {
         }
     }
 
+    pub fn involves_user(&self, user: &Principal) -> bool {
+        self.user1 == *user || self.user2 == *user
+    }
+
     pub fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) {
         let id = match self.messages.last() {
             Some(m) => m.id + 1,
@@ -43,10 +47,6 @@ impl Chat {
             .iter()
             .map(|m| Message::new(m.id, m.timestamp, m.sent_by_user1 == (*me == self.user1), m.text.clone()))
             .collect()
-    }
-
-    pub fn get_key(&self) -> (Principal, Principal) {
-        (self.user1.clone(), self.user2.clone())
     }
 }
 
