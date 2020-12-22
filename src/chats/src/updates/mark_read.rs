@@ -1,6 +1,7 @@
 use ic_cdk::storage;
-use crate::domain::chat::ChatId;
+use crate::domain::direct_chat::ChatId;
 use crate::domain::chat_list::ChatList;
+use crate::domain::chat::Chat;
 
 pub fn update(chat_id: ChatId, up_to_index: u32) -> Option<u32> {
     let chat_list: &mut ChatList = storage::get_mut();

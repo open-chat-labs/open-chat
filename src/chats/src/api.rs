@@ -1,6 +1,6 @@
 use ic_cdk_macros::*;
 use ic_types::Principal;
-use crate::domain::chat::{ChatId, ChatSummary, Message};
+use crate::domain::direct_chat::{ChatId, ChatSummary, Message};
 use crate::queries::*;
 use crate::updates::*;
 

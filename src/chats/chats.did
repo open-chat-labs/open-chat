@@ -20,4 +20,8 @@ service : {
     mark_read: (nat64, nat32) -> (opt nat32);
     get_messages: (nat64, nat32) -> (opt vec Message) query;
     list_chats: () -> (vec ChatSummary) query;
+
+    create_group_chat: (vec principal, text) -> (nat64);
+    add_participants: (nat64, vec principal) -> (opt nat16);
+    remove_participant: (nat64, principal) -> (opt bool);
 }

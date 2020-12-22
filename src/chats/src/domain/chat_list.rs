@@ -1,11 +1,12 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use ic_types::Principal;
 use shared::StableState;
-use super::chat::{Chat, ChatId, ChatSummary};
+use super::chat::Chat;
+use super::direct_chat::{DirectChat, ChatId, ChatSummary};
 
 #[derive(Default)]
 pub struct ChatList {
-    chats: HashMap<ChatId, Chat>
+    chats: HashMap<ChatId, DirectChat>
 }
 
 impl ChatList {
@@ -14,13 +15,13 @@ impl ChatList {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(Chat::new(chat_id, sender, recipient, text, timestamp));
+                e.insert(DirectChat::new(chat_id, sender, recipient, text, timestamp));
                 Some(chat_id)
             }
         }
     }
 
-    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&Chat> {
+    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&DirectChat> {
         let chat = self.chats.get(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -28,7 +29,7 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut Chat> {
+    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut DirectChat> {
         let chat = self.chats.get_mut(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -56,17 +57,17 @@ impl ChatList {
 }
 
 impl StableState for ChatList {
-    type State = Vec<Chat>;
+    type State = Vec<DirectChat>;
 
-    fn drain(self) -> Vec<Chat> {
+    fn drain(self) -> Vec<DirectChat> {
         self.chats
             .into_iter()
             .map(|(_, c)| c)
             .collect()
     }
 
-    fn fill(chats: Vec<Chat>) -> ChatList {
-        let map: HashMap<ChatId, Chat> = chats
+    fn fill(chats: Vec<DirectChat>) -> ChatList {
+        let map: HashMap<ChatId, DirectChat> = chats
             .into_iter()
             .map(|c| (c.get_id(), c))
             .collect();

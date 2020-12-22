@@ -1,6 +1,6 @@
 use ic_cdk::storage;
 use crate::domain::chat_list::ChatList;
-use crate::domain::chat::ChatSummary;
+use crate::domain::direct_chat::ChatSummary;
 
 pub fn query() -> Vec<ChatSummary> {
     let chat_list: &ChatList = storage::get();

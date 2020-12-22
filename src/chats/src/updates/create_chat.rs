@@ -1,6 +1,6 @@
 use ic_cdk::{api, storage};
 use ic_types::Principal;
-use crate::domain::chat::ChatId;
+use crate::domain::direct_chat::ChatId;
 use crate::domain::chat_list::ChatList;
 
 pub fn update(recipient: Principal, text: String) -> Option<ChatId> {
