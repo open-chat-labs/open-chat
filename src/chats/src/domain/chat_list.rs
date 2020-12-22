@@ -1,10 +1,7 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
-use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
-use highway::{HighwayHasher, HighwayHash};
-use serde::Deserialize;
 use shared::StableState;
-use super::chat::Chat;
+use super::chat::{Chat, ChatId, ChatSummary};
 
 #[derive(Default)]
 pub struct ChatList {
@@ -12,55 +9,66 @@ pub struct ChatList {
 }
 
 impl ChatList {
-
-    pub fn create(&mut self, sender: Principal, recipient: Principal) -> Option<ChatId> {
-
+    pub fn create(&mut self, sender: Principal, recipient: Principal, text: String, timestamp: u64) -> Option<ChatId> {
         let chat_id = ChatId::new(&sender, &recipient);
-
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(Chat::new(sender, recipient));
+                e.insert(Chat::new(chat_id, sender, recipient, text, timestamp));
                 Some(chat_id)
             }
         }
     }
 
-    pub fn get(&self, chat_id: ChatId, on_behalf_of: &Principal) -> Option<&Chat> {
-
+    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&Chat> {
         let chat = self.chats.get(&chat_id)?;
-
-        if !chat.involves_user(on_behalf_of) {
+        if !chat.involves_user(me) {
             return None;
         }
-    
         Some(chat)
     }
 
-    pub fn get_mut(&mut self, chat_id: ChatId, on_behalf_of: &Principal) -> Option<&mut Chat> {
-
+    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut Chat> {
         let chat = self.chats.get_mut(&chat_id)?;
-
-        if !chat.involves_user(on_behalf_of) {
+        if !chat.involves_user(me) {
             return None;
         }
-    
         Some(chat)
+    }
+
+    pub fn list_chats(&self, user: &Principal) -> Vec<ChatSummary> {
+        // For now this will iterate through every chat...
+        let mut list: Vec<_> = self
+            .chats
+            .values()
+            .filter(|chat| chat.involves_user(user))
+            .map(|chat| chat.to_summary(user))
+            .collect();
+
+        list.sort_unstable_by(|c1, c2| {
+            let t1 = c1.get_most_recent().get_timestamp();
+            let t2 = c2.get_most_recent().get_timestamp();
+            t2.cmp(&t1)
+        });
+
+        list
     }
 }
 
 impl StableState for ChatList {
-    type State = Vec<(ChatId, Chat)>;
+    type State = Vec<Chat>;
 
-    fn drain(self) -> Vec<(ChatId, Chat)> {
+    fn drain(self) -> Vec<Chat> {
         self.chats
             .into_iter()
+            .map(|(_, c)| c)
             .collect()
     }
 
-    fn fill(chats: Vec<(ChatId, Chat)>) -> ChatList {
+    fn fill(chats: Vec<Chat>) -> ChatList {
         let map: HashMap<ChatId, Chat> = chats
             .into_iter()
+            .map(|c| (c.get_id(), c))
             .collect();
         
         ChatList {
@@ -68,24 +76,3 @@ impl StableState for ChatList {
         }
     }
 }
-
-/// TODO: We would preferably use a Uuid or u128 but these haven't yet got a CandidType implementation
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
-pub struct ChatId(u64);
-
-impl ChatId {
-    fn new(user1: &Principal, user2: &Principal) -> ChatId {
-        let mut hasher = HighwayHasher::default();
-
-        if user1 < user2 {
-            hasher.append(user1.as_slice());
-            hasher.append(user2.as_slice());    
-        } else {
-            hasher.append(user2.as_slice());
-            hasher.append(user1.as_slice());    
-        }
-
-        ChatId(hasher.finalize64())
-    }
-}
-

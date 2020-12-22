@@ -1,20 +1,35 @@
 use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
+use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
 
 #[derive(CandidType, Deserialize)]
 pub struct Chat {
+    id: ChatId,
     user1: Principal,
     user2: Principal,
     messages: Vec<MessageInternal>
 }
 
 impl Chat {
-    pub fn new(user1: Principal, user2: Principal) -> Chat {
+    pub fn get_id(&self) -> ChatId {
+        self.id
+    }
+
+    pub fn new(id: ChatId, sender: Principal, recipient: Principal, text: String, timestamp: u64) -> Chat {
+
+        let message = MessageInternal {
+            id: 0,
+            timestamp,
+            sent_by_user1: true,
+            text
+        };
+
         Chat {
-            user1,
-            user2,
-            messages: Vec::new()
+            id,
+            user1: sender,
+            user2: recipient,
+            messages: vec![message]
         }
     }
 
@@ -22,11 +37,8 @@ impl Chat {
         self.user1 == *user || self.user2 == *user
     }
 
-    pub fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) {
-        let id = match self.messages.last() {
-            Some(m) => m.id + 1,
-            None => 0
-        };
+    pub fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) -> u64 {
+        let id = self.messages.last().unwrap().id + 1;
 
         let message = MessageInternal {
             id,
@@ -36,6 +48,8 @@ impl Chat {
         };
 
         self.messages.push(message);
+
+        id
     }
 
     pub fn get_messages(&self, me: &Principal, from_index: usize) -> Vec<Message> {
@@ -45,8 +59,59 @@ impl Chat {
 
         self.messages[from_index..]
             .iter()
-            .map(|m| Message::new(m.id, m.timestamp, m.sent_by_user1 == (*me == self.user1), m.text.clone()))
+            .map(|m| Message::new(
+                m.id, 
+                m.timestamp, 
+                m.sent_by_user1 == (*me == self.user1), 
+                m.text.clone()))
             .collect()
+    }
+
+    pub fn to_summary(&self, me: &Principal) -> ChatSummary {
+        let message = self.messages.last().unwrap();
+
+        ChatSummary {
+            id: self.id,
+            them: if self.user1 == *me { self.user2.clone() } else { self.user1.clone() },
+            most_recent: Message::new(
+                message.id, 
+                message.timestamp,
+                message.sent_by_user1 == (*me == self.user1), 
+                message.text.clone())
+        }
+    }
+}
+
+/// TODO: We would preferably use a Uuid or u128 but these haven't yet got a CandidType implementation
+#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
+pub struct ChatId(u64);
+
+impl ChatId {
+    pub fn new(user1: &Principal, user2: &Principal) -> ChatId {
+        let mut hasher = HighwayHasher::default();
+
+        if user1 < user2 {
+            hasher.append(user1.as_slice());
+            hasher.append(user2.as_slice());    
+        } else {
+            hasher.append(user2.as_slice());
+            hasher.append(user1.as_slice());    
+        }
+
+        ChatId(hasher.finalize64())
+    }
+}
+
+#[derive(CandidType)]
+pub struct ChatSummary {
+    id: ChatId,
+    them: Principal,
+    most_recent: Message,
+}
+
+impl ChatSummary {
+    pub fn get_most_recent(&self) -> &Message {
+        &self.most_recent
     }
 }
 
@@ -66,6 +131,10 @@ impl Message {
             sent_by_me,
             text
         }
+    }
+
+    pub fn get_timestamp(&self) -> u64 {
+        self.timestamp
     }
 }
 
@@ -88,7 +157,10 @@ mod tests {
         let user1 = Principal::from_text("yy53y-szfmc-h2gyu-zlind-wzikf-6zuqh-i4x6u-fvado-rvydl-qxwlz-oqe").unwrap();
         let user2 = Principal::from_text("ups66-6ukpx-mitsu-vhso3-ixjld-5p3m5-fbq6p-bbbma-oyzvm-mjr2w-qae").unwrap();
 
-        let mut chat = Chat::new(user1.clone(), user2.clone());
+        let mut chat = Chat::new(
+            ChatId::new(&user1, &user2),
+            user1.clone(), 
+            user2.clone());
 
         for i in 0..10 {
             let text = i.to_string();
@@ -113,7 +185,10 @@ mod tests {
         let user1 = Principal::from_text("yy53y-szfmc-h2gyu-zlind-wzikf-6zuqh-i4x6u-fvado-rvydl-qxwlz-oqe").unwrap();
         let user2 = Principal::from_text("ups66-6ukpx-mitsu-vhso3-ixjld-5p3m5-fbq6p-bbbma-oyzvm-mjr2w-qae").unwrap();
 
-        let mut chat = Chat::new(user1.clone(), user2.clone());
+        let mut chat = Chat::new(
+            ChatId::new(&user1, &user2),
+            user1.clone(), 
+            user2.clone());
 
         let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64;
 
@@ -136,7 +211,10 @@ mod tests {
         let user1 = Principal::from_text("yy53y-szfmc-h2gyu-zlind-wzikf-6zuqh-i4x6u-fvado-rvydl-qxwlz-oqe").unwrap();
         let user2 = Principal::from_text("ups66-6ukpx-mitsu-vhso3-ixjld-5p3m5-fbq6p-bbbma-oyzvm-mjr2w-qae").unwrap();
 
-        let mut chat = Chat::new(user1.clone(), user2.clone());
+        let mut chat = Chat::new(
+            ChatId::new(&user1, &user2),
+            user1.clone(), 
+            user2.clone());
 
         let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64;
 
