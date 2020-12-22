@@ -1,12 +1,12 @@
 dfx identity use matt
 dfx canister call user_mgmt set_username '("Matt")'
-dfx canister call user_mgmt get_principal '("Matt")'
 dfx identity use hamish
 dfx canister call user_mgmt set_username '("Hamish")'
-dfx canister call user_mgmt get_principal '("Hamish")'
+dfx canister call user_mgmt get_principal '("Matt")'
 dfx canister call chats create_chat '(principal "lpfg6-5goq7-vn6yz-wegiu-r6goc-sxoor-wj3b2-dpyup-k6i5m-qhv5m-xae", "Hi Matt, how is it going")'
 dfx canister call chats send_message '(45_292_552_032_833_753, "hello!!??")'
 dfx identity use matt
 dfx canister call chats list_chats
 dfx canister call chats get_messages '(45_292_552_032_833_753, 0)'
+dfx canister call chats mark_read '(45_292_552_032_833_753, 2)'
 dfx canister call chats send_message '(45_292_552_032_833_753, "whats up?")'
