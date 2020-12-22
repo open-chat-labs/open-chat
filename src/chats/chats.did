@@ -1,13 +1,21 @@
-type Message = 
+type Message =
     record {
         id: nat64;
         timestamp: nat64;
         sent_by_me: bool;
         text: text;
-    }
+    };
+
+type ChatSummary =
+    record {
+        id: nat64;
+        them: principal;
+        most_recent: Message;
+    };
 
 service : {
-    create_chat: (principal) -> (opt nat64);
-    send_message: (nat64, text) -> (bool);
+    create_chat: (principal, text) -> (opt nat64);
+    send_message: (nat64, text) -> (opt nat64);
     get_messages: (nat64, nat64) -> (opt vec Message) query;
+    list_chats: () -> (vec ChatSummary) query;
 }
