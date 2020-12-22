@@ -1,3 +1,4 @@
+use std::cmp::max;
 use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
 use highway::{HighwayHasher, HighwayHash};
@@ -8,8 +9,8 @@ pub struct Chat {
     id: ChatId,
     user1: Principal,
     user2: Principal,
-    user1_read_index: u32,
-    user2_read_index: u32,
+    user1_latest_read: u32,
+    user2_latest_read: u32,
     messages: Vec<MessageInternal>
 }
 
@@ -31,8 +32,8 @@ impl Chat {
             id,
             user1: sender,
             user2: recipient,
-            user1_read_index: 1,
-            user2_read_index: 0,
+            user1_latest_read: 1,
+            user2_latest_read: 0,
             messages: vec![message]
         }
     }
@@ -56,20 +57,22 @@ impl Chat {
         self.messages.push(message);
 
         if is_user1 {
-            if self.user1_read_index == prev_id {
-                self.user1_read_index = id;
+            if self.user1_latest_read == prev_id {
+                self.user1_latest_read = id;
             }
         } else {
-            if self.user2_read_index == prev_id {
-                self.user2_read_index = id;
+            if self.user1_latest_read == prev_id {
+                self.user1_latest_read = id;
             }
         }
 
         id
     }
 
-    pub fn get_messages(&self, me: &Principal, from_index: u32) -> Vec<Message> {
-        let from_index = from_index as usize;
+    pub fn get_messages(&self, me: &Principal, from_id: u32) -> Vec<Message> {
+        let start_id = self.messages.first().unwrap().id;
+
+        let from_index = max(from_id - start_id, 0) as usize;
 
         if from_index >= self.messages.len() {
             return Vec::new();
@@ -85,13 +88,13 @@ impl Chat {
             .collect()
     }
 
-    pub fn mark_read(&mut self, me: &Principal, up_to_index: u32) -> u32 {
+    pub fn mark_read(&mut self, me: &Principal, up_to_id: u32) -> u32 {
         let is_user1 = *me == self.user1;
 
         if is_user1 {
-            self.user1_read_index = up_to_index;
+            self.user1_latest_read = up_to_id;
         } else {
-            self.user2_read_index = up_to_index;
+            self.user2_latest_read = up_to_id;
         }
 
         self.messages.last().unwrap().id
@@ -100,7 +103,7 @@ impl Chat {
     pub fn to_summary(&self, me: &Principal) -> ChatSummary {
         let message = self.messages.last().unwrap();
         let is_user1 = *me == self.user1;
-        let unread = message.id - (if is_user1 { self.user1_read_index } else { self.user2_read_index });
+        let unread = message.id - (if is_user1 { self.user1_latest_read } else { self.user2_latest_read });
 
         ChatSummary {
             id: self.id,
@@ -230,17 +233,17 @@ mod tests {
             String::from("Hello"),
             timestamp);
 
-        for i in 0..10 {
+        for i in 0..9 {
             let text = i.to_string();
             chat.push_message(&user1, text, timestamp);
         }
 
-        for i in 1..10 {
-            let messages = chat.get_messages(&user1, i);
+        for id in 1..=10 {
+            let messages = chat.get_messages(&user1, id);
 
-            assert_eq!(11 - i as usize, messages.len());
+            assert_eq!(11 - id as usize, messages.len());
 
-            assert_eq!((i + 1) as u32, messages.first().unwrap().id);
+            assert_eq!(id as u32, messages.first().unwrap().id);
         }
     }
 
@@ -257,15 +260,13 @@ mod tests {
             String::from("Hello"),
             timestamp);
 
-        for i in 1..10 {
+        for i in 0..9 {
             let text = i.to_string();
             chat.push_message(&user1, text, timestamp);
         }
 
-        for i in 10..20 {
-            let messages = chat.get_messages(&user1, i);
+        let messages = chat.get_messages(&user1, 11);
 
-            assert_eq!(0, messages.len());
-        }
+        assert_eq!(0, messages.len());
     }
 }
