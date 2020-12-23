@@ -2,7 +2,7 @@ use std::cmp::max;
 use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
 use serde::Deserialize;
-use crate::Timestamp;
+use shared::timestamp::Timestamp;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]

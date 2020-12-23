@@ -1,16 +1,12 @@
 use ic_cdk::storage;
-use crate::domain::user_data::{SetUsernameResponse, UserData};
+use shared::timestamp;
+use crate::domain::user_store::{UpdateUsernameResult, UserStore};
 
-pub fn update(username: String) -> bool {
+pub fn update(username: String) -> UpdateUsernameResult {
     let principal = ic_cdk::caller();
-    
-    let user_data: &mut UserData = storage::get_mut();
+    let now = timestamp::now();
 
-    let result = user_data.set_username(principal, username);
+    let user_store: &mut UserStore = storage::get_mut();
 
-    match result {
-        SetUsernameResponse::Success => true,
-        SetUsernameResponse::SuccessNoChange => true,
-        SetUsernameResponse::UsernameTaken => false
-    }
+    user_store.update_username(principal, username, now)
 }

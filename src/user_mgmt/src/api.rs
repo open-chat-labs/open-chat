@@ -1,10 +1,16 @@
 use ic_cdk_macros::*;
 use ic_types::Principal;
+use crate::domain::user_store::{RegisterUserResult, UpdateUsernameResult};
 use crate::queries::*;
 use crate::updates::*;
 
 #[update]
-pub fn set_username(username: String) -> bool {
+pub fn register_user(username: String) -> RegisterUserResult {
+    register_user::update(username)
+}
+
+#[update]
+pub fn update_username(username: String) -> UpdateUsernameResult {
     set_username::update(username)
 }
 
