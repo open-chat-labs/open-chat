@@ -8,5 +8,5 @@ pub fn update(recipient: Principal, text: String) -> Option<ChatId> {
     let me = ic_cdk::caller();
     let timestamp = api::time() as u64;
 
-    chat_list.create(me, recipient, text, timestamp)
+    chat_list.create_direct_chat(me, recipient, text, timestamp)
 }

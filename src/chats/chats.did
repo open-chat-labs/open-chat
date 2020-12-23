@@ -2,7 +2,7 @@ type Message =
     record {
         id: nat32;
         timestamp: nat64;
-        sent_by_me: bool;
+        sender: principal;
         text: text;
     };
 
@@ -11,13 +11,17 @@ type ChatSummary =
         id: nat64;
         them: principal;
         unread: nat32;
-        most_recent: Message;
+        most_recent: opt Message;
     };
 
 service : {
-    create_chat: (principal, text) -> (opt nat64);
+    create_direct_chat: (principal, text) -> (opt nat64);
     send_message: (nat64, text) -> (opt nat32);
     mark_read: (nat64, nat32) -> (opt nat32);
     get_messages: (nat64, nat32) -> (opt vec Message) query;
     list_chats: () -> (vec ChatSummary) query;
+
+    create_group_chat: (vec principal, text) -> (opt nat64);
+    add_participants: (nat64, vec principal) -> (opt nat16);
+    remove_participant: (nat64, principal) -> (opt bool);
 }
