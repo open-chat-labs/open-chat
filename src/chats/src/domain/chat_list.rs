@@ -1,7 +1,8 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use ic_types::Principal;
 use shared::StableState;
-use super::chat::{Chat, ChatId, ChatSummary, ChatEnum};
+use crate::Timestamp;
+use super::chat::{Chat, ChatEnum, ChatId, ChatSummary};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 
@@ -11,23 +12,23 @@ pub struct ChatList {
 }
 
 impl ChatList {
-    pub fn create_direct_chat(&mut self, sender: Principal, recipient: Principal, text: String, timestamp: u64) -> Option<ChatId> {
+    pub fn create_direct_chat(&mut self, sender: Principal, recipient: Principal, text: String, now: Timestamp) -> Option<ChatId> {
         let chat_id = ChatId::for_direct_chat(&sender, &recipient);
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, text, timestamp)));
+                e.insert(ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, text, now)));
                 Some(chat_id)
             }
         }
     }
 
-    pub fn create_group_chat(&mut self, creator: Principal, participants: Vec<Principal>, subject: String, timestamp: u64) -> Option<ChatId> {
-        let chat_id = ChatId::for_group_chat(&creator, timestamp);
+    pub fn create_group_chat(&mut self, creator: Principal, participants: Vec<Principal>, subject: String, now: Timestamp) -> Option<ChatId> {
+        let chat_id = ChatId::for_group_chat(&creator, now);
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(ChatEnum::Group(GroupChat::new(chat_id, subject, creator, participants)));
+                e.insert(ChatEnum::Group(GroupChat::new(chat_id, subject, creator, participants, now)));
                 Some(chat_id)
             }
         }
@@ -59,8 +60,8 @@ impl ChatList {
             .collect();
 
         list.sort_unstable_by(|c1, c2| {
-            let t1 = c1.get_most_recent().map(|m| m.get_timestamp());
-            let t2 = c2.get_most_recent().map(|m| m.get_timestamp());
+            let t1 = c1.get_updated_date();
+            let t2 = c2.get_updated_date();
             t2.cmp(&t1)
         });
 

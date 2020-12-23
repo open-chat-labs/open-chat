@@ -2,19 +2,22 @@ use std::cmp::max;
 use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
 use serde::Deserialize;
+use crate::Timestamp;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]
 struct Participant {
     principal: Principal,
     latest_read: u32,
+    date_added: Timestamp
 }
 
 impl Participant {
-    fn new(principal: Principal) -> Participant {
+    fn new(principal: Principal, now: Timestamp) -> Participant {
         Participant {
             principal,
-            latest_read: 0
+            latest_read: 0,
+            date_added: now
         }
     }
 }
@@ -33,14 +36,15 @@ impl GroupChat {
         id: ChatId,
         subject: String,
         creator: Principal,
-        participants: Vec<Principal>) -> GroupChat {
+        participants: Vec<Principal>,
+        now: Timestamp) -> GroupChat {
 
         let mut participants: Vec<_> = participants
             .into_iter()
-            .map(|p| Participant::new(p))
+            .map(|p| Participant::new(p, now))
             .collect();
 
-        participants.push(Participant::new(creator));
+        participants.push(Participant::new(creator, now));
 
         GroupChat {
             id,
@@ -61,7 +65,7 @@ impl Chat for GroupChat {
         self.participants.iter().any(|p| p.principal == *user)
     }
 
-    fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) -> u32 {
+    fn push_message(&mut self, sender: &Principal, text: String, now: Timestamp) -> u32 {
 
         let id = match self.messages.last() {
             Some(message) => message.get_id() + 1,
@@ -70,7 +74,7 @@ impl Chat for GroupChat {
 
         let message = Message::new(
             id,
-            timestamp,
+            now,
             sender.clone(),
             text
         );
@@ -125,10 +129,54 @@ impl Chat for GroupChat {
     }
 
     fn to_summary(&self, me: &Principal) -> ChatSummary {
-        ChatSummary::new(
-            self.id,
-            me.clone(),
-            0,
-            self.messages.last().map(|m| m.clone()))
+        ChatSummary::Group(GroupChatSummary::new(self, me))
+    }
+}
+
+#[derive(CandidType)]
+pub struct GroupChatSummary {
+    id: ChatId,
+    subject: String,
+    updated_date: Timestamp,
+    participants: Vec<Principal>,
+    unread: u32,
+    latest_message: Option<Message>
+}
+
+impl GroupChatSummary {
+    fn new(chat: &GroupChat, me: &Principal) -> GroupChatSummary {
+
+        let me = chat.participants.iter().find(|p| p.principal == *me).unwrap();
+
+        fn calc_updated_date(chat: &GroupChat, me: &Participant) -> Timestamp {
+            let mut updated_date = me.date_added;
+
+            if let Some(message) = chat.messages.last() {
+                updated_date = max(updated_date, message.get_timestamp());
+            }
+
+            updated_date
+        }
+
+        let latest_message = chat.messages.last();
+
+        let unread = if let Some(message) = latest_message {
+            message.get_id() - me.latest_read
+        } else {
+            0
+        };
+
+        GroupChatSummary {
+            id: chat.id,
+            subject: chat.subject.clone(),
+            updated_date: calc_updated_date(chat, me),
+            participants: chat.participants.iter().map(|p| p.principal.clone()).collect(),
+            unread,
+            latest_message: latest_message.map(|m| m.clone())
+        }
+    }
+
+    pub fn get_updated_date(&self) -> Timestamp {
+        self.updated_date
     }
 }
