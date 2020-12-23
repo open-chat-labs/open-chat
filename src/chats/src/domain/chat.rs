@@ -8,7 +8,7 @@ use crate::domain::group_chat::GroupChat;
 
 #[enum_dispatch(Chat)]
 #[derive(CandidType, Deserialize)]
-pub enum ChatType {
+pub enum ChatEnum {
     Direct(DirectChat),
     Group(GroupChat)
 }

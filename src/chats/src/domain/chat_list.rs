@@ -1,13 +1,13 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use ic_types::Principal;
 use shared::StableState;
-use super::chat::{Chat, ChatId, ChatSummary, ChatType};
+use super::chat::{Chat, ChatId, ChatSummary, ChatEnum};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 
 #[derive(Default)]
 pub struct ChatList {
-    chats: HashMap<ChatId, ChatType>
+    chats: HashMap<ChatId, ChatEnum>
 }
 
 impl ChatList {
@@ -16,7 +16,7 @@ impl ChatList {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(ChatType::Direct(DirectChat::new(chat_id, sender, recipient, text, timestamp)));
+                e.insert(ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, text, timestamp)));
                 Some(chat_id)
             }
         }
@@ -27,13 +27,13 @@ impl ChatList {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(ChatType::Group(GroupChat::new(chat_id, subject, creator, participants)));
+                e.insert(ChatEnum::Group(GroupChat::new(chat_id, subject, creator, participants)));
                 Some(chat_id)
             }
         }
     }
 
-    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&ChatType> {
+    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&ChatEnum> {
         let chat = self.chats.get(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -41,7 +41,7 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut ChatType> {
+    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut ChatEnum> {
         let chat = self.chats.get_mut(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -69,17 +69,17 @@ impl ChatList {
 }
 
 impl StableState for ChatList {
-    type State = Vec<ChatType>;
+    type State = Vec<ChatEnum>;
 
-    fn drain(self) -> Vec<ChatType> {
+    fn drain(self) -> Vec<ChatEnum> {
         self.chats
             .into_iter()
             .map(|(_, c)| c)
             .collect()
     }
 
-    fn fill(chats: Vec<ChatType>) -> ChatList {
-        let map: HashMap<ChatId, ChatType> = chats
+    fn fill(chats: Vec<ChatEnum>) -> ChatList {
+        let map: HashMap<ChatId, ChatEnum> = chats
             .into_iter()
             .map(|c| (c.get_id(), c))
             .collect();

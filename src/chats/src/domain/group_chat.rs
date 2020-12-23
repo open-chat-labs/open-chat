@@ -5,7 +5,7 @@ use serde::Deserialize;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]
-pub struct Participant {
+struct Participant {
     principal: Principal,
     latest_read: u32,
 }
