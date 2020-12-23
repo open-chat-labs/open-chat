@@ -13,9 +13,23 @@ type UpdateUsernameResult =
         UserNotFound
     };
 
+type GetUserRequest =
+    record {
+        id: principal;
+        cached_version: opt nat32;
+    };
+
+type UserSummary =
+    record {
+        id: principal;
+        username: text;
+        version: nat32;
+    };
+
 service : {
     register_user: (text) -> (RegisterUserResult);
     update_username: (text) -> (UpdateUsernameResult);
-    get_username: () -> (opt text) query;
     get_principal: (text) -> (opt principal) query;
+    get_username: () -> (opt text) query;
+    get_users: (vec GetUserRequest) -> (vec UserSummary) query;
 }

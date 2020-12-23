@@ -4,6 +4,7 @@ use multi_map::MultiMap;
 use serde::Deserialize;
 use shared::upgrade::StableState;
 use shared::timestamp::Timestamp;
+use crate::queries::get_users::GetUserRequest;
 
 #[derive(Default)]
 pub struct UserStore {
@@ -16,7 +17,7 @@ impl UserStore {
         if self.data.contains_key_alt(&username) { return RegisterUserResult::UsernameExists; }
 
         let user = User {
-            principal: principal.clone(),
+            id: principal.clone(),
             username: username.clone(),
             joined: now,
             last_updated: now,
@@ -30,7 +31,7 @@ impl UserStore {
 
     pub fn update_username(&mut self, principal: Principal, username: String, now: Timestamp) -> UpdateUsernameResult {
         if let Some(match_by_username) = self.data.get_alt(&username) {
-            return if match_by_username.principal == principal {
+            return if match_by_username.id == principal {
                 UpdateUsernameResult::SuccessNoChange
             } else {
                 UpdateUsernameResult::UsernameTaken
@@ -55,7 +56,16 @@ impl UserStore {
     }
 
     pub fn get_principal(&self, username: &String) -> Option<Principal> {
-        self.data.get_alt(username).map(|u| u.principal.clone())
+        self.data.get_alt(username).map(|u| u.id.clone())
+    }
+
+    pub fn get_users(&self, users: Vec<GetUserRequest>) -> Vec<UserSummary> {
+        users
+            .iter()
+            .filter_map(|r| self.data.get(&r.id).map(|u| (u, r.cached_version)))
+            .filter(|(u, v)| v.is_none() || v.unwrap() < u.version)
+            .map(|(u, _)| UserSummary::new(u))
+            .collect()
     }
 }
 
@@ -73,7 +83,7 @@ impl StableState for UserStore {
         let mut data = MultiMap::with_capacity(users.len());
 
         for user in users {
-            data.insert(user.principal.clone(), user.username.clone(), user);
+            data.insert(user.id.clone(), user.username.clone(), user);
         }
 
         UserStore {
@@ -84,11 +94,28 @@ impl StableState for UserStore {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct User {
-    principal: Principal,
+    id: Principal,
     username: String,
     joined: Timestamp,
     last_updated: Timestamp,
     version: u32
+}
+
+#[derive(CandidType)]
+pub struct UserSummary {
+    id: Principal,
+    username: String,
+    version: u32
+}
+
+impl UserSummary {
+    fn new(user: &User) -> UserSummary {
+        UserSummary {
+            id: user.id.clone(),
+            username: user.username.clone(),
+            version: user.version
+        }
+    }
 }
 
 #[derive(CandidType)]
