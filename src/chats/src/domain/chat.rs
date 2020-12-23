@@ -3,8 +3,9 @@ use ic_types::Principal;
 use enum_dispatch::enum_dispatch;
 use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
-use crate::domain::direct_chat::DirectChat;
-use crate::domain::group_chat::GroupChat;
+use crate::domain::direct_chat::{DirectChat, DirectChatSummary};
+use crate::domain::group_chat::{GroupChat, GroupChatSummary};
+use crate::Timestamp;
 
 #[enum_dispatch(Chat)]
 #[derive(CandidType, Deserialize)]
@@ -17,7 +18,7 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &Principal) -> bool;
-    fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) -> u32;
+    fn push_message(&mut self, sender: &Principal, text: String, timestamp: Timestamp) -> u32;
     fn get_messages(&self, from_id: u32) -> Vec<Message>;
     fn mark_read(&mut self, me: &Principal, up_to_id: u32) -> u32;
     fn to_summary(&self, me: &Principal) -> ChatSummary;
@@ -29,7 +30,7 @@ pub struct ChatId(u64);
 
 impl ChatId {
 
-    pub fn for_group_chat(creator: &Principal, timestamp: u64) -> ChatId {
+    pub fn for_group_chat(creator: &Principal, timestamp: Timestamp) -> ChatId {
         let mut hasher = HighwayHasher::default();
 
         hasher.append(creator.as_slice());
@@ -54,42 +55,43 @@ impl ChatId {
 }
 
 #[derive(CandidType)]
-pub struct ChatSummary {
-    id: ChatId,
-    them: Principal,
-    unread: u32,
-    most_recent: Option<Message>
+pub enum ChatSummary {
+    Direct(DirectChatSummary),
+    Group(GroupChatSummary)
 }
 
 impl ChatSummary {
-    pub fn new(id: ChatId, them: Principal, unread: u32, most_recent: Option<Message>) -> ChatSummary {
-        ChatSummary { id, them, unread, most_recent }
-    }
-
-    pub fn get_most_recent(&self) -> Option<&Message> {
-        self.most_recent.as_ref()
+    // Date bumped by:
+    // 1 - New message from any user
+    // 2 - Group created with 'me' in it
+    // 3 - 'me' added to existing group
+    pub fn get_updated_date(&self) -> Timestamp {
+        match self {
+            ChatSummary::Direct(summary) => summary.get_updated_date(),
+            ChatSummary::Group(summary) => summary.get_updated_date()
+        }
     }
 }
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct Message {
     id: u32,
-    timestamp: u64,
+    timestamp: Timestamp,
     sender: Principal,
     text: String
 }
 
 impl Message {
-    pub fn new(id: u32, timestamp: u64, sender: Principal, text: String) -> Message {
+    pub fn new(id: u32, now: Timestamp, sender: Principal, text: String) -> Message {
         Message {
             id,
-            timestamp,
+            timestamp: now,
             sender,
             text
         }
     }
 
-    pub fn get_timestamp(&self) -> u64 {
+    pub fn get_timestamp(&self) -> Timestamp {
         self.timestamp
     }
 

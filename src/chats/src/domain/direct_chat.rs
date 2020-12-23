@@ -1,6 +1,7 @@
 use ic_cdk::export::candid::CandidType;
 use ic_types::Principal;
 use serde::Deserialize;
+use crate::Timestamp;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]
@@ -14,9 +15,9 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(id: ChatId, sender: Principal, recipient: Principal, text: String, timestamp: u64) -> DirectChat {
+    pub fn new(id: ChatId, sender: Principal, recipient: Principal, text: String, now: Timestamp) -> DirectChat {
 
-        let message = Message::new(1, timestamp, sender.clone(), text);
+        let message = Message::new(1, now, sender.clone(), text);
 
         DirectChat {
             id,
@@ -38,7 +39,7 @@ impl Chat for DirectChat {
         self.user1 == *user || self.user2 == *user
     }
 
-    fn push_message(&mut self, sender: &Principal, text: String, timestamp: u64) -> u32 {
+    fn push_message(&mut self, sender: &Principal, text: String, timestamp: Timestamp) -> u32 {
         let prev_id = self.messages.last().unwrap().get_id();
         let id = prev_id + 1;
 
@@ -92,14 +93,34 @@ impl Chat for DirectChat {
     }
 
     fn to_summary(&self, me: &Principal) -> ChatSummary {
-        let message = self.messages.last().unwrap();
-        let is_user1 = *me == self.user1;
-        let unread = message.get_id() - (if is_user1 { self.user1_latest_read } else { self.user2_latest_read });
+        ChatSummary::Direct(DirectChatSummary::new(&self, me))
+    }
+}
 
-        ChatSummary::new(
-            self.id,
-            if is_user1 { self.user2.clone() } else { self.user1.clone() },
+#[derive(CandidType)]
+pub struct DirectChatSummary {
+    id: ChatId,
+    them: Principal,
+    unread: u32,
+    latest_message: Message
+}
+
+impl DirectChatSummary {
+    fn new(chat: &DirectChat, me: &Principal) -> DirectChatSummary {
+        let latest_message = chat.messages.last().unwrap().clone();
+        let is_user1 = *me == chat.user1;
+        let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };
+        let unread = latest_message.get_id() - (if is_user1 { chat.user1_latest_read } else { chat.user2_latest_read });
+
+        DirectChatSummary {
+            id: chat.id,
+            them,
             unread,
-            Some(message.clone()))
+            latest_message
+        }
+    }
+
+    pub fn get_updated_date(&self) -> Timestamp {
+        self.latest_message.get_timestamp()
     }
 }

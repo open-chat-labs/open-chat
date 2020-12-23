@@ -7,11 +7,27 @@ type Message =
     };
 
 type ChatSummary =
+    variant {
+        Direct: DirectChatSummary;
+        Group: GroupChatSummary
+    };
+
+type DirectChatSummary =
     record {
         id: nat64;
         them: principal;
         unread: nat32;
-        most_recent: opt Message;
+        latest_message: Message;
+    };
+
+type GroupChatSummary =
+    record {
+        id: nat64;
+        subject: text;
+        updated_date: nat64;
+        participants: vec principal;
+        unread: nat32;
+        latest_message: opt Message;
     };
 
 service : {
