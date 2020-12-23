@@ -1,9 +1,9 @@
 use ic_cdk::storage;
 use ic_types::Principal;
-use crate::domain::user_data::UserData;
+use crate::domain::user_store::UserStore;
 
 pub fn query(username: &String) -> Option<Principal> {
-    let user_data: &UserData = storage::get();
+    let user_store: &UserStore = storage::get();
     
-    user_data.get_principal(username)
+    user_store.get_principal(username)
 }

@@ -1,4 +1,5 @@
 use ic_cdk::storage;
+use shared::timestamp;
 use crate::domain::chat::{Chat, ChatId};
 use crate::domain::chat_list::ChatList;
 
@@ -7,7 +8,7 @@ pub fn update(chat_id: ChatId, text: String) -> Option<u32> {
     let me = ic_cdk::caller();
 
     if let Some(chat) = chat_list.get_mut(chat_id, &me) {
-        let now = crate::get_current_timestamp();
+        let now = timestamp::now();
         let message_id = chat.push_message(&me, text, now);
         return Some(message_id);
     }

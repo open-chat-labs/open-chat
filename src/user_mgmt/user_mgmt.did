@@ -1,5 +1,21 @@
+type RegisterUserResult =
+    variant {
+        Success;
+        UserExists;
+        UsernameExists
+    };
+
+type UpdateUsernameResult =
+    variant {
+        Success;
+        SuccessNoChange;
+        UsernameTaken;
+        UserNotFound
+    };
+
 service : {
-    set_username: (text) -> (bool);
+    register_user: (text) -> (RegisterUserResult);
+    update_username: (text) -> (UpdateUsernameResult);
     get_username: () -> (opt text) query;
     get_principal: (text) -> (opt principal) query;
 }

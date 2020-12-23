@@ -1,12 +1,13 @@
 use ic_cdk_macros::*;
-use crate::domain::user_data::UserData;
+use shared::upgrade;
+use crate::domain::user_store::UserStore;
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    shared::pre_upgrade::<UserData>();
+    upgrade::pre_upgrade::<UserStore>();
 }
 
 #[post_upgrade]
 fn post_upgrade() {
-    shared::post_upgrade::<UserData>();
+    upgrade::post_upgrade::<UserStore>();
 }

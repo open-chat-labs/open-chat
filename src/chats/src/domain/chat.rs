@@ -3,9 +3,9 @@ use ic_types::Principal;
 use enum_dispatch::enum_dispatch;
 use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
+use shared::timestamp::Timestamp;
 use crate::domain::direct_chat::{DirectChat, DirectChatSummary};
 use crate::domain::group_chat::{GroupChat, GroupChatSummary};
-use crate::Timestamp;
 
 #[enum_dispatch(Chat)]
 #[derive(CandidType, Deserialize)]

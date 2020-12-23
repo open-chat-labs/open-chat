@@ -1,7 +1,7 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use ic_types::Principal;
-use shared::StableState;
-use crate::Timestamp;
+use shared::timestamp::Timestamp;
+use shared::upgrade::StableState;
 use super::chat::{Chat, ChatEnum, ChatId, ChatSummary};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
