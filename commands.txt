@@ -20,5 +20,8 @@ dfx canister call chats send_message '(45_292_552_032_833_753, "whats up?")'
 -- Group Chat
 dfx identity use matt
 dfx canister call user_mgmt get_principal '("Hamish")'
-dfx canister call chats create_group_chat '(vec {principal "uhpjy-crxbe-6chrq-vadba-aqrmz-f4d2e-h7nxj-7hrso-ebvqe-gnygw-tae"}, "Xmas 2020")'
+dfx canister call chats create_group_chat '(vec { principal "uhpjy-crxbe-6chrq-vadba-aqrmz-f4d2e-h7nxj-7hrso-ebvqe-gnygw-tae" }, "Xmas 2020")'
 dfx canister call chats send_message '(12_699_180_841_646_933_661, "Are you coming to mine for xmas?")'
+
+-- Get Users
+dfx canister call user_mgmt get_users '(vec { record { id = principal "uhpjy-crxbe-6chrq-vadba-aqrmz-f4d2e-h7nxj-7hrso-ebvqe-gnygw-tae"; cached_version = opt 1 } })'
