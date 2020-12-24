@@ -31,7 +31,7 @@ type UserSummary =
 service : {
     register_user: (text) -> (RegisterUserResult);
     update_username: (text) -> (UpdateUsernameResult);
+    get_current_user: () -> (opt UserSummary) query;
     get_user_id: (text) -> (opt UserId) query;
-    get_username: () -> (opt text) query;
     get_users: (vec GetUserRequest) -> (vec UserSummary) query;
 }

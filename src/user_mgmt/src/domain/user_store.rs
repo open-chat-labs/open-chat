@@ -51,12 +51,12 @@ impl UserStore {
         }
     }
 
-    pub fn get_username(&self, user_id: &UserId) -> Option<String> {
-        self.data.get(user_id).map(|u| u.username.clone())
-    }
-
     pub fn get_user_id(&self, username: &String) -> Option<UserId> {
         self.data.get_alt(username).map(|u| u.id.clone())
+    }
+
+    pub fn get_user(&self, user_id: &UserId) -> Option<UserSummary> {
+        self.data.get(user_id).map(UserSummary::new)
     }
 
     pub fn get_users(&self, users: Vec<GetUserRequest>) -> Vec<UserSummary> {
