@@ -34,13 +34,31 @@ type GroupChatSummary =
         latest_message: opt Message;
     };
 
+type AddParticipantsResult =
+    variant {
+        Success: nat32;
+        UserNotAdmin;
+        ChatNotFound;
+        ChatWrongType
+    };
+
+type RemoveParticipantResult =
+    variant {
+        Success;
+        UserNotAdmin;
+        UserToRemoveNotInChat;
+        CannotRemoveSelfFromChat;
+        ChatNotFound;
+        ChatWrongType
+    };
+
 service : {
     create_direct_chat: (UserId, text) -> (opt ChatId);
     create_group_chat: (vec UserId, text) -> (opt ChatId);
     send_message: (ChatId, text) -> (opt nat32);
     mark_read: (ChatId, nat32) -> (opt nat32);
-    add_participants: (ChatId, vec UserId) -> (opt nat16);
-    remove_participant: (ChatId, UserId) -> (opt bool);
+    add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);
+    remove_participant: (ChatId, UserId) -> (RemoveParticipantResult);
     get_messages: (ChatId, nat32) -> (opt vec Message) query;
     list_chats: () -> (vec ChatSummary) query;
 }
