@@ -1,3 +1,5 @@
+type UserId = principal;
+
 type RegisterUserResult =
     variant {
         Success;
@@ -15,13 +17,13 @@ type UpdateUsernameResult =
 
 type GetUserRequest =
     record {
-        id: principal;
+        id: UserId;
         cached_version: opt nat32;
     };
 
 type UserSummary =
     record {
-        id: principal;
+        id: UserId;
         username: text;
         version: nat32;
     };
@@ -29,7 +31,7 @@ type UserSummary =
 service : {
     register_user: (text) -> (RegisterUserResult);
     update_username: (text) -> (UpdateUsernameResult);
-    get_principal: (text) -> (opt principal) query;
+    get_user_id: (text) -> (opt UserId) query;
     get_username: () -> (opt text) query;
     get_users: (vec GetUserRequest) -> (vec UserSummary) query;
 }

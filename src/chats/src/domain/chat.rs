@@ -1,9 +1,9 @@
 use ic_cdk::export::candid::CandidType;
-use ic_types::Principal;
 use enum_dispatch::enum_dispatch;
 use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
+use shared::user_id::UserId;
 use crate::domain::direct_chat::{DirectChat, DirectChatSummary};
 use crate::domain::group_chat::{GroupChat, GroupChatSummary};
 
@@ -17,11 +17,11 @@ pub enum ChatEnum {
 #[enum_dispatch]
 pub trait Chat {
     fn get_id(&self) -> ChatId;
-    fn involves_user(&self, user: &Principal) -> bool;
-    fn push_message(&mut self, sender: &Principal, text: String, timestamp: Timestamp) -> u32;
+    fn involves_user(&self, user: &UserId) -> bool;
+    fn push_message(&mut self, sender: &UserId, text: String, timestamp: Timestamp) -> u32;
     fn get_messages(&self, from_id: u32) -> Vec<Message>;
-    fn mark_read(&mut self, me: &Principal, up_to_id: u32) -> u32;
-    fn to_summary(&self, me: &Principal) -> ChatSummary;
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32;
+    fn to_summary(&self, me: &UserId) -> ChatSummary;
 }
 
 /// TODO: We would preferably use a Uuid or u128 but these haven't yet got a CandidType implementation
@@ -30,7 +30,7 @@ pub struct ChatId(u64);
 
 impl ChatId {
 
-    pub fn for_group_chat(creator: &Principal, timestamp: Timestamp) -> ChatId {
+    pub fn for_group_chat(creator: &UserId, timestamp: Timestamp) -> ChatId {
         let mut hasher = HighwayHasher::default();
 
         hasher.append(creator.as_slice());
@@ -39,7 +39,7 @@ impl ChatId {
         ChatId(hasher.finalize64())
     }
 
-    pub fn for_direct_chat(user1: &Principal, user2: &Principal) -> ChatId {
+    pub fn for_direct_chat(user1: &UserId, user2: &UserId) -> ChatId {
         let mut hasher = HighwayHasher::default();
 
         if user1 < user2 {
@@ -77,12 +77,12 @@ impl ChatSummary {
 pub struct Message {
     id: u32,
     timestamp: Timestamp,
-    sender: Principal,
+    sender: UserId,
     text: String
 }
 
 impl Message {
-    pub fn new(id: u32, now: Timestamp, sender: Principal, text: String) -> Message {
+    pub fn new(id: u32, now: Timestamp, sender: UserId, text: String) -> Message {
         Message {
             id,
             timestamp: now,

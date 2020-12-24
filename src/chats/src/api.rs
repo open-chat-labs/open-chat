@@ -1,16 +1,16 @@
 use ic_cdk_macros::*;
-use ic_types::Principal;
+use shared::user_id::UserId;
 use crate::domain::chat::{ChatId, ChatSummary, Message};
 use crate::queries::*;
 use crate::updates::*;
 
 #[update]
-fn create_direct_chat(recipient: Principal, text: String) -> Option<ChatId> {
+fn create_direct_chat(recipient: UserId, text: String) -> Option<ChatId> {
     create_direct_chat::update(recipient, text)
 }
 
 #[update]
-fn create_group_chat(participants: Vec<Principal>, subject: String) -> Option<ChatId> {
+fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatId> {
     create_group_chat::update(participants, subject)
 }
 

@@ -1,5 +1,5 @@
 use ic_cdk_macros::*;
-use ic_types::Principal;
+use shared::user_id::UserId;
 use crate::domain::user_store::{RegisterUserResult, UpdateUsernameResult, UserSummary};
 use crate::queries::*;
 use crate::updates::*;
@@ -20,8 +20,8 @@ pub fn get_username() -> Option<String> {
 }
 
 #[query]
-pub fn get_principal(username: String) -> Option<Principal> {
-    get_principal::query(&username)
+pub fn get_user_id(username: String) -> Option<UserId> {
+    get_user_id::query(&username)
 }
 
 #[query]

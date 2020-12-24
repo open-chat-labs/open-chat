@@ -1,8 +1,10 @@
+type UserId = principal;
+
 type Message =
     record {
         id: nat32;
         timestamp: nat64;
-        sender: principal;
+        sender: UserId;
         text: text;
     };
 
@@ -15,7 +17,7 @@ type ChatSummary =
 type DirectChatSummary =
     record {
         id: nat64;
-        them: principal;
+        them: UserId;
         unread: nat32;
         latest_message: Message;
     };
@@ -25,19 +27,19 @@ type GroupChatSummary =
         id: nat64;
         subject: text;
         updated_date: nat64;
-        participants: vec principal;
+        participants: vec UserId;
         unread: nat32;
         latest_message: opt Message;
     };
 
 service : {
-    create_direct_chat: (principal, text) -> (opt nat64);
+    create_direct_chat: (UserId, text) -> (opt nat64);
     send_message: (nat64, text) -> (opt nat32);
     mark_read: (nat64, nat32) -> (opt nat32);
     get_messages: (nat64, nat32) -> (opt vec Message) query;
     list_chats: () -> (vec ChatSummary) query;
 
-    create_group_chat: (vec principal, text) -> (opt nat64);
-    add_participants: (nat64, vec principal) -> (opt nat16);
-    remove_participant: (nat64, principal) -> (opt bool);
+    create_group_chat: (vec UserId, text) -> (opt nat64);
+    add_participants: (nat64, vec UserId) -> (opt nat16);
+    remove_participant: (nat64, UserId) -> (opt bool);
 }
