@@ -24,6 +24,16 @@ fn mark_read(chat_id: ChatId, up_to_index: u32) -> Option<u32> {
     mark_read::update(chat_id, up_to_index)
 }
 
+#[update]
+fn add_participants(chat_id: ChatId, users: Vec<UserId>) -> add_participants::AddParticipantsResult {
+    add_participants::update(chat_id, users)
+}
+
+#[update]
+fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::RemoveParticipantResult {
+    remove_participant::update(chat_id, user)
+}
+
 #[query]
 fn list_chats() -> Vec<ChatSummary> {
     list_chats::query()
