@@ -1,21 +1,21 @@
 use ic_cdk::export::candid::CandidType;
-use ic_types::Principal;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
+use shared::user_id::UserId;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]
 pub struct DirectChat {
     id: ChatId,
-    user1: Principal,
-    user2: Principal,
+    user1: UserId,
+    user2: UserId,
     user1_latest_read: u32,
     user2_latest_read: u32,
     messages: Vec<Message>
 }
 
 impl DirectChat {
-    pub fn new(id: ChatId, sender: Principal, recipient: Principal, text: String, now: Timestamp) -> DirectChat {
+    pub fn new(id: ChatId, sender: UserId, recipient: UserId, text: String, now: Timestamp) -> DirectChat {
 
         let message = Message::new(1, now, sender.clone(), text);
 
@@ -35,11 +35,11 @@ impl Chat for DirectChat {
         self.id
     }
 
-    fn involves_user(&self, user: &Principal) -> bool {
+    fn involves_user(&self, user: &UserId) -> bool {
         self.user1 == *user || self.user2 == *user
     }
 
-    fn push_message(&mut self, sender: &Principal, text: String, timestamp: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, text: String, timestamp: Timestamp) -> u32 {
         let prev_id = self.messages.last().unwrap().get_id();
         let id = prev_id + 1;
 
@@ -80,7 +80,7 @@ impl Chat for DirectChat {
             .collect()
     }
 
-    fn mark_read(&mut self, me: &Principal, up_to_id: u32) -> u32 {
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
         let is_user1 = *me == self.user1;
 
         if is_user1 {
@@ -92,7 +92,7 @@ impl Chat for DirectChat {
         self.messages.last().unwrap().get_id()
     }
 
-    fn to_summary(&self, me: &Principal) -> ChatSummary {
+    fn to_summary(&self, me: &UserId) -> ChatSummary {
         ChatSummary::Direct(DirectChatSummary::new(&self, me))
     }
 }
@@ -100,13 +100,13 @@ impl Chat for DirectChat {
 #[derive(CandidType)]
 pub struct DirectChatSummary {
     id: ChatId,
-    them: Principal,
+    them: UserId,
     unread: u32,
     latest_message: Message
 }
 
 impl DirectChatSummary {
-    fn new(chat: &DirectChat, me: &Principal) -> DirectChatSummary {
+    fn new(chat: &DirectChat, me: &UserId) -> DirectChatSummary {
         let latest_message = chat.messages.last().unwrap().clone();
         let is_user1 = *me == chat.user1;
         let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };

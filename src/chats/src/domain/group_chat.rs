@@ -1,21 +1,21 @@
 use std::cmp::max;
 use ic_cdk::export::candid::CandidType;
-use ic_types::Principal;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
+use shared::user_id::UserId;
 use super::chat::*;
 
 #[derive(CandidType, Deserialize)]
 struct Participant {
-    principal: Principal,
+    user_id: UserId,
     latest_read: u32,
     date_added: Timestamp
 }
 
 impl Participant {
-    fn new(principal: Principal, now: Timestamp) -> Participant {
+    fn new(user_id: UserId, now: Timestamp) -> Participant {
         Participant {
-            principal,
+            user_id,
             latest_read: 0,
             date_added: now
         }
@@ -35,8 +35,8 @@ impl GroupChat {
     pub fn new(
         id: ChatId,
         subject: String,
-        creator: Principal,
-        participants: Vec<Principal>,
+        creator: UserId,
+        participants: Vec<UserId>,
         now: Timestamp) -> GroupChat {
 
         let mut participants: Vec<_> = participants
@@ -61,11 +61,11 @@ impl Chat for GroupChat {
         self.id
     }
 
-    fn involves_user(&self, user: &Principal) -> bool {
-        self.participants.iter().any(|p| p.principal == *user)
+    fn involves_user(&self, user: &UserId) -> bool {
+        self.participants.iter().any(|p| p.user_id == *user)
     }
 
-    fn push_message(&mut self, sender: &Principal, text: String, now: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, text: String, now: Timestamp) -> u32 {
 
         let id = match self.messages.last() {
             Some(message) => message.get_id() + 1,
@@ -84,7 +84,7 @@ impl Chat for GroupChat {
         let participant = self
             .participants
             .iter_mut()
-            .find(|p| p.principal == *sender)
+            .find(|p| p.user_id == *sender)
             .unwrap();
 
         if participant.latest_read == id - 1 {
@@ -109,12 +109,12 @@ impl Chat for GroupChat {
             .collect()
     }
 
-    fn mark_read(&mut self, me: &Principal, up_to_id: u32) -> u32 {
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
 
         let participant = self
             .participants
             .iter_mut()
-            .find(|p| p.principal == *me)
+            .find(|p| p.user_id == *me)
             .unwrap();
 
         let latest_id = self.messages.last().unwrap().get_id();
@@ -128,7 +128,7 @@ impl Chat for GroupChat {
         latest_id
     }
 
-    fn to_summary(&self, me: &Principal) -> ChatSummary {
+    fn to_summary(&self, me: &UserId) -> ChatSummary {
         ChatSummary::Group(GroupChatSummary::new(self, me))
     }
 }
@@ -138,15 +138,15 @@ pub struct GroupChatSummary {
     id: ChatId,
     subject: String,
     updated_date: Timestamp,
-    participants: Vec<Principal>,
+    participants: Vec<UserId>,
     unread: u32,
     latest_message: Option<Message>
 }
 
 impl GroupChatSummary {
-    fn new(chat: &GroupChat, me: &Principal) -> GroupChatSummary {
+    fn new(chat: &GroupChat, me: &UserId) -> GroupChatSummary {
 
-        let me = chat.participants.iter().find(|p| p.principal == *me).unwrap();
+        let me = chat.participants.iter().find(|p| p.user_id == *me).unwrap();
 
         fn calc_updated_date(chat: &GroupChat, me: &Participant) -> Timestamp {
             let mut updated_date = me.date_added;
@@ -170,7 +170,7 @@ impl GroupChatSummary {
             id: chat.id,
             subject: chat.subject.clone(),
             updated_date: calc_updated_date(chat, me),
-            participants: chat.participants.iter().map(|p| p.principal.clone()).collect(),
+            participants: chat.participants.iter().map(|p| p.user_id.clone()).collect(),
             unread,
             latest_message: latest_message.map(|m| m.clone())
         }

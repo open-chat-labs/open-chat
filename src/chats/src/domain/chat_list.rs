@@ -1,7 +1,7 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
-use ic_types::Principal;
 use shared::timestamp::Timestamp;
 use shared::upgrade::StableState;
+use shared::user_id::UserId;
 use super::chat::{Chat, ChatEnum, ChatId, ChatSummary};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
@@ -12,7 +12,7 @@ pub struct ChatList {
 }
 
 impl ChatList {
-    pub fn create_direct_chat(&mut self, sender: Principal, recipient: Principal, text: String, now: Timestamp) -> Option<ChatId> {
+    pub fn create_direct_chat(&mut self, sender: UserId, recipient: UserId, text: String, now: Timestamp) -> Option<ChatId> {
         let chat_id = ChatId::for_direct_chat(&sender, &recipient);
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
@@ -23,7 +23,7 @@ impl ChatList {
         }
     }
 
-    pub fn create_group_chat(&mut self, creator: Principal, participants: Vec<Principal>, subject: String, now: Timestamp) -> Option<ChatId> {
+    pub fn create_group_chat(&mut self, creator: UserId, participants: Vec<UserId>, subject: String, now: Timestamp) -> Option<ChatId> {
         let chat_id = ChatId::for_group_chat(&creator, now);
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
@@ -34,7 +34,7 @@ impl ChatList {
         }
     }
 
-    pub fn get(&self, chat_id: ChatId, me: &Principal) -> Option<&ChatEnum> {
+    pub fn get(&self, chat_id: ChatId, me: &UserId) -> Option<&ChatEnum> {
         let chat = self.chats.get(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -42,7 +42,7 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn get_mut(&mut self, chat_id: ChatId, me: &Principal) -> Option<&mut ChatEnum> {
+    pub fn get_mut(&mut self, chat_id: ChatId, me: &UserId) -> Option<&mut ChatEnum> {
         let chat = self.chats.get_mut(&chat_id)?;
         if !chat.involves_user(me) {
             return None;
@@ -50,7 +50,7 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn list_chats(&self, user: &Principal) -> Vec<ChatSummary> {
+    pub fn list_chats(&self, user: &UserId) -> Vec<ChatSummary> {
         // For now this will iterate through every chat...
         let mut list: Vec<_> = self
             .chats

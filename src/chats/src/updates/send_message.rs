@@ -5,7 +5,7 @@ use crate::domain::chat_list::ChatList;
 
 pub fn update(chat_id: ChatId, text: String) -> Option<u32> {
     let chat_list: &mut ChatList = storage::get_mut();
-    let me = ic_cdk::caller();
+    let me = shared::user_id::get_current();
 
     if let Some(chat) = chat_list.get_mut(chat_id, &me) {
         let now = timestamp::now();
