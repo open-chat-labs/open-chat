@@ -15,8 +15,8 @@ pub fn update_username(username: String) -> UpdateUsernameResult {
 }
 
 #[query]
-pub fn get_username() -> Option<String> {
-    get_username::query()
+pub fn get_current_user() -> Option<UserSummary> {
+    get_current_user::query()
 }
 
 #[query]
