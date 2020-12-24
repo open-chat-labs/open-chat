@@ -1,3 +1,4 @@
+use std::cmp::min;
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
@@ -83,13 +84,21 @@ impl Chat for DirectChat {
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
         let is_user1 = *me == self.user1;
 
+        let latest_id = self.messages.last().unwrap().get_id();
+
+        let up_to_id = min(up_to_id, latest_id);
+
         if is_user1 {
-            self.user1_latest_read = up_to_id;
+            if self.user1_latest_read < up_to_id {
+                self.user1_latest_read = up_to_id;
+            }
         } else {
-            self.user2_latest_read = up_to_id;
+            if self.user2_latest_read < up_to_id {
+                self.user2_latest_read = up_to_id;
+            }
         }
 
-        self.messages.last().unwrap().get_id()
+        latest_id
     }
 
     fn to_summary(&self, me: &UserId) -> ChatSummary {

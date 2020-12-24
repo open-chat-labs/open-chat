@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
@@ -119,7 +119,7 @@ impl Chat for GroupChat {
 
         let latest_id = self.messages.last().unwrap().get_id();
 
-        let up_to_id = max(up_to_id, latest_id);
+        let up_to_id = min(up_to_id, latest_id);
 
         if participant.latest_read < up_to_id {
             participant.latest_read = up_to_id;
