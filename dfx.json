@@ -3,14 +3,14 @@
     "chats": {
       "type": "custom",
       "candid": "src/chats/chats.did",
-      "wasm": "target/wasm32-unknown-unknown/release/chats.wasm",
-      "build": "cargo build --target wasm32-unknown-unknown --release --package chats"
+      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
+      "build": "./generate-wasm.sh chats"
     },
     "user_mgmt": {
       "type": "custom",
       "candid": "src/user_mgmt/user_mgmt.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt.wasm",
-      "build": "cargo build --target wasm32-unknown-unknown --release --package user_mgmt"
+      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
+      "build": "./generate-wasm.sh user_mgmt"
     },
     "open_chat_assets": {
       "dependencies": [
@@ -30,7 +30,7 @@
       "packtool": ""
     }
   },
-  "dfx": "0.6.14",
+  "dfx": "0.6.16",
   "networks": {
     "ic": {
       "providers": [
