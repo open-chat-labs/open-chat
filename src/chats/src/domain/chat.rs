@@ -19,7 +19,7 @@ pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
     fn push_message(&mut self, sender: &UserId, text: String, timestamp: Timestamp) -> u32;
-    fn get_messages(&self, from_id: u32) -> Vec<Message>;
+    fn get_messages(&self, from_id: u32, to_id: u32) -> Vec<Message>;
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32;
     fn to_summary(&self, me: &UserId) -> ChatSummary;
 }
