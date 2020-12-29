@@ -37,19 +37,19 @@ type GroupChatSummary =
 type AddParticipantsResult =
     variant {
         Success: nat32;
-        UserNotAdmin;
+        Unauthorized;
         ChatNotFound;
-        ChatWrongType
+        NotGroupChat
     };
 
 type RemoveParticipantResult =
     variant {
         Success;
-        UserNotAdmin;
-        UserToRemoveNotInChat;
+        Unauthorized;
+        ParticipantNotFound;
         CannotRemoveSelfFromChat;
         ChatNotFound;
-        ChatWrongType
+        NotGroupChat
     };
 
 service : {

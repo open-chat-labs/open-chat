@@ -16,10 +16,10 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> AddParticipantsResult {
             let now = timestamp::now();
             match group_chat.add_participants(&me, users, now) {
                 Some(count_added) => AddParticipantsResult::Success(count_added),
-                None => AddParticipantsResult::UserNotAdmin
+                None => AddParticipantsResult::Unauthorized
             }
         },
-        Some(_) => AddParticipantsResult::ChatWrongType,
+        Some(_) => AddParticipantsResult::NotGroupChat,
         None => AddParticipantsResult::ChatNotFound
     }
 }
@@ -27,7 +27,7 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> AddParticipantsResult {
 #[derive(CandidType)]
 pub enum AddParticipantsResult {
     Success(u32),
-    UserNotAdmin,
+    Unauthorized,
     ChatNotFound,
-    ChatWrongType
+    NotGroupChat
 }

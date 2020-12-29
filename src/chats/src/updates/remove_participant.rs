@@ -18,11 +18,11 @@ pub fn update(chat_id: ChatId, user: UserId) -> RemoveParticipantResult {
 
             match group_chat.remove_participant(&me, &user) {
                 Some(true) => RemoveParticipantResult::Success,
-                Some(false) => RemoveParticipantResult::UserToRemoveNotInChat,
-                None => RemoveParticipantResult::UserNotAdmin
+                Some(false) => RemoveParticipantResult::ParticipantNotFound,
+                None => RemoveParticipantResult::Unauthorized
             }
         },
-        Some(_) => RemoveParticipantResult::ChatWrongType,
+        Some(_) => RemoveParticipantResult::NotGroupChat,
         None => RemoveParticipantResult::ChatNotFound
     }
 }
@@ -30,9 +30,9 @@ pub fn update(chat_id: ChatId, user: UserId) -> RemoveParticipantResult {
 #[derive(CandidType)]
 pub enum RemoveParticipantResult {
     Success,
-    UserNotAdmin,
-    UserToRemoveNotInChat,
+    Unauthorized,
+    ParticipantNotFound,
     CannotRemoveSelfFromChat,
     ChatNotFound,
-    ChatWrongType
+    NotGroupChat
 }
