@@ -40,7 +40,7 @@ fn list_chats(unread_only: bool) -> Vec<ChatSummary> {
 }
 
 #[query]
-fn get_messages(chat_id: ChatId, from_id: u32, to_id: u32) -> Option<Vec<Message>> {
-    get_messages::query(chat_id, from_id, to_id)
+fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<Vec<Message>> {
+    get_messages::query(chat_id, from_id, page_size)
 }
 
