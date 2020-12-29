@@ -50,12 +50,13 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn list_chats(&self, user: &UserId) -> Vec<ChatSummary> {
+    pub fn list_chats(&self, user: &UserId, unread_only: bool) -> Vec<ChatSummary> {
         // For now this will iterate through every chat...
         let mut list: Vec<_> = self
             .chats
             .values()
             .filter(|chat| chat.involves_user(user))
+            .filter(|&chat| !unread_only || chat.get_unread_count(user) > 0)
             .map(|chat| chat.to_summary(user))
             .collect();
 

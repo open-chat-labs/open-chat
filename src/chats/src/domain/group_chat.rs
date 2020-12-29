@@ -155,6 +155,18 @@ impl Chat for GroupChat {
         latest_id
     }
 
+    fn get_unread_count(&self, user_id: &UserId) -> u32 {
+        let user = self.participants.iter().find(|p| p.user_id == *user_id).unwrap();
+
+        let latest_message = self.messages.last();
+
+        if let Some(message) = latest_message {
+            message.get_id() - user.latest_read
+        } else {
+            0
+        }
+    }
+
     fn to_summary(&self, me: &UserId) -> ChatSummary {
         ChatSummary::Group(GroupChatSummary::new(self, me))
     }
@@ -172,6 +184,7 @@ pub struct GroupChatSummary {
 
 impl GroupChatSummary {
     fn new(chat: &GroupChat, me: &UserId) -> GroupChatSummary {
+        let unread = chat.get_unread_count(me);
 
         let me = chat.participants.iter().find(|p| p.user_id == *me).unwrap();
 
@@ -185,13 +198,7 @@ impl GroupChatSummary {
             updated_date
         }
 
-        let latest_message = chat.messages.last();
-
-        let unread = if let Some(message) = latest_message {
-            message.get_id() - me.latest_read
-        } else {
-            0
-        };
+        let latest_message = chat.messages.last().map(|m| m.clone());
 
         GroupChatSummary {
             id: chat.id,
@@ -199,7 +206,7 @@ impl GroupChatSummary {
             updated_date: calc_updated_date(chat, me),
             participants: chat.participants.iter().map(|p| p.user_id.clone()).collect(),
             unread,
-            latest_message: latest_message.map(|m| m.clone())
+            latest_message
         }
     }
 

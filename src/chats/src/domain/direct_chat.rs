@@ -106,6 +106,16 @@ impl Chat for DirectChat {
         latest_id
     }
 
+    fn get_unread_count(&self, user_id: &UserId) -> u32 {
+        let is_user1 = *user_id == self.user1;
+
+        let latest_message = self.messages.last().unwrap();
+
+        let latest_read = if is_user1 { self.user1_latest_read } else { self.user2_latest_read };
+
+        latest_message.get_id() - latest_read
+    }
+
     fn to_summary(&self, me: &UserId) -> ChatSummary {
         ChatSummary::Direct(DirectChatSummary::new(&self, me))
     }
@@ -121,10 +131,10 @@ pub struct DirectChatSummary {
 
 impl DirectChatSummary {
     fn new(chat: &DirectChat, me: &UserId) -> DirectChatSummary {
-        let latest_message = chat.messages.last().unwrap().clone();
         let is_user1 = *me == chat.user1;
         let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };
-        let unread = latest_message.get_id() - (if is_user1 { chat.user1_latest_read } else { chat.user2_latest_read });
+        let unread = chat.get_unread_count(me);
+        let latest_message = chat.messages.last().unwrap().clone();
 
         DirectChatSummary {
             id: chat.id,
