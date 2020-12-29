@@ -35,8 +35,8 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Remo
 }
 
 #[query]
-fn list_chats() -> Vec<ChatSummary> {
-    list_chats::query()
+fn list_chats(unread_only: bool) -> Vec<ChatSummary> {
+    list_chats::query(unread_only)
 }
 
 #[query]
