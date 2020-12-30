@@ -14,7 +14,7 @@ pub struct UserStore {
 impl UserStore {
     pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResult {
         if self.data.contains_key(&user_id) { return RegisterUserResult::UserExists; }
-        if self.data.contains_key_alt(&username) { return RegisterUserResult::UsernameExists; }
+        if self.data.contains_key_alt(&username) { return RegisterUserResult::UsernameTaken; }
 
         let user = User {
             id: user_id.clone(),
@@ -24,9 +24,11 @@ impl UserStore {
             version: 1
         };
 
+        let user_summary = UserSummary::new(&user);
+
         self.data.insert(user_id, username, user);
 
-        RegisterUserResult::Success
+        RegisterUserResult::Success(user_summary)
     }
 
     pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResult {
@@ -120,9 +122,9 @@ impl UserSummary {
 
 #[derive(CandidType)]
 pub enum RegisterUserResult {
-    Success,
+    Success(UserSummary),
     UserExists,
-    UsernameExists
+    UsernameTaken
 }
 
 #[derive(CandidType)]
