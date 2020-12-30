@@ -53,8 +53,8 @@ type RemoveParticipantResult =
     };
 
 service : {
-    create_direct_chat: (UserId, text) -> (opt ChatId);
     create_group_chat: (vec UserId, text) -> (opt ChatId);
+    send_direct_message: (UserId, text) -> nat32;
     send_message: (ChatId, text) -> (opt nat32);
     mark_read: (ChatId, nat32) -> (opt nat32);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);

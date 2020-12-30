@@ -5,13 +5,13 @@ use crate::queries::*;
 use crate::updates::*;
 
 #[update]
-fn create_direct_chat(recipient: UserId, text: String) -> Option<ChatId> {
-    create_direct_chat::update(recipient, text)
+fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatId> {
+    create_group_chat::update(participants, subject)
 }
 
 #[update]
-fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatId> {
-    create_group_chat::update(participants, subject)
+fn send_direct_message(recipient: UserId, text: String) -> u32 {
+    send_direct_message::update(recipient, text)
 }
 
 #[update]
