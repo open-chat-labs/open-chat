@@ -15,8 +15,8 @@ fn send_direct_message(recipient: UserId, text: String) -> u32 {
 }
 
 #[update]
-fn send_group_message(chat_id: ChatId, text: String) -> Option<u32> {
-    send_group_message::update(chat_id, text)
+fn send_message(chat_id: ChatId, text: String) -> Option<u32> {
+    send_message::update(chat_id, text)
 }
 
 #[update]

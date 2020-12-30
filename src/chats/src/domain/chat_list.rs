@@ -14,9 +14,8 @@ pub struct ChatList {
 impl ChatList {
     pub fn create_direct_chat(&mut self, chat_id: ChatId, sender: UserId, recipient: UserId, text: String, now: Timestamp) -> u32 {
         let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, text, now));
-        let message_id = chat.get_messages(0, 1)[0].get_id();
         self.chats.insert(chat_id, chat);
-        message_id
+        1
     }
 
     pub fn create_group_chat(&mut self, creator: UserId, participants: Vec<UserId>, subject: String, now: Timestamp) -> Option<ChatId> {

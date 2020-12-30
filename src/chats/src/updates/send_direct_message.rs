@@ -1,8 +1,8 @@
 use ic_cdk::storage;
 use shared::timestamp;
+use shared::user_id::UserId;
 use crate::domain::chat::{Chat, ChatId};
 use crate::domain::chat_list::ChatList;
-use shared::user_id::UserId;
 
 pub fn update(recipient: UserId, text: String) -> u32 {
     let chat_list: &mut ChatList = storage::get_mut();
