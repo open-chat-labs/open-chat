@@ -2,9 +2,9 @@ type UserId = principal;
 
 type RegisterUserResult =
     variant {
-        Success;
+        Success: UserSummary;
         UserExists;
-        UsernameExists
+        UsernameTaken
     };
 
 type UpdateUsernameResult =
