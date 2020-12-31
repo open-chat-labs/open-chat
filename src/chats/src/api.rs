@@ -44,3 +44,7 @@ fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<Vec<Mes
     get_messages::query(chat_id, from_id, page_size)
 }
 
+#[query]
+fn get_direct_messages(user_id: UserId, from_id: u32, page_size: u32) -> Option<Vec<Message>> {
+    get_direct_messages::query(user_id, from_id, page_size)
+}
