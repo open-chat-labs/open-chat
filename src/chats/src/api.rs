@@ -10,12 +10,12 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatI
 }
 
 #[update]
-fn send_direct_message(recipient: UserId, text: String) -> send_message::SendMessageResult {
+fn send_direct_message(recipient: UserId, text: String) -> send_message::Result {
     send_direct_message::update(recipient, text)
 }
 
 #[update]
-fn send_message(chat_id: ChatId, text: String) -> Option<send_message::SendMessageResult> {
+fn send_message(chat_id: ChatId, text: String) -> Option<send_message::Result> {
     send_message::update(chat_id, text)
 }
 
@@ -25,12 +25,12 @@ fn mark_read(chat_id: ChatId, up_to_index: u32) -> Option<u32> {
 }
 
 #[update]
-fn add_participants(chat_id: ChatId, users: Vec<UserId>) -> add_participants::AddParticipantsResult {
+fn add_participants(chat_id: ChatId, users: Vec<UserId>) -> add_participants::Result {
     add_participants::update(chat_id, users)
 }
 
 #[update]
-fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::RemoveParticipantResult {
+fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Result {
     remove_participant::update(chat_id, user)
 }
 
