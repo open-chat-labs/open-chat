@@ -29,6 +29,20 @@ pub trait Chat {
 #[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
 pub struct ChatId(u64);
 
+#[derive(CandidType, Deserialize, Clone)]
+pub struct Message {
+    id: u32,
+    timestamp: Timestamp,
+    sender: UserId,
+    text: String
+}
+
+#[derive(CandidType)]
+pub enum ChatSummary {
+    Direct(DirectChatSummary),
+    Group(GroupChatSummary)
+}
+
 impl ChatId {
 
     pub fn for_group_chat(creator: &UserId, timestamp: Timestamp) -> ChatId {
@@ -55,33 +69,6 @@ impl ChatId {
     }
 }
 
-#[derive(CandidType)]
-pub enum ChatSummary {
-    Direct(DirectChatSummary),
-    Group(GroupChatSummary)
-}
-
-impl ChatSummary {
-    // Date bumped by:
-    // 1 - New message from any user
-    // 2 - Group created with 'me' in it
-    // 3 - 'me' added to existing group
-    pub fn get_updated_date(&self) -> Timestamp {
-        match self {
-            ChatSummary::Direct(summary) => summary.get_updated_date(),
-            ChatSummary::Group(summary) => summary.get_updated_date()
-        }
-    }
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct Message {
-    id: u32,
-    timestamp: Timestamp,
-    sender: UserId,
-    text: String
-}
-
 impl Message {
     pub fn new(id: u32, now: Timestamp, sender: UserId, text: String) -> Message {
         Message {
@@ -98,5 +85,18 @@ impl Message {
 
     pub fn get_id(&self) -> u32 {
         self.id
+    }
+}
+
+impl ChatSummary {
+    // Date bumped by:
+    // 1 - New message from any user
+    // 2 - Group created with 'me' in it
+    // 3 - 'me' added to existing group
+    pub fn get_updated_date(&self) -> Timestamp {
+        match self {
+            ChatSummary::Direct(summary) => summary.get_updated_date(),
+            ChatSummary::Group(summary) => summary.get_updated_date()
+        }
     }
 }

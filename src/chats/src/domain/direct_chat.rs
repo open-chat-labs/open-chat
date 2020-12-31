@@ -15,6 +15,14 @@ pub struct DirectChat {
     messages: Vec<Message>
 }
 
+#[derive(CandidType)]
+pub struct DirectChatSummary {
+    id: ChatId,
+    them: UserId,
+    unread: u32,
+    latest_message: Message
+}
+
 impl DirectChat {
     pub fn new(id: ChatId, sender: UserId, recipient: UserId, text: String, now: Timestamp) -> DirectChat {
 
@@ -119,14 +127,6 @@ impl Chat for DirectChat {
     fn to_summary(&self, me: &UserId) -> ChatSummary {
         ChatSummary::Direct(DirectChatSummary::new(&self, me))
     }
-}
-
-#[derive(CandidType)]
-pub struct DirectChatSummary {
-    id: ChatId,
-    them: UserId,
-    unread: u32,
-    latest_message: Message
 }
 
 impl DirectChatSummary {

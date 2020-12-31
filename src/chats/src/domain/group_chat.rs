@@ -14,6 +14,24 @@ pub struct GroupChat {
     messages: Vec<Message>
 }
 
+#[derive(CandidType, Deserialize)]
+struct Participant {
+    user_id: UserId,
+    admin: bool,
+    latest_read: u32,
+    date_added: Timestamp
+}
+
+#[derive(CandidType)]
+pub struct GroupChatSummary {
+    id: ChatId,
+    subject: String,
+    updated_date: Timestamp,
+    participants: Vec<UserId>,
+    unread: u32,
+    latest_message: Option<Message>
+}
+
 impl GroupChat {
     pub fn new(
         id: ChatId,
@@ -172,14 +190,15 @@ impl Chat for GroupChat {
     }
 }
 
-#[derive(CandidType)]
-pub struct GroupChatSummary {
-    id: ChatId,
-    subject: String,
-    updated_date: Timestamp,
-    participants: Vec<UserId>,
-    unread: u32,
-    latest_message: Option<Message>
+impl Participant {
+    fn new(user_id: UserId, admin: bool, now: Timestamp) -> Participant {
+        Participant {
+            user_id,
+            admin,
+            latest_read: 0,
+            date_added: now
+        }
+    }
 }
 
 impl GroupChatSummary {
@@ -215,21 +234,3 @@ impl GroupChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize)]
-struct Participant {
-    user_id: UserId,
-    admin: bool,
-    latest_read: u32,
-    date_added: Timestamp
-}
-
-impl Participant {
-    fn new(user_id: UserId, admin: bool, now: Timestamp) -> Participant {
-        Participant {
-            user_id,
-            admin,
-            latest_read: 0,
-            date_added: now
-        }
-    }
-}
