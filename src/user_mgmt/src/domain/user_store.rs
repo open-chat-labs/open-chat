@@ -4,7 +4,7 @@ use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::upgrade::StableState;
 use shared::user_id::UserId;
-use crate::queries::get_users::GetUserRequest;
+use crate::queries::get_users::Request;
 
 #[derive(Default)]
 pub struct UserStore {
@@ -61,7 +61,7 @@ impl UserStore {
         self.data.get(user_id).map(UserSummary::new)
     }
 
-    pub fn get_users(&self, users: Vec<GetUserRequest>) -> Vec<UserSummary> {
+    pub fn get_users(&self, users: Vec<Request>) -> Vec<UserSummary> {
         users
             .iter()
             .filter_map(|r| self.data.get(&r.id).map(|u| (u, r.cached_version)))

@@ -25,6 +25,6 @@ pub fn get_user_id(username: String) -> Option<UserId> {
 }
 
 #[query]
-pub fn get_users(users: Vec<get_users::GetUserRequest>) -> Vec<UserSummary> {
+pub fn get_users(users: Vec<get_users::Request>) -> Vec<UserSummary> {
     get_users::query(users)
 }

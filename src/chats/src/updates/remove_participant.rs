@@ -4,7 +4,7 @@ use shared::user_id::UserId;
 use crate::domain::chat::{ChatId, ChatEnum};
 use crate::domain::chat_list::ChatList;
 
-pub fn update(chat_id: ChatId, user: UserId) -> RemoveParticipantResult {
+pub fn update(chat_id: ChatId, user: UserId) -> Result {
     let chat_list: &mut ChatList = storage::get_mut();
     let me = shared::user_id::get_current();
 
@@ -13,22 +13,22 @@ pub fn update(chat_id: ChatId, user: UserId) -> RemoveParticipantResult {
     match chat {
         Some(ChatEnum::Group(group_chat)) => {
             if me == user {
-                return RemoveParticipantResult::CannotRemoveSelfFromChat;
+                return Result::CannotRemoveSelfFromChat;
             }
 
             match group_chat.remove_participant(&me, &user) {
-                Some(true) => RemoveParticipantResult::Success,
-                Some(false) => RemoveParticipantResult::ParticipantNotFound,
-                None => RemoveParticipantResult::Unauthorized
+                Some(true) => Result::Success,
+                Some(false) => Result::ParticipantNotFound,
+                None => Result::Unauthorized
             }
         },
-        Some(_) => RemoveParticipantResult::NotGroupChat,
-        None => RemoveParticipantResult::ChatNotFound
+        Some(_) => Result::NotGroupChat,
+        None => Result::ChatNotFound
     }
 }
 
 #[derive(CandidType)]
-pub enum RemoveParticipantResult {
+pub enum Result {
     Success,
     Unauthorized,
     ParticipantNotFound,
