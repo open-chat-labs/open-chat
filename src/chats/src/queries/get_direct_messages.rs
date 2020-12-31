@@ -1,7 +1,7 @@
 use ic_cdk::storage;
+use shared::user_id::UserId;
 use crate::domain::chat_list::ChatList;
 use crate::domain::chat::{Chat, ChatId, Message};
-use shared::user_id::UserId;
 
 pub fn query(user_id: UserId, from_id: u32, page_size: u32) -> Option<Vec<Message>> {
     let chat_list: &ChatList = storage::get();

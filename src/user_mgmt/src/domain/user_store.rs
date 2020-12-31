@@ -11,6 +11,37 @@ pub struct UserStore {
     data: MultiMap<UserId, String, User>
 }
 
+#[derive(CandidType, Deserialize, Debug)]
+pub struct User {
+    id: UserId,
+    username: String,
+    joined: Timestamp,
+    last_updated: Timestamp,
+    version: u32
+}
+
+#[derive(CandidType)]
+pub struct UserSummary {
+    id: UserId,
+    username: String,
+    version: u32
+}
+
+#[derive(CandidType)]
+pub enum RegisterUserResult {
+    Success(UserSummary),
+    UserExists,
+    UsernameTaken
+}
+
+#[derive(CandidType)]
+pub enum UpdateUsernameResult {
+    Success,
+    SuccessNoChange,
+    UsernameTaken,
+    UserNotFound
+}
+
 impl UserStore {
     pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResult {
         if self.data.contains_key(&user_id) { return RegisterUserResult::UserExists; }
@@ -94,22 +125,6 @@ impl StableState for UserStore {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug)]
-pub struct User {
-    id: UserId,
-    username: String,
-    joined: Timestamp,
-    last_updated: Timestamp,
-    version: u32
-}
-
-#[derive(CandidType)]
-pub struct UserSummary {
-    id: UserId,
-    username: String,
-    version: u32
-}
-
 impl UserSummary {
     fn new(user: &User) -> UserSummary {
         UserSummary {
@@ -118,19 +133,4 @@ impl UserSummary {
             version: user.version
         }
     }
-}
-
-#[derive(CandidType)]
-pub enum RegisterUserResult {
-    Success(UserSummary),
-    UserExists,
-    UsernameTaken
-}
-
-#[derive(CandidType)]
-pub enum UpdateUsernameResult {
-    Success,
-    SuccessNoChange,
-    UsernameTaken,
-    UserNotFound
 }
