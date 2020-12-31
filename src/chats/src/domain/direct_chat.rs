@@ -94,6 +94,10 @@ impl Chat for DirectChat {
             .collect()
     }
 
+    fn get_latest_message_id(&self) -> u32 {
+        self.messages.last().unwrap().get_id()
+    }
+
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
         let is_user1 = *me == self.user1;
 

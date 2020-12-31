@@ -1,6 +1,6 @@
 use ic_cdk_macros::*;
 use shared::user_id::UserId;
-use crate::domain::chat::{ChatId, ChatSummary, Message};
+use crate::domain::chat::{ChatId, ChatSummary};
 use crate::queries::*;
 use crate::updates::*;
 
@@ -40,11 +40,11 @@ fn list_chats(unread_only: bool) -> Vec<ChatSummary> {
 }
 
 #[query]
-fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<Vec<Message>> {
+fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<get_messages::Result> {
     get_messages::query(chat_id, from_id, page_size)
 }
 
 #[query]
-fn get_direct_messages(user_id: UserId, from_id: u32, page_size: u32) -> Option<Vec<Message>> {
+fn get_direct_messages(user_id: UserId, from_id: u32, page_size: u32) -> Option<get_messages::Result> {
     get_direct_messages::query(user_id, from_id, page_size)
 }
