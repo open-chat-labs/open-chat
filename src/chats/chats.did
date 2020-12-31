@@ -58,6 +58,12 @@ type RemoveParticipantResult =
         NotGroupChat
     };
 
+type GetMessagesResult =
+    record {
+        messages: vec Message;
+        latest_message_id: nat32;
+    };
+
 service : {
     create_group_chat: (vec UserId, text) -> (opt ChatId);
     send_direct_message: (UserId, text) -> (SendMessageResult);
@@ -65,7 +71,7 @@ service : {
     mark_read: (ChatId, nat32) -> (opt nat32);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResult);
-    get_messages: (ChatId, nat32, nat32) -> (opt vec Message) query;
-    get_direct_messages: (UserId, nat32, nat32) -> (opt vec Message) query;
+    get_messages: (ChatId, nat32, nat32) -> (opt GetMessagesResult) query;
+    get_direct_messages: (UserId, nat32, nat32) -> (opt GetMessagesResult) query;
     list_chats: (bool) -> (vec ChatSummary) query;
 }

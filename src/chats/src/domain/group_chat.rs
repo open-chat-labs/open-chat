@@ -135,6 +135,10 @@ impl Chat for GroupChat {
     }
 
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message> {
+        if self.messages.is_empty() {
+            return Vec::new();
+        }
+
         let earliest_id = self.messages.first().unwrap().get_id();
         let latest_id = self.messages.last().unwrap().get_id();
 
@@ -152,6 +156,14 @@ impl Chat for GroupChat {
             .iter()
             .map(|m| m.clone())
             .collect()
+    }
+
+    fn get_latest_message_id(&self) -> u32 {
+        if self.messages.is_empty() {
+            0
+        } else {
+            self.messages.last().unwrap().get_id()
+        }
     }
 
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
