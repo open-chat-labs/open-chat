@@ -10,12 +10,12 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatI
 }
 
 #[update]
-fn send_direct_message(recipient: UserId, text: String) -> u32 {
+fn send_direct_message(recipient: UserId, text: String) -> send_message::SendMessageResult {
     send_direct_message::update(recipient, text)
 }
 
 #[update]
-fn send_message(chat_id: ChatId, text: String) -> Option<u32> {
+fn send_message(chat_id: ChatId, text: String) -> Option<send_message::SendMessageResult> {
     send_message::update(chat_id, text)
 }
 
