@@ -3,8 +3,9 @@ use ic_cdk::storage;
 use shared::user_id::UserId;
 use crate::domain::chat::{ChatId, ChatEnum};
 use crate::domain::chat_list::ChatList;
+use self::Response::*;
 
-pub fn update(chat_id: ChatId, user: UserId) -> Result {
+pub fn update(chat_id: ChatId, user: UserId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
     let me = shared::user_id::get_current();
 
@@ -13,22 +14,22 @@ pub fn update(chat_id: ChatId, user: UserId) -> Result {
     match chat {
         Some(ChatEnum::Group(group_chat)) => {
             if me == user {
-                return Result::CannotRemoveSelfFromChat;
+                return CannotRemoveSelfFromChat;
             }
 
             match group_chat.remove_participant(&me, &user) {
-                Some(true) => Result::Success,
-                Some(false) => Result::ParticipantNotFound,
-                None => Result::Unauthorized
+                Some(true) => Success,
+                Some(false) => ParticipantNotFound,
+                None => Unauthorized
             }
         },
-        Some(_) => Result::NotGroupChat,
-        None => Result::ChatNotFound
+        Some(_) => NotGroupChat,
+        None => ChatNotFound
     }
 }
 
 #[derive(CandidType)]
-pub enum Result {
+pub enum Response {
     Success,
     Unauthorized,
     ParticipantNotFound,

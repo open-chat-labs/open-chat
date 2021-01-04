@@ -87,24 +87,22 @@ impl Chat for DirectChat {
         get_latest_message_id(&self.messages)
     }
 
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
-        let is_user1 = *me == self.user1;
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult {
+        let latest_read = if *me == self.user1 {
+            &mut self.user1_latest_read
+        } else {
+            &mut self.user2_latest_read
+        };
 
         let latest_id = self.messages.last().unwrap().get_id();
 
         let up_to_id = min(up_to_id, latest_id);
 
-        if is_user1 {
-            if self.user1_latest_read < up_to_id {
-                self.user1_latest_read = up_to_id;
-            }
-        } else {
-            if self.user2_latest_read < up_to_id {
-                self.user2_latest_read = up_to_id;
-            }
+        if *latest_read < up_to_id {
+            *latest_read = up_to_id;
         }
 
-        latest_id
+        MarkReadResult::new(*latest_read, latest_id)
     }
 
     fn get_unread_count(&self, user_id: &UserId) -> u32 {

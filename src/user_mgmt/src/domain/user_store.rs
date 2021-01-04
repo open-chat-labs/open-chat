@@ -28,14 +28,14 @@ pub struct UserSummary {
 }
 
 #[derive(CandidType)]
-pub enum RegisterUserResult {
+pub enum RegisterUserResponse {
     Success(UserSummary),
     UserExists,
     UsernameTaken
 }
 
 #[derive(CandidType)]
-pub enum UpdateUsernameResult {
+pub enum UpdateUsernameResponse {
     Success,
     SuccessNoChange,
     UsernameTaken,
@@ -43,9 +43,9 @@ pub enum UpdateUsernameResult {
 }
 
 impl UserStore {
-    pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResult {
-        if self.data.contains_key(&user_id) { return RegisterUserResult::UserExists; }
-        if self.data.contains_key_alt(&username) { return RegisterUserResult::UsernameTaken; }
+    pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResponse {
+        if self.data.contains_key(&user_id) { return RegisterUserResponse::UserExists; }
+        if self.data.contains_key_alt(&username) { return RegisterUserResponse::UsernameTaken; }
 
         let user = User {
             id: user_id.clone(),
@@ -59,15 +59,15 @@ impl UserStore {
 
         self.data.insert(user_id, username, user);
 
-        RegisterUserResult::Success(user_summary)
+        RegisterUserResponse::Success(user_summary)
     }
 
-    pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResult {
+    pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResponse {
         if let Some(match_by_username) = self.data.get_alt(&username) {
             return if match_by_username.id == user_id {
-                UpdateUsernameResult::SuccessNoChange
+                UpdateUsernameResponse::SuccessNoChange
             } else {
-                UpdateUsernameResult::UsernameTaken
+                UpdateUsernameResponse::UsernameTaken
             };
         }
 
@@ -78,9 +78,9 @@ impl UserStore {
 
             self.data.insert(user_id, username, user);
 
-            UpdateUsernameResult::Success
+            UpdateUsernameResponse::Success
         } else {
-            UpdateUsernameResult::UserNotFound
+            UpdateUsernameResponse::UserNotFound
         }
     }
 
