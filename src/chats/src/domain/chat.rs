@@ -22,7 +22,7 @@ pub trait Chat {
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32;
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult;
     fn get_unread_count(&self, user: &UserId) -> u32;
     fn to_summary(&self, me: &UserId) -> ChatSummary;
 }
@@ -43,6 +43,12 @@ pub struct Message {
 pub enum ChatSummary {
     Direct(DirectChatSummary),
     Group(GroupChatSummary)
+}
+
+#[derive(CandidType)]
+pub struct MarkReadResult {
+    read_up_to_id: u32,
+    latest_message_id: u32,
 }
 
 impl ChatId {
@@ -99,6 +105,15 @@ impl ChatSummary {
         match self {
             ChatSummary::Direct(summary) => summary.get_updated_date(),
             ChatSummary::Group(summary) => summary.get_updated_date()
+        }
+    }
+}
+
+impl MarkReadResult {
+    pub fn new(read_up_to_id: u32, latest_message_id: u32) -> MarkReadResult {
+        MarkReadResult {
+            read_up_to_id,
+            latest_message_id
         }
     }
 }

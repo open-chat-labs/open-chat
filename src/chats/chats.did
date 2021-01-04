@@ -2,12 +2,95 @@ type UserId = principal;
 type ChatId = nat64;
 type Timestamp = nat64;
 
+type CreateGroupChatResponse =
+    variant {
+        Success: ChatId;
+        ChatAlreadyExists;
+    };
+
+type SendDirectMessageResult =
+    record {
+        chat_id: ChatId;
+        message_id: nat32;
+        timestamp: Timestamp;
+    };
+
+type SendDirectMessageResponse =
+    variant {
+        Success: SendDirectMessageResult;
+    };
+
+type SendMessageResult =
+    record {
+        message_id: nat32;
+        timestamp: Timestamp;
+    };
+
+type SendMessageResponse =
+    variant {
+        Success: SendMessageResult;
+        ChatNotFound;
+    };
+
+type MarkReadResult =
+    record {
+        read_up_to_id: nat32;
+        latest_message_id: nat32;
+    };
+
+type MarkReadResponse =
+    variant {
+        Success: MarkReadResult;
+        ChatNotFound;
+    };
+
+type AddParticipantsResponse =
+    variant {
+        Success: nat32;
+        Unauthorized;
+        ChatNotFound;
+        NotGroupChat;
+    };
+
+type RemoveParticipantResponse =
+    variant {
+        Success;
+        Unauthorized;
+        ParticipantNotFound;
+        CannotRemoveSelfFromChat;
+        ChatNotFound;
+        NotGroupChat;
+    };
+
 type Message =
     record {
         id: nat32;
         timestamp: Timestamp;
         sender: UserId;
         text: text;
+    };
+
+type GetMessagesResult =
+    record {
+        messages: vec Message;
+        latest_message_id: nat32;
+    };
+
+type GetMessagesResponse =
+    variant {
+        Success: GetMessagesResult;
+        ChatNotFound;
+    };
+
+type GetMessagesByIdResponse =
+    variant {
+        Success: GetMessagesResult;
+        ChatNotFound;
+    };
+
+type ListChatsResponse =
+    variant {
+        Success: vec ChatSummary;
     };
 
 type ChatSummary =
@@ -34,51 +117,14 @@ type GroupChatSummary =
         latest_message: opt Message;
     };
 
-type SendDirectMessageResult =
-    record {
-        chat_id: ChatId;
-        message_id: nat32;
-        timestamp: Timestamp;
-    };
-
-type SendMessageResult =
-    record {
-        message_id: nat32;
-        timestamp: Timestamp;
-    };
-
-type AddParticipantsResult =
-    variant {
-        Success: nat32;
-        Unauthorized;
-        ChatNotFound;
-        NotGroupChat;
-    };
-
-type RemoveParticipantResult =
-    variant {
-        Success;
-        Unauthorized;
-        ParticipantNotFound;
-        CannotRemoveSelfFromChat;
-        ChatNotFound;
-        NotGroupChat;
-    };
-
-type GetMessagesResult =
-    record {
-        messages: vec Message;
-        latest_message_id: nat32;
-    };
-
 service : {
-    create_group_chat: (vec UserId, text) -> (opt ChatId);
-    send_direct_message: (UserId, text) -> (SendDirectMessageResult);
-    send_message: (ChatId, text) -> (opt SendMessageResult);
-    mark_read: (ChatId, nat32) -> (opt nat32);
-    add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);
-    remove_participant: (ChatId, UserId) -> (RemoveParticipantResult);
-    get_messages: (ChatId, nat32, nat32) -> (opt GetMessagesResult) query;
-    get_messages_by_id: (ChatId, vec nat32) -> (opt GetMessagesResult) query;
-    list_chats: (bool) -> (vec ChatSummary) query;
+    create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
+    send_direct_message: (UserId, text) -> (SendDirectMessageResponse);
+    send_message: (ChatId, text) -> (SendMessageResponse);
+    mark_read: (ChatId, nat32) -> (MarkReadResponse);
+    add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
+    remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
+    get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
+    get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
+    list_chats: (bool) -> (ListChatsResponse) query;
 }

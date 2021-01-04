@@ -4,8 +4,9 @@ use shared::{timestamp, timestamp::Timestamp};
 use shared::user_id::UserId;
 use crate::domain::chat::{Chat, ChatId};
 use crate::domain::chat_list::ChatList;
+use self::Response::*;
 
-pub fn update(recipient: UserId, text: String) -> Result {
+pub fn update(recipient: UserId, text: String) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
     let now = timestamp::now();
     let me = shared::user_id::get_current();
@@ -17,11 +18,16 @@ pub fn update(recipient: UserId, text: String) -> Result {
         None => chat_list.create_direct_chat(chat_id, me, recipient, text, now)
     };
 
-    Result {
+    Success(Result {
         chat_id,
         message_id,
         timestamp: now
-    }
+    })
+}
+
+#[derive(CandidType)]
+pub enum Response {
+    Success(Result)
 }
 
 #[derive(CandidType)]

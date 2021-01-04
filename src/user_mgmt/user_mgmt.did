@@ -1,18 +1,37 @@
 type UserId = principal;
 
-type RegisterUserResult =
+type UserSummary =
+    record {
+        id: UserId;
+        username: text;
+        version: nat32;
+    };
+
+type RegisterUserResponse =
     variant {
         Success: UserSummary;
         UserExists;
-        UsernameTaken
+        UsernameTaken;
     };
 
-type UpdateUsernameResult =
+type UpdateUsernameResponse =
     variant {
         Success;
         SuccessNoChange;
         UsernameTaken;
-        UserNotFound
+        UserNotFound;
+    };
+
+type GetCurrentUserResponse =
+    variant {
+        Success: UserSummary;
+        UserNotFound;
+    };
+
+type GetUserIdResponse =
+    variant {
+        Success: UserId;
+        UserNotFound;
     };
 
 type GetUserRequest =
@@ -21,17 +40,15 @@ type GetUserRequest =
         cached_version: opt nat32;
     };
 
-type UserSummary =
-    record {
-        id: UserId;
-        username: text;
-        version: nat32;
+type GetUsersResponse =
+    variant {
+        Success: vec UserSummary;
     };
 
 service : {
-    register_user: (text) -> (RegisterUserResult);
-    update_username: (text) -> (UpdateUsernameResult);
-    get_current_user: () -> (opt UserSummary) query;
-    get_user_id: (text) -> (opt UserId) query;
-    get_users: (vec GetUserRequest) -> (vec UserSummary) query;
+    register_user: (text) -> (RegisterUserResponse);
+    update_username: (text) -> (UpdateUsernameResponse);
+    get_current_user: () -> (GetCurrentUserResponse) query;
+    get_user_id: (text) -> (GetUserIdResponse) query;
+    get_users: (vec GetUserRequest) -> (GetUsersResponse) query;
 }

@@ -147,7 +147,7 @@ impl Chat for GroupChat {
         get_latest_message_id(&self.messages)
     }
 
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
+    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult {
 
         let participant = self
             .participants
@@ -163,7 +163,7 @@ impl Chat for GroupChat {
             participant.latest_read = up_to_id;
         }
 
-        latest_id
+        MarkReadResult::new(participant.latest_read, latest_id)
     }
 
     fn get_unread_count(&self, user_id: &UserId) -> u32 {
