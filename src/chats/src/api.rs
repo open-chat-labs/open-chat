@@ -10,7 +10,7 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> Option<ChatI
 }
 
 #[update]
-fn send_direct_message(recipient: UserId, text: String) -> send_message::Result {
+fn send_direct_message(recipient: UserId, text: String) -> send_direct_message::Result {
     send_direct_message::update(recipient, text)
 }
 
@@ -44,7 +44,3 @@ fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<get_mes
     get_messages::query(chat_id, from_id, page_size)
 }
 
-#[query]
-fn get_direct_messages(user_id: UserId, from_id: u32, page_size: u32) -> Option<get_messages::Result> {
-    get_direct_messages::query(user_id, from_id, page_size)
-}
