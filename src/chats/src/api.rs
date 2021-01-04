@@ -44,3 +44,7 @@ fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> Option<get_mes
     get_messages::query(chat_id, from_id, page_size)
 }
 
+#[query]
+fn get_messages_by_id(chat_id: ChatId, ids: Vec<u32>) -> Option<get_messages::Result> {
+    get_messages_by_id::query(chat_id, ids)
+}
