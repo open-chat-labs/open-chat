@@ -1,9 +1,10 @@
-use std::cmp::{max, min};
+use std::cmp::min;
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 use super::chat::*;
+use super::messages::*;
 
 #[derive(CandidType, Deserialize)]
 pub struct DirectChat {
@@ -75,38 +76,15 @@ impl Chat for DirectChat {
     }
 
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message> {
-        let earliest_id = self.messages.first().unwrap().get_id();
-        let latest_id = self.messages.last().unwrap().get_id();
-
-        let from_id = max(from_id, earliest_id);
-
-        if from_id > latest_id {
-            return Vec::new();
-        }
-
-        let page_size = page_size as usize;
-        let from_index = (from_id - earliest_id) as usize;
-        let to_index = min(from_index + page_size, self.messages.len());
-
-        self.messages[from_index..to_index]
-            .iter()
-            .map(|m| m.clone())
-            .collect()
+        get_messages(&self.messages, from_id, page_size)
     }
 
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message> {
-        let earliest_id = self.messages.first().unwrap().get_id();
-        let latest_id = self.messages.last().unwrap().get_id();
-
-        ids
-            .into_iter()
-            .filter(|id| *id <= latest_id)
-            .map(|id| self.messages[(id - earliest_id) as usize].clone())
-            .collect()
+        get_messages_by_id(&self.messages, ids)
     }
 
     fn get_latest_message_id(&self) -> u32 {
-        self.messages.last().unwrap().get_id()
+        get_latest_message_id(&self.messages)
     }
 
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> u32 {
