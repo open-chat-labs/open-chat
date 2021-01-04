@@ -43,7 +43,7 @@ type SendDirectMessageResult =
 
 type SendMessageResult =
     record {
-        id: nat32;
+        message_id: nat32;
         timestamp: Timestamp;
     };
 
@@ -73,7 +73,7 @@ type GetMessagesResult =
 
 service : {
     create_group_chat: (vec UserId, text) -> (opt ChatId);
-    send_direct_message: (UserId, text) -> (SendMessageResult);
+    send_direct_message: (UserId, text) -> (SendDirectMessageResult);
     send_message: (ChatId, text) -> (opt SendMessageResult);
     mark_read: (ChatId, nat32) -> (opt nat32);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);

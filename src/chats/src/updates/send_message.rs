@@ -16,14 +16,14 @@ pub fn update(chat_id: ChatId, text: String) -> Option<Result> {
 
 #[derive(CandidType)]
 pub struct Result {
-    id: u32,
+    message_id: u32,
     timestamp: Timestamp
 }
 
 impl Result {
-    pub fn new(id: u32, timestamp: Timestamp) -> Result {
+    pub fn new(message_id: u32, timestamp: Timestamp) -> Result {
         Result {
-            id,
+            message_id,
             timestamp
         }
     }
