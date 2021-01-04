@@ -13,7 +13,7 @@ type Message =
 type ChatSummary =
     variant {
         Direct: DirectChatSummary;
-        Group: GroupChatSummary
+        Group: GroupChatSummary;
     };
 
 type DirectChatSummary =
@@ -34,10 +34,17 @@ type GroupChatSummary =
         latest_message: opt Message;
     };
 
+type SendDirectMessageResult =
+    record {
+        chat_id: ChatId;
+        message_id: nat32;
+        timestamp: Timestamp;
+    };
+
 type SendMessageResult =
     record {
         id: nat32;
-        timestamp: Timestamp
+        timestamp: Timestamp;
     };
 
 type AddParticipantsResult =
@@ -45,7 +52,7 @@ type AddParticipantsResult =
         Success: nat32;
         Unauthorized;
         ChatNotFound;
-        NotGroupChat
+        NotGroupChat;
     };
 
 type RemoveParticipantResult =
@@ -55,7 +62,7 @@ type RemoveParticipantResult =
         ParticipantNotFound;
         CannotRemoveSelfFromChat;
         ChatNotFound;
-        NotGroupChat
+        NotGroupChat;
     };
 
 type GetMessagesResult =
@@ -72,6 +79,5 @@ service : {
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResult);
     get_messages: (ChatId, nat32, nat32) -> (opt GetMessagesResult) query;
-    get_direct_messages: (UserId, nat32, nat32) -> (opt GetMessagesResult) query;
     list_chats: (bool) -> (vec ChatSummary) query;
 }

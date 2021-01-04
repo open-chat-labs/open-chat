@@ -1,9 +1,9 @@
+use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
-use shared::timestamp;
+use shared::{timestamp, timestamp::Timestamp};
 use shared::user_id::UserId;
 use crate::domain::chat::{Chat, ChatId};
 use crate::domain::chat_list::ChatList;
-use crate::updates::send_message::Result;
 
 pub fn update(recipient: UserId, text: String) -> Result {
     let chat_list: &mut ChatList = storage::get_mut();
@@ -17,5 +17,16 @@ pub fn update(recipient: UserId, text: String) -> Result {
         None => chat_list.create_direct_chat(chat_id, me, recipient, text, now)
     };
 
-    Result::new(message_id, now)
+    Result {
+        chat_id,
+        message_id,
+        timestamp: now
+    }
+}
+
+#[derive(CandidType)]
+pub struct Result {
+    chat_id: ChatId,
+    message_id: u32,
+    timestamp: Timestamp,
 }
