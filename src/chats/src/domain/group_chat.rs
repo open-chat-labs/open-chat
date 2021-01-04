@@ -166,9 +166,9 @@ impl Chat for GroupChat {
         let latest_id = self.messages.last().unwrap().get_id();
 
         ids
-            .iter()
-            .filter(|id| **id <= latest_id)
-            .map(|id| self.messages[(*id - 1) as usize].clone())
+            .into_iter()
+            .filter(|id| *id <= latest_id)
+            .map(|id| self.messages[(id - 1) as usize].clone())
             .collect()
     }
 
