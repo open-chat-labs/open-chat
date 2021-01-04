@@ -163,12 +163,13 @@ impl Chat for GroupChat {
             return Vec::new();
         }
 
+        let earliest_id = self.messages.first().unwrap().get_id();
         let latest_id = self.messages.last().unwrap().get_id();
 
         ids
             .into_iter()
             .filter(|id| *id <= latest_id)
-            .map(|id| self.messages[(id - 1) as usize].clone())
+            .map(|id| self.messages[(id - earliest_id) as usize].clone())
             .collect()
     }
 
