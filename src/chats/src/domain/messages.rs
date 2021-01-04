@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 use crate::domain::chat::Message;
 
-pub(crate) fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32) -> Vec<Message> {
+pub fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32) -> Vec<Message> {
     if messages.is_empty() {
         return Vec::new();
     }
@@ -25,7 +25,7 @@ pub(crate) fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32
         .collect()
 }
 
-pub(crate) fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>) -> Vec<Message> {
+pub fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>) -> Vec<Message> {
     if messages.is_empty() {
         return Vec::new();
     }
@@ -40,7 +40,7 @@ pub(crate) fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>) -> Vec<
         .collect()
 }
 
-pub(crate) fn get_latest_message_id(messages: &Vec<Message>) -> u32 {
+pub fn get_latest_message_id(messages: &Vec<Message>) -> u32 {
     if messages.is_empty() {
         0
     } else {
