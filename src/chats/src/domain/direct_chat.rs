@@ -94,6 +94,17 @@ impl Chat for DirectChat {
             .collect()
     }
 
+    fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message> {
+        let earliest_id = self.messages.first().unwrap().get_id();
+        let latest_id = self.messages.last().unwrap().get_id();
+
+        ids
+            .into_iter()
+            .filter(|id| *id <= latest_id)
+            .map(|id| self.messages[(id - earliest_id) as usize].clone())
+            .collect()
+    }
+
     fn get_latest_message_id(&self) -> u32 {
         self.messages.last().unwrap().get_id()
     }

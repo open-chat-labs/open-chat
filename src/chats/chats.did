@@ -79,5 +79,6 @@ service : {
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResult);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResult);
     get_messages: (ChatId, nat32, nat32) -> (opt GetMessagesResult) query;
+    get_messages_by_id: (ChatId, vec nat32) -> (opt GetMessagesResult) query;
     list_chats: (bool) -> (vec ChatSummary) query;
 }
