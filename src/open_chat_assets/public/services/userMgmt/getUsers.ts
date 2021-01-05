@@ -1,4 +1,4 @@
-import canister from "ic:canisters/chats";
+import canister from "ic:canisters/user_mgmt";
 import {UserId, UserSummary} from "../../model/users";
 import {Option} from "../../model/common";
 import {convertFromOption} from "../option";

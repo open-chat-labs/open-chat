@@ -12,6 +12,7 @@ export type DirectChat = {
     updatedDate: Timestamp,
     latestMessageId: number,
     readUpTo: number,
+    missingMessages: number[],
     messages: Message[]
 }
 
@@ -23,5 +24,6 @@ export type GroupChat = {
     participants: UserId[],
     latestMessageId: number,
     readUpTo: number,
+    missingMessages: number[],
     messages: Message[];
 }

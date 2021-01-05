@@ -1,4 +1,4 @@
-import canister from "ic:canisters/chats";
+import canister from "ic:canisters/user_mgmt";
 import {UserSummary} from "../../model/users";
 
 export default async function(username: string) : Promise<RegisterUserResponse> {

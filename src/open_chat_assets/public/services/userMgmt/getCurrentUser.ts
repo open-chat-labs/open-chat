@@ -1,5 +1,5 @@
-import canister from "ic:canisters/chats";
-import {UserSummary} from "../../model/users";
+import canister from "ic:canisters/user_mgmt";
+import { UserSummary } from "../../model/users";
 
 export default async function() : Promise<GetCurrentUserResponse> {
     let response = await canister.get_current_user();

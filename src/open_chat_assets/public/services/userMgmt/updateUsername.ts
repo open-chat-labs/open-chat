@@ -1,4 +1,4 @@
-import canister from "ic:canisters/chats";
+import canister from "ic:canisters/user_mgmt";
 
 export default async function(username: string) : Promise<UpdateUsernameResponse> {
     let response = await canister.update_username(username);
