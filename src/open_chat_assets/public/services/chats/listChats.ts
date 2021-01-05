@@ -1,8 +1,8 @@
 import canister from "ic:canisters/chats";
-import { Chat, ChatId, DirectChat, GroupChat } from "../../model/chats";
-import {ConfirmedMessage, Message} from "../../model/messages";
-import {Option} from "../../model/common";
-import {convertToOption} from "../option";
+import { Chat, DirectChat, GroupChat } from "../../model/chats";
+import { Option } from "../../model/common";
+import { ConfirmedMessage, Message } from "../../model/messages";
+import { convertToOption } from "../option";
 
 export default async function(unreadOnly: boolean) : Promise<ListChatsResponse> {
     let response = await canister.list_chats(unreadOnly);
@@ -44,6 +44,7 @@ function convertToDirectChat(value: any) : DirectChat {
         updatedDate: latestMessage.timestamp,
         latestMessageId: latestMessage.id,
         readUpTo: latestMessage.id - value.unread,
+        missingMessages: [],
         messages: [{ kind: "confirmed", ...latestMessage }]
     }
 }
@@ -64,6 +65,7 @@ function convertToGroupChat(value: any) : GroupChat
         participants: value.participants,
         latestMessageId: value.latest_message.id,
         readUpTo: value.latest_message.id - value.unread,
+        missingMessages: [],
         messages: messages
     };
 }

@@ -1,7 +1,7 @@
 import { Timestamp } from "./common";
 import { UserId } from "./users";
 
-export type Message = ConfirmedMessage | UnconfirmedMessage;
+export type Message = ConfirmedMessage | UnconfirmedMessage | MissingMessage;
 
 export type ConfirmedMessage = {
     kind: "confirmed",
@@ -15,4 +15,9 @@ export type UnconfirmedMessage = {
     kind: "unconfirmed",
     id: Symbol,
     text: string
+}
+
+export type MissingMessage = {
+    kind: "missing",
+    id: number
 }
