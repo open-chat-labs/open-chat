@@ -1,9 +1,9 @@
 import canister from "ic:canisters/chats";
-import {UserId} from "../../model/users";
-import {Timestamp} from "../../model/common";
+import { ChatId } from "../../model/chats";
+import { Timestamp } from "../../model/common";
 
-export default async function(userId: UserId, message: string) : Promise<SendMessageResponse> {
-    let response = await canister.send_message(userId, message);
+export default async function(chatId: ChatId, message: string) : Promise<SendMessageResponse> {
+    let response = await canister.send_message(chatId, message);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

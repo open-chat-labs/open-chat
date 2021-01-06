@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
 import {ChatId} from "../../model/chats";
-import {ConfirmedMessage} from "../../model/messages";
+import {LocalMessage} from "../../model/messages";
 
 export default async function(chatId: ChatId, fromId: number, pageSize: number) : Promise<GetMessagesResponse> {
     let response = await canister.get_messages(chatId, fromId, pageSize);
@@ -18,7 +18,7 @@ function handleResponse(response: any) : GetMessagesResponse {
         return {
             kind: "success",
             result: {
-                messages: success.messages.map(convertToConfirmedMessage),
+                messages: success.messages.map(convertToLocalMessage),
                 latestMessageId: success.latest_message_id
             }
         };
@@ -31,8 +31,8 @@ function handleResponse(response: any) : GetMessagesResponse {
     }
 }
 
-export function convertToConfirmedMessage(value: any) : ConfirmedMessage {
-    return { kind: "confirmed", ...value };
+export function convertToLocalMessage(value: any) : LocalMessage {
+    return { kind: "local", ...value };
 }
 
 export type GetMessagesResponse =
@@ -49,6 +49,6 @@ export type ChatNotFound = {
 }
 
 export type GetMessagesResult = {
-    messages: ConfirmedMessage[],
+    messages: LocalMessage[],
     latestMessageId: number
 }

@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ChatId } from "../../model/chats";
+import { Chat, ChatId } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
@@ -9,6 +9,14 @@ import { RootState } from "../../reducers";
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
+
+function sendMessage(chat: Chat, message: string) {
+    return chat.kind === "direct"
+        ? sendDirectMessage(chat.them, chat.chatId, message)
+        : sendGroupMessage(chat.chatId, message);
+}
+
+export default sendMessage;
 
 export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
@@ -34,6 +42,10 @@ export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, messag
         let outcomeEvent;
         if (response.kind === "success") {
             const myUserId = getState().usersState.me!.userId;
+
+            if ("chatId" in response.result) {
+                chatId = (response.result as any).chatId;
+            }
 
             outcomeEvent = {
                 type: SEND_MESSAGE_SUCCEEDED,
@@ -135,19 +147,16 @@ export type SendGroupMessageRequest = {
 
 export type SendMessageSuccess = SendDirectMessageSuccess | SendGroupMessageSuccess;
 
-export type SendDirectMessageSuccess = {
+export type SendDirectMessageSuccess = SendMessageSuccessCommon & {
     kind: "direct",
-    userId: UserId,
-    chatId: Option<ChatId>,
-    sender: UserId,
-    message: string,
-    unconfirmedMessageId: Symbol,
-    confirmedMessageId: number,
-    confirmedMessageTimestamp: Timestamp
+    userId: UserId
 }
 
-export type SendGroupMessageSuccess = {
-    kind: "group",
+export type SendGroupMessageSuccess = SendMessageSuccessCommon & {
+    kind: "group"
+}
+
+type SendMessageSuccessCommon = {
     chatId: ChatId,
     sender: UserId,
     message: string,

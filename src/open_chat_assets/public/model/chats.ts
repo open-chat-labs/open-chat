@@ -24,7 +24,7 @@ type ChatCommon = {
     latestMessageId: number,
     readUpTo: number,
     confirmedOnServerUpTo: number, // Everything up to this is either a ConfirmedMessage or MissingMessage, everything after is an UnconfirmedMessage
-    missingMessages: Set<number>,
-    missingMessagesRequested: Set<number>,
+    messagesToDownload: number[],
+    messagesDownloading: number[],
     messages: Message[]
 }
