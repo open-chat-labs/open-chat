@@ -133,7 +133,7 @@ export default function(state: State = initialState, event: Event) : State {
                 : findGroupChatIndex(chatsCopy, payload.chatId);
 
             const chatCopy = { ...chatsCopy[chatIndex] };
-            chatCopy.messages.slice();
+            chatCopy.messages = chatCopy.messages.slice();
 
             const unconfirmedMessage : UnconfirmedMessage = {
                 kind: "unconfirmed",
