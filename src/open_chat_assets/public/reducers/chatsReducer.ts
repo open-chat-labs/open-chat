@@ -1,6 +1,8 @@
+import * as assert from "assert";
+
 import { Chat, ChatId, DirectChat } from "../model/chats";
 import { Option } from "../model/common";
-import { ConfirmedMessage, Message, UnconfirmedMessage } from "../model/messages";
+import { ConfirmedMessage, Message, MissingMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import { chatIdsEqual, userIdsEqual } from "../utils";
 
@@ -14,6 +16,14 @@ import {
     GetAllChatsSucceededEvent
 } from "../actions/chats/getAllChats";
 
+import {
+    GET_MESSAGES_BY_ID_FAILED,
+    GET_MESSAGES_BY_ID_REQUESTED,
+    GET_MESSAGES_BY_ID_SUCCEEDED,
+    GetMessagesByIdFailedEvent,
+    GetMessagesByIdRequestedEvent,
+    GetMessagesByIdSucceededEvent
+} from "../actions/chats/getMessagesById";
 
 import {
     SEND_MESSAGE_REQUESTED,
@@ -38,6 +48,9 @@ type Event =
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
+    GetMessagesByIdRequestedEvent |
+    GetMessagesByIdSucceededEvent |
+    GetMessagesByIdFailedEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -49,7 +62,7 @@ export default function(state: State = initialState, event: Event) : State {
             return {
                 ...state,
                 selectedChatIndex: event.payload
-            }
+            };
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
@@ -57,6 +70,58 @@ export default function(state: State = initialState, event: Event) : State {
                 ...state,
                 chats: event.payload,
                 selectedChatIndex: event.payload.length ? 0 : null
+            };
+        }
+
+        case GET_MESSAGES_BY_ID_REQUESTED: {
+            const { chatId, messageIds } = event.payload;
+            const chatsCopy = state.chats.slice();
+            const chatIndex = findChatIndex(chatsCopy, chatId);
+            const chatCopy = { ...chatsCopy[chatIndex] };
+            chatsCopy[chatIndex] = chatCopy;
+            chatCopy.missingMessagesRequested = new Set<number>(chatCopy.missingMessagesRequested);
+
+            messageIds.forEach(chatCopy.missingMessagesRequested.add);
+
+            return {
+                ...state,
+                chats: chatsCopy
+            };
+        }
+
+        case GET_MESSAGES_BY_ID_SUCCEEDED: {
+            const { request, result } = event.payload;
+            const chatsCopy = state.chats.slice();
+            const chatIndex = findChatIndex(chatsCopy, request.chatId);
+            const chatCopy = { ...chatsCopy[chatIndex] };
+            chatsCopy[chatIndex] = chatCopy;
+            chatCopy.messages = chatCopy.messages.slice();
+            chatCopy.missingMessages = new Set<number>(chatCopy.missingMessages);
+            chatCopy.missingMessagesRequested = new Set<number>(chatCopy.missingMessagesRequested);
+
+            addMessagesToChat(chatCopy, result.messages);
+            result.messages.forEach(m => chatCopy.missingMessages.delete(m.id));
+            request.messageIds.forEach(chatCopy.missingMessagesRequested.delete);
+
+            return {
+                ...state,
+                chats: chatsCopy
+            };
+        }
+
+        case GET_MESSAGES_BY_ID_FAILED: {
+            const { chatId, messageIds } = event.payload;
+            const chatsCopy = state.chats.slice();
+            const chatIndex = findChatIndex(chatsCopy, chatId);
+            const chatCopy = { ...chatsCopy[chatIndex] };
+            chatsCopy[chatIndex] = chatCopy;
+            chatCopy.missingMessagesRequested = new Set<number>(chatCopy.missingMessagesRequested);
+
+            messageIds.forEach(chatCopy.missingMessagesRequested.delete);
+
+            return {
+                ...state,
+                chats: chatsCopy
             };
         }
 
@@ -68,6 +133,8 @@ export default function(state: State = initialState, event: Event) : State {
                 : findGroupChatIndex(chatsCopy, payload.chatId);
 
             const chatCopy = { ...chatsCopy[chatIndex] };
+            chatCopy.messages.slice();
+
             const unconfirmedMessage : UnconfirmedMessage = {
                 kind: "unconfirmed",
                 id: payload.unconfirmedMessageId,
@@ -76,9 +143,10 @@ export default function(state: State = initialState, event: Event) : State {
             chatCopy.messages.push(unconfirmedMessage);
 
             chatsCopy.splice(chatIndex, 1);
+            chatsCopy.unshift(chatCopy);
 
             return {
-                chats: [chatCopy, ...chatsCopy],
+                chats: chatsCopy,
                 selectedChatIndex: 0
             };
         }
@@ -91,22 +159,50 @@ export default function(state: State = initialState, event: Event) : State {
                 : findGroupChatIndex(chatsCopy, payload.chatId);
 
             const chatCopy = { ...chatsCopy[chatIndex] };
-            const messageIndex = chatCopy.messages.findIndex(m => m.kind === "unconfirmed" && m.id === payload.unconfirmedMessageId);
+            chatsCopy[chatIndex] = chatCopy;
+            chatCopy.messages = chatCopy.messages.slice();
+            chatCopy.missingMessages = new Set<number>(chatCopy.missingMessages);
+
+            const firstMessage = chatCopy.messages[0];
+            assert.notStrictEqual(firstMessage.kind, "unconfirmed");
+
             const confirmedMessage: ConfirmedMessage = {
                 kind: "confirmed",
                 id: payload.confirmedMessageId,
                 timestamp: payload.confirmedMessageTimestamp,
-                sender: 0, // TODO Get the actual value
+                sender: payload.sender,
                 text: payload.message
+            };
+
+            const firstMessageId = firstMessage.id as number;
+            const confirmedMessageIndex = payload.confirmedMessageId - firstMessageId;
+            const unconfirmedMessageIndex = chatCopy.messages.findIndex(m => m.kind === "unconfirmed" && m.id === payload.unconfirmedMessageId);
+
+            if (confirmedMessageIndex === unconfirmedMessageIndex) {
+                chatCopy.messages[unconfirmedMessageIndex] = confirmedMessage;
+            } else {
+                const messagesToInsert: Message[] = [];
+                for (let id = unconfirmedMessageIndex; id < confirmedMessageIndex; id++) {
+                    chatCopy.missingMessages.add(id);
+                    messagesToInsert.push({
+                        kind: "missing",
+                        id
+                    });
+                }
+
+                messagesToInsert.push(confirmedMessage);
+                chatCopy.messages.splice(unconfirmedMessageIndex, 1, ...messagesToInsert);
             }
-            chatCopy.messages[messageIndex] = confirmedMessage;
-            chatCopy.messages.sort(sortMessages);
+
+            chatCopy.missingMessages.delete(confirmedMessage.id);
+
+            if (chatCopy.confirmedOnServerUpTo < confirmedMessage.id) {
+                chatCopy.confirmedOnServerUpTo = confirmedMessage.id;
+            }
 
             if (chatCopy.latestMessageId < confirmedMessage.id) {
                 chatCopy.latestMessageId = confirmedMessage.id;
             }
-
-            // TODO Check for any missing messages / duplicates
 
             return {
                 chats: chatsCopy,
@@ -115,15 +211,18 @@ export default function(state: State = initialState, event: Event) : State {
         }
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
-            const user = event.payload;
+            const { userId } = event.payload;
 
             const newChat: DirectChat = {
                 kind: "direct",
-                them: user.userId,
+                them: userId,
+                chatId: 0,
                 updatedDate: 0,
                 latestMessageId: 0,
                 readUpTo: 0,
-                missingMessages: [],
+                confirmedOnServerUpTo: 0,
+                missingMessages: new Set<number>(),
+                missingMessagesRequested: new Set<number>(),
                 messages: []
             };
 
@@ -137,6 +236,43 @@ export default function(state: State = initialState, event: Event) : State {
         default:
           return state;
     }
+}
+
+function addMessagesToChat(chat: Chat, messages: ConfirmedMessage[]) {
+    messages.sort((a, b) => a.id - b.id);
+
+    const firstMessageId = chat.messages[0].id as number;
+    messages.forEach(m => {
+        const messageIndex = m.id - firstMessageId;
+
+        if (messageIndex < chat.messages.length) {
+            chat.messages[messageIndex] = m;
+        } else if (messageIndex === chat.messages.length) {
+            chat.messages.push(m);
+        } else {
+            const missingMessagesCount = messageIndex - chat.messages.length;
+            const missingMessages: MissingMessage[] = [];
+            for (let i = 1; i <= missingMessagesCount; i++) {
+                missingMessages.push({ kind: "missing", id: chat.confirmedOnServerUpTo + i });
+            }
+            const lastConfirmedMessageIndex = chat.confirmedOnServerUpTo - firstMessageId;
+
+            chat.messages.splice(lastConfirmedMessageIndex, 0, ...missingMessages);
+            chat.messages.push(m);
+        }
+
+        if (chat.confirmedOnServerUpTo < m.id) {
+            chat.confirmedOnServerUpTo = m.id;
+        }
+
+        if (chat.latestMessageId < m.id) {
+            chat.latestMessageId = m.id;
+        }
+    });
+}
+
+function findChatIndex(chats: Chat[], chatId: ChatId) : number {
+    return chats.findIndex(c => c.chatId && chatIdsEqual(chatId, c.chatId));
 }
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {

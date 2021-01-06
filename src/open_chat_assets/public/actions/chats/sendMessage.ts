@@ -1,14 +1,17 @@
-import chatService from "../../services/chats/service";
+import { Dispatch } from "react";
+
+import chatsService from "../../services/chats/service";
 import { ChatId } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { UserId } from "../../model/users";
+import { RootState } from "../../reducers";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
-export default function(userId: UserId, chatId: Option<ChatId>, message: string) {
-    return async (dispatch: any) => {
+export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const id = Symbol("id");
 
         const requestEvent: SendMessageRequestedEvent = {
@@ -25,17 +28,20 @@ export default function(userId: UserId, chatId: Option<ChatId>, message: string)
         dispatch(requestEvent);
 
         const response = chatId
-            ? await chatService.sendMessage(chatId, message)
-            : await chatService.sendDirectMessage(userId, message);
+            ? await chatsService.sendMessage(chatId, message)
+            : await chatsService.sendDirectMessage(userId, message);
 
         let outcomeEvent;
         if (response.kind === "success") {
+            const myUserId = getState().usersState.me!.userId;
+
             outcomeEvent = {
                 type: SEND_MESSAGE_SUCCEEDED,
                 payload: {
                     kind: "direct",
                     userId: userId,
                     chatId: chatId,
+                    sender: myUserId,
                     message: message,
                     unconfirmedMessageId: id,
                     confirmedMessageId: response.result.messageId,
@@ -52,43 +58,48 @@ export default function(userId: UserId, chatId: Option<ChatId>, message: string)
     }
 }
 
-export const sendGroupMessage = (chatId: ChatId, message: string) => async (dispatch: any) => {
-    const id = Symbol("id");
+export function sendGroupMessage(chatId: ChatId, message: string) {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+        const id = Symbol("id");
 
-    const requestEvent: SendMessageRequestedEvent = {
-        type: SEND_MESSAGE_REQUESTED,
-        payload: {
-            kind: "group",
-            chatId: chatId,
-            message: message,
-            unconfirmedMessageId: id
-        }
-    };
-
-    dispatch(requestEvent);
-
-    const response = await chatService.sendMessage(chatId, message);
-
-    let outcomeEvent;
-    if (response.kind === "success") {
-        outcomeEvent = {
-            type: SEND_MESSAGE_SUCCEEDED,
+        const requestEvent: SendMessageRequestedEvent = {
+            type: SEND_MESSAGE_REQUESTED,
             payload: {
                 kind: "group",
                 chatId: chatId,
                 message: message,
-                unconfirmedMessageId: id,
-                confirmedMessageId: response.result.messageId,
-                confirmedMessageTimestamp: response.result.timestamp
+                unconfirmedMessageId: id
             }
-        } as SendMessageSucceededEvent;
-    } else {
-        outcomeEvent = {
-            type: SEND_MESSAGE_FAILED
-        } as SendMessageFailedEvent;
-    }
+        };
 
-    dispatch(outcomeEvent);
+        dispatch(requestEvent);
+
+        const response = await chatsService.sendMessage(chatId, message);
+
+        let outcomeEvent;
+        if (response.kind === "success") {
+            const myUserId = getState().usersState.me!.userId;
+
+            outcomeEvent = {
+                type: SEND_MESSAGE_SUCCEEDED,
+                payload: {
+                    kind: "group",
+                    chatId: chatId,
+                    sender: myUserId,
+                    message: message,
+                    unconfirmedMessageId: id,
+                    confirmedMessageId: response.result.messageId,
+                    confirmedMessageTimestamp: response.result.timestamp
+                }
+            } as SendMessageSucceededEvent;
+        } else {
+            outcomeEvent = {
+                type: SEND_MESSAGE_FAILED
+            } as SendMessageFailedEvent;
+        }
+
+        dispatch(outcomeEvent);
+    }
 }
 
 export type SendMessageRequestedEvent = {
@@ -128,6 +139,7 @@ export type SendDirectMessageSuccess = {
     kind: "direct",
     userId: UserId,
     chatId: Option<ChatId>,
+    sender: UserId,
     message: string,
     unconfirmedMessageId: Symbol,
     confirmedMessageId: number,
@@ -137,6 +149,7 @@ export type SendDirectMessageSuccess = {
 export type SendGroupMessageSuccess = {
     kind: "group",
     chatId: ChatId,
+    sender: UserId,
     message: string,
     unconfirmedMessageId: Symbol,
     confirmedMessageId: number,

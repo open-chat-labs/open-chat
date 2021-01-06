@@ -1,4 +1,6 @@
-import getUserId from "../../services/userMgmt/getUserId";
+import { Dispatch } from "react";
+
+import userMgmtService from "../../services/userMgmt/service";
 import { RootState } from "../../reducers";
 import { Chat } from "../../model/chats";
 import { Option } from "../../model/common";
@@ -12,7 +14,7 @@ export const SETUP_NEW_DIRECT_CHAT_FAILED_CHAT_ALREADY_EXISTS = "SETUP_NEW_DIREC
 export const SETUP_NEW_DIRECT_CHAT_FAILED_CANT_CREATE_CHAT_WITH_SELF = "SETUP_NEW_DIRECT_CHAT_FAILED_CANT_CREATE_CHAT_WITH_SELF";
 
 export default function(username: string) {
-    return async (dispatch: any, getState: () => RootState) => {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const requestEvent: SetupNewDirectChatRequestedEvent = {
             type: SETUP_NEW_DIRECT_CHAT_REQUESTED,
             payload: username
@@ -35,7 +37,7 @@ export default function(username: string) {
 
             let userId = findUserId(state.usersState.userDictionary, username);
             if (!userId) {
-                const getUserResponse = await getUserId(username);
+                const getUserResponse = await userMgmtService.getUserId(username);
 
                 if (getUserResponse.kind === "success") {
                     userId = getUserResponse.userId;

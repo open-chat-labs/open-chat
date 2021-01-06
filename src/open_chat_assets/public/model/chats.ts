@@ -1,4 +1,4 @@
-import { Timestamp } from "./common";
+import { Option, Timestamp } from "./common";
 import { Message } from "./messages";
 import { UserId } from "./users";
 
@@ -6,24 +6,25 @@ export type ChatId = number;
 
 export type Chat = DirectChat | GroupChat;
 
-export type DirectChat = {
+export type DirectChat = ChatCommon & {
     kind: "direct",
     them: UserId,
-    updatedDate: Timestamp,
-    latestMessageId: number,
-    readUpTo: number,
-    missingMessages: number[],
-    messages: Message[]
+    chatId: Option<ChatId>
 }
 
-export type GroupChat = {
+export type GroupChat = ChatCommon & {
     kind: "group",
     chatId: ChatId,
     subject: string,
+    participants: UserId[]
+}
+
+type ChatCommon = {
     updatedDate: Timestamp,
-    participants: UserId[],
     latestMessageId: number,
     readUpTo: number,
-    missingMessages: number[],
-    messages: Message[];
+    confirmedOnServerUpTo: number, // Everything up to this is either a ConfirmedMessage or MissingMessage, everything after is an UnconfirmedMessage
+    missingMessages: Set<number>,
+    missingMessagesRequested: Set<number>,
+    messages: Message[]
 }

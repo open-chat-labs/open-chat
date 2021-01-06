@@ -1,3 +1,5 @@
+import { Dispatch } from "react";
+
 import { UserSummary } from "../../model/users";
 import { GetUserRequest } from "../../services/userMgmt/getUsers";
 import userMgmtService from "../../services/userMgmt/service";
@@ -7,7 +9,7 @@ export const GET_USERS_SUCCEEDED = "GET_USERS_SUCCEEDED";
 export const GET_USERS_FAILED = "GET_USERS_FAILED";
 
 export default function(users: GetUserRequest[]) {
-    return async (dispatch: any) => {
+    return async (dispatch: Dispatch<any>) => {
         const requestAction: GetUsersRequestedEvent = {
             type: GET_USERS_REQUESTED
         };
