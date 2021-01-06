@@ -1,3 +1,5 @@
+import { Dispatch } from "react";
+
 import { UserSummary } from "../../model/users";
 import userMgmtService from "../../services/userMgmt/service";
 
@@ -6,7 +8,7 @@ export const GET_CURRENT_USER_SUCCEEDED = "GET_CURRENT_USER_SUCCEEDED";
 export const GET_CURRENT_USER_FAILED = "GET_CURRENT_USER_FAILED";
 
 export default function() {
-    return async (dispatch: any) => {
+    return async (dispatch: Dispatch<any>) => {
         const requestEvent: GetCurrentUserRequestedEvent = {
             type: GET_CURRENT_USER_REQUESTED
         };

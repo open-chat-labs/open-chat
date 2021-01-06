@@ -1,3 +1,5 @@
+import { Dispatch } from "react";
+
 import userMgmtService from "../../services/userMgmt/service";
 import { UserSummary } from "../../model/users";
 
@@ -7,7 +9,7 @@ export const REGISTER_USER_FAILED_USER_EXISTS = "REGISTER_USER_FAILED_USER_EXIST
 export const REGISTER_USER_FAILED_USERNAME_EXISTS = "REGISTER_USER_FAILED_USERNAME_EXISTS";
 
 export default function(username: string) {
-    return async (dispatch: any) => {
+    return async (dispatch: Dispatch<any>) => {
         const requestEvent: RegisterUserRequestedEvent = {
             type: REGISTER_USER_REQUESTED,
             payload: username

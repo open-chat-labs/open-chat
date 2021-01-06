@@ -1,4 +1,6 @@
-import chatService from "../../services/chats/service";
+import { Dispatch } from "react";
+
+import chatsService from "../../services/chats/service";
 import { Chat } from "../../model/chats";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
@@ -6,14 +8,14 @@ export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
 export const GET_ALL_CHATS_FAILED = "GET_ALL_CHATS_FAILED";
 
 export default function() {
-    return async (dispatch: any) => {
+    return async (dispatch: Dispatch<any>) => {
         const requestEvent: GetAllChatsRequestedEvent = {
             type: GET_ALL_CHATS_REQUESTED
         };
 
         dispatch(requestEvent);
 
-        const result = await chatService.listChats(false);
+        const result = await chatsService.listChats(false);
 
         let outcomeEvent;
         if (result.kind === "success") {

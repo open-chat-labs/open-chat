@@ -3,8 +3,6 @@ dfx identity use matt
 dfx canister call user_mgmt set_username '("Matt")'
 dfx identity use hamish
 dfx canister call user_mgmt set_username '("Hamish")'
-dfx identity use calum
-dfx canister call user_mgmt set_username '("Calum")'
 
 -- Direct Chat
 dfx identity use hamish

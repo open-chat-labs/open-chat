@@ -41,21 +41,25 @@ function convertToDirectChat(value: any) : DirectChat {
     return {
         kind: "direct",
         them: value.them,
+        chatId: value.chat_id,
         updatedDate: latestMessage.timestamp,
         latestMessageId: latestMessage.id,
         readUpTo: latestMessage.id - value.unread,
-        missingMessages: [],
+        confirmedOnServerUpTo: latestMessage.id,
+        missingMessages: new Set<number>(),
+        missingMessagesRequested: new Set<number>(),
         messages: [{ kind: "confirmed", ...latestMessage }]
-    }
+    };
 }
 
 function convertToGroupChat(value: any) : GroupChat
 {
-    let messages = [] as Message[];
-    let latestMessage: Option<any> = convertToOption(value.latest_message);
+    const messages = [] as Message[];
+    const latestMessage: Option<any> = convertToOption(value.latest_message);
     if (latestMessage) {
         messages.push(convertToConfirmedMessage(latestMessage));
     }
+    const latestMessageId = latestMessage ? latestMessage.id : 0;
 
     return {
         kind: "group",
@@ -63,9 +67,11 @@ function convertToGroupChat(value: any) : GroupChat
         subject: value.subject,
         updatedDate: value.updated_date,
         participants: value.participants,
-        latestMessageId: value.latest_message.id,
-        readUpTo: value.latest_message.id - value.unread,
-        missingMessages: [],
+        latestMessageId: latestMessageId,
+        readUpTo: latestMessageId - value.unread,
+        confirmedOnServerUpTo: latestMessageId,
+        missingMessages: new Set<number>(),
+        missingMessagesRequested: new Set<number>(),
         messages: messages
     };
 }
