@@ -11,7 +11,7 @@ import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
-const PAGE_SIZE = 20;
+import { PAGE_SIZE } from "./constants";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();

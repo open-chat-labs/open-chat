@@ -21,5 +21,6 @@ export type ConfirmedMessage = {
 export type UnconfirmedMessage = {
     kind: "unconfirmed",
     id: Symbol,
+    timestamp: Timestamp,
     text: string
 }

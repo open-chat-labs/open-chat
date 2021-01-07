@@ -22,6 +22,7 @@ export type GroupChat = ConfirmedChatCommon & {
 export type NewDirectChat = {
     kind: "newDirect",
     them: UserId,
+    updatedDate: Timestamp,
     messages: Message[]
 }
 

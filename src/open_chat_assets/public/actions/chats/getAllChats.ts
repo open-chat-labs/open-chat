@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../model/chats";
+import { PAGE_SIZE } from "../../constants";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
@@ -16,8 +17,8 @@ export default function() {
         dispatch(requestEvent);
 
         const response = await chatsService.getChats({
-            unread_only: false,
-            message_count_for_top_chat: null
+            unreadOnly: false,
+            messageCountForTopChat: PAGE_SIZE
         });
 
         let outcomeEvent;

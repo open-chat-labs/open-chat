@@ -1,11 +1,16 @@
 import canister from "ic:canisters/chats";
 import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
 import { Option } from "../../model/common";
-import { LocalMessage, Message } from "../../model/messages";
-import { convertToOption } from "../option";
+import { LocalMessage } from "../../model/messages";
+import { convertFromOption } from "../option";
 
 export default async function(request: GetChatsRequest) : Promise<GetChatsResponse> {
-    let response = await canister.get_chats(request);
+    const canisterRequest = {
+        unread_only: request.unreadOnly,
+        message_count_for_top_chat: convertFromOption(request.messageCountForTopChat)
+    };
+
+    let response = await canister.get_chats(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
@@ -19,8 +24,8 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
 }
 
 export type GetChatsRequest = {
-    unread_only: boolean,
-    message_count_for_top_chat: Option<number>
+    unreadOnly: boolean,
+    messageCountForTopChat: Option<number>
 };
 
 export type GetChatsResponse =
@@ -52,13 +57,13 @@ function convertToDirectChat(value: any) : DirectChat {
         confirmedOnServerUpTo: latestMessage.id,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: value.latest_messages.map(convertToLocalMessage)
+        messages: value.latest_messages.reverse().map(convertToLocalMessage)
     };
 }
 
 function convertToGroupChat(value: any) : GroupChat
 {
-    const latestMessageId = value.latest_messages.count > 0 ? value.latest_messages[0].id : 0;
+    const latestMessageId = value.latest_messages.length > 0 ? value.latest_messages[0].id : 0;
 
     return {
         kind: "group",
@@ -70,7 +75,7 @@ function convertToGroupChat(value: any) : GroupChat
         confirmedOnServerUpTo: latestMessageId,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: value.latest_messages.map(convertToLocalMessage)
+        messages: value.latest_messages.reverse().map(convertToLocalMessage)
     };
 }
 
