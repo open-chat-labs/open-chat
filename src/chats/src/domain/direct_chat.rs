@@ -21,7 +21,7 @@ pub struct DirectChatSummary {
     id: ChatId,
     them: UserId,
     unread: u32,
-    latest_message: Message
+    latest_messages: Vec<Message>
 }
 
 impl DirectChat {
@@ -115,27 +115,34 @@ impl Chat for DirectChat {
         latest_message.get_id() - latest_read
     }
 
-    fn to_summary(&self, me: &UserId) -> ChatSummary {
-        ChatSummary::Direct(DirectChatSummary::new(&self, me))
+    fn get_updated_date(&self, _user_id: &UserId) -> Timestamp {
+        let latest_message = self.messages.last().unwrap();
+        latest_message.get_timestamp()
+    }
+
+    fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary {
+        ChatSummary::Direct(DirectChatSummary::new(&self, me, message_count))
     }
 }
 
 impl DirectChatSummary {
-    fn new(chat: &DirectChat, me: &UserId) -> DirectChatSummary {
+    fn new(chat: &DirectChat, me: &UserId, message_count: u32) -> DirectChatSummary {
         let is_user1 = *me == chat.user1;
         let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };
         let unread = chat.get_unread_count(me);
-        let latest_message = chat.messages.last().unwrap().clone();
+        let latest_messages = chat
+            .messages
+            .iter()
+            .rev()
+            .take(message_count as usize)
+            .map(|m| m.clone())
+            .collect();
 
         DirectChatSummary {
             id: chat.id,
             them,
             unread,
-            latest_message
+            latest_messages
         }
-    }
-
-    pub fn get_updated_date(&self) -> Timestamp {
-        self.latest_message.get_timestamp()
     }
 }

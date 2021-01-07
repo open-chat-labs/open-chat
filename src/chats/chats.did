@@ -87,7 +87,7 @@ type DirectChatSummary =
         id: ChatId;
         them: UserId;
         unread: nat32;
-        latest_message: Message;
+        latest_messages: vec Message;
     };
 
 type GroupChatSummary =
@@ -97,7 +97,7 @@ type GroupChatSummary =
         updated_date: Timestamp;
         participants: vec UserId;
         unread: nat32;
-        latest_message: opt Message;
+        latest_messages: vec Message;
     };
 
 type GetChatsResponse =

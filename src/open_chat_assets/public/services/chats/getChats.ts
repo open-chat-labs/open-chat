@@ -42,28 +42,23 @@ function convertToChat(value: any) : ConfirmedChat {
 }
 
 function convertToDirectChat(value: any) : DirectChat {
-    let latestMessage = value.latest_message;
+    let latestMessage = value.latest_messages[0];
     return {
         kind: "direct",
         them: value.them,
-        chatId: value.chat_id,
+        chatId: value.id,
         updatedDate: latestMessage.timestamp,
         readUpTo: latestMessage.id - value.unread,
         confirmedOnServerUpTo: latestMessage.id,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: [{ kind: "confirmed", ...latestMessage }]
+        messages: value.latest_messages.map(convertToLocalMessage)
     };
 }
 
 function convertToGroupChat(value: any) : GroupChat
 {
-    const messages = [] as Message[];
-    const latestMessage: Option<any> = convertToOption(value.latest_message);
-    if (latestMessage) {
-        messages.push(convertToLocalMessage(latestMessage));
-    }
-    const latestMessageId = latestMessage ? latestMessage.id : 0;
+    const latestMessageId = value.latest_messages.count > 0 ? value.latest_messages[0].id : 0;
 
     return {
         kind: "group",
@@ -75,7 +70,7 @@ function convertToGroupChat(value: any) : GroupChat
         confirmedOnServerUpTo: latestMessageId,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: messages
+        messages: value.latest_messages.map(convertToLocalMessage)
     };
 }
 
