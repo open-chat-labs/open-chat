@@ -29,7 +29,7 @@ export default function() {
     });
 
     return (
-        <div id="side" style={{ display:"flex", flexDirection:"column", height:"100%" }}>
+        <div id="main" style={{ display:"flex", flexDirection:"column", height:"100%" }}>
             <div>
                 {messages}
             </div>
