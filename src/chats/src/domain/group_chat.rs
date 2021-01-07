@@ -30,7 +30,7 @@ pub struct GroupChatSummary {
     updated_date: Timestamp,
     participants: Vec<UserId>,
     unread: u32,
-    latest_message: Option<Message>
+    latest_messages: Vec<Message>
 }
 
 impl GroupChat {
@@ -178,8 +178,19 @@ impl Chat for GroupChat {
         }
     }
 
-    fn to_summary(&self, me: &UserId) -> ChatSummary {
-        ChatSummary::Group(GroupChatSummary::new(self, me))
+    fn get_updated_date(&self, user_id: &UserId) -> Timestamp {
+        let user = self.participants.iter().find(|p| p.user_id == *user_id).unwrap();
+        let mut updated_date = user.date_added;
+
+        if let Some(message) = self.messages.last() {
+            updated_date = max(updated_date, message.get_timestamp());
+        }
+
+        updated_date
+    }
+
+    fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary {
+        ChatSummary::Group(GroupChatSummary::new(self, me, message_count))
     }
 }
 
@@ -195,35 +206,25 @@ impl Participant {
 }
 
 impl GroupChatSummary {
-    fn new(chat: &GroupChat, me: &UserId) -> GroupChatSummary {
+    fn new(chat: &GroupChat, me: &UserId, message_count: u32) -> GroupChatSummary {
         let unread = chat.get_unread_count(me);
 
-        let me = chat.participants.iter().find(|p| p.user_id == *me).unwrap();
-
-        fn calc_updated_date(chat: &GroupChat, me: &Participant) -> Timestamp {
-            let mut updated_date = me.date_added;
-
-            if let Some(message) = chat.messages.last() {
-                updated_date = max(updated_date, message.get_timestamp());
-            }
-
-            updated_date
-        }
-
-        let latest_message = chat.messages.last().map(|m| m.clone());
+        let latest_messages = chat
+            .messages
+            .iter()
+            .rev()
+            .take(message_count as usize)
+            .map(|m| m.clone())
+            .collect();
 
         GroupChatSummary {
             id: chat.id,
             subject: chat.subject.clone(),
-            updated_date: calc_updated_date(chat, me),
+            updated_date: chat.get_updated_date(me),
             participants: chat.participants.iter().map(|p| p.user_id.clone()).collect(),
             unread,
-            latest_message
+            latest_messages
         }
-    }
-
-    pub fn get_updated_date(&self) -> Timestamp {
-        self.updated_date
     }
 }
 

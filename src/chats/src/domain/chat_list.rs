@@ -45,23 +45,36 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn list_chats(&self, user: &UserId, unread_only: bool) -> Vec<ChatSummary> {
+    pub fn get_chats(
+        &self,
+        user: &UserId,
+        unread_only: bool,
+        message_count_for_top_chat: Option<u16>) -> Vec<ChatSummary> {
+
+        let top_message_count = match message_count_for_top_chat {
+            Some(c) => c as u32,
+            None => 1
+        };
+
         // For now this will iterate through every chat...
         let mut list: Vec<_> = self
             .chats
             .values()
             .filter(|chat| chat.involves_user(user))
-            .filter(|&chat| !unread_only || chat.get_unread_count(user) > 0)
-            .map(|chat| chat.to_summary(user))
+            .filter(|chat| !unread_only || chat.get_unread_count(user) > 0)
             .collect();
 
         list.sort_unstable_by(|c1, c2| {
-            let t1 = c1.get_updated_date();
-            let t2 = c2.get_updated_date();
+            let t1 = c1.get_updated_date(user);
+            let t2 = c2.get_updated_date(user);
             t2.cmp(&t1)
         });
 
         list
+            .iter()
+            .enumerate()
+            .map(|(i, chat)| chat.to_summary(user, if i == 0 {top_message_count} else {1}))
+            .collect()
     }
 }
 

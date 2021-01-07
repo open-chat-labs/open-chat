@@ -4,21 +4,26 @@ import { Option } from "../../model/common";
 import { LocalMessage, Message } from "../../model/messages";
 import { convertToOption } from "../option";
 
-export default async function(unreadOnly: boolean) : Promise<ListChatsResponse> {
-    let response = await canister.list_chats(unreadOnly);
+export default async function(request: GetChatsRequest) : Promise<GetChatsResponse> {
+    let response = await canister.get_chats(request);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
         return {
             kind: "success",
-            chats:  success.map(convertToChat)
+            chats: success.map(convertToChat)
         };
     } else {
-        throw new Error("Unrecognised 'list_chats' response");
+        throw new Error("Unrecognised 'get_chats' response");
     }
 }
 
-export type ListChatsResponse =
+export type GetChatsRequest = {
+    unread_only: boolean,
+    message_count_for_top_chat: Option<number>
+};
+
+export type GetChatsResponse =
     Success;
 
 export type Success = {
@@ -37,28 +42,23 @@ function convertToChat(value: any) : ConfirmedChat {
 }
 
 function convertToDirectChat(value: any) : DirectChat {
-    let latestMessage = value.latest_message;
+    let latestMessage = value.latest_messages[0];
     return {
         kind: "direct",
         them: value.them,
-        chatId: value.chat_id,
+        chatId: value.id,
         updatedDate: latestMessage.timestamp,
         readUpTo: latestMessage.id - value.unread,
         confirmedOnServerUpTo: latestMessage.id,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: [{ kind: "confirmed", ...latestMessage }]
+        messages: value.latest_messages.map(convertToLocalMessage)
     };
 }
 
 function convertToGroupChat(value: any) : GroupChat
 {
-    const messages = [] as Message[];
-    const latestMessage: Option<any> = convertToOption(value.latest_message);
-    if (latestMessage) {
-        messages.push(convertToLocalMessage(latestMessage));
-    }
-    const latestMessageId = latestMessage ? latestMessage.id : 0;
+    const latestMessageId = value.latest_messages.count > 0 ? value.latest_messages[0].id : 0;
 
     return {
         kind: "group",
@@ -70,7 +70,7 @@ function convertToGroupChat(value: any) : GroupChat
         confirmedOnServerUpTo: latestMessageId,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: messages
+        messages: value.latest_messages.map(convertToLocalMessage)
     };
 }
 

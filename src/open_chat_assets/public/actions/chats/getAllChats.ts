@@ -15,13 +15,16 @@ export default function() {
 
         dispatch(requestEvent);
 
-        const result = await chatsService.listChats(false);
+        const response = await chatsService.getChats({
+            unread_only: false,
+            message_count_for_top_chat: null
+        });
 
         let outcomeEvent;
-        if (result.kind === "success") {
+        if (response.kind === "success") {
             outcomeEvent = {
                 type: GET_ALL_CHATS_SUCCEEDED,
-                payload: result.chats
+                payload: response.chats
             } as GetAllChatsSucceededEvent;
         } else {
             outcomeEvent = {

@@ -1,3 +1,3 @@
 pub mod get_messages;
 pub mod get_messages_by_id;
-pub mod list_chats;
+pub mod get_chats;

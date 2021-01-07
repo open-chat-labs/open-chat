@@ -24,7 +24,8 @@ pub trait Chat {
     fn get_latest_message_id(&self) -> u32;
     fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult;
     fn get_unread_count(&self, user: &UserId) -> u32;
-    fn to_summary(&self, me: &UserId) -> ChatSummary;
+    fn get_updated_date(&self, user_id: &UserId) -> Timestamp;
+    fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary;
 }
 
 /// TODO: We would preferably use a Uuid or u128 but these haven't yet got a CandidType implementation
@@ -93,19 +94,6 @@ impl Message {
 
     pub fn get_id(&self) -> u32 {
         self.id
-    }
-}
-
-impl ChatSummary {
-    // Date bumped by:
-    // 1 - New message from any user
-    // 2 - Group created with 'me' in it
-    // 3 - 'me' added to existing group
-    pub fn get_updated_date(&self) -> Timestamp {
-        match self {
-            ChatSummary::Direct(summary) => summary.get_updated_date(),
-            ChatSummary::Group(summary) => summary.get_updated_date()
-        }
     }
 }
 
