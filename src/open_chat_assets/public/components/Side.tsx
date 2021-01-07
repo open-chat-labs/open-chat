@@ -11,10 +11,10 @@ export default function() {
 
     const chats = chatsState.chats.map((c, index) => {
         let name: string;
-        if (c.kind === "direct") {
-            name = "Direct: " + (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
-        } else {
+        if (c.kind === "group") {
             name = "Group: " + c.subject;
+        } else {
+            name = "Direct: " + (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
         }
 
         return (

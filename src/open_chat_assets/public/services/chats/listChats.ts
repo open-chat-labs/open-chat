@@ -1,5 +1,5 @@
 import canister from "ic:canisters/chats";
-import { Chat, DirectChat, GroupChat } from "../../model/chats";
+import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage, Message } from "../../model/messages";
 import { convertToOption } from "../option";
@@ -23,10 +23,10 @@ export type ListChatsResponse =
 
 export type Success = {
     kind: "success",
-    chats: Chat[]
+    chats: ConfirmedChat[]
 }
 
-function convertToChat(value: any) : Chat {
+function convertToChat(value: any) : ConfirmedChat {
     if (value.hasOwnProperty("Direct")) {
         return convertToDirectChat(value.Direct);
     } else if (value.hasOwnProperty("Group")) {
@@ -43,7 +43,6 @@ function convertToDirectChat(value: any) : DirectChat {
         them: value.them,
         chatId: value.chat_id,
         updatedDate: latestMessage.timestamp,
-        latestMessageId: latestMessage.id,
         readUpTo: latestMessage.id - value.unread,
         confirmedOnServerUpTo: latestMessage.id,
         messagesToDownload: [],
@@ -67,7 +66,6 @@ function convertToGroupChat(value: any) : GroupChat
         subject: value.subject,
         updatedDate: value.updated_date,
         participants: value.participants,
-        latestMessageId: latestMessageId,
         readUpTo: latestMessageId - value.unread,
         confirmedOnServerUpTo: latestMessageId,
         messagesToDownload: [],
