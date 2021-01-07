@@ -45,7 +45,7 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn list_chats(&self, user: &UserId, unread_only: bool) -> Vec<ChatSummary> {
+    pub fn get_chats(&self, user: &UserId, unread_only: bool) -> Vec<ChatSummary> {
         // For now this will iterate through every chat...
         let mut list: Vec<_> = self
             .chats

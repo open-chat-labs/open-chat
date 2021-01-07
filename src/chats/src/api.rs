@@ -35,6 +35,11 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Resp
 }
 
 #[query]
+fn get_chats(unread_only: bool) -> get_chats::Response {
+    get_chats::query(unread_only)
+}
+
+#[query]
 fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> get_messages::Response {
     get_messages::query(chat_id, from_id, page_size)
 }
@@ -42,9 +47,4 @@ fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> get_messages::
 #[query]
 fn get_messages_by_id(chat_id: ChatId, ids: Vec<u32>) -> get_messages_by_id::Response {
     get_messages_by_id::query(chat_id, ids)
-}
-
-#[query]
-fn list_chats(unread_only: bool) -> list_chats::Response {
-    list_chats::query(unread_only)
 }

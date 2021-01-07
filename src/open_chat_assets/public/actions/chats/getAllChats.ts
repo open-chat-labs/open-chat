@@ -15,7 +15,7 @@ export default function() {
 
         dispatch(requestEvent);
 
-        const result = await chatsService.listChats(false);
+        const result = await chatsService.getChats(false);
 
         let outcomeEvent;
         if (result.kind === "success") {

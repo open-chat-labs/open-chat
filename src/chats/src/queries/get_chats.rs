@@ -8,7 +8,7 @@ pub fn query(unread_only: bool) -> Response {
     let chat_list: &ChatList = storage::get();
     let me = shared::user_id::get_current();
 
-    Success(chat_list.list_chats(&me, unread_only))
+    Success(chat_list.get_chats(&me, unread_only))
 }
 
 #[derive(CandidType)]

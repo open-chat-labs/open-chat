@@ -70,29 +70,6 @@ type Message =
         text: text;
     };
 
-type GetMessagesResult =
-    record {
-        messages: vec Message;
-        latest_message_id: nat32;
-    };
-
-type GetMessagesResponse =
-    variant {
-        Success: GetMessagesResult;
-        ChatNotFound;
-    };
-
-type GetMessagesByIdResponse =
-    variant {
-        Success: GetMessagesResult;
-        ChatNotFound;
-    };
-
-type ListChatsResponse =
-    variant {
-        Success: vec ChatSummary;
-    };
-
 type ChatSummary =
     variant {
         Direct: DirectChatSummary;
@@ -117,6 +94,29 @@ type GroupChatSummary =
         latest_message: opt Message;
     };
 
+type GetChatsResponse =
+    variant {
+        Success: vec ChatSummary;
+    };
+
+type GetMessagesResult =
+    record {
+        messages: vec Message;
+        latest_message_id: nat32;
+    };
+
+type GetMessagesResponse =
+    variant {
+        Success: GetMessagesResult;
+        ChatNotFound;
+    };
+
+type GetMessagesByIdResponse =
+    variant {
+        Success: GetMessagesResult;
+        ChatNotFound;
+    };
+
 service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
     send_direct_message: (UserId, text) -> (SendDirectMessageResponse);
@@ -124,7 +124,7 @@ service : {
     mark_read: (ChatId, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
+    get_chats: (bool) -> (GetChatsResponse) query;
     get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
-    list_chats: (bool) -> (ListChatsResponse) query;
 }

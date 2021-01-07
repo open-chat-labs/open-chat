@@ -4,8 +4,8 @@ import { Option } from "../../model/common";
 import { LocalMessage, Message } from "../../model/messages";
 import { convertToOption } from "../option";
 
-export default async function(unreadOnly: boolean) : Promise<ListChatsResponse> {
-    let response = await canister.list_chats(unreadOnly);
+export default async function(unreadOnly: boolean) : Promise<GetChatsResponse> {
+    let response = await canister.get_chats(unreadOnly);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
@@ -14,11 +14,11 @@ export default async function(unreadOnly: boolean) : Promise<ListChatsResponse> 
             chats:  success.map(convertToChat)
         };
     } else {
-        throw new Error("Unrecognised 'list_chats' response");
+        throw new Error("Unrecognised 'get_chats' response");
     }
 }
 
-export type ListChatsResponse =
+export type GetChatsResponse =
     Success;
 
 export type Success = {
