@@ -15,23 +15,25 @@ export default function() {
 
     const chat = chatsState.chats[chatsState.selectedChatIndex];
 
-    const messages = chat.messages.map(m => {
-        switch (m.kind) {
-            case "local":
-                return <div>{m.text}</div>;
+    const confirmedMessages = chat.kind !== "newDirect"
+        ? chat.confirmedMessages.map(m => {
+            switch (m.kind) {
+                case "local":
+                    return <div>{m.text}</div>;
 
-            case "unconfirmed":
-                return <div style={{fontStyle: "italic"}}>{m.text}</div>;
+                case "remote":
+                    return <div style={{fontStyle: "italic"}}>loading...</div>
+            }
+        })
+        : null;
 
-            case "remote":
-                return <div style={{fontStyle: "italic"}}>loading...</div>
-        }
-    });
+    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div style={{fontStyle: "italic"}}>{m.text}</div>);
 
     return (
         <div id="main" style={{ display:"flex", flexDirection:"column", height:"100%" }}>
             <div>
-                {messages}
+                {confirmedMessages}
+                {unconfirmedMessages}
             </div>
             <input value={newMessageText} onChange={e => setNewMessageText(e.target.value)}/>
             <button onClick={handleSendMessage}>+</button>

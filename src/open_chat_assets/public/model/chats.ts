@@ -1,5 +1,5 @@
 import { Timestamp } from "./common";
-import { Message } from "./messages";
+import { ConfirmedMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 
 export type ChatId = number;
@@ -23,7 +23,7 @@ export type NewDirectChat = {
     kind: "newDirect",
     them: UserId,
     updatedDate: Timestamp,
-    messages: Message[]
+    unconfirmedMessages: UnconfirmedMessage[]
 }
 
 type ConfirmedChatCommon = {
@@ -33,5 +33,6 @@ type ConfirmedChatCommon = {
     confirmedOnServerUpTo: number, // Everything up to this is either a ConfirmedMessage or MissingMessage, everything after is an UnconfirmedMessage
     messagesToDownload: number[],
     messagesDownloading: number[],
-    messages: Message[]
+    confirmedMessages: ConfirmedMessage[],
+    unconfirmedMessages: UnconfirmedMessage[]
 }

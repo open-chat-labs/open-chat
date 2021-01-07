@@ -57,7 +57,8 @@ function convertToDirectChat(value: any) : DirectChat {
         confirmedOnServerUpTo: latestMessage.id,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: value.latest_messages.reverse().map(convertToLocalMessage)
+        confirmedMessages: value.latest_messages.reverse().map(convertToLocalMessage),
+        unconfirmedMessages: []
     };
 }
 
@@ -75,7 +76,8 @@ function convertToGroupChat(value: any) : GroupChat
         confirmedOnServerUpTo: latestMessageId,
         messagesToDownload: [],
         messagesDownloading: [],
-        messages: value.latest_messages.reverse().map(convertToLocalMessage)
+        confirmedMessages: value.latest_messages.reverse().map(convertToLocalMessage),
+        unconfirmedMessages: []
     };
 }
 
