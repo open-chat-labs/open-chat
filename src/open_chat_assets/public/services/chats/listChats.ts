@@ -1,7 +1,7 @@
 import canister from "ic:canisters/chats";
 import { Chat, DirectChat, GroupChat } from "../../model/chats";
 import { Option } from "../../model/common";
-import { ConfirmedMessage, Message } from "../../model/messages";
+import { LocalMessage, Message } from "../../model/messages";
 import { convertToOption } from "../option";
 
 export default async function(unreadOnly: boolean) : Promise<ListChatsResponse> {
@@ -46,8 +46,8 @@ function convertToDirectChat(value: any) : DirectChat {
         latestMessageId: latestMessage.id,
         readUpTo: latestMessage.id - value.unread,
         confirmedOnServerUpTo: latestMessage.id,
-        missingMessages: new Set<number>(),
-        missingMessagesRequested: new Set<number>(),
+        messagesToDownload: [],
+        messagesDownloading: [],
         messages: [{ kind: "confirmed", ...latestMessage }]
     };
 }
@@ -57,7 +57,7 @@ function convertToGroupChat(value: any) : GroupChat
     const messages = [] as Message[];
     const latestMessage: Option<any> = convertToOption(value.latest_message);
     if (latestMessage) {
-        messages.push(convertToConfirmedMessage(latestMessage));
+        messages.push(convertToLocalMessage(latestMessage));
     }
     const latestMessageId = latestMessage ? latestMessage.id : 0;
 
@@ -70,12 +70,12 @@ function convertToGroupChat(value: any) : GroupChat
         latestMessageId: latestMessageId,
         readUpTo: latestMessageId - value.unread,
         confirmedOnServerUpTo: latestMessageId,
-        missingMessages: new Set<number>(),
-        missingMessagesRequested: new Set<number>(),
+        messagesToDownload: [],
+        messagesDownloading: [],
         messages: messages
     };
 }
 
-function convertToConfirmedMessage(value: any) : ConfirmedMessage {
-    return { kind: "confirmed", ...value };
+function convertToLocalMessage(value: any) : LocalMessage {
+    return { kind: "local", ...value };
 }

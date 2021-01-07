@@ -55,15 +55,11 @@ export function setupBackgroundTasks() {
         }
     }, [usersState.unknownUserIds]);
 
-    // Whenever a chat is detected with missing messages, call off to get those messages
+    // Whenever a chat has messages to download, call off to get those messages
     useEffect(() => {
         chatsState.chats.forEach(c => {
-            if (c.chatId && c.missingMessages.size) {
-                // Skip missing messages that have already been requested
-                const missingMessages = [...c.missingMessages].filter(id => !c.missingMessagesRequested.has(id));
-                if (missingMessages.length) {
-                    dispatch(getMessagesById(c.chatId, missingMessages.slice(0, PAGE_SIZE)));
-                }
+            if (c.chatId && c.messagesToDownload.length && !c.messagesDownloading.length) {
+                dispatch(getMessagesById(c.chatId, c.messagesToDownload.slice(0, PAGE_SIZE)));
             }
         })
     }, [chatsState.chats]);
