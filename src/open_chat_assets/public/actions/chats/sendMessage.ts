@@ -12,9 +12,16 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
 export default function(chat: Chat, message: string) {
-    return chat.kind === "direct"
-        ? sendDirectMessage(chat.them, chat.chatId, message)
-        : sendGroupMessage(chat.chatId, message);
+    switch (chat.kind) {
+        case "direct":
+            return sendDirectMessage(chat.them, chat.chatId, message);
+
+        case "group":
+            return sendGroupMessage(chat.chatId, message);
+
+        case "newDirect":
+            return sendDirectMessage(chat.them, null, message);
+    }
 }
 
 export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {

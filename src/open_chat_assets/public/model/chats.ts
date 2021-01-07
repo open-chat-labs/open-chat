@@ -1,27 +1,33 @@
-import { Option, Timestamp } from "./common";
+import { Timestamp } from "./common";
 import { Message } from "./messages";
 import { UserId } from "./users";
 
 export type ChatId = number;
 
-export type Chat = DirectChat | GroupChat;
+export type Chat = ConfirmedChat | NewDirectChat;
 
-export type DirectChat = ChatCommon & {
+export type ConfirmedChat = DirectChat | GroupChat;
+
+export type DirectChat = ConfirmedChatCommon & {
     kind: "direct",
-    them: UserId,
-    chatId: Option<ChatId>
+    them: UserId
 }
 
-export type GroupChat = ChatCommon & {
+export type GroupChat = ConfirmedChatCommon & {
     kind: "group",
-    chatId: ChatId,
     subject: string,
     participants: UserId[]
 }
 
-type ChatCommon = {
+export type NewDirectChat = {
+    kind: "newDirect",
+    them: UserId,
+    messages: Message[]
+}
+
+type ConfirmedChatCommon = {
+    chatId: ChatId,
     updatedDate: Timestamp,
-    latestMessageId: number,
     readUpTo: number,
     confirmedOnServerUpTo: number, // Everything up to this is either a ConfirmedMessage or MissingMessage, everything after is an UnconfirmedMessage
     messagesToDownload: number[],

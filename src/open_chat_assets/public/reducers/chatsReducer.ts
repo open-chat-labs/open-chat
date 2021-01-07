@@ -1,4 +1,4 @@
-import { Chat, ChatId, DirectChat } from "../model/chats";
+import { Chat, ChatId, ConfirmedChat, DirectChat, NewDirectChat } from "../model/chats";
 import { Option } from "../model/common";
 import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
@@ -77,7 +77,7 @@ export default function(state: State = initialState, event: Event) : State {
             const { chatId, messageIds } = event.payload;
             const chatsCopy = state.chats.slice();
             const chatIndex = findChatIndex(chatsCopy, chatId);
-            const chatCopy = { ...chatsCopy[chatIndex] };
+            const chatCopy = { ...chatsCopy[chatIndex] } as ConfirmedChat;
             chatsCopy[chatIndex] = chatCopy;
 
             chatCopy.messagesDownloading = setFunctions.union(chatCopy.messagesDownloading, messageIds);
@@ -92,7 +92,7 @@ export default function(state: State = initialState, event: Event) : State {
             const { request, result } = event.payload;
             const chatsCopy = state.chats.slice();
             const chatIndex = findChatIndex(chatsCopy, request.chatId);
-            const chatCopy = { ...chatsCopy[chatIndex] };
+            const chatCopy = { ...chatsCopy[chatIndex] } as ConfirmedChat;
             chatsCopy[chatIndex] = chatCopy;
             chatCopy.messages = chatCopy.messages.slice();
 
@@ -112,7 +112,7 @@ export default function(state: State = initialState, event: Event) : State {
             const { chatId, messageIds } = event.payload;
             const chatsCopy = state.chats.slice();
             const chatIndex = findChatIndex(chatsCopy, chatId);
-            const chatCopy = { ...chatsCopy[chatIndex] };
+            const chatCopy = { ...chatsCopy[chatIndex] } as ConfirmedChat;
             chatsCopy[chatIndex] = chatCopy;
 
             chatCopy.messagesDownloading = setFunctions.except(chatCopy.messagesDownloading, messageIds);
@@ -156,11 +156,27 @@ export default function(state: State = initialState, event: Event) : State {
                 ? findDirectChatIndex(chatsCopy, payload.userId)
                 : findGroupChatIndex(chatsCopy, payload.chatId);
 
-            const chatCopy = { ...chatsCopy[chatIndex] };
+            const chat = chatsCopy[chatIndex];
+            let chatCopy;
+            if (chat.kind === "newDirect") {
+                chatCopy = {
+                    kind: "direct",
+                    them: chat.them,
+                    chatId: payload.chatId,
+                    updatedDate: 0,
+                    readUpTo: 0,
+                    confirmedOnServerUpTo: 0,
+                    messagesToDownload: [],
+                    messagesDownloading: [],
+                    messages: chat.messages
+                } as DirectChat
+            } else {
+                chatCopy = { ...chat };
+                chatCopy.messages = chatCopy.messages.slice();
+                chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
+            }
+
             chatsCopy[chatIndex] = chatCopy;
-            chatCopy.chatId = payload.chatId;
-            chatCopy.messages = chatCopy.messages.slice();
-            chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
 
             const confirmedMessage: LocalMessage = {
                 kind: "local",
@@ -197,10 +213,6 @@ export default function(state: State = initialState, event: Event) : State {
                 chatCopy.updatedDate = confirmedMessage.timestamp;
             }
 
-            if (chatCopy.latestMessageId < confirmedMessage.id) {
-                chatCopy.latestMessageId = confirmedMessage.id;
-            }
-
             if (chatCopy.confirmedOnServerUpTo < confirmedMessage.id) {
                 chatCopy.confirmedOnServerUpTo = confirmedMessage.id;
             }
@@ -216,16 +228,9 @@ export default function(state: State = initialState, event: Event) : State {
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
             const { userId } = event.payload;
 
-            const newChat: DirectChat = {
-                kind: "direct",
+            const newChat: NewDirectChat = {
+                kind: "newDirect",
                 them: userId,
-                chatId: null,
-                updatedDate: 0,
-                latestMessageId: 0,
-                readUpTo: 0,
-                confirmedOnServerUpTo: 0,
-                messagesToDownload: [],
-                messagesDownloading: [],
                 messages: []
             };
 
@@ -241,7 +246,7 @@ export default function(state: State = initialState, event: Event) : State {
     }
 }
 
-function addMessagesToChat(chat: Chat, messages: LocalMessage[]) {
+function addMessagesToChat(chat: ConfirmedChat, messages: LocalMessage[]) {
     messages.sort((a, b) => a.id - b.id);
 
     const firstMessageId = chat.messages[0].id as number;
@@ -267,19 +272,15 @@ function addMessagesToChat(chat: Chat, messages: LocalMessage[]) {
         if (chat.confirmedOnServerUpTo < m.id) {
             chat.confirmedOnServerUpTo = m.id;
         }
-
-        if (chat.latestMessageId < m.id) {
-            chat.latestMessageId = m.id;
-        }
     });
 }
 
 function findChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => c.chatId && chatIdsEqual(chatId, c.chatId));
+    return chats.findIndex(c => c.kind !== "newDirect" && c.chatId && chatIdsEqual(chatId, c.chatId));
 }
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {
-    return chats.findIndex(c => c.kind === "direct" && userIdsEqual(userId, c.them));
+    return chats.findIndex(c => c.kind !== "group" && userIdsEqual(userId, c.them));
 }
 
 function findGroupChatIndex(chats: Chat[], chatId: ChatId) : number {
