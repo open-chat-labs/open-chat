@@ -1,6 +1,6 @@
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
-import { userIdsEqual } from "../utils";
+import userIdsEqual from "../utils/userIdsEqual";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";

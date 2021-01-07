@@ -3,16 +3,18 @@ import { UserId } from "./users";
 
 export type Message = LocalMessage | RemoteMessage | UnconfirmedMessage;
 
-export type LocalMessage = {
+export type LocalMessage = ConfirmedMessage & {
     kind: "local",
-    id: number,
     timestamp: Timestamp,
     sender: UserId,
     text: string
 }
 
-export type RemoteMessage = {
-    kind: "remote",
+export type RemoteMessage = ConfirmedMessage & {
+    kind: "remote"
+}
+
+export type ConfirmedMessage = {
     id: number
 }
 

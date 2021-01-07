@@ -1,6 +1,7 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
+import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
 import { Chat, ChatId } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { UserId } from "../../model/users";
@@ -10,13 +11,11 @@ export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
-function sendMessage(chat: Chat, message: string) {
+export default function(chat: Chat, message: string) {
     return chat.kind === "direct"
         ? sendDirectMessage(chat.them, chat.chatId, message)
         : sendGroupMessage(chat.chatId, message);
 }
-
-export default sendMessage;
 
 export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
@@ -43,16 +42,12 @@ export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, messag
         if (response.kind === "success") {
             const myUserId = getState().usersState.me!.userId;
 
-            if ("chatId" in response.result) {
-                chatId = (response.result as any).chatId;
-            }
-
             outcomeEvent = {
                 type: SEND_MESSAGE_SUCCEEDED,
                 payload: {
                     kind: "direct",
                     userId: userId,
-                    chatId: chatId,
+                    chatId: chatId ?? (response.result as SendDirectMessageResult).chatId,
                     sender: myUserId,
                     message: message,
                     unconfirmedMessageId: id,

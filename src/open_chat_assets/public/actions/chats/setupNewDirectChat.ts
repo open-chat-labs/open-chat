@@ -5,7 +5,7 @@ import { RootState } from "../../reducers";
 import { Chat } from "../../model/chats";
 import { Option } from "../../model/common";
 import { UserId, UserSummary } from "../../model/users";
-import { userIdsEqual } from "../../utils";
+import userIdsEqual from "../../utils/userIdsEqual";
 
 export const SETUP_NEW_DIRECT_CHAT_REQUESTED = "SETUP_NEW_DIRECT_CHAT_REQUESTED";
 export const SETUP_NEW_DIRECT_CHAT_SUCCEEDED = "SETUP_NEW_DIRECT_CHAT_SUCCEEDED";
