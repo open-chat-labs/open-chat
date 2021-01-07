@@ -62,6 +62,12 @@ type RemoveParticipantResponse =
         NotGroupChat;
     };
 
+type GetChatsRequest =
+    record {
+        unread_only: bool;
+        message_count_for_top_chat: opt nat16;
+    };
+
 type Message =
     record {
         id: nat32;
@@ -124,7 +130,7 @@ service : {
     mark_read: (ChatId, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
-    get_chats: (bool) -> (GetChatsResponse) query;
+    get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
 }

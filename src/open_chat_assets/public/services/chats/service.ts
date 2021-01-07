@@ -6,7 +6,7 @@ import sendMessage, { SendMessageResponse } from "./sendMessage";
 import markRead, { MarkReadResponse } from "./markRead";
 import addParticipants, { AddParticipantsResponse } from "./addParticipants";
 import removeParticipant, { RemoveParticipantResponse } from "./removeParticipant";
-import getChats, { GetChatsResponse } from "./getChats";
+import getChats, {GetChatsRequest, GetChatsResponse} from "./getChats";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
 
 export default class service {
@@ -34,8 +34,8 @@ export default class service {
         return removeParticipant(chatId, user);
     }
 
-    public static getChats(unreadOnly: boolean) : Promise<GetChatsResponse> {
-        return getChats(unreadOnly);
+    public static getChats(request: GetChatsRequest) : Promise<GetChatsResponse> {
+        return getChats(request);
     }
 
     public static getMessages(chatId: ChatId, fromId: number, pageSize: number) : Promise<GetMessagesResponse> {

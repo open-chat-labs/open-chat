@@ -4,19 +4,24 @@ import { Option } from "../../model/common";
 import { LocalMessage, Message } from "../../model/messages";
 import { convertToOption } from "../option";
 
-export default async function(unreadOnly: boolean) : Promise<GetChatsResponse> {
-    let response = await canister.get_chats(unreadOnly);
+export default async function(request: GetChatsRequest) : Promise<GetChatsResponse> {
+    let response = await canister.get_chats(request);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
         return {
             kind: "success",
-            chats:  success.map(convertToChat)
+            chats: success.map(convertToChat)
         };
     } else {
         throw new Error("Unrecognised 'get_chats' response");
     }
 }
+
+export type GetChatsRequest = {
+    unread_only: boolean,
+    message_count_for_top_chat: Option<number>
+};
 
 export type GetChatsResponse =
     Success;

@@ -35,8 +35,8 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Resp
 }
 
 #[query]
-fn get_chats(unread_only: bool) -> get_chats::Response {
-    get_chats::query(unread_only)
+fn get_chats(request: get_chats::Request) -> get_chats::Response {
+    get_chats::query(request)
 }
 
 #[query]
