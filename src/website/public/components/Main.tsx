@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import sendMessage from "../actions/chats/sendMessage";
 
-export default Main
+import SendButton from "../send_button.svg";
+
+export default Main;
 
 function Main() {
     const dispatch = useDispatch();
@@ -38,7 +40,7 @@ function Main() {
                 {unconfirmedMessages}
             </div>
             <input value={newMessageText} onChange={e => setNewMessageText(e.target.value)}/>
-            <button onClick={handleSendMessage}>+</button>
+            <button onClick={handleSendMessage}><SendButton /></button>
         </div>
     );
 

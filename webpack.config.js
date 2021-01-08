@@ -59,6 +59,10 @@ function generateWebpackConfigForCanister(name, info) {
           test: /\.css$/i,
           use: ['style-loader', 'css-loader'],
           exclude: /node_modules/
+        },
+        {
+          test: /\.svg$/,
+          use: ['@svgr/webpack', 'url-loader'],
         }
       ]
     },

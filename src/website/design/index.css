@@ -92,7 +92,7 @@ main {
     position: relative;
 }
 
-.search-icon {
+.search > svg {
     display: block;
     float: left;
     position: absolute;
@@ -261,7 +261,7 @@ main footer button.send {
     align-self: center;
 }
 
-.send-image {
+footer button svg {
     margin: 0;
     padding: 0;
 }
