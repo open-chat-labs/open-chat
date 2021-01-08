@@ -1,5 +1,6 @@
 import canister from "ic:canisters/user_mgmt";
-import {UserSummary} from "../../model/users";
+import { UserSummary } from "../../model/users";
+import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 
 export default async function(username: string) : Promise<RegisterUserResponse> {
     let response = await canister.register_user(username);
@@ -9,7 +10,7 @@ export default async function(username: string) : Promise<RegisterUserResponse> 
         return {
             kind: "success",
             userSummary: {
-                userId: success.id,
+                userId: userIdFromCandid(success.id),
                 username: success.username,
                 version: success.version
             }

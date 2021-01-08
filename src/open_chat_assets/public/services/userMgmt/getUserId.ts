@@ -1,5 +1,6 @@
 import canister from "ic:canisters/user_mgmt";
-import {UserId} from "../../model/users";
+import { UserId } from "../../model/users";
+import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 
 export default async function(username: string) : Promise<GetUserIdResponse> {
     let response = await canister.get_user_id(username);
@@ -7,7 +8,7 @@ export default async function(username: string) : Promise<GetUserIdResponse> {
     if (response.hasOwnProperty("Success")) {
         return {
             kind: "success",
-            userId: response.Success
+            userId: userIdFromCandid(response.Success)
         };
     } else if (response.hasOwnProperty("UserNotFound")) {
         return {
