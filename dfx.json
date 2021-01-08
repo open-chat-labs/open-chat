@@ -2,25 +2,25 @@
   "canisters": {
     "chats": {
       "type": "custom",
-      "candid": "src/chats/chats.did",
+      "candid": "src/services/chats/chats.did",
       "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
       "build": "./generate-wasm.sh chats"
     },
     "user_mgmt": {
       "type": "custom",
-      "candid": "src/user_mgmt/user_mgmt.did",
+      "candid": "src/services/user_mgmt/user_mgmt.did",
       "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
       "build": "./generate-wasm.sh user_mgmt"
     },
-    "open_chat_assets": {
+    "website": {
       "dependencies": [
         "user_mgmt"
       ],
       "frontend": {
-        "entrypoint": "src/open_chat_assets/public/index.tsx"
+        "entrypoint": "src/website/public/index.tsx"
       },
       "source": [
-        "dist/open_chat_assets/"
+        "dist/website/"
       ],
       "type": "assets"
     }

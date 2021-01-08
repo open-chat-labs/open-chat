@@ -19,7 +19,7 @@
 - Send images + caption
 - Send cycles / tokens
 - Block contact
-- 
+- Draft/notes area 
 - Send video + caption
 - User preferences
   - keep messages
