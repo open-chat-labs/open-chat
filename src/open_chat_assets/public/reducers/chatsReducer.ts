@@ -64,7 +64,7 @@ export default function(state: State = initialState, event: Event) : State {
             const chat = state.chats[event.payload];
             let chats = state.chats;
             if (chat.kind !== "newDirect") {
-                const messagesIds = getMessageIdsToFillLatestPage(chat.confirmedMessages, chat.confirmedOnServerUpTo);
+                const messagesIds = getMessageIdsToFillLatestPage(chat.confirmedMessages, chat.latestKnownMessageId);
 
                 if (messagesIds.length) {
                     chats = chats.slice();
@@ -197,7 +197,7 @@ export default function(state: State = initialState, event: Event) : State {
                     chatId: payload.chatId,
                     updatedDate: 0,
                     readUpTo: 0,
-                    confirmedOnServerUpTo: 0,
+                    latestKnownMessageId: 0,
                     messagesToDownload: [],
                     messagesDownloading: [],
                     confirmedMessages: [],
@@ -265,7 +265,7 @@ function addMessageToChat(chat: ConfirmedChat, message: ConfirmedMessage) {
     addMessagesToChat(chat, [message]);
 }
 
-function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], confirmedUpToOnServer?: Option<number>) {
+function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], latestKnownMessageId?: Option<number>) {
     // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
     messages.sort((a, b) => a.id - b.id);
 
@@ -317,9 +317,9 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], co
         } else {
             // If we reach here then some messages are missing so we need to fill the gaps with RemoteMessages and mark
             // them to be downloaded
-            const firstMissingMessageId = chat.confirmedOnServerUpTo + 1;
+            const firstMissingMessageId = chat.latestKnownMessageId + 1;
             const lastMissingMessageId = message.id - 1;
-            const lastConfirmedMessageIndex = chat.confirmedOnServerUpTo - lowestMessageId;
+            const lastConfirmedMessageIndex = chat.latestKnownMessageId - lowestMessageId;
             addMissingMessages(firstMissingMessageId, lastMissingMessageId, lastConfirmedMessageIndex);
             chat.confirmedMessages.push(message);
         }
@@ -330,16 +330,16 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], co
             }
         }
 
-        if (chat.confirmedOnServerUpTo < message.id) {
-            chat.confirmedOnServerUpTo = message.id;
+        if (chat.latestKnownMessageId < message.id) {
+            chat.latestKnownMessageId = message.id;
         }
     }
 
-    // If after adding these messages the confirmedOnServerUpTo value we have is still lower than what we got from the
+    // If after adding these messages the latestKnownMessageId value we have is still lower than what we got from the
     // server then we need to add some missing messages and mark them to be downloaded.
-    if (confirmedUpToOnServer && chat.confirmedOnServerUpTo < confirmedUpToOnServer) {
-        addMissingMessages(chat.confirmedOnServerUpTo + 1, confirmedUpToOnServer, chat.confirmedOnServerUpTo + 1);
-        chat.confirmedOnServerUpTo = confirmedUpToOnServer;
+    if (latestKnownMessageId && chat.latestKnownMessageId < latestKnownMessageId) {
+        addMissingMessages(chat.latestKnownMessageId + 1, latestKnownMessageId, chat.latestKnownMessageId + 1);
+        chat.latestKnownMessageId = latestKnownMessageId;
     }
 
     function addMissingMessages(fromId: number, toId: number, index: number) {

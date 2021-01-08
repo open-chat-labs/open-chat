@@ -30,7 +30,7 @@ type ConfirmedChatCommon = {
     chatId: ChatId,
     updatedDate: Timestamp,
     readUpTo: number,
-    confirmedOnServerUpTo: number, // Everything up to this is either a ConfirmedMessage or MissingMessage, everything after is an UnconfirmedMessage
+    latestKnownMessageId: number,
     messagesToDownload: number[],
     messagesDownloading: number[],
     confirmedMessages: ConfirmedMessage[],
