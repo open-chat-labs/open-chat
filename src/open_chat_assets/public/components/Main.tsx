@@ -29,7 +29,7 @@ function Main() {
         })
         : null;
 
-    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div key={m.id.toString()} style={{fontStyle: "italic"}}>{m.text}</div>);
+    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div key={m.timestamp.toString()} style={{fontStyle: "italic"}}>{m.text}</div>);
 
     return (
         <div id="main" style={{ display:"flex", flexDirection:"column", height:"100%" }}>
