@@ -88,14 +88,10 @@ export default function(state: State = initialState, event: Event) : State {
         case GET_ALL_CHATS_SUCCEEDED: {
             const chats = event.payload;
 
-            if (chats.length) {
-                sortChatsAndReturnSelectedIndex(chats, 0);
-            }
-
             return {
                 ...state,
                 chats,
-                selectedChatIndex: event.payload.length ? 0 : null
+                selectedChatIndex: chats.length ? 0 : null
             };
         }
 
