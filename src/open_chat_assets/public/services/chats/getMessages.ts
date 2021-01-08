@@ -1,9 +1,11 @@
 import canister from "ic:canisters/chats";
-import {ChatId} from "../../model/chats";
-import {LocalMessage} from "../../model/messages";
+import { ChatId } from "../../model/chats";
+import { LocalMessage } from "../../model/messages";
+import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
+import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
 export default async function(chatId: ChatId, fromId: number, pageSize: number) : Promise<GetMessagesResponse> {
-    let response = await canister.get_messages(chatId, fromId, pageSize);
+    let response = await canister.get_messages(chatIdToCandid(chatId), fromId, pageSize);
     return handleResponse(response);
 }
 
@@ -32,7 +34,7 @@ function handleResponse(response: any) : GetMessagesResponse {
 }
 
 export function convertToLocalMessage(value: any) : LocalMessage {
-    return { kind: "local", ...value };
+    return { kind: "local", ...value, sender: userIdToCandid(value.sender) };
 }
 
 export type GetMessagesResponse =

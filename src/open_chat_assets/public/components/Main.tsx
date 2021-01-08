@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import sendMessage from "../actions/chats/sendMessage";
 
-export default function() {
+export default Main
+
+function Main() {
     const dispatch = useDispatch();
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const [newMessageText, setNewMessageText] = useState("");
@@ -19,15 +21,15 @@ export default function() {
         ? chat.confirmedMessages.map(m => {
             switch (m.kind) {
                 case "local":
-                    return <div>{m.text}</div>;
+                    return <div key={m.id}>{m.text}</div>;
 
                 case "remote":
-                    return <div style={{fontStyle: "italic"}}>loading...</div>
+                    return <div key={m.id} style={{fontStyle: "italic"}}>loading...</div>
             }
         })
         : null;
 
-    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div style={{fontStyle: "italic"}}>{m.text}</div>);
+    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div key={m.id.toString()} style={{fontStyle: "italic"}}>{m.text}</div>);
 
     return (
         <div id="main" style={{ display:"flex", flexDirection:"column", height:"100%" }}>

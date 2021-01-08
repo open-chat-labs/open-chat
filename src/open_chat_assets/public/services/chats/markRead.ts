@@ -1,8 +1,9 @@
 import canister from "ic:canisters/chats";
-import {ChatId} from "../../model/chats";
+import { ChatId } from "../../model/chats";
+import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 
 export default async function(chatId: ChatId, upToIndex: number) : Promise<MarkReadResponse> {
-    let response = await canister.mark_read(chatId, upToIndex);
+    let response = await canister.mark_read(chatIdToCandid(chatId), upToIndex);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

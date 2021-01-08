@@ -2,7 +2,7 @@ import { Timestamp } from "./common";
 import { ConfirmedMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 
-export type ChatId = number;
+export type ChatId = BigInt;
 
 export type Chat = ConfirmedChat | NewDirectChat;
 

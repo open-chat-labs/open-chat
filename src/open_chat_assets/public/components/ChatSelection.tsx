@@ -8,7 +8,9 @@ type Props = {
     index: number
 }
 
-export default function(props: Props) {
+export default ChatSelection;
+
+function ChatSelection(props: Props) {
     const dispatch = useDispatch();
 
     return (

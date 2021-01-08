@@ -3,7 +3,9 @@ import { useDispatch } from "react-redux";
 
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 
-export default function() {
+export default SideHeader;
+
+function SideHeader() {
     const [newChatUsername, setNewChatUsername] = useState("");
     const dispatch = useDispatch();
 

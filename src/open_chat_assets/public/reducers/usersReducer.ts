@@ -1,6 +1,5 @@
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
-import userIdsEqual from "../utils/userIdsEqual";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -68,13 +67,13 @@ export default function(state: State = initialState, event: Event) : State {
             chats.forEach((c => {
                 if (c.kind === "direct") {
                     if (!userDictionary.hasOwnProperty(c.them.toString()) &&
-                        !unknownUserIds.find(u => userIdsEqual(u, c.them))) {
+                        !unknownUserIds.find(u => u === c.them)) {
                         unknownUserIds.push(c.them);
                     }
                 } else {
                     c.participants.forEach((p: UserId) => {
                         if (!userDictionary.hasOwnProperty(p.toString()) &&
-                            !unknownUserIds.find(u => userIdsEqual(u, p)) ) {
+                            !unknownUserIds.find(u => u === p)) {
                             unknownUserIds.push(p);
                         }
                     })
@@ -111,7 +110,7 @@ export default function(state: State = initialState, event: Event) : State {
             const userDictionary: any = { ...state.userDictionary };
 
             users.forEach(user => {
-                const index = state.unknownUserIds.findIndex(u => userIdsEqual(u, user.userId));
+                const index = state.unknownUserIds.findIndex(u => u === user.userId);
                 if (index >= 0) {
                     unknownUserIds.splice(index, 1);
                 }
@@ -158,7 +157,7 @@ export default function(state: State = initialState, event: Event) : State {
             const unknownUserIds = [...state.unknownUserIds];
             const userDictionary: any = { ...state.userDictionary };
 
-            const index = unknownUserIds.findIndex(u => userIdsEqual(u, user.userId));
+            const index = unknownUserIds.findIndex(u => u === user.userId);
 
             if (index >= 0) {
                 unknownUserIds.splice(index, 1);

@@ -2,8 +2,6 @@ import { Chat, ChatId, ConfirmedChat, DirectChat, NewDirectChat } from "../model
 import { Option } from "../model/common";
 import { ConfirmedMessage, LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
-import chatIdsEqual from "../utils/chatIdsEqual";
-import userIdsEqual from "../utils/userIdsEqual";
 import * as setFunctions from "../utils/setFunctions";
 import * as timestamp from "../utils/timestamp";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
@@ -378,13 +376,13 @@ function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: number) {
 }
 
 function findChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => c.kind !== "newDirect" && c.chatId && chatIdsEqual(chatId, c.chatId));
+    return chats.findIndex(c => c.kind !== "newDirect" && c.chatId && chatId === c.chatId);
 }
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {
-    return chats.findIndex(c => c.kind !== "group" && userIdsEqual(userId, c.them));
+    return chats.findIndex(c => c.kind !== "group" && userId === c.them);
 }
 
 function findGroupChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => c.kind === "group" && chatIdsEqual(chatId, c.chatId));
+    return chats.findIndex(c => c.kind === "group" && chatId === c.chatId);
 }
