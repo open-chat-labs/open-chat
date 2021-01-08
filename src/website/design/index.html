@@ -8,10 +8,16 @@
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
     <link rel="stylesheet" href="index.css">
     <title>Open Chat</title>
+    <script lang="javascript">
+        function scrollMessagesToBottom() {
+            var objDiv = document.getElementById("messages");
+            objDiv.scrollTop = objDiv.scrollHeight;            
+        }
+    </script>
 </head>
 ​
 
-<body>
+<body onload="scrollMessagesToBottom()">
     <section id="app" class="app">        
         <section class="sidebar">
             <header>   
@@ -56,7 +62,7 @@
                     <div class="date">last seen today at 15:10</div>
                 </div>
             </header>
-            <div class="detail">
+            <div id="messages" class="detail">
                 <p class="message them">
                     I've just joined that google chat group
                 </p>
@@ -95,7 +101,7 @@
             </div>
             <footer class="enter-message">
                 <input id="newMessage" placeholder="Type a message" />
-                <button onclick="newMessage.value=''" class="send"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg></button>
+                <button onclick="newMessage.value=''; scrollMessagesToBottom()" class="send"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg></button>
             </footer>
         </main>
     </section>
