@@ -22,7 +22,7 @@ img {
 }
 
 body {
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";    
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
     line-height: 1.5;
     background-color: #41398b;
     display: flex;
@@ -122,9 +122,29 @@ header {
     background-color: #ededed;
 }
 
+.sidebar header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.sidebar header button.add-group {
+    background-color: transparent;
+    border-radius: 50%;
+}
+
+.sidebar header button.add-group:hover {
+    background-color: #e0e0e0;
+}
+
+.sidebar header button.add-group svg {
+    margin-top: 6px;
+    margin-right: 8px;
+    color: #41398b;
+}
+
 main header {
     border-left: 1px solid #dddddd;
-    /* border-bottom: 1px solid #dddddd; */
     display: flex;
     flex-direction: row;
 }
@@ -174,10 +194,13 @@ img.avatar {
 .chats li img.avatar {
     width: 49px;
     height: 49px;
-    display: block;
-    list-style: none;
-    margin: 0;
-    margin-top: 6px;
+    margin-top: 7px;
+}
+
+.chats li svg.avatar {
+    width: 56px;
+    height: 56px;
+    margin-top: 3px;
 }
 
 .chats li .date {
@@ -189,7 +212,7 @@ img.avatar {
     color: #606060;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;    
+    text-overflow: ellipsis;
 }
 
 .chats li:hover {
@@ -204,7 +227,7 @@ img.avatar {
 .detail {
     padding: 14px 20px 0 20px;
     flex: 1 1;
-    overflow:auto; 
+    overflow:auto;
 }
 
 .detail::after {
