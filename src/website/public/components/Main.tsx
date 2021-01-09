@@ -5,6 +5,7 @@ import { RootState } from "../reducers";
 import sendMessage from "../actions/chats/sendMessage";
 
 import SendButton from "../send_button.svg";
+import MessagesList from "./MessagesList";
 
 export default Main;
 
@@ -19,26 +20,9 @@ function Main() {
 
     const chat = chatsState.chats[chatsState.selectedChatIndex];
 
-    const confirmedMessages = chat.kind !== "newDirect"
-        ? chat.confirmedMessages.map(m => {
-            switch (m.kind) {
-                case "local":
-                    return <div key={m.id}>{m.text}</div>;
-
-                case "remote":
-                    return <div key={m.id} style={{fontStyle: "italic"}}>loading...</div>
-            }
-        })
-        : null;
-
-    const unconfirmedMessages = chat.unconfirmedMessages.map(m => <div key={m.timestamp.toString()} style={{fontStyle: "italic"}}>{m.text}</div>);
-
     return (
         <div id="main" style={{ display:"flex", flexDirection:"column", height:"100%" }}>
-            <div>
-                {confirmedMessages}
-                {unconfirmedMessages}
-            </div>
+            <MessagesList />
             <input value={newMessageText} onChange={e => setNewMessageText(e.target.value)}/>
             <button onClick={handleSendMessage}><SendButton /></button>
         </div>

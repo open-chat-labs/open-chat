@@ -62,7 +62,7 @@ function generateWebpackConfigForCanister(name, info) {
         },
         {
           test: /\.svg$/,
-          use: ['@svgr/webpack', 'url-loader'],
+          use: 'svg-react-loader'
         }
       ]
     },

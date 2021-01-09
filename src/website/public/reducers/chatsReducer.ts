@@ -311,10 +311,10 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], la
         } else {
             // If we reach here then some messages are missing so we need to fill the gaps with RemoteMessages and mark
             // them to be downloaded
-            const firstMissingMessageId = chat.latestKnownMessageId + 1;
+            const firstMissingMessageId = chat.confirmedMessages[chat.confirmedMessages.length - 1].id + 1;
             const lastMissingMessageId = message.id - 1;
-            const lastConfirmedMessageIndex = chat.latestKnownMessageId - lowestMessageId;
-            addMissingMessages(firstMissingMessageId, lastMissingMessageId, lastConfirmedMessageIndex);
+            const indexToInsertAt = chat.confirmedMessages.length;
+            addMissingMessages(firstMissingMessageId, lastMissingMessageId, indexToInsertAt);
             chat.confirmedMessages.push(message);
         }
 

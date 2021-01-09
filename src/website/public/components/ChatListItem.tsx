@@ -8,9 +8,9 @@ type Props = {
     index: number
 }
 
-export default ChatSelection;
+export default ChatListItem;
 
-function ChatSelection(props: Props) {
+function ChatListItem(props: Props) {
     const dispatch = useDispatch();
 
     return (
