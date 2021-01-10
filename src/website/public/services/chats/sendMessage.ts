@@ -2,6 +2,7 @@ import canister from "ic:canisters/chats";
 import { ChatId } from "../../model/chats";
 import { Timestamp } from "../../model/common";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
+import { fromCandid as timestampFromCandid } from "../candidConverters/timestamp";
 
 export default async function(chatId: ChatId, message: string) : Promise<SendMessageResponse> {
     let response = await canister.send_message(chatIdToCandid(chatId), message);
@@ -12,7 +13,7 @@ export default async function(chatId: ChatId, message: string) : Promise<SendMes
             kind: "success",
             result: {
                 messageId: success.message_id,
-                timestamp: success.timestamp
+                timestamp: timestampFromCandid(success.timestamp)
             }
         };
     } else if (response.hasOwnProperty("ChatNotFound")) {
