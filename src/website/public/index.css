@@ -113,13 +113,9 @@ main {
     border: 0;
     border-radius: 25px;
     padding: 4px 15px 6px 64px;
-    color: #bbbbbb;
     font-size: 15px;
     font-weight: 300;
     outline: none;
-}
-
-.search input:focus {
     color: #111111;
 }
 
