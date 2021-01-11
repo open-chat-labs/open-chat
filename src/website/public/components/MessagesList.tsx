@@ -2,10 +2,12 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
+import DayChangeMarker from "./messages/DayChangeMarker";
 import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
 import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
 import MessageSentByMe from "./messages/MessageSentByMe";
 import RemoteMessage from "./messages/RemoteMessage";
+import * as timestamp from "../utils/timestamp";
 
 export default MessagesList;
 
@@ -20,52 +22,65 @@ function MessagesList() {
 
     const chat = chatsState.chats[chatsState.selectedChatIndex];
 
-    const confirmedMessages = chat.kind === "direct"
-        ? chat.confirmedMessages.map(m => {
-            switch (m.kind) {
-                case "local":
-                    const sentByMe = m.sender === myUserId;
-                    if (sentByMe) {
-                        const props = {
-                            message: m.text,
-                            timestamp: m.timestamp,
-                            confirmed: true
-                        };
-                        return <MessageSentByMe key={m.id} {...props} />;
-                    } else if (chat.kind === "direct") {
-                        const props = {
-                            message: m.text,
-                            timestamp: m.timestamp
-                        };
-                        return <DirectMessageSentByThem key={m.id} {...props} />;
-                    } else {
-                        const props = {
-                            message: m.text,
-                            timestamp: m.timestamp,
-                            senderUsername: usersDictionary.hasOwnProperty(m.sender) ? usersDictionary[m.sender] : ""
-                        };
-                        return <GroupMessageSentByElse key={m.id} {...props} />;
-                    }
+    const children: JSX.Element[] = [];
 
-                case "remote":
-                    return <RemoteMessage key={m.id} />
+    if (chat.kind !== "newDirect") {
+        let prevDate: Date | null = null;
+        let prevDayString: string | null = null;
+        for (let i = 0; i < chat.confirmedMessages.length; i++) {
+            const message = chat.confirmedMessages[i];
+            if (message.kind === "local") {
+                const date = timestamp.asDate(message.timestamp);
+                const dayString = date.toDateString();
+                if (prevDayString === null || prevDayString !== dayString) {
+                    children.push(<DayChangeMarker key={dayString} date={date}/>);
+                }
+
+                const sentByMe = message.sender === myUserId;
+                if (sentByMe) {
+                    const props = {
+                        message: message.text,
+                        date,
+                        confirmed: true
+                    };
+                    children.push(<MessageSentByMe key={message.id} {...props} />);
+                } else if (chat.kind === "direct") {
+                    const props = {
+                        message: message.text,
+                        date
+                    };
+                    children.push(<DirectMessageSentByThem key={message.id} {...props} />);
+                } else {
+                    const props = {
+                        message: message.text,
+                        date,
+                        senderUsername: usersDictionary.hasOwnProperty(message.sender)
+                            ? usersDictionary[message.sender]
+                            : ""
+                    };
+                    children.push(<GroupMessageSentByElse key={message.id} {...props} />);
+                }
+                prevDate = date;
+                prevDayString = dayString;
+            } else if (message.kind === "remote") {
+                children.push(<RemoteMessage key={message.id}/>);
             }
-        })
-        : null;
+        }
+    }
 
-    const unconfirmedMessages = chat.unconfirmedMessages.map(m => {
+    for (let i = 0; i < chat.unconfirmedMessages.length; i++) {
+        const message = chat.unconfirmedMessages[i];
         const props = {
-            message: m.text,
-            timestamp: m.timestamp,
+            message: message.text,
+            date: timestamp.asDate(message.timestamp),
             confirmed: false
         };
-        return <MessageSentByMe key={"u-" + m.timestamp} {...props} />;
-    });
+        children.push(<MessageSentByMe key={"u-" + message.timestamp} {...props} />);
+    }
 
     return (
         <div id="messages">
-            {confirmedMessages}
-            {unconfirmedMessages}
+            {children}
         </div>
     );
 }
