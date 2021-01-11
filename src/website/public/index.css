@@ -166,7 +166,7 @@ main header {
     flex-direction: row;
 }
 
-main header button {
+.avatar-button {
     height: 40px;
 }
 
@@ -243,26 +243,30 @@ main header>div >div {
     padding: 14px 20px 0 20px;
     flex: 1 1;
     overflow:auto;
-}
-
-.detail::after {
-    content: "";
-    clear: both;
-    display: table;
+    display: flex;
+    flex-direction: column;
 }
 
 .detail .message {
     max-width: 500px;
     background-color: white;
     padding: 8px 16px;
-    border-radius: 25px;
-    clear: both;
+    border-radius: 20px;
     margin: 0px;
     margin-bottom: 16px;
 }
 
+.detail .day-change-marker {
+    padding: 6px 12px;
+    border-radius: 10px;
+    background-color: #dddddd;
+    margin-bottom: 16px;
+    align-self: center;
+    font-size: 13px;
+}
+
 .detail .me {
-    float: right;
+    align-self: flex-end;
     background-color: #d62c7d;
     color: white;
 }

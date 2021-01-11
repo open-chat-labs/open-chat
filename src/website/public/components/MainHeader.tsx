@@ -23,7 +23,7 @@ function MainHeader() {
 
     return (
         <header>
-            <button>
+            <button className="avatar-button">
                 <DirectChatDefaultAvatar className="avatar" />
             </button>
             <div>

@@ -16,7 +16,7 @@ function DayChangeMarker(props : Props) {
     const text = `-- ${dayOfWeek} ${dayOfMonth}${ordinal} ${month} ${year} --`;
 
     return (
-        <div style={{fontSize: "smaller"}}>{text}</div>
+        <div className="day-change-marker">{text}</div>
     );
 }
 
