@@ -1,10 +1,8 @@
 import React from "react";
 
-import { Timestamp } from "../../model/common";
-
 interface Props {
     message: string,
-    timestamp: Timestamp,
+    date: Date,
     senderUsername: string
 }
 

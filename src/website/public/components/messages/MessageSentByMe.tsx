@@ -1,12 +1,10 @@
 import React from "react";
 
-import { Timestamp } from "../../model/common";
-
 export default MessageSentByMe;
 
 interface Props {
     message: string,
-    timestamp: Timestamp,
+    date: Date,
     confirmed: boolean
 }
 

@@ -1,12 +1,10 @@
 import React from "react";
 
-import { Timestamp } from "../../model/common";
-
 export default DirectMessageSentByThem;
 
-interface Props {
+type Props = {
     message: string,
-    timestamp: Timestamp
+    date: Date
 }
 
 function DirectMessageSentByThem(props : Props) {
