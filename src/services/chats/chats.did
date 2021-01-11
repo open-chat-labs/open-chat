@@ -4,8 +4,8 @@ type Timestamp = nat64;
 
 type CreateGroupChatResult =
     record {
-        chat_id: ChatId,
-        timestamp: Timestamp
+        chat_id: ChatId;
+        timestamp: Timestamp;
     };
 
 type CreateGroupChatResponse =

@@ -1,4 +1,4 @@
-import { Chat, ChatId, ConfirmedChat, DirectChat, NewDirectChat } from "../model/chats";
+import { Chat, ChatId, ConfirmedChat, DirectChat, GroupChat, NewDirectChat, NewGroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { ConfirmedMessage, LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
@@ -7,6 +7,14 @@ import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
+
+import {
+    CREATE_GROUP_CHAT_REQUESTED,
+    CREATE_GROUP_CHAT_SUCCEEDED,
+    CreateGroupChatFailedEvent,
+    CreateGroupChatRequestedEvent,
+    CreateGroupChatSucceededEvent
+} from "../actions/chats/createGroupChat";
 
 import {
     GET_ALL_CHATS_SUCCEEDED,
@@ -44,6 +52,9 @@ const initialState: State = {
 
 type Event =
     ChatSelectedEvent |
+    CreateGroupChatRequestedEvent |
+    CreateGroupChatSucceededEvent |
+    CreateGroupChatFailedEvent |
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
@@ -60,7 +71,7 @@ export default function(state: State = initialState, event: Event) : State {
         case CHAT_SELECTED: {
             const chat = state.chats[event.payload];
             let chats = state.chats;
-            if (chat.kind !== "newDirect") {
+            if ("chatId" in chat) {
                 const messagesIds = getMessageIdsToFillLatestPage(chat.confirmedMessages, chat.latestKnownMessageId);
 
                 if (messagesIds.length) {
@@ -79,6 +90,55 @@ export default function(state: State = initialState, event: Event) : State {
                 ...state,
                 chats: chats,
                 selectedChatIndex: event.payload
+            };
+        }
+
+        case CREATE_GROUP_CHAT_REQUESTED: {
+            const { tempId, subject, users } = event.payload;
+
+            const newChat: NewGroupChat = {
+                kind: "newGroup",
+                id: tempId,
+                subject,
+                participants: users,
+                unconfirmedMessages: []
+            };
+
+            return {
+                ...state,
+                chats: [newChat, ...state.chats],
+                selectedChatIndex: 0
+            };
+        }
+
+        case CREATE_GROUP_CHAT_SUCCEEDED: {
+            const { tempId, chatId, date } = event.payload;
+
+            const chatIndex = state.chats.findIndex(c => c.kind === "newGroup" && c.id === tempId);
+            const chat = state.chats[chatIndex] as NewGroupChat;
+            const newChat: GroupChat = {
+                kind: "group",
+                subject: chat.subject,
+                participants: chat.participants,
+                chatId,
+                updatedDate: date,
+                readUpTo: 0,
+                latestKnownMessageId: 0,
+                messagesToDownload: [],
+                messagesDownloading: [],
+                confirmedMessages: [],
+                unconfirmedMessages: []
+            };
+
+            const chatsCopy = state.chats.slice();
+            chatsCopy[chatIndex] = newChat;
+
+            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex!);
+
+            return {
+                ...state,
+                chats: chatsCopy,
+                selectedChatIndex: selectedChatIndex
             };
         }
 
@@ -116,7 +176,7 @@ export default function(state: State = initialState, event: Event) : State {
             chatCopy.confirmedMessages = chatCopy.confirmedMessages.slice();
             chatCopy.unconfirmedMessages = chatCopy.unconfirmedMessages.slice();
 
-            const messageIds = result.messages.map(m => m.id);
+            const messageIds = result.messages.map((m: LocalMessage) => m.id);
             chatCopy.messagesToDownload = setFunctions.except(chatCopy.messagesToDownload, messageIds);
             chatCopy.messagesDownloading = setFunctions.except(chatCopy.messagesDownloading, request.messageIds);
 
@@ -149,20 +209,23 @@ export default function(state: State = initialState, event: Event) : State {
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
             const chatsCopy = state.chats.slice();
-            const chatIndex = payload.kind === "direct"
-                ? findDirectChatIndex(chatsCopy, payload.userId)
-                : findGroupChatIndex(chatsCopy, payload.chatId);
+            let chatIndex: number = -1;
+            if ("chatId" in payload && payload.chatId !== null) {
+                chatIndex = findChatIndex(chatsCopy, payload.chatId);
+            } else if ("userId" in payload) {
+                chatIndex = findDirectChatIndex(chatsCopy, payload.userId);
+            } else if ("unconfirmedChatId" in payload) {
+                chatIndex = findNewGroupChatIndex(chatsCopy, payload.unconfirmedChatId);
+            }
 
             const unconfirmedMessage : UnconfirmedMessage = {
                 kind: "unconfirmed",
-                id: payload.unconfirmedMessageId,
-                date: new Date(),
+                id: "unconfirmedMessageId" in payload ? payload.unconfirmedMessageId : Symbol("id"),
                 text: payload.message
             };
 
             const chatCopy = { ...chatsCopy[chatIndex] };
             chatCopy.unconfirmedMessages = [...chatCopy.unconfirmedMessages, unconfirmedMessage];
-            chatCopy.updatedDate = unconfirmedMessage.date;
 
             chatsCopy.splice(chatIndex, 1);
             chatsCopy.unshift(chatCopy);
@@ -179,9 +242,11 @@ export default function(state: State = initialState, event: Event) : State {
             const chatsCopy = state.chats.slice();
             const chatIndex = payload.kind === "direct"
                 ? findDirectChatIndex(chatsCopy, payload.userId)
-                : findGroupChatIndex(chatsCopy, payload.chatId);
+                : findChatIndex(chatsCopy, payload.chatId);
 
-            const chat = chatsCopy[chatIndex];
+            // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
+            // userId or a chatId and a NewGroupChat has neither.
+            const chat = chatsCopy[chatIndex] as Exclude<Chat, NewGroupChat>;
             let chatCopy;
             if (chat.kind === "newDirect") {
                 chatCopy = {
@@ -195,7 +260,7 @@ export default function(state: State = initialState, event: Event) : State {
                     messagesDownloading: [],
                     confirmedMessages: [],
                     unconfirmedMessages: chat.unconfirmedMessages
-                } as DirectChat
+                } as DirectChat;
             } else {
                 chatCopy = { ...chat };
                 chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
@@ -238,7 +303,6 @@ export default function(state: State = initialState, event: Event) : State {
             const newChat: NewDirectChat = {
                 kind: "newDirect",
                 them: userId,
-                updatedDate: new Date(),
                 unconfirmedMessages: []
             };
 
@@ -250,7 +314,7 @@ export default function(state: State = initialState, event: Event) : State {
         }
 
         default:
-          return state;
+            return state;
     }
 }
 
@@ -372,18 +436,35 @@ function getMessageIdsToFillLatestPage(messages: Message[], confirmedOnServerUpT
 
 function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: number) {
     const selectedChat = chats[selectedIndex];
-    chats.sort((a, b) => b.updatedDate.getTime() - a.updatedDate.getTime());
+    chats.sort((a, b) => {
+        if ("updatedDate" in a) {
+            if ("updatedDate" in b) {
+                // If both are confirmed then compare the updated dates
+                return b.updatedDate.getTime() - a.updatedDate.getTime();
+            }
+            // If only 'a' is confirmed, then 'b' should appear first
+            return -1;
+        }
+
+        // If only 'b' is confirmed, then 'a' should appear first
+        if ("updatedDate" in b) {
+            return 1;
+        }
+
+        // If neither are confirmed then treat them equally (this should be extremely rare)
+        return 0;
+    });
     return chats.indexOf(selectedChat);
 }
 
 function findChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => c.kind !== "newDirect" && c.chatId && chatId === c.chatId);
+    return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
 }
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {
-    return chats.findIndex(c => c.kind !== "group" && userId === c.them);
+    return chats.findIndex(c => "them" in c && userId === c.them);
 }
 
-function findGroupChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => c.kind === "group" && chatId === c.chatId);
+function findNewGroupChatIndex(chats: Chat[], id: Symbol) : number {
+    return chats.findIndex(c => c.kind === "newGroup" && id === c.id);
 }

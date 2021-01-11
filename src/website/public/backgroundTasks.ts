@@ -58,7 +58,7 @@ export function setupBackgroundTasks() {
     // Whenever a chat has messages to download, call off to get those messages
     useEffect(() => {
         chatsState.chats.forEach(c => {
-            if (c.kind !== "newDirect" && c.chatId && c.messagesToDownload.length && !c.messagesDownloading.length) {
+            if ("chatId" in c && c.messagesToDownload.length && !c.messagesDownloading.length) {
                 dispatch(getMessagesById(c.chatId, c.messagesToDownload.slice(0, PAGE_SIZE)));
             }
         })

@@ -21,6 +21,10 @@ function MainHeader() {
         ? (userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "")
         : chat.subject;
 
+    const lastSeen = "updatedDate" in chat
+        ? <div className="date">last seen {chat.updatedDate.toDateString()}</div>
+        : null;
+
     return (
         <header>
             <button className="avatar-button">
@@ -28,7 +32,7 @@ function MainHeader() {
             </button>
             <div>
             <div className="name">{chatName}</div>
-                <div className="date">last seen {chat.updatedDate.toDateString()}</div>
+                {lastSeen}
             </div>
         </header>
     );

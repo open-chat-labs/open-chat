@@ -3,9 +3,10 @@ import { UserId } from "./users";
 
 export type ChatId = BigInt;
 
-export type Chat = ConfirmedChat | NewDirectChat;
+export type Chat = ConfirmedChat | UnconfirmedChat;
 
 export type ConfirmedChat = DirectChat | GroupChat;
+export type UnconfirmedChat = NewDirectChat | NewGroupChat;
 
 export type DirectChat = ConfirmedChatCommon & {
     kind: "direct",
@@ -21,7 +22,14 @@ export type GroupChat = ConfirmedChatCommon & {
 export type NewDirectChat = {
     kind: "newDirect",
     them: UserId,
-    updatedDate: Date,
+    unconfirmedMessages: UnconfirmedMessage[]
+}
+
+export type NewGroupChat = {
+    kind: "newGroup",
+    id: Symbol,
+    subject: string,
+    participants: UserId[],
     unconfirmedMessages: UnconfirmedMessage[]
 }
 
