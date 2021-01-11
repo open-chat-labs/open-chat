@@ -3,7 +3,7 @@ import { UserId } from "../../model/users";
 import { ChatId } from "../../model/chats";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
-import {fromCandid as dateFromCandid} from "../candidConverters/date";
+import { fromCandid as dateFromCandid } from "../candidConverters/date";
 
 export default async function(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
     const candidUserIds = users.map(userIdToCandid);

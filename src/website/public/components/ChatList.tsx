@@ -14,13 +14,17 @@ function ChatList() {
     const chats = chatsState.chats.map((c, index) => {
         let name: string;
         let key: string;
-        if (c.kind === "group") {
+        if ("them" in c) {
+            name = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
+            key = "D-" + c.them.toString();
+        } else if (c.kind === "group") {
             name = c.subject;
             key = "G-" + c.chatId.toString();
         } else {
-            name = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
-            key = "D-" + c.them.toString();
+            name = c.subject;
+            key = "NG-" + c.subject;
         }
+
         let latestMessageText = "";
         if (c.unconfirmedMessages.length) {
             latestMessageText = c.unconfirmedMessages[c.unconfirmedMessages.length - 1].text;
@@ -35,7 +39,7 @@ function ChatList() {
             <ChatListItem
                 key={key}
                 name={name}
-                date={new Date(c.updatedDate)}
+                date={"updatedDate" in c ? c.updatedDate : undefined}
                 index={index}
                 selected={index === selectedChatIndex}
                 latestMessage={latestMessageText}/>
@@ -48,4 +52,3 @@ function ChatList() {
         </ul>
     );
 }
-

@@ -7,6 +7,7 @@ import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
 import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
 import MessageSentByMe from "./messages/MessageSentByMe";
 import RemoteMessage from "./messages/RemoteMessage";
+import UnconfirmedMessage from "./messages/UnconfirmedMessage";
 
 export default MessagesList;
 
@@ -23,7 +24,7 @@ function MessagesList() {
 
     const children: JSX.Element[] = [];
 
-    if (chat.kind !== "newDirect") {
+    if ("confirmedMessages" in chat) {
         let prevDate: Date | null = null;
         let prevDayString: string | null = null;
         for (let i = 0; i < chat.confirmedMessages.length; i++) {
@@ -69,11 +70,9 @@ function MessagesList() {
     for (let i = 0; i < chat.unconfirmedMessages.length; i++) {
         const message = chat.unconfirmedMessages[i];
         const props = {
-            message: message.text,
-            date: message.date,
-            confirmed: false
+            message: message.text
         };
-        children.push(<MessageSentByMe key={"u-" + message.date.getTime()} {...props} />);
+        children.push(<UnconfirmedMessage key={"u-" + i} {...props} />);
     }
 
     return (

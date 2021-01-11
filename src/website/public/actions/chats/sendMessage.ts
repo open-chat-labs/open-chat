@@ -21,10 +21,13 @@ export default function(chat: Chat, message: string) {
 
         case "newDirect":
             return sendDirectMessage(chat.them, null, message);
+
+        case "newGroup":
+            return sendMessageToNewGroup(chat.id, message);
     }
 }
 
-export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
+function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const id = Symbol("id");
 
@@ -72,7 +75,7 @@ export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, messag
     }
 }
 
-export function sendGroupMessage(chatId: ChatId, message: string) {
+function sendGroupMessage(chatId: ChatId, message: string) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const id = Symbol("id");
 
@@ -116,6 +119,20 @@ export function sendGroupMessage(chatId: ChatId, message: string) {
     }
 }
 
+// We can't send messages to a new group until the group has been confirmed at which point we will receive the chatId.
+// So we only signal the 'requestEvent', the reducer will then add the message to the 'unconfirmedMessages' array for
+// the chat and those messages will be sent once the chat is confirmed.
+function sendMessageToNewGroup(id: Symbol, message: string) {
+    return (dispatch: Dispatch<any>) => {
+        const requestEvent: SendMessageToNewGroupRequest = {
+            kind: "newGroup",
+            unconfirmedChatId: id,
+            message
+        };
+        dispatch(requestEvent);
+    }
+}
+
 export type SendMessageRequestedEvent = {
     type: typeof SEND_MESSAGE_REQUESTED,
     payload: SendMessageRequest
@@ -130,7 +147,7 @@ export type SendMessageFailedEvent = {
     type: typeof SEND_MESSAGE_FAILED
 }
 
-export type SendMessageRequest = SendDirectMessageRequest | SendGroupMessageRequest;
+export type SendMessageRequest = SendDirectMessageRequest | SendGroupMessageRequest | SendMessageToNewGroupRequest;
 
 export type SendDirectMessageRequest = {
     kind: "direct",
@@ -145,6 +162,12 @@ export type SendGroupMessageRequest = {
     chatId: ChatId,
     message: string,
     unconfirmedMessageId: Symbol
+}
+
+export type SendMessageToNewGroupRequest = {
+    kind: "newGroup",
+    unconfirmedChatId: Symbol,
+    message: string
 }
 
 export type SendMessageSuccess = SendDirectMessageSuccess | SendGroupMessageSuccess;

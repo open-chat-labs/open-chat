@@ -1,13 +1,12 @@
 import React from "react";
 
-export default MessageSentByMe;
+export default UnconfirmedMessage;
 
 interface Props {
-    message: string,
-    date: Date
+    message: string
 }
 
-function MessageSentByMe(props : Props) {
+function UnconfirmedMessage(props : Props) {
     return (
         <p className="message me">{props.message}</p>
     );

@@ -7,7 +7,7 @@ import DirectChatDefaultAvatar from "../assets/icons/directChatDefaultAvatar.svg
 
 type Props = {
     name: string,
-    date: Date,
+    date?: Date,
     index: number,
     selected: boolean,
     latestMessage: string
@@ -23,7 +23,7 @@ function ChatListItem(props: Props) {
         <li className={className} onClick={() => dispatch(selectChat(props.index))}>
             <DirectChatDefaultAvatar className="avatar" />
             <div className="message-container">
-                <div className="date">{props.date.toDateString()}</div>
+                <div className="date">{props.date ? props.date.toDateString() : null}</div>
                 <div className="name">{props.name}</div>
                 <div className="message">{props.latestMessage}</div>
             </div>
