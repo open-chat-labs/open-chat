@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 
 import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
-import DirectChatDefaultAvatar from "../assets/icons/directChatDefaultAvatar.svg";
+import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
 import SearchIcon from "../assets/icons/search.svg";
 
 const DEFAULT_TEXT = "Search or start a new chat";
@@ -19,7 +19,7 @@ function SideHeader() {
         <>
             <header>
                 <button className="avatar-button">
-                    <DirectChatDefaultAvatar className="avatar" />
+                    <DefaultAvatar className="avatar" />
                 </button>
                 <div>
                     <button className="add-chat" onClick={_ => dispatch(setupNewDirectChat(text))}>Add chat</button>

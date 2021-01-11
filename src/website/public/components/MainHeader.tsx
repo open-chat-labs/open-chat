@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 
-import DirectChatDefaultAvatar from "../assets/icons/directChatDefaultAvatar.svg";
+import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
 
 export default MainHeader;
 
@@ -28,7 +28,7 @@ function MainHeader() {
     return (
         <header>
             <button className="avatar-button">
-                <DirectChatDefaultAvatar className="avatar" />
+                <DefaultAvatar className="avatar" />
             </button>
             <div>
             <div className="name">{chatName}</div>
