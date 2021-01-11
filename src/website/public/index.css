@@ -50,6 +50,12 @@ button {
     }
 }
 
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
 #app {
     flex-grow: 1;
     display: flex;
@@ -132,6 +138,7 @@ header {
     display: flex;
     align-items: center;
 }
+
 .sidebar header button.add-chat {
     padding: 8px;
     margin-right: 2px;
@@ -149,7 +156,6 @@ header {
 }
 
 .sidebar header button.add-group svg {
-    margin-top: 6px;
     margin-right: 8px;
     color: #41398b;
 }
@@ -158,6 +164,10 @@ main header {
     border-left: 1px solid #dddddd;
     display: flex;
     flex-direction: row;
+}
+
+main header button {
+    height: 40px;
 }
 
 main header>div {
@@ -169,12 +179,6 @@ main header>div {
 
 main header>div >div {
     line-height: normal;
-}
-
-img.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
 }
 
 .sidebar ul, li {
@@ -253,6 +257,8 @@ img.avatar {
     padding: 8px 16px;
     border-radius: 25px;
     clear: both;
+    margin: 0px;
+    margin-bottom: 16px;
 }
 
 .detail .me {
