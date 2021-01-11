@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import sendMessage from "../actions/chats/sendMessage";
 
-import SendButton from "../send_button.svg";
+import SendButton from "../assets/icons/sendButton.svg";
 
 export default MainFooter;
 
