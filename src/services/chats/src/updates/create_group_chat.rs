@@ -14,7 +14,7 @@ pub fn update(participants: Vec<UserId>, subject: String) -> Response {
     match chat_list.create_group_chat(me, participants, subject, now) {
         Some(chat_id) => Success(Result {
             chat_id,
-            created: now
+            timestamp: now
         }),
         None => ChatAlreadyExists,
     }
@@ -23,7 +23,7 @@ pub fn update(participants: Vec<UserId>, subject: String) -> Response {
 #[derive(CandidType)]
 pub struct Result {
     chat_id: ChatId,
-    created: Timestamp
+    timestamp: Timestamp
 }
 
 #[derive(CandidType)]
