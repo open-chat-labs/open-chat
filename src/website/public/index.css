@@ -54,6 +54,24 @@ button {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    background-color: transparent;
+}
+
+.avatar-button {
+    border-radius: 50%;
+    height: 40px;
+}
+
+.chats li .avatar {
+    width: 49px;
+    height: 49px;
+    margin-top: 7px;
+}
+
+.chats li svg.avatar {
+    width: 56px;
+    height: 56px;
+    margin-top: 3px;
 }
 
 #app {
@@ -166,10 +184,6 @@ main header {
     flex-direction: row;
 }
 
-.avatar-button {
-    height: 40px;
-}
-
 main header>div {
     padding: 0 18px;
     display: flex;
@@ -204,18 +218,6 @@ main header>div >div {
     padding: 6px 15px 6px 15px;
     min-width: 0;
     width: 100%;
-}
-
-.chats li img.avatar {
-    width: 49px;
-    height: 49px;
-    margin-top: 7px;
-}
-
-.chats li svg.avatar {
-    width: 56px;
-    height: 56px;
-    margin-top: 3px;
 }
 
 .chats li .date {
