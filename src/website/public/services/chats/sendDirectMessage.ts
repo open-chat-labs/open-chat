@@ -3,6 +3,7 @@ import { UserId } from "../../model/users";
 import { ChatId } from "../../model/chats";
 import { Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
+import { fromCandid as timestampFromCandid } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
 export default async function(userId: UserId, message: string) : Promise<SendDirectMessageResponse> {
@@ -15,7 +16,7 @@ export default async function(userId: UserId, message: string) : Promise<SendDir
             result: {
                 chatId: chatIdFromCandid(success.chat_id),
                 messageId: success.message_id,
-                timestamp: success.timestamp
+                timestamp: timestampFromCandid(success.timestamp)
             }
         };
     } else {
