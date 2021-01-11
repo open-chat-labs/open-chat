@@ -7,12 +7,13 @@ import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
 import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
 import SearchIcon from "../assets/icons/search.svg";
 
-const DEFAULT_TEXT = "Search or start a new chat";
-
 export default SideHeader;
 
+const PLACEHOLDER_TEXT = "Search or start a new chat";
+
 function SideHeader() {
-    const [text, setText] = useState(DEFAULT_TEXT);
+    const [text, setText] = useState("");
+    const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
     const dispatch = useDispatch();
 
     return (
@@ -29,7 +30,12 @@ function SideHeader() {
                 </div>
             </header>
             <div className="search">
-                <input value={text} onFocus={_ => setText("")} onChange={e => setText(e.target.value)} />
+                <input
+                    value={text}
+                    onChange={e => setText(e.target.value)}
+                    placeholder={placeholderText}
+                    onFocus={_ => setPlaceholderText("")}
+                    onBlur={_ => setPlaceholderText(PLACEHOLDER_TEXT)} />
                 <SearchIcon />
             </div>
         </>
