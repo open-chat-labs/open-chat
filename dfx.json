@@ -13,9 +13,6 @@
       "build": "./generate-wasm.sh user_mgmt"
     },
     "website": {
-      "dependencies": [
-        "user_mgmt"
-      ],
       "frontend": {
         "entrypoint": "src/website/public/index.tsx"
       },

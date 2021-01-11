@@ -35,13 +35,13 @@ function generateWebpackConfigForCanister(name, info) {
   }
 
   return {
-    mode: "production",
+    mode: "development",
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint),
     },
     devtool: "source-map",
     optimization: {
-      minimize: true,
+      minimize: false,
       minimizer: [new TerserPlugin()],
     },
     resolve: {
