@@ -3,7 +3,7 @@ import { Dispatch } from "react";
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
 import { Chat, ChatId } from "../../model/chats";
-import { Option, Timestamp } from "../../model/common";
+import { Option } from "../../model/common";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
 
@@ -59,7 +59,7 @@ export function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, messag
                     message: message,
                     unconfirmedMessageId: id,
                     confirmedMessageId: response.result.messageId,
-                    confirmedMessageTimestamp: response.result.timestamp
+                    confirmedMessageDate: response.result.date
                 }
             } as SendMessageSucceededEvent;
         } else {
@@ -103,7 +103,7 @@ export function sendGroupMessage(chatId: ChatId, message: string) {
                     message: message,
                     unconfirmedMessageId: id,
                     confirmedMessageId: response.result.messageId,
-                    confirmedMessageTimestamp: response.result.timestamp
+                    confirmedMessageDate: response.result.date
                 }
             } as SendMessageSucceededEvent;
         } else {
@@ -164,5 +164,5 @@ type SendMessageSuccessCommon = {
     message: string,
     unconfirmedMessageId: Symbol,
     confirmedMessageId: number,
-    confirmedMessageTimestamp: Timestamp
+    confirmedMessageDate: Date
 }

@@ -3,7 +3,6 @@ import { Option } from "../model/common";
 import { ConfirmedMessage, LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
-import * as timestamp from "../utils/timestamp";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
@@ -157,13 +156,13 @@ export default function(state: State = initialState, event: Event) : State {
             const unconfirmedMessage : UnconfirmedMessage = {
                 kind: "unconfirmed",
                 id: payload.unconfirmedMessageId,
-                timestamp: timestamp.getCurrent(),
+                date: new Date(),
                 text: payload.message
             };
 
             const chatCopy = { ...chatsCopy[chatIndex] };
             chatCopy.unconfirmedMessages = [...chatCopy.unconfirmedMessages, unconfirmedMessage];
-            chatCopy.updatedDate = unconfirmedMessage.timestamp;
+            chatCopy.updatedDate = unconfirmedMessage.date;
 
             chatsCopy.splice(chatIndex, 1);
             chatsCopy.unshift(chatCopy);
@@ -189,7 +188,7 @@ export default function(state: State = initialState, event: Event) : State {
                     kind: "direct",
                     them: chat.them,
                     chatId: payload.chatId,
-                    updatedDate: 0,
+                    updatedDate: new Date(),
                     readUpTo: 0,
                     latestKnownMessageId: 0,
                     messagesToDownload: [],
@@ -209,7 +208,7 @@ export default function(state: State = initialState, event: Event) : State {
             const confirmedMessage: LocalMessage = {
                 kind: "local",
                 id: payload.confirmedMessageId,
-                timestamp: payload.confirmedMessageTimestamp,
+                date: payload.confirmedMessageDate,
                 sender: payload.sender,
                 text: payload.message
             };
@@ -239,7 +238,7 @@ export default function(state: State = initialState, event: Event) : State {
             const newChat: NewDirectChat = {
                 kind: "newDirect",
                 them: userId,
-                updatedDate: timestamp.getCurrent(),
+                updatedDate: new Date(),
                 unconfirmedMessages: []
             };
 
@@ -319,8 +318,8 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], la
         }
 
         if (message.kind === "local") {
-            if (chat.updatedDate < message.timestamp) {
-                chat.updatedDate = message.timestamp;
+            if (chat.updatedDate < message.date) {
+                chat.updatedDate = message.date;
             }
         }
 
@@ -371,7 +370,7 @@ function getMessageIdsToFillLatestPage(messages: Message[], confirmedOnServerUpT
 
 function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: number) {
     const selectedChat = chats[selectedIndex];
-    chats.sort((a, b) => b.updatedDate - a.updatedDate);
+    chats.sort((a, b) => b.updatedDate.getTime() - a.updatedDate.getTime());
     return chats.indexOf(selectedChat);
 }
 

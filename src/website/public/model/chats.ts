@@ -1,4 +1,3 @@
-import { Timestamp } from "./common";
 import { ConfirmedMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 
@@ -22,13 +21,13 @@ export type GroupChat = ConfirmedChatCommon & {
 export type NewDirectChat = {
     kind: "newDirect",
     them: UserId,
-    updatedDate: Timestamp,
+    updatedDate: Date,
     unconfirmedMessages: UnconfirmedMessage[]
 }
 
 type ConfirmedChatCommon = {
     chatId: ChatId,
-    updatedDate: Timestamp,
+    updatedDate: Date,
     readUpTo: number,
     latestKnownMessageId: number,
     messagesToDownload: number[],
