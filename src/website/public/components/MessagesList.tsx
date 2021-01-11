@@ -7,7 +7,6 @@ import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
 import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
 import MessageSentByMe from "./messages/MessageSentByMe";
 import RemoteMessage from "./messages/RemoteMessage";
-import * as timestamp from "../utils/timestamp";
 
 export default MessagesList;
 
@@ -30,37 +29,36 @@ function MessagesList() {
         for (let i = 0; i < chat.confirmedMessages.length; i++) {
             const message = chat.confirmedMessages[i];
             if (message.kind === "local") {
-                const date = timestamp.asDate(message.timestamp);
-                const dayString = date.toDateString();
+                const dayString = message.date.toDateString();
                 if (prevDayString === null || prevDayString !== dayString) {
-                    children.push(<DayChangeMarker key={dayString} date={date}/>);
+                    children.push(<DayChangeMarker key={dayString} date={message.date}/>);
                 }
 
                 const sentByMe = message.sender === myUserId;
                 if (sentByMe) {
                     const props = {
                         message: message.text,
-                        date,
+                        date: message.date,
                         confirmed: true
                     };
                     children.push(<MessageSentByMe key={message.id} {...props} />);
                 } else if (chat.kind === "direct") {
                     const props = {
                         message: message.text,
-                        date
+                        date: message.date
                     };
                     children.push(<DirectMessageSentByThem key={message.id} {...props} />);
                 } else {
                     const props = {
                         message: message.text,
-                        date,
+                        date: message.date,
                         senderUsername: usersDictionary.hasOwnProperty(message.sender)
                             ? usersDictionary[message.sender]
                             : ""
                     };
                     children.push(<GroupMessageSentByElse key={message.id} {...props} />);
                 }
-                prevDate = date;
+                prevDate = message.date;
                 prevDayString = dayString;
             } else if (message.kind === "remote") {
                 children.push(<RemoteMessage key={message.id}/>);
@@ -72,10 +70,10 @@ function MessagesList() {
         const message = chat.unconfirmedMessages[i];
         const props = {
             message: message.text,
-            date: timestamp.asDate(message.timestamp),
+            date: message.date,
             confirmed: false
         };
-        children.push(<MessageSentByMe key={"u-" + message.timestamp} {...props} />);
+        children.push(<MessageSentByMe key={"u-" + message.date.getTime()} {...props} />);
     }
 
     return (

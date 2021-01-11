@@ -1,9 +1,8 @@
 import canister from "ic:canisters/chats";
 import { UserId } from "../../model/users";
 import { ChatId } from "../../model/chats";
-import { Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
-import { fromCandid as timestampFromCandid } from "../candidConverters/timestamp";
+import { fromCandid as dateFromCandid } from "../candidConverters/date";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
 export default async function(userId: UserId, message: string) : Promise<SendDirectMessageResponse> {
@@ -16,7 +15,7 @@ export default async function(userId: UserId, message: string) : Promise<SendDir
             result: {
                 chatId: chatIdFromCandid(success.chat_id),
                 messageId: success.message_id,
-                timestamp: timestampFromCandid(success.timestamp)
+                date: dateFromCandid(success.date)
             }
         };
     } else {
@@ -35,5 +34,5 @@ export type Success = {
 export type SendDirectMessageResult = {
     chatId: ChatId,
     messageId: number,
-    timestamp: Timestamp
+    date: Date
 }
