@@ -258,6 +258,10 @@ main header>div >div {
     margin-bottom: 16px;
 }
 
+.detail .them {
+    align-self: flex-start;
+}
+
 .detail .day-change-marker {
     padding: 6px 12px;
     border-radius: 10px;
