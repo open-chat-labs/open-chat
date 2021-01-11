@@ -10,6 +10,6 @@ export default GroupMessageSentByElse;
 
 function GroupMessageSentByElse(props : Props) {
     return (
-        <div>{props.message}</div>
+        <p className="message them">{props.message}</p>
     );
 }

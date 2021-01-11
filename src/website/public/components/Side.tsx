@@ -6,9 +6,9 @@ export default Side;
 
 function Side() {
     return (
-        <div id="side" style={{display: "flex", flexDirection: "column", height: "100%"}}>
+        <section className="sidebar">
             <SideHeader />
             <ChatList />
-        </div>
+        </section>
     );
 }

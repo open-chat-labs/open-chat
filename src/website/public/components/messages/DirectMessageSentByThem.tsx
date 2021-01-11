@@ -9,6 +9,6 @@ type Props = {
 
 function DirectMessageSentByThem(props : Props) {
     return (
-        <div>{props.message}</div>
+        <p className="message them">{props.message}</p>
     );
 }

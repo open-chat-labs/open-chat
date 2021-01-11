@@ -13,10 +13,10 @@ function DayChangeMarker(props : Props) {
     const ordinal = getOrdinal(dayOfMonth);
     const year = props.date.getFullYear();
 
-    const text = `-- ${dayOfWeek} ${dayOfMonth}${ordinal} ${month} ${year} --`;
+    const text = `${dayOfWeek} ${dayOfMonth}${ordinal} ${month} ${year}`;
 
     return (
-        <div style={{fontSize: "smaller"}}>{text}</div>
+        <div className="day-change-marker">{text}</div>
     );
 }
 

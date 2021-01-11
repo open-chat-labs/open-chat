@@ -262,11 +262,11 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], la
     // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
     messages.sort((a, b) => a.id - b.id);
 
-    const lowestCurrentMessageId = chat.confirmedMessages[0].id;
+    const lowestCurrentMessageId = chat.confirmedMessages.length ? chat.confirmedMessages[0].id : null;
     const lowestNewMessageId = messages[0].id;
 
     let indexWhereNoLongerPrepending = 0;
-    if (lowestNewMessageId < lowestCurrentMessageId) {
+    if (lowestCurrentMessageId && lowestNewMessageId < lowestCurrentMessageId) {
         // If we reach here, then we need to prepend at least 1 message to the current array
         const shiftRequired = lowestCurrentMessageId - lowestNewMessageId;
         const toPrepend: ConfirmedMessage[] = [];
@@ -292,7 +292,9 @@ function addMessagesToChat(chat: ConfirmedChat, messages: ConfirmedMessage[], la
         chat.confirmedMessages.unshift(...toPrepend);
     }
 
-    const lowestMessageId = Math.min(lowestCurrentMessageId, lowestNewMessageId);
+    const lowestMessageId = lowestCurrentMessageId
+        ? Math.min(lowestCurrentMessageId, lowestNewMessageId)
+        : lowestNewMessageId;
 
     // Now handle the later messages
     for (let index = indexWhereNoLongerPrepending; index < messages.length; index++) {

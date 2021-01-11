@@ -1,8 +1,19 @@
+-- Cleanup
+dfx identity remove alice
+dfx identity remove calum
+dfx identity remove hamish
+dfx identity remove matt
+
 -- Preamble
-dfx identity use matt
-dfx canister call user_mgmt set_username '("Matt")'
-dfx identity use hamish
-dfx canister call user_mgmt set_username '("Hamish")'
+dfx identity new alice
+dfx identity new calum
+dfx identity new hamish
+dfx identity new matt
+
+dfx --identity=alice canister call user_mgmt register_user '("Alice")'
+dfx --identity=calum canister call user_mgmt register_user '("Calum")'
+dfx --identity=hamish canister call user_mgmt register_user '("Hamish")'
+dfx --identity=matt canister call user_mgmt register_user '("Matt")'
 
 -- Direct Chat
 dfx identity use hamish

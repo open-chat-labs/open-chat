@@ -15,7 +15,7 @@ export default async function(userId: UserId, message: string) : Promise<SendDir
             result: {
                 chatId: chatIdFromCandid(success.chat_id),
                 messageId: success.message_id,
-                date: dateFromCandid(success.date)
+                date: dateFromCandid(success.timestamp)
             }
         };
     } else {

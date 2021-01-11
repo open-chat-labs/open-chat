@@ -77,7 +77,7 @@ function MessagesList() {
     }
 
     return (
-        <div id="messages">
+        <div id="messages" className="detail">
             {children}
         </div>
     );

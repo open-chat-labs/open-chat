@@ -9,8 +9,7 @@ interface Props {
 }
 
 function MessageSentByMe(props : Props) {
-    const style = props.confirmed ? {} : {fontStyle: "italic"};
     return (
-        <div style={style}>{props.message}</div>
+        <p className="message me">{props.message}</p>
     );
 }

@@ -3,19 +3,30 @@ import { useDispatch } from "react-redux";
 
 import selectChat from "../actions/chats/selectChat";
 
+import DirectChatDefaultAvatar from "../assets/icons/directChatDefaultAvatar.svg";
+
 type Props = {
     name: string,
-    index: number
+    date: Date,
+    index: number,
+    selected: boolean,
+    latestMessage: string
 }
 
 export default ChatListItem;
 
 function ChatListItem(props: Props) {
     const dispatch = useDispatch();
+    const className = props.selected ? "selected" : "";
 
     return (
-        <li onClick={() => dispatch(selectChat(props.index))}>
-            <span>{props.name}</span>
+        <li className={className} onClick={() => dispatch(selectChat(props.index))}>
+            <DirectChatDefaultAvatar className="avatar" />
+            <div className="message-container">
+                <div className="date">{props.date.toDateString()}</div>
+                <div className="name">{props.name}</div>
+                <div className="message">{props.latestMessage}</div>
+            </div>
         </li>
     );
 }
