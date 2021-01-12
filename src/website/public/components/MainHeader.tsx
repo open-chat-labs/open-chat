@@ -1,9 +1,8 @@
 import React from "react";
 import { useSelector } from "react-redux";
-
 import { RootState } from "../reducers";
-
 import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
+import { toShortTime } from "../utils/datetimeFunctions";
 
 export default MainHeader;
 
@@ -22,7 +21,7 @@ function MainHeader() {
         : chat.subject;
 
     const lastSeen = "updatedDate" in chat
-        ? <div className="date">last seen {chat.updatedDate.toDateString()} at {chat.updatedDate.toLocaleTimeString()}</div>
+        ? <div className="date">last seen {chat.updatedDate.toDateString()} at {toShortTime(chat.updatedDate)}</div>
         : null;
 
     return (

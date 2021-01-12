@@ -8,6 +8,9 @@ interface Props {
 
 function UnconfirmedMessage(props : Props) {
     return (
-        <p className="message me">{props.message}</p>
+        <p className="message me">
+            {props.message}
+            <span className="message-time">...</span>
+        </p>
     );
 }

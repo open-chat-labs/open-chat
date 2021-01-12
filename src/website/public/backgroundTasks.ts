@@ -63,4 +63,14 @@ export function setupBackgroundTasks() {
             }
         })
     }, [chatsState.chats]);
+
+    // If the selected chat changes (to different chat or there is a new message) 
+    // then scroll the message window to the bottom
+    const selectedChat = chatsState.selectedChatIndex !== null ? chatsState.chats[chatsState.selectedChatIndex] : null;
+    useEffect(() => {
+        var objDiv = document.getElementById("messages");
+        if (objDiv) {
+            objDiv.scrollTop = objDiv.scrollHeight;         
+        }
+    }, [selectedChat]);
 };

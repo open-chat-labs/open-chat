@@ -254,6 +254,22 @@ main header>div >div {
     margin-bottom: 16px;
 }
 
+.message-time {
+    display: block;
+    float: right;
+    margin-top: 8px;
+    z-index: 10;
+    color: #999999;   
+    font-size: 11px;
+    height: 15px;
+    width: 43px;
+    text-align: right;
+}
+
+.me .message-time {
+    color: #cccccc;   
+}
+
 .detail .them {
     align-self: flex-start;
 }
