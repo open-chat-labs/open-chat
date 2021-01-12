@@ -239,7 +239,7 @@ main header>div >div {
 }
 
 .detail {
-    padding: 14px 20px 0 20px;
+    padding: 0 20px 14px 20px;
     flex: 1 1;
     overflow:auto;
     display: flex;
@@ -252,7 +252,11 @@ main header>div >div {
     padding: 8px 16px;
     border-radius: 20px;
     margin: 0px;
-    margin-bottom: 16px;
+    margin-top: 14px;
+}
+
+.detail .message.merge {
+    margin-top: 2px;
 }
 
 .message-time {
@@ -279,7 +283,7 @@ main header>div >div {
     padding: 6px 12px;
     border-radius: 10px;
     background-color: #dddddd;
-    margin-bottom: 16px;
+    margin-top: 14px;
     align-self: center;
     font-size: 13px;
 }
