@@ -1,10 +1,10 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-
-import selectChat from "../actions/chats/selectChat";
-
-import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
+import DefaultAvatar from "./defaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
+import selectChat from "../actions/chats/selectChat";
+import { Option } from "../model/common";
+import { UserId } from "../model/users";
 
 type Props = {
     name: string,
@@ -12,7 +12,8 @@ type Props = {
     index: number,
     selected: boolean,
     latestMessage: string,
-    isGroup: boolean
+    isGroup: boolean,
+    userId: Option<UserId>
 }
 
 export default ChatListItem;
@@ -22,7 +23,7 @@ function ChatListItem(props: Props) {
     const className = props.selected ? "selected" : "";
     const icon = props.isGroup
         ? <GroupChatIcon className="avatar" />
-        : <DefaultAvatar className="avatar" />;
+        : <DefaultAvatar userId={props.userId} />;
 
     return (
         <li className={className} onClick={() => dispatch(selectChat(props.index))}>
