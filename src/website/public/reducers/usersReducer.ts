@@ -60,7 +60,7 @@ const initialState: State = {
 export default function(state: State = initialState, event: Event) : State {
     switch (event.type) {
         case GET_ALL_CHATS_SUCCEEDED: {
-            const chats = event.payload;
+            const { chats } = event.payload;
             const unknownUserIds = [...state.unknownUserIds];
             const userDictionary: any = state.userDictionary;
 

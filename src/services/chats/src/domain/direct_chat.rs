@@ -20,6 +20,7 @@ pub struct DirectChat {
 pub struct DirectChatSummary {
     id: ChatId,
     them: UserId,
+    updated_date: Timestamp,
     unread: u32,
     latest_messages: Vec<Message>
 }
@@ -130,7 +131,7 @@ impl DirectChatSummary {
         let is_user1 = *me == chat.user1;
         let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };
         let unread = chat.get_unread_count(me);
-        let latest_messages = chat
+        let latest_messages: Vec<_> = chat
             .messages
             .iter()
             .rev()
@@ -138,9 +139,12 @@ impl DirectChatSummary {
             .map(|m| m.clone())
             .collect();
 
+        let updated_date = latest_messages.first().unwrap().get_timestamp();
+
         DirectChatSummary {
             id: chat.id,
             them,
+            updated_date,
             unread,
             latest_messages
         }

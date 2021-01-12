@@ -92,6 +92,7 @@ type DirectChatSummary =
     record {
         id: ChatId;
         them: UserId;
+        updated_date: Timestamp;
         unread: nat32;
         latest_messages: vec Message;
     };

@@ -2,8 +2,8 @@ import canister from "ic:canisters/chats";
 import { UserId } from "../../model/users";
 import { ChatId } from "../../model/chats";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
+import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
-import { fromCandid as dateFromCandid } from "../candidConverters/date";
 
 export default async function(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
     const candidUserIds = users.map(userIdToCandid);
@@ -16,7 +16,7 @@ export default async function(subject: string, users: UserId[]) : Promise<Create
             kind: "success",
             result: {
                 chatId: chatIdFromCandid(success.chat_id),
-                date: dateFromCandid(success.timestamp)
+                date: timestampToDate(success.timestamp)
             }
         };
     } else if (response.hasOwnProperty("ChatAlreadyExists")) {

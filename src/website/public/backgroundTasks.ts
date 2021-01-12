@@ -7,11 +7,13 @@ import { GetUserRequest } from "./services/userMgmt/getUsers";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
+import getUpdatedChats from "./actions/chats/getUpdatedChats";
+
 import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
-import { PAGE_SIZE } from "./constants";
+import { REFRESH_CHATS_INTERVAL_MILLISECONDS, PAGE_SIZE } from "./constants";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();
@@ -73,4 +75,18 @@ export function setupBackgroundTasks() {
             objDiv.scrollTop = objDiv.scrollHeight;         
         }
     }, [selectedChat]);
+
+    // Check for new messages at regular intervals
+    useEffect(() => {
+        if (!usersState.me || !chatsState.chatsSyncedUpTo) {
+            return;
+        }
+
+        const getUpdates = () => dispatch(getUpdatedChats(chatsState.chatsSyncedUpTo, () => setupTimeout()));
+        const setupTimeout = () => timeoutId = setTimeout(getUpdates, REFRESH_CHATS_INTERVAL_MILLISECONDS);
+
+        let timeoutId: NodeJS.Timeout;
+        setupTimeout();
+        return () => clearTimeout(timeoutId);
+    }, [chatsState.chatsSyncedUpTo]);
 };
