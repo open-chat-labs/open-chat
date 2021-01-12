@@ -12,13 +12,13 @@ pub fn query(request: Request) -> Response {
 
     Success(chat_list.get_chats(
         &me,
-        request.since,
+        request.updated_since,
         request.message_count_for_top_chat))
 }
 
 #[derive(Deserialize)]
 pub struct Request {
-    since: Option<Timestamp>,
+    updated_since: Option<Timestamp>,
     message_count_for_top_chat: Option<u16>,
 }
 

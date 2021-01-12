@@ -22,7 +22,7 @@ function MainHeader() {
         : chat.subject;
 
     const lastSeen = "updatedDate" in chat
-        ? <div className="date">last seen {chat.updatedDate.toDateString()}</div>
+        ? <div className="date">last seen {chat.updatedDate.toDateString()} at {chat.updatedDate.toLocaleTimeString()}</div>
         : null;
 
     return (

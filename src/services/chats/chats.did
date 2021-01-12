@@ -70,7 +70,7 @@ type RemoveParticipantResponse =
 
 type GetChatsRequest =
     record {
-        since: opt Timestamp;
+        updated_since: opt Timestamp;
         message_count_for_top_chat: opt nat16;
     };
 

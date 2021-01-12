@@ -48,7 +48,7 @@ impl ChatList {
     pub fn get_chats(
         &self,
         user: &UserId,
-        since: Option<Timestamp>,
+        updated_since: Option<Timestamp>,
         message_count_for_top_chat: Option<u16>) -> Vec<ChatSummary> {
 
         let top_message_count = match message_count_for_top_chat {
@@ -61,7 +61,7 @@ impl ChatList {
             .chats
             .values()
             .filter(|chat| chat.involves_user(user))
-            .filter(|chat| since.is_none() || chat.get_updated_date(user) > since.unwrap())
+            .filter(|chat| updated_since.is_none() || chat.get_updated_date(user) > updated_since.unwrap())
             .collect();
 
         list.sort_unstable_by(|c1, c2| {
