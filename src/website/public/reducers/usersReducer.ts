@@ -87,8 +87,6 @@ export default function(state: State = initialState, event: Event) : State {
         }
 
         case GET_CURRENT_USER_SUCCEEDED: {
-            alert("Hi " + event.payload.username + "!");
-
             return {
                 ...state,
                 mustRegisterAsNewUser: false,
