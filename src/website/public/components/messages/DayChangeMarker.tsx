@@ -1,10 +1,10 @@
 import React from "react";
 
-export default DayChangeMarker;
-
-interface Props {
+type Props = {
     date: Date
 }
+
+export default DayChangeMarker;
 
 function DayChangeMarker(props : Props) {
     const dayOfWeek = props.date.toLocaleDateString("en", { weekday: "long" });
