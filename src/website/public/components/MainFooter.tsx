@@ -21,7 +21,12 @@ function MainFooter() {
 
     return (
         <footer className="enter-message">
-            <input id="newMessage" value={newMessageText} placeholder="Type a message" onChange={e => setNewMessageText(e.target.value)}/>
+            <input
+                id="newMessage"
+                value={newMessageText}
+                placeholder="Type a message"
+                onChange={e => setNewMessageText(e.target.value)}
+                onKeyDown={handleKeyPress} />
             <button onClick={handleSendMessage} className="send">
                 <SendButton />
             </button>
@@ -34,5 +39,11 @@ function MainFooter() {
         }
         setNewMessageText("");
         //scrollMessagesToBottom()
+    }
+
+    function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
+        if (e.key === "Enter") {
+            handleSendMessage();
+        }
     }
 }
