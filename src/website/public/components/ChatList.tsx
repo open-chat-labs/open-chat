@@ -1,6 +1,8 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { Option } from "../model/common";
 import { RootState } from "../reducers";
+import { useSelector } from "react-redux";
+import { UserId } from "../model/users";
 
 import ChatListItem from "./ChatListItem";
 
@@ -15,15 +17,18 @@ function ChatList() {
         let name: string;
         let key: string;
         let isGroup: boolean;
+        let userId: Option<UserId>;
 
         if ("them" in c) {
             name = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
             key = "D-" + c.them.toString();
             isGroup = false;
+            userId = c.them;
         } else {
             name = c.subject;
             key = c.kind === "group" ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
             isGroup = true;
+            userId = null;
         }
 
         let latestMessageText = "";
@@ -44,7 +49,8 @@ function ChatList() {
                 index={index}
                 selected={index === selectedChatIndex}
                 latestMessage={latestMessageText}
-                isGroup={isGroup} />
+                isGroup={isGroup}
+                userId={userId} />
         );
     });
 

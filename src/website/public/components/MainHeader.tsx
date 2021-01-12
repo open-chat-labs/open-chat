@@ -1,7 +1,8 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
-import DefaultAvatar from "../assets/icons/defaultAvatar.svg";
+import DefaultAvatar from "./defaultAvatar";
+import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import { toShortTime } from "../utils/datetimeFunctions";
 
 export default MainHeader;
@@ -16,9 +17,16 @@ function MainHeader() {
 
     const chat = chatsState.chats[chatsState.selectedChatIndex];
 
-    const chatName = "them" in chat
-        ? (userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "")
-        : chat.subject;
+    let icon : JSX.Element;
+    let chatName : string;
+
+    if ("them" in chat) {
+        icon = <DefaultAvatar userId={chat.them} />;
+        chatName = userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "";
+    } else {
+        icon = <GroupChatIcon className="avatar" />;
+        chatName = chat.subject;
+    }
 
     const lastSeen = "updatedDate" in chat
         ? <div className="date">last seen {chat.updatedDate.toDateString()} at {toShortTime(chat.updatedDate)}</div>
@@ -27,7 +35,7 @@ function MainHeader() {
     return (
         <header>
             <button className="avatar-button">
-                <DefaultAvatar className="avatar" />
+                {icon}
             </button>
             <div>
             <div className="name">{chatName}</div>
