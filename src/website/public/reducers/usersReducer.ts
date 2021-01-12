@@ -1,3 +1,4 @@
+import { DirectChat, GroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
 
@@ -65,12 +66,12 @@ export default function(state: State = initialState, event: Event) : State {
             const userDictionary: any = state.userDictionary;
 
             chats.forEach((c => {
-                if (c.kind === "direct") {
+                if (c instanceof DirectChat) {
                     if (!userDictionary.hasOwnProperty(c.them.toString()) &&
                         !unknownUserIds.find(u => u === c.them)) {
                         unknownUserIds.push(c.them);
                     }
-                } else {
+                } else if (c instanceof GroupChat) {
                     c.participants.forEach((p: UserId) => {
                         if (!userDictionary.hasOwnProperty(p.toString()) &&
                             !unknownUserIds.find(u => u === p)) {

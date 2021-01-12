@@ -2,6 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
+import { DirectChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 
@@ -57,7 +58,7 @@ function MessagesList() {
                     mergeWithPrevious
                 };
                 children.push(<MessageSentByMe key={message.id} {...props} />);
-            } else if (chat.kind === "direct") {
+            } else if (chat instanceof DirectChat) {
                 const props = {
                     message: message.text,
                     date: message.date,

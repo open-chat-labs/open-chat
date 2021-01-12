@@ -1,5 +1,5 @@
 import canister from "ic:canisters/chats";
-import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
+import { Chat, DirectChat, GroupChat } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { fromCandid as localMessageFromCandid } from "../candidConverters/localMessage";
@@ -46,11 +46,11 @@ export type GetChatsResponse =
 
 export type Success = {
     kind: "success",
-    chats: ConfirmedChat[],
+    chats: Chat[],
     latestUpdateTimestamp: Option<Timestamp>
 }
 
-function convertToChat(value: any) : ConfirmedChat {
+function convertToChat(value: any) : Chat {
     if (value.hasOwnProperty("Direct")) {
         return convertToDirectChat(value.Direct);
     } else if (value.hasOwnProperty("Group")) {
@@ -62,36 +62,26 @@ function convertToChat(value: any) : ConfirmedChat {
 
 function convertToDirectChat(value: any) : DirectChat {
     const latestMessage = value.latest_messages[0];
-    return {
-        kind: "direct",
-        them: userIdFromCandid(value.them),
-        chatId: chatIdFromCandid(value.id),
-        updatedDate: timestampToDate(value.updated_date),
-        readUpTo: latestMessage.id - value.unread,
-        latestKnownMessageId: latestMessage.id,
-        messagesToDownload: [],
-        messagesDownloading: [],
-        confirmedMessages: value.latest_messages.reverse().map(localMessageFromCandid),
-        unconfirmedMessages: []
-    };
+    return new DirectChat(
+        chatIdFromCandid(value.id),
+        userIdFromCandid(value.them),
+        timestampToDate(value.updated_date),
+        latestMessage.id - value.unread,
+        latestMessage.id,
+        value.latest_messages.reverse().map(localMessageFromCandid));
 }
 
 function convertToGroupChat(value: any) : GroupChat
 {
     const latestMessageId = value.latest_messages.length > 0 ? value.latest_messages[0].id : 0;
-    return {
-        kind: "group",
-        chatId: chatIdFromCandid(value.id),
-        subject: value.subject,
-        updatedDate: timestampToDate(value.updated_date),
-        participants: value.participants.map(userIdFromCandid),
-        readUpTo: latestMessageId - value.unread,
-        latestKnownMessageId: latestMessageId,
-        messagesToDownload: [],
-        messagesDownloading: [],
-        confirmedMessages: value.latest_messages.reverse().map(localMessageFromCandid),
-        unconfirmedMessages: []
-    };
+    return new GroupChat(
+        chatIdFromCandid(value.id),
+        value.subject,
+        value.participants.map(userIdFromCandid),
+        timestampToDate(value.updated_date),
+        latestMessageId - value.unread,
+        latestMessageId,
+        value.latest_messages.reverse().map(localMessageFromCandid));
 }
 
 
