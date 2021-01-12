@@ -1,6 +1,7 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
+use shared::timestamp::Timestamp;
 use crate::domain::chat_list::ChatList;
 use crate::domain::chat::ChatSummary;
 use self::Response::*;
@@ -11,13 +12,13 @@ pub fn query(request: Request) -> Response {
 
     Success(chat_list.get_chats(
         &me,
-        request.unread_only,
+        request.updated_since,
         request.message_count_for_top_chat))
 }
 
 #[derive(Deserialize)]
 pub struct Request {
-    unread_only: bool,
+    updated_since: Option<Timestamp>,
     message_count_for_top_chat: Option<u16>,
 }
 
