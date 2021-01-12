@@ -1,5 +1,5 @@
 import { Chat, ChatId, ConfirmedChat, DirectChat, GroupChat, NewDirectChat, NewGroupChat } from "../model/chats";
-import { Option } from "../model/common";
+import { Option, Timestamp } from "../model/common";
 import { ConfirmedMessage, LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
@@ -32,6 +32,8 @@ import {
     GetMessagesByIdSucceededEvent
 } from "../actions/chats/getMessagesById";
 
+import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
+
 import {
     SEND_MESSAGE_REQUESTED,
     SEND_MESSAGE_SUCCEEDED,
@@ -42,12 +44,14 @@ import {
 
 type State = {
     chats: Chat[],
-    selectedChatIndex: Option<number>
+    selectedChatIndex: Option<number>,
+    chatsSyncedUpTo: Option<Timestamp>
 }
 
 const initialState: State = {
     chats: [],
-    selectedChatIndex: null
+    selectedChatIndex: null,
+    chatsSyncedUpTo: null
 };
 
 type Event =
@@ -61,6 +65,7 @@ type Event =
     GetMessagesByIdRequestedEvent |
     GetMessagesByIdSucceededEvent |
     GetMessagesByIdFailedEvent |
+    GetUpdatedChatsSucceededEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -138,17 +143,18 @@ export default function(state: State = initialState, event: Event) : State {
             return {
                 ...state,
                 chats: chatsCopy,
-                selectedChatIndex: selectedChatIndex
+                selectedChatIndex
             };
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
-            const chats = event.payload;
+            const { chats, latestUpdateTimestamp } = event.payload;
 
             return {
                 ...state,
                 chats,
-                selectedChatIndex: chats.length ? 0 : null
+                selectedChatIndex: chats.length ? 0 : null,
+                chatsSyncedUpTo: latestUpdateTimestamp
             };
         }
 
@@ -203,6 +209,35 @@ export default function(state: State = initialState, event: Event) : State {
             return {
                 ...state,
                 chats: chatsCopy
+            };
+        }
+
+        case GET_UPDATED_CHATS_SUCCEEDED: {
+            const { chats, latestUpdateTimestamp } = event.payload;
+
+            if (!chats.length) {
+                return state;
+            }
+
+            const chatsCopy = state.chats.slice();
+            chats.forEach(c => {
+                const chatIndex = findChatIndex(chatsCopy, c.chatId);
+                if (chatIndex >= 0) {
+                    const chatCopy = { ...chatsCopy[chatIndex] } as ConfirmedChat;
+                    chatsCopy[chatIndex] = chatCopy;
+                    addMessagesToChat(chatCopy, c.confirmedMessages, c.latestKnownMessageId);
+                } else {
+                    chatsCopy.push(c);
+                }
+            });
+
+            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex);
+
+            return {
+                ...state,
+                chats: chatsCopy,
+                selectedChatIndex,
+                chatsSyncedUpTo: latestUpdateTimestamp
             };
         }
 
@@ -434,8 +469,8 @@ function getMessageIdsToFillLatestPage(messages: Message[], confirmedOnServerUpT
     return requiredMessageIds;
 }
 
-function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: number) {
-    const selectedChat = chats[selectedIndex];
+function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: Option<number>) {
+    const selectedChat = selectedIndex !== null ? chats[selectedIndex] : null;
     chats.sort((a, b) => {
         if ("updatedDate" in a) {
             if ("updatedDate" in b) {
@@ -454,7 +489,7 @@ function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: number) {
         // If neither are confirmed then treat them equally (this should be extremely rare)
         return 0;
     });
-    return chats.indexOf(selectedChat);
+    return selectedChat !== null ? chats.indexOf(selectedChat) : 0;
 }
 
 function findChatIndex(chats: Chat[], chatId: ChatId) : number {
