@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
-import DefaultAvatar from "./defaultAvatar";
+import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import { toShortTime } from "../utils/datetimeFunctions";
 

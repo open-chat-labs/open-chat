@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import DefaultAvatar from "./defaultAvatar";
+import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../model/common";

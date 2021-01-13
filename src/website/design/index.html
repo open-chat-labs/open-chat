@@ -7,12 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="../public/index.css">
     <title>Open Chat</title>
-    <script lang="javascript">
-        function scrollMessagesToBottom() {
-            var objDiv = document.getElementById("messages");
-            objDiv.scrollTop = objDiv.scrollHeight;            
-        }
-    </script>
 </head>
 ​
 
@@ -20,9 +14,10 @@
     <section id="app" class="app">        
         <section class="sidebar">
             <header>   
-                <button class="avatar-button">
-                    <img class="avatar" src="matt.jpeg" />
-                </button>
+                <label class="avatar-button">
+                    <img id="myAvatar" class="avatar" data-identicon-value="f62142836846128685a" />
+                    <input style="display:none" type="file" accept=".jpg, .jpeg, .png" onchange="onAvatarFileSelected(event)" />
+                </label>
                 <div>
                     <div class="ddl">
                         <button onclick="toggleDDL('chatsMenu')" class="ddl-button">
@@ -52,6 +47,14 @@
                     </div>
                 </li>
                 <li class="selected">
+                    <img class="avatar" src="matt.jpeg" />
+                    <div class="message-container">
+                        <div class="date">yesterday</div>
+                        <div class="name">Matt Grogan</div>
+                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit s dasds dasdda s</div>
+                    </div>
+                </li>
+                <li>
                     <img class="avatar" src="hamish.jpeg" />
                     <div class="message-container">
                         <div class="date">yesterday</div>
@@ -136,10 +139,10 @@
         <main>
             <header>            
                 <button class="avatar-button">  
-                    <img class="avatar" src="hamish.jpeg" />                  
+                    <img class="avatar" src="matt.jpeg" />                  
                 </button>      
                 <div>   
-                    <div class="name">Hamish Peebles</div>
+                    <div class="name">Matt Grogan</div>
                     <div class="date">last seen today at 15:10</div>
                 </div>
             </header>
@@ -205,6 +208,26 @@
     <script src="../../../node_modules/identicon.js/identicon.js"></script>
 
     <script lang="javascript">
+
+        function scrollMessagesToBottom() {
+            var objDiv = document.getElementById("messages");
+            objDiv.scrollTop = objDiv.scrollHeight;            
+        }
+
+        function onAvatarFileSelected(event) {
+            let files = event.target.files;
+
+            if (files && files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document
+                        .getElementById("myAvatar")
+                        .setAttribute("src", e.target.result);
+                }
+                reader.readAsDataURL(files[0]);
+            }
+        }
+
         function generateIdenticons(id, user) {
 
             let images = document.querySelectorAll('[data-identicon-value]');
@@ -218,10 +241,6 @@
             }
         }
 
-        generateIdenticons();
-    </script>
-
-    <script>
         function toggleDDL(id) {
             document.getElementById(id).classList.toggle("show");
         }
@@ -238,6 +257,9 @@
                 }
             }
         }
+
+        generateIdenticons();
+
     </script>
 </body>
 ​

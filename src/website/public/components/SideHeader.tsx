@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import SideHeaderMenu from "./SideHeaderMenu";
-import DefaultAvatar from "./defaultAvatar";
+import MyAvatar from "./MyAvatar";
 import SearchIcon from "../assets/icons/search.svg";
 
 export default SideHeader;
@@ -17,9 +17,7 @@ function SideHeader() {
     return (
         <>
             <header>
-                <button className="avatar-button">
-                    <DefaultAvatar userId={usersState.me?.userId ?? null} />
-                </button>
+                <MyAvatar />    
                 <div>
                     <SideHeaderMenu text={text} />
                 </div>
