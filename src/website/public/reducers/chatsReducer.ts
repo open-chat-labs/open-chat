@@ -83,10 +83,13 @@ type Event =
 export default function(state: State = initialState, event: Event) : State {
     switch (event.type) {
         case CHAT_SELECTED: {
-            const chat = state.chats[event.payload];
+            const selectedChatIndex = event.payload;
+            let chat = state.chats[selectedChatIndex];
             let chats = state.chats;
             if ("chatId" in chat) {
                 const chatCopy = chat.clone();
+                chats = chats.slice();
+                chats[selectedChatIndex] = chatCopy;
                 chatCopy.messages = chatCopy.messages.slice();
                 chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
                 chatCopy.earliestConfirmedMessageId = chatCopy.latestConfirmedMessageId - PAGE_SIZE;
@@ -95,8 +98,8 @@ export default function(state: State = initialState, event: Event) : State {
 
             return {
                 ...state,
-                chats: chats,
-                selectedChatIndex: event.payload
+                chats,
+                selectedChatIndex
             };
         }
 

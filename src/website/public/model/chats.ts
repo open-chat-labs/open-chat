@@ -80,8 +80,9 @@ abstract class ConfirmedChatBase {
         } as UnconfirmedMessage);
     }
 
-    get earliestConfirmedMessageId() : number {
-        return this.#earliestConfirmedMessageId ?? 0;
+    queueMissingMessagesForDownload = () : void => {
+        const missingMessages = this.messages.filter(m => m.kind === "remote").map(m => (m as RemoteMessage).id);
+        setFunctions.unionWith(this.messagesToDownload, missingMessages);
     }
 
     set earliestConfirmedMessageId(value: number) {
@@ -100,10 +101,6 @@ abstract class ConfirmedChatBase {
         this.#earliestConfirmedMessageId = value;
     }
 
-    get latestConfirmedMessageId() : number {
-        return this.#latestConfirmedMessageId ?? 0;
-    }
-
     set latestConfirmedMessageId(value: number) {
         if (!this.#latestConfirmedMessageId) {
             this.messages.splice(0, 0, { kind: "remote", id: value });
@@ -120,7 +117,7 @@ abstract class ConfirmedChatBase {
         this.#latestConfirmedMessageId = value;
     }
 
-    removeMatchingUnconfirmedMessage(text: string) {
+    private removeMatchingUnconfirmedMessage(text: string) {
         let indexOfMatch: number = -1;
         for (let index = this.#minimumUnconfirmedMessageIndex; index < this.messages.length; index++) {
             const message = this.messages[index];
@@ -137,18 +134,13 @@ abstract class ConfirmedChatBase {
         }
     }
 
-    queueMissingMessagesForDownload = () : void => {
-        const missingMessages = this.messages.filter(m => m.kind === "remote").map(m => (m as RemoteMessage).id);
-        setFunctions.unionWith(this.messagesToDownload, missingMessages);
-    }
-
-    calculateEarliestConfirmedMessageId = () : Option<number> => {
+    private calculateEarliestConfirmedMessageId = () : Option<number> => {
         return this.messages.length && this.messages[0].kind !== "unconfirmed"
             ? this.messages[0].id
             : null;
     }
 
-    calculateLatestConfirmedMessageId = () : Option<number> => {
+    private calculateLatestConfirmedMessageId = () : Option<number> => {
         for (let index = this.messages.length - 1; index >= 0; index--) {
             const message = this.messages[index];
             if (message.kind !== "unconfirmed") {
@@ -158,30 +150,12 @@ abstract class ConfirmedChatBase {
         return null;
     }
 
-    calculateLowestUnconfirmedExpectedMessageId = (startingFromId: number) : Option<number> => {
-        const startingIndex = Math.max(this.getMessageIndex(startingFromId), 0);
-        for (let index = startingIndex; index < this.messages.length; index++) {
-            const message = this.messages[index];
-            if (message.kind === "unconfirmed") {
-                return this.getMessageIdFromIndex(index);
-            }
-        }
-        return null;
-    }
-
-    getMessageIndex = (messageId: number) : number => {
+    private getMessageIndex = (messageId: number) : number => {
         const lowestMessageId = this.messages.length && this.messages[0].kind !== "unconfirmed"
             ? this.messages[0].id
             : messageId;
 
         return messageId - lowestMessageId;
-    }
-
-    getMessageIdFromIndex = (index: number) : number => {
-        if (!this.#earliestConfirmedMessageId) {
-            return 0;
-        }
-        return this.#earliestConfirmedMessageId + index;
     }
 }
 
