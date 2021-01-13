@@ -68,7 +68,7 @@ export default function(username: string) {
 }
 
 function chatAlreadyExists(chats: Chat[], userId: UserId) : boolean {
-    const chat = chats.find(c => c.kind === "direct" && c.them === userId);
+    const chat = chats.find(c => "them" in c && c.them === userId);
 
     return Boolean(chat);
 }

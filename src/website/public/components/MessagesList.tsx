@@ -2,6 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
+import { DirectChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 
@@ -31,13 +32,26 @@ function MessagesList() {
     let lastSeenDate: Option<Date> = null;
     let lastSeenDayString: Option<string> = null;
     let prevMessageSender: Option<UserId> = null;
-    if ("confirmedMessages" in chat) {
-        for (let i = 0; i < chat.confirmedMessages.length; i++) {
-            const message = chat.confirmedMessages[i];
-            if (message.kind === "remote") {
-                continue;
-            }
+    for (let i = 0; i < chat.messages.length; i++) {
+        const message = chat.messages[i];
+        if (message.kind === "remote") {
+            continue;
+        } else if (message.kind === "unconfirmed") {
+            const now = new Date();
 
+            const mergeWithPrevious: boolean =
+                lastSeenDate !== null &&
+                (prevMessageSender === null || prevMessageSender === myUserId) &&
+                now.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
+
+            const props = {
+                message: message.text,
+                mergeWithPrevious
+            };
+            children.push(<UnconfirmedMessage key={"u-" + i} {...props} />);
+            prevMessageSender = myUserId;
+            lastSeenDate = now;
+        } else {
             const dayString = message.date.toDateString();
             if (lastSeenDayString === null || lastSeenDayString !== dayString) {
                 children.push(<DayChangeMarker key={dayString} date={message.date}/>);
@@ -57,7 +71,7 @@ function MessagesList() {
                     mergeWithPrevious
                 };
                 children.push(<MessageSentByMe key={message.id} {...props} />);
-            } else if (chat.kind === "direct") {
+            } else if (chat instanceof DirectChat) {
                 const props = {
                     message: message.text,
                     date: message.date,
@@ -79,26 +93,6 @@ function MessagesList() {
             lastSeenDayString = dayString;
             prevMessageSender = message.sender;
         }
-    }
-
-    for (let i = 0; i < chat.unconfirmedMessages.length; i++) {
-        const message = chat.unconfirmedMessages[i];
-
-        const now = new Date();
-
-        const mergeWithPrevious: boolean =
-            lastSeenDate !== null &&
-            (prevMessageSender === null || prevMessageSender === myUserId) &&
-            now.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
-
-        const props = {
-            message: message.text,
-            mergeWithPrevious
-        };
-        children.push(<UnconfirmedMessage key={"u-" + i} {...props} />);
-
-        lastSeenDate = now;
-        prevMessageSender = myUserId;
     }
 
     return (

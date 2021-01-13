@@ -19,6 +19,5 @@ export type RemoteMessage = {
 
 export type UnconfirmedMessage = {
     kind: "unconfirmed",
-    id: Symbol,
     text: string
 }
