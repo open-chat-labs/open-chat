@@ -1,6 +1,7 @@
 import { DirectChat, GroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
+import * as setFunctions from "../utils/setFunctions";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -67,15 +68,13 @@ export default function(state: State = initialState, event: Event) : State {
 
             chats.forEach((c => {
                 if (c instanceof DirectChat) {
-                    if (!userDictionary.hasOwnProperty(c.them.toString()) &&
-                        !unknownUserIds.find(u => u === c.them)) {
-                        unknownUserIds.push(c.them);
+                    if (!userDictionary.hasOwnProperty(c.them)) {
+                        setFunctions.add(unknownUserIds, c.them);
                     }
                 } else if (c instanceof GroupChat) {
                     c.participants.forEach((p: UserId) => {
-                        if (!userDictionary.hasOwnProperty(p.toString()) &&
-                            !unknownUserIds.find(u => u === p)) {
-                            unknownUserIds.push(p);
+                        if (!userDictionary.hasOwnProperty(p)) {
+                            setFunctions.add(unknownUserIds, p);
                         }
                     })
                 }
@@ -109,10 +108,7 @@ export default function(state: State = initialState, event: Event) : State {
             const userDictionary: any = { ...state.userDictionary };
 
             users.forEach(user => {
-                const index = state.unknownUserIds.findIndex(u => u === user.userId);
-                if (index >= 0) {
-                    unknownUserIds.splice(index, 1);
-                }
+                setFunctions.remove(unknownUserIds, user.userId);
                 userDictionary[user.userId.toString()] = user;
             });
 
@@ -156,12 +152,7 @@ export default function(state: State = initialState, event: Event) : State {
             const unknownUserIds = [...state.unknownUserIds];
             const userDictionary: any = { ...state.userDictionary };
 
-            const index = unknownUserIds.findIndex(u => u === user.userId);
-
-            if (index >= 0) {
-                unknownUserIds.splice(index, 1);
-            }
-
+            setFunctions.remove(unknownUserIds, user.userId);
             userDictionary[user.userId.toString()] = user;
 
             return {
