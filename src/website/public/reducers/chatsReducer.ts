@@ -211,7 +211,11 @@ export default function(state: State = initialState, event: Event) : State {
 
             const chatsCopy = state.chats.slice();
             chats.forEach(c => {
-                const chatIndex = findChatIndex(chatsCopy, c.chatId);
+                let chatIndex = findChatIndex(chatsCopy, c.chatId);
+                if (chatIndex < 0 && c instanceof DirectChat) {
+                    chatIndex = findDirectChatIndex(chatsCopy, c.them);
+                }
+
                 if (chatIndex >= 0) {
                     const chatCopy = (chatsCopy[chatIndex] as ConfirmedChat).clone();
                     chatsCopy[chatIndex] = chatCopy;
@@ -241,8 +245,6 @@ export default function(state: State = initialState, event: Event) : State {
                 chatIndex = findChatIndex(chatsCopy, payload.chatId);
             } else if ("userId" in payload) {
                 chatIndex = findDirectChatIndex(chatsCopy, payload.userId);
-            } else if ("unconfirmedChatId" in payload) {
-                chatIndex = findNewGroupChatIndex(chatsCopy, payload.unconfirmedChatId);
             }
 
             const chatCopy = chatsCopy[chatIndex].clone();
@@ -321,12 +323,12 @@ function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: Option<nu
                 return b.updatedDate.getTime() - a.updatedDate.getTime();
             }
             // If only 'a' is confirmed, then 'b' should appear first
-            return -1;
+            return 1;
         }
 
         // If only 'b' is confirmed, then 'a' should appear first
         if ("updatedDate" in b) {
-            return 1;
+            return -1;
         }
 
         // If neither are confirmed then treat them equally (this should be extremely rare)
@@ -341,8 +343,4 @@ function findChatIndex(chats: Chat[], chatId: ChatId) : number {
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {
     return chats.findIndex(c => "them" in c && userId === c.them);
-}
-
-function findNewGroupChatIndex(chats: Chat[], id: Symbol) : number {
-    return chats.findIndex(c => c instanceof NewGroupChat && id === c.id);
 }
