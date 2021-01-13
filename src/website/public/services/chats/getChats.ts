@@ -1,5 +1,5 @@
 import canister from "ic:canisters/chats";
-import { Chat, DirectChat, GroupChat } from "../../model/chats";
+import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { fromCandid as localMessageFromCandid } from "../candidConverters/localMessage";
@@ -46,11 +46,11 @@ export type GetChatsResponse =
 
 export type Success = {
     kind: "success",
-    chats: Chat[],
+    chats: ConfirmedChat[],
     latestUpdateTimestamp: Option<Timestamp>
 }
 
-function convertToChat(value: any) : Chat {
+function convertToChat(value: any) : ConfirmedChat {
     if (value.hasOwnProperty("Direct")) {
         return convertToDirectChat(value.Direct);
     } else if (value.hasOwnProperty("Group")) {
