@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
-import { useDispatch } from "react-redux";
-
-import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
-
-import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
+import SideHeaderMenu from "./SideHeaderMenu";
 import DefaultAvatar from "./defaultAvatar";
 import SearchIcon from "../assets/icons/search.svg";
 
@@ -17,7 +13,6 @@ function SideHeader() {
     const usersState = useSelector((state: RootState) => state.usersState);
     const [text, setText] = useState("");
     const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
-    const dispatch = useDispatch();
 
     return (
         <>
@@ -26,10 +21,7 @@ function SideHeader() {
                     <DefaultAvatar userId={usersState.me?.userId ?? null} />
                 </button>
                 <div>
-                    <button className="add-chat" onClick={_ => dispatch(setupNewDirectChat(text))}>Add chat</button>
-                    <button className="add-group">
-                        <CreateGroupChatIcon />
-                    </button>
+                    <SideHeaderMenu text={text} />
                 </div>
             </header>
             <div className="search">

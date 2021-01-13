@@ -191,8 +191,9 @@ header {
     padding: 6px;
 }
 
-.ddl-button > svg {
+.ddl-button-svg {
     vertical-align: middle;
+    pointer-events: none;
 }
 
 .ddl-button:hover, .ddl-button:focus {
