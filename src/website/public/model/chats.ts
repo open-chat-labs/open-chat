@@ -24,13 +24,15 @@ abstract class ConfirmedChatBase {
         chatId: ChatId,
         updatedDate: Date,
         readUpTo: number,
-        messages: Message[]) {
+        messages: Message[],
+        messagesToDownload: number[] = [],
+        messagesDownloading: number[] = []) {
         this.chatId = chatId;
         this.updatedDate = updatedDate;
         this.readUpTo = readUpTo;
         this.messages = messages;
-        this.messagesToDownload = [];
-        this.messagesDownloading = [];
+        this.messagesToDownload = messagesToDownload;
+        this.messagesDownloading = messagesDownloading;
         this.#earliestConfirmedMessageId = this.calculateEarliestConfirmedMessageId();
         this.#latestConfirmedMessageId = this.calculateLatestConfirmedMessageId();
         this.#minimumUnconfirmedMessageIndex = 0;
@@ -191,8 +193,10 @@ export class DirectChat extends ConfirmedChatBase {
         them: UserId,
         updatedDate: Date,
         readUpTo: number = 0,
-        messages: Message[] = []) {
-        super(chatId, updatedDate, readUpTo, messages);
+        messages: Message[] = [],
+        messagesToDownload: number[] = [],
+        messagesDownloading: number[] = []) {
+        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading);
         this.them = them;
     }
 
@@ -202,7 +206,9 @@ export class DirectChat extends ConfirmedChatBase {
             this.them,
             this.updatedDate,
             this.readUpTo,
-            this.messages);
+            this.messages,
+            this.messagesToDownload,
+            this.messagesDownloading);
     }
 }
 
@@ -216,8 +222,10 @@ export class GroupChat extends ConfirmedChatBase {
         participants: UserId[],
         updatedDate: Date,
         readUpTo: number = 0,
-        messages: Message[] = []) {
-        super(chatId, updatedDate, readUpTo, messages);
+        messages: Message[] = [],
+        messagesToDownload: number[] = [],
+        messagesDownloading: number[] = []) {
+        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading);
         this.subject = subject;
         this.participants = participants;
     }
@@ -229,7 +237,9 @@ export class GroupChat extends ConfirmedChatBase {
             this.participants,
             this.updatedDate,
             this.readUpTo,
-            this.messages);
+            this.messages,
+            this.messagesToDownload,
+            this.messagesDownloading);
     }
 }
 
