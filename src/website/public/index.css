@@ -153,25 +153,51 @@ header {
     align-items: center;
 }
 
-.sidebar header button.add-chat {
-    padding: 8px;
-    margin-right: 2px;
-    border-radius: 15px;
-    background-color: transparent;
+.ddl {
+    position: relative;
+    display: inline-block;  
 }
 
-.sidebar header button.add-group {
-    background-color: transparent;
+.ddl-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    right: 0;
+}
+
+.ddl-content a {
+    font-size: 14px;
+    color: #606060;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.ddl-content a:hover {
+    background-color: #f0f0f0;
+}
+
+.show {
+    display: block;
+}
+
+.ddl-button {
+    color: #919191;
     border-radius: 50%;
+    padding: 6px;
 }
 
-.sidebar header > div button:hover {
+.ddl-button-svg {
+    vertical-align: middle;
+    pointer-events: none;
+}
+
+.ddl-button:hover, .ddl-button:focus {
     background-color: #e0e0e0;
-}
-
-.sidebar header button.add-group svg {
-    margin-right: 8px;
-    color: #41398b;
 }
 
 main header {
