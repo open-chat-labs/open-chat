@@ -185,6 +185,10 @@ header {
     display: block;
 }
 
+.hide {
+    display: none;
+}
+
 .ddl-button {
     color: #919191;
     border-radius: 50%;

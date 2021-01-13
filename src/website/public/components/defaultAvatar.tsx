@@ -20,7 +20,7 @@ function DefaultAvatar(props: Props) : JSX.Element {
 
         const data = new Identicon(hash, { margin: 0, format: 'svg' }).toString();
         
-        icon = <img className="avatar" src={"data:image/svg+xml;base64," + data} />;
+        icon = <img id="myAvatar" className="avatar" src={"data:image/svg+xml;base64," + data} />;
     } else {
         icon = <UnknownUserAvatar className="avatar" />;
     }
