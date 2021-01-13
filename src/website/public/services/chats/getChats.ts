@@ -67,7 +67,6 @@ function convertToDirectChat(value: any) : DirectChat {
         userIdFromCandid(value.them),
         timestampToDate(value.updated_date),
         latestMessage.id - value.unread,
-        latestMessage.id,
         value.latest_messages.reverse().map(localMessageFromCandid));
 }
 
@@ -80,7 +79,6 @@ function convertToGroupChat(value: any) : GroupChat
         value.participants.map(userIdFromCandid),
         timestampToDate(value.updated_date),
         latestMessageId - value.unread,
-        latestMessageId,
         value.latest_messages.reverse().map(localMessageFromCandid));
 }
 

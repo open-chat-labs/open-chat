@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
 import { ChatId, NewGroupChat } from "../../model/chats";
+import { UnconfirmedMessage } from "../../model/messages";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
 
@@ -52,7 +53,8 @@ export default function(subject: string, users: UserId[]) {
         // Messages may have been added on the UI before the chat was confirmed on the back end. These messages will
         // have been added to the 'chat.unconfirmedMessages' array. So we need to read the values out of this array,
         // then apply the state change to confirm the chat, then send those messages using the new chatId.
-        const messagesToSend = getState().chatsState.chats.find(c => c instanceof NewGroupChat && c.id === tempId)!.unconfirmedMessages;
+        const chat = getState().chatsState.chats.find(c => c instanceof NewGroupChat && c.id === tempId)!
+        const messagesToSend = chat.messages as UnconfirmedMessage[];
 
         dispatch(outcomeEvent);
 

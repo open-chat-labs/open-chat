@@ -1,4 +1,5 @@
-import { ConfirmedMessage, RemoteMessage, UnconfirmedMessage } from "./messages";
+import { Option } from "./common";
+import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
 
@@ -12,130 +13,173 @@ abstract class ConfirmedChatBase {
     chatId: ChatId;
     updatedDate: Date;
     readUpTo: number;
-    latestKnownMessageId: number;
-    confirmedMessages: ConfirmedMessage[];
-    unconfirmedMessages: UnconfirmedMessage[];
+    messages: Message[];
     messagesToDownload: number[];
     messagesDownloading: number[];
+    #earliestConfirmedMessageId: Option<number>;
+    #latestConfirmedMessageId: Option<number>;
+    #minimumUnconfirmedMessageIndex: number;
 
     protected constructor(
         chatId: ChatId,
         updatedDate: Date,
         readUpTo: number,
-        latestKnownMessageId: number,
-        confirmedMessages: ConfirmedMessage[],
-        unconfirmedMessages: UnconfirmedMessage[]) {
+        messages: Message[]) {
         this.chatId = chatId;
         this.updatedDate = updatedDate;
         this.readUpTo = readUpTo;
-        this.latestKnownMessageId = latestKnownMessageId;
-        this.confirmedMessages = confirmedMessages;
-        this.unconfirmedMessages = unconfirmedMessages;
+        this.messages = messages;
         this.messagesToDownload = [];
         this.messagesDownloading = [];
+        this.#earliestConfirmedMessageId = this.calculateEarliestConfirmedMessageId();
+        this.#latestConfirmedMessageId = this.calculateLatestConfirmedMessageId();
+        this.#minimumUnconfirmedMessageIndex = 0;
     }
 
     abstract clone() : ConfirmedChat;
 
-    addMessage(message: ConfirmedMessage) {
+    addMessage = (message: LocalMessage) : void => {
         this.addMessages([message]);
     }
 
-    addMessages(messages: ConfirmedMessage[], latestKnownMessageId?: number) : void {
+    addMessages = (messages: LocalMessage[]) : void => {
         // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
         messages.sort((a, b) => a.id - b.id);
 
-        const chat = this;
-        const lowestCurrentMessageId = chat.confirmedMessages.length ? chat.confirmedMessages[0].id : null;
-        const lowestNewMessageId = messages[0].id;
+        // These 2 setters will ensure the messages array covers the full range of ids from the new messages
+        this.earliestConfirmedMessageId = messages[0].id;
+        this.latestConfirmedMessageId = messages[messages.length - 1].id;
 
-        if (chat.messagesToDownload.length) {
-            messages
-                .filter(m => m.kind === "local")
-                .forEach(m => setFunctions.remove(chat.messagesToDownload, m.id));
-        }
-
-        let indexWhereNoLongerPrepending = 0;
-        if (lowestCurrentMessageId && lowestNewMessageId < lowestCurrentMessageId) {
-            // If we reach here, then we need to prepend at least 1 message to the current array
-            const shiftRequired = lowestCurrentMessageId - lowestNewMessageId;
-            const toPrepend: ConfirmedMessage[] = [];
-            for (let i = 0; i < messages.length && messages[i].id < lowestCurrentMessageId; i++) {
-                const message = messages[i];
-                toPrepend[message.id - lowestCurrentMessageId + shiftRequired] = message;
-                indexWhereNoLongerPrepending++;
-            }
-
-            // Check for gaps in the array of messages, if found, plug them with RemoteMessages and queue them for download
-            for (let id = lowestNewMessageId + 1; id < lowestCurrentMessageId; id++) {
-                const index = id - lowestNewMessageId;
-                if (!messages[index]) {
-                    chat.confirmedMessages[index] = {
-                        kind: "remote",
-                        id: id
-                    } as RemoteMessage;
-
-                    setFunctions.add(chat.messagesToDownload, id);
-                }
-            }
-
-            chat.confirmedMessages.unshift(...toPrepend);
-        }
-
-        const lowestMessageId = lowestCurrentMessageId
-            ? Math.min(lowestCurrentMessageId, lowestNewMessageId)
-            : lowestNewMessageId;
-
-        // Now handle the later messages
-        for (let index = indexWhereNoLongerPrepending; index < messages.length; index++) {
+        for (let index = 0; index < messages.length; index++) {
             const message = messages[index];
-            const messageIndex = message.id - lowestMessageId;
+            const messageIndex = this.getMessageIndex(message.id);
 
-            if (messageIndex < chat.confirmedMessages.length) {
-                // This is the only case where we overwrite an existing message, so first check if the existing message is
-                // 'local'. If it is we would be replacing it with a message that is the same or worse, so we do nothing.
-                if (chat.confirmedMessages[messageIndex].kind !== "local") {
-                    chat.confirmedMessages[messageIndex] = message;
-                }
-            } else if (messageIndex === chat.confirmedMessages.length) {
-                chat.confirmedMessages.push(message);
-            } else {
-                // If we reach here then some messages are missing so we need to fill the gaps with RemoteMessages and mark
-                // them to be downloaded
-                const firstMissingMessageId = chat.confirmedMessages[chat.confirmedMessages.length - 1].id + 1;
-                const lastMissingMessageId = message.id - 1;
-                const indexToInsertAt = chat.confirmedMessages.length;
-                addMissingMessages(firstMissingMessageId, lastMissingMessageId, indexToInsertAt);
-                chat.confirmedMessages.push(message);
+            const currentMessage = this.messages[messageIndex];
+            if (currentMessage.kind === "local") {
+                // If the current message is 'local' then this message has already been added
+                continue;
             }
+            this.messages[messageIndex] = message;
 
-            if (message.kind === "local") {
-                if (chat.updatedDate < message.date) {
-                    chat.updatedDate = message.date;
-                }
-            }
+            this.removeMatchingUnconfirmedMessage(message.text);
 
-            if (chat.latestKnownMessageId < message.id) {
-                chat.latestKnownMessageId = message.id;
+            if (this.updatedDate < message.date) {
+                this.updatedDate = message.date;
             }
         }
 
-        // If after adding these messages the latestKnownMessageId value we have is still lower than what we got from the
-        // server then we need to add some missing messages and mark them to be downloaded.
-        if (latestKnownMessageId && chat.latestKnownMessageId < latestKnownMessageId) {
-            addMissingMessages(chat.latestKnownMessageId + 1, latestKnownMessageId, chat.latestKnownMessageId + 1);
-            chat.latestKnownMessageId = latestKnownMessageId;
-        }
+        this.queueMissingMessagesForDownload();
+    }
 
-        function addMissingMessages(fromId: number, toId: number, index: number) {
-            const missingMessages: RemoteMessage[] = [];
-            for (let id = fromId; id <= toId; id++) {
-                missingMessages.push({ kind: "remote", id });
-                setFunctions.add(chat.messagesToDownload, id);
+    addUnconfirmedMessage = (message: string) : void => {
+        this.messages.push({
+            kind: "unconfirmed",
+            text: message
+        } as UnconfirmedMessage);
+    }
+
+    get earliestConfirmedMessageId() : number {
+        return this.#earliestConfirmedMessageId ?? 0;
+    }
+
+    set earliestConfirmedMessageId(value: number) {
+        if (!this.#earliestConfirmedMessageId) {
+            this.messages.splice(0, 0, { kind: "remote", id: value });
+            this.#latestConfirmedMessageId = value;
+        } else if (value >= this.#earliestConfirmedMessageId) {
+            return;
+        } else {
+            const toPrepend: RemoteMessage[] = [];
+            for (let id = value; id < this.#earliestConfirmedMessageId; id++) {
+                toPrepend.push({kind: "remote", id});
             }
-
-            chat.confirmedMessages.splice(index, 0, ...missingMessages);
+            this.messages.splice(0, 0, ...toPrepend);
         }
+        this.#earliestConfirmedMessageId = value;
+    }
+
+    get latestConfirmedMessageId() : number {
+        return this.#latestConfirmedMessageId ?? 0;
+    }
+
+    set latestConfirmedMessageId(value: number) {
+        if (!this.#latestConfirmedMessageId) {
+            this.messages.splice(0, 0, { kind: "remote", id: value });
+            this.#earliestConfirmedMessageId = value;
+        } else if (value <= this.#latestConfirmedMessageId) {
+            return;
+        } else {
+            const toAdd: RemoteMessage[] = [];
+            for (let id = this.#latestConfirmedMessageId + 1; id <= value; id++) {
+                toAdd.push({ kind: "remote", id });
+            }
+            this.messages.splice(this.getMessageIndex(this.#latestConfirmedMessageId + 1), 0, ...toAdd);
+        }
+        this.#latestConfirmedMessageId = value;
+    }
+
+    removeMatchingUnconfirmedMessage(text: string) {
+        let indexOfMatch: number = -1;
+        for (let index = this.#minimumUnconfirmedMessageIndex; index < this.messages.length; index++) {
+            const message = this.messages[index];
+            if (message.kind !== "unconfirmed") {
+                this.#minimumUnconfirmedMessageIndex = index;
+            } else if (message.text === text) {
+                indexOfMatch = index;
+                break;
+            }
+        }
+
+        if (indexOfMatch >= 0) {
+            this.messages.splice(indexOfMatch, 1);
+        }
+    }
+
+    queueMissingMessagesForDownload = () : void => {
+        const missingMessages = this.messages.filter(m => m.kind === "remote").map(m => (m as RemoteMessage).id);
+        setFunctions.unionWith(this.messagesToDownload, missingMessages);
+    }
+
+    calculateEarliestConfirmedMessageId = () : Option<number> => {
+        return this.messages.length && this.messages[0].kind !== "unconfirmed"
+            ? this.messages[0].id
+            : null;
+    }
+
+    calculateLatestConfirmedMessageId = () : Option<number> => {
+        for (let index = this.messages.length - 1; index >= 0; index--) {
+            const message = this.messages[index];
+            if (message.kind !== "unconfirmed") {
+                return message.id;
+            }
+        }
+        return null;
+    }
+
+    calculateLowestUnconfirmedExpectedMessageId = (startingFromId: number) : Option<number> => {
+        const startingIndex = Math.max(this.getMessageIndex(startingFromId), 0);
+        for (let index = startingIndex; index < this.messages.length; index++) {
+            const message = this.messages[index];
+            if (message.kind === "unconfirmed") {
+                return this.getMessageIdFromIndex(index);
+            }
+        }
+        return null;
+    }
+
+    getMessageIndex = (messageId: number) : number => {
+        const lowestMessageId = this.messages.length && this.messages[0].kind !== "unconfirmed"
+            ? this.messages[0].id
+            : messageId;
+
+        return messageId - lowestMessageId;
+    }
+
+    getMessageIdFromIndex = (index: number) : number => {
+        if (!this.#earliestConfirmedMessageId) {
+            return 0;
+        }
+        return this.#earliestConfirmedMessageId + index;
     }
 }
 
@@ -147,10 +191,8 @@ export class DirectChat extends ConfirmedChatBase {
         them: UserId,
         updatedDate: Date,
         readUpTo: number = 0,
-        latestKnownMessageId: number = 0,
-        confirmedMessages: ConfirmedMessage[] = [],
-        unconfirmedMessages: UnconfirmedMessage[] = []) {
-        super(chatId, updatedDate, readUpTo, latestKnownMessageId, confirmedMessages, unconfirmedMessages);
+        messages: Message[] = []) {
+        super(chatId, updatedDate, readUpTo, messages);
         this.them = them;
     }
 
@@ -160,9 +202,7 @@ export class DirectChat extends ConfirmedChatBase {
             this.them,
             this.updatedDate,
             this.readUpTo,
-            this.latestKnownMessageId,
-            this.confirmedMessages,
-            this.unconfirmedMessages);
+            this.messages);
     }
 }
 
@@ -176,10 +216,8 @@ export class GroupChat extends ConfirmedChatBase {
         participants: UserId[],
         updatedDate: Date,
         readUpTo: number = 0,
-        latestKnownMessageId: number = 0,
-        confirmedMessages: ConfirmedMessage[] = [],
-        unconfirmedMessages: UnconfirmedMessage[] = []) {
-        super(chatId, updatedDate, readUpTo, latestKnownMessageId, confirmedMessages, unconfirmedMessages);
+        messages: Message[] = []) {
+        super(chatId, updatedDate, readUpTo, messages);
         this.subject = subject;
         this.participants = participants;
     }
@@ -191,32 +229,37 @@ export class GroupChat extends ConfirmedChatBase {
             this.participants,
             this.updatedDate,
             this.readUpTo,
-            this.latestKnownMessageId,
-            this.confirmedMessages,
-            this.unconfirmedMessages);
+            this.messages);
     }
 }
 
 abstract class UnconfirmedChatBase {
-    unconfirmedMessages: UnconfirmedMessage[];
+    messages: UnconfirmedMessage[];
 
-    protected constructor(unconfirmedMessages: UnconfirmedMessage[]) {
-        this.unconfirmedMessages = unconfirmedMessages;
+    protected constructor(messages: UnconfirmedMessage[]) {
+        this.messages = messages;
     }
 
     abstract clone() : UnconfirmedChat;
+
+    addUnconfirmedMessage = (message: string) => {
+        this.messages.push({
+            kind: "unconfirmed",
+            text: message
+        } as UnconfirmedMessage);
+    }
 }
 
 export class NewDirectChat extends UnconfirmedChatBase {
     them: UserId;
 
-    constructor(them: UserId, unconfirmedMessages: UnconfirmedMessage[] = []) {
-        super(unconfirmedMessages);
+    constructor(them: UserId, messages: UnconfirmedMessage[] = []) {
+        super(messages);
         this.them = them;
     }
 
     clone(): NewDirectChat {
-        return new NewDirectChat(this.them, this.unconfirmedMessages);
+        return new NewDirectChat(this.them, this.messages);
     }
 }
 
@@ -225,14 +268,14 @@ export class NewGroupChat extends UnconfirmedChatBase {
     subject: string;
     participants: UserId[];
 
-    constructor(id: Symbol, subject: string, participants: UserId[], unconfirmedMessages: UnconfirmedMessage[] = []) {
-        super(unconfirmedMessages);
+    constructor(id: Symbol, subject: string, participants: UserId[], messages: UnconfirmedMessage[] = []) {
+        super(messages);
         this.id = id;
         this.subject = subject;
         this.participants = participants;
     }
 
     clone(): NewGroupChat {
-        return new NewGroupChat(this.id, this.subject, this.participants, this.unconfirmedMessages);
+        return new NewGroupChat(this.id, this.subject, this.participants, this.messages);
     }
 }

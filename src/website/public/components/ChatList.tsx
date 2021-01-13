@@ -34,12 +34,11 @@ function ChatList() {
         }
 
         let latestMessageText = "";
-        if (c.unconfirmedMessages.length) {
-            latestMessageText = c.unconfirmedMessages[c.unconfirmedMessages.length - 1].text;
-        } else if ("confirmedMessages" in c && c.confirmedMessages.length) {
-            const latestMessage = c.confirmedMessages[c.confirmedMessages.length - 1];
-            if ("text" in latestMessage) {
-                latestMessageText = latestMessage.text;
+        for (let i = c.messages.length - 1; i >= 0; i--) {
+            const message = c.messages[i];
+            if ("text" in message) {
+                latestMessageText = message.text;
+                break;
             }
         }
 
