@@ -9,7 +9,6 @@ import DayChangeMarker from "./messages/DayChangeMarker";
 import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
 import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
 import MessageSentByMe from "./messages/MessageSentByMe";
-import RemoteMessage from "./messages/RemoteMessage";
 import UnconfirmedMessage from "./messages/UnconfirmedMessage";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -35,51 +34,50 @@ function MessagesList() {
     if ("confirmedMessages" in chat) {
         for (let i = 0; i < chat.confirmedMessages.length; i++) {
             const message = chat.confirmedMessages[i];
-            if (message.kind === "local") {
-                const dayString = message.date.toDateString();
-                if (lastSeenDayString === null || lastSeenDayString !== dayString) {
-                    children.push(<DayChangeMarker key={dayString} date={message.date}/>);
-                }
-
-                const mergeWithPrevious: boolean =
-                    lastSeenDate !== null &&
-                    message.sender === prevMessageSender &&
-                    message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
-
-                const sentByMe = message.sender === myUserId;
-                if (sentByMe) {
-                    const props = {
-                        message: message.text,
-                        date: message.date,
-                        confirmed: true,
-                        mergeWithPrevious
-                    };
-                    children.push(<MessageSentByMe key={message.id} {...props} />);
-                } else if (chat.kind === "direct") {
-                    const props = {
-                        message: message.text,
-                        date: message.date,
-                        mergeWithPrevious
-                    };
-                    children.push(<DirectMessageSentByThem key={message.id} {...props} />);
-                } else {
-                    const props = {
-                        message: message.text,
-                        date: message.date,
-                        senderUsername: usersDictionary.hasOwnProperty(message.sender)
-                            ? usersDictionary[message.sender]
-                            : "",
-                        mergeWithPrevious
-                    };
-                    children.push(<GroupMessageSentByElse key={message.id} {...props} />);
-                }
-                lastSeenDate = message.date;
-                lastSeenDayString = dayString;
-                prevMessageSender = message.sender;
-            } else if (message.kind === "remote") {
-                children.push(<RemoteMessage key={message.id} />);
-                prevMessageSender = null;
+            if (message.kind === "remote") {
+                continue;
             }
+
+            const dayString = message.date.toDateString();
+            if (lastSeenDayString === null || lastSeenDayString !== dayString) {
+                children.push(<DayChangeMarker key={dayString} date={message.date}/>);
+            }
+
+            const mergeWithPrevious: boolean =
+                lastSeenDate !== null &&
+                message.sender === prevMessageSender &&
+                message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
+
+            const sentByMe = message.sender === myUserId;
+            if (sentByMe) {
+                const props = {
+                    message: message.text,
+                    date: message.date,
+                    confirmed: true,
+                    mergeWithPrevious
+                };
+                children.push(<MessageSentByMe key={message.id} {...props} />);
+            } else if (chat.kind === "direct") {
+                const props = {
+                    message: message.text,
+                    date: message.date,
+                    mergeWithPrevious
+                };
+                children.push(<DirectMessageSentByThem key={message.id} {...props} />);
+            } else {
+                const props = {
+                    message: message.text,
+                    date: message.date,
+                    senderUsername: usersDictionary.hasOwnProperty(message.sender)
+                        ? usersDictionary[message.sender]
+                        : "",
+                    mergeWithPrevious
+                };
+                children.push(<GroupMessageSentByElse key={message.id} {...props} />);
+            }
+            lastSeenDate = message.date;
+            lastSeenDayString = dayString;
+            prevMessageSender = message.sender;
         }
     }
 
