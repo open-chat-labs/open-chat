@@ -92,7 +92,7 @@ export default function(state: State = initialState, event: Event) : State {
                 chats[selectedChatIndex] = chatCopy;
                 chatCopy.messages = chatCopy.messages.slice();
                 chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
-                chatCopy.earliestConfirmedMessageId = chatCopy.latestConfirmedMessageId - PAGE_SIZE;
+                chatCopy.extendMessagesRangeDownTo(chatCopy.latestConfirmedMessageId - PAGE_SIZE);
                 chatCopy.queueMissingMessagesForDownload();
             }
 
