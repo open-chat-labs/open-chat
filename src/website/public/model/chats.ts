@@ -16,9 +16,9 @@ abstract class ConfirmedChatBase {
     messages: Message[];
     messagesToDownload: number[];
     messagesDownloading: number[];
-    #earliestConfirmedMessageId: Option<number>;
-    #latestConfirmedMessageId: Option<number>;
-    #minimumUnconfirmedMessageIndex: number;
+    earliestConfirmedMessageId: Option<number>;
+    latestConfirmedMessageId: Option<number>;
+    minimumUnconfirmedMessageIndex: number;
 
     protected constructor(
         chatId: ChatId,
@@ -26,16 +26,19 @@ abstract class ConfirmedChatBase {
         readUpTo: number,
         messages: Message[],
         messagesToDownload: number[] = [],
-        messagesDownloading: number[] = []) {
+        messagesDownloading: number[] = [],
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
+        minimumUnconfirmedMessageIndex: number = 0) {
         this.chatId = chatId;
         this.updatedDate = updatedDate;
         this.readUpTo = readUpTo;
         this.messages = messages;
         this.messagesToDownload = messagesToDownload;
         this.messagesDownloading = messagesDownloading;
-        this.#earliestConfirmedMessageId = this.calculateEarliestConfirmedMessageId();
-        this.#latestConfirmedMessageId = this.calculateLatestConfirmedMessageId();
-        this.#minimumUnconfirmedMessageIndex = 0;
+        this.earliestConfirmedMessageId = earliestConfirmedMessageId ? earliestConfirmedMessageId : this.calculateEarliestConfirmedMessageId();
+        this.latestConfirmedMessageId = latestConfirmedMessageId ? latestConfirmedMessageId : this.calculateLatestConfirmedMessageId();
+        this.minimumUnconfirmedMessageIndex = minimumUnconfirmedMessageIndex;
     }
 
     abstract clone() : ConfirmedChat;
@@ -48,9 +51,8 @@ abstract class ConfirmedChatBase {
         // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
         messages.sort((a, b) => a.id - b.id);
 
-        // These 2 setters will ensure the messages array covers the full range of ids from the new messages
-        this.earliestConfirmedMessageId = messages[0].id;
-        this.latestConfirmedMessageId = messages[messages.length - 1].id;
+        this.extendMessagesRangeDownTo(messages[0].id);
+        this.extendMessagesRangeUpTo(messages[messages.length - 1].id);
 
         for (let message of messages) {
             setFunctions.remove(this.messagesToDownload, message.id);
@@ -85,53 +87,51 @@ abstract class ConfirmedChatBase {
         setFunctions.unionWith(this.messagesToDownload, missingMessages);
     }
 
-    set earliestConfirmedMessageId(value: number) {
-        if (!this.#earliestConfirmedMessageId) {
-            this.messages.splice(0, 0, { kind: "remote", id: value });
-            this.#latestConfirmedMessageId = value;
-        } else if (value >= this.#earliestConfirmedMessageId) {
+    extendMessagesRangeDownTo = (messageId: number) : void => {
+        if (!this.earliestConfirmedMessageId) {
+            this.messages.splice(0, 0, { kind: "remote", id: messageId });
+            this.latestConfirmedMessageId = messageId;
+        } else if (messageId >= this.earliestConfirmedMessageId) {
             return;
         } else {
             const toPrepend: RemoteMessage[] = [];
-            for (let id = value; id < this.#earliestConfirmedMessageId; id++) {
+            for (let id = messageId; id < this.earliestConfirmedMessageId; id++) {
                 toPrepend.push({kind: "remote", id});
             }
             this.messages.splice(0, 0, ...toPrepend);
         }
-        this.#earliestConfirmedMessageId = value;
+        this.earliestConfirmedMessageId = messageId;
     }
 
-    set latestConfirmedMessageId(value: number) {
-        if (!this.#latestConfirmedMessageId) {
-            this.messages.splice(0, 0, { kind: "remote", id: value });
-            this.#earliestConfirmedMessageId = value;
-        } else if (value <= this.#latestConfirmedMessageId) {
+    extendMessagesRangeUpTo = (messageId: number) : void => {
+        if (!this.latestConfirmedMessageId) {
+            this.messages.splice(0, 0, { kind: "remote", id: messageId });
+            this.earliestConfirmedMessageId = messageId;
+        } else if (messageId <= this.latestConfirmedMessageId) {
             return;
         } else {
             const toAdd: RemoteMessage[] = [];
-            for (let id = this.#latestConfirmedMessageId + 1; id <= value; id++) {
+            for (let id = this.latestConfirmedMessageId + 1; id <= messageId; id++) {
                 toAdd.push({ kind: "remote", id });
             }
-            this.messages.splice(this.getMessageIndex(this.#latestConfirmedMessageId + 1), 0, ...toAdd);
+            this.messages.splice(this.getMessageIndex(this.latestConfirmedMessageId + 1), 0, ...toAdd);
         }
-        this.#latestConfirmedMessageId = value;
+        this.latestConfirmedMessageId = messageId;
     }
 
-    private removeMatchingUnconfirmedMessage(text: string) {
+    private removeMatchingUnconfirmedMessage = (text: string) : boolean => {
         let indexOfMatch: number = -1;
-        for (let index = this.#minimumUnconfirmedMessageIndex; index < this.messages.length; index++) {
+        for (let index = this.minimumUnconfirmedMessageIndex; index < this.messages.length; index++) {
             const message = this.messages[index];
             if (message.kind !== "unconfirmed") {
-                this.#minimumUnconfirmedMessageIndex = index;
+                this.minimumUnconfirmedMessageIndex = index;
             } else if (message.text === text) {
                 indexOfMatch = index;
-                break;
+                this.messages.splice(indexOfMatch, 1);
+                return true;
             }
         }
-
-        if (indexOfMatch >= 0) {
-            this.messages.splice(indexOfMatch, 1);
-        }
+        return false;
     }
 
     private calculateEarliestConfirmedMessageId = () : Option<number> => {
@@ -141,8 +141,7 @@ abstract class ConfirmedChatBase {
     }
 
     private calculateLatestConfirmedMessageId = () : Option<number> => {
-        for (let index = this.messages.length - 1; index >= 0; index--) {
-            const message = this.messages[index];
+        for (let message of this.messages) {
             if (message.kind !== "unconfirmed") {
                 return message.id;
             }
@@ -169,8 +168,12 @@ export class DirectChat extends ConfirmedChatBase {
         readUpTo: number = 0,
         messages: Message[] = [],
         messagesToDownload: number[] = [],
-        messagesDownloading: number[] = []) {
-        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading);
+        messagesDownloading: number[] = [],
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
+        minimumUnconfirmedMessageIndex: number = 0) {
+        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
+            earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
         this.them = them;
     }
 
@@ -182,7 +185,10 @@ export class DirectChat extends ConfirmedChatBase {
             this.readUpTo,
             this.messages,
             this.messagesToDownload,
-            this.messagesDownloading);
+            this.messagesDownloading,
+            this.earliestConfirmedMessageId,
+            this.latestConfirmedMessageId,
+            this.minimumUnconfirmedMessageIndex);
     }
 }
 
@@ -198,8 +204,12 @@ export class GroupChat extends ConfirmedChatBase {
         readUpTo: number = 0,
         messages: Message[] = [],
         messagesToDownload: number[] = [],
-        messagesDownloading: number[] = []) {
-        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading);
+        messagesDownloading: number[] = [],
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
+        minimumUnconfirmedMessageIndex: number = 0) {
+        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
+            earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
         this.subject = subject;
         this.participants = participants;
     }
@@ -213,7 +223,10 @@ export class GroupChat extends ConfirmedChatBase {
             this.readUpTo,
             this.messages,
             this.messagesToDownload,
-            this.messagesDownloading);
+            this.messagesDownloading,
+            this.earliestConfirmedMessageId,
+            this.latestConfirmedMessageId,
+            this.minimumUnconfirmedMessageIndex);
     }
 }
 
