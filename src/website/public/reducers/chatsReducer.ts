@@ -241,6 +241,7 @@ function getChatByIdForModification(chats: Chat[], chatId: ChatId) : ConfirmedCh
     return tryGetChatForModification(chats, { chatId })[0] as ConfirmedChat;
 }
 
+// If the chat is found, this will clone it then update the chats array to contain the new entry in place of the old one
 function tryGetChatForModification(chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] {
     let index: number = -1;
     if (filter.index != null) {
