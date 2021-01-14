@@ -2,7 +2,6 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
-import { DirectChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 
@@ -11,6 +10,7 @@ import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
 import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
 import MessageSentByMe from "./messages/MessageSentByMe";
 import UnconfirmedMessage from "./messages/UnconfirmedMessage";
+import { CONFIRMED_DIRECT_CHAT } from "../constants";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -77,7 +77,7 @@ function MessagesList() {
                     mergeWithPrevious
                 };
                 children.push(<MessageSentByMe key={message.id} {...props} />);
-            } else if (chat instanceof DirectChat) {
+            } else if (chat.kind === CONFIRMED_DIRECT_CHAT) {
                 const props = {
                     message: message.text,
                     date: message.date,

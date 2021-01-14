@@ -1,5 +1,6 @@
 import canister from "ic:canisters/chats";
-import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
+import * as chatFunctions from "../../model/chats";
+import { ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { fromCandid as localMessageFromCandid } from "../candidConverters/localMessage";
@@ -60,9 +61,9 @@ function convertToChat(value: any) : ConfirmedChat {
     }
 }
 
-function convertToDirectChat(value: any) : DirectChat {
+function convertToDirectChat(value: any) : ConfirmedDirectChat {
     const latestMessage = value.latest_messages[0];
-    return new DirectChat(
+    return chatFunctions.newConfirmedDirectChat(
         chatIdFromCandid(value.id),
         userIdFromCandid(value.them),
         timestampToDate(value.updated_date),
@@ -70,10 +71,10 @@ function convertToDirectChat(value: any) : DirectChat {
         value.latest_messages.reverse().map(localMessageFromCandid));
 }
 
-function convertToGroupChat(value: any) : GroupChat
+function convertToGroupChat(value: any) : ConfirmedGroupChat
 {
     const latestMessageId = value.latest_messages.length > 0 ? value.latest_messages[0].id : 0;
-    return new GroupChat(
+    return chatFunctions.newConfirmedGroupChat(
         chatIdFromCandid(value.id),
         value.subject,
         value.participants.map(userIdFromCandid),
