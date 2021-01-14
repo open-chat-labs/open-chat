@@ -38,6 +38,10 @@ function MessagesList() {
             continue;
         } else if (message.kind === "unconfirmed") {
             const now = new Date();
+            const dayString = now.toDateString();
+            if (lastSeenDayString === null || lastSeenDayString !== dayString) {
+                children.push(<DayChangeMarker key={dayString} date={now} />);
+            }
 
             const mergeWithPrevious: boolean =
                 lastSeenDate !== null &&
@@ -49,12 +53,14 @@ function MessagesList() {
                 mergeWithPrevious
             };
             children.push(<UnconfirmedMessage key={"u-" + i} {...props} />);
-            prevMessageSender = myUserId;
+
             lastSeenDate = now;
+            lastSeenDayString = dayString;
+            prevMessageSender = myUserId;
         } else {
             const dayString = message.date.toDateString();
             if (lastSeenDayString === null || lastSeenDayString !== dayString) {
-                children.push(<DayChangeMarker key={dayString} date={message.date}/>);
+                children.push(<DayChangeMarker key={dayString} date={message.date} />);
             }
 
             const mergeWithPrevious: boolean =
