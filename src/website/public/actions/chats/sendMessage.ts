@@ -14,17 +14,10 @@ export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
 export default function(chat: Chat, message: string) {
     switch (chat.kind) {
-        case "direct":
-            return sendDirectMessage(chat.them, chat.chatId, message);
-
-        case "group":
-            return sendGroupMessage(chat.chatId, message);
-
-        case "newDirect":
-            return sendDirectMessage(chat.them, null, message);
-
-        case "newGroup":
-            return sendMessageToNewGroup(chat.id, message);
+        case "direct": return sendDirectMessage(chat.them, chat.chatId, message);
+        case "group": return sendGroupMessage(chat.chatId, message);
+        case "newDirect": return sendDirectMessage(chat.them, null, message);
+        case "newGroup": return sendMessageToNewGroup(chat.id, message);
     }
 }
 
