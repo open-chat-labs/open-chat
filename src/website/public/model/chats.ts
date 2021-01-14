@@ -16,8 +16,8 @@ abstract class ConfirmedChatBase {
     messages: Message[];
     messagesToDownload: number[];
     messagesDownloading: number[];
-    earliestConfirmedMessageId: number;
-    latestConfirmedMessageId: number;
+    earliestConfirmedMessageId: Option<number>;
+    latestConfirmedMessageId: Option<number>;
     minimumUnconfirmedMessageIndex: number;
 
     protected constructor(
@@ -27,8 +27,8 @@ abstract class ConfirmedChatBase {
         messages: Message[],
         messagesToDownload: number[] = [],
         messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: number = 0,
-        latestConfirmedMessageId: number = 0,
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
         minimumUnconfirmedMessageIndex: number = 0) {
         this.chatId = chatId;
         this.updatedDate = updatedDate;
@@ -134,20 +134,19 @@ abstract class ConfirmedChatBase {
         return false;
     }
 
-    private calculateEarliestConfirmedMessageId = () : number => {
+    private calculateEarliestConfirmedMessageId = () : Option<number> => {
         return this.messages.length && this.messages[0].kind !== "unconfirmed"
             ? this.messages[0].id
-            : 0;
+            : null;
     }
 
-    private calculateLatestConfirmedMessageId = () : number => {
-        for (let index = this.messages.length - 1; index >= 0; index--) {
-            const message = this.messages[index];
+    private calculateLatestConfirmedMessageId = () : Option<number> => {
+        for (let message of this.messages) {
             if (message.kind !== "unconfirmed") {
                 return message.id;
             }
         }
-        return 0;
+        return null;
     }
 
     private getMessageIndex = (messageId: number) : number => {
@@ -170,8 +169,8 @@ export class DirectChat extends ConfirmedChatBase {
         messages: Message[] = [],
         messagesToDownload: number[] = [],
         messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: number = 0,
-        latestConfirmedMessageId: number = 0,
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
         minimumUnconfirmedMessageIndex: number = 0) {
         super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
             earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
@@ -206,8 +205,8 @@ export class GroupChat extends ConfirmedChatBase {
         messages: Message[] = [],
         messagesToDownload: number[] = [],
         messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: number = 0,
-        latestConfirmedMessageId: number = 0,
+        earliestConfirmedMessageId: Option<number> = null,
+        latestConfirmedMessageId: Option<number> = null,
         minimumUnconfirmedMessageIndex: number = 0) {
         super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
             earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
