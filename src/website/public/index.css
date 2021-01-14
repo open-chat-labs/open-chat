@@ -37,10 +37,13 @@ button, input, optgroup, select, textarea {
     line-height: inherit;
 }
 
-button {
+button, video {
     padding: 0;
     border: 0;
     outline: none;
+}
+
+button {
     cursor: pointer;
 }
 
@@ -60,6 +63,7 @@ button {
 .avatar-button {
     border-radius: 50%;
     height: 40px;
+    cursor: pointer;
 }
 
 .chats li .avatar {
@@ -305,7 +309,7 @@ main header>div >div {
     color: #cccccc;   
 }
 
-.detail .them {
+.detail .message.them {
     align-self: flex-start;
 }
 
@@ -318,10 +322,37 @@ main header>div >div {
     font-size: 13px;
 }
 
-.detail .me {
+.detail .message.me {
     align-self: flex-end;
     background-color: #d62c7d;
     color: white;
+}
+
+.detail .message.image {
+    padding: 0px;
+    position: relative; 
+}
+
+.detail .message.image img, video {
+    border-radius: 20px;
+}
+
+.detail .message.image video {
+    display: block;
+}
+
+.detail .message.image .message-time {
+    position: absolute;
+    display: inline;
+    float: none;
+    margin: 0px;
+    right: 10px;
+    bottom: 6px;
+    background-color: #444444;
+    color: white;
+    text-align: center;
+    opacity: 0.6;
+    border-radius: 6px;
 }
 
 main footer {
@@ -346,18 +377,35 @@ main footer input::placeholder {
     color: #bbbbbb;
 }
 
-main footer button.send {
+main footer button {
     outline: 0;
     height: 25px;
     border: 0;
     color: #9b9b9b;
     margin: 0;
     padding: 0;
-    margin-left: 20px;
     cursor: pointer;
     align-self: center;
     background-color: transparent;
+    margin-left: 20px;
 }
+
+main footer .attach {
+    margin-right: 10px;
+    color: #9b9b9b;
+    border-radius: 50%;
+    padding: 6px;
+}
+
+main footer .attach svg {
+    vertical-align: middle;
+    pointer-events: none;
+}
+
+main footer .attach:hover, :focus {
+    background-color: #e0e0e0;
+}
+
 
 footer button svg {
     margin: 0;
