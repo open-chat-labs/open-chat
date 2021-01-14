@@ -13,7 +13,7 @@ import { Option, Timestamp } from "../model/common";
 import { LocalMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
-import { PAGE_SIZE } from "../constants";
+import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -88,7 +88,7 @@ export default produce((state: ChatsState, event: Event) => {
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat) {
                 chat = getChatForModification(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
-                chat.extendMessagesRangeDownTo((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE);
+                chat.extendMessagesRangeDownTo(Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID));
                 chat.queueMissingMessagesForDownload();
             }
             break;

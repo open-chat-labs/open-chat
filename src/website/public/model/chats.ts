@@ -2,7 +2,6 @@ import { Option } from "./common";
 import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
-import { MIN_MESSAGE_ID } from "../constants";
 
 export type Chat = ConfirmedChat | UnconfirmedChat;
 export type ConfirmedChat = DirectChat | GroupChat;
@@ -92,10 +91,6 @@ abstract class ConfirmedChatBase {
     }
 
     extendMessagesRangeDownTo = (messageId: number) : void => {
-        if (messageId < MIN_MESSAGE_ID) {
-            messageId = MIN_MESSAGE_ID;
-        }
-
         if (!this.earliestConfirmedMessageId) {
             this.messages.splice(0, 0, { kind: "remote", id: messageId });
             this.latestConfirmedMessageId = messageId;
@@ -112,10 +107,6 @@ abstract class ConfirmedChatBase {
     }
 
     extendMessagesRangeUpTo = (messageId: number) : void => {
-        if (messageId < MIN_MESSAGE_ID) {
-            messageId = MIN_MESSAGE_ID;
-        }
-
         if (!this.latestConfirmedMessageId) {
             this.messages.splice(0, 0, { kind: "remote", id: messageId });
             this.earliestConfirmedMessageId = messageId;
