@@ -38,7 +38,8 @@ abstract class ConfirmedChatBase {
     }
 
     abstract clone() : ConfirmedChat;
-    cloneNonCtorFields = (target: ConfirmedChat) : void => {
+
+    protected cloneNonCtorFields = (target: ConfirmedChat) : void => {
         target.messagesToDownload = this.messagesToDownload.slice();
         target.messagesToDownload = this.messagesDownloading.slice();
         target.earliestConfirmedMessageId = this.earliestConfirmedMessageId;
