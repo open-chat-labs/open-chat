@@ -1,3 +1,5 @@
+import produce from "immer";
+
 import {
     Chat,
     ChatId,
@@ -5,11 +7,10 @@ import {
     DirectChat,
     GroupChat,
     NewDirectChat,
-    NewGroupChat,
-    UnconfirmedChat
+    NewGroupChat
 } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
-import { ConfirmedMessage, LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "../model/messages";
+import { LocalMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
@@ -51,13 +52,13 @@ import {
     SendMessageSucceededEvent
 } from "../actions/chats/sendMessage";
 
-type State = {
+export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
     chatsSyncedUpTo: Option<Timestamp>
 }
 
-const initialState: State = {
+const initialState: ChatsState = {
     chats: [],
     selectedChatIndex: null,
     chatsSyncedUpTo: null
@@ -80,47 +81,33 @@ type Event =
     SendMessageFailedEvent |
     SetupNewDirectChatSucceededEvent;
 
-export default function(state: State = initialState, event: Event) : State {
+export default produce((state: ChatsState, event: Event) => {
     switch (event.type) {
         case CHAT_SELECTED: {
-            const selectedChatIndex = event.payload;
-            let chat = state.chats[selectedChatIndex];
-            let chats = state.chats;
+            state.selectedChatIndex = event.payload;
+            let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat) {
-                const chatCopy = chat.clone();
-                chats = chats.slice();
-                chats[selectedChatIndex] = chatCopy;
-                chatCopy.messages = chatCopy.messages.slice();
-                chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
-                chatCopy.extendMessagesRangeDownTo(chatCopy.latestConfirmedMessageId - PAGE_SIZE);
-                chatCopy.queueMissingMessagesForDownload();
+                chat = getChatForModification(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
+                chat.extendMessagesRangeDownTo(Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID));
+                chat.queueMissingMessagesForDownload();
             }
-
-            return {
-                ...state,
-                chats,
-                selectedChatIndex
-            };
+            break;
         }
 
         case CREATE_GROUP_CHAT_REQUESTED: {
             const { tempId, subject, users } = event.payload;
-
             const newChat: NewGroupChat = new NewGroupChat(
                 tempId,
                 subject,
                 users);
 
-            return {
-                ...state,
-                chats: [newChat, ...state.chats],
-                selectedChatIndex: 0
-            };
+            state.chats.unshift(newChat);
+            state.selectedChatIndex = 0;
+            break;
         }
 
         case CREATE_GROUP_CHAT_SUCCEEDED: {
             const { tempId, chatId, date } = event.payload;
-
             const chatIndex = state.chats.findIndex(c => c instanceof NewGroupChat && c.id === tempId);
             const chat = state.chats[chatIndex] as NewGroupChat;
             const newChat = new GroupChat(
@@ -129,23 +116,14 @@ export default function(state: State = initialState, event: Event) : State {
                 chat.participants,
                 date);
 
-            const chatsCopy = state.chats.slice();
-            chatsCopy[chatIndex] = newChat;
-
-            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex!);
-
-            return {
-                ...state,
-                chats: chatsCopy,
-                selectedChatIndex
-            };
+            state.chats[chatIndex] = newChat;
+            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            break;
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
             const { chats, latestUpdateTimestamp } = event.payload;
-
             return {
-                ...state,
                 chats,
                 selectedChatIndex: chats.length ? 0 : null,
                 chatsSyncedUpTo: latestUpdateTimestamp
@@ -154,164 +132,138 @@ export default function(state: State = initialState, event: Event) : State {
 
         case GET_MESSAGES_BY_ID_REQUESTED: {
             const { chatId, messageIds } = event.payload;
-            const chatsCopy = state.chats.slice();
-            const chatIndex = findChatIndex(chatsCopy, chatId);
-            const chatCopy = (chatsCopy[chatIndex] as ConfirmedChat).clone();
-            chatsCopy[chatIndex] = chatCopy;
+            const chat = getChatByIdForModification(state.chats, chatId);
 
-            chatCopy.messagesDownloading = setFunctions.union(chatCopy.messagesDownloading, messageIds);
-
-            return {
-                ...state,
-                chats: chatsCopy
-            };
+            setFunctions.unionWith(chat.messagesDownloading, messageIds);
+            break;
         }
 
         case GET_MESSAGES_BY_ID_SUCCEEDED: {
             const { request, result } = event.payload;
-            const chatsCopy = state.chats.slice();
-            const chatIndex = findChatIndex(chatsCopy, request.chatId);
-            const chatCopy = (chatsCopy[chatIndex] as ConfirmedChat).clone();
-            chatsCopy[chatIndex] = chatCopy;
-            chatCopy.messages = chatCopy.messages.slice();
-            chatCopy.messagesDownloading = setFunctions.except(chatCopy.messagesDownloading, request.messageIds);
+            const chat = getChatByIdForModification(state.chats, request.chatId);
 
-            chatCopy.addMessages(result.messages);
+            setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
+            chat.addMessages(result.messages);
 
-            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex!);
-
-            return {
-                ...state,
-                chats: chatsCopy,
-                selectedChatIndex
-            };
+            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            break;
         }
 
         case GET_MESSAGES_BY_ID_FAILED: {
             const { chatId, messageIds } = event.payload;
-            const chatsCopy = state.chats.slice();
-            const chatIndex = findChatIndex(chatsCopy, chatId);
-            const chatCopy = (chatsCopy[chatIndex] as ConfirmedChat).clone();
-            chatsCopy[chatIndex] = chatCopy;
+            const chat = getChatByIdForModification(state.chats, chatId);
 
-            chatCopy.messagesDownloading = setFunctions.except(chatCopy.messagesDownloading, messageIds);
-
-            return {
-                ...state,
-                chats: chatsCopy
-            };
+            setFunctions.exceptWith(chat.messagesDownloading, messageIds);
+            break;
         }
 
         case GET_UPDATED_CHATS_SUCCEEDED: {
             const { chats, latestUpdateTimestamp } = event.payload;
-
             if (!chats.length) {
-                return state;
+                return;
             }
 
-            const chatsCopy = state.chats.slice();
-            chats.forEach(c => {
-                let chatIndex = findChatIndex(chatsCopy, c.chatId);
-                if (chatIndex < 0 && c instanceof DirectChat) {
-                    chatIndex = findDirectChatIndex(chatsCopy, c.them);
-                }
+            for (const updatedChat of chats) {
+                const currentChat = tryGetChatForModification(state.chats, { chatId: updatedChat.chatId })[0] as Option<ConfirmedChat>;
 
-                if (chatIndex >= 0) {
-                    const chatCopy = (chatsCopy[chatIndex] as ConfirmedChat).clone();
-                    chatsCopy[chatIndex] = chatCopy;
+                if (currentChat) {
                     // These messages have just come from the server so are all of type LocalMessage
-                    const messages = c.messages as LocalMessage[];
-                    chatCopy.addMessages(messages);
+                    const messages = updatedChat.messages as LocalMessage[];
+                    currentChat.addMessages(messages);
                 } else {
-                    chatsCopy.push(c);
+                    state.chats.push(updatedChat);
                 }
-            });
+            }
 
-            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex);
-
-            return {
-                ...state,
-                chats: chatsCopy,
-                selectedChatIndex,
-                chatsSyncedUpTo: latestUpdateTimestamp
-            };
+            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
+            state.chatsSyncedUpTo = latestUpdateTimestamp;
+            break;
         }
 
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
-            const chatsCopy = state.chats.slice();
-            let chatIndex: number = -1;
-            if ("chatId" in payload && payload.chatId !== null) {
-                chatIndex = findChatIndex(chatsCopy, payload.chatId);
-            } else if ("userId" in payload) {
-                chatIndex = findDirectChatIndex(chatsCopy, payload.userId);
-            }
 
-            const chatCopy = chatsCopy[chatIndex].clone();
-            chatCopy.addUnconfirmedMessage(payload.message);
+            const [chat, index] = getChatForModification(state.chats, {
+                chatId: ("chatId" in payload && payload.chatId) ? payload.chatId : undefined,
+                userId: "userId" in payload ? payload.userId : undefined
+            });
+            chat.addUnconfirmedMessage(payload.message);
 
-            chatsCopy.splice(chatIndex, 1);
-            chatsCopy.unshift(chatCopy);
-
-            return {
-                ...state,
-                chats: chatsCopy,
-                selectedChatIndex: 0
-            };
+            state.chats.splice(index, 1);
+            state.chats.unshift(chat);
+            state.selectedChatIndex = 0;
+            break;
         }
 
         case SEND_MESSAGE_SUCCEEDED: {
             const payload = event.payload;
-            const chatsCopy = state.chats.slice();
-            const chatIndex = payload.kind === "direct"
-                ? findDirectChatIndex(chatsCopy, payload.userId)
-                : findChatIndex(chatsCopy, payload.chatId);
+            const filter = {
+                chatId: payload.chatId,
+                userId: "userId" in payload ? payload.userId : undefined
+            } as ChatFilter;
 
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            const chat = chatsCopy[chatIndex] as Exclude<Chat, NewGroupChat>;
-            let chatCopy: ConfirmedChat;
+            let [chat, index] = getChatForModification(state.chats, filter) as [Exclude<Chat, NewGroupChat>, number];
             if (chat instanceof NewDirectChat) {
-                chatCopy = new DirectChat(
+                chat = new DirectChat(
                     payload.chatId,
                     chat.them,
                     payload.message.date,
                     0,
                     chat.messages);
-            } else {
-                chatCopy = chat.clone();
-                chatCopy.messagesToDownload = chatCopy.messagesToDownload.slice();
-                chatCopy.messages = chatCopy.messages.slice();
+                state.chats[index] = chat;
             }
 
-            chatsCopy[chatIndex] = chatCopy;
+            chat.addMessage(payload.message);
 
-            chatCopy.addMessage(payload.message);
-
-            const selectedChatIndex = sortChatsAndReturnSelectedIndex(chatsCopy, state.selectedChatIndex!);
-
-            return {
-                ...state,
-                chats: chatsCopy,
-                selectedChatIndex
-            };
+            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            break;
         }
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
             const { userId } = event.payload;
-
             const newChat: NewDirectChat = new NewDirectChat(userId);
 
-            return {
-                ...state,
-                chats: [newChat, ...state.chats],
-                selectedChatIndex: 0
-            };
+            state.chats.unshift(newChat);
+            state.selectedChatIndex = 0;
+            break;
         }
-
-        default:
-            return state;
     }
+}, initialState);
+
+function getChatForModification(chats: Chat[], filter: ChatFilter) : [Chat, number] {
+    return tryGetChatForModification(chats, filter) as [Chat, number];
+}
+
+function getChatByIdForModification(chats: Chat[], chatId: ChatId) : ConfirmedChat {
+    return tryGetChatForModification(chats, { chatId })[0] as ConfirmedChat;
+}
+
+// If the chat is found, this will clone it then update the chats array to contain the new entry in place of the old one
+function tryGetChatForModification(chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] {
+    let index: number = -1;
+    if (filter.index != null) {
+        index = filter.index;
+    }
+    if (index === -1 && filter.chatId) {
+        index = findChatIndex(chats, filter.chatId);
+    }
+    if (index === -1 && filter.userId) {
+        index = findDirectChatIndex(chats, filter.userId);
+    }
+    if (index === -1) {
+        return [null, -1];
+    }
+    const chat = chats[index].clone();
+    chats[index] = chat;
+    return [chat, index];
+}
+
+type ChatFilter = {
+    index?: number,
+    chatId?: ChatId,
+    userId?: UserId
 }
 
 function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: Option<number>) {

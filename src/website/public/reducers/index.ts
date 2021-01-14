@@ -1,13 +1,16 @@
 import { combineReducers } from "redux";
 
-import chatsReducer from "./chatsReducer";
-import usersReducer from "./usersReducer";
+import chatsReducer, { ChatsState } from "./chatsReducer";
+import usersReducer, { UsersState } from "./usersReducer";
 
 const rootReducer = combineReducers({
-  chatsState: chatsReducer,
-  usersState: usersReducer
+    chatsState: chatsReducer,
+    usersState: usersReducer
 });
 
 export default rootReducer;
 
-export type RootState = ReturnType<typeof rootReducer>;
+export type RootState = {
+    chatsState: ChatsState,
+    usersState: UsersState
+};
