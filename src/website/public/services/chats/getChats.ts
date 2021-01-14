@@ -1,4 +1,5 @@
 import canister from "ic:canisters/chats";
+import * as chatFunctions from "../../model/chats";
 import { ConfirmedChat, DirectChat, GroupChat } from "../../model/chats";
 import { Option, Timestamp } from "../../model/common";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
@@ -62,7 +63,7 @@ function convertToChat(value: any) : ConfirmedChat {
 
 function convertToDirectChat(value: any) : DirectChat {
     const latestMessage = value.latest_messages[0];
-    return new DirectChat(
+    return chatFunctions.newDirectChat(
         chatIdFromCandid(value.id),
         userIdFromCandid(value.them),
         timestampToDate(value.updated_date),
@@ -73,7 +74,7 @@ function convertToDirectChat(value: any) : DirectChat {
 function convertToGroupChat(value: any) : GroupChat
 {
     const latestMessageId = value.latest_messages.length > 0 ? value.latest_messages[0].id : 0;
-    return new GroupChat(
+    return chatFunctions.newGroupChat(
         chatIdFromCandid(value.id),
         value.subject,
         value.participants.map(userIdFromCandid),

@@ -53,7 +53,7 @@ export default function(subject: string, users: UserId[]) {
         // Messages may have been added on the UI before the chat was confirmed on the back end. These messages will
         // have been added to the 'chat.unconfirmedMessages' array. So we need to read the values out of this array,
         // then apply the state change to confirm the chat, then send those messages using the new chatId.
-        const chat = getState().chatsState.chats.find(c => c instanceof NewGroupChat && c.id === tempId)!
+        const chat = getState().chatsState.chats.find(c => c.kind === "newGroup" && c.id === tempId)!
         const messagesToSend = chat.messages as UnconfirmedMessage[];
 
         dispatch(outcomeEvent);

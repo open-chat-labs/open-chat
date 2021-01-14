@@ -69,11 +69,11 @@ export default produce((state: UsersState, event: Event) => {
             const userDictionary: any = state.userDictionary;
 
             for (const chat of chats) {
-                if (chat instanceof DirectChat) {
+                if (chat.kind === "direct") {
                     if (!userDictionary.hasOwnProperty(chat.them)) {
                         setFunctions.add(unknownUserIds, chat.them);
                     }
-                } else if (chat instanceof GroupChat) {
+                } else if (chat.kind === "group") {
                     chat.participants.forEach((p: UserId) => {
                         if (!userDictionary.hasOwnProperty(p)) {
                             setFunctions.add(unknownUserIds, p);

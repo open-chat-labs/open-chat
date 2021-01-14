@@ -13,14 +13,18 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
 export default function(chat: Chat, message: string) {
-    if (chat instanceof DirectChat) {
-        return sendDirectMessage(chat.them, chat.chatId, message);
-    } else if (chat instanceof GroupChat) {
-        return sendGroupMessage(chat.chatId, message);
-    } else if (chat instanceof NewDirectChat) {
-        return sendDirectMessage(chat.them, null, message);
-    } else if (chat instanceof NewGroupChat) {
-        return sendMessageToNewGroup(chat.id, message);
+    switch (chat.kind) {
+        case "direct":
+            return sendDirectMessage(chat.them, chat.chatId, message);
+
+        case "group":
+            return sendGroupMessage(chat.chatId, message);
+
+        case "newDirect":
+            return sendDirectMessage(chat.them, null, message);
+
+        case "newGroup":
+            return sendMessageToNewGroup(chat.id, message);
     }
 }
 

@@ -77,7 +77,7 @@ function MessagesList() {
                     mergeWithPrevious
                 };
                 children.push(<MessageSentByMe key={message.id} {...props} />);
-            } else if (chat instanceof DirectChat) {
+            } else if (chat.kind === "direct") {
                 const props = {
                     message: message.text,
                     date: message.date,

@@ -28,7 +28,7 @@ function ChatList() {
             userId = c.them;
         } else {
             name = c.subject;
-            key = c instanceof GroupChat ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
+            key = c.kind === "group" ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
             isGroup = true;
             userId = null;
         }
