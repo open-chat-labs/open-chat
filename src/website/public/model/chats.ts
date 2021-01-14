@@ -52,10 +52,10 @@ abstract class ConfirmedChatBase {
         this.earliestConfirmedMessageId = messages[0].id;
         this.latestConfirmedMessageId = messages[messages.length - 1].id;
 
-        for (let index = 0; index < messages.length; index++) {
-            const message = messages[index];
-            const messageIndex = this.getMessageIndex(message.id);
+        for (let message of messages) {
+            setFunctions.remove(this.messagesToDownload, message.id);
 
+            const messageIndex = this.getMessageIndex(message.id);
             const currentMessage = this.messages[messageIndex];
             if (currentMessage.kind === "local") {
                 // If the current message is 'local' then this message has already been added
