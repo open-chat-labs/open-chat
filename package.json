@@ -17,6 +17,7 @@
     "bignumber.js": "^9.0.1",
     "css-loader": "5.0.1",
     "identicon.js": "^2.3.3",
+    "immer": "^8.0.0",
     "md5": "^2.3.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",

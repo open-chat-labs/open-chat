@@ -1,3 +1,5 @@
+import produce from "immer";
+
 import { DirectChat, GroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
@@ -45,124 +47,94 @@ export type Event =
     RegisterUserFailedUsernameExistsEvent |
     SetupNewDirectChatSucceededEvent;
 
-type State = {
+export type UsersState = {
     mustRegisterAsNewUser: boolean,
     me: Option<UserSummary>,
     unknownUserIds: UserId[],
     userDictionary: {}
 }
 
-const initialState: State = {
+const initialState: UsersState = {
     mustRegisterAsNewUser: false,
     me: null,
     unknownUserIds: [],
     userDictionary: {}
 };
 
-export default function(state: State = initialState, event: Event) : State {
+export default produce((state: UsersState, event: Event) => {
     switch (event.type) {
         case GET_ALL_CHATS_SUCCEEDED: {
             const { chats } = event.payload;
-            const unknownUserIds = [...state.unknownUserIds];
+            const unknownUserIds = state.unknownUserIds;
             const userDictionary: any = state.userDictionary;
 
-            chats.forEach((c => {
-                if (c instanceof DirectChat) {
-                    if (!userDictionary.hasOwnProperty(c.them)) {
-                        setFunctions.add(unknownUserIds, c.them);
+            for (const chat of chats) {
+                if (chat instanceof DirectChat) {
+                    if (!userDictionary.hasOwnProperty(chat.them)) {
+                        setFunctions.add(unknownUserIds, chat.them);
                     }
-                } else if (c instanceof GroupChat) {
-                    c.participants.forEach((p: UserId) => {
+                } else if (chat instanceof GroupChat) {
+                    chat.participants.forEach((p: UserId) => {
                         if (!userDictionary.hasOwnProperty(p)) {
                             setFunctions.add(unknownUserIds, p);
                         }
                     })
                 }
-            }));
-
-            return {
-                ...state,
-                unknownUserIds
-            };
+            }
+            break;
         }
 
         case GET_CURRENT_USER_SUCCEEDED: {
-            return {
-                ...state,
-                mustRegisterAsNewUser: false,
-                me: event.payload
-            };
+            state.mustRegisterAsNewUser = false;
+            state.me = event.payload;
+            break;
         }
 
         case GET_CURRENT_USER_FAILED: {
-            return {
-                ...state,
-                mustRegisterAsNewUser: true,
-                me: null
-            };
+            state.mustRegisterAsNewUser = true;
+            state.me = null;
+            break;
         }
 
         case GET_USERS_SUCCEEDED: {
             const users = event.payload;
-            const unknownUserIds: UserId[] = state.unknownUserIds.slice();
-            const userDictionary: any = { ...state.userDictionary };
+            const unknownUserIds: UserId[] = state.unknownUserIds;
+            const userDictionary: any = state.userDictionary;
 
-            users.forEach(user => {
+            for (const user of users) {
                 setFunctions.remove(unknownUserIds, user.userId);
-                userDictionary[user.userId.toString()] = user;
-            });
-
-            return {
-                ...state,
-                unknownUserIds,
-                userDictionary
+                userDictionary[user.userId] = user;
             }
+            break;
         }
 
         case REGISTER_USER_SUCCEEDED: {
             alert("Hi " + event.payload.username + "!");
-
-            return {
-                ...state,
-                mustRegisterAsNewUser: false,
-                me: event.payload
-            };
+            state.mustRegisterAsNewUser = false;
+            state.me = event.payload;
+            break;
         }
 
         case REGISTER_USER_FAILED_USER_EXISTS: {
             alert("You already have a user account");
-
-            return {
-                ...state,
-                mustRegisterAsNewUser: false
-            };
+            state.mustRegisterAsNewUser = false;
+            break;
         }
 
         case REGISTER_USER_FAILED_USERNAME_EXISTS: {
             alert("Username taken");
-
-            return {
-                ...state,
-                mustRegisterAsNewUser: true
-            };
+            state.mustRegisterAsNewUser = true;
+            break;
         }
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
             const user = event.payload;
-            const unknownUserIds = [...state.unknownUserIds];
-            const userDictionary: any = { ...state.userDictionary };
+            const unknownUserIds = state.unknownUserIds;
+            const userDictionary: any = state.userDictionary;
 
             setFunctions.remove(unknownUserIds, user.userId);
-            userDictionary[user.userId.toString()] = user;
-
-            return {
-                ...state,
-                unknownUserIds,
-                userDictionary
-            };
+            userDictionary[user.userId] = user;
+            break;
         }
-
-        default:
-            return state;
     }
-}
+}, initialState);
