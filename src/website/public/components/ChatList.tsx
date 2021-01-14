@@ -1,11 +1,10 @@
 import React from "react";
 import { useSelector } from "react-redux";
 
-import { GroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 import { RootState } from "../reducers";
-
+import { CONFIRMED_GROUP_CHAT } from "../constants";
 import ChatListItem from "./ChatListItem";
 
 export default ChatList;
@@ -28,7 +27,7 @@ function ChatList() {
             userId = c.them;
         } else {
             name = c.subject;
-            key = c.kind === "group" ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
+            key = c.kind === CONFIRMED_GROUP_CHAT ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
             isGroup = true;
             userId = null;
         }

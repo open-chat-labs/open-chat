@@ -2,11 +2,17 @@ import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
-import { Chat, ChatId, DirectChat, GroupChat, NewDirectChat, NewGroupChat } from "../../model/chats";
+import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage } from "../../model/messages";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
+import {
+    CONFIRMED_DIRECT_CHAT,
+    CONFIRMED_GROUP_CHAT,
+    UNCONFIRMED_DIRECT_CHAT,
+    UNCONFIRMED_GROUP_CHAT
+} from "../../constants";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -14,10 +20,10 @@ export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
 export default function(chat: Chat, message: string) {
     switch (chat.kind) {
-        case "direct": return sendDirectMessage(chat.them, chat.chatId, message);
-        case "group": return sendGroupMessage(chat.chatId, message);
-        case "newDirect": return sendDirectMessage(chat.them, null, message);
-        case "newGroup": return sendMessageToNewGroup(chat.id, message);
+        case CONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, chat.chatId, message);
+        case CONFIRMED_GROUP_CHAT: return sendGroupMessage(chat.chatId, message);
+        case UNCONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, null, message);
+        case UNCONFIRMED_GROUP_CHAT: return sendMessageToNewGroup(chat.id, message);
     }
 }
 

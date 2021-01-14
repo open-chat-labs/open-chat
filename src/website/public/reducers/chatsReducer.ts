@@ -5,14 +5,14 @@ import {
     Chat,
     ChatId,
     ConfirmedChat,
-    NewDirectChat,
-    NewGroupChat
+    UnconfirmedDirectChat,
+    UnconfirmedGroupChat
 } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
 import { LocalMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
-import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
+import { MIN_MESSAGE_ID, PAGE_SIZE, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -96,8 +96,8 @@ export default produce((state: ChatsState, event: Event) => {
 
         case CREATE_GROUP_CHAT_REQUESTED: {
             const { tempId, subject, users } = event.payload;
-            const newChat: NewGroupChat = {
-                kind: "newGroup",
+            const newChat: UnconfirmedGroupChat = {
+                kind: UNCONFIRMED_GROUP_CHAT,
                 id: tempId,
                 subject,
                 participants: users,
@@ -111,9 +111,9 @@ export default produce((state: ChatsState, event: Event) => {
 
         case CREATE_GROUP_CHAT_SUCCEEDED: {
             const { tempId, chatId, date } = event.payload;
-            const chatIndex = state.chats.findIndex(c => c.kind === "newGroup" && c.id === tempId);
-            const chat = state.chats[chatIndex] as NewGroupChat;
-            const newChat = chatFunctions.newGroupChat(
+            const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id === tempId);
+            const chat = state.chats[chatIndex] as UnconfirmedGroupChat;
+            const newChat = chatFunctions.newConfirmedGroupChat(
                 chatId,
                 chat.subject,
                 chat.participants,
@@ -207,9 +207,9 @@ export default produce((state: ChatsState, event: Event) => {
 
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = getChat(state.chats, filter) as [Exclude<Chat, NewGroupChat>, number];
-            if (chat.kind === "newDirect") {
-                chat = chatFunctions.newDirectChat(
+            let [chat, index] = getChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            if (chat.kind === UNCONFIRMED_DIRECT_CHAT) {
+                chat = chatFunctions.newConfirmedDirectChat(
                     payload.chatId,
                     chat.them,
                     payload.message.date,
@@ -226,8 +226,8 @@ export default produce((state: ChatsState, event: Event) => {
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
             const { userId } = event.payload;
-            const newChat: NewDirectChat = {
-                kind: "newDirect",
+            const newChat: UnconfirmedDirectChat = {
+                kind: UNCONFIRMED_DIRECT_CHAT,
                 them: userId,
                 messages: []
             };

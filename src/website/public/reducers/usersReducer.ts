@@ -1,12 +1,12 @@
 import produce from "immer";
 
-import { DirectChat, GroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
+import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -69,16 +69,16 @@ export default produce((state: UsersState, event: Event) => {
             const userDictionary: any = state.userDictionary;
 
             for (const chat of chats) {
-                if (chat.kind === "direct") {
+                if (chat.kind === CONFIRMED_DIRECT_CHAT) {
                     if (!userDictionary.hasOwnProperty(chat.them)) {
                         setFunctions.add(unknownUserIds, chat.them);
                     }
-                } else if (chat.kind === "group") {
+                } else if (chat.kind === CONFIRMED_GROUP_CHAT) {
                     chat.participants.forEach((p: UserId) => {
                         if (!userDictionary.hasOwnProperty(p)) {
                             setFunctions.add(unknownUserIds, p);
                         }
-                    })
+                    });
                 }
             }
             break;

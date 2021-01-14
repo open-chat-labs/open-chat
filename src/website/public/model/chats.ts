@@ -2,10 +2,11 @@ import { Option } from "./common";
 import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
+import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
 
 export type Chat = ConfirmedChat | UnconfirmedChat;
-export type ConfirmedChat = DirectChat | GroupChat;
-export type UnconfirmedChat = NewDirectChat | NewGroupChat;
+export type ConfirmedChat = ConfirmedDirectChat | ConfirmedGroupChat;
+export type UnconfirmedChat = UnconfirmedDirectChat | UnconfirmedGroupChat;
 
 export type ChatId = BigInt;
 
@@ -21,13 +22,13 @@ type ConfirmedChatCommon = {
     minimumUnconfirmedMessageIndex: number
 }
 
-export type DirectChat = ConfirmedChatCommon & {
-    kind: "direct",
+export type ConfirmedDirectChat = ConfirmedChatCommon & {
+    kind: "cd",
     them: UserId
 }
 
-export type GroupChat = ConfirmedChatCommon & {
-    kind: "group",
+export type ConfirmedGroupChat = ConfirmedChatCommon & {
+    kind: "cg",
     subject: string,
     participants: UserId[]
 }
@@ -36,25 +37,25 @@ type UnconfirmedChatCommon = {
     messages: UnconfirmedMessage[];
 }
 
-export type NewDirectChat = UnconfirmedChatCommon & {
-    kind: "newDirect",
+export type UnconfirmedDirectChat = UnconfirmedChatCommon & {
+    kind: "ud",
     them: UserId
 }
 
-export type NewGroupChat = UnconfirmedChatCommon & {
-    kind: "newGroup",
+export type UnconfirmedGroupChat = UnconfirmedChatCommon & {
+    kind: "ug",
     id: Symbol,
     subject: string,
     participants: UserId[]
 }
 
-export const newDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, readUpTo: number = 0,
-                              messages: Message[] = []) : DirectChat => {
+export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, readUpTo: number = 0,
+                                       messages: Message[] = []) : ConfirmedDirectChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
     return {
-        kind: "direct",
+        kind: CONFIRMED_DIRECT_CHAT,
         chatId,
         them,
         updatedDate,
@@ -68,13 +69,13 @@ export const newDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, r
     };
 }
 
-export const newGroupChat = (chatId: ChatId, subject: string, participants: UserId[], updatedDate: Date,
-                             readUpTo: number = 0, messages: Message[] = []) : GroupChat => {
+export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participants: UserId[], updatedDate: Date,
+                                      readUpTo: number = 0, messages: Message[] = []) : ConfirmedGroupChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
     return {
-        kind: "group",
+        kind: CONFIRMED_GROUP_CHAT,
         chatId,
         subject,
         participants,
