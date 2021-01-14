@@ -13,7 +13,7 @@ function MyAvatar() {
             <input 
                 className="hide" 
                 type="file" 
-                accept=".jpg, .jpeg, .png" 
+                accept=".jpg, .jpeg, .png, .gif" 
                 onChange={e => onAvatarFileSelected(e)} />
         </label>                
     );
