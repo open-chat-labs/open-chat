@@ -159,9 +159,8 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_UPDATED_CHATS_SUCCEEDED: {
             const { chats, latestUpdateTimestamp } = event.payload;
-
             if (!chats.length) {
-                return state;
+                return;
             }
 
             for (const updatedChat of chats) {

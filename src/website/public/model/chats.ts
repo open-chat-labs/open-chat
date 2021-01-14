@@ -25,24 +25,26 @@ abstract class ConfirmedChatBase {
         chatId: ChatId,
         updatedDate: Date,
         readUpTo: number,
-        messages: Message[],
-        messagesToDownload: number[] = [],
-        messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: Option<number> = null,
-        latestConfirmedMessageId: Option<number> = null,
-        minimumUnconfirmedMessageIndex: number = 0) {
+        messages: Message[]) {
         this.chatId = chatId;
         this.updatedDate = updatedDate;
         this.readUpTo = readUpTo;
         this.messages = messages;
-        this.messagesToDownload = messagesToDownload;
-        this.messagesDownloading = messagesDownloading;
-        this.earliestConfirmedMessageId = earliestConfirmedMessageId ? earliestConfirmedMessageId : this.calculateEarliestConfirmedMessageId();
-        this.latestConfirmedMessageId = latestConfirmedMessageId ? latestConfirmedMessageId : this.calculateLatestConfirmedMessageId();
-        this.minimumUnconfirmedMessageIndex = minimumUnconfirmedMessageIndex;
+        this.messagesToDownload = [];
+        this.messagesDownloading = [];
+        this.earliestConfirmedMessageId = this.calculateEarliestConfirmedMessageId();
+        this.latestConfirmedMessageId = this.calculateLatestConfirmedMessageId();
+        this.minimumUnconfirmedMessageIndex = 0;
     }
 
     abstract clone() : ConfirmedChat;
+    cloneNonCtorFields = (target: ConfirmedChat) : void => {
+        target.messagesToDownload = this.messagesToDownload.slice();
+        target.messagesToDownload = this.messagesDownloading.slice();
+        target.earliestConfirmedMessageId = this.earliestConfirmedMessageId;
+        target.latestConfirmedMessageId = this.latestConfirmedMessageId;
+        target.minimumUnconfirmedMessageIndex = this.minimumUnconfirmedMessageIndex;
+    }
 
     addMessage = (message: LocalMessage) : void => {
         this.addMessages([message]);
@@ -109,6 +111,10 @@ abstract class ConfirmedChatBase {
     }
 
     extendMessagesRangeUpTo = (messageId: number) : void => {
+        if (messageId < MIN_MESSAGE_ID) {
+            messageId = MIN_MESSAGE_ID;
+        }
+
         if (!this.latestConfirmedMessageId) {
             this.messages.splice(0, 0, { kind: "remote", id: messageId });
             this.earliestConfirmedMessageId = messageId;
@@ -170,30 +176,16 @@ export class DirectChat extends ConfirmedChatBase {
         chatId: ChatId,
         them: UserId,
         updatedDate: Date,
-        readUpTo: number = 0,
-        messages: Message[] = [],
-        messagesToDownload: number[] = [],
-        messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: Option<number> = null,
-        latestConfirmedMessageId: Option<number> = null,
-        minimumUnconfirmedMessageIndex: number = 0) {
-        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
-            earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
+        readUpTo: number,
+        messages: Message[]) {
+        super(chatId, updatedDate, readUpTo, messages);
         this.them = them;
     }
 
-    clone() : DirectChat {
-        return new DirectChat(
-            this.chatId,
-            this.them,
-            this.updatedDate,
-            this.readUpTo,
-            this.messages,
-            this.messagesToDownload,
-            this.messagesDownloading,
-            this.earliestConfirmedMessageId,
-            this.latestConfirmedMessageId,
-            this.minimumUnconfirmedMessageIndex);
+    clone = () : DirectChat => {
+        const clone = new DirectChat(this.chatId, this.them, this.updatedDate, this.readUpTo, this.messages);
+        this.cloneNonCtorFields(clone);
+        return clone;
     }
 }
 
@@ -207,42 +199,27 @@ export class GroupChat extends ConfirmedChatBase {
         participants: UserId[],
         updatedDate: Date,
         readUpTo: number = 0,
-        messages: Message[] = [],
-        messagesToDownload: number[] = [],
-        messagesDownloading: number[] = [],
-        earliestConfirmedMessageId: Option<number> = null,
-        latestConfirmedMessageId: Option<number> = null,
-        minimumUnconfirmedMessageIndex: number = 0) {
-        super(chatId, updatedDate, readUpTo, messages, messagesToDownload, messagesDownloading,
-            earliestConfirmedMessageId, latestConfirmedMessageId, minimumUnconfirmedMessageIndex);
+        messages: Message[] = []) {
+        super(chatId, updatedDate, readUpTo, messages);
         this.subject = subject;
         this.participants = participants;
     }
 
-    clone() : GroupChat {
-        return new GroupChat(
-            this.chatId,
-            this.subject,
-            this.participants,
-            this.updatedDate,
-            this.readUpTo,
-            this.messages,
-            this.messagesToDownload,
-            this.messagesDownloading,
-            this.earliestConfirmedMessageId,
-            this.latestConfirmedMessageId,
-            this.minimumUnconfirmedMessageIndex);
+    clone = () : GroupChat => {
+        const clone = new GroupChat(this.chatId, this.subject, this.participants, this.updatedDate, this.readUpTo, this.messages);
+        this.cloneNonCtorFields(clone);
+        return clone;
     }
 }
 
 abstract class UnconfirmedChatBase {
     messages: UnconfirmedMessage[];
 
-    protected constructor(messages: UnconfirmedMessage[]) {
-        this.messages = messages;
+    protected constructor() {
+        this.messages = [];
     }
 
-    abstract clone() : UnconfirmedChat;
+    abstract clone() : UnconfirmedChatBase;
 
     addUnconfirmedMessage = (message: string) => {
         this.messages.push({
@@ -255,13 +232,15 @@ abstract class UnconfirmedChatBase {
 export class NewDirectChat extends UnconfirmedChatBase {
     them: UserId;
 
-    constructor(them: UserId, messages: UnconfirmedMessage[] = []) {
-        super(messages);
+    constructor(them: UserId) {
+        super();
         this.them = them;
     }
 
-    clone(): NewDirectChat {
-        return new NewDirectChat(this.them, this.messages);
+    clone = () : NewDirectChat => {
+        const clone = new NewDirectChat(this.them);
+        clone.messages = this.messages;
+        return clone;
     }
 }
 
@@ -270,14 +249,16 @@ export class NewGroupChat extends UnconfirmedChatBase {
     subject: string;
     participants: UserId[];
 
-    constructor(id: Symbol, subject: string, participants: UserId[], messages: UnconfirmedMessage[] = []) {
-        super(messages);
+    constructor(id: Symbol, subject: string, participants: UserId[]) {
+        super();
         this.id = id;
         this.subject = subject;
         this.participants = participants;
     }
 
-    clone(): NewGroupChat {
-        return new NewGroupChat(this.id, this.subject, this.participants, this.messages);
+    clone = () : NewGroupChat => {
+        const clone = new NewGroupChat(this.id, this.subject, this.participants);
+        clone.messages = this.messages;
+        return clone;
     }
 }
