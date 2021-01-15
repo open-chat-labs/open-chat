@@ -52,11 +52,11 @@ export type UnconfirmedGroupChat = UnconfirmedChatCommon & {
     pendingParticipants: UserId[]
 }
 
-export const isDirectChat = (chat: Chat) : boolean => {
+export const isDirectChat = (chat: Chat) : chat is DirectChat => {
     return chat.kind === CONFIRMED_DIRECT_CHAT || chat.kind === UNCONFIRMED_DIRECT_CHAT;
 }
 
-export const isGroupChat = (chat: Chat) : boolean => {
+export const isGroupChat = (chat: Chat) : chat is GroupChat => {
     return chat.kind === CONFIRMED_GROUP_CHAT || chat.kind === UNCONFIRMED_GROUP_CHAT;
 }
 
