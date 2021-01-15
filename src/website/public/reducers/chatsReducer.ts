@@ -196,7 +196,8 @@ export default produce((state: ChatsState, event: Event) => {
 
             const [chat, index] = getChat(state.chats, {
                 chatId: ("chatId" in payload && payload.chatId) ? payload.chatId : undefined,
-                userId: "userId" in payload ? payload.userId : undefined
+                userId: "userId" in payload ? payload.userId : undefined,
+                unconfirmedChatId: payload.kind === "newGroup" ? payload.unconfirmedChatId : undefined
             });
             chatFunctions.addUnconfirmedMessage(chat, payload.message);
 
