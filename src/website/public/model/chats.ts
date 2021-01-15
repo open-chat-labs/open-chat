@@ -273,7 +273,8 @@ const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<numbe
 }
 
 const calculateLatestConfirmedMessageId = (messages: Message[]) : Option<number> => {
-    for (const message of messages) {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
         if (message.kind !== "unconfirmed") {
             return message.id;
         }
