@@ -34,6 +34,8 @@ function generateWebpackConfigForCanister(name, info) {
     return;
   }
 
+  const sourceDir = path.join(__dirname, info.frontend.sourceDir);
+
   return {
     mode: "production",
     entry: {
@@ -54,15 +56,20 @@ function generateWebpackConfigForCanister(name, info) {
     },
     module: {
       rules: [
-        { test: /\.([jt]s)x?$/, loader: "ts-loader", exclude: /node_modules/ },
+        {
+          test: /\.([jt]s)x?$/,
+          loader: "ts-loader",
+          include: sourceDir
+        },
         {
           test: /\.css$/i,
           use: ['style-loader', 'css-loader'],
-          exclude: /node_modules/
+          include: sourceDir
         },
         {
           test: /\.svg$/,
-          use: 'svg-react-loader'
+          use: 'svg-react-loader',
+          include: sourceDir
         }
       ]
     },
