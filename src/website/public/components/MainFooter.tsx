@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { RootState } from "../reducers";
 import sendMessage from "../actions/chats/sendMessage";
-
+import Paperclip from "../assets/icons/paperclip.svg";
 import SendButton from "../assets/icons/sendButton.svg";
 
 export default MainFooter;
@@ -21,6 +20,10 @@ function MainFooter() {
 
     return (
         <footer className="enter-message">
+            <label className="attach">
+                <Paperclip />
+                <input className="hide" type="file" accept="image/*,video/mp4,video/webm,video/ogg" />
+            </label>
             <input
                 id="newMessage"
                 value={newMessageText}

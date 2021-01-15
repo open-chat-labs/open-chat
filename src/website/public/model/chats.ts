@@ -181,6 +181,76 @@ export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number) 
     chat.latestConfirmedMessageId = messageId;
 }
 
+export const getChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => {
+    return tryGetChat(chats, filter) as [Chat, number];
+}
+
+export const getChatById = (chats: Chat[], chatId: ChatId) : ConfirmedChat => {
+    return tryGetChat(chats, { chatId })[0] as ConfirmedChat;
+}
+
+export const tryGetChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
+    let index: number = -1;
+    if (filter.index != null) {
+        index = filter.index;
+    }
+    if (index === -1 && filter.chatId) {
+        index = findChatIndex(chats, filter.chatId);
+    }
+    if (index === -1 && filter.unconfirmedChatId) {
+        index = findChatIndexBySymbol(chats, filter.unconfirmedChatId);
+    }
+    if (index === -1 && filter.userId) {
+        index = findDirectChatIndex(chats, filter.userId);
+    }
+    if (index === -1) {
+        return [null, -1];
+    }
+    return [chats[index], index];
+}
+
+export type ChatFilter = {
+    index?: number,
+    chatId?: ChatId,
+    unconfirmedChatId?: Symbol,
+    userId?: UserId
+}
+
+export const sortChatsAndReturnSelectedIndex = (chats: Chat[], selectedIndex: Option<number>) => {
+    const selectedChat = selectedIndex !== null ? chats[selectedIndex] : null;
+    chats.sort((a, b) => {
+        if ("updatedDate" in a) {
+            if ("updatedDate" in b) {
+                // If both are confirmed then compare the updated dates
+                return b.updatedDate.getTime() - a.updatedDate.getTime();
+            }
+            // If only 'a' is confirmed, then 'b' should appear first
+            return 1;
+        }
+
+        // If only 'b' is confirmed, then 'a' should appear first
+        if ("updatedDate" in b) {
+            return -1;
+        }
+
+        // If neither are confirmed then treat them equally (this should be extremely rare)
+        return 0;
+    });
+    return selectedChat !== null ? chats.indexOf(selectedChat) : 0;
+}
+
+export const findChatIndex = (chats: Chat[], chatId: ChatId) : number => {
+    return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
+}
+
+export const findChatIndexBySymbol = (chats: Chat[], unconfirmedChatId: Symbol) : number => {
+    return chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id && unconfirmedChatId == c.id);
+}
+
+export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {
+    return chats.findIndex(c => "them" in c && userId === c.them);
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, text: string) : boolean => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {

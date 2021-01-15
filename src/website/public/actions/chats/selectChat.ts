@@ -4,7 +4,7 @@ export default function(index: number) {
     return {
         type: CHAT_SELECTED,
         payload: index
-    };
+    } as ChatSelectedEvent;
 }
 
 export type ChatSelectedEvent = {

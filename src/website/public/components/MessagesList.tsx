@@ -85,12 +85,18 @@ function MessagesList() {
                 };
                 children.push(<DirectMessageSentByThem key={message.id} {...props} />);
             } else {
+                const sender = usersDictionary.hasOwnProperty(message.sender)
+                    ? usersDictionary[message.sender]
+                    : {
+                        userId: message.sender,
+                        username: "Unknown",
+                        version: 0
+                    };
+
                 const props = {
                     message: message.text,
                     date: message.date,
-                    senderUsername: usersDictionary.hasOwnProperty(message.sender)
-                        ? usersDictionary[message.sender]
-                        : "",
+                    sender: sender,
                     mergeWithPrevious
                 };
                 children.push(<GroupMessageSentByElse key={message.id} {...props} />);
