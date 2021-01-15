@@ -30,7 +30,8 @@ function SideHeaderMenu(props: Props) {
     buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(setupNewDirectChat(props.text))}>New chat</a>);
 
     if (props.selectedChat && isGroupChat(props.selectedChat)) {
-        buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(addParticipantsByUsername(props.selectedChat as GroupChat, [props.text]))}>Add participant</a>);
+        const groupChat = props.selectedChat;
+        buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(addParticipantsByUsername(groupChat, [props.text]))}>Add participant</a>);
     }
 
     buttons.push(<a href="#">Profile</a>);
