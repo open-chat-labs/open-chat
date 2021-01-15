@@ -174,6 +174,8 @@ export default produce((state: ChatsState, event: Event) => {
                 return;
             }
 
+            const unconfirmedGroupChat = state.chats.find(c => c.kind === UNCONFIRMED_GROUP_CHAT) as UnconfirmedGroupChat;
+
             for (const updatedChat of chats) {
                 const currentChat = chatFunctions.tryGetChat(state.chats, { chatId: updatedChat.chatId })[0] as Option<ConfirmedChat>;
 
@@ -181,7 +183,7 @@ export default produce((state: ChatsState, event: Event) => {
                     // These messages have just come from the server so are all of type LocalMessage
                     const messages = updatedChat.messages as LocalMessage[];
                     chatFunctions.addMessages(currentChat, messages);
-                } else {
+                } else if (!(unconfirmedGroupChat && chatFunctions.isGroupChat(updatedChat) && unconfirmedGroupChat.subject === updatedChat.subject)) {
                     state.chats.push(updatedChat);
                 }
             }
