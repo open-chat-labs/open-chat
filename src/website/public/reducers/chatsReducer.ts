@@ -12,7 +12,7 @@ import { Option, Timestamp } from "../model/common";
 import { LocalMessage } from "../model/messages";
 import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
-import { MIN_MESSAGE_ID, PAGE_SIZE, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
+import { CONFIRMED_GROUP_CHAT, MIN_MESSAGE_ID, PAGE_SIZE, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -51,6 +51,14 @@ import {
     SendMessageSucceededEvent
 } from "../actions/chats/sendMessage";
 
+import {
+    ADD_PARTICIPANTS_REQUESTED,
+    ADD_PARTICIPANTS_FAILED,
+    AddParticipantsRequestedEvent,
+    AddParticipantsSucceededEvent,
+    AddParticipantsFailedEvent
+} from "../actions/chats/addParticipants";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -78,14 +86,17 @@ type Event =
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
-    SetupNewDirectChatSucceededEvent;
+    SetupNewDirectChatSucceededEvent |
+    AddParticipantsRequestedEvent |
+    AddParticipantsSucceededEvent |
+    AddParticipantsFailedEvent;
 
 export default produce((state: ChatsState, event: Event) => {
     switch (event.type) {
         case CHAT_SELECTED: {
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
-            if ("chatId" in chat) {
+            if ("chatId" in chat && chat.latestConfirmedMessageId) {
                 chat = getChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired);
@@ -100,7 +111,8 @@ export default produce((state: ChatsState, event: Event) => {
                 kind: UNCONFIRMED_GROUP_CHAT,
                 id: tempId,
                 subject,
-                participants: users,
+                initialParticipants: users,
+                pendingParticipants: [],
                 messages: []
             };
 
@@ -116,7 +128,7 @@ export default produce((state: ChatsState, event: Event) => {
             const newChat = chatFunctions.newConfirmedGroupChat(
                 chatId,
                 chat.subject,
-                chat.participants,
+                chat.initialParticipants,
                 date);
 
             state.chats[chatIndex] = newChat;
@@ -136,7 +148,6 @@ export default produce((state: ChatsState, event: Event) => {
         case GET_MESSAGES_BY_ID_REQUESTED: {
             const { chatId, messageIds } = event.payload;
             const chat = getChatById(state.chats, chatId);
-
             setFunctions.unionWith(chat.messagesDownloading, messageIds);
             break;
         }
@@ -144,10 +155,8 @@ export default produce((state: ChatsState, event: Event) => {
         case GET_MESSAGES_BY_ID_SUCCEEDED: {
             const { request, result } = event.payload;
             const chat = getChatById(state.chats, request.chatId);
-
             setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
             chatFunctions.addMessages(chat, result.messages);
-
             state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
             break;
         }
@@ -155,7 +164,6 @@ export default produce((state: ChatsState, event: Event) => {
         case GET_MESSAGES_BY_ID_FAILED: {
             const { chatId, messageIds } = event.payload;
             const chat = getChatById(state.chats, chatId);
-
             setFunctions.exceptWith(chat.messagesDownloading, messageIds);
             break;
         }
@@ -236,6 +244,35 @@ export default produce((state: ChatsState, event: Event) => {
             state.selectedChatIndex = 0;
             break;
         }
+
+        case ADD_PARTICIPANTS_REQUESTED: {
+            const { chatId, users } = event.payload;
+            const filter = {
+                chatId: chatId as ChatId,
+                unconfirmedChatId: chatId as Symbol                
+            };
+            const [chat, _] = getChat(state.chats, filter);
+
+            if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
+                // We can't add the particpants until the chat is confirmed 
+                // so store them for later
+                setFunctions.unionWith(chat.pendingParticipants, users);           
+            } else if (chat.kind === CONFIRMED_GROUP_CHAT) {
+                // Add the particpants immediately and remove them if the call fails
+                setFunctions.unionWith(chat.participants, users); 
+            }
+            break;
+        }
+
+        case ADD_PARTICIPANTS_FAILED: {
+            const { chatId, users } = event.payload;
+            const [chat, _] = getChat(state.chats, { chatId });
+
+            if (chat.kind === CONFIRMED_GROUP_CHAT) {
+                // Adding the participants failed so remove them from the chat
+                setFunctions.exceptWith(chat.participants, users);
+            }
+        }
     }
 }, initialState);
 
@@ -255,6 +292,9 @@ function tryGetChat(chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] 
     if (index === -1 && filter.chatId) {
         index = findChatIndex(chats, filter.chatId);
     }
+    if (index === -1 && filter.unconfirmedChatId) {
+        index = findChatIndexBySymbol(chats, filter.unconfirmedChatId);
+    }
     if (index === -1 && filter.userId) {
         index = findDirectChatIndex(chats, filter.userId);
     }
@@ -267,6 +307,7 @@ function tryGetChat(chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] 
 type ChatFilter = {
     index?: number,
     chatId?: ChatId,
+    unconfirmedChatId?: Symbol,
     userId?: UserId
 }
 
@@ -295,6 +336,10 @@ function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: Option<nu
 
 function findChatIndex(chats: Chat[], chatId: ChatId) : number {
     return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
+}
+
+function findChatIndexBySymbol(chats: Chat[], unconfirmedChatId: Symbol) : number {
+    return chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id && unconfirmedChatId == c.id);
 }
 
 function findDirectChatIndex(chats: Chat[], userId: UserId) : number {

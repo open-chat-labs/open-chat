@@ -8,7 +8,7 @@ import { toCandid as userIdToCandid } from "../candidConverters/userId";
 export default async function(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
     const candidUserIds = users.map(userIdToCandid);
 
-    const response = await canister.create_group_chat(subject, candidUserIds);
+    const response = await canister.create_group_chat(candidUserIds, subject);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

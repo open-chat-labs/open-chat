@@ -4,13 +4,16 @@ import { RootState } from "../reducers";
 import SideHeaderMenu from "./SideHeaderMenu";
 import MyAvatar from "./MyAvatar";
 import SearchIcon from "../assets/icons/search.svg";
+import { GroupChat } from "../model/chats";
 
 export default SideHeader;
 
 const PLACEHOLDER_TEXT = "Search or start a new chat";
 
 function SideHeader() {
-    const usersState = useSelector((state: RootState) => state.usersState);
+    const chatsState = useSelector((state: RootState) => state.chatsState);
+    const selectedChat = chatsState.selectedChatIndex !== null ? chatsState.chats[chatsState.selectedChatIndex] : null;
+    
     const [text, setText] = useState("");
     const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
 
@@ -19,7 +22,7 @@ function SideHeader() {
             <header>
                 <MyAvatar />    
                 <div>
-                    <SideHeaderMenu text={text} />
+                    <SideHeaderMenu text={text} selectedChat={selectedChat} />
                 </div>
             </header>
             <div className="search">

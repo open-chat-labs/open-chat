@@ -1,10 +1,15 @@
 import React from "react";
+import { Option } from "../model/common";
 import { useDispatch } from "react-redux";
+import { addParticipantsByUsername } from "../actions/chats/addParticipants";
+import createGroupChat from "../actions/chats/createGroupChat";
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 import DropdownMenuIcon from "../assets/icons/dropdownMenuIcon.svg";
+import { Chat, GroupChat, isGroupChat } from "../model/chats";
 
 type Props = {
     text: string,
+    selectedChat: Option<Chat>
 }
 
 export default SideHeaderMenu;
@@ -13,17 +18,26 @@ function SideHeaderMenu(props: Props) {
 
     const dispatch = useDispatch();
 
+    let buttons: JSX.Element[] = [];
+
+    buttons.push(<a href="#" onClick={_ => dispatch(createGroupChat(props.text, []))}>New group</a>);
+    buttons.push(<a href="#" onClick={_ => dispatch(setupNewDirectChat(props.text))}>New chat</a>);
+
+    if (props.selectedChat && isGroupChat(props.selectedChat)) {
+        buttons.push(<a href="#" onClick={_ => dispatch(addParticipantsByUsername(props.selectedChat as GroupChat, [props.text]))}>Add participant</a>);
+    }
+
+    buttons.push(<a href="#">Profile</a>);
+    buttons.push(<a href="#">Settings</a>);
+    buttons.push(<a href="#">Logout</a>);
+
     return (
         <div className="ddl">
             <button onClick={_ => toggleDropdownMenu("chatsMenu")} className="ddl-button">
                 <DropdownMenuIcon className="ddl-button-svg" />
             </button>
             <div id="chatsMenu" className="ddl-content">
-                <a href="#">New group</a>
-                <a href="#" onClick={a => dispatch(setupNewDirectChat(props.text))}>New chat</a>
-                <a href="#">Profile</a>
-                <a href="#">Settings</a>
-                <a href="#">Logout</a>
+                {buttons}
             </div>
         </div>
     );
