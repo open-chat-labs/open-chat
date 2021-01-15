@@ -43,7 +43,7 @@ function generateWebpackConfigForCanister(name, info) {
     },
     devtool: "source-map",
     optimization: {
-      minimize: true,
+      minimize: false,
       minimizer: [new TerserPlugin()],
     },
     resolve: {

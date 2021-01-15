@@ -309,6 +309,17 @@ main header>div >div {
     color: #cccccc;   
 }
 
+.message.group a.participant {
+    font-size: 13px;
+    font-weight: bolder;
+    display: block;
+    text-decoration: none;
+}
+
+.message.group a.participant:hover {
+    text-decoration: underline;
+}
+
 .detail .message.them {
     align-self: flex-start;
 }

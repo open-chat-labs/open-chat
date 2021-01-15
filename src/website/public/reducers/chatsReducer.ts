@@ -6,11 +6,11 @@ import {
     ChatId,
     ConfirmedChat,
     UnconfirmedDirectChat,
-    UnconfirmedGroupChat
+    UnconfirmedGroupChat,
+    ChatFilter
 } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
 import { LocalMessage } from "../model/messages";
-import { UserId } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
 import { CONFIRMED_GROUP_CHAT, MIN_MESSAGE_ID, PAGE_SIZE, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
 
@@ -97,7 +97,7 @@ export default produce((state: ChatsState, event: Event) => {
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat && chat.latestConfirmedMessageId) {
-                chat = getChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
+                chat = chatFunctions.getChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired);
                 chatFunctions.queueMissingMessagesForDownload(chat);
@@ -132,7 +132,7 @@ export default produce((state: ChatsState, event: Event) => {
                 date);
 
             state.chats[chatIndex] = newChat;
-            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
             break;
         }
 
@@ -147,23 +147,23 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_BY_ID_REQUESTED: {
             const { chatId, messageIds } = event.payload;
-            const chat = getChatById(state.chats, chatId);
+            const chat = chatFunctions.getChatById(state.chats, chatId);
             setFunctions.unionWith(chat.messagesDownloading, messageIds);
             break;
         }
 
         case GET_MESSAGES_BY_ID_SUCCEEDED: {
             const { request, result } = event.payload;
-            const chat = getChatById(state.chats, request.chatId);
+            const chat = chatFunctions.getChatById(state.chats, request.chatId);
             setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
             chatFunctions.addMessages(chat, result.messages);
-            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
             break;
         }
 
         case GET_MESSAGES_BY_ID_FAILED: {
             const { chatId, messageIds } = event.payload;
-            const chat = getChatById(state.chats, chatId);
+            const chat = chatFunctions.getChatById(state.chats, chatId);
             setFunctions.exceptWith(chat.messagesDownloading, messageIds);
             break;
         }
@@ -175,7 +175,7 @@ export default produce((state: ChatsState, event: Event) => {
             }
 
             for (const updatedChat of chats) {
-                const currentChat = tryGetChat(state.chats, { chatId: updatedChat.chatId })[0] as Option<ConfirmedChat>;
+                const currentChat = chatFunctions.tryGetChat(state.chats, { chatId: updatedChat.chatId })[0] as Option<ConfirmedChat>;
 
                 if (currentChat) {
                     // These messages have just come from the server so are all of type LocalMessage
@@ -186,7 +186,7 @@ export default produce((state: ChatsState, event: Event) => {
                 }
             }
 
-            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
+            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
             state.chatsSyncedUpTo = latestUpdateTimestamp;
             break;
         }
@@ -194,7 +194,7 @@ export default produce((state: ChatsState, event: Event) => {
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
 
-            const [chat, index] = getChat(state.chats, {
+            const [chat, index] = chatFunctions.getChat(state.chats, {
                 chatId: ("chatId" in payload && payload.chatId) ? payload.chatId : undefined,
                 userId: "userId" in payload ? payload.userId : undefined,
                 unconfirmedChatId: payload.kind === "newGroup" ? payload.unconfirmedChatId : undefined
@@ -216,7 +216,7 @@ export default produce((state: ChatsState, event: Event) => {
 
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = getChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            let [chat, index] = chatFunctions.getChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
             if (chat.kind === UNCONFIRMED_DIRECT_CHAT) {
                 chat = chatFunctions.newConfirmedDirectChat(
                     payload.chatId,
@@ -229,7 +229,7 @@ export default produce((state: ChatsState, event: Event) => {
 
             chatFunctions.addMessage(chat, payload.message);
 
-            state.selectedChatIndex = sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
             break;
         }
 
@@ -252,7 +252,7 @@ export default produce((state: ChatsState, event: Event) => {
                 chatId: chatId as ChatId,
                 unconfirmedChatId: chatId as Symbol                
             };
-            const [chat, _] = getChat(state.chats, filter);
+            const [chat, _] = chatFunctions.getChat(state.chats, filter);
 
             if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
                 // We can't add the particpants until the chat is confirmed 
@@ -267,7 +267,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case ADD_PARTICIPANTS_FAILED: {
             const { chatId, users } = event.payload;
-            const [chat, _] = getChat(state.chats, { chatId });
+            const [chat, _] = chatFunctions.getChat(state.chats, { chatId });
 
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Adding the participants failed so remove them from the chat
@@ -277,72 +277,3 @@ export default produce((state: ChatsState, event: Event) => {
     }
 }, initialState);
 
-function getChat(chats: Chat[], filter: ChatFilter) : [Chat, number] {
-    return tryGetChat(chats, filter) as [Chat, number];
-}
-
-function getChatById(chats: Chat[], chatId: ChatId) : ConfirmedChat {
-    return tryGetChat(chats, { chatId })[0] as ConfirmedChat;
-}
-
-function tryGetChat(chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] {
-    let index: number = -1;
-    if (filter.index != null) {
-        index = filter.index;
-    }
-    if (index === -1 && filter.chatId) {
-        index = findChatIndex(chats, filter.chatId);
-    }
-    if (index === -1 && filter.unconfirmedChatId) {
-        index = findChatIndexBySymbol(chats, filter.unconfirmedChatId);
-    }
-    if (index === -1 && filter.userId) {
-        index = findDirectChatIndex(chats, filter.userId);
-    }
-    if (index === -1) {
-        return [null, -1];
-    }
-    return [chats[index], index];
-}
-
-type ChatFilter = {
-    index?: number,
-    chatId?: ChatId,
-    unconfirmedChatId?: Symbol,
-    userId?: UserId
-}
-
-function sortChatsAndReturnSelectedIndex(chats: Chat[], selectedIndex: Option<number>) {
-    const selectedChat = selectedIndex !== null ? chats[selectedIndex] : null;
-    chats.sort((a, b) => {
-        if ("updatedDate" in a) {
-            if ("updatedDate" in b) {
-                // If both are confirmed then compare the updated dates
-                return b.updatedDate.getTime() - a.updatedDate.getTime();
-            }
-            // If only 'a' is confirmed, then 'b' should appear first
-            return 1;
-        }
-
-        // If only 'b' is confirmed, then 'a' should appear first
-        if ("updatedDate" in b) {
-            return -1;
-        }
-
-        // If neither are confirmed then treat them equally (this should be extremely rare)
-        return 0;
-    });
-    return selectedChat !== null ? chats.indexOf(selectedChat) : 0;
-}
-
-function findChatIndex(chats: Chat[], chatId: ChatId) : number {
-    return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
-}
-
-function findChatIndexBySymbol(chats: Chat[], unconfirmedChatId: Symbol) : number {
-    return chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id && unconfirmedChatId == c.id);
-}
-
-function findDirectChatIndex(chats: Chat[], userId: UserId) : number {
-    return chats.findIndex(c => "them" in c && userId === c.them);
-}
