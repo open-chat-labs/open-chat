@@ -122,11 +122,15 @@ function sendGroupMessage(chatId: ChatId, message: string) {
 // the chat and those messages will be sent once the chat is confirmed.
 function sendMessageToNewGroup(id: Symbol, message: string) {
     return (dispatch: Dispatch<any>) => {
-        const requestEvent: SendMessageToNewGroupRequest = {
-            kind: "newGroup",
-            unconfirmedChatId: id,
-            message
+        const requestEvent: SendMessageRequestedEvent = {
+            type: SEND_MESSAGE_REQUESTED,
+            payload: {
+                kind: "newGroup",
+                unconfirmedChatId: id,
+                message
+            }
         };
+
         dispatch(requestEvent);
     }
 }
