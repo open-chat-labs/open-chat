@@ -9,7 +9,8 @@ import { Chat, GroupChat, isGroupChat } from "../model/chats";
 
 type Props = {
     text: string,
-    selectedChat: Option<Chat>
+    selectedChat: Option<Chat>,
+    clearInput: () => void
 }
 
 export default SideHeaderMenu;
@@ -20,11 +21,16 @@ function SideHeaderMenu(props: Props) {
 
     let buttons: JSX.Element[] = [];
 
-    buttons.push(<a href="#" onClick={_ => dispatch(createGroupChat(props.text, []))}>New group</a>);
-    buttons.push(<a href="#" onClick={_ => dispatch(setupNewDirectChat(props.text))}>New chat</a>);
+    function dispatchAndClearInput(result: any) {
+        dispatch(result);
+        props.clearInput();
+    }
+
+    buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(createGroupChat(props.text, []))}>New group</a>);
+    buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(setupNewDirectChat(props.text))}>New chat</a>);
 
     if (props.selectedChat && isGroupChat(props.selectedChat)) {
-        buttons.push(<a href="#" onClick={_ => dispatch(addParticipantsByUsername(props.selectedChat as GroupChat, [props.text]))}>Add participant</a>);
+        buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(addParticipantsByUsername(props.selectedChat as GroupChat, [props.text]))}>Add participant</a>);
     }
 
     buttons.push(<a href="#">Profile</a>);
