@@ -30,10 +30,14 @@
 - Video call
 - Group video call
 - Live location
+- User stories (short videos that live for 24 hours against a user account)
+- Browser push notifications
+- iOS app
+- Android app
 
 # Scalability
 
-- Have auto-inc particpant ids for group chat so that each message has this id rather than the large principal
+- Have auto-inc participant ids for group chat so that each message has this id rather than the large principal
 - Shard chats
 
 # Performance
