@@ -2,9 +2,11 @@ import { Option } from "./common";
 import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
-import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
+import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
 
 export type Chat = ConfirmedChat | UnconfirmedChat;
+export type GroupChat = ConfirmedGroupChat | UnconfirmedGroupChat;
+export type DirectChat = ConfirmedDirectChat | UnconfirmedDirectChat;
 export type ConfirmedChat = ConfirmedDirectChat | ConfirmedGroupChat;
 export type UnconfirmedChat = UnconfirmedDirectChat | UnconfirmedGroupChat;
 
@@ -23,12 +25,12 @@ type ConfirmedChatCommon = {
 }
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
-    kind: "cd",
+    kind: typeof CONFIRMED_DIRECT_CHAT,
     them: UserId
 }
 
 export type ConfirmedGroupChat = ConfirmedChatCommon & {
-    kind: "cg",
+    kind: typeof CONFIRMED_GROUP_CHAT,
     subject: string,
     participants: UserId[]
 }
@@ -38,15 +40,24 @@ type UnconfirmedChatCommon = {
 }
 
 export type UnconfirmedDirectChat = UnconfirmedChatCommon & {
-    kind: "ud",
+    kind: typeof UNCONFIRMED_DIRECT_CHAT,
     them: UserId
 }
 
 export type UnconfirmedGroupChat = UnconfirmedChatCommon & {
-    kind: "ug",
+    kind: typeof UNCONFIRMED_GROUP_CHAT,
     id: Symbol,
     subject: string,
-    participants: UserId[]
+    initialParticipants: UserId[],
+    pendingParticipants: UserId[]
+}
+
+export const isDirectChat = (chat: Chat) : boolean => {
+    return chat.kind === CONFIRMED_DIRECT_CHAT || chat.kind === UNCONFIRMED_DIRECT_CHAT;
+}
+
+export const isGroupChat = (chat: Chat) : boolean => {
+    return chat.kind === CONFIRMED_GROUP_CHAT || chat.kind === UNCONFIRMED_GROUP_CHAT;
 }
 
 export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, readUpTo: number = 0,
@@ -95,6 +106,10 @@ export const addMessage = (chat: ConfirmedChat, message: LocalMessage) : void =>
 }
 
 export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : void => {
+
+    if (messages.length === 0)
+        return;
+
     // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
     messages.sort((a, b) => a.id - b.id);
 
