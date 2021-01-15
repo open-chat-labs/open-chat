@@ -5,6 +5,7 @@ import { UserId, UserSummary } from "../model/users";
 import * as setFunctions from "../utils/setFunctions";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
+import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
 import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
 
@@ -38,6 +39,7 @@ export type Event =
     GetCurrentUserRequestedEvent |
     GetCurrentUserSucceededEvent |
     GetCurrentUserFailedEvent |
+    GetUpdatedChatsSucceededEvent |
     GetUsersRequestedEvent |
     GetUsersSucceededEvent |
     GetUsersFailedEvent |
@@ -63,7 +65,8 @@ const initialState: UsersState = {
 
 export default produce((state: UsersState, event: Event) => {
     switch (event.type) {
-        case GET_ALL_CHATS_SUCCEEDED: {
+        case GET_ALL_CHATS_SUCCEEDED:
+        case GET_UPDATED_CHATS_SUCCEEDED: {
             const { chats } = event.payload;
             const unknownUserIds = state.unknownUserIds;
             const userDictionary: any = state.userDictionary;
