@@ -14,7 +14,7 @@ import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
 import { REFRESH_CHATS_INTERVAL_MILLISECONDS, PAGE_SIZE } from "./constants";
-import { Timestamp } from "./model/common";
+import { Option, Timestamp } from "./model/common";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();
@@ -79,13 +79,13 @@ export function setupBackgroundTasks() {
 
     // Check for new messages at regular intervals
     useEffect(() => {
-        if (usersState.me && chatsState.chatsSyncedUpTo) {
+        if (usersState.me) {
             return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
-    }, [chatsState.chatsSyncedUpTo]);
-};
+    }, [usersState.me]);
+}
 
-function updateChatsRegularlyTask(chatsSyncedUpTo: Timestamp, dispatch: Dispatch<any>) : () => void {
+function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
     let timeoutId: NodeJS.Timeout;
     const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsSyncedUpTo)) as any;
     const waitThenGetUpdatesLoop = () => {
