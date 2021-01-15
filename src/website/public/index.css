@@ -402,7 +402,7 @@ main footer .attach svg {
     pointer-events: none;
 }
 
-main footer .attach:hover, :focus {
+main footer .attach:hover, .attach:focus {
     background-color: #e0e0e0;
 }
 

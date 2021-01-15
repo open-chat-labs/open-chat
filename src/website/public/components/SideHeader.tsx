@@ -22,7 +22,7 @@ function SideHeader() {
             <header>
                 <MyAvatar />    
                 <div>
-                    <SideHeaderMenu text={text} selectedChat={selectedChat} />
+                    <SideHeaderMenu text={text} selectedChat={selectedChat} clearInput={() => setText("")} />
                 </div>
             </header>
             <div className="search">
