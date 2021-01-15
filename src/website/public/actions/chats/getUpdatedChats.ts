@@ -8,7 +8,7 @@ export const GET_UPDATED_CHATS_REQUESTED = "GET_UPDATED_CHATS_REQUESTED";
 export const GET_UPDATED_CHATS_SUCCEEDED = "GET_UPDATED_CHATS_SUCCEEDED";
 export const GET_UPDATED_CHATS_FAILED = "GET_UPDATED_CHATS_FAILED";
 
-export default function(updatedSince: Option<Timestamp>, callback: () => void) {
+export default function(updatedSince: Option<Timestamp>) {
     return async (dispatch: Dispatch<any>) => {
         // This function is called every second and we do not currently listen for GET_UPDATED_CHATS_REQUESTED event so
         // in order to remove noise and aid debugging these events are not being dispatched for now.
@@ -44,8 +44,6 @@ export default function(updatedSince: Option<Timestamp>, callback: () => void) {
         if (outcomeEvent.type !== GET_UPDATED_CHATS_SUCCEEDED || outcomeEvent.payload.chats.length) {
             dispatch(outcomeEvent);
         }
-
-        callback();
     }
 }
 

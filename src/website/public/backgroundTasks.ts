@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Dispatch, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { UserId } from "./model/users";
@@ -14,6 +14,7 @@ import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
 import { REFRESH_CHATS_INTERVAL_MILLISECONDS, PAGE_SIZE } from "./constants";
+import { Timestamp } from "./model/common";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();
@@ -78,15 +79,19 @@ export function setupBackgroundTasks() {
 
     // Check for new messages at regular intervals
     useEffect(() => {
-        if (!usersState.me || !chatsState.chatsSyncedUpTo) {
-            return;
+        if (usersState.me && chatsState.chatsSyncedUpTo) {
+            return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
-
-        const getUpdates = () => dispatch(getUpdatedChats(chatsState.chatsSyncedUpTo, () => setupTimeout()));
-        const setupTimeout = () => timeoutId = setTimeout(getUpdates, REFRESH_CHATS_INTERVAL_MILLISECONDS);
-
-        let timeoutId: NodeJS.Timeout;
-        setupTimeout();
-        return () => clearTimeout(timeoutId);
     }, [chatsState.chatsSyncedUpTo]);
 };
+
+function updateChatsRegularlyTask(chatsSyncedUpTo: Timestamp, dispatch: Dispatch<any>) : () => void {
+    let timeoutId: NodeJS.Timeout;
+    const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsSyncedUpTo)) as any;
+    const waitThenGetUpdatesLoop = () => {
+        timeoutId = setTimeout(_ => getUpdates().finally(waitThenGetUpdatesLoop), REFRESH_CHATS_INTERVAL_MILLISECONDS);
+    }
+
+    waitThenGetUpdatesLoop();
+    return () => clearTimeout(timeoutId);
+}
