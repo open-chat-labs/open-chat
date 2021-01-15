@@ -44,7 +44,7 @@ impl GroupChat {
         let mut all_participants = Vec::with_capacity(participants.len() + 1);
         all_participants.push(Participant::new(creator, true, now));
         for p in participants {
-            all_participants.push(Participant::new(p, false, now))
+            all_participants.push(Participant::new(p, true, now))
         }
 
         GroupChat {
