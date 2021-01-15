@@ -62,13 +62,15 @@ import {
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
-    chatsSyncedUpTo: Option<Timestamp>
+    chatsSyncedUpTo: Option<Timestamp>,
+    runUpdateChatsTask: boolean
 }
 
 const initialState: ChatsState = {
     chats: [],
     selectedChatIndex: null,
-    chatsSyncedUpTo: null
+    chatsSyncedUpTo: null,
+    runUpdateChatsTask: false
 };
 
 type Event =
@@ -141,7 +143,8 @@ export default produce((state: ChatsState, event: Event) => {
             return {
                 chats,
                 selectedChatIndex: chats.length ? 0 : null,
-                chatsSyncedUpTo: latestUpdateTimestamp
+                chatsSyncedUpTo: latestUpdateTimestamp,
+                runUpdateChatsTask: true
             };
         }
 

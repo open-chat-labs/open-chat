@@ -79,10 +79,10 @@ export function setupBackgroundTasks() {
 
     // Check for new messages at regular intervals
     useEffect(() => {
-        if (usersState.me) {
+        if (chatsState.runUpdateChatsTask) {
             return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
-    }, [usersState.me]);
+    }, [chatsState.runUpdateChatsTask]);
 }
 
 function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
