@@ -4,3 +4,7 @@ members = [
     "src/services/shared",
     "src/services/user_mgmt"
 ]
+
+exclude = [
+    "bigmap-rs"
+]

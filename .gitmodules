@@ -1,0 +1,3 @@
+[submodule "bigmap-rs"]
+	path = bigmap-rs
+	url = git@github.com:dfinity/bigmap-rs.git
