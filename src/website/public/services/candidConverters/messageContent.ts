@@ -1,15 +1,15 @@
 import { MessageContent } from "../../model/messages";
 
-export function fromCandid(payload: any) : MessageContent {
-    if (payload.hasOwnProperty("Text")) {
-        const inner = payload.Text;
+export function fromCandid(content: any) : MessageContent {
+    if (content.hasOwnProperty("Text")) {
+        const inner = content.Text;
         return {
             kind: "text",
             text: inner.text
         };
     }
-    if (payload.hasOwnProperty("Media")) {
-        const inner = payload.Media;
+    if (content.hasOwnProperty("Media")) {
+        const inner = content.Media;
         return {
             kind: "media",
             caption: inner.caption,
@@ -19,7 +19,7 @@ export function fromCandid(payload: any) : MessageContent {
             chunkSize: inner.chunk_size
         };
     }
-    throw new Error("Unrecognised payload type - " + JSON.stringify(payload));
+    throw new Error("Unrecognised content type - " + JSON.stringify(content));
 }
 
 export function toCandid(content: MessageContent) : any {
