@@ -35,8 +35,15 @@ function ChatList() {
         let latestMessageText = "";
         for (let i = c.messages.length - 1; i >= 0; i--) {
             const message = c.messages[i];
-            if ("text" in message) {
-                latestMessageText = message.text;
+            if ("content" in message) {
+                const content = message.content;
+                if (content.kind === "text") {
+                    latestMessageText = content.text;
+                } else if (content.kind === "media") {
+                    latestMessageText = content.caption ?? getMimeTypeDisplayName(content.mimeType);
+                } else {
+                    throw new Error("Unrecognised content type - " + (content as any).kind);
+                }
                 break;
             }
         }
@@ -59,4 +66,15 @@ function ChatList() {
             {chats}
         </ul>
     );
+}
+
+function getMimeTypeDisplayName(mimeType: string) : string {
+    const mimeTypeLower = mimeType.toLowerCase();
+    if (mimeTypeLower.startsWith("video/")) {
+        return "video";
+    } else if (mimeTypeLower.startsWith("image/")) {
+        return "image";
+    } else {
+        return "file";
+    }
 }

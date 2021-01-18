@@ -4,7 +4,7 @@ import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
 import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
-import { LocalMessage } from "../../model/messages";
+import { LocalMessage, MessageContent } from "../../model/messages";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
 import {
@@ -18,32 +18,32 @@ export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
-export default function(chat: Chat, message: string) {
+export default function(chat: Chat, content: MessageContent) {
     switch (chat.kind) {
-        case CONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, chat.chatId, message);
-        case CONFIRMED_GROUP_CHAT: return sendGroupMessage(chat.chatId, message);
-        case UNCONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, null, message);
-        case UNCONFIRMED_GROUP_CHAT: return sendMessageToNewGroup(chat.id, message);
+        case CONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, chat.chatId, content);
+        case CONFIRMED_GROUP_CHAT: return sendGroupMessage(chat.chatId, content);
+        case UNCONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, null, content);
+        case UNCONFIRMED_GROUP_CHAT: return sendMessageToNewGroup(chat.id, content);
     }
 }
 
-function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: string) {
+function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, content: MessageContent) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const requestEvent: SendMessageRequestedEvent = {
             type: SEND_MESSAGE_REQUESTED,
             payload: {
                 kind: "direct",
-                userId: userId,
-                chatId: chatId,
-                message: message
+                userId,
+                chatId,
+                content
             }
         };
 
         dispatch(requestEvent);
 
         const response = chatId
-            ? await chatsService.sendMessage(chatId, message)
-            : await chatsService.sendDirectMessage(userId, message);
+            ? await chatsService.sendMessage(chatId, content)
+            : await chatsService.sendDirectMessage(userId, content);
 
         let outcomeEvent;
         if (response.kind === "success") {
@@ -53,14 +53,14 @@ function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: stri
                 type: SEND_MESSAGE_SUCCEEDED,
                 payload: {
                     kind: "direct",
-                    userId: userId,
+                    userId,
                     chatId: chatId ?? (response.result as SendDirectMessageResult).chatId,
                     message: {
                         kind: "local",
                         id: response.result.messageId,
                         date: response.result.date,
                         sender: myUserId,
-                        text: message
+                        content
                     }
                 }
             } as SendMessageSucceededEvent;
@@ -74,20 +74,20 @@ function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, message: stri
     }
 }
 
-function sendGroupMessage(chatId: ChatId, message: string) {
+function sendGroupMessage(chatId: ChatId, content: MessageContent) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const requestEvent: SendMessageRequestedEvent = {
             type: SEND_MESSAGE_REQUESTED,
             payload: {
                 kind: "group",
-                chatId: chatId,
-                message: message
+                chatId,
+                content
             }
         };
 
         dispatch(requestEvent);
 
-        const response = await chatsService.sendMessage(chatId, message);
+        const response = await chatsService.sendMessage(chatId, content);
 
         let outcomeEvent;
         if (response.kind === "success") {
@@ -97,13 +97,13 @@ function sendGroupMessage(chatId: ChatId, message: string) {
                 type: SEND_MESSAGE_SUCCEEDED,
                 payload: {
                     kind: "group",
-                    chatId: chatId,
+                    chatId,
                     message: {
                         kind: "local",
                         id: response.result.messageId,
                         date: response.result.date,
                         sender: myUserId,
-                        text: message
+                        content
                     }
                 }
             } as SendMessageSucceededEvent;
@@ -120,14 +120,14 @@ function sendGroupMessage(chatId: ChatId, message: string) {
 // We can't send messages to a new group until the group has been confirmed at which point we will receive the chatId.
 // So we only signal the 'requestEvent', the reducer will then add the message to the 'unconfirmedMessages' array for
 // the chat and those messages will be sent once the chat is confirmed.
-function sendMessageToNewGroup(id: Symbol, message: string) {
+function sendMessageToNewGroup(id: Symbol, content: MessageContent) {
     return (dispatch: Dispatch<any>) => {
         const requestEvent: SendMessageRequestedEvent = {
             type: SEND_MESSAGE_REQUESTED,
             payload: {
                 kind: "newGroup",
                 unconfirmedChatId: id,
-                message
+                content
             }
         };
 
@@ -155,19 +155,19 @@ export type SendDirectMessageRequest = {
     kind: "direct",
     userId: UserId,
     chatId: Option<ChatId>,
-    message: string
+    content: MessageContent
 }
 
 export type SendGroupMessageRequest = {
     kind: "group",
     chatId: ChatId,
-    message: string
+    content: MessageContent
 }
 
 export type SendMessageToNewGroupRequest = {
     kind: "newGroup",
     unconfirmedChatId: Symbol,
-    message: string
+    content: MessageContent
 }
 
 export type SendMessageSuccess = SendDirectMessageSuccess | SendGroupMessageSuccess;

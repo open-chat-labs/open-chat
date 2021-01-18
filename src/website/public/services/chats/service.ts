@@ -1,4 +1,5 @@
 import { ChatId } from "../../model/chats";
+import { MessageContent } from "../../model/messages";
 import { UserId } from "../../model/users";
 import createGroupChat, { CreateGroupChatResponse } from "./createGroupChat";
 import sendDirectMessage, { SendDirectMessageResponse } from "./sendDirectMessage";
@@ -6,7 +7,7 @@ import sendMessage, { SendMessageResponse } from "./sendMessage";
 import markRead, { MarkReadResponse } from "./markRead";
 import addParticipants, { AddParticipantsResponse } from "./addParticipants";
 import removeParticipant, { RemoveParticipantResponse } from "./removeParticipant";
-import getChats, {GetChatsRequest, GetChatsResponse} from "./getChats";
+import getChats, { GetChatsRequest, GetChatsResponse } from "./getChats";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
 
 export default class service {
@@ -14,12 +15,12 @@ export default class service {
         return createGroupChat(subject, users);
     }
 
-    public static sendDirectMessage(userId: UserId, message: string) : Promise<SendDirectMessageResponse> {
-        return sendDirectMessage(userId, message);
+    public static sendDirectMessage(userId: UserId, content: MessageContent) : Promise<SendDirectMessageResponse> {
+        return sendDirectMessage(userId, content);
     }
 
-    public static sendMessage(chatId: ChatId, message: string) : Promise<SendMessageResponse> {
-        return sendMessage(chatId, message);
+    public static sendMessage(chatId: ChatId, content: MessageContent) : Promise<SendMessageResponse> {
+        return sendMessage(chatId, content);
     }
 
     public static markRead(chatId: ChatId, upToIndex: number) : Promise<MarkReadResponse> {

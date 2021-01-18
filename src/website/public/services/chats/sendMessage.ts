@@ -1,10 +1,12 @@
 import canister from "ic:canisters/chats";
 import { ChatId } from "../../model/chats";
+import { MessageContent } from "../../model/messages";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
+import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 
-export default async function(chatId: ChatId, message: string) : Promise<SendMessageResponse> {
-    let response = await canister.send_message(chatIdToCandid(chatId), message);
+export default async function(chatId: ChatId, content: MessageContent) : Promise<SendMessageResponse> {
+    let response = await canister.send_message(chatIdToCandid(chatId), messagePayloadToCandid(content));
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

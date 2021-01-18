@@ -50,7 +50,7 @@ function MessagesList() {
 
             children.push(<Message
                 key={"u-" + i}
-                message={message.text}
+                content={message.content}
                 sentByMe={true}
                 mergeWithPrevious={mergeWithPrevious} />);
 
@@ -81,7 +81,7 @@ function MessagesList() {
 
             children.push(<Message
                 key={message.id}
-                message={message.text}
+                content={message.content}
                 date={message.date}
                 sentByMe={sentByMe}
                 sender={sender}

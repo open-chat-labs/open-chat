@@ -208,7 +208,7 @@ export default produce((state: ChatsState, event: Event) => {
                 userId: "userId" in payload ? payload.userId : undefined,
                 unconfirmedChatId: payload.kind === "newGroup" ? payload.unconfirmedChatId : undefined
             });
-            chatFunctions.addUnconfirmedMessage(chat, payload.message);
+            chatFunctions.addUnconfirmedMessage(chat, payload.content);
 
             state.chats.splice(index, 1);
             state.chats.unshift(chat);
