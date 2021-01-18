@@ -18,7 +18,7 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
-    fn push_message(&mut self, sender: &UserId, text: String, timestamp: Timestamp) -> u32;
+    fn push_message(&mut self, sender: &UserId, payload: MessagePayload, timestamp: Timestamp) -> u32;
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
@@ -33,11 +33,31 @@ pub trait Chat {
 pub struct ChatId(u64);
 
 #[derive(CandidType, Deserialize, Clone)]
+pub struct TextPayload {
+    text: String
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct MediaPayload {
+    caption: Option<String>,
+    mime_type: String,
+    blob_id: String,
+    blob_size: u32,
+    chunk_size: u32
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub enum MessagePayload {
+    Text(TextPayload),
+    Media(MediaPayload)
+}
+
+#[derive(CandidType, Deserialize, Clone)]
 pub struct Message {
     id: u32,
     timestamp: Timestamp,
     sender: UserId,
-    text: String
+    payload: MessagePayload
 }
 
 #[derive(CandidType)]
@@ -79,12 +99,12 @@ impl ChatId {
 }
 
 impl Message {
-    pub fn new(id: u32, now: Timestamp, sender: UserId, text: String) -> Message {
+    pub fn new(id: u32, now: Timestamp, sender: UserId, payload: MessagePayload) -> Message {
         Message {
             id,
             timestamp: now,
             sender,
-            text
+            payload
         }
     }
 

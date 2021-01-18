@@ -14,6 +14,26 @@ type CreateGroupChatResponse =
         ChatAlreadyExists;
     };
 
+type TextPayload =
+    record {
+        text: text;
+    };
+
+type MediaPayload =
+    record {
+        caption: opt text;
+        mime_type: text;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type MessagePayload =
+    variant {
+        Text: TextPayload;
+        Media: MediaPayload;
+    };
+
 type SendDirectMessageResult =
     record {
         chat_id: ChatId;
@@ -79,7 +99,7 @@ type Message =
         id: nat32;
         timestamp: Timestamp;
         sender: UserId;
-        text: text;
+        payload: MessagePayload
     };
 
 type ChatSummary =
@@ -132,12 +152,15 @@ type GetMessagesByIdResponse =
 
 service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
-    send_direct_message: (UserId, text) -> (SendDirectMessageResponse);
-    send_message: (ChatId, text) -> (SendMessageResponse);
+    send_direct_message: (UserId, MessagePayload) -> (SendDirectMessageResponse);
+    send_message: (ChatId, MessagePayload) -> (SendMessageResponse);
     mark_read: (ChatId, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
+    put_chunk: (text, nat32, vec nat8) -> (bool);
+
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
+    get_chunk: (text, nat32) -> (opt vec nat8) query;
 }

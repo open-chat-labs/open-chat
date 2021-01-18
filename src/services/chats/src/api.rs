@@ -1,6 +1,6 @@
 use ic_cdk_macros::*;
 use shared::user_id::UserId;
-use crate::domain::chat::ChatId;
+use crate::domain::chat::{ChatId, MessagePayload};
 use crate::queries::*;
 use crate::updates::*;
 
@@ -10,13 +10,13 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> create_group
 }
 
 #[update]
-fn send_direct_message(recipient: UserId, text: String) -> send_direct_message::Response {
-    send_direct_message::update(recipient, text)
+fn send_direct_message(recipient: UserId, payload: MessagePayload) -> send_direct_message::Response {
+    send_direct_message::update(recipient, payload)
 }
 
 #[update]
-fn send_message(chat_id: ChatId, text: String) -> send_message::Response {
-    send_message::update(chat_id, text)
+fn send_message(chat_id: ChatId, payload: MessagePayload) -> send_message::Response {
+    send_message::update(chat_id, payload)
 }
 
 #[update]
@@ -34,6 +34,11 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Resp
     remove_participant::update(chat_id, user)
 }
 
+#[update]
+fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
+    put_chunk::update(blob_id, chunk_index, data)
+}
+
 #[query]
 fn get_chats(request: get_chats::Request) -> get_chats::Response {
     get_chats::query(request)
@@ -48,3 +53,9 @@ fn get_messages(chat_id: ChatId, from_id: u32, page_size: u32) -> get_messages::
 fn get_messages_by_id(chat_id: ChatId, ids: Vec<u32>) -> get_messages_by_id::Response {
     get_messages_by_id::query(chat_id, ids)
 }
+
+#[query]
+fn get_chunk(blob_id: String, chunk_index: u32) -> Option<Vec<u8>> {
+    get_chunk::query(blob_id, chunk_index)
+}
+
