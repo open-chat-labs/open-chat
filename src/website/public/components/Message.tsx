@@ -16,19 +16,19 @@ export default Message;
 
 function Message(props : Props) {
     let className = "message " + (props.sentByMe ? "me" : "them");
-    let senderUsernameFragment = null;
+    let senderLink = null;
     if (props.sender) {
         const sender = props.sender;
         const dispatch = useDispatch();
         className += " group";
-        senderUsernameFragment = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+        senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
     if (props.mergeWithPrevious) {
         className += " merge";
     }
     return (
         <p className={className}>
-            {senderUsernameFragment}
+            {senderLink}
             {props.message}
             <span className="message-time">{props.date ? toShortTime(props.date) : "..."}</span>
         </p>
