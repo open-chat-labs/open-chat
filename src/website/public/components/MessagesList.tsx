@@ -2,15 +2,12 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
+import * as chatFunctions from "../model/chats";
 import { Option } from "../model/common";
-import { UserId } from "../model/users";
+import { UserId, UserSummary } from "../model/users";
 
-import DayChangeMarker from "./messages/DayChangeMarker";
-import DirectMessageSentByThem from "./messages/DirectMessageSentByThem";
-import GroupMessageSentByElse from "./messages/GroupMessageSentByElse";
-import MessageSentByMe from "./messages/MessageSentByMe";
-import UnconfirmedMessage from "./messages/UnconfirmedMessage";
-import { CONFIRMED_DIRECT_CHAT } from "../constants";
+import DayChangeMarker from "./DayChangeMarker";
+import Message from "./Message";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -26,6 +23,7 @@ function MessagesList() {
     }
 
     const chat = chatsState.chats[chatsState.selectedChatIndex];
+    const isGroupChat = chatFunctions.isGroupChat(chat);
 
     const children: JSX.Element[] = [];
 
@@ -36,7 +34,9 @@ function MessagesList() {
         const message = chat.messages[i];
         if (message.kind === "remote") {
             continue;
-        } else if (message.kind === "unconfirmed") {
+        }
+
+        if (message.kind === "unconfirmed") {
             const now = new Date();
             const dayString = now.toDateString();
             if (lastSeenDayString === null || lastSeenDayString !== dayString) {
@@ -48,14 +48,12 @@ function MessagesList() {
                 (prevMessageSender === null || prevMessageSender === myUserId) &&
                 now.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
 
-            const props = {
-                message: message.text,
-                mergeWithPrevious
-            };
-            children.push(<UnconfirmedMessage key={"u-" + i} {...props} />);
+            children.push(<Message
+                key={"u-" + i}
+                message={message.text}
+                sentByMe={true}
+                mergeWithPrevious={mergeWithPrevious} />);
 
-            lastSeenDate = now;
-            lastSeenDayString = dayString;
             prevMessageSender = myUserId;
         } else {
             const dayString = message.date.toDateString();
@@ -68,39 +66,27 @@ function MessagesList() {
                 message.sender === prevMessageSender &&
                 message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
 
+            let sender: UserSummary | undefined;
+
             const sentByMe = message.sender === myUserId;
-            if (sentByMe) {
-                const props = {
-                    message: message.text,
-                    date: message.date,
-                    confirmed: true,
-                    mergeWithPrevious
-                };
-                children.push(<MessageSentByMe key={message.id} {...props} />);
-            } else if (chat.kind === CONFIRMED_DIRECT_CHAT) {
-                const props = {
-                    message: message.text,
-                    date: message.date,
-                    mergeWithPrevious
-                };
-                children.push(<DirectMessageSentByThem key={message.id} {...props} />);
-            } else {
-                const sender = usersDictionary.hasOwnProperty(message.sender)
+            if (isGroupChat && !sentByMe) {
+                sender = usersDictionary.hasOwnProperty(message.sender)
                     ? usersDictionary[message.sender]
                     : {
                         userId: message.sender,
                         username: "Unknown",
                         version: 0
                     };
-
-                const props = {
-                    message: message.text,
-                    date: message.date,
-                    sender: sender,
-                    mergeWithPrevious
-                };
-                children.push(<GroupMessageSentByElse key={message.id} {...props} />);
             }
+
+            children.push(<Message
+                key={message.id}
+                message={message.text}
+                date={message.date}
+                sentByMe={sentByMe}
+                sender={sender}
+                mergeWithPrevious={mergeWithPrevious} />);
+
             lastSeenDate = message.date;
             lastSeenDayString = dayString;
             prevMessageSender = message.sender;
