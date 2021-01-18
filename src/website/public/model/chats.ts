@@ -1,5 +1,5 @@
 import { Option } from "./common";
-import { LocalMessage, Message, RemoteMessage, UnconfirmedMessage } from "./messages";
+import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
 import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
@@ -127,7 +127,7 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : voi
         }
         chat.messages[messageIndex] = message;
 
-        removeMatchingUnconfirmedMessage(chat, message.text);
+        removeMatchingUnconfirmedMessage(chat, message.content);
 
         if (chat.updatedDate < message.date) {
             chat.updatedDate = message.date;
@@ -137,10 +137,10 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : voi
     queueMissingMessagesForDownload(chat);
 }
 
-export const addUnconfirmedMessage = (chat: Chat, message: string) : void => {
+export const addUnconfirmedMessage = (chat: Chat, content: MessageContent) : void => {
     chat.messages.push({
         kind: "unconfirmed",
-        text: message
+        content
     } as UnconfirmedMessage);
 }
 
@@ -251,13 +251,15 @@ export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {
     return chats.findIndex(c => "them" in c && userId === c.them);
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, text: string) : boolean => {
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : boolean => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
         if (message.kind !== "unconfirmed") {
             chat.minimumUnconfirmedMessageIndex = index;
-        } else if (message.text === text) {
+        } else if (
+            (message.content.kind === "text" && content.kind === "text" && message.content.text === content.text) ||
+            (message.content.kind === "media" && content.kind === "media" && message.content.blobId === content.blobId)) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
             return true;

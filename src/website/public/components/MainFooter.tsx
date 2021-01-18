@@ -38,7 +38,7 @@ function MainFooter() {
 
     function handleSendMessage() {
         if (newMessageText) {
-            dispatch(sendMessage(chat, newMessageText))
+            dispatch(sendMessage(chat, { kind: "text", text: newMessageText }));
         }
         setNewMessageText("");
         //scrollMessagesToBottom()

@@ -70,7 +70,7 @@ export default function(subject: string, users: UserId[]) {
                 dispatch(addParticipantsByUserId(chat, particpantsToAdd));
             }
 
-            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.text)));
+            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content)));
         }    
     }
 }
