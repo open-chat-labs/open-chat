@@ -2,7 +2,7 @@ use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use shared::timestamp::Timestamp;
 use shared::upgrade::StableState;
 use shared::user_id::UserId;
-use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessagePayload};
+use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 
@@ -12,8 +12,8 @@ pub struct ChatList {
 }
 
 impl ChatList {
-    pub fn create_direct_chat(&mut self, chat_id: ChatId, sender: UserId, recipient: UserId, payload: MessagePayload, now: Timestamp) -> u32 {
-        let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, payload, now));
+    pub fn create_direct_chat(&mut self, chat_id: ChatId, sender: UserId, recipient: UserId, content: MessageContent, now: Timestamp) -> u32 {
+        let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, content, now));
         self.chats.insert(chat_id, chat);
         1
     }

@@ -1,18 +1,18 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::{timestamp, timestamp::Timestamp};
-use crate::domain::chat::{Chat, ChatId, MessagePayload};
+use crate::domain::chat::{Chat, ChatId, MessageContent};
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
 
-pub fn update(chat_id: ChatId, payload: MessagePayload) -> Response {
+pub fn update(chat_id: ChatId, content: MessageContent) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
     let me = shared::user_id::get_current();
     match chat_list.get_mut(chat_id, &me) {
         None => ChatNotFound,
         Some(chat) => {
             let now = timestamp::now();
-            let message_id = chat.push_message(&me, payload, now);
+            let message_id = chat.push_message(&me, content, now);
             Success(Result::new(message_id, now))
         }
     }
