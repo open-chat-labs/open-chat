@@ -8,12 +8,14 @@ import {
     GetDataSucceededEvent
 } from "../actions/data/getData";
 
+import { PUT_DATA_REQUESTED, PutDataRequestedEvent } from "../actions/data/putData";
+
 export type BlobsState = {
     blobs: any,
     blobsDownloading: []
 }
 
-type Event = GetDataRequestedEvent | GetDataSucceededEvent;
+type Event = GetDataRequestedEvent | GetDataSucceededEvent | PutDataRequestedEvent;
 
 export default produce((state: BlobsState, event: Event) => {
     switch (event.type) {
@@ -27,6 +29,12 @@ export default produce((state: BlobsState, event: Event) => {
             const { key, data } = event.payload;
             state.blobs[key] = data;
             setFunctions.remove(state.blobsDownloading, key);
+            break;
+        }
+
+        case PUT_DATA_REQUESTED: {
+            const { key, data } = event.payload;
+            state.blobs[key] = data;
             break;
         }
     }
