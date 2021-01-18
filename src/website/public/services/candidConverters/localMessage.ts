@@ -9,6 +9,6 @@ export function fromCandid(value: any) : LocalMessage {
         id: value.id,
         date: timestampToDate(value.timestamp),
         sender: userIdFromCandid(value.sender),
-        content: messageContentFromCandid(value.payload)
+        content: messageContentFromCandid(value.content)
     };
 }

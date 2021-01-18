@@ -1,10 +1,12 @@
 import React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { toShortTime } from "../utils/datetimeFunctions";
 import gotoUser from "../actions/chats/gotoUser";
+import getData from "../actions/data/getData";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
+import { RootState } from "../reducers";
 
 export interface Props {
     content: MessageContent,
@@ -17,25 +19,37 @@ export interface Props {
 export default Message;
 
 function Message(props : Props) {
+    const dispatch = useDispatch();
+    const blobsState = useSelector((state: RootState) => state.blobsState.blobs);
+
     let className = "message " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
     if (props.sender) {
         const sender = props.sender;
-        const dispatch = useDispatch();
         className += " group";
         senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
     if (props.mergeWithPrevious) {
         className += " merge";
     }
-    const messageContent =  props.content.kind === "text"
-        ? props.content.text
-        : <img src="pug1.jpeg" />;
+    let contentElement;
+    const content = props.content;
+    if (content.kind === "text") {
+        contentElement = content.text;
+    } else {
+        if (blobsState.blobs.hasOwnProperty(content.blobId)) {
+            const data = blobsState.blobs[content.blobId];
+            contentElement = <img src={data} />;
+        } else if (!blobsState.blobsDownloading.includes(content.blobId)) {
+            dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
+            contentElement = "Loading...";
+        }
+    }
 
     return (
         <p className={className}>
             {senderLink}
-            {messageContent}
+            {contentElement}
             <span className="message-time">{props.date ? toShortTime(props.date) : "..."}</span>
         </p>
     );
