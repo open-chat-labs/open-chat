@@ -340,20 +340,20 @@ main header>div >div {
     color: white;
 }
 
-.detail .message.image {
+.detail .message.media {
     padding: 0px;
     position: relative; 
 }
 
-.detail .message.image img, video {
+.detail .message.media img, video {
     border-radius: 20px;
 }
 
-.detail .message.image video {
+.detail .message.media video {
     display: block;
 }
 
-.detail .message.image .message-time {
+.detail .message.media .message-time {
     position: absolute;
     display: inline;
     float: none;
