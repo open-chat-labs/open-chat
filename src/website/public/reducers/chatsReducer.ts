@@ -180,7 +180,11 @@ export default produce((state: ChatsState, event: Event) => {
             const unconfirmedGroupChat = state.chats.find(c => c.kind === UNCONFIRMED_GROUP_CHAT) as UnconfirmedGroupChat;
 
             for (const updatedChat of chats) {
-                const currentChat = chatFunctions.tryGetChat(state.chats, { chatId: updatedChat.chatId })[0] as Option<ConfirmedChat>;
+                const filter = {
+                    chatId: updatedChat.chatId,
+                    userId: chatFunctions.isDirectChat(updatedChat) ? updatedChat.them : undefined
+                };
+                const currentChat = chatFunctions.tryGetChat(state.chats, filter)[0] as Option<ConfirmedChat>;
 
                 if (currentChat) {
                     // These messages have just come from the server so are all of type LocalMessage
