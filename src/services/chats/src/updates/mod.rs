@@ -4,3 +4,4 @@ pub mod mark_read;
 pub mod remove_participant;
 pub mod send_direct_message;
 pub mod send_message;
+pub mod put_chunk;
