@@ -4,6 +4,7 @@ import { Option } from "./common";
 export type Message = ConfirmedMessage | UnconfirmedMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
 export type MessageContent = TextContent | MediaContent;
+export type SendMessageContent = TextContent | SendMediaContent;
 
 export type LocalMessage = {
     kind: "local",
@@ -31,8 +32,15 @@ export type TextContent = {
 export type MediaContent = {
     kind: "media",
     caption: Option<string>;
-    mimeType: string;
-    blobId: string;
-    blobSize: number;
-    chunkSize: number;
+    mimeType: string,
+    blobId: string,
+    blobSize: number,
+    chunkSize: number,
+}
+
+export type SendMediaContent = {
+    kind: "media",
+    caption: Option<string>,
+    mimeType: string,
+    blob: Uint8Array
 }

@@ -1,13 +1,15 @@
 import { Dispatch } from "react";
-
+import { v1 as uuidv1 } from 'uuid';
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
 import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
-import { LocalMessage, MessageContent } from "../../model/messages";
+import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
 import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
+import putData, { PutDataOutcome, PUT_DATA_FAILED } from "../data/putData";
 import {
+    CHUNK_SIZE_BYTES,
     CONFIRMED_DIRECT_CHAT,
     CONFIRMED_GROUP_CHAT,
     UNCONFIRMED_DIRECT_CHAT,
@@ -18,17 +20,55 @@ export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
-export default function(chat: Chat, content: MessageContent) {
-    switch (chat.kind) {
-        case CONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, chat.chatId, content);
-        case CONFIRMED_GROUP_CHAT: return sendGroupMessage(chat.chatId, content);
-        case UNCONFIRMED_DIRECT_CHAT: return sendDirectMessage(chat.them, null, content);
-        case UNCONFIRMED_GROUP_CHAT: return sendMessageToNewGroup(chat.id, content);
+export default function(chat: Chat, sendMessageContent: SendMessageContent) {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+
+        let content: MessageContent;
+
+        if (sendMessageContent.kind === "media") {
+            let blobId = uuidv1().toString();
+
+            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(blobId, sendMessageContent.blob)) as any;
+            let outcomeEvent = await putDataAsync();
+
+            if (outcomeEvent.type === PUT_DATA_FAILED)
+                return;
+
+            content = {
+                kind: sendMessageContent.kind,
+                caption: sendMessageContent.caption,
+                mimeType: sendMessageContent.mimeType,
+                blobId,
+                blobSize: sendMessageContent.blob.length,
+                chunkSize: CHUNK_SIZE_BYTES
+            };
+
+        } else if (sendMessageContent.kind === "text") {
+            content = sendMessageContent;
+        } else {
+            throw Error("Unrecognised content type");
+        }
+
+        switch (chat.kind) {
+            case CONFIRMED_DIRECT_CHAT: 
+                dispatch(sendDirectMessage(chat.them, chat.chatId, content));
+                break;
+            case CONFIRMED_GROUP_CHAT: 
+                dispatch(sendGroupMessage(chat.chatId, content));
+                break;
+            case UNCONFIRMED_DIRECT_CHAT: 
+                dispatch(sendDirectMessage(chat.them, null, content));
+                break;
+            case UNCONFIRMED_GROUP_CHAT: 
+                dispatch(sendMessageToNewGroup(chat.id, content));
+                break;
+        }
     }
 }
 
 function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, content: MessageContent) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+
         const requestEvent: SendMessageRequestedEvent = {
             type: SEND_MESSAGE_REQUESTED,
             payload: {
