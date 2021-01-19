@@ -7,11 +7,8 @@ pub struct BlobStorage {
 }
 
 impl BlobStorage {
-    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
-        match self.chunks.insert((blob_id, chunk_index), data) {
-            Some(_) => true,
-            None => false
-        }
+    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) {
+        self.chunks.insert((blob_id, chunk_index), data);
     }
 
     pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {

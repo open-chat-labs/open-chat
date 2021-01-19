@@ -70,6 +70,6 @@ function MainFooter() {
                 blob: e.target.result
             }));
         }
-        reader.readAsDataURL(files[0]);
+        reader.readAsArrayBuffer(files[0]);
     }    
 }

@@ -21,7 +21,7 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 
 export default function(chat: Chat, sendMessageContent: SendMessageContent) {
-    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+    return async (dispatch: Dispatch<any>) => {
 
         let content: MessageContent;
 

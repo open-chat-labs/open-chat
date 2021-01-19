@@ -7,7 +7,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@dfinity/agent": "0.6.14",
+    "@dfinity/agent": "0.6.18",
     "@reduxjs/toolkit": "1.5.0",
     "@types/async": "^3.2.5",
     "@types/identicon.js": "^2.3.0",

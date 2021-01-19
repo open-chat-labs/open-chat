@@ -46,6 +46,9 @@ function generateWebpackConfigForCanister(name, info) {
       minimize: false,
       minimizer: [new TerserPlugin()],
     },
+    node: {
+      fs: "empty"
+    },
     resolve: {
       alias: aliases,
       extensions: ['.tsx', '.ts', '.js']
