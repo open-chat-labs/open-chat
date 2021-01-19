@@ -24,13 +24,11 @@ function Message(props : Props) {
 
     let className = "message " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
-    if (props.sender) {
-        const sender = props.sender;
-        className += " group";
-        senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
-    }
     if (props.mergeWithPrevious) {
         className += " merge";
+    } else if (props.sender) {
+        const sender = props.sender;
+        senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
     let contentElement;
     const content = props.content;
