@@ -59,7 +59,7 @@ function MainFooter() {
         if (!files || !files[0]) {
             return;
         }
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.onload = function(e: any) {
             dispatch(sendMessage(chat, { 
                 kind: "media", 
@@ -67,7 +67,7 @@ function MainFooter() {
                 // TODO: Could try sniffing file for mimetype
                 // https://stackoverflow.com/questions/18299806/how-to-check-file-mime-type-with-javascript-before-upload
                 mimeType: files[0].type,
-                blob: e.target.result
+                blob: new Uint8Array(e.target.result)
             }));
         }
         reader.readAsArrayBuffer(files[0]);
