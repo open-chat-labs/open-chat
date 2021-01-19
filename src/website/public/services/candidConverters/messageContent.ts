@@ -1,4 +1,5 @@
 import { MessageContent } from "../../model/messages";
+import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "../candidConverters/option";
 
 export function fromCandid(content: any) : MessageContent {
     if (content.hasOwnProperty("Text")) {
@@ -12,7 +13,7 @@ export function fromCandid(content: any) : MessageContent {
         const inner = content.Media;
         return {
             kind: "media",
-            caption: inner.caption,
+            caption: optionFromCandid(inner.caption),
             mimeType: inner.mime_type,
             blobId: inner.blob_id,
             blobSize: inner.blob_size,
@@ -32,7 +33,7 @@ export function toCandid(content: MessageContent) : any {
     } else {
         return {
             Media: {
-                caption: content.caption,
+                caption: optionToCandid(content.caption),
                 mime_type: content.mimeType,
                 blob_id: content.blobId,
                 blob_size: content.blobSize,
