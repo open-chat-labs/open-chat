@@ -20,7 +20,7 @@ export default Message;
 
 function Message(props : Props) {
     const dispatch = useDispatch();
-    const blobsState = useSelector((state: RootState) => state.blobsState.blobs);
+    const blobsState = useSelector((state: RootState) => state.blobsState);
 
     let className = "message " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
@@ -37,7 +37,8 @@ function Message(props : Props) {
     } else {
         if (blobsState.blobs.hasOwnProperty(content.blobId)) {
             const data = blobsState.blobs[content.blobId];
-            contentElement = <img src={data} />;
+            const src = "data:*/*;base64," + btoa(String.fromCharCode(...data));
+            contentElement = <img src={src} />;
         } else if (!blobsState.blobsDownloading.includes(content.blobId)) {
             dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
             contentElement = "Loading...";

@@ -17,8 +17,13 @@ import {
 
 export type BlobsState = {
     blobs: any,
-    blobsDownloading: []
+    blobsDownloading: string[]
 }
+
+const initialState: BlobsState = {
+    blobs: {},
+    blobsDownloading: []
+};
 
 type Event =
     GetDataRequestedEvent | 
@@ -54,4 +59,4 @@ export default produce((state: BlobsState, event: Event) => {
             break;
         }
     }
-}, { blobs: {} });
+}, initialState);
