@@ -82,7 +82,7 @@ export function setupBackgroundTasks() {
         if (chatsState.runUpdateChatsTask) {
             return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
-    }, [chatsState.runUpdateChatsTask]);
+    }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo]);
 }
 
 function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
