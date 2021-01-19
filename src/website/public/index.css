@@ -197,6 +197,9 @@ header {
     color: #919191;
     border-radius: 50%;
     padding: 6px;
+    background-color: transparent;
+    width: 36px;
+    height: 36px;
 }
 
 .ddl-button-svg {
