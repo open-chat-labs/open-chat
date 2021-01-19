@@ -36,7 +36,8 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Resp
 
 #[update]
 fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
-    put_chunk::update(blob_id, chunk_index, data)
+    put_chunk::update(blob_id, chunk_index, data);
+    true
 }
 
 #[query]
