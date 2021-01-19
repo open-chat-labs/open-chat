@@ -282,6 +282,7 @@ export default produce((state: ChatsState, event: Event) => {
                 // Adding the participants failed so remove them from the chat
                 setFunctions.exceptWith(chat.participants, users);
             }
+            break;
         }
     }
 }, initialState);
