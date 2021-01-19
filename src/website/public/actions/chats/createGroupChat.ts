@@ -8,6 +8,7 @@ import { RootState } from "../../reducers";
 import sendMessage from "./sendMessage";
 import { addParticipantsByUserId } from "./addParticipants";
 import { CONFIRMED_GROUP_CHAT, UNCONFIRMED_GROUP_CHAT } from "../../constants";
+import { TextContent } from "../../model/messages";
 
 export const CREATE_GROUP_CHAT_REQUESTED = "CREATE_GROUP_CHAT_REQUESTED";
 export const CREATE_GROUP_CHAT_SUCCEEDED = "CREATE_GROUP_CHAT_SUCCEEDED";
@@ -70,7 +71,7 @@ export default function(subject: string, users: UserId[]) {
                 dispatch(addParticipantsByUserId(chat, particpantsToAdd));
             }
 
-            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content)));
+            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content as TextContent)));
         }    
     }
 }

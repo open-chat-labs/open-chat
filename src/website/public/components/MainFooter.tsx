@@ -22,7 +22,11 @@ function MainFooter() {
         <footer className="enter-message">
             <label className="attach">
                 <Paperclip />
-                <input className="hide" type="file" accept="image/*,video/mp4,video/webm,video/ogg" />
+                <input 
+                    className="hide" 
+                    type="file" 
+                    accept="image/*,video/mp4,video/webm,video/ogg" 
+                    onChange={onMediaSelected}/>
             </label>
             <input
                 id="newMessage"
@@ -49,4 +53,23 @@ function MainFooter() {
             handleSendMessage();
         }
     }
+
+    function onMediaSelected(event: any) {
+        let files = event.target.files;
+        if (!files || !files[0]) {
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e: any) {
+            dispatch(sendMessage(chat, { 
+                kind: "media", 
+                caption: null,
+                // TODO: Could try sniffing file for mimetype
+                // https://stackoverflow.com/questions/18299806/how-to-check-file-mime-type-with-javascript-before-upload
+                mimeType: files[0].type,
+                blob: e.target.result
+            }));
+        }
+        reader.readAsDataURL(files[0]);
+    }    
 }

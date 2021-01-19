@@ -40,8 +40,12 @@ export default function(key: string, data: Uint8Array) {
         }
 
         dispatch(outcomeEvent);
+
+        return outcomeEvent;
     }
 }
+
+export type PutDataOutcome = PutDataSucceededEvent | PutDataFailedEvent;
 
 export type PutDataRequestedEvent = {
     type: typeof PUT_DATA_REQUESTED,
