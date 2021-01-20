@@ -36,8 +36,9 @@ function Message(props : Props) {
         contentElement = content.text;
     } else {
         if (blobsState.blobs.hasOwnProperty(content.blobId)) {
+            className += " media";
             const data = blobsState.blobs[content.blobId];
-            const src = "data:*/*;base64," + btoa(String.fromCharCode(...data));
+            const src = "data:*/*;base64," + btoa(new Uint8Array(data).reduce((data, byte) => data + String.fromCharCode(byte), ''));
             contentElement = <img src={src} />;
         } else if (!blobsState.blobsDownloading.includes(content.blobId)) {
             dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
