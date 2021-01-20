@@ -9,7 +9,7 @@ export default class service {
         const bytes = new Uint8Array(totalBytes);
         const chunks = this.getChunkIndexes(totalBytes, chunkSize);
 
-        async.mapLimit(chunks, 10, async (i, callback) => {
+        await async.mapLimit(chunks, 10, async (i, callback) => {
             const response = await getChunk(key, i, chunkSize);
             if (response.kind === "success") {
                 const offset = i * chunkSize;
@@ -17,8 +17,7 @@ export default class service {
             } else {
                 // TODO: Handle error
             }
-        }, e => {
-            if (e) console.log("GetChunk error - " + e);
+            callback(null);
         });
 
         return {
@@ -36,11 +35,10 @@ export default class service {
             chunks.push(new Uint8Array(slice));
         }
 
-        async.forEachOfLimit(chunks, 10, async (c, i, callback) => {
+        await async.forEachOfLimit(chunks, 10, async (c, i, callback) => {
             const index = i as number;
             await putChunk(key, index, c);
-        }, e => {
-            if (e) console.log("PutChunk error - " + e);
+            callback(null);
         });
 
         return true;
