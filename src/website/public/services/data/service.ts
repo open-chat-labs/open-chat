@@ -17,7 +17,8 @@ export default class service {
             } else {
                 // Handle errors
             }
-            callback();
+        }, e => {
+            if (e) console.log("GetChunk error - " + e);
         });
 
         return {
@@ -38,7 +39,8 @@ export default class service {
         await async.forEachOfLimit(chunks, 10, async (c, i, callback) => {
             const index = i as number;
             await putChunk(key, index, c);
-            callback();
+        }, e => {
+            if (e) console.log("PutChunk error - " + e);
         });
 
         return true;
