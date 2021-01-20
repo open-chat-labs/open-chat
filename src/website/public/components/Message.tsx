@@ -1,12 +1,10 @@
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-
+import { useDispatch } from "react-redux";
 import { toShortTime } from "../utils/datetimeFunctions";
 import gotoUser from "../actions/chats/gotoUser";
-import getData from "../actions/data/getData";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
-import { RootState } from "../reducers";
+import MediaContent from "./MediaContent";
 
 export interface Props {
     content: MessageContent,
@@ -20,30 +18,23 @@ export default Message;
 
 function Message(props : Props) {
     const dispatch = useDispatch();
-    const blobsState = useSelector((state: RootState) => state.blobsState);
 
     let className = "message " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
+
     if (props.mergeWithPrevious) {
         className += " merge";
     } else if (props.sender) {
         const sender = props.sender;
         senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
+
     let contentElement;
-    const content = props.content;
-    if (content.kind === "text") {
-        contentElement = content.text;
+    if (props.content.kind === "media") {
+        className += " media";
+        contentElement = <MediaContent key={props.content.blobId} content={props.content} />;
     } else {
-        if (blobsState.blobs.hasOwnProperty(content.blobId)) {
-            className += " media";
-            const data = blobsState.blobs[content.blobId];
-            const src = "data:*/*;base64," + btoa(new Uint8Array(data).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-            contentElement = <img src={src} />;
-        } else if (!blobsState.blobsDownloading.includes(content.blobId)) {
-            dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
-            contentElement = "Loading...";
-        }
+        contentElement = props.content.text;
     }
 
     return (

@@ -1,3 +1,9 @@
+# Code
+- Error handling - in particular around canister calls
+- Ensure components return only required state from useSelector hook 
+- Split reducers into a handler per message
+- Tests
+
 # Features
 
 - Star message (and other tags)
