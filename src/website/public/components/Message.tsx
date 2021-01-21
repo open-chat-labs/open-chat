@@ -32,7 +32,7 @@ function Message(props : Props) {
     let contentElement;
     if (props.content.kind === "media") {
         className += " media";
-        contentElement = <MediaContent key={props.content.blobId} content={props.content} />;
+        contentElement = <MediaContent content={props.content} />;
     } else {
         contentElement = props.content.text;
     }

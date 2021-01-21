@@ -49,7 +49,7 @@ function MessagesList() {
                 now.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
 
             children.push(<Message
-                key={"u-" + i}
+                key={message.key}
                 content={message.content}
                 sentByMe={true}
                 mergeWithPrevious={mergeWithPrevious} />);
@@ -80,7 +80,7 @@ function MessagesList() {
             }
 
             children.push(<Message
-                key={message.id}
+                key={message.key}
                 content={message.content}
                 date={message.date}
                 sentByMe={sentByMe}
