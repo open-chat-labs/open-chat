@@ -1,3 +1,5 @@
+import { v1 as uuidv1 } from 'uuid';
+
 import { Option } from "./common";
 import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
@@ -127,8 +129,10 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : voi
         }
         chat.messages[messageIndex] = message;
 
-        removeMatchingUnconfirmedMessage(chat, message.content);
-
+        const unconfirmedMessage = removeMatchingUnconfirmedMessage(chat, message.content);
+        if (unconfirmedMessage) {
+            message.key = unconfirmedMessage.key;
+        }
         if (chat.updatedDate < message.date) {
             chat.updatedDate = message.date;
         }
@@ -138,10 +142,12 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : voi
 }
 
 export const addUnconfirmedMessage = (chat: Chat, content: MessageContent) : void => {
-    chat.messages.push({
+    const message: UnconfirmedMessage = {
         kind: "unconfirmed",
+        key: uuidv1().toString(),
         content
-    } as UnconfirmedMessage);
+    };
+    chat.messages.push(message);
 }
 
 export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
@@ -251,7 +257,7 @@ export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {
     return chats.findIndex(c => "them" in c && userId === c.them);
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : boolean => {
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
@@ -262,10 +268,10 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageC
             (message.content.kind === "media" && content.kind === "media" && message.content.blobId === content.blobId)) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
-            return true;
+            return message;
         }
     }
-    return false;
+    return null;
 }
 
 const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<number> => {

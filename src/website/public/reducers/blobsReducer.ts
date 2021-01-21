@@ -54,7 +54,7 @@ export default produce((state: BlobsState, event: Event) => {
         }
 
         case PUT_DATA_FAILED: {
-            const { key, data } = event.payload;
+            const { key } = event.payload;
             delete state.blobs[key];
             break;
         }

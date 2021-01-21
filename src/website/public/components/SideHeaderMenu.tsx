@@ -5,7 +5,7 @@ import { addParticipantsByUsername } from "../actions/chats/addParticipants";
 import createGroupChat from "../actions/chats/createGroupChat";
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 import DropdownMenuIcon from "../assets/icons/dropdownMenuIcon.svg";
-import { Chat, GroupChat, isGroupChat } from "../model/chats";
+import { Chat, isGroupChat } from "../model/chats";
 
 type Props = {
     text: string,
@@ -13,13 +13,13 @@ type Props = {
     clearInput: () => void
 }
 
-export default SideHeaderMenu;
+export default React.memo(SideHeaderMenu);
 
 function SideHeaderMenu(props: Props) {
 
     const dispatch = useDispatch();
 
-    let buttons: JSX.Element[] = [];
+    const buttons: JSX.Element[] = [];
 
     function dispatchAndClearInput(result: any) {
         dispatch(result);

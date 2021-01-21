@@ -7,20 +7,19 @@ import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import { toShortTime } from "../utils/datetimeFunctions";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
 import * as setFunctions from "../utils/setFunctions";
+import { getSelectedChat } from "../utils/stateFunctions";
 import { UserSummary } from "../model/users";
 
-export default MainHeader;
+export default React.memo(MainHeader);
 
 function MainHeader() {
-    const chatsState = useSelector((state: RootState) => state.chatsState);
     const me : Option<UserSummary> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
+    const chat = useSelector(getSelectedChat);
 
-    if (chatsState.selectedChatIndex === null) {
+    if (chat === null) {
         return <div></div>;
     }
-
-    const chat = chatsState.chats[chatsState.selectedChatIndex];
 
     let icon : JSX.Element;
     let chatName : string;

@@ -7,7 +7,7 @@ import { RootState } from "../reducers";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
 import ChatListItem from "./ChatListItem";
 
-export default ChatList;
+export default React.memo(ChatList);
 
 function ChatList() {
     const chatsState = useSelector((state: RootState) => state.chatsState);

@@ -16,7 +16,7 @@ type Props = {
     userId: Option<UserId>
 }
 
-export default ChatListItem;
+export default React.memo(ChatListItem);
 
 function ChatListItem(props: Props) {
     const dispatch = useDispatch();

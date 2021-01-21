@@ -9,7 +9,7 @@ type Props = {
     userId: Option<UserId>
 }
 
-export default DefaultAvatar;
+export default React.memo(DefaultAvatar);
 
 function DefaultAvatar(props: Props) : JSX.Element {
 

@@ -14,7 +14,7 @@ export interface Props {
     mergeWithPrevious: boolean
 }
 
-export default Message;
+export default React.memo(Message);
 
 function Message(props : Props) {
     const dispatch = useDispatch();
@@ -32,7 +32,7 @@ function Message(props : Props) {
     let contentElement;
     if (props.content.kind === "media") {
         className += " media";
-        contentElement = <MediaContent key={props.content.blobId} content={props.content} />;
+        contentElement = <MediaContent content={props.content} />;
     } else {
         contentElement = props.content.text;
     }

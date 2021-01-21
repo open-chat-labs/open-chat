@@ -350,6 +350,8 @@ main header>div >div {
 
 .detail .message.media img, video {
     border-radius: 20px;
+    max-width: 500px;
+    max-height: 500px;
 }
 
 .detail .message.media video {

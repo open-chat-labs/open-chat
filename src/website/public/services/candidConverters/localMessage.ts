@@ -7,6 +7,7 @@ export function fromCandid(value: any) : LocalMessage {
     return {
         kind: "local",
         id: value.id,
+        key: value.id,
         date: timestampToDate(value.timestamp),
         sender: userIdFromCandid(value.sender),
         content: messageContentFromCandid(value.content)
