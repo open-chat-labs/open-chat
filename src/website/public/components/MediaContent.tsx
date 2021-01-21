@@ -24,9 +24,9 @@ function MediaContent(props : Props): JSX.Element {
 
     if (blobUrl) {
         if (content.mimeType.startsWith("image/")) {
-            contentElement = <Image key={props.content.blobId} id={props.content.blobId} blobUrl={blobUrl} />;
+            contentElement = <Image key={props.content.blobId} blobUrl={blobUrl} />;
         } else if (content.mimeType.startsWith("video/")) {
-            contentElement = <Video key={props.content.blobId} id={props.content.blobId} blobUrl={blobUrl} />
+            contentElement = <Video key={props.content.blobId} blobUrl={blobUrl} />
         }
     } else if (!isDataDownloading) {
         dispatch(getData(content.blobId, content.blobSize, content.chunkSize));

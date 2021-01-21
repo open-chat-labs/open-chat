@@ -1,7 +1,6 @@
 import React from "react";
 
 export interface Props {
-    id: string,
     blobUrl: string
 }
 
