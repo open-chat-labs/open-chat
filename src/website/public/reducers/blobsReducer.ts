@@ -41,7 +41,7 @@ export default produce((state: BlobsState, event: Event) => {
 
         case GET_DATA_SUCCEEDED: {
             const { key, data } = event.payload;
-            state.blobs[key] = data;
+            state.blobs[key] = dataToBlobUrl(data);
             setFunctions.remove(state.blobsDownloading, key);
             break;
         }
@@ -49,7 +49,7 @@ export default produce((state: BlobsState, event: Event) => {
         case PUT_DATA_REQUESTED: {
             const { key, data } = event.payload;
             // Assume Put will succeed and remove blob if it fails
-            state.blobs[key] = data;
+            state.blobs[key] = dataToBlobUrl(data);
             break;
         }
 
@@ -60,3 +60,8 @@ export default produce((state: BlobsState, event: Event) => {
         }
     }
 }, initialState);
+
+function dataToBlobUrl(data: Uint8Array): string {
+    const blob = new Blob([data]);
+    return URL.createObjectURL(blob);
+}
