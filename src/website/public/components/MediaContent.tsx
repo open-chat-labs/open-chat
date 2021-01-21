@@ -15,18 +15,18 @@ export default React.memo(MediaContent);
 
 function MediaContent(props : Props): JSX.Element {
     const dispatch = useDispatch();
-    const [data, isDataDownloading] = useSelector(
+    const [blobUrl, isDataDownloading] = useSelector(
         (state: RootState) => getBlobState(state, props.content), 
         (a, b) => a[0] === b[0] && a[1] === b[1]);
 
     let contentElement;
     const content = props.content;
 
-    if (data) {
+    if (blobUrl) {
         if (content.mimeType.startsWith("image/")) {
-            contentElement = <Image id={props.content.blobId} data={data} />;
+            contentElement = <Image id={props.content.blobId} blobUrl={blobUrl} />;
         } else if (content.mimeType.startsWith("video/")) {
-            contentElement = <Video id={props.content.blobId} data={data} mimeType={props.content.mimeType} />
+            contentElement = <Video id={props.content.blobId} blobUrl={blobUrl} />
         }
     } else if (!isDataDownloading) {
         dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
@@ -40,10 +40,10 @@ function MediaContent(props : Props): JSX.Element {
     );
 }
 
-function getBlobState(state: RootState, content: Media): [Option<Uint8Array>, boolean] {
+function getBlobState(state: RootState, content: Media): [Option<string>, boolean] {
     const blobsState = state.blobsState;
     return [
-        blobsState.blobs.hasOwnProperty(content.blobId) ? blobsState.blobs[content.blobId] as Uint8Array : null,
+        blobsState.blobs.hasOwnProperty(content.blobId) ? blobsState.blobs[content.blobId] as string : null,
         blobsState.blobsDownloading.includes(content.blobId)
     ];
 }
