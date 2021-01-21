@@ -1,22 +1,21 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../reducers";
+
 import sendMessage from "../actions/chats/sendMessage";
+import { getSelectedChat } from "../utils/stateFunctions";
 import Paperclip from "../assets/icons/paperclip.svg";
 import SendButton from "../assets/icons/sendButton.svg";
 
-export default MainFooter;
+export default React.memo(MainFooter);
 
 function MainFooter() {
     const dispatch = useDispatch();
-    const chatsState = useSelector((state: RootState) => state.chatsState);
+    const chat = useSelector(getSelectedChat);
     const [newMessageText, setNewMessageText] = useState("");
 
-    if (chatsState.selectedChatIndex === null) {
+    if (chat === null) {
         return <div></div>;
     }
-
-    const chat = chatsState.chats[chatsState.selectedChatIndex];
 
     return (
         <footer className="enter-message">
@@ -42,7 +41,7 @@ function MainFooter() {
 
     function handleSendMessage() {
         if (newMessageText) {
-            dispatch(sendMessage(chat, { kind: "text", text: newMessageText }));
+            dispatch(sendMessage(chat!, { kind: "text", text: newMessageText }));
         }
         setNewMessageText("");
         //scrollMessagesToBottom()
@@ -61,7 +60,7 @@ function MainFooter() {
         }
         const reader = new FileReader();
         reader.onload = function(e: any) {
-            dispatch(sendMessage(chat, { 
+            dispatch(sendMessage(chat!, {
                 kind: "media", 
                 caption: null,
                 // TODO: Could try sniffing file for mimetype

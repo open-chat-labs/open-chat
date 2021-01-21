@@ -1,15 +1,17 @@
 import React from "react";
-import { shallowEqual, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Option } from "../model/common";
 import getData from "../actions/data/getData";
 import { MediaContent as Media } from "../model/messages";
 import { RootState } from "../reducers";
+import Image from "./Image";
+import Video from "./Video";
 
 export interface Props {
     content: Media
 }
 
-export default MediaContent;
+export default React.memo(MediaContent);
 
 function MediaContent(props : Props): JSX.Element {
     const dispatch = useDispatch();
@@ -22,12 +24,9 @@ function MediaContent(props : Props): JSX.Element {
 
     if (data) {
         if (content.mimeType.startsWith("image/")) {
-            const src = "data:*/*;base64," + btoa(data.reduce((data, byte) => data + String.fromCharCode(byte), ''));
-            contentElement = <img src={src} />;
+            contentElement = <Image id={props.content.blobId} data={data} />;
         } else if (content.mimeType.startsWith("video/")) {
-            const videoBlob = new Blob([data], { type: 'video/mp4', });
-            const src = URL.createObjectURL(videoBlob);
-            contentElement = <video controls><source src={src}/>Your browser does not support the video tag</video>;
+            contentElement = <Video id={props.content.blobId} data={data} mimeType={props.content.mimeType} />
         }
     } else if (!isDataDownloading) {
         dispatch(getData(content.blobId, content.blobSize, content.chunkSize));

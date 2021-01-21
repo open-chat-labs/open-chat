@@ -14,7 +14,7 @@ export interface Props {
     mergeWithPrevious: boolean
 }
 
-export default Message;
+export default React.memo(Message);
 
 function Message(props : Props) {
     const dispatch = useDispatch();

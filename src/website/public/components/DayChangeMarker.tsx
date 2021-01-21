@@ -4,7 +4,7 @@ type Props = {
     date: Date
 }
 
-export default DayChangeMarker;
+export default React.memo(DayChangeMarker);
 
 function DayChangeMarker(props : Props) {
     const dayOfWeek = props.date.toLocaleDateString("en", { weekday: "long" });

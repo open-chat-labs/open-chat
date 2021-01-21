@@ -2,7 +2,7 @@ import React from "react";
 import ChatList from "./ChatList";
 import SideHeader from "./SideHeader";
 
-export default Side;
+export default React.memo(Side);
 
 function Side() {
     return (

@@ -5,24 +5,24 @@ import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
+import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
 import Message from "./Message";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
-export default MessagesList;
+export default React.memo(MessagesList);
 
 function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
-    const chatsState = useSelector((state: RootState) => state.chatsState);
+    const chat = useSelector(getSelectedChat);
 
-    if (chatsState.selectedChatIndex === null) {
+    if (chat === null) {
         return <div></div>;
     }
 
-    const chat = chatsState.chats[chatsState.selectedChatIndex];
     const isGroupChat = chatFunctions.isGroupChat(chat);
 
     const children: JSX.Element[] = [];

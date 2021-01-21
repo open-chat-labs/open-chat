@@ -7,12 +7,12 @@ import MessagesList from "./MessagesList";
 import MainHeader from "./MainHeader";
 import MainFooter from "./MainFooter";
 
-export default Main;
+export default React.memo(Main);
 
 function Main() {
-    const selectedChatIndex = useSelector((state: RootState) => state.chatsState.selectedChatIndex);
+    const showMainWindow = useSelector((state: RootState) => state.chatsState.selectedChatIndex !== null);
 
-    if (selectedChatIndex === null) {
+    if (!showMainWindow) {
         return <div></div>;
     }
 
