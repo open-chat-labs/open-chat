@@ -4,7 +4,13 @@ import { Option } from "./common";
 import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
-import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT, UNCONFIRMED_DIRECT_CHAT, UNCONFIRMED_GROUP_CHAT } from "../constants";
+import {
+    CONFIRMED_DIRECT_CHAT,
+    CONFIRMED_GROUP_CHAT,
+    DEFAULT_UPDATED_DATE,
+    UNCONFIRMED_DIRECT_CHAT,
+    UNCONFIRMED_GROUP_CHAT
+} from "../constants";
 
 export type Chat = ConfirmedChat | UnconfirmedChat;
 export type GroupChat = ConfirmedGroupChat | UnconfirmedGroupChat;
@@ -101,6 +107,15 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         latestConfirmedMessageId,
         minimumUnconfirmedMessageIndex: 0
     };
+}
+
+export const confirmDirectChat = (chat: UnconfirmedDirectChat, chatId: ChatId) : ConfirmedDirectChat => {
+    return newConfirmedDirectChat(
+        chatId,
+        chat.them,
+        DEFAULT_UPDATED_DATE,
+        0,
+        chat.messages);
 }
 
 export const addMessage = (chat: ConfirmedChat, message: LocalMessage) : void => {
