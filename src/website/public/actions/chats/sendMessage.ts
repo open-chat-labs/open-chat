@@ -30,8 +30,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
 
         // Start uploading the media data
         let uploadContentTask: Option<Promise<PutDataOutcome>> = null;
-        if (content.kind === "media" && sendMessageContent.kind === "media") {
-            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.blobId, sendMessageContent.blob)) as any;	
+        if ("id" in content && "data" in sendMessageContent) {
+            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.id, sendMessageContent.data)) as any;	
             uploadContentTask = putDataAsync();
         }
 
@@ -55,7 +55,7 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         }
 
         // Wait for the media data to finish uploading
-        if (content.kind === "media") {
+        if (content.kind === "media" || content.kind === "file") {
             let outcomeEvent = await uploadContentTask;	
             if (outcomeEvent?.type === PUT_DATA_FAILED) {
                 dispatch ({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
@@ -122,20 +122,29 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
 }
 
 function convertContent(sendMessageContent: SendMessageContent): MessageContent {
-    if (sendMessageContent.kind === "media") {
-        let blobId = uuidv1().toString();
-        return {
-            kind: sendMessageContent.kind,
-            caption: sendMessageContent.caption,
-            mimeType: sendMessageContent.mimeType,
-            blobId,
-            blobSize: sendMessageContent.blob.length,
-            chunkSize: CHUNK_SIZE_BYTES
-        };
-    } else if (sendMessageContent.kind === "text") {
-        return sendMessageContent;
-    } else {
-        throw Error("Unrecognised content type");
+    switch (sendMessageContent.kind) {
+        case "media":
+            return {
+                kind: sendMessageContent.kind,
+                caption: sendMessageContent.caption,
+                mimeType: sendMessageContent.mimeType,
+                id: uuidv1().toString(),
+                size: sendMessageContent.data.length,
+                chunkSize: CHUNK_SIZE_BYTES
+            };
+        case "file":
+            return {
+                kind: sendMessageContent.kind,
+                name: sendMessageContent.name,
+                mimeType: sendMessageContent.mimeType,
+                id: uuidv1().toString(),
+                size: sendMessageContent.data.length,
+                chunkSize: CHUNK_SIZE_BYTES
+            };
+        case "text":
+            return sendMessageContent;
+        default:
+            throw Error("Unrecognised content type");
     }
 } 
 

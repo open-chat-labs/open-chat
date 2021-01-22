@@ -24,12 +24,12 @@ function MediaContent(props : Props): JSX.Element {
 
     if (blobUrl) {
         if (content.mimeType.startsWith("image/")) {
-            contentElement = <Image key={props.content.blobId} blobUrl={blobUrl} />;
+            contentElement = <Image key={props.content.id} blobUrl={blobUrl} />;
         } else if (content.mimeType.startsWith("video/")) {
-            contentElement = <Video key={props.content.blobId} blobUrl={blobUrl} />
+            contentElement = <Video key={props.content.id} blobUrl={blobUrl} />
         }
     } else if (!isDataDownloading) {
-        dispatch(getData(content.blobId, content.blobSize, content.chunkSize));
+        dispatch(getData(content.id, content.size, content.chunkSize));
         contentElement = "Loading...";
     }
 
@@ -43,7 +43,7 @@ function MediaContent(props : Props): JSX.Element {
 function getBlobState(state: RootState, content: Media): [Option<string>, boolean] {
     const blobsState = state.blobsState;
     return [
-        blobsState.blobs.hasOwnProperty(content.blobId) ? blobsState.blobs[content.blobId] as string : null,
-        blobsState.blobsDownloading.includes(content.blobId)
+        blobsState.blobs.hasOwnProperty(content.id) ? blobsState.blobs[content.id] as string : null,
+        blobsState.blobsDownloading.includes(content.id)
     ];
 }

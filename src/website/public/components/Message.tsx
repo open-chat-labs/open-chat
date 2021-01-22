@@ -5,6 +5,7 @@ import gotoUser from "../actions/chats/gotoUser";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
 import MediaContent from "./MediaContent";
+import FileContent from "./FileContent";
 
 export interface Props {
     content: MessageContent,
@@ -33,15 +34,18 @@ function Message(props : Props) {
     if (props.content.kind === "media") {
         className += " media";
         contentElement = <MediaContent content={props.content} />;
+    } else if (props.content.kind === "file") {
+        className += " file";
+        contentElement = <FileContent content={props.content} />;
     } else {
         contentElement = props.content.text;
     }
 
     return (
-        <p className={className}>
+        <div className={className}>
             {senderLink}
             {contentElement}
             <span className="message-time">{props.date ? toShortTime(props.date) : "..."}</span>
-        </p>
+        </div>
     );
 }

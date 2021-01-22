@@ -47,9 +47,19 @@ pub struct MediaContent {
 }
 
 #[derive(CandidType, Deserialize, Clone)]
+pub struct FileContent {
+    name: String,
+    mime_type: String,
+    blob_id: String,
+    blob_size: u32,
+    chunk_size: u32
+}
+
+#[derive(CandidType, Deserialize, Clone)]
 pub enum MessageContent {
     Text(TextContent),
-    Media(MediaContent)
+    Media(MediaContent),
+    File(FileContent),
 }
 
 #[derive(CandidType, Deserialize, Clone)]
