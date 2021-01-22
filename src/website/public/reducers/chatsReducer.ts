@@ -184,12 +184,15 @@ export default produce((state: ChatsState, event: Event) => {
                     chatId: updatedChat.chatId,
                     userId: chatFunctions.isDirectChat(updatedChat) ? updatedChat.them : undefined
                 };
-                const currentChat = chatFunctions.tryGetChat(state.chats, filter)[0] as Option<ConfirmedChat>;
+                let [currentChat, index] = chatFunctions.tryGetChat(state.chats, filter);
 
                 if (currentChat) {
                     // These messages have just come from the server so are all of type LocalMessage
                     const messages = updatedChat.messages as LocalMessage[];
-                    chatFunctions.addMessages(currentChat, messages);
+                    if (currentChat.kind === UNCONFIRMED_DIRECT_CHAT) {
+                        state.chats[index] = currentChat = chatFunctions.confirmDirectChat(currentChat, updatedChat.chatId);
+                    }
+                    chatFunctions.addMessages(currentChat as ConfirmedChat, messages);
                 } else if (!(unconfirmedGroupChat && chatFunctions.isGroupChat(updatedChat) && unconfirmedGroupChat.subject === updatedChat.subject)) {
                     state.chats.push(updatedChat);
                 }
@@ -227,13 +230,7 @@ export default produce((state: ChatsState, event: Event) => {
             // userId or a chatId and a NewGroupChat has neither.
             let [chat, index] = chatFunctions.getChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
             if (chat.kind === UNCONFIRMED_DIRECT_CHAT) {
-                chat = chatFunctions.newConfirmedDirectChat(
-                    payload.chatId,
-                    chat.them,
-                    payload.message.date,
-                    0,
-                    chat.messages);
-                state.chats[index] = chat;
+                state.chats[index] = chat = chatFunctions.confirmDirectChat(chat, payload.chatId);
             }
 
             chatFunctions.addMessage(chat, payload.message);
@@ -264,11 +261,11 @@ export default produce((state: ChatsState, event: Event) => {
             const [chat, _] = chatFunctions.getChat(state.chats, filter);
 
             if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
-                // We can't add the particpants until the chat is confirmed 
+                // We can't add the participants until the chat is confirmed
                 // so store them for later
                 setFunctions.unionWith(chat.pendingParticipants, users);           
             } else if (chat.kind === CONFIRMED_GROUP_CHAT) {
-                // Add the particpants immediately and remove them if the call fails
+                // Add the participants immediately and remove them if the call fails
                 setFunctions.unionWith(chat.participants, users); 
             }
             break;
