@@ -99,7 +99,7 @@ export default produce((state: ChatsState, event: Event) => {
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat && chat.latestConfirmedMessageId) {
-                chat = chatFunctions.getChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
+                chat = chatFunctions.findChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired);
                 chatFunctions.queueMissingMessagesForDownload(chat);
@@ -184,7 +184,7 @@ export default produce((state: ChatsState, event: Event) => {
                     chatId: updatedChat.chatId,
                     userId: chatFunctions.isDirectChat(updatedChat) ? updatedChat.them : undefined
                 };
-                let [currentChat, index] = chatFunctions.tryGetChat(state.chats, filter);
+                let [currentChat, index] = chatFunctions.tryFindChat(state.chats, filter);
 
                 if (currentChat) {
                     // These messages have just come from the server so are all of type LocalMessage
@@ -205,12 +205,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
-
-            const [chat, index] = chatFunctions.getChat(state.chats, {
-                chatId: ("chatId" in payload && payload.chatId) ? payload.chatId : undefined,
-                userId: "userId" in payload ? payload.userId : undefined,
-                unconfirmedChatId: payload.kind === "newGroup" ? payload.unconfirmedChatId : undefined
-            });
+            const [chat, index] = chatFunctions.getChat(state.chats, payload.chat);
             chatFunctions.addUnconfirmedMessage(chat, payload.content);
 
             state.chats.splice(index, 1);
@@ -228,7 +223,7 @@ export default produce((state: ChatsState, event: Event) => {
 
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = chatFunctions.getChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            let [chat, index] = chatFunctions.findChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
             if (chat.kind === UNCONFIRMED_DIRECT_CHAT) {
                 state.chats[index] = chat = chatFunctions.confirmDirectChat(chat, payload.chatId);
             }
@@ -258,7 +253,7 @@ export default produce((state: ChatsState, event: Event) => {
                 chatId: chatId as ChatId,
                 unconfirmedChatId: chatId as Symbol                
             };
-            const [chat, _] = chatFunctions.getChat(state.chats, filter);
+            const [chat, _] = chatFunctions.findChat(state.chats, filter);
 
             if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
                 // We can't add the participants until the chat is confirmed
@@ -273,7 +268,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case ADD_PARTICIPANTS_FAILED: {
             const { chatId, users } = event.payload;
-            const [chat, _] = chatFunctions.getChat(state.chats, { chatId });
+            const [chat, _] = chatFunctions.findChat(state.chats, { chatId });
 
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Adding the participants failed so remove them from the chat

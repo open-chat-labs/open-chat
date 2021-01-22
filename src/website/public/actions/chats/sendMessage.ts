@@ -22,160 +22,109 @@ export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_FAILED";
 
 export default function(chat: Chat, sendMessageContent: SendMessageContent) {
-    return async (dispatch: Dispatch<any>) => {
-        switch (chat.kind) {
-            case CONFIRMED_DIRECT_CHAT:
-                dispatch(sendDirectMessage(chat.them, chat.chatId, sendMessageContent));
-                break;
-            case CONFIRMED_GROUP_CHAT:
-                dispatch(sendGroupMessage(chat.chatId, sendMessageContent));
-                break;
-            case UNCONFIRMED_DIRECT_CHAT:
-                dispatch(sendDirectMessage(chat.them, null, sendMessageContent));
-                break;
-            case UNCONFIRMED_GROUP_CHAT:
-                dispatch(sendMessageToNewGroup(chat.id, sendMessageContent));
-                break;
-        }
-    }
-}
-
-function sendDirectMessage(userId: UserId, chatId: Option<ChatId>, sendMessageContent: SendMessageContent) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        const [content, uploadContentTask] = handleMessageContent(sendMessageContent, dispatch);
 
-        const requestEvent: SendMessageRequestedEvent = {
-            type: SEND_MESSAGE_REQUESTED,
-            payload: {
-                kind: "direct",
-                userId,
-                chatId,
-                content
-            }
-        };
+        // If the "send message content" is media the message itself will contain
+        // meta info about the media and the data will be uploaded separately in parallel
+        const content = convertContent(sendMessageContent);
 
-        dispatch(requestEvent);
+        // Start uploading the media data
+        let uploadContentTask: Option<Promise<PutDataOutcome>> = null;
+        if (content.kind === "media" && sendMessageContent.kind === "media") {
+            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.blobId, sendMessageContent.blob)) as any;	
+            uploadContentTask = putDataAsync();
+        }
 
-        const contentUploadSuccess = !uploadContentTask || await uploadContentTask;
-
-        let outcomeEvent;
-        if (!contentUploadSuccess) {
-            outcomeEvent = {
-                type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED
+        // Dispatch the message requested event - this will put the message in the chat
+        {
+            const requestEvent: SendMessageRequestedEvent = {
+                type: SEND_MESSAGE_REQUESTED,
+                payload: {
+                    chat,
+                    content
+                }
             };
-        } else {
-            const response = chatId
-                ? await chatsService.sendMessage(chatId, content)
-                : await chatsService.sendDirectMessage(userId, content);
+            dispatch(requestEvent);
+        }
 
-            if (response.kind === "success") {
-                const myUserId = getState().usersState.me!.userId;
+        // We can't send messages to a new group until the group has been confirmed at which point we will receive the chatId.
+        // So we only signal the 'requestEvent', the reducer will then add the message to the 'unconfirmedMessages' array for
+        // the chat and those messages will be sent once the chat is confirmed.
+        if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
+            return;
+        }
 
-                outcomeEvent = {
-                    type: SEND_MESSAGE_SUCCEEDED,
-                    payload: {
-                        kind: "direct",
-                        userId,
-                        chatId: chatId ?? (response.result as SendDirectMessageResult).chatId,
-                        message: {
-                            kind: "local",
-                            id: response.result.messageId,
-                            date: response.result.date,
-                            sender: myUserId,
-                            content
-                        }
-                    }
-                } as SendMessageSucceededEvent;
-            } else {
-                outcomeEvent = {
-                    type: SEND_MESSAGE_FAILED
-                } as SendMessageFailedEvent;
+        // Wait for the media data to finish uploading
+        if (content.kind === "media") {
+            let outcomeEvent = await uploadContentTask;	
+            if (outcomeEvent?.type === PUT_DATA_FAILED) {
+                dispatch ({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
+                return;
             }
         }
 
-        dispatch(outcomeEvent);
-    }
-}
+        // Send the message to the IC
+        const response = chat.kind === UNCONFIRMED_DIRECT_CHAT
+            ? await chatsService.sendDirectMessage(chat.them, content)
+            : await chatsService.sendMessage(chat.chatId, content);
 
-function sendGroupMessage(chatId: ChatId, sendMessageContent: SendMessageContent) {
-    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        const [content, uploadContentTask] = handleMessageContent(sendMessageContent, dispatch);
+        // Dispatch a failed event
+        if (response.kind !== "success") {
+            dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
+            return;
+        }
 
-        const requestEvent: SendMessageRequestedEvent = {
-            type: SEND_MESSAGE_REQUESTED,
-            payload: {
-                kind: "group",
-                chatId,
+        // Dispatch a succeeded event
+        {
+            const myUserId = getState().usersState.me!.userId;
+            const message: LocalMessage = {
+                kind: "local",
+                id: response.result.messageId,
+                key: response.result.messageId.toString(),
+                date: response.result.date,
+                sender: myUserId,
                 content
-            }
-        };
-
-        dispatch(requestEvent);
-
-        const contentUploadSuccess = !uploadContentTask || await uploadContentTask;
-
-        let outcomeEvent;
-        if (!contentUploadSuccess) {
-            outcomeEvent = {
-                type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED
             };
-        } else {
-            const response = await chatsService.sendMessage(chatId, content);
 
-            if (response.kind === "success") {
-                const myUserId = getState().usersState.me!.userId;
-
-                outcomeEvent = {
-                    type: SEND_MESSAGE_SUCCEEDED,
-                    payload: {
+            let payload;
+            switch (chat.kind) {
+                case CONFIRMED_GROUP_CHAT:
+                    payload = {
                         kind: "group",
-                        chatId,
-                        message: {
-                            kind: "local",
-                            id: response.result.messageId,
-                            date: response.result.date,
-                            sender: myUserId,
-                            content
-                        }
+                        chatId: chat.chatId,
+                        message
                     }
-                } as SendMessageSucceededEvent;
-            } else {
-                outcomeEvent = {
-                    type: SEND_MESSAGE_FAILED
-                } as SendMessageFailedEvent;
+                    break;
+                case UNCONFIRMED_DIRECT_CHAT:
+                    payload = {
+                        kind: "direct",
+                        userId: chat.them,
+                        chatId: (response.result as SendDirectMessageResult).chatId,
+                        message
+                    }
+                    break;
+                case CONFIRMED_DIRECT_CHAT:
+                    payload = {
+                        kind: "direct",
+                        userId: chat.them,
+                        chatId: chat.chatId,
+                        message
+                    }
+                    break;            
             }
+
+            dispatch({
+                type: SEND_MESSAGE_SUCCEEDED,
+                payload
+            } as SendMessageSucceededEvent);
         }
-
-        dispatch(outcomeEvent);
     }
 }
 
-// We can't send messages to a new group until the group has been confirmed at which point we will receive the chatId.
-// So we only signal the 'requestEvent', the reducer will then add the message to the 'unconfirmedMessages' array for
-// the chat and those messages will be sent once the chat is confirmed.
-function sendMessageToNewGroup(id: Symbol, sendMessageContent: SendMessageContent) {
-    return (dispatch: Dispatch<any>) => {
-        const [content] = handleMessageContent(sendMessageContent, dispatch);
-
-        const requestEvent: SendMessageRequestedEvent = {
-            type: SEND_MESSAGE_REQUESTED,
-            payload: {
-                kind: "newGroup",
-                unconfirmedChatId: id,
-                content
-            }
-        };
-
-        dispatch(requestEvent);
-    }
-}
-
-function handleMessageContent(sendMessageContent: SendMessageContent, dispatch: Dispatch<any>) : [MessageContent, Option<Promise<boolean>>] {
-    let content: MessageContent;
+function convertContent(sendMessageContent: SendMessageContent): MessageContent {
     if (sendMessageContent.kind === "media") {
         let blobId = uuidv1().toString();
-
-        content = {
+        return {
             kind: sendMessageContent.kind,
             caption: sendMessageContent.caption,
             mimeType: sendMessageContent.mimeType,
@@ -183,16 +132,12 @@ function handleMessageContent(sendMessageContent: SendMessageContent, dispatch: 
             blobSize: sendMessageContent.blob.length,
             chunkSize: CHUNK_SIZE_BYTES
         };
-
-        const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(blobId, sendMessageContent.blob)) as any;
-
-        return [content, putDataAsync().then(r => r.type === "PUT_DATA_SUCCEEDED")];
     } else if (sendMessageContent.kind === "text") {
-        return [sendMessageContent, null];
+        return sendMessageContent;
     } else {
         throw Error("Unrecognised content type");
     }
-}
+} 
 
 export type SendMessageRequestedEvent = {
     type: typeof SEND_MESSAGE_REQUESTED,
@@ -212,24 +157,8 @@ export type SendMessageFailedToUploadContentEvent = {
     type: typeof SEND_MESSAGE_FAILED
 }
 
-export type SendMessageRequest = SendDirectMessageRequest | SendGroupMessageRequest | SendMessageToNewGroupRequest;
-
-export type SendDirectMessageRequest = {
-    kind: "direct",
-    userId: UserId,
-    chatId: Option<ChatId>,
-    content: MessageContent
-}
-
-export type SendGroupMessageRequest = {
-    kind: "group",
-    chatId: ChatId,
-    content: MessageContent
-}
-
-export type SendMessageToNewGroupRequest = {
-    kind: "newGroup",
-    unconfirmedChatId: Symbol,
+export type SendMessageRequest = {
+    chat: Chat,
     content: MessageContent
 }
 
