@@ -3,8 +3,8 @@ import { Option } from "./common";
 
 export type Message = ConfirmedMessage | UnconfirmedMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
-export type MessageContent = TextContent | MediaContent;
-export type SendMessageContent = TextContent | SendMediaContent;
+export type MessageContent = TextContent | MediaContent | FileContent;
+export type SendMessageContent = TextContent | SendMediaContent | SendFileContent;
 
 export type LocalMessage = {
     kind: "local",
@@ -33,10 +33,19 @@ export type TextContent = {
 
 export type MediaContent = {
     kind: "media",
+    id: string,
+    size: number,
     caption: Option<string>;
     mimeType: string,
-    blobId: string,
-    blobSize: number,
+    chunkSize: number,
+}
+
+export type FileContent = {
+    kind: "file",
+    id: string,
+    size: number,
+    name: string;
+    mimeType: string,
     chunkSize: number,
 }
 
@@ -44,5 +53,13 @@ export type SendMediaContent = {
     kind: "media",
     caption: Option<string>,
     mimeType: string,
-    blob: Uint8Array
+    data: Uint8Array
 }
+
+export type SendFileContent = {
+    kind: "file",
+    name: string,
+    mimeType: string,
+    data: Uint8Array
+}
+

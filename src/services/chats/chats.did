@@ -28,10 +28,20 @@ type MediaContent =
         chunk_size: nat32;
     };
 
+type FileContent =
+    record {
+        name: text;
+        mime_type: text;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
         Media: MediaContent;
+        File: FileContent;
     };
 
 type SendDirectMessageResult =

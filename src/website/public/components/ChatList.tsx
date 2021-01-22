@@ -41,6 +41,8 @@ function ChatList() {
                     latestMessageText = content.text;
                 } else if (content.kind === "media") {
                     latestMessageText = content.caption ?? getMimeTypeDisplayName(content.mimeType);
+                } else if (content.kind === "file") {
+                    latestMessageText = content.name;
                 } else {
                     throw new Error("Unrecognised content type - " + (content as any).kind);
                 }

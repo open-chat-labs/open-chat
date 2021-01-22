@@ -289,7 +289,8 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageC
             chat.minimumUnconfirmedMessageIndex = index;
         } else if (
             (message.content.kind === "text" && content.kind === "text" && message.content.text === content.text) ||
-            (message.content.kind === "media" && content.kind === "media" && message.content.blobId === content.blobId)) {
+            (message.content.kind === "media" && content.kind === "media" && message.content.id === content.id) ||
+            (message.content.kind === "file" && content.kind === "file" && message.content.id === content.id)) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
             return message;

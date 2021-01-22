@@ -15,8 +15,19 @@ export function fromCandid(content: any) : MessageContent {
             kind: "media",
             caption: optionFromCandid(inner.caption),
             mimeType: inner.mime_type,
-            blobId: inner.blob_id,
-            blobSize: inner.blob_size,
+            id: inner.blob_id,
+            size: inner.blob_size,
+            chunkSize: inner.chunk_size
+        };
+    }
+    if (content.hasOwnProperty("File")) {
+        const inner = content.File;
+        return {
+            kind: "file",
+            name: inner.name,
+            mimeType: inner.mime_type,
+            id: inner.blob_id,
+            size: inner.blob_size,
             chunkSize: inner.chunk_size
         };
     }
@@ -24,21 +35,33 @@ export function fromCandid(content: any) : MessageContent {
 }
 
 export function toCandid(content: MessageContent) : any {
-    if (content.kind === "text") {
-        return {
-            Text: {
-                text: content.text
-            }
-        };
-    } else {
-        return {
-            Media: {
-                caption: optionToCandid(content.caption),
-                mime_type: content.mimeType,
-                blob_id: content.blobId,
-                blob_size: content.blobSize,
-                chunk_size: content.chunkSize
-            }
-        };
+
+    switch (content.kind) {
+        case "text":
+            return {
+                Text: {
+                    text: content.text
+                }
+            };
+        case "media":
+            return {
+                Media: {
+                    caption: optionToCandid(content.caption),
+                    mime_type: content.mimeType,
+                    blob_id: content.id,
+                    blob_size: content.size,
+                    chunk_size: content.chunkSize
+                }
+            };
+        case "file":
+            return {
+                File: {
+                    name: content.name,
+                    mime_type: content.mimeType,
+                    blob_id: content.id,
+                    blob_size: content.size,
+                    chunk_size: content.chunkSize
+                }
+            };
     }
 }
