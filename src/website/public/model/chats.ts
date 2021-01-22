@@ -202,15 +202,24 @@ export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number) 
     chat.latestConfirmedMessageId = messageId;
 }
 
-export const getChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => {
-    return tryGetChat(chats, filter) as [Chat, number];
+export const getChat = (chats: Chat[], old_chat: Chat): [Chat, number] => {
+    const filter = {
+        chatId: ("chatId" in old_chat && old_chat.chatId) ? old_chat.chatId : undefined,
+        userId: "them" in old_chat ? old_chat.them : undefined,
+        unconfirmedChatId: old_chat.kind === UNCONFIRMED_GROUP_CHAT ? old_chat.id : undefined
+    };
+    return tryFindChat(chats, filter) as [Chat, number];
+}
+
+export const findChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => {
+    return tryFindChat(chats, filter) as [Chat, number];
 }
 
 export const getChatById = (chats: Chat[], chatId: ChatId) : ConfirmedChat => {
-    return tryGetChat(chats, { chatId })[0] as ConfirmedChat;
+    return tryFindChat(chats, { chatId })[0] as ConfirmedChat;
 }
 
-export const tryGetChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
+export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
     let index: number = -1;
     if (filter.index != null) {
         index = filter.index;
