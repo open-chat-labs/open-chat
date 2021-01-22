@@ -1,8 +1,8 @@
 use ic_cdk::export::candid::CandidType;
 use multi_map::MultiMap;
 use serde::Deserialize;
+use shared::storage::StableState;
 use shared::timestamp::Timestamp;
-use shared::upgrade::StableState;
 use shared::user_id::UserId;
 use crate::queries::get_users::Request;
 

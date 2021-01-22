@@ -20,8 +20,8 @@ fn send_message(chat_id: ChatId, content: MessageContent) -> send_message::Respo
 }
 
 #[update]
-fn mark_read(chat_id: ChatId, up_to_index: u32) -> mark_read::Response {
-    mark_read::update(chat_id, up_to_index)
+fn mark_read(chat_id: ChatId, from_id: u32, to_id: u32) -> mark_read::Response {
+    mark_read::update(chat_id, from_id, to_id)
 }
 
 #[update]

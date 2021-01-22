@@ -70,8 +70,7 @@ type SendMessageResponse =
 
 type MarkReadResult =
     record {
-        read_up_to_id: nat32;
-        latest_message_id: nat32;
+        unread_message_ids: vec nat32;
     };
 
 type MarkReadResponse =
@@ -123,7 +122,7 @@ type DirectChatSummary =
         id: ChatId;
         them: UserId;
         updated_date: Timestamp;
-        unread: nat32;
+        unread_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
     };
 
@@ -133,7 +132,7 @@ type GroupChatSummary =
         subject: text;
         updated_date: Timestamp;
         participants: vec UserId;
-        unread: nat32;
+        unread_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
     };
 
@@ -164,7 +163,7 @@ service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
     send_direct_message: (UserId, MessageContent) -> (SendDirectMessageResponse);
     send_message: (ChatId, MessageContent) -> (SendMessageResponse);
-    mark_read: (ChatId, nat32) -> (MarkReadResponse);
+    mark_read: (ChatId, nat32, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);

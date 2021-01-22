@@ -1,10 +1,11 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use shared::timestamp::Timestamp;
-use shared::upgrade::StableState;
+use shared::storage::StableState;
 use shared::user_id::UserId;
 use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
+use crate::domain::chat::ChatStableState;
 
 #[derive(Default)]
 pub struct ChatList {
@@ -79,21 +80,21 @@ impl ChatList {
 }
 
 impl StableState for ChatList {
-    type State = Vec<ChatEnum>;
+    type State = Vec<ChatStableState>;
 
-    fn drain(self) -> Vec<ChatEnum> {
+    fn drain(self) -> Vec<ChatStableState> {
         self.chats
             .into_iter()
-            .map(|(_, c)| c)
+            .map(|(_, c)| c.into())
             .collect()
     }
 
-    fn fill(chats: Vec<ChatEnum>) -> ChatList {
+    fn fill(chats: Vec<ChatStableState>) -> ChatList {
         let map: HashMap<ChatId, ChatEnum> = chats
             .into_iter()
-            .map(|c| (c.get_id(), c))
+            .map(|c| (c.get_id(), c.into()))
             .collect();
-        
+
         ChatList {
             chats: map
         }

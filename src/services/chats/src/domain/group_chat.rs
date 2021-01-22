@@ -1,12 +1,14 @@
-use std::cmp::{max, min};
+use std::cmp::max;
+use std::ops::RangeInclusive;
 use ic_cdk::export::candid::CandidType;
+use range_set::RangeSet;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
+use crate::utils;
 use super::chat::*;
 use super::messages::*;
 
-#[derive(CandidType, Deserialize)]
 pub struct GroupChat {
     id: ChatId,
     subject: String,
@@ -15,12 +17,11 @@ pub struct GroupChat {
     messages: Vec<Message>
 }
 
-#[derive(CandidType, Deserialize)]
 struct Participant {
     user_id: UserId,
     admin: bool,
-    latest_read: u32,
-    date_added: Timestamp
+    date_added: Timestamp,
+    unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>
 }
 
 #[derive(CandidType)]
@@ -29,8 +30,25 @@ pub struct GroupChatSummary {
     subject: String,
     updated_date: Timestamp,
     participants: Vec<UserId>,
-    unread: u32,
+    unread_message_id_ranges: Vec<[u32; 2]>,
     latest_messages: Vec<Message>
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct GroupChatStableState {
+    id: ChatId,
+    subject: String,
+    description: Option<String>,
+    participants: Vec<ParticipantStableState>,
+    messages: Vec<Message>
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct ParticipantStableState {
+    user_id: UserId,
+    admin: bool,
+    date_added: Timestamp,
+    unread_message_ids: Vec<[u32; 2]>
 }
 
 impl GroupChat {
@@ -122,14 +140,8 @@ impl Chat for GroupChat {
 
         self.messages.push(message);
 
-        let participant = self
-            .participants
-            .iter_mut()
-            .find(|p| p.user_id == *sender)
-            .unwrap();
-
-        if participant.latest_read == id - 1 {
-            participant.latest_read = id;
+        for p in self.participants.iter_mut().filter(|p| p.user_id != *sender) {
+            p.unread_message_ids.insert(id);
         }
 
         id
@@ -147,7 +159,7 @@ impl Chat for GroupChat {
         get_latest_message_id(&self.messages)
     }
 
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult {
+    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32) -> MarkReadResult {
 
         let participant = self
             .participants
@@ -155,27 +167,15 @@ impl Chat for GroupChat {
             .find(|p| p.user_id == *me)
             .unwrap();
 
-        let latest_id = self.messages.last().unwrap().get_id();
+        participant.unread_message_ids.remove_range(from_id..=to_id);
 
-        let up_to_id = min(up_to_id, latest_id);
-
-        if participant.latest_read < up_to_id {
-            participant.latest_read = up_to_id;
-        }
-
-        MarkReadResult::new(participant.latest_read, latest_id)
+        MarkReadResult::new(participant.unread_message_ids.iter().collect())
     }
 
-    fn get_unread_count(&self, user_id: &UserId) -> u32 {
-        let user = self.participants.iter().find(|p| p.user_id == *user_id).unwrap();
+    fn get_unread_message_id_ranges(&self, user_id: &UserId) -> Vec<[u32; 2]> {
+        let participant = self.participants.iter().find(|p| p.user_id == *user_id).unwrap();
 
-        let latest_message = self.messages.last();
-
-        if let Some(message) = latest_message {
-            message.get_id() - user.latest_read
-        } else {
-            0
-        }
+        utils::range_set_to_vec(participant.unread_message_ids.clone())
     }
 
     fn get_updated_date(&self, user_id: &UserId) -> Timestamp {
@@ -199,7 +199,7 @@ impl Participant {
         Participant {
             user_id,
             admin,
-            latest_read: 0,
+            unread_message_ids: RangeSet::new(),
             date_added: now
         }
     }
@@ -207,7 +207,7 @@ impl Participant {
 
 impl GroupChatSummary {
     fn new(chat: &GroupChat, me: &UserId, message_count: u32) -> GroupChatSummary {
-        let unread = chat.get_unread_count(me);
+        let unread_message_id_ranges = chat.get_unread_message_id_ranges(me);
 
         let latest_messages = chat
             .messages
@@ -222,9 +222,61 @@ impl GroupChatSummary {
             subject: chat.subject.clone(),
             updated_date: chat.get_updated_date(me),
             participants: chat.participants.iter().map(|p| p.user_id.clone()).collect(),
-            unread,
+            unread_message_id_ranges,
             latest_messages
         }
     }
 }
 
+impl GroupChatStableState {
+    pub fn get_id(&self) -> ChatId {
+        self.id
+    }
+}
+
+impl From<GroupChat> for GroupChatStableState {
+    fn from(chat: GroupChat) -> Self {
+        GroupChatStableState {
+            id: chat.id,
+            subject: chat.subject,
+            description: chat.description,
+            participants: chat.participants.into_iter().map(|p| p.into()).collect(),
+            messages: chat.messages
+        }
+    }
+}
+
+impl From<GroupChatStableState> for GroupChat {
+    fn from(chat: GroupChatStableState) -> Self {
+        GroupChat {
+            id: chat.id,
+            subject: chat.subject,
+            description: chat.description,
+            participants: chat.participants.into_iter().map(|p| p.into()).collect(),
+            messages: chat.messages
+        }
+    }
+}
+
+impl From<Participant> for ParticipantStableState {
+    fn from(participant: Participant) -> Self {
+        ParticipantStableState {
+            user_id: participant.user_id,
+            admin: participant.admin,
+            date_added: participant.date_added,
+            unread_message_ids: utils::range_set_to_vec(participant.unread_message_ids)
+
+        }
+    }
+}
+
+impl From<ParticipantStableState> for Participant {
+    fn from(participant: ParticipantStableState) -> Self {
+        Participant {
+            user_id: participant.user_id,
+            admin: participant.admin,
+            date_added: participant.date_added,
+            unread_message_ids: utils::vec_to_range_set(participant.unread_message_ids)
+        }
+    }
+}

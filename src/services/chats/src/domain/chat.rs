@@ -4,11 +4,10 @@ use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
-use crate::domain::direct_chat::{DirectChat, DirectChatSummary};
-use crate::domain::group_chat::{GroupChat, GroupChatSummary};
+use crate::domain::direct_chat::{DirectChat, DirectChatSummary, DirectChatStableState};
+use crate::domain::group_chat::{GroupChat, GroupChatSummary, GroupChatStableState};
 
 #[enum_dispatch(Chat)]
-#[derive(CandidType, Deserialize)]
 pub enum ChatEnum {
     Direct(DirectChat),
     Group(GroupChat)
@@ -22,15 +21,15 @@ pub trait Chat {
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult;
-    fn get_unread_count(&self, user: &UserId) -> u32;
+    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32) -> MarkReadResult;
+    fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
     fn get_updated_date(&self, user_id: &UserId) -> Timestamp;
     fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary;
 }
 
 /// TODO: We would preferably use a Uuid or u128 but these haven't yet got a CandidType implementation
 #[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
-pub struct ChatId(u64);
+pub struct ChatId(pub u64);
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TextContent {
@@ -78,8 +77,13 @@ pub enum ChatSummary {
 
 #[derive(CandidType)]
 pub struct MarkReadResult {
-    read_up_to_id: u32,
-    latest_message_id: u32,
+    unread_message_ids: Vec<u32>
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum ChatStableState {
+    Direct(DirectChatStableState),
+    Group(GroupChatStableState)
 }
 
 impl ChatId {
@@ -128,10 +132,36 @@ impl Message {
 }
 
 impl MarkReadResult {
-    pub fn new(read_up_to_id: u32, latest_message_id: u32) -> MarkReadResult {
+    pub fn new(unread_message_ids: Vec<u32>) -> MarkReadResult {
         MarkReadResult {
-            read_up_to_id,
-            latest_message_id
+            unread_message_ids
+        }
+    }
+}
+
+impl ChatStableState {
+    pub fn get_id(&self) -> ChatId {
+        match self {
+            ChatStableState::Direct(c) => c.get_id(),
+            ChatStableState::Group(c) => c.get_id()
+        }
+    }
+}
+
+impl From<ChatStableState> for ChatEnum {
+    fn from(chat: ChatStableState) -> Self {
+        match chat {
+            ChatStableState::Direct(c) => ChatEnum::Direct(c.into()),
+            ChatStableState::Group(c) => ChatEnum::Group(c.into())
+        }
+    }
+}
+
+impl From<ChatEnum> for ChatStableState {
+    fn from(chat: ChatEnum) -> Self {
+        match chat {
+            ChatEnum::Direct(c) => ChatStableState::Direct(c.into()),
+            ChatEnum::Group(c) => ChatStableState::Group(c.into())
         }
     }
 }

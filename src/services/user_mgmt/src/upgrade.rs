@@ -1,13 +1,13 @@
 use ic_cdk_macros::*;
-use shared::upgrade;
+use shared::storage;
 use crate::domain::user_store::UserStore;
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    upgrade::pre_upgrade::<UserStore>();
+    storage::stable_save::<UserStore>(storage::take_from_storage());
 }
 
 #[post_upgrade]
 fn post_upgrade() {
-    upgrade::post_upgrade::<UserStore>();
+    storage::put_in_storage(storage::stable_restore::<UserStore>());
 }

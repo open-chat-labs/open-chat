@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use shared::upgrade::StableState;
+use shared::storage::StableState;
 
 #[derive(Default)]
 pub struct BlobStorage {
