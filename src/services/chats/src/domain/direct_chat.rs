@@ -1,18 +1,19 @@
-use std::cmp::min;
+use std::ops::{RangeInclusive};
 use ic_cdk::export::candid::CandidType;
+use range_set::RangeSet;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 use super::chat::*;
 use super::messages::*;
+use crate::utils;
 
-#[derive(CandidType, Deserialize)]
 pub struct DirectChat {
     id: ChatId,
     user1: UserId,
     user2: UserId,
-    user1_latest_read: u32,
-    user2_latest_read: u32,
+    user1_unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>,
+    user2_unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>,
     messages: Vec<Message>
 }
 
@@ -21,8 +22,18 @@ pub struct DirectChatSummary {
     id: ChatId,
     them: UserId,
     updated_date: Timestamp,
-    unread: u32,
+    unread_message_id_ranges: Vec<[u32; 2]>,
     latest_messages: Vec<Message>
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct DirectChatStableState {
+    id: ChatId,
+    user1: UserId,
+    user2: UserId,
+    user1_unread_message_ids: Vec<[u32; 2]>,
+    user2_unread_message_ids: Vec<[u32; 2]>,
+    messages: Vec<Message>
 }
 
 impl DirectChat {
@@ -34,8 +45,8 @@ impl DirectChat {
             id,
             user1: sender,
             user2: recipient,
-            user1_latest_read: 1,
-            user2_latest_read: 0,
+            user1_unread_message_ids: RangeSet::new(),
+            user2_unread_message_ids: RangeSet::from(1..=1),
             messages: vec![message]
         }
     }
@@ -64,13 +75,9 @@ impl Chat for DirectChat {
         self.messages.push(message);
 
         if sender == &self.user1 {
-            if self.user1_latest_read == prev_id {
-                self.user1_latest_read = id;
-            }
+            self.user2_unread_message_ids.insert(id);
         } else {
-            if self.user2_latest_read == prev_id {
-                self.user2_latest_read = id;
-            }
+            self.user1_unread_message_ids.insert(id);
         }
 
         id
@@ -88,32 +95,24 @@ impl Chat for DirectChat {
         get_latest_message_id(&self.messages)
     }
 
-    fn mark_read(&mut self, me: &UserId, up_to_id: u32) -> MarkReadResult {
-        let latest_read = if *me == self.user1 {
-            &mut self.user1_latest_read
+    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32) -> MarkReadResult {
+        let unread_message_ids: Vec<u32>;
+        if *me == self.user1 {
+            &mut self.user1_unread_message_ids.remove_range(from_id..=to_id);
+            unread_message_ids = self.user1_unread_message_ids.iter().collect();
         } else {
-            &mut self.user2_latest_read
+            &mut self.user2_unread_message_ids.remove_range(from_id..=to_id);
+            unread_message_ids = self.user2_unread_message_ids.iter().collect();
         };
 
-        let latest_id = self.messages.last().unwrap().get_id();
-
-        let up_to_id = min(up_to_id, latest_id);
-
-        if *latest_read < up_to_id {
-            *latest_read = up_to_id;
-        }
-
-        MarkReadResult::new(*latest_read, latest_id)
+        MarkReadResult::new(unread_message_ids)
     }
 
-    fn get_unread_count(&self, user_id: &UserId) -> u32 {
+    fn get_unread_message_id_ranges(&self, user_id: &UserId) -> Vec<[u32; 2]> {
         let is_user1 = *user_id == self.user1;
+        let unread_message_ids = if is_user1 { &self.user1_unread_message_ids } else { &self.user2_unread_message_ids };
 
-        let latest_message = self.messages.last().unwrap();
-
-        let latest_read = if is_user1 { self.user1_latest_read } else { self.user2_latest_read };
-
-        latest_message.get_id() - latest_read
+        utils::range_set_to_vec(unread_message_ids.clone())
     }
 
     fn get_updated_date(&self, _user_id: &UserId) -> Timestamp {
@@ -130,7 +129,7 @@ impl DirectChatSummary {
     fn new(chat: &DirectChat, me: &UserId, message_count: u32) -> DirectChatSummary {
         let is_user1 = *me == chat.user1;
         let them = if is_user1 { chat.user2.clone() } else { chat.user1.clone() };
-        let unread = chat.get_unread_count(me);
+        let unread_message_id_ranges = chat.get_unread_message_id_ranges(me);
         let latest_messages: Vec<_> = chat
             .messages
             .iter()
@@ -145,8 +144,40 @@ impl DirectChatSummary {
             id: chat.id,
             them,
             updated_date,
-            unread,
+            unread_message_id_ranges,
             latest_messages
+        }
+    }
+}
+
+impl DirectChatStableState {
+    pub fn get_id(&self) -> ChatId {
+        self.id
+    }
+}
+
+impl From<DirectChat> for DirectChatStableState {
+    fn from(chat: DirectChat) -> Self {
+        DirectChatStableState {
+            id: chat.id,
+            user1: chat.user1,
+            user2: chat.user2,
+            user1_unread_message_ids: utils::range_set_to_vec(chat.user1_unread_message_ids),
+            user2_unread_message_ids: utils::range_set_to_vec(chat.user2_unread_message_ids),
+            messages: chat.messages
+        }
+    }
+}
+
+impl From<DirectChatStableState> for DirectChat {
+    fn from(chat: DirectChatStableState) -> Self {
+        DirectChat {
+            id: chat.id,
+            user1: chat.user1,
+            user2: chat.user2,
+            user1_unread_message_ids: utils::vec_to_range_set(chat.user1_unread_message_ids),
+            user2_unread_message_ids: utils::vec_to_range_set(chat.user2_unread_message_ids),
+            messages: chat.messages
         }
     }
 }

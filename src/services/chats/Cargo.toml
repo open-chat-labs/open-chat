@@ -15,5 +15,7 @@ ic-cdk = "0.2.0"
 ic-cdk-macros = "0.2.0"
 enum_dispatch = "0.3.4"
 highway = "0.6.3"
+range-set = "0.0.5"
 serde = "1.0.111"
 shared = { path = "../shared", version = "0.1.0" }
+smallvec = "0.6.14"
