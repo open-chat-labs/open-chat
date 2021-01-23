@@ -1,17 +1,19 @@
 import React from "react";
 import { useDispatch } from "react-redux";
+
 import { toShortTime } from "../utils/datetimeFunctions";
 import gotoUser from "../actions/chats/gotoUser";
+import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
 import MediaContent from "./MediaContent";
 import FileContent from "./FileContent";
 
-export interface Props {
+export type Props = {
     content: MessageContent,
-    date?: Date,
+    dateConfirmed: Option<Date>,
     sentByMe: boolean,
-    sender?: UserSummary,
+    sender: Option<UserSummary>,
     mergeWithPrevious: boolean
 }
 
@@ -45,7 +47,7 @@ function Message(props : Props) {
         <div className={className}>
             {senderLink}
             {contentElement}
-            <span className="message-time">{props.date ? toShortTime(props.date) : "..."}</span>
+            <span className="message-time">{props.dateConfirmed ? toShortTime(props.dateConfirmed) : "..."}</span>
         </div>
     );
 }

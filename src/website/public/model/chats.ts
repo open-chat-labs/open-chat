@@ -160,6 +160,7 @@ export const addUnconfirmedMessage = (chat: Chat, content: MessageContent) : voi
     const message: UnconfirmedMessage = {
         kind: "unconfirmed",
         key: uuidv1().toString(),
+        date: new Date(),
         content
     };
     chat.messages.push(message);
