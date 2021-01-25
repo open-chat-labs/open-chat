@@ -37,6 +37,8 @@ function MainFooter() {
             dispatch(sendMessage(chat!, { kind: "text", text: newMessageText }));
         }
         setNewMessageText("");
+        const textBox = document.getElementById("newMessage")!;
+        textBox.focus();
         //scrollMessagesToBottom()
     }
 
