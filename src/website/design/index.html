@@ -43,7 +43,7 @@
                     <div class="message-container">
                         <div class="date">today</div>
                         <div class="name">John Smith</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
                     </div>
                 </li>
                 <li class="selected">
@@ -51,7 +51,7 @@
                     <div class="message-container">
                         <div class="date">yesterday</div>
                         <div class="name">Matt Grogan</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
                             labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
                             laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
                             voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
@@ -63,7 +63,7 @@
                     <div class="message-container">
                         <div class="date">yesterday</div>
                         <div class="name">Hamish Peebles</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit s dasds dasdda s</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing elit s dasds dasdda s</div>
                     </div>
                 </li>
                 <li>
@@ -71,7 +71,7 @@
                     <div class="message-container">
                         <div class="date">Tuesday</div>
                         <div class="name">Family</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -79,7 +79,7 @@
                     <div class="message-container">
                         <div class="date">Tuesday</div>
                         <div class="name">Alice Grogan</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -87,7 +87,7 @@
                     <div class="message-container">
                         <div class="date">Monday</div>
                         <div class="name">Calum Peebles</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
                     </div>
                 </li>
                 <li>
@@ -95,7 +95,7 @@
                     <div class="message-container">
                         <div class="date">Saturday</div>
                         <div class="name">Jane Doe</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit s dasds dasdda s</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing elit s dasds dasdda s</div>
                     </div>
                 </li>
                 <li>
@@ -103,7 +103,7 @@
                     <div class="message-container">
                         <div class="date">05/01/2021</div>
                         <div class="name">Tetbury Rugby U8s Coaches</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -111,7 +111,7 @@
                     <div class="message-container">
                         <div class="date">05/01/2021</div>
                         <div class="name">Gene Kelly</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -119,7 +119,7 @@
                     <div class="message-container">
                         <div class="date">05/01/2021</div>
                         <div class="name">Fred Astaire</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -127,7 +127,7 @@
                     <div class="message-container">
                         <div class="date">05/01/2021</div>
                         <div class="name">Greta Garbo</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
                 <li>
@@ -135,7 +135,7 @@
                     <div class="message-container">
                         <div class="date">05/01/2021</div>
                         <div class="name">Madonna</div>
-                        <div class="message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
+                        <div class="chats-message">Lorem ipsum dolor sit amet, consectetur adipiscing</div>
                     </div>
                 </li>   
             </ul>
@@ -193,12 +193,17 @@
                     Around the rugged rock the rugged rascal ran
                     <span class="message-time">09:17</span>
                 </div>
+                <div class="message me merge middle">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
+                    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
+                    <span class="message-time">09:17</span>
+                </div>
                 <div class="message me merge bottom">
                     She sells sea shells on the sea shore
                     <span class="message-time">09:17</span>
                 </div>
                 <div class="message me media">
-                    <img src="pug1.jpeg" />
+                    <img class="message-media" src="pug1.jpeg" />
                     <!-- <span class="caption">So cute!!!!</span> -->
                     <span class="message-time">09:22</span>
                 </div>
@@ -211,19 +216,11 @@
                     <span class="message-time">09:22</span>
                 </div>
                 <div class="message them media">
-                    <video controls>
+                    <video class="message-media" controls>
                         <source src="rabbit.mp4" type="video/mp4"/>
                         Your browser does not support the video tag.
                     </video>                    
                     <span class="message-time">09:22</span>
-                </div>
-                <div class="message me">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
-                    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
-                    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
-                    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
-                    non proident, sunt in culpa qui officia deserunt mollit anim id est laborum
-                    <span class="message-time">09:27</span>
                 </div>
                 <div class="message me file">
                     <div>

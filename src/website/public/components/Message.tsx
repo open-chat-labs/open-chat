@@ -14,7 +14,7 @@ export type Props = {
     dateConfirmed: Option<Date>,
     sentByMe: boolean,
     sender: Option<UserSummary>,
-    mergeWithPrevious: boolean
+    groupPosition: MessageGroupPosition
 }
 
 export default React.memo(Message);
@@ -25,11 +25,21 @@ function Message(props : Props) {
     let className = "message " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
 
-    if (props.mergeWithPrevious) {
-        className += " merge";
-    } else if (props.sender) {
+    if (props.sender && (props.groupPosition == MessageGroupPosition.None || props.groupPosition == MessageGroupPosition.Top)) {
         const sender = props.sender;
         senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+    }
+
+    switch (props.groupPosition) {
+        case MessageGroupPosition.Top:
+            className += " top";
+            break;
+        case MessageGroupPosition.Middle:
+            className += " merge middle";
+            break;
+        case MessageGroupPosition.Bottom:
+            className += " merge bottom";
+            break;
     }
 
     let contentElement;
@@ -50,4 +60,11 @@ function Message(props : Props) {
             <span className="message-time">{props.dateConfirmed ? toShortTime(props.dateConfirmed) : "..."}</span>
         </div>
     );
+}
+
+export enum MessageGroupPosition {
+    None,
+    Top,
+    Middle,
+    Bottom
 }

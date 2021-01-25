@@ -258,7 +258,7 @@ main header>div >div {
     float: right;
 }
 
-.chats li .message {
+.chats li .chats-message {
     font-size: 14px;
     color: #606060;
     white-space: nowrap;
@@ -284,33 +284,66 @@ main header>div >div {
     flex-direction: column;
 }
 
-.detail .message {
+.message {
     max-width: 500px;
     background-color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 8px 13px;
     margin: 0px;
     margin-top: 14px;
 }
 
-.detail .message.merge {
+.message.merge {
     margin-top: 2px;
 }
 
-.detail .message.file {
-    padding: 3px;
+.message, .message-media {
+  border-radius: 16px;
 }
 
-.detail .message.me.top {
-    border-radius: 20px 20px 4px 20px;
+.message.me.top, 
+.message.me.top .message-media {
+    border-radius: 16px 16px 4px 16px;
 }
 
-.detail .message.me.middle {
-    border-radius: 20px 4px 4px 20px;
+.message.me.middle,
+.message.me.middle .message-media {
+    border-radius: 16px 4px 4px 16px;
 }
 
-.detail .message.me.bottom {
-    border-radius: 20px 4px 20px 20px;
+.message.me.bottom,
+.message.me.bottom .message-media {
+    border-radius: 16px 4px 16px 16px;
+}
+
+.message.them.top,
+.message.them.top .message-media {
+  border-radius: 16px 16px 16px 4px;
+}
+
+.message.them.middle,
+.message.them.middle .message-media {
+  border-radius: 4px 16px 16px 4px;
+}
+
+.message.them.bottom,
+.message.them.bottom .message-media {
+  border-radius: 4px 16px 16px 16px;
+}
+
+.message.file div {
+  border-radius: 13px 13px 6px 6px;
+}
+
+.message.me.merge.file div {
+  border-radius: 13px 2px 2px 6px;
+}
+
+.message.them.merge.file div {
+  border-radius: 2px 13px 6px 2px;
+}
+
+.detail.group .message.them.file div {
+  border-radius: 2px;
 }
 
 .message-time, .file-size {
@@ -342,17 +375,18 @@ main header>div >div {
     font-weight: bolder;
     display: block;
     text-decoration: none;
+    color: #d62c7d;
 }
 
 .message a.participant:hover {
     text-decoration: underline;
 }
 
-.detail .message.them {
+.message.them {
     align-self: flex-start;
 }
 
-.detail .day-change-marker {
+.day-change-marker {
     padding: 6px 12px;
     border-radius: 10px;
     background-color: #dddddd;
@@ -361,28 +395,41 @@ main header>div >div {
     font-size: 13px;
 }
 
-.detail .message.me {
+.message.me {
     align-self: flex-end;
     background-color: #d62c7d;
     color: white;
 }
 
-.detail .message.media {
+.message.media {
     padding: 0px;
     position: relative; 
+    background-color: transparent;
 }
 
-.detail .message.media img, video {
-    border-radius: 20px;
+.message.media a.participant {
+    position: absolute;
+    display: block;
+    padding: 4px 6px 4px 13px;
+    top: 0px;
+    left: 0px;
+    z-index: 50;
+    background-color: white;
+    text-align: center;
+    border-radius: 16px 6px 6px 0px;
+    line-height: 13px;
+}
+
+.message-media {
     max-width: 500px;
     max-height: 500px;
 }
 
-.detail .message.media video {
+.message.media video {
     display: block;
 }
 
-.detail .message.media .message-time {
+.message.media .message-time {
     position: absolute;
     display: inline;
     float: none;
@@ -396,15 +443,23 @@ main header>div >div {
     border-radius: 6px;
 }
 
+.message.file {
+  padding: 3px;
+}
+
 .message.file div {
-    border-radius: 17px 17px 6px 6px;
     min-width: 300px;
-    padding: 16px;
+    padding: 16px 13px;
     max-width: 494px;
     background-color: #e9e9e9;
     font-size: 14px;
     line-height: 14px;
     cursor: pointer;
+}
+
+.message.file a.participant {
+    /* margin-top: 10px; */
+    margin-left: 10px;
 }
 
 .message.me.file div {
@@ -417,11 +472,11 @@ main header>div >div {
     margin-bottom: 3px;
 }
 
-.detail .message.file .message-time {
+.message.file .message-time {
     margin-right: 13px;
 }
 
-.detail .message.file .file-size {
+.message.file .file-size {
     margin-left: 13px;
 }
 

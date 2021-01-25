@@ -31,7 +31,7 @@ function ChatListItem(props: Props) {
             <div className="message-container">
                 <div className="date">{props.date ? props.date.toDateString() : null}</div>
                 <div className="name">{props.name}</div>
-                <div className="message">{props.latestMessage}</div>
+                <div className="chats-message">{props.latestMessage}</div>
             </div>
         </li>
     );

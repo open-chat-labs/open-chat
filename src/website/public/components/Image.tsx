@@ -7,5 +7,5 @@ export interface Props {
 export default React.memo(Image);
 
 function Image(props : Props): JSX.Element {
-    return <img src={props.blobUrl} />;
+    return <img className="message-media" src={props.blobUrl} />;
 }
