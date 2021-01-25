@@ -1,7 +1,7 @@
-import { Dispatch, useEffect, useLayoutEffect } from "react";
+import { Dispatch, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { ConfirmedChat } from "./model/chats";
+import { ChatId, ConfirmedChat } from "./model/chats";
 import { UserId } from "./model/users";
 import { RootState } from "./reducers";
 import { GetUserRequest } from "./services/userMgmt/getUsers";
@@ -117,6 +117,17 @@ function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatc
     if (downloadMoreMessages) {
         const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
         const count = chat.earliestConfirmedMessageId! - fromId;
-        dispatch(getMessages(chat.chatId, fromId, count, true));
+        dispatch(loadMoreMessages(chat.chatId, fromId, count));
+    }
+
+    function loadMoreMessages(chatId: ChatId, fromId: number, count: number) {
+        return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+            // Check that the chat we were tracking is still the current one, it may have changed since the "scroll"
+            // event is triggered asynchronously
+            const selectedChat = stateFunctions.getSelectedChat(getState().chatsState);
+            if (selectedChat && chatFunctions.isConfirmedChat(selectedChat) && selectedChat.chatId === chatId) {
+                dispatch(getMessages(chatId, fromId, count))
+            }
+        }
     }
 }
