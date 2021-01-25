@@ -4,12 +4,12 @@ import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import { Option } from "../model/common";
-import { MessageContent } from "../model/messages";
+import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId, UserSummary } from "../model/users";
 import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
-import Message from "./Message";
+import MessageComponent, { MessageGroupPosition } from "./Message";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -28,13 +28,28 @@ function MessagesList() {
 
     const children: JSX.Element[] = [];
 
+    // Ignore remote messages
+    const messages = chat.messages.filter(m => m.kind !== "remote") as (LocalMessage | UnconfirmedMessage)[];
+
+    // Determine which messages should be grouped with the previous message
+    let messagesToGroup: boolean[] = [];
     let lastSeenDate: Option<Date> = null;
-    let lastSeenDayString: Option<string> = null;
     let prevMessageSender: Option<UserId> = null;
-    for (const message of chat.messages) {
-        if (message.kind === "remote") {
-            continue;
-        }
+    for (const message of messages) {
+        const senderUserId: UserId = message.kind === "unconfirmed" ? myUserId : message.sender;
+        const groupWithPrevious: boolean =
+            lastSeenDate !== null &&
+            senderUserId === prevMessageSender &&
+            message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
+
+        messagesToGroup.push(groupWithPrevious);
+        lastSeenDate = message.date;
+        prevMessageSender = senderUserId;
+    }
+
+    // Loop through messages and add components
+    for (let i = 0; i < messages.length; i++) {
+        let message = messages[i];
 
         let sentByMe: boolean;
         let senderUserId: UserId;
@@ -57,30 +72,41 @@ function MessagesList() {
         }
 
         const dayString = message.date.toDateString();
-        if (lastSeenDayString === null || lastSeenDayString !== dayString) {
+        const prevDayString = i > 0 ? messages[i-1].date.toDateString() : null;
+        if (prevDayString === null || prevDayString !== dayString) {
             children.push(<DayChangeMarker key={dayString} date={message.date} />);
         }
 
-        const mergeWithPrevious: boolean =
-            lastSeenDate !== null &&
-            senderUserId === prevMessageSender &&
-            message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
+        // Determine whether the message should be grouped with others and if so whether it is
+        // at the top, middle, or bottom of the group
+        const groupWithPrevious = messagesToGroup[i];
+        const groupWithNext = i < messages.length - 1 ? messagesToGroup[i+1] : false;
+        let groupPosition: MessageGroupPosition = MessageGroupPosition.None;
+        if (!groupWithPrevious && groupWithNext) {
+            groupPosition = MessageGroupPosition.Top;
+        } else if (groupWithPrevious && groupWithNext) {
+            groupPosition = MessageGroupPosition.Middle;
+        } else if (groupWithPrevious && !groupWithNext) {
+            groupPosition = MessageGroupPosition.Bottom;
+        }
 
-        children.push(<Message
+        children.push(<MessageComponent
             key={message.key}
             content={message.content}
             dateConfirmed={message.kind === "unconfirmed" ? null : message.date}
             sentByMe={sentByMe}
             sender={senderDetails}
-            mergeWithPrevious={mergeWithPrevious} />);
+            groupPosition={groupPosition} />);
+    }
 
-        lastSeenDate = message.date;
-        lastSeenDayString = dayString;
-        prevMessageSender = senderUserId;
+    let className = "detail";
+
+    if ("subject" in chat) {
+        className += " group";
     }
 
     return (
-        <div id="messages" className="detail">
+        <div id="messages" className={className}>
             {children}
         </div>
     );
