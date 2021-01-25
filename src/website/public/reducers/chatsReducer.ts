@@ -119,7 +119,7 @@ export default produce((state: ChatsState, event: Event) => {
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat && chat.latestConfirmedMessageId) {
                 chat = chatFunctions.findChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
-                const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) - PAGE_SIZE, MIN_MESSAGE_ID);
+                const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, MIN_MESSAGE_ID);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
                 chatFunctions.queueMissingMessagesForDownload(chat);
             }

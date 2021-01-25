@@ -2,14 +2,24 @@ import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
 import { ChatId } from "../../model/chats";
+import * as chatFunctions from "../../model/chats";
 import { GetMessagesResult } from "../../services/chats/getMessages";
+import { RootState } from "../../reducers";
+import * as stateFunctions from "../../utils/stateFunctions";
 
 export const GET_MESSAGES_REQUESTED = "GET_MESSAGES_REQUESTED";
 export const GET_MESSAGES_SUCCEEDED = "GET_MESSAGES_SUCCEEDED";
 export const GET_MESSAGES_FAILED = "GET_MESSAGES_FAILED";
 
-export default function(chatId: ChatId, fromId: number, count: number) {
-    return async (dispatch: Dispatch<any>) => {
+export default function(chatId: ChatId, fromId: number, count: number, onlyIfSelectedChat: boolean = false) {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+        const selectedChat = stateFunctions.getSelectedChat(getState().chatsState);
+
+        if (onlyIfSelectedChat &&
+            (!selectedChat || !chatFunctions.isConfirmedChat(selectedChat) || selectedChat.chatId !== chatId)) {
+            return;
+        }
+
         const request: GetMessagesRequest = {
             chatId,
             fromId,

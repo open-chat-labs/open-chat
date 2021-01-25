@@ -108,14 +108,15 @@ function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: 
 }
 
 function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
-    const moreMessagesToDownload =
-        !chat.messagesToDownload.length &&
+    const downloadMoreMessages =
+        !chat.messagesDownloading.length &&
         chat.earliestConfirmedMessageId !== null &&
-        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID;
+        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID &&
+        messagesDiv.scrollTop < 200;
 
-    if (moreMessagesToDownload && messagesDiv.scrollTop < 200) {
+    if (downloadMoreMessages) {
         const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
         const count = chat.earliestConfirmedMessageId! - fromId;
-        dispatch(getMessages(chat.chatId, fromId, count));
+        dispatch(getMessages(chat.chatId, fromId, count, true));
     }
 }
