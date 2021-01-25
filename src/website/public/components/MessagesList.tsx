@@ -1,15 +1,19 @@
-import React, { useLayoutEffect } from "react";
-import { useSelector } from "react-redux";
+import React, { Dispatch, useEffect, useLayoutEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import { Option } from "../model/common";
-import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "../model/messages";
+import { LocalMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId, UserSummary } from "../model/users";
 import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
+import { ChatId, ConfirmedChat } from "../model/chats";
+import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
+import * as stateFunctions from "../utils/stateFunctions";
+import getMessages from "../actions/chats/getMessages";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -19,6 +23,7 @@ function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+    const dispatch = useDispatch();
 
     if (chat === null) {
         return <div></div>;
@@ -105,8 +110,19 @@ function MessagesList() {
         className += " group";
     }
 
+    const messagesDiv = document.getElementById("messages");
+    useEffect(() => {
+        if (!messagesDiv || !chatFunctions.isConfirmedChat(chat)) {
+            return;
+        }
+
+        const onScroll = (e: Event) => onMessagesScroll(chat, e.target as HTMLElement, dispatch);
+        messagesDiv.addEventListener("scroll", onScroll);
+
+        return () => messagesDiv.removeEventListener("scroll", onScroll);
+    }, [chat, messagesDiv])
+
     useLayoutEffect(() => {
-        const messagesDiv = document.getElementById("messages");
         if (!messagesDiv) {
             return;
         }
@@ -115,11 +131,36 @@ function MessagesList() {
         } else if (chat.scrollBottom !== null) {
             messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
         }
-    }, [chat]);
+    }, [chat, messagesDiv]);
 
     return (
         <div id="messages" className={className}>
             {children}
         </div>
     );
+}
+
+function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
+    const downloadMoreMessages =
+        !chat.messagesDownloading.length &&
+        chat.earliestConfirmedMessageId !== null &&
+        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID &&
+        messagesDiv.scrollTop < 200;
+
+    if (downloadMoreMessages) {
+        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
+        const count = chat.earliestConfirmedMessageId! - fromId;
+        dispatch(loadMoreMessages(chat.chatId, fromId, count));
+    }
+
+    function loadMoreMessages(chatId: ChatId, fromId: number, count: number) {
+        return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+            // Check that the chat we were tracking is still the current one, it may have changed since the "scroll"
+            // event is triggered asynchronously
+            const selectedChat = stateFunctions.getSelectedChat(getState().chatsState);
+            if (selectedChat && chatFunctions.isConfirmedChat(selectedChat) && selectedChat.chatId === chatId) {
+                dispatch(getMessages(chatId, fromId, count))
+            }
+        }
+    }
 }

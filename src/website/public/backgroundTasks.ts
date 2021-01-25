@@ -1,24 +1,19 @@
 import { Dispatch, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { ChatId, ConfirmedChat } from "./model/chats";
 import { UserId } from "./model/users";
 import { RootState } from "./reducers";
 import { GetUserRequest } from "./services/userMgmt/getUsers";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
-import getMessages from "./actions/chats/getMessages";
 import getUpdatedChats from "./actions/chats/getUpdatedChats";
 
 import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
-import * as chatFunctions from "./model/chats";
-import * as stateFunctions from "./utils/stateFunctions";
-
-import { MIN_MESSAGE_ID, PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
+import { PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
 import { Option, Timestamp } from "./model/common";
 
 export function setupBackgroundTasks() {
@@ -26,7 +21,6 @@ export function setupBackgroundTasks() {
 
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const usersState = useSelector((state: RootState) => state.usersState);
-    const selectedChat = stateFunctions.getSelectedChat(chatsState);
 
     // If 'usersState.mustRegisterAsNewUser' is false, attempt to get details of the current user if not already known
     useEffect(() => {
@@ -79,21 +73,6 @@ export function setupBackgroundTasks() {
             return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
     }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo]);
-
-    useEffect(() => {
-        if (!selectedChat || !chatFunctions.isConfirmedChat(selectedChat)) {
-            return;
-        }
-        const messagesDiv = document.getElementById("messages")!;
-        if (!messagesDiv) {
-            return;
-        }
-
-        const onScroll = (e: Event) => onMessagesScroll(selectedChat, e.target as HTMLElement, dispatch);
-        messagesDiv.addEventListener("scroll", onScroll);
-
-        return () => messagesDiv.removeEventListener("scroll", onScroll);
-    }, [selectedChat])
 }
 
 function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
@@ -105,29 +84,4 @@ function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: 
 
     waitThenGetUpdatesLoop();
     return () => clearTimeout(timeoutId);
-}
-
-function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
-    const downloadMoreMessages =
-        !chat.messagesDownloading.length &&
-        chat.earliestConfirmedMessageId !== null &&
-        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID &&
-        messagesDiv.scrollTop < 200;
-
-    if (downloadMoreMessages) {
-        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
-        const count = chat.earliestConfirmedMessageId! - fromId;
-        dispatch(loadMoreMessages(chat.chatId, fromId, count));
-    }
-
-    function loadMoreMessages(chatId: ChatId, fromId: number, count: number) {
-        return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-            // Check that the chat we were tracking is still the current one, it may have changed since the "scroll"
-            // event is triggered asynchronously
-            const selectedChat = stateFunctions.getSelectedChat(getState().chatsState);
-            if (selectedChat && chatFunctions.isConfirmedChat(selectedChat) && selectedChat.chatId === chatId) {
-                dispatch(getMessages(chatId, fromId, count))
-            }
-        }
-    }
 }
