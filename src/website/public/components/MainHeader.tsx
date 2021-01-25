@@ -15,7 +15,7 @@ export default React.memo(MainHeader);
 function MainHeader() {
     const me : Option<UserSummary> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
-    const chat = useSelector(getSelectedChat);
+    const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     if (chat === null) {
         return <div></div>;

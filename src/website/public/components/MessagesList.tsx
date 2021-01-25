@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
@@ -18,7 +18,7 @@ export default React.memo(MessagesList);
 function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
-    const chat = useSelector(getSelectedChat);
+    const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     if (chat === null) {
         return <div></div>;
@@ -104,6 +104,18 @@ function MessagesList() {
     if ("subject" in chat) {
         className += " group";
     }
+
+    useLayoutEffect(() => {
+        const messagesDiv = document.getElementById("messages");
+        if (!messagesDiv) {
+            return;
+        }
+        if (chat.scrollTop !== null) {
+            messagesDiv.scrollTop = chat.scrollTop;
+        } else if (chat.scrollBottom !== null) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
+        }
+    }, [chat]);
 
     return (
         <div id="messages" className={className}>

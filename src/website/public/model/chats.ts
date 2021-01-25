@@ -20,7 +20,12 @@ export type UnconfirmedChat = UnconfirmedDirectChat | UnconfirmedGroupChat;
 
 export type ChatId = BigInt;
 
-type ConfirmedChatCommon = {
+type ChatCommon = {
+    scrollTop: Option<number>,
+    scrollBottom: Option<number>
+}
+
+type ConfirmedChatCommon = ChatCommon & {
     chatId: ChatId,
     updatedDate: Date,
     readUpTo: number,
@@ -43,8 +48,8 @@ export type ConfirmedGroupChat = ConfirmedChatCommon & {
     participants: UserId[]
 }
 
-type UnconfirmedChatCommon = {
-    messages: UnconfirmedMessage[];
+type UnconfirmedChatCommon = ChatCommon & {
+    messages: UnconfirmedMessage[]
 }
 
 export type UnconfirmedDirectChat = UnconfirmedChatCommon & {
@@ -68,6 +73,10 @@ export const isGroupChat = (chat: Chat) : chat is GroupChat => {
     return chat.kind === CONFIRMED_GROUP_CHAT || chat.kind === UNCONFIRMED_GROUP_CHAT;
 }
 
+export const isConfirmedChat = (chat: Chat) : chat is ConfirmedChat => {
+    return chat.kind === CONFIRMED_DIRECT_CHAT || chat.kind === CONFIRMED_GROUP_CHAT;
+}
+
 export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, readUpTo: number = 0,
                                        messages: Message[] = []) : ConfirmedDirectChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
@@ -84,7 +93,9 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         messagesDownloading: [],
         earliestConfirmedMessageId,
         latestConfirmedMessageId,
-        minimumUnconfirmedMessageIndex: 0
+        minimumUnconfirmedMessageIndex: 0,
+        scrollTop: null,
+        scrollBottom: 0
     };
 }
 
@@ -105,8 +116,22 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         messagesDownloading: [],
         earliestConfirmedMessageId,
         latestConfirmedMessageId,
-        minimumUnconfirmedMessageIndex: 0
+        minimumUnconfirmedMessageIndex: 0,
+        scrollTop: null,
+        scrollBottom: 0
     };
+}
+
+export const mergeUpdates = (currentChat: Exclude<Chat, UnconfirmedGroupChat>, updatedChat: ConfirmedChat, isSelectedChat: boolean) : ConfirmedChat => {
+    // These messages have just come from the server so are all of type LocalMessage
+    const messages = updatedChat.messages as LocalMessage[];
+    const chat = currentChat.kind === UNCONFIRMED_DIRECT_CHAT
+        ? confirmDirectChat(currentChat, updatedChat.chatId)
+        : currentChat;
+
+    addMessages(chat, messages, isSelectedChat);
+
+    return chat;
 }
 
 export const confirmDirectChat = (chat: UnconfirmedDirectChat, chatId: ChatId) : ConfirmedDirectChat => {
@@ -118,11 +143,11 @@ export const confirmDirectChat = (chat: UnconfirmedDirectChat, chatId: ChatId) :
         chat.messages);
 }
 
-export const addMessage = (chat: ConfirmedChat, message: LocalMessage) : void => {
-    addMessages(chat, [message]);
+export const addMessage = (chat: ConfirmedChat, message: LocalMessage, isSelectedChat: boolean) : void => {
+    addMessages(chat, [message], isSelectedChat);
 }
 
-export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : void => {
+export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSelectedChat: boolean) : void => {
 
     if (messages.length === 0)
         return;
@@ -130,8 +155,8 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[]) : voi
     // Ensure messages are sorted by id (they should be already so this should only do a single iteration)
     messages.sort((a, b) => a.id - b.id);
 
-    extendMessagesRangeDownTo(chat, messages[0].id);
-    extendMessagesRangeUpTo(chat, messages[messages.length - 1].id);
+    extendMessagesRangeDownTo(chat, messages[0].id, isSelectedChat);
+    extendMessagesRangeUpTo(chat, messages[messages.length - 1].id, isSelectedChat);
 
     for (const message of messages) {
         setFunctions.remove(chat.messagesToDownload, message.id);
@@ -164,6 +189,8 @@ export const addUnconfirmedMessage = (chat: Chat, content: MessageContent) : voi
         content
     };
     chat.messages.push(message);
+    chat.scrollBottom = 0;
+    chat.scrollTop = null;
 }
 
 export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
@@ -171,7 +198,7 @@ export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
     setFunctions.unionWith(chat.messagesToDownload, missingMessages);
 }
 
-export const extendMessagesRangeDownTo = (chat: ConfirmedChat, messageId: number) : void => {
+export const extendMessagesRangeDownTo = (chat: ConfirmedChat, messageId: number, isSelectedChat: boolean) : void => {
     if (!chat.earliestConfirmedMessageId) {
         chat.messages.splice(0, 0, { kind: "remote", id: messageId });
         chat.latestConfirmedMessageId = messageId;
@@ -183,11 +210,14 @@ export const extendMessagesRangeDownTo = (chat: ConfirmedChat, messageId: number
             toPrepend.push({kind: "remote", id});
         }
         chat.messages.splice(0, 0, ...toPrepend);
+        if (isSelectedChat) {
+            maintainScrollBottom(chat);
+        }
     }
     chat.earliestConfirmedMessageId = messageId;
 }
 
-export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number) : void => {
+export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number, isSelectedChat: boolean) : void => {
     if (!chat.latestConfirmedMessageId) {
         chat.messages.splice(0, 0, { kind: "remote", id: messageId });
         chat.earliestConfirmedMessageId = messageId;
@@ -199,6 +229,9 @@ export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number) 
             toAdd.push({ kind: "remote", id });
         }
         chat.messages.splice(getMessageIndex(chat.messages, chat.latestConfirmedMessageId + 1), 0, ...toAdd);
+        if (isSelectedChat) {
+            maintainScroll(chat);
+        }
     }
     chat.latestConfirmedMessageId = messageId;
 }
@@ -216,8 +249,8 @@ export const findChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => 
     return tryFindChat(chats, filter) as [Chat, number];
 }
 
-export const getChatById = (chats: Chat[], chatId: ChatId) : ConfirmedChat => {
-    return tryFindChat(chats, { chatId })[0] as ConfirmedChat;
+export const getChatById = (chats: Chat[], chatId: ChatId) : [ConfirmedChat, number] => {
+    return tryFindChat(chats, { chatId }) as [ConfirmedChat, number];
 }
 
 export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
@@ -282,6 +315,36 @@ export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {
     return chats.findIndex(c => "them" in c && userId === c.them);
 }
 
+export const maintainScroll = (chat: Chat) : void => {
+    if (isScrolledToBottom()) {
+        maintainScrollBottom(chat);
+    } else {
+        maintainScrollTop(chat);
+    }
+}
+
+export const maintainScrollTop = (chat: Chat) : void => {
+    const scrollTop = getScrollTopAndBottom()[0];
+    if (scrollTop !== null) {
+        chat.scrollTop = scrollTop;
+        chat.scrollBottom = null;
+    } else {
+        chat.scrollTop = 0;
+        chat.scrollBottom = 0;
+    }
+}
+
+export const maintainScrollBottom = (chat: Chat) : void => {
+    const scrollBottom = getScrollTopAndBottom()[1];
+    if (scrollBottom !== null) {
+        chat.scrollBottom = scrollBottom;
+        chat.scrollTop = null;
+    } else {
+        chat.scrollTop = 0;
+        chat.scrollBottom = 0;
+    }
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
@@ -323,3 +386,17 @@ const getMessageIndex = (messages: Message[], messageId: number) : number => {
 
     return messageId - lowestMessageId;
 }
+
+const isScrolledToBottom = () : boolean => {
+    const scrollBottom = getScrollTopAndBottom()[1];
+    return (scrollBottom ?? 0) < 20;
+}
+
+const getScrollTopAndBottom = () : [Option<number>, Option<number>] => {
+    const messagesDiv = document.getElementById("messages");
+    if (!messagesDiv) {
+        return [null, null];
+    }
+    return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
+}
+

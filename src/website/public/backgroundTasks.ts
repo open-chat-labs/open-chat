@@ -1,19 +1,24 @@
-import { Dispatch, useEffect } from "react";
+import { Dispatch, useEffect, useLayoutEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { ConfirmedChat } from "./model/chats";
 import { UserId } from "./model/users";
 import { RootState } from "./reducers";
 import { GetUserRequest } from "./services/userMgmt/getUsers";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
+import getMessages from "./actions/chats/getMessages";
 import getUpdatedChats from "./actions/chats/getUpdatedChats";
 
 import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 
-import { REFRESH_CHATS_INTERVAL_MILLISECONDS, PAGE_SIZE } from "./constants";
+import * as chatFunctions from "./model/chats";
+import * as stateFunctions from "./utils/stateFunctions";
+
+import { MIN_MESSAGE_ID, PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
 import { Option, Timestamp } from "./model/common";
 
 export function setupBackgroundTasks() {
@@ -21,6 +26,7 @@ export function setupBackgroundTasks() {
 
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const usersState = useSelector((state: RootState) => state.usersState);
+    const selectedChat = stateFunctions.getSelectedChat(chatsState);
 
     // If 'usersState.mustRegisterAsNewUser' is false, attempt to get details of the current user if not already known
     useEffect(() => {
@@ -67,22 +73,27 @@ export function setupBackgroundTasks() {
         })
     }, [chatsState.chats]);
 
-    // If the selected chat changes (to different chat or there is a new message) 
-    // then scroll the message window to the bottom
-    const selectedChat = chatsState.selectedChatIndex !== null ? chatsState.chats[chatsState.selectedChatIndex] : null;
-    useEffect(() => {
-        var objDiv = document.getElementById("messages");
-        if (objDiv) {
-            objDiv.scrollTop = objDiv.scrollHeight;         
-        }
-    }, [selectedChat]);
-
     // Check for new messages at regular intervals
     useEffect(() => {
         if (chatsState.runUpdateChatsTask) {
             return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
         }
     }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo]);
+
+    useEffect(() => {
+        if (!selectedChat || !chatFunctions.isConfirmedChat(selectedChat)) {
+            return;
+        }
+        const messagesDiv = document.getElementById("messages")!;
+        if (!messagesDiv) {
+            return;
+        }
+
+        const onScroll = (e: Event) => onMessagesScroll(selectedChat, e.target as HTMLElement, dispatch);
+        messagesDiv.addEventListener("scroll", onScroll);
+
+        return () => messagesDiv.removeEventListener("scroll", onScroll);
+    }, [selectedChat])
 }
 
 function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
@@ -94,4 +105,17 @@ function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: 
 
     waitThenGetUpdatesLoop();
     return () => clearTimeout(timeoutId);
+}
+
+function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
+    const moreMessagesToDownload =
+        !chat.messagesToDownload.length &&
+        chat.earliestConfirmedMessageId !== null &&
+        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID;
+
+    if (moreMessagesToDownload && messagesDiv.scrollTop < 200) {
+        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
+        const count = chat.earliestConfirmedMessageId! - fromId;
+        dispatch(getMessages(chat.chatId, fromId, count));
+    }
 }

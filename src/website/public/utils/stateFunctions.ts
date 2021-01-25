@@ -1,9 +1,8 @@
-import { RootState } from "../reducers";
 import { Chat } from "../model/chats";
 import { Option } from "../model/common";
+import { ChatsState } from "../reducers/chatsReducer";
 
-export function getSelectedChat(state: RootState) : Option<Chat> {
-    const chatsState = state.chatsState;
+export function getSelectedChat(chatsState: ChatsState) : Option<Chat> {
     return chatsState.selectedChatIndex === null
         ? null
         : chatsState.chats[chatsState.selectedChatIndex];
