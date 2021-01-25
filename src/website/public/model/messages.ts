@@ -23,6 +23,7 @@ export type RemoteMessage = {
 export type UnconfirmedMessage = {
     kind: "unconfirmed",
     key: string,
+    date: Date,
     content: MessageContent
 }
 
