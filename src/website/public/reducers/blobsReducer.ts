@@ -40,9 +40,11 @@ export default produce((state: BlobsState, event: Event) => {
         }
 
         case GET_DATA_SUCCEEDED: {
-            const { key, data } = event.payload;
-            state.blobs[key] = dataToBlobUrl(data);
+            const { key, cacheResult, data } = event.payload;
             setFunctions.remove(state.blobsDownloading, key);
+            if (cacheResult) {
+                state.blobs[key] = dataToBlobUrl(data);
+            }
             break;
         }
 
