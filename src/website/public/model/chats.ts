@@ -28,7 +28,8 @@ type ChatCommon = {
 type ConfirmedChatCommon = ChatCommon & {
     chatId: ChatId,
     updatedDate: Date,
-    readUpTo: number,
+    unreadMessageIds: number[],
+    markAsReadPending: number[],
     messages: Message[],
     messagesToDownload: number[],
     messagesDownloading: number[],
@@ -77,8 +78,8 @@ export const isConfirmedChat = (chat: Chat) : chat is ConfirmedChat => {
     return chat.kind === CONFIRMED_DIRECT_CHAT || chat.kind === CONFIRMED_GROUP_CHAT;
 }
 
-export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, readUpTo: number = 0,
-                                       messages: Message[] = []) : ConfirmedDirectChat => {
+export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, unreadMessageIds: number[] = [],
+                                       markAsReadPending: number[] = [], messages: Message[] = []) : ConfirmedDirectChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
@@ -87,7 +88,8 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         chatId,
         them,
         updatedDate,
-        readUpTo,
+        unreadMessageIds,
+        markAsReadPending,
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
@@ -100,7 +102,8 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
 }
 
 export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participants: UserId[], updatedDate: Date,
-                                      readUpTo: number = 0, messages: Message[] = []) : ConfirmedGroupChat => {
+                                      unreadMessageIds: number[] = [], markAsReadPending: number[] = [],
+                                      messages: Message[] = []) : ConfirmedGroupChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
@@ -110,7 +113,8 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         subject,
         participants,
         updatedDate,
-        readUpTo,
+        unreadMessageIds,
+        markAsReadPending,
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
@@ -153,6 +157,7 @@ export const mergeUpdates = (currentChat: Exclude<Chat, UnconfirmedGroupChat>, u
         : currentChat;
 
     addMessages(chat, messages, isSelectedChat);
+    chat.unreadMessageIds = setFunctions.except(updatedChat.unreadMessageIds, chat.markAsReadPending);
 
     return chat;
 }
@@ -162,7 +167,8 @@ export const confirmDirectChat = (chat: UnconfirmedDirectChat, chatId: ChatId) :
         chatId,
         chat.them,
         DEFAULT_UPDATED_DATE,
-        0,
+        [],
+        [],
         chat.messages);
 }
 

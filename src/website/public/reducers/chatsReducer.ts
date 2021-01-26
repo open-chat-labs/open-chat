@@ -1,21 +1,16 @@
 import produce from "immer";
 
 import * as chatFunctions from "../model/chats";
-import {
-    Chat,
-    ChatId,
-    ConfirmedChat,
-    UnconfirmedDirectChat,
-    UnconfirmedGroupChat,
-    ChatFilter
-} from "../model/chats";
+import { Chat, ChatFilter, ChatId, ConfirmedChat, UnconfirmedGroupChat } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
 import * as setFunctions from "../utils/setFunctions";
 import {
     CONFIRMED_GROUP_CHAT,
-    MIN_MESSAGE_ID, PAGE_SIZE,
+    MIN_MESSAGE_ID,
+    PAGE_SIZE,
     UNCONFIRMED_DIRECT_CHAT,
-    UNCONFIRMED_GROUP_CHAT } from "../constants";
+    UNCONFIRMED_GROUP_CHAT
+} from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
@@ -64,12 +59,18 @@ import {
 } from "../actions/chats/sendMessage";
 
 import {
-    ADD_PARTICIPANTS_REQUESTED,
     ADD_PARTICIPANTS_FAILED,
+    ADD_PARTICIPANTS_REQUESTED,
+    AddParticipantsFailedEvent,
     AddParticipantsRequestedEvent,
-    AddParticipantsSucceededEvent,
-    AddParticipantsFailedEvent
+    AddParticipantsSucceededEvent
 } from "../actions/chats/addParticipants";
+import { MARK_MESSAGE_AS_READ, MarkMessageAsReadEvent } from "../actions/chats/markMessageAsRead";
+import {
+    MARK_MESSAGES_AS_READ_SUCCEEDED,
+    MarkMessagesAsReadRequestedEvent,
+    MarkMessagesAsReadSucceededEvent
+} from "../actions/chats/markMessagesAsRead";
 
 export type ChatsState = {
     chats: Chat[],
@@ -100,6 +101,8 @@ type Event =
     GetMessagesByIdSucceededEvent |
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
+    MarkMessageAsReadEvent |
+    MarkMessagesAsReadSucceededEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -242,6 +245,23 @@ export default produce((state: ChatsState, event: Event) => {
 
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
             state.chatsSyncedUpTo = latestUpdateTimestamp;
+            break;
+        }
+
+        case MARK_MESSAGE_AS_READ: {
+            const { chatId, messageId } = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            setFunctions.add(chat.markAsReadPending, messageId);
+            break;
+        }
+
+        case MARK_MESSAGES_AS_READ_SUCCEEDED: {
+            const { chatId, fromId, toId } = event.payload.request;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            for (let messageId = fromId; messageId <= toId; messageId++) {
+                setFunctions.remove(chat.markAsReadPending, messageId);
+                setFunctions.remove(chat.unreadMessageIds, messageId);
+            }
             break;
         }
 

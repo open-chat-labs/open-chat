@@ -23,8 +23,8 @@ export default class service {
         return sendMessage(chatId, content);
     }
 
-    public static markRead(chatId: ChatId, upToIndex: number) : Promise<MarkReadResponse> {
-        return markRead(chatId, upToIndex);
+    public static markRead(chatId: ChatId, fromId: number, toId: number) : Promise<MarkReadResponse> {
+        return markRead(chatId, fromId, toId);
     }
 
     public static addParticipants(chatId: ChatId, users: UserId[]) : Promise<AddParticipantsResponse> {

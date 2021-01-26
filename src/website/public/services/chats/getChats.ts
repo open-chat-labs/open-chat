@@ -62,25 +62,34 @@ function convertToChat(value: any) : ConfirmedChat {
 }
 
 function convertToDirectChat(value: any) : ConfirmedDirectChat {
-    const latestMessage = value.latest_messages[0];
     return chatFunctions.newConfirmedDirectChat(
         chatIdFromCandid(value.id),
         userIdFromCandid(value.them),
         timestampToDate(value.updated_date),
-        latestMessage.id - value.unread,
+        convertRangeSetToArray(value.unread_message_id_ranges),
+        [],
         value.latest_messages.reverse().map(localMessageFromCandid));
 }
 
-function convertToGroupChat(value: any) : ConfirmedGroupChat
-{
-    const latestMessageId = value.latest_messages.length > 0 ? value.latest_messages[0].id : 0;
+function convertToGroupChat(value: any) : ConfirmedGroupChat {
     return chatFunctions.newConfirmedGroupChat(
         chatIdFromCandid(value.id),
         value.subject,
         value.participants.map(userIdFromCandid),
         timestampToDate(value.updated_date),
-        latestMessageId - value.unread,
+        convertRangeSetToArray(value.unread_message_id_ranges),
+        [],
         value.latest_messages.reverse().map(localMessageFromCandid));
+}
+
+function convertRangeSetToArray(rangeSet: number[][]) : number[] {
+    const array = [];
+    for (const range of rangeSet) {
+        for (let i = range[0]; i <= range[1]; i++) {
+            array.push(i);
+        }
+    }
+    return array;
 }
 
 
