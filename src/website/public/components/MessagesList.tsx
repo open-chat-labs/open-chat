@@ -130,9 +130,6 @@ function MessagesList() {
         return () => messagesDiv.removeEventListener("scroll", onScroll);
     }, [chat, messagesRef.current])
 
-    useLayoutEffect(() => {
-    }, [chat, messagesRef.current]);
-
     return (
         <div id="messages" ref={messagesRef} className={className}>
             {children}
