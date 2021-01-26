@@ -122,6 +122,29 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
     };
 }
 
+export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat => {
+    return {
+        kind: UNCONFIRMED_DIRECT_CHAT,
+        them: userId,
+        messages: [],
+        scrollTop: null,
+        scrollBottom: 0
+    };
+}
+
+export const newUnconfirmedGroupChat = (tempId: Symbol, subject: string, users: UserId[]) : UnconfirmedGroupChat => {
+    return {
+        kind: UNCONFIRMED_GROUP_CHAT,
+        id: tempId,
+        subject,
+        initialParticipants: users,
+        pendingParticipants: [],
+        messages: [],
+        scrollTop: null,
+        scrollBottom: 0
+    };
+}
+
 export const mergeUpdates = (currentChat: Exclude<Chat, UnconfirmedGroupChat>, updatedChat: ConfirmedChat, isSelectedChat: boolean) : ConfirmedChat => {
     // These messages have just come from the server so are all of type LocalMessage
     const messages = updatedChat.messages as LocalMessage[];

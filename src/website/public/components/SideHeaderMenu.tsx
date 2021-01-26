@@ -1,15 +1,16 @@
 import React from "react";
-import { Option } from "../model/common";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+
 import { addParticipantsByUsername } from "../actions/chats/addParticipants";
 import createGroupChat from "../actions/chats/createGroupChat";
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 import DropdownMenuIcon from "../assets/icons/dropdownMenuIcon.svg";
-import { Chat, isGroupChat } from "../model/chats";
+import { isGroupChat } from "../model/chats";
+import { RootState } from "../reducers";
+import { getSelectedChat } from "../utils/stateFunctions";
 
 type Props = {
     text: string,
-    selectedChat: Option<Chat>,
     clearInput: () => void
 }
 
@@ -18,6 +19,7 @@ export default React.memo(SideHeaderMenu);
 function SideHeaderMenu(props: Props) {
 
     const dispatch = useDispatch();
+    const selectedChat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     const buttons: JSX.Element[] = [];
 
@@ -29,8 +31,8 @@ function SideHeaderMenu(props: Props) {
     buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(setupNewDirectChat(props.text))}>New chat</a>);
     buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(createGroupChat(props.text, []))}>New group</a>);
 
-    if (props.selectedChat && isGroupChat(props.selectedChat)) {
-        const groupChat = props.selectedChat;
+    if (selectedChat && isGroupChat(selectedChat)) {
+        const groupChat = selectedChat;
         buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(addParticipantsByUsername(groupChat, [props.text]))}>Add participant</a>);
     }
 

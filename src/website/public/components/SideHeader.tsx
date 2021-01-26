@@ -1,18 +1,14 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
 
-import { getSelectedChat } from "../utils/stateFunctions";
 import SideHeaderMenu from "./SideHeaderMenu";
 import MyAvatar from "./MyAvatar";
 import SearchIcon from "../assets/icons/search.svg";
-import { RootState } from "../reducers";
 
 const PLACEHOLDER_TEXT = "Search or start a new chat";
 
 export default React.memo(SideHeader);
 
 function SideHeader() {
-    const selectedChat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
     const [text, setText] = useState("");
     const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
     const clearInput = () => setText("");
@@ -22,7 +18,7 @@ function SideHeader() {
             <header>
                 <MyAvatar />    
                 <div>
-                    <SideHeaderMenu text={text} selectedChat={selectedChat} clearInput={clearInput} />
+                    <SideHeaderMenu text={text} clearInput={clearInput} />
                 </div>
             </header>
             <div className="search">
