@@ -111,7 +111,8 @@ function MessagesList() {
 
     const dispatch = useDispatch();
     const messagesRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
+
+    useLayoutEffect(() => {
         const messagesDiv = messagesRef.current;
         if (!messagesDiv || !chatFunctions.isConfirmedChat(chat)) {
             return;
@@ -152,17 +153,6 @@ function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatc
     if (downloadMoreMessages) {
         const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
         const count = chat.earliestConfirmedMessageId! - fromId;
-        dispatch(loadMoreMessages(chat.chatId, fromId, count));
-    }
-
-    function loadMoreMessages(chatId: ChatId, fromId: number, count: number) {
-        return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-            // Check that the chat we were tracking is still the current one, it may have changed since the "scroll"
-            // event is triggered asynchronously
-            const selectedChat = stateFunctions.getSelectedChat(getState().chatsState);
-            if (selectedChat && chatFunctions.isConfirmedChat(selectedChat) && selectedChat.chatId === chatId) {
-                dispatch(getMessages(chatId, fromId, count))
-            }
-        }
+        dispatch(getMessages(chat.chatId, fromId, count));
     }
 }
