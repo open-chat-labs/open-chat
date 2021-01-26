@@ -117,6 +117,13 @@ function MessagesList() {
             return;
         }
 
+        // Set the scroll top or scroll bottom to maintain the previously saved scroll position
+        if (chat.scrollTop !== null) {
+            messagesDiv.scrollTop = chat.scrollTop;
+        } else if (chat.scrollBottom !== null) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
+        }
+
         const onScroll = (e: Event) => onMessagesScroll(chat, e.target as HTMLElement, dispatch);
         messagesDiv.addEventListener("scroll", onScroll);
 
@@ -124,15 +131,6 @@ function MessagesList() {
     }, [chat, messagesRef.current])
 
     useLayoutEffect(() => {
-        const messagesDiv = messagesRef.current;
-        if (!messagesDiv) {
-            return;
-        }
-        if (chat.scrollTop !== null) {
-            messagesDiv.scrollTop = chat.scrollTop;
-        } else if (chat.scrollBottom !== null) {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
-        }
     }, [chat, messagesRef.current]);
 
     return (
