@@ -1,4 +1,4 @@
-import React, { Dispatch, useEffect, useLayoutEffect } from "react";
+import React, {DetailedHTMLProps, Dispatch, HTMLAttributes, useEffect, useLayoutEffect, useRef} from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
@@ -23,7 +23,6 @@ function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
-    const dispatch = useDispatch();
 
     if (chat === null) {
         return <div></div>;
@@ -110,8 +109,10 @@ function MessagesList() {
         className += " group";
     }
 
-    const messagesDiv = document.getElementById("messages");
+    const dispatch = useDispatch();
+    const messagesRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
+        const messagesDiv = messagesRef.current;
         if (!messagesDiv || !chatFunctions.isConfirmedChat(chat)) {
             return;
         }
@@ -120,9 +121,10 @@ function MessagesList() {
         messagesDiv.addEventListener("scroll", onScroll);
 
         return () => messagesDiv.removeEventListener("scroll", onScroll);
-    }, [chat, messagesDiv])
+    }, [chat, messagesRef.current])
 
     useLayoutEffect(() => {
+        const messagesDiv = messagesRef.current;
         if (!messagesDiv) {
             return;
         }
@@ -131,10 +133,10 @@ function MessagesList() {
         } else if (chat.scrollBottom !== null) {
             messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
         }
-    }, [chat, messagesDiv]);
+    }, [chat, messagesRef.current]);
 
     return (
-        <div id="messages" className={className}>
+        <div id="messages" ref={messagesRef} className={className}>
             {children}
         </div>
     );
