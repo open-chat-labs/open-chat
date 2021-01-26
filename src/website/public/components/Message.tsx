@@ -27,7 +27,12 @@ function Message(props : Props) {
 
     if (props.sender && (props.groupPosition == MessageGroupPosition.None || props.groupPosition == MessageGroupPosition.Top)) {
         const sender = props.sender;
-        senderLink = <a className="participant" href="#" onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+        senderLink = <a 
+            className="participant" 
+            href="#" 
+            role="button" 
+            title={'Select chat with "' + sender.username + '"'} 
+            onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
 
     switch (props.groupPosition) {

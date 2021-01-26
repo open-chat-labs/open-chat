@@ -6,14 +6,15 @@ export const GET_DATA_REQUESTED = "GET_DATA_REQUESTED";
 export const GET_DATA_SUCCEEDED = "GET_DATA_SUCCEEDED";
 export const GET_DATA_FAILED = "GET_DATA_FAILED";
 
-export default function(key: string, totalBytes: number, chunkSize: number) {
+export default function(key: string, totalBytes: number, chunkSize: number, cacheResult: boolean) {
     return async (dispatch: Dispatch<any>) => {
         const requestEvent: GetDataRequestedEvent = {
             type: GET_DATA_REQUESTED,
             payload: {
                 key,
                 totalBytes,
-                chunkSize
+                chunkSize,
+                cacheResult
             }
         };
 
@@ -29,7 +30,8 @@ export default function(key: string, totalBytes: number, chunkSize: number) {
                     key,
                     totalBytes,
                     chunkSize,
-                    data: response.data
+                    data: response.data,
+                    cacheResult
                 }
             } as GetDataSucceededEvent;
         } else {
@@ -39,15 +41,20 @@ export default function(key: string, totalBytes: number, chunkSize: number) {
         }
 
         dispatch(outcomeEvent);
+
+        return outcomeEvent;
     }
 }
+
+export type GetDataOutcome = GetDataSucceededEvent | GetDataFailedEvent;
 
 export type GetDataRequestedEvent = {
     type: typeof GET_DATA_REQUESTED,
     payload: {
         key: string,
         totalBytes: number,
-        chunkSize: number
+        chunkSize: number,
+        cacheResult: boolean
     }
 }
 
@@ -57,7 +64,8 @@ export type GetDataSucceededEvent = {
         key: string,
         totalBytes: number,
         chunkSize: number,
-        data: Uint8Array
+        data: Uint8Array,
+        cacheResult: boolean
     }
 }
 
