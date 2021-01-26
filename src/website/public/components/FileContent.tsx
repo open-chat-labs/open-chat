@@ -24,7 +24,10 @@ function FileContent(props : Props): JSX.Element {
                 href="#" 
                 role="button" 
                 onClick={onClick}
-                title={'Download "' + props.content.name + '"'}>{props.content.name}</a>
+                title={'Download "' + props.content.name + '"'}>
+                <div className="file-icon"></div>
+                <div className="file-name">{props.content.name}</div>
+            </a>
             <span className="file-size">{props.content.mimeType.toUpperCase()} - {props.content.size} B</span>
         </>
     );
