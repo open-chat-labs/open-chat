@@ -128,17 +128,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case CREATE_GROUP_CHAT_REQUESTED: {
             const { tempId, subject, users } = event.payload;
-            const newChat: UnconfirmedGroupChat = {
-                kind: UNCONFIRMED_GROUP_CHAT,
-                id: tempId,
-                subject,
-                initialParticipants: users,
-                pendingParticipants: [],
-                messages: [],
-                scrollTop: null,
-                scrollBottom: 0
-            };
-
+            const newChat = chatFunctions.newUnconfirmedGroupChat(tempId, subject, users);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
             break;
@@ -171,7 +161,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_REQUESTED: {
             const { chatId, fromId, count } = event.payload;
-            const chat = chatFunctions.getChatById(state.chats, chatId)[0];
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
             const messageIds = [];
             for (let i = fromId; i < fromId + count; i++) {
                 messageIds.push(i);
@@ -195,7 +185,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_FAILED: {
             const { chatId, fromId, count } = event.payload;
-            const chat = chatFunctions.getChatById(state.chats, chatId)[0];
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
             const messageIds = [];
             for (let i = fromId; i < fromId + count; i++) {
                 messageIds.push(i);
@@ -206,7 +196,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_BY_ID_REQUESTED: {
             const { chatId, messageIds } = event.payload;
-            const chat = chatFunctions.getChatById(state.chats, chatId)[0];
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
             setFunctions.unionWith(chat.messagesDownloading, messageIds);
             break;
         }
@@ -288,14 +278,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
             const { userId } = event.payload;
-            const newChat: UnconfirmedDirectChat = {
-                kind: UNCONFIRMED_DIRECT_CHAT,
-                them: userId,
-                messages: [],
-                scrollTop: null,
-                scrollBottom: 0
-            };
-
+            const newChat = chatFunctions.newUnconfirmedDirectChat(userId);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
             break;
