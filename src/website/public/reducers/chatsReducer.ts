@@ -109,12 +109,12 @@ type Event =
     AddParticipantsFailedEvent;
 
 export default produce((state: ChatsState, event: Event) => {
+    maintainScrollOfSelectedChat(state);
     switch (event.type) {
         case CHAT_SELECTED: {
             if (event.payload === state.selectedChatIndex) {
                 return;
             }
-            maintainScrollOfSelectedChat(state);
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat && chat.latestConfirmedMessageId) {
@@ -127,7 +127,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case CREATE_GROUP_CHAT_REQUESTED: {
-            maintainScrollOfSelectedChat(state);
             const { tempId, subject, users } = event.payload;
             const newChat: UnconfirmedGroupChat = {
                 kind: UNCONFIRMED_GROUP_CHAT,
@@ -146,7 +145,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case CREATE_GROUP_CHAT_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const { tempId, chatId, date } = event.payload;
             const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id === tempId);
             const chat = state.chats[chatIndex] as UnconfirmedGroupChat;
@@ -172,7 +170,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_REQUESTED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, fromId, count } = event.payload;
             const chat = chatFunctions.getChatById(state.chats, chatId)[0];
             const messageIds = [];
@@ -184,7 +181,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const { request, result } = event.payload;
             const [chat, index] = chatFunctions.getChatById(state.chats, request.chatId);
             const messageIds = [];
@@ -198,7 +194,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_FAILED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, fromId, count } = event.payload;
             const chat = chatFunctions.getChatById(state.chats, chatId)[0];
             const messageIds = [];
@@ -210,7 +205,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_BY_ID_REQUESTED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, messageIds } = event.payload;
             const chat = chatFunctions.getChatById(state.chats, chatId)[0];
             setFunctions.unionWith(chat.messagesDownloading, messageIds);
@@ -218,7 +212,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_BY_ID_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const { request, result } = event.payload;
             const [chat, index] = chatFunctions.getChatById(state.chats, request.chatId);
             setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
@@ -228,7 +221,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_MESSAGES_BY_ID_FAILED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, messageIds } = event.payload;
             const chat = chatFunctions.getChatById(state.chats, chatId)[0];
             setFunctions.exceptWith(chat.messagesDownloading, messageIds);
@@ -236,7 +228,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_UPDATED_CHATS_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const { chats, latestUpdateTimestamp } = event.payload;
             if (!chats.length) {
                 return;
@@ -276,7 +267,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case SEND_MESSAGE_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const payload = event.payload;
             const filter = {
                 chatId: payload.chatId,
@@ -297,7 +287,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
-            maintainScrollOfSelectedChat(state);
             const { userId } = event.payload;
             const newChat: UnconfirmedDirectChat = {
                 kind: UNCONFIRMED_DIRECT_CHAT,
@@ -313,7 +302,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case ADD_PARTICIPANTS_REQUESTED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, users } = event.payload;
             const filter = {
                 chatId: chatId as ChatId,
@@ -333,7 +321,6 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case ADD_PARTICIPANTS_FAILED: {
-            maintainScrollOfSelectedChat(state);
             const { chatId, users } = event.payload;
             const [chat, _] = chatFunctions.findChat(state.chats, { chatId });
 
