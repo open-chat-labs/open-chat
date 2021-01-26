@@ -325,24 +325,14 @@ export const maintainScroll = (chat: Chat) : void => {
 
 export const maintainScrollTop = (chat: Chat) : void => {
     const scrollTop = getScrollTopAndBottom()[0];
-    if (scrollTop !== null) {
-        chat.scrollTop = scrollTop;
-        chat.scrollBottom = null;
-    } else {
-        chat.scrollTop = 0;
-        chat.scrollBottom = 0;
-    }
+    chat.scrollTop = scrollTop;
+    chat.scrollBottom = null;
 }
 
 export const maintainScrollBottom = (chat: Chat) : void => {
     const scrollBottom = getScrollTopAndBottom()[1];
-    if (scrollBottom !== null) {
-        chat.scrollBottom = scrollBottom;
-        chat.scrollTop = null;
-    } else {
-        chat.scrollTop = 0;
-        chat.scrollBottom = 0;
-    }
+    chat.scrollBottom = scrollBottom;
+    chat.scrollTop = null;
 }
 
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
