@@ -324,15 +324,19 @@ export const maintainScroll = (chat: Chat) : void => {
 }
 
 export const maintainScrollTop = (chat: Chat) : void => {
-    const scrollTop = getScrollTopAndBottom()[0];
-    chat.scrollTop = scrollTop;
-    chat.scrollBottom = null;
+    const scrollValues = getScrollTopAndBottom();
+    if (scrollValues) {
+        chat.scrollTop = scrollValues[0];
+        chat.scrollBottom = null;
+    }
 }
 
 export const maintainScrollBottom = (chat: Chat) : void => {
-    const scrollBottom = getScrollTopAndBottom()[1];
-    chat.scrollBottom = scrollBottom;
-    chat.scrollTop = null;
+    const scrollValues = getScrollTopAndBottom();
+    if (scrollValues) {
+        chat.scrollBottom = scrollValues[1];
+        chat.scrollTop = null;
+    }
 }
 
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
@@ -378,14 +382,14 @@ const getMessageIndex = (messages: Message[], messageId: number) : number => {
 }
 
 const isScrolledToBottom = () : boolean => {
-    const scrollBottom = getScrollTopAndBottom()[1];
-    return (scrollBottom ?? 0) < 20;
+    const scrollValues = getScrollTopAndBottom();
+    return !scrollValues || scrollValues[1] <= 20;
 }
 
-const getScrollTopAndBottom = () : [Option<number>, Option<number>] => {
+const getScrollTopAndBottom = () : Option<[number, number]> => {
     const messagesDiv = document.getElementById("messages");
     if (!messagesDiv) {
-        return [null, null];
+        return null;
     }
     return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
 }
