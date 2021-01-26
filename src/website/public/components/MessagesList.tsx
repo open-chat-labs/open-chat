@@ -1,4 +1,4 @@
-import React, {DetailedHTMLProps, Dispatch, HTMLAttributes, useEffect, useLayoutEffect, useRef} from "react";
+import React, { Dispatch, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
@@ -10,9 +10,8 @@ import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
-import { ChatId, ConfirmedChat } from "../model/chats";
+import { ConfirmedChat } from "../model/chats";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
-import * as stateFunctions from "../utils/stateFunctions";
 import getMessages from "../actions/chats/getMessages";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
