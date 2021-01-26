@@ -4,17 +4,16 @@ import markMessagesAsRead from "../actions/chats/markMessagesAsRead";
 import store from "../store";
 
 const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();
-const TEN_SECONDS_MS= 10_000;
+const SYNC_DELAY_MS = 10_000;
 
 export default class markAsReadHandler {
     public static markRead(chatId: ChatId, messageId: number) : void {
-        const createTimeout = () => setTimeout(() => this.updateServer(chatId), TEN_SECONDS_MS);
-
         const existing = pending.get(chatId);
         if (existing) {
             existing[0].add(messageId);
         } else {
-            pending.set(chatId, [new Set<number>([messageId]), createTimeout()]);
+            const timeout = setTimeout(() => this.updateServer(chatId), SYNC_DELAY_MS);
+            pending.set(chatId, [new Set<number>([messageId]), timeout]);
         }
     }
 
