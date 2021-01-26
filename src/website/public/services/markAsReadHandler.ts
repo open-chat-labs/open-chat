@@ -13,8 +13,6 @@ export default class markAsReadHandler {
         const existing = pending.get(chatId);
         if (existing) {
             existing[0].add(messageId);
-            clearTimeout(existing[1]);
-            existing[1] = createTimeout();
         } else {
             pending.set(chatId, [new Set<number>([messageId]), createTimeout()]);
         }
