@@ -1,15 +1,18 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { Dispatch, useLayoutEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import { Option } from "../model/common";
-import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "../model/messages";
+import { LocalMessage, UnconfirmedMessage } from "../model/messages";
 import { UserId, UserSummary } from "../model/users";
 import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
+import { ConfirmedChat } from "../model/chats";
+import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
+import getMessages from "../actions/chats/getMessages";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -18,7 +21,7 @@ export default React.memo(MessagesList);
 function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
-    const chat = useSelector(getSelectedChat);
+    const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     if (chat === null) {
         return <div></div>;
@@ -105,9 +108,45 @@ function MessagesList() {
         className += " group";
     }
 
+    const dispatch = useDispatch();
+    const messagesRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const messagesDiv = messagesRef.current;
+        if (!messagesDiv || !chatFunctions.isConfirmedChat(chat)) {
+            return;
+        }
+
+        // Set the scroll top or scroll bottom to maintain the previously saved scroll position
+        if (chat.scrollTop !== null) {
+            messagesDiv.scrollTop = chat.scrollTop;
+        } else if (chat.scrollBottom !== null) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
+        }
+
+        const onScroll = (e: Event) => onMessagesScroll(chat, e.target as HTMLElement, dispatch);
+        messagesDiv.addEventListener("scroll", onScroll);
+
+        return () => messagesDiv.removeEventListener("scroll", onScroll);
+    }, [chat, messagesRef.current])
+
     return (
-        <div id="messages" className={className}>
+        <div id="messages" ref={messagesRef} className={className}>
             {children}
         </div>
     );
+}
+
+function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
+    const downloadMoreMessages =
+        !chat.messagesDownloading.length &&
+        chat.earliestConfirmedMessageId !== null &&
+        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID &&
+        messagesDiv.scrollTop < 200;
+
+    if (downloadMoreMessages) {
+        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
+        const count = chat.earliestConfirmedMessageId! - fromId;
+        dispatch(getMessages(chat.chatId, fromId, count));
+    }
 }

@@ -10,10 +10,10 @@ export const GET_MESSAGES_BY_ID_FAILED = "GET_MESSAGES_BY_ID_FAILED";
 
 export default function(chatId: ChatId, messageIds: number[]) {
     return async (dispatch: Dispatch<any>) => {
-        const request = {
+        const request: GetMessagesByIdRequest = {
             chatId,
             messageIds
-        } as GetMessagesByIdRequest;
+        };
 
         const requestEvent: GetMessagesByIdRequestedEvent = {
             type: GET_MESSAGES_BY_ID_REQUESTED,

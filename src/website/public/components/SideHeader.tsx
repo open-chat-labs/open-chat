@@ -5,13 +5,14 @@ import { getSelectedChat } from "../utils/stateFunctions";
 import SideHeaderMenu from "./SideHeaderMenu";
 import MyAvatar from "./MyAvatar";
 import SearchIcon from "../assets/icons/search.svg";
+import { RootState } from "../reducers";
 
 const PLACEHOLDER_TEXT = "Search or start a new chat";
 
 export default React.memo(SideHeader);
 
 function SideHeader() {
-    const selectedChat = useSelector(getSelectedChat);
+    const selectedChat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
     const [text, setText] = useState("");
     const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
     const clearInput = () => setText("");
