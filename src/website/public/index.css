@@ -292,9 +292,39 @@ main header>div >div {
 .message {
     max-width: 500px;
     background-color: white;
-    padding: 8px 13px;
+    padding: 6px 11px;
     margin: 0px;
     margin-top: 14px;
+    position: relative;
+    cursor: pointer;
+}
+
+.message .down-arrow {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    opacity: 0.85;
+    display: none;
+    z-index: 51;
+    background-color: inherit;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    padding: 5px;
+    vertical-align: middle;
+    color: #aaaaaa;
+}
+
+.message.file.them .down-arrow {
+    background-color: #e9e9e9;
+}
+
+.message.file.me .down-arrow {
+    background-color: #ea4091;
+}
+
+.message:hover .down-arrow {
+    display: block;    
 }
 
 .message.merge {
@@ -302,7 +332,7 @@ main header>div >div {
 }
 
 .message, .message-media {
-  border-radius: 16px;
+    border-radius: 16px;
 }
 
 .message.me.top, 
@@ -322,33 +352,37 @@ main header>div >div {
 
 .message.them.top,
 .message.them.top .message-media {
-  border-radius: 16px 16px 16px 4px;
+    border-radius: 16px 16px 16px 4px;
 }
 
 .message.them.middle,
 .message.them.middle .message-media {
-  border-radius: 4px 16px 16px 4px;
+    border-radius: 4px 16px 16px 4px;
 }
 
 .message.them.bottom,
 .message.them.bottom .message-media {
-  border-radius: 4px 16px 16px 16px;
+    border-radius: 4px 16px 16px 16px;
 }
 
 .message.file .download-file {
-  border-radius: 13px 13px 6px 6px;
+    border-radius: 13px 13px 6px 6px;
 }
 
 .message.me.merge.file .download-file {
-  border-radius: 13px 2px 2px 6px;
+    border-radius: 13px 2px 2px 6px;
 }
 
 .message.them.merge.file .download-file {
-  border-radius: 2px 13px 6px 2px;
+    border-radius: 2px 13px 6px 2px;
 }
 
 .detail.group .message.them.file .download-file {
-  border-radius: 2px;
+    border-radius: 2px 12px 2px 2px;
+}
+
+.detail.group .message.them.file .participant + .download-file {
+    border-radius: 2px;
 }
 
 .message-time, .file-size {
@@ -415,7 +449,7 @@ main header>div >div {
 .message.media .participant {
     position: absolute;
     display: block;
-    padding: 4px 7px 3px 13px;
+    padding: 4px 7px 3px 11px;
     top: 0px;
     left: 0px;
     z-index: 50;
@@ -423,6 +457,7 @@ main header>div >div {
     text-align: center;
     border-radius: 16px 0px 2px 0px;
     line-height: 13px;
+    opacity: 0.6;
 }
 
 .message-media {
@@ -439,12 +474,11 @@ main header>div >div {
     display: inline;
     float: none;
     margin: 0px;
-    right: 10px;
-    bottom: 6px;
-    background-color: #444444;
-    color: white;
+    right: 4px;
+    bottom: 4px;
+    background-color: rgb(68, 68, 68, 0.6);
+    color: #dddddd;
     text-align: center;
-    opacity: 0.6;
     border-radius: 6px;
 }
 
@@ -454,23 +488,37 @@ main header>div >div {
 
 .message.file .download-file {
     min-width: 300px;
-    padding: 16px 13px;
+    padding: 10px 9px;
     max-width: 494px;
     background-color: #e9e9e9;
     font-size: 14px;
     line-height: 14px;
-    cursor: pointer;
     display: block;
     text-decoration: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .message.file .participant {
-    margin-left: 10px;
+    margin-left: 8px;
 }
 
 .message.me.file .download-file {
     color: white;
     background-color: #ea4091;
+}
+
+.download-file .file-name {
+    margin-left: 8px;
+}
+
+.download-file > * {
+    flex: 0 0 auto;
+}
+
+.download-file .file-name {
+    flex: 1 0 auto;
 }
 
 .message.file .message-time, 
@@ -480,11 +528,21 @@ main header>div >div {
 }
 
 .message.file .message-time {
-    margin-right: 13px;
+    margin-right: 9px;
 }
 
 .message.file .file-size {
-    margin-left: 13px;
+    margin-left: 9px;
+}
+
+.file-icon {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAA8CAYAAADL94L/AAAByElEQVR4Ae3axdJTQRAFYFyegA3u8ALseCDcicsGhxt3x+G32BXc3X3NBnfXYTqp3sZlhuqpOlXZRL46He9ReJyJxGSTEreaPfEHZiX+1uSJvelVNu+Jvjd7Yk9zI8aSUe0eDpjCIYfNSuw5v/zF5In/6mU27478tXriLJvXjdSwPq1lCDTCmxjiCNav8GZYBVMwWKagX8kWjk9vCcMhYWhEFEw1+oV0wZjdPKY6Vn9EwmBDTYPwBoXCYPLGDQTJjkHQNQRJj0FQtmgs+C8wOHIIkh2DoDu5vD5Xfkz9hsTBWDyxhjDYUDqvLRYSY1JilSQGyyxXOt4QKJPX70NDQmI27gyxHcn9bH/5RFMNAUgoDI4afOAMHBiCdiDNj5woGAhgsCEYudSI1lBCRwoPL957slAoDDYEoPXb/ZVs3FE/y9072fDxsx4BMPVfGOpl1VY/y5++4EWM1Fm9LcCKpy8RpnchDGEIQxjCEIYwhCEMYQhDGMIQhjCEIQxhCEMYwhCGMIQhDGEIQxhYNlXiP+XHXLRDM5thQVpyzIfS2YtLceVEkRmzalsgMArPhp258bA6b/LEb8LqPM930VNdvY/fhMmCxw+Of+4BTcPInBo2AAAAAElFTkSuQmCC);
+    background-size: contain;
+    width: 26px;
+    height: 30px;
+}
+
+.message.file .file-icon {
 }
 
 main footer {
