@@ -10,11 +10,13 @@ import MediaContent from "./MediaContent";
 import FileContent from "./FileContent";
 
 export type Props = {
+    id: string,
     content: MessageContent,
     dateConfirmed: Option<Date>,
     sentByMe: boolean,
     sender: Option<UserSummary>,
     groupPosition: MessageGroupPosition
+    unread: boolean,
 }
 
 export default React.memo(Message);
@@ -33,6 +35,10 @@ function Message(props : Props) {
             role="button" 
             title={'Select chat with "' + sender.username + '"'} 
             onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+    }
+
+    if (props.unread) {
+        className += " unread";
     }
 
     switch (props.groupPosition) {
@@ -59,7 +65,7 @@ function Message(props : Props) {
     }
 
     return (
-        <div className={className}>
+        <div id={"message-" + props.id} className={className}>
             {senderLink}
             {contentElement}
             <span className="message-time">{props.dateConfirmed ? toShortTime(props.dateConfirmed) : "..."}</span>

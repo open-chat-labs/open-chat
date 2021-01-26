@@ -13,6 +13,7 @@ import MessageComponent, { MessageGroupPosition } from "./Message";
 import { ConfirmedChat } from "../model/chats";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
+import markMessageAsRead from "../actions/chats/markMessageAsRead";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -31,11 +32,17 @@ function MessagesList() {
 
     const children: JSX.Element[] = [];
 
+    let unreadMessageIds = new Set<number>();
+    if (chatFunctions.isConfirmedChat(chat)) {
+        chat.unreadMessageIds.forEach(id => unreadMessageIds.add(id));
+        chat.markAsReadPending.forEach(id => unreadMessageIds.delete(id));
+    }
+
     // Ignore remote messages
     const messages = chat.messages.filter(m => m.kind !== "remote") as (LocalMessage | UnconfirmedMessage)[];
 
     // Determine which messages should be grouped with the previous message
-    let messagesToGroup: boolean[] = [];
+    const messagesToGroup: boolean[] = [];
     let lastSeenDate: Option<Date> = null;
     let prevMessageSender: Option<UserId> = null;
     for (const message of messages) {
@@ -52,17 +59,19 @@ function MessagesList() {
 
     // Loop through messages and add components
     for (let i = 0; i < messages.length; i++) {
-        let message = messages[i];
+        const message = messages[i];
 
         let sentByMe: boolean;
         let senderUserId: UserId;
         let senderDetails: Option<UserSummary> = null;
+        let unread: boolean = false;
         if (message.kind === "unconfirmed") {
             sentByMe = true;
             senderUserId = myUserId;
         } else {
             sentByMe = message.sender === myUserId;
             senderUserId = message.sender;
+            unread = unreadMessageIds.has(message.id);
             if (isGroupChat && !sentByMe) {
                 senderDetails = usersDictionary.hasOwnProperty(message.sender)
                     ? usersDictionary[message.sender]
@@ -95,10 +104,12 @@ function MessagesList() {
 
         children.push(<MessageComponent
             key={message.key}
+            id={message.key}
             content={message.content}
             dateConfirmed={message.kind === "unconfirmed" ? null : message.date}
             sentByMe={sentByMe}
             sender={senderDetails}
+            unread={unread}
             groupPosition={groupPosition} />);
     }
 
@@ -148,5 +159,22 @@ function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatc
         const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
         const count = chat.earliestConfirmedMessageId! - fromId;
         dispatch(getMessages(chat.chatId, fromId, count));
+    }
+
+    // Find any unread messages which are visible and mark them as read
+    const substringStart = "message-".length;
+    const outerBox = messagesDiv.getBoundingClientRect();
+    const min = outerBox.top - 5;
+    const max = outerBox.bottom - 30;
+    for (const child of messagesDiv.children) {
+        const box = child.getBoundingClientRect();
+        if (box.top < min) {
+            continue;
+        } else if (box.top > max) {
+            break;
+        }
+        if (child.classList.contains("unread")) {
+            dispatch(markMessageAsRead(chat.chatId, parseInt(child.id.substring(substringStart))));
+        }
     }
 }

@@ -2,16 +2,15 @@ import canister from "ic:canisters/chats";
 import { ChatId } from "../../model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 
-export default async function(chatId: ChatId, upToIndex: number) : Promise<MarkReadResponse> {
-    let response = await canister.mark_read(chatIdToCandid(chatId), upToIndex);
+export default async function(chatId: ChatId, fromId: number, toId: number) : Promise<MarkReadResponse> {
+    let response = await canister.mark_read(chatIdToCandid(chatId), fromId, toId);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
         return {
             kind: "success",
             result: {
-                readUpToId: success.read_up_to_id,
-                latestMessageId: success.latest_message_id
+                unreadMessageIds: success.unread_message_ids
             }
         };
     } else if (response.hasOwnProperty("ChatNotFound")) {
@@ -37,6 +36,5 @@ export type ChatNotFound = {
 }
 
 export type MarkReadResult = {
-    readUpToId: number;
-    latestMessageId: number;
+    unreadMessageIds: number[]
 }
