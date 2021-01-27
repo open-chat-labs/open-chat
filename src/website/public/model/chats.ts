@@ -78,6 +78,10 @@ export const isConfirmedChat = (chat: Chat) : chat is ConfirmedChat => {
     return chat.kind === CONFIRMED_DIRECT_CHAT || chat.kind === CONFIRMED_GROUP_CHAT;
 }
 
+export const getUnreadCount = (chat: Chat) : number => {
+    return isConfirmedChat(chat) ? chat.unreadMessageIds.length - chat.markAsReadPending.length : 0;
+}
+
 export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, unreadMessageIds: number[] = [],
                                        markAsReadPending: number[] = [], messages: Message[] = []) : ConfirmedDirectChat => {
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
