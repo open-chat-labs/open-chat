@@ -13,7 +13,8 @@ type Props = {
     selected: boolean,
     latestMessage: string,
     isGroup: boolean,
-    userId: Option<UserId>
+    userId: Option<UserId>,
+    unreadCount: number
 }
 
 export default React.memo(ChatListItem);
@@ -29,9 +30,14 @@ function ChatListItem(props: Props) {
         <li className={className} onClick={() => dispatch(selectChat(props.index))}>
             {icon}
             <div className="message-container">
-                <div className="date">{props.date ? props.date.toDateString() : null}</div>
-                <div className="name">{props.name}</div>
-                <div className="chats-message">{props.latestMessage}</div>
+                <div>
+                    <div className="date">{props.date ? props.date.toDateString() : null}</div>
+                    <div className="name">{props.name}</div>
+                </div>
+                <div>
+                    {props.unreadCount > 0 ? <div className="unread-count">{props.unreadCount.toString()}</div> : null} 
+                    <div className="chats-message">{props.latestMessage}</div>
+                </div>
             </div>
         </li>
     );

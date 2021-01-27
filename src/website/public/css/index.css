@@ -277,7 +277,21 @@ main header>div >div {
 }
 
 .chats li.selected {
-   background-color: #e0e0e0;
+    background-color: #e0e0e0;
+}
+
+.chats .message-container .unread-count {
+    font-size: 12px;
+    float: right;
+    background-color: #05d755;
+    color: white;
+    line-height: 1;
+    border-radius: 10px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 20px;
+    min-width: 20px;
+    padding: 0 4px;
 }
 
 .detail {

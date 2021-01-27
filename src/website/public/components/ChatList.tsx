@@ -1,10 +1,10 @@
 import React from "react";
 import { useSelector } from "react-redux";
-
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 import { RootState } from "../reducers";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
+import * as chatFunctions from "../model/chats";
 import ChatListItem from "./ChatListItem";
 
 export default React.memo(ChatList);
@@ -50,6 +50,8 @@ function ChatList() {
             }
         }
 
+        const unreadCount = chatFunctions.isConfirmedChat(c) ? c.unreadMessageIds.length - c.markAsReadPending.length : 0;
+
         return (
             <ChatListItem
                 key={key}
@@ -59,7 +61,8 @@ function ChatList() {
                 selected={index === selectedChatIndex}
                 latestMessage={latestMessageText}
                 isGroup={isGroup}
-                userId={userId} />
+                userId={userId}
+                unreadCount={unreadCount} />
         );
     });
 
