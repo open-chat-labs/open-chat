@@ -65,12 +65,12 @@ import {
     AddParticipantsRequestedEvent,
     AddParticipantsSucceededEvent
 } from "../actions/chats/addParticipants";
-import { MARK_MESSAGE_AS_READ, MarkMessageAsReadEvent } from "../actions/chats/markMessageAsRead";
+import { MARK_MESSAGES_AS_READ, MarkMessagesAsReadEvent } from "../actions/chats/markMessagesAsRead";
 import {
-    MARK_MESSAGES_AS_READ_SUCCEEDED,
-    MarkMessagesAsReadRequestedEvent,
-    MarkMessagesAsReadSucceededEvent
-} from "../actions/chats/markMessagesAsRead";
+    MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED,
+    MarkMessagesAsReadServerSyncRequestedEvent,
+    MarkMessagesAsReadServerSyncSucceededEvent
+} from "../actions/chats/markMessagesAsReadServerSync";
 
 export type ChatsState = {
     chats: Chat[],
@@ -101,8 +101,8 @@ type Event =
     GetMessagesByIdSucceededEvent |
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
-    MarkMessageAsReadEvent |
-    MarkMessagesAsReadSucceededEvent |
+    MarkMessagesAsReadEvent |
+    MarkMessagesAsReadServerSyncSucceededEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -248,14 +248,14 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
-        case MARK_MESSAGE_AS_READ: {
-            const { chatId, messageId } = event.payload;
+        case MARK_MESSAGES_AS_READ: {
+            const { chatId, messageIds } = event.payload;
             const [chat] = chatFunctions.getChatById(state.chats, chatId);
-            setFunctions.add(chat.markAsReadPending, messageId);
+            setFunctions.unionWith(chat.markAsReadPending, messageIds);
             break;
         }
 
-        case MARK_MESSAGES_AS_READ_SUCCEEDED: {
+        case MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED: {
             const { chatId, fromId, toId } = event.payload.request;
             const [chat] = chatFunctions.getChatById(state.chats, chatId);
             for (let messageId = fromId; messageId <= toId; messageId++) {

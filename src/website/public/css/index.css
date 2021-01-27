@@ -299,6 +299,10 @@ main header>div >div {
     cursor: pointer;
 }
 
+.message.unread {
+    background-color: #e6e6e6;
+}
+
 .message .down-arrow {
     position: absolute;
     top: 3px;

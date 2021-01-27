@@ -1,19 +1,21 @@
+import store from "../store";
 import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
-import markMessagesAsRead from "../actions/chats/markMessagesAsRead";
-import store from "../store";
+import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadServerSync";
 
 const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();
 const SYNC_DELAY_MS = 10_000;
 
-export default class markAsReadHandler {
-    public static markRead(chatId: ChatId, messageId: number) : void {
-        const existing = pending.get(chatId);
-        if (existing) {
-            existing[0].add(messageId);
-        } else {
+export default class MarkAsReadHandler {
+    public static markRead(chatId: ChatId, messageIds: number[]) : void {
+        let values = pending.get(chatId);
+        if (!values) {
             const timeout = setTimeout(() => this.updateServer(chatId), SYNC_DELAY_MS);
-            pending.set(chatId, [new Set<number>([messageId]), timeout]);
+            values = [new Set<number>(), timeout];
+            pending.set(chatId, values);
+        }
+        for (const messageId of messageIds) {
+            values[0].add(messageId);
         }
     }
 
@@ -43,6 +45,6 @@ export default class markAsReadHandler {
             ranges.push(current);
         }
 
-        ranges.forEach(r => store.dispatch<any>(markMessagesAsRead(chatId, r[0], r[1])));
+        ranges.forEach(r => store.dispatch<any>(markMessagesAsReadServerSync(chatId, r[0], r[1])));
     }
 }
