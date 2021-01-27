@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { FileContent as File } from "../model/messages";
 import getData, { GetDataOutcome, GET_DATA_FAILED } from "../actions/data/getData";
+import formatFileSize from "../formatters/fileSize";
 
 export interface Props {
     content: File
@@ -28,7 +29,7 @@ function FileContent(props : Props): JSX.Element {
                 <div className="file-icon"></div>
                 <div className="file-name">{props.content.name}</div>
             </a>
-            <span className="file-size">{props.content.mimeType.toUpperCase()} - {props.content.size} B</span>
+            <span className="file-size">{props.content.mimeType.toUpperCase()} - {formatFileSize(props.content.size)}</span>
         </>
     );
 
