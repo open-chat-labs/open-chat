@@ -6,7 +6,10 @@ import App from "./App";
 import store from "./store";
 import "./css/index.css";
 import "./css/emoji-mart.css";
+import { APP_TITLE } from "./constants";
 import startup from "./startup"
+
+document.title = APP_TITLE;
 
 startup();
 

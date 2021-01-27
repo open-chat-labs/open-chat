@@ -12,8 +12,9 @@ import getUpdatedChats from "./actions/chats/getUpdatedChats";
 import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
+import * as chatFunctions from "./model/chats";
 
-import { PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
+import { APP_TITLE, PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
 import { Option, Timestamp } from "./model/common";
 
 export function setupBackgroundTasks() {
@@ -21,6 +22,16 @@ export function setupBackgroundTasks() {
 
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const usersState = useSelector((state: RootState) => state.usersState);
+
+    useEffect(() => {
+        let count = 0;
+        for (const chat of chatsState.chats) {
+            if (chatFunctions.getUnreadCount(chat)) {
+                count++;
+            }
+        }
+        document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;;
+    }, [chatsState.chats]);
 
     // If 'usersState.mustRegisterAsNewUser' is false, attempt to get details of the current user if not already known
     useEffect(() => {

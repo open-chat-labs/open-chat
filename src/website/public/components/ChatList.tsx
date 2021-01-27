@@ -50,8 +50,6 @@ function ChatList() {
             }
         }
 
-        const unreadCount = chatFunctions.isConfirmedChat(c) ? c.unreadMessageIds.length - c.markAsReadPending.length : 0;
-
         return (
             <ChatListItem
                 key={key}
@@ -62,7 +60,7 @@ function ChatList() {
                 latestMessage={latestMessageText}
                 isGroup={isGroup}
                 userId={userId}
-                unreadCount={unreadCount} />
+                unreadCount={chatFunctions.getUnreadCount(c)} />
         );
     });
 
