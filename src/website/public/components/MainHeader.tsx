@@ -4,7 +4,7 @@ import { RootState } from "../reducers";
 import { Option } from "../model/common";
 import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
-import { toShortTime } from "../utils/datetimeFunctions";
+import { toShortTimeString } from "../formatters/date";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
 import * as setFunctions from "../utils/setFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
@@ -29,7 +29,7 @@ function MainHeader() {
         icon = <DefaultAvatar userId={chat.them} />;
         chatName = userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "";
         subTitle = "updatedDate" in chat
-            ? <div className="date">last seen {chat.updatedDate.toDateString()} at {toShortTime(chat.updatedDate)}</div>
+            ? <div className="date">last seen {chat.updatedDate.toDateString()} at {toShortTimeString(chat.updatedDate)}</div>
             : null;
     } else {
         icon = <GroupChatIcon className="avatar" />;

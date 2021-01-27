@@ -1,13 +1,13 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 
-import { toShortTime } from "../utils/datetimeFunctions";
 import gotoUser from "../actions/chats/gotoUser";
 import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
 import MediaContent from "./MediaContent";
 import FileContent from "./FileContent";
+import { toShortTimeString } from "../formatters/date";
 
 export type Props = {
     id: string,
@@ -68,7 +68,7 @@ function Message(props : Props) {
         <div id={"message-" + props.id} className={className}>
             {senderLink}
             {contentElement}
-            <span className="message-time">{props.dateConfirmed ? toShortTime(props.dateConfirmed) : "..."}</span>
+            <span className="message-time">{props.dateConfirmed ? toShortTimeString(props.dateConfirmed) : "..."}</span>
         </div>
     );
 }

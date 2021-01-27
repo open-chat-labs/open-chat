@@ -1,4 +1,6 @@
 import React from "react";
+import { toDayOfWeekString, toLongDateString } from "../formatters/date";
+import * as dateFunctions from "../utils/dateFunctions";
 
 type Props = {
     date: Date
@@ -7,20 +9,20 @@ type Props = {
 export default React.memo(DayChangeMarker);
 
 function DayChangeMarker(props : Props) {
-    const dayOfWeek = props.date.toLocaleDateString("en", { weekday: "long" });
-    const dayOfMonth = props.date.getDate();
-    const month = props.date.toLocaleDateString("en", { month: "long" });
-    const ordinal = getOrdinal(dayOfMonth);
-    const year = props.date.getFullYear();
-
-    const text = `${dayOfWeek} ${dayOfMonth}${ordinal} ${month} ${year}`;
-
-    return (
-        <div className="day-change-marker">{text}</div>
-    );
+    return <div className="day-change-marker">{formatDate(props.date)}</div>;
 }
 
-function getOrdinal(n: number) : string {
-    // Taken from https://stackoverflow.com/a/39466341
-    return [,"st","nd","rd"][n/10%10^1&&n%10]||"th";
+function formatDate(date: Date) : string {
+    const startOfToday = dateFunctions.getStartOfToday();
+    if (date >= startOfToday) {
+        return "Today";
+    }
+    const startOfYesterday = dateFunctions.addDays(startOfToday, -1);
+    if (date >= startOfYesterday) {
+        return "Yesterday";
+    }
+    const useDayNameOnly = date >= dateFunctions.addDays(startOfToday, -6);
+    return useDayNameOnly
+        ? toDayOfWeekString(date)
+        : toLongDateString(date);
 }
