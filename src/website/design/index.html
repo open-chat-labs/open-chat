@@ -20,10 +20,10 @@
                 </label>
                 <div>
                     <div class="ddl">
-                        <button onclick="toggleDDL('chatsMenu')" class="ddl-button">
+                        <button onclick="toggleDDL('chatsMenu')" class="ddl-button hide-on-click-ignore">
                             <svg class="ddl-button-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"></path></svg>
                         </button>
-                        <div id="chatsMenu" class="ddl-content">
+                        <div id="chatsMenu" class="ddl-content hide-on-click-outside hide" onclick="toggleDDL('chatsMenu')">
                             <a href="#">New group</a>
                             <a href="#">New chat</a>
                             <a href="#">Profile</a>
@@ -309,19 +309,16 @@
         }
 
         function toggleDDL(id) {
-            document.getElementById(id).classList.toggle("show");
+            document.getElementById(id).classList.toggle("hide");
         }
 
         window.onclick = function (event) {
-            if (!event.target.matches('.ddl-button') && !event.target.matches('.ddl-button-svg')) {
-                var dropdowns = document.getElementsByClassName("ddl-content");
-                var i;
-                for (i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
+            if (event.target.matches('.hide-on-click-ignore, .hide-on-click-ignore *, .hide-on-click-outside, .hide-on-click-outside *'))
+                return;
+
+            const dropdowns = document.getElementsByClassName("hide-on-click-outside");
+            for (let dropdown of dropdowns) {
+                dropdown.classList.add('hide');
             }
         }
 

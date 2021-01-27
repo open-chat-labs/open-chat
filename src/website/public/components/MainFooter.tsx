@@ -6,7 +6,7 @@ import { getSelectedChat } from "../utils/stateFunctions";
 import SendButton from "../assets/icons/sendButton.svg";
 import AttachFile from "./AttachFile";
 import { RootState } from "../reducers";
-import Emojis from "./Emojis";
+import EmojiPicker from "./EmojiPicker";
 
 export default React.memo(MainFooter);
 
@@ -22,7 +22,7 @@ function MainFooter() {
     return (
         <footer className="enter-message">
             <div className="buttons">
-                <Emojis appendNewMessageText={appendNewMessageText} focusOnTextInput={focusOnTextInput} />
+                <EmojiPicker appendNewMessageText={appendNewMessageText} focusOnTextInput={focusOnTextInput} />
                 <AttachFile chat={chat} />
             </div>
             <input
