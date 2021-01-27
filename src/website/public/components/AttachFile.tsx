@@ -15,7 +15,7 @@ function AttachFile(props: Props) {
     const dispatch = useDispatch();
 
     return (
-        <label className="attach">
+        <label className="attach button">
             <Paperclip />
             <input 
                 className="hide" 

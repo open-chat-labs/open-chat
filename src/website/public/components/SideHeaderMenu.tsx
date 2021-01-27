@@ -42,7 +42,7 @@ function SideHeaderMenu(props: Props) {
 
     return (
         <div className="ddl">
-            <button onClick={_ => toggleDropdownMenu("chatsMenu")} className="ddl-button">
+            <button onClick={_ => toggleElementVisibility("chatsMenu")} className="ddl-button">
                 <DropdownMenuIcon className="ddl-button-svg" />
             </button>
             <div id="chatsMenu" className="ddl-content">
@@ -50,8 +50,9 @@ function SideHeaderMenu(props: Props) {
             </div>
         </div>
     );
+
+    function toggleElementVisibility(id: string) {
+        document.getElementById(id)!.classList.toggle("show");
+    }
 }
 
-function toggleDropdownMenu(id: string) {
-    document.getElementById(id)!.classList.toggle("show");
-}

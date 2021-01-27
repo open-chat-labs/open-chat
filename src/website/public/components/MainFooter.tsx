@@ -6,6 +6,7 @@ import { getSelectedChat } from "../utils/stateFunctions";
 import SendButton from "../assets/icons/sendButton.svg";
 import AttachFile from "./AttachFile";
 import { RootState } from "../reducers";
+import Emojis from "./Emojis";
 
 export default React.memo(MainFooter);
 
@@ -20,7 +21,10 @@ function MainFooter() {
 
     return (
         <footer className="enter-message">
-            <AttachFile chat={chat} />
+            <div className="buttons">
+                <Emojis appendNewMessageText={appendNewMessageText} focusOnTextInput={focusOnTextInput} />
+                <AttachFile chat={chat} />
+            </div>
             <input
                 id="newMessage"
                 value={newMessageText}
@@ -32,6 +36,14 @@ function MainFooter() {
             </button>
         </footer>
     );
+
+    function appendNewMessageText(text: string) {
+        setNewMessageText(newMessageText + text);
+    }
+
+    function focusOnTextInput() {
+        document.getElementById("newMessage")?.focus();
+    }
 
     function handleSendMessage() {
         if (newMessageText) {

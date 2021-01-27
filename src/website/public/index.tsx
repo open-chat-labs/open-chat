@@ -4,7 +4,8 @@ import { Provider } from "react-redux";
 
 import App from "./App";
 import store from "./store";
-import "./index.css";
+import "./css/index.css";
+import "./css/emoji-mart.css";
 import startup from "./startup"
 
 startup();

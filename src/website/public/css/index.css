@@ -49,7 +49,7 @@ button {
 
 a {
     text-decoration: none;
-    color: #111111;  
+    color: #111111;
 }
 
 @media screen and (min-width: 1450px) {
@@ -164,7 +164,7 @@ header {
 
 .ddl {
     position: relative;
-    display: inline-block;  
+    display: inline-block;
 }
 
 .ddl-content {
@@ -324,7 +324,7 @@ main header>div >div {
 }
 
 .message:hover .down-arrow {
-    display: block;    
+    display: block;
 }
 
 .message.merge {
@@ -335,7 +335,7 @@ main header>div >div {
     border-radius: 16px;
 }
 
-.message.me.top, 
+.message.me.top,
 .message.me.top .message-media {
     border-radius: 16px 16px 4px 16px;
 }
@@ -389,14 +389,13 @@ main header>div >div {
     display: block;
     margin-top: 8px;
     z-index: 10;
-    color: #999999;   
+    color: #999999;
     font-size: 11px;
 }
 
 .message-time {
     float: right;
-    height: 15px;
-    width: 43px;
+    margin-left: 10px;
     text-align: right;
 }
 
@@ -406,7 +405,7 @@ main header>div >div {
 }
 
 .me .message-time, .me .file-size {
-    color: #cccccc;   
+    color: #cccccc;
 }
 
 .message a.participant {
@@ -442,7 +441,7 @@ main header>div >div {
 
 .message.media {
     padding: 0px;
-    position: relative; 
+    position: relative;
     background-color: transparent;
 }
 
@@ -474,12 +473,13 @@ main header>div >div {
     display: inline;
     float: none;
     margin: 0px;
-    right: 4px;
+    right: 7px;
     bottom: 4px;
     background-color: rgb(68, 68, 68, 0.6);
     color: #dddddd;
     text-align: center;
     border-radius: 6px;
+    padding: 0px 4px;
 }
 
 .message.file {
@@ -521,7 +521,7 @@ main header>div >div {
     flex: 1 0 auto;
 }
 
-.message.file .message-time, 
+.message.file .message-time,
 .message.file .file-size {
     margin-top: 6px;
     margin-bottom: 3px;
@@ -548,7 +548,9 @@ main header>div >div {
 main footer {
     display: flex;
     padding: 11px 16px;
+    color: #9b9b9b;
     background-color: #f0f0f0;
+    align-items: center;
 }
 
 main footer input {
@@ -567,36 +569,63 @@ main footer input::placeholder {
     color: #bbbbbb;
 }
 
-main footer button {
+main footer button.send {
     outline: 0;
     height: 25px;
     border: 0;
-    color: #9b9b9b;
     margin: 0;
     padding: 0;
     cursor: pointer;
     align-self: center;
     background-color: transparent;
     margin-left: 20px;
+    color: #9b9b9b;
+}
+
+main footer .buttons {
+    display: flex;
+    align-items: center;
+}
+
+main footer .button {
+    border-radius: 50%;
+    padding: 4px;
+}
+
+main footer .smiley {
+    margin-right: 5px;
 }
 
 main footer .attach {
     margin-right: 10px;
-    color: #9b9b9b;
-    border-radius: 50%;
-    padding: 6px;
 }
 
-main footer .attach svg {
+main footer .button svg {
     vertical-align: middle;
     pointer-events: none;
 }
 
-main footer .attach:hover, .attach:focus {
+main footer .buttons > *:hover,
+main footer .buttons > *:focus {
     background-color: #e0e0e0;
 }
 
 footer button svg {
     margin: 0;
     padding: 0;
+}
+
+.emojis-container {
+    z-index: 100;
+    position: relative;
+}
+
+.emoji-mart-preview {
+  /* display: none; */
+}
+
+.emoji-mart {
+    position: absolute;
+    bottom: 35px;
+    left: -49px;
 }
