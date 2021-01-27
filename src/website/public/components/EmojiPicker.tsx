@@ -2,20 +2,20 @@ import React from "react";
 import { EmojiData, Picker } from 'emoji-mart'
 import Smiley from "../assets/icons/smiley.svg";
 
-export default React.memo(Emojis);
+export default React.memo(EmojiPicker);
 
 type Props = {
     appendNewMessageText: (text: string) => void,
     focusOnTextInput: () => void,
 }
 
-function Emojis(props: Props) {
+function EmojiPicker(props: Props) {
     return (
         <>
-            <div className="smiley button" onClick={_ => toggleEmojiPicker()}>
+            <div className="smiley button hide-on-click-ignore" onClick={_ => toggleEmojiPicker()}>
                 <Smiley />
             </div>
-            <div id="emojisContainer" className="emojis-container hide">
+            <div id="emojisContainer" className="emojis-container hide-on-click-outside hide">
                 <Picker 
                     title={"Pick your emoji..."}
                     theme="light"
@@ -36,7 +36,6 @@ function Emojis(props: Props) {
     function toggleEmojiPicker() {
         const elemClassList = document.getElementById("emojisContainer")!.classList;
         elemClassList.toggle("hide");
-
         if (elemClassList.contains("hide")) {
             props.focusOnTextInput();
         } else {

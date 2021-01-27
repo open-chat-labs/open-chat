@@ -11,15 +11,12 @@ function setupBigIntSerialization() {
 
 function hideDropdownMenus() {
     window.onclick = function (event: any) {
-        if (!event.target.matches('.ddl-button') && !event.target.matches('.ddl-button-svg')) {
-            var dropdowns = document.getElementsByClassName("ddl-content");
-            var i;
-            for (i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
+        if (event.target.matches('.hide-on-click-ignore, .hide-on-click-ignore *, .hide-on-click-outside, .hide-on-click-outside *'))
+            return;
+
+        const dropdowns = document.getElementsByClassName("hide-on-click-outside");
+        for (let dropdown of dropdowns) {
+            dropdown.classList.add('hide');
         }
     }
 }
