@@ -10,10 +10,10 @@ import { getSelectedChat } from "../utils/stateFunctions";
 
 import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
-import { ConfirmedChat } from "../model/chats";
+import { ChatId, ConfirmedChat } from "../model/chats";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
-import markMessageAsRead from "../actions/chats/markMessageAsRead";
+import UnreadMessagesHandler from "../services/UnreadMessagesHandler";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -141,6 +141,24 @@ function MessagesList() {
         return () => messagesDiv.removeEventListener("scroll", onScroll);
     }, [chat, messagesRef.current])
 
+    let chatId: Option<ChatId> = null;
+    let hasUnreadMessages: boolean = false;
+    if (chatFunctions.isConfirmedChat(chat)) {
+        chatId = chat.chatId;
+        hasUnreadMessages = chat.unreadMessageIds.length > chat.markAsReadPending.length;
+    }
+
+    // Start a new UnreadMessagesHandler to mark messages as read once they have been visible for a certain duration
+    useLayoutEffect(() => {
+        if (!chatId || !hasUnreadMessages) {
+            return;
+        }
+
+        const unreadMessagesHandler = new UnreadMessagesHandler(chatId);
+        unreadMessagesHandler.start();
+        return () => unreadMessagesHandler.stop();
+    }, [chatId, hasUnreadMessages]);
+
     return (
         <div id="messages" ref={messagesRef} className={className}>
             {children}
@@ -148,6 +166,7 @@ function MessagesList() {
     );
 }
 
+// Listen to scroll events and load more messages if the user scrolls near the top of the currently loaded messages
 function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
     const downloadMoreMessages =
         !chat.messagesDownloading.length &&
@@ -159,22 +178,5 @@ function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatc
         const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
         const count = chat.earliestConfirmedMessageId! - fromId;
         dispatch(getMessages(chat.chatId, fromId, count));
-    }
-
-    // Find any unread messages which are visible and mark them as read
-    const substringStart = "message-".length;
-    const outerBox = messagesDiv.getBoundingClientRect();
-    const min = outerBox.top - 5;
-    const max = outerBox.bottom - 30;
-    for (const child of messagesDiv.children) {
-        const box = child.getBoundingClientRect();
-        if (box.top < min) {
-            continue;
-        } else if (box.top > max) {
-            break;
-        }
-        if (child.classList.contains("unread")) {
-            dispatch(markMessageAsRead(chat.chatId, parseInt(child.id.substring(substringStart))));
-        }
     }
 }

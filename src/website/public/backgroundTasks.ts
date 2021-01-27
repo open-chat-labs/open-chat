@@ -77,11 +77,16 @@ export function setupBackgroundTasks() {
 
 function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
     let timeoutId: NodeJS.Timeout;
+    let stopped = false;
     const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsSyncedUpTo)) as any;
     const waitThenGetUpdatesLoop = () => {
+        if (stopped) return;
         timeoutId = setTimeout(_ => getUpdates().finally(waitThenGetUpdatesLoop), REFRESH_CHATS_INTERVAL_MILLISECONDS);
     }
 
     waitThenGetUpdatesLoop();
-    return () => clearTimeout(timeoutId);
+    return () => {
+        stopped = true;
+        clearTimeout(timeoutId);
+    }
 }
