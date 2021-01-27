@@ -60,7 +60,7 @@ function ChatList() {
                 latestMessage={latestMessageText}
                 isGroup={isGroup}
                 userId={userId}
-                unreadCount={chatFunctions.getUnreadCount(c)} />
+                unreadCount={chatFunctions.getUnreadMessageCount(c)} />
         );
     });
 
