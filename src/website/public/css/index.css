@@ -448,6 +448,14 @@ main header>div >div {
     margin-top: 14px;
     align-self: center;
     font-size: 13px;
+    position: sticky;
+    top: 14px;
+    z-index: 60;
+}
+
+.detail .day-container {
+    display: flex;
+    flex-direction: column;
 }
 
 .message.me {

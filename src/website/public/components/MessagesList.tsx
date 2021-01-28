@@ -3,19 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
+import { ChatId, ConfirmedChat } from "../model/chats";
 import { Option } from "../model/common";
 import { LocalMessage, UnconfirmedMessage } from "../model/messages";
-import { UserId, UserSummary } from "../model/users";
-import { getSelectedChat } from "../utils/stateFunctions";
-
-import DayChangeMarker from "./DayChangeMarker";
-import MessageComponent, { MessageGroupPosition } from "./Message";
-import { ChatId, ConfirmedChat } from "../model/chats";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
+import { areOnSameDay } from "../utils/dateFunctions";
+import { getSelectedChat } from "../utils/stateFunctions";
+import MessagesFromSingleDay from "./MessagesFromSingleDay";
 import UnreadMessagesHandler from "../services/UnreadMessagesHandler";
-
-const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export default React.memo(MessagesList);
 
@@ -41,81 +37,33 @@ function MessagesList() {
     // Ignore remote messages
     const messages = chat.messages.filter(m => m.kind !== "remote") as (LocalMessage | UnconfirmedMessage)[];
 
-    // Determine which messages should be grouped with the previous message
-    const messagesToGroup: boolean[] = [];
-    let lastSeenDate: Option<Date> = null;
-    let prevMessageSender: Option<UserId> = null;
+    let messagesFromSameDay: (LocalMessage | UnconfirmedMessage)[] = [];
+    let lastMessageDate: Option<Date> = null;
     for (const message of messages) {
-        const senderUserId: UserId = message.kind === "unconfirmed" ? myUserId : message.sender;
-        const groupWithPrevious: boolean =
-            lastSeenDate !== null &&
-            senderUserId === prevMessageSender &&
-            message.date.getTime() - lastSeenDate.getTime() < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS;
-
-        messagesToGroup.push(groupWithPrevious);
-        lastSeenDate = message.date;
-        prevMessageSender = senderUserId;
+        if (lastMessageDate && !areOnSameDay(lastMessageDate, message.date)) {
+            addDay(lastMessageDate, messagesFromSameDay);
+            messagesFromSameDay = [];
+        }
+        messagesFromSameDay.push(message);
+        lastMessageDate = message.date;
     }
 
-    // Loop through messages and add components
-    for (let i = 0; i < messages.length; i++) {
-        const message = messages[i];
+    if (messagesFromSameDay.length) {
+        addDay(lastMessageDate!, messagesFromSameDay);
+    }
 
-        let sentByMe: boolean;
-        let senderUserId: UserId;
-        let senderDetails: Option<UserSummary> = null;
-        let unread: boolean = false;
-        if (message.kind === "unconfirmed") {
-            sentByMe = true;
-            senderUserId = myUserId;
-        } else {
-            sentByMe = message.sender === myUserId;
-            senderUserId = message.sender;
-            unread = unreadMessageIds.has(message.id);
-            if (isGroupChat && !sentByMe) {
-                senderDetails = usersDictionary.hasOwnProperty(message.sender)
-                    ? usersDictionary[message.sender]
-                    : {
-                        userId: message.sender,
-                        username: "Unknown",
-                        version: 0
-                    };
-            }
-        }
-
-        const dayString = message.date.toDateString();
-        const prevDayString = i > 0 ? messages[i-1].date.toDateString() : null;
-        if (prevDayString === null || prevDayString !== dayString) {
-            children.push(<DayChangeMarker key={dayString} date={message.date} />);
-        }
-
-        // Determine whether the message should be grouped with others and if so whether it is
-        // at the top, middle, or bottom of the group
-        const groupWithPrevious = messagesToGroup[i];
-        const groupWithNext = i < messages.length - 1 ? messagesToGroup[i+1] : false;
-        let groupPosition: MessageGroupPosition = MessageGroupPosition.None;
-        if (!groupWithPrevious && groupWithNext) {
-            groupPosition = MessageGroupPosition.Top;
-        } else if (groupWithPrevious && groupWithNext) {
-            groupPosition = MessageGroupPosition.Middle;
-        } else if (groupWithPrevious && !groupWithNext) {
-            groupPosition = MessageGroupPosition.Bottom;
-        }
-
-        children.push(<MessageComponent
-            key={message.key}
-            id={message.key}
-            content={message.content}
-            dateConfirmed={message.kind === "unconfirmed" ? null : message.date}
-            sentByMe={sentByMe}
-            sender={senderDetails}
-            unread={unread}
-            groupPosition={groupPosition} />);
+    function addDay(date: Date, messages: (LocalMessage | UnconfirmedMessage)[]) {
+        children.push(<MessagesFromSingleDay
+            key = {date.toDateString()}
+            isGroupChat={isGroupChat}
+            myUserId={myUserId}
+            usersDictionary={usersDictionary}
+            messages={messagesFromSameDay}
+            unreadMessageIds={unreadMessageIds} />);
     }
 
     let className = "detail";
-
-    if ("subject" in chat) {
+    if (isGroupChat) {
         className += " group";
     }
 
