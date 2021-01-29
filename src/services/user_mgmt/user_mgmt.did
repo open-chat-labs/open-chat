@@ -5,7 +5,7 @@ type UserSummary =
     record {
         id: UserId;
         username: text;
-        minutes_since_last_online: nat32;
+        seconds_since_last_online: nat32;
         version: nat32;
     };
 

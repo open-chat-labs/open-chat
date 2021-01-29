@@ -16,9 +16,9 @@ export function addDays(date: Date, days: number) : Date {
     return copy;
 }
 
-export function addMinutes(date: Date, minutes: number) : Date {
+export function addSeconds(date: Date, seconds: number) : Date {
     const copy = new Date(date);
-    copy.setMinutes(date.getMinutes() + minutes);
+    copy.setSeconds(date.getSeconds() + seconds);
     return copy;
 }
 

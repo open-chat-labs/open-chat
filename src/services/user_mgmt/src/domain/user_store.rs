@@ -24,7 +24,7 @@ pub struct User {
 pub struct UserSummary {
     id: UserId,
     username: String,
-    minutes_since_last_online: u32,
+    seconds_since_last_online: u32,
     version: u32
 }
 
@@ -142,16 +142,16 @@ impl StableState for UserStore {
 impl UserSummary {
     // You can pass in now = None if you know that the user is online now
     fn new(user: &User, now: Option<Timestamp>) -> UserSummary {
-        let mut minutes_since_last_online: u32 = 0;
+        let mut seconds_since_last_online: u32 = 0;
         if let Some(t) = now {
             let millis_since_last_online = t - user.last_online;
-            minutes_since_last_online = ((millis_since_last_online / 1000) / 60) as u32;
+            seconds_since_last_online = (millis_since_last_online / 1000) as u32;
         }
 
         UserSummary {
             id: user.id.clone(),
             username: user.username.clone(),
-            minutes_since_last_online,
+            seconds_since_last_online,
             version: user.version
         }
     }
