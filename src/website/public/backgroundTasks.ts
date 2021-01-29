@@ -24,12 +24,7 @@ export function setupBackgroundTasks() {
     const usersState = useSelector((state: RootState) => state.usersState);
 
     useEffect(() => {
-        let count = 0;
-        for (const chat of chatsState.chats) {
-            if (chatFunctions.getUnreadCount(chat)) {
-                count++;
-            }
-        }
+        const count = chatFunctions.getUnreadChatCount(chatsState.chats);
         document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;;
     }, [chatsState.chats]);
 

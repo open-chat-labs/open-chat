@@ -8,9 +8,8 @@
     <link rel="stylesheet" href="../public/css/index.css">
     <title>Open Chat</title>
 </head>
-​
 
-<body onload="scrollMessagesToBottom()">
+<body onload="onBodyLoad()">
     <section id="app" class="app">        
         <section class="sidebar">
             <header>   
@@ -234,7 +233,7 @@
                     </div>
                     <div class="message them">
                         <svg class="down-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18"><path fill="currentColor" d="M3.3 4.6L9 10.3l5.7-5.7 1.6 1.6L9 13.4 1.7 6.2l1.6-1.6z"></path></svg>
-                        Lorem ipsum dolor sit amet, consectetur
+                        Lorem ipsum dolor sit 😀 amet, 😀consectetur
                         <span class="message-time">09:22</span>
                     </div>
                     <div class="message them media">
@@ -267,7 +266,7 @@
             </div>
             <footer class="enter-message">
                 <div class="buttons">
-                    <div class="smiley button">
+                    <div class="smiley button" onclick="insertTextAtCaret('😀')">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M9.153 11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962zm-3.204 1.362c-.026-.307-.131 5.218 6.063 5.551 6.066-.25 6.066-5.551 6.066-5.551-6.078 1.416-12.129 0-12.129 0zm11.363 1.108s-.669 1.959-5.051 1.959c-3.505 0-5.388-1.164-5.607-1.959 0 0 5.912 1.055 10.658 0zM11.804 1.011C5.609 1.011.978 6.033.978 12.228s4.826 10.761 11.021 10.761S23.02 18.423 23.02 12.228c.001-6.195-5.021-11.217-11.216-11.217zM12 21.354c-5.273 0-9.381-3.886-9.381-9.159s3.942-9.548 9.215-9.548 9.548 4.275 9.548 9.548c-.001 5.272-4.109 9.159-9.382 9.159zm3.108-9.751c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962z"></path></svg>
                     </div>
                     <label class="attach button">
@@ -275,7 +274,16 @@
                         <input style="display:none" type="file" />
                     </label>
                 </div>
-                <input id="newMessage" placeholder="Type a message" />
+                <div class="message-input-container">
+                    <div 
+                        id="messageInput" 
+                        class="message-input" 
+                        onkeyup="saveSelection()"
+                        onmouseup="saveSelection()"
+                        onpaste="pastePlainText(event)"
+                        contenteditable="true" 
+                        spellcheck="true"></div>
+                </div>
                 <button onclick="newMessage.value=''; scrollMessagesToBottom()" class="send"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg></button>
             </footer>
         </main>
@@ -284,6 +292,125 @@
     <script src="../../../node_modules/identicon.js/identicon.js"></script>
 
     <script lang="javascript">
+
+        let savedRange;
+
+        function onBodyLoad() {
+            scrollMessagesToBottom();
+            
+            let textBox = document.getElementById("messageInput");
+            textBox.addEventListener("textInput", onTextBoxTextInput, true);
+        }
+
+        function onTextBoxTextInput(e) {
+            // Markup the text so it will appear correctly in the textbox
+            const text = markupNewTextForTextBox(e.data);
+
+            // If the text hasn't been marked-up then go ahead with the text input event
+            if (text == e.data)
+                return;
+
+            // Otherwise cancel it and manually insert the mark-up 
+            e.preventDefault();
+            document.execCommand("insertHTML", false, text);
+        }
+
+        function insertTextAtCaret(text) {
+            // We want to manually insert text in the editable textbox at the selection. However the 
+            // document selection might not currently be inside the textbox so we save the range of the 
+            // last seen selection inside the textbox and then use that here. If there is no existing 
+            // saved range then initialise one at the end of the text box.
+            if (!savedRange) {
+                let textBox = document.getElementById("messageInput");
+                savedRange = new Range();
+                savedRange.selectNodeContents(textBox);
+                savedRange.collapse(false);
+            }
+
+            // Apply the saved range selection to the document
+            let selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedRange);
+
+            // Markup the text so it will appear correctly in the textbox and manually insert it
+            document.execCommand("insertHTML", false, markupNewTextForTextBox(text));
+
+            // Save the new selection range
+            saveSelection();
+        }
+
+        function saveSelection() {
+            savedRange = window.getSelection().getRangeAt(0);
+        }
+
+        function pastePlainText(e) {
+            // Cancel the paste event
+            e.preventDefault();
+
+            // Get plain text representation of clipboard
+            var text = (e.originalEvent ?? e).clipboardData.getData('text/plain');
+
+            // Markup the text so it will appear correctly in the textbox
+            text = markupNewTextForTextBox(text);
+            
+            // Manually insert marked-up text
+            document.execCommand("insertHTML", false, text);
+        }
+        
+        function markupNewTextForTextBox(text) {
+            // If the selection is inside an "emoji span" then ensure that any initial non-emoji characters 
+            // are inside their own "plain span" to split them out
+            const insideEmojiSpan = isSelectionInsideEmojiSpan();
+
+            let foundEmoji = false;
+            let textForPlainSpan = "";
+            let markup = "";
+            for (const c of text) {
+                const isEmoji = containsEmoji(c);
+
+                if (insideEmojiSpan && !foundEmoji && isEmoji && textForPlainSpan.length > 0) {
+                    markup = buildPlainSpan(textForPlainSpan);
+                }
+
+                foundEmoji = foundEmoji || isEmoji;
+
+                if (insideEmojiSpan && !foundEmoji) {
+                    textForPlainSpan += c;
+                } else if (isEmoji) {
+                    markup += buildEmojiSpan(c);
+                } else {
+                    markup += c;
+                }
+            }      
+            
+            if (insideEmojiSpan && !foundEmoji && textForPlainSpan.length > 0) {
+                markup = buildPlainSpan(textForPlainSpan);
+            }
+
+            return markup;
+        }
+
+        function isSelectionInsideEmojiSpan() {
+            const range = window.getSelection().getRangeAt(0);
+            const parent = range.commonAncestorContainer;
+            const grandParent = parent.parentElement;
+
+            return (parent.nodeName == "SPAN" && parent.classList.contains("emoji")) 
+                || (parent.nodeName == "#text" && (grandParent.nodeName == "SPAN" && grandParent.classList.contains("emoji")));
+        }
+
+        function buildEmojiSpan(c) {
+            return `<span class="emoji">${c}</span>`;
+        }
+
+        function buildPlainSpan(text) {
+            return `<span>${text}</span>`;
+        }
+
+        function containsEmoji(text) {
+            const regex_emoji = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{1F9B0}-\u{1F9B3}]/u;
+            return regex_emoji.test(text);
+        }
 
         function scrollMessagesToBottom() {
             var objDiv = document.getElementById("messages");
