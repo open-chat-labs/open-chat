@@ -1,7 +1,8 @@
 import produce from "immer";
 
-import { Option } from "../model/common";
+import { Option, Timestamp } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
+import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
@@ -34,6 +35,11 @@ import {
     RegisterUserSucceededEvent
 } from "../actions/users/registerUser";
 
+import {
+    UPDATE_MINUTES_SINCE_LAST_ONLINE,
+    UpdateMinutesSinceLastOnline
+} from "../actions/users/updateMinutesSinceLastOnline";
+
 export type Event =
     GetAllChatsSucceededEvent |
     GetCurrentUserRequestedEvent |
@@ -47,20 +53,23 @@ export type Event =
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
-    SetupNewDirectChatSucceededEvent;
+    SetupNewDirectChatSucceededEvent |
+    UpdateMinutesSinceLastOnline;
 
 export type UsersState = {
     mustRegisterAsNewUser: boolean,
     me: Option<UserSummary>,
     unknownUserIds: UserId[],
-    userDictionary: {}
+    userDictionary: any,
+    usersSyncedUpTo: Option<Timestamp>
 }
 
 const initialState: UsersState = {
     mustRegisterAsNewUser: false,
     me: null,
     unknownUserIds: [],
-    userDictionary: {}
+    userDictionary: {},
+    usersSyncedUpTo: null
 };
 
 export default produce((state: UsersState, event: Event) => {
@@ -100,13 +109,18 @@ export default produce((state: UsersState, event: Event) => {
         }
 
         case GET_USERS_SUCCEEDED: {
-            const users = event.payload;
+            const { request, result } = event.payload;
             const unknownUserIds: UserId[] = state.unknownUserIds;
             const userDictionary: any = state.userDictionary;
 
-            for (const user of users) {
+            for (const user of result.users) {
                 setFunctions.remove(unknownUserIds, user.userId);
                 userDictionary[user.userId] = user;
+            }
+
+            // Only bump the usersSyncedUpTo value if all users were requested
+            if (request.users.length === Object.keys(userDictionary).length) {
+                state.usersSyncedUpTo = result.timestamp;
             }
             break;
         }
@@ -138,6 +152,13 @@ export default produce((state: UsersState, event: Event) => {
             setFunctions.remove(unknownUserIds, user.userId);
             userDictionary[user.userId] = user;
             break;
+        }
+
+        case UPDATE_MINUTES_SINCE_LAST_ONLINE: {
+            for (const value of Object.values(state.userDictionary)) {
+                const user = value as UserSummary;
+                user.minutesSinceLastOnline = Math.floor(dateFunctions.getMinutesSince(user.lastOnline));
+            }
         }
     }
 }, initialState);

@@ -2,6 +2,7 @@ import store from "../store";
 import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
 import markMessagesAsRead from "../actions/chats/markMessagesAsRead";
+import RecurringTaskRunner from "../utils/RecurringTaskRunner";
 
 const INTERVAL_MS = 200;
 const COUNT_REQUIRED = 10;
@@ -13,34 +14,27 @@ export default class UnreadMessagesHandler {
     stopped: boolean = false;
     timeout: Option<NodeJS.Timeout> = null;
     messageIdToAppearanceCountMap: Map<number, number> = new Map<number, number>();
+    taskRunner: Option<RecurringTaskRunner> = null;
 
     constructor(chatId: ChatId) {
         this.chatId = chatId;
     }
 
     public start = () => {
-        if (this.timeout) {
+        if (this.taskRunner) {
             return;
         }
-        const setupTimeout = () : void => {
-            if (this.stopped) return;
-            this.timeout = setTimeout(() => {
-                this.runSingleIteration();
-                setupTimeout();
-            }, INTERVAL_MS);
-        }
-        setupTimeout();
+        this.taskRunner = RecurringTaskRunner.startNew(this.runSingleIteration, INTERVAL_MS, false);
     }
 
     public stop = () => {
-        this.stopped = true;
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = null;
+        if (this.taskRunner) {
+            this.taskRunner.stop();
+            this.taskRunner = null;
         }
     }
 
-    runSingleIteration = () : void => {
+    runSingleIteration = () : Promise<void> => {
         const visibleUnreadMessages = this.getVisibleUnreadMessages();
         const newMessageIdToAppearanceCountMap: Map<number, number> = new Map<number, number>();
         const messagesToMarkAsRead: number[] = [];
@@ -62,6 +56,8 @@ export default class UnreadMessagesHandler {
         }
 
         this.messageIdToAppearanceCountMap = newMessageIdToAppearanceCountMap;
+
+        return Promise.resolve();
     }
 
     getVisibleUnreadMessages = () : number[] => {

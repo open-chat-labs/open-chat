@@ -13,6 +13,11 @@ pub fn update_username(username: String) -> UpdateUsernameResponse {
     set_username::update(username)
 }
 
+#[update]
+pub fn mark_as_online() {
+    mark_as_online::update();
+}
+
 #[query]
 pub fn get_current_user() -> get_current_user::Response {
     get_current_user::query()
@@ -24,6 +29,6 @@ pub fn get_user_id(username: String) -> get_user_id::Response {
 }
 
 #[query]
-pub fn get_users(users: Vec<get_users::Request>) -> get_users::Response {
-    get_users::query(users)
+pub fn get_users(request: get_users::Request) -> get_users::Response {
+    get_users::query(request)
 }

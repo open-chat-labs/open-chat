@@ -4,8 +4,8 @@ import { RootState } from "../reducers";
 import { Option } from "../model/common";
 import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
-import { toShortTimeString } from "../formatters/date";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
+import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import { UserSummary } from "../model/users";
@@ -13,7 +13,7 @@ import { UserSummary } from "../model/users";
 export default React.memo(MainHeader);
 
 function MainHeader() {
-    const me : Option<UserSummary> = useSelector((state: RootState) => state.usersState.me);
+    const me: Option<UserSummary> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
@@ -21,16 +21,17 @@ function MainHeader() {
         return <div></div>;
     }
 
-    let icon : JSX.Element;
-    let chatName : string;
-    let subTitle : Option<JSX.Element> = null;
+    let icon: JSX.Element;
+    let chatName: string = "";
+    let subTitle: Option<JSX.Element> = null;
 
     if ("them" in chat) {
         icon = <DefaultAvatar userId={chat.them} />;
-        chatName = userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "";
-        subTitle = "updatedDate" in chat
-            ? <div className="date">last seen {chat.updatedDate.toDateString()} at {toShortTimeString(chat.updatedDate)}</div>
-            : null;
+        if (userDictionary.hasOwnProperty(chat.them)) {
+            const userSummary = userDictionary[chat.them] as UserSummary;
+            chatName = userSummary.username;
+            subTitle = <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
+        }
     } else {
         icon = <GroupChatIcon className="avatar" />;
         chatName = chat.subject;
@@ -58,4 +59,27 @@ function MainHeader() {
             </div>
         </header>
     );
+}
+
+function formatLastOnlineDate(minutesSinceLastOnline: number) : string {
+    if (minutesSinceLastOnline < 2) {
+        return "Online now";
+    }
+    let durationText: string;
+    if (minutesSinceLastOnline < 60) {
+        durationText = `${minutesSinceLastOnline} minutes`;
+    } else {
+        const hoursSinceLastOnline = Math.floor(minutesSinceLastOnline / 60);
+        if (hoursSinceLastOnline === 1) {
+            durationText = "1 hour";
+        } else if (hoursSinceLastOnline < 24) {
+            durationText = `${hoursSinceLastOnline} hours`;
+        } else {
+            const daysSinceLastOnline = Math.floor(hoursSinceLastOnline / 24);
+            durationText = daysSinceLastOnline === 1
+                ? "1 day"
+                : `${daysSinceLastOnline} days`;
+        }
+    }
+    return `Last online ${durationText} ago`;
 }

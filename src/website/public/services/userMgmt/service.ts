@@ -1,8 +1,9 @@
 import registerUser, { RegisterUserResponse } from "./registerUser";
 import updateUsername, { UpdateUsernameResponse } from "./updateUsername";
+import markAsOnline from "./markAsOnline";
 import getCurrentUser, { GetCurrentUserResponse } from "./getCurrentUser";
-import getUserId, {GetUserIdResponse} from "./getUserId";
-import getUsers, {GetUserRequest, GetUsersResponse} from "./getUsers";
+import getUserId, { GetUserIdResponse } from "./getUserId";
+import getUsers, { GetUsersRequest, GetUsersResponse } from "./getUsers";
 
 export default class service {
     public static registerUser(username: string) : Promise<RegisterUserResponse> {
@@ -13,6 +14,10 @@ export default class service {
         return updateUsername(username);
     }
 
+    public static async markAsOnline() : Promise<void> {
+        return markAsOnline();
+    }
+
     public static async getCurrentUser() : Promise<GetCurrentUserResponse> {
         return getCurrentUser();
     }
@@ -21,7 +26,7 @@ export default class service {
         return getUserId(username);
     }
 
-    public static async getUsers(users: GetUserRequest[]) : Promise<GetUsersResponse> {
-        return getUsers(users);
+    public static async getUsers(request: GetUsersRequest) : Promise<GetUsersResponse> {
+        return getUsers(request);
     }
 }

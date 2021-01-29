@@ -1,23 +1,38 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
+use shared::{timestamp, timestamp::Timestamp};
 use shared::user_id::UserId;
 use crate::domain::user_store::{UserStore, UserSummary};
 use self::Response::*;
 
-pub fn query(users: Vec<Request>) -> Response {
+pub fn query(request: Request) -> Response {
     let user_store: &UserStore = storage::get();
+    let now = timestamp::now();
 
-    Success(user_store.get_users(users))
+    let users = user_store.get_users(request.users, request.updated_since, now);
+
+    let result = Result {
+        users,
+        timestamp: now
+    };
+
+    Success(result)
 }
 
 #[derive(Deserialize)]
 pub struct Request {
-    pub id: UserId,
-    pub cached_version: Option<u32>
+    users: Vec<UserId>,
+    updated_since: Option<Timestamp>
 }
 
 #[derive(CandidType)]
 pub enum Response {
-    Success(Vec<UserSummary>)
+    Success(Result)
+}
+
+#[derive(CandidType)]
+pub struct Result {
+    users: Vec<UserSummary>,
+    timestamp: Timestamp
 }

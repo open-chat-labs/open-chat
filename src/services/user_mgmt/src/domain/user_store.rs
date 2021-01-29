@@ -4,7 +4,6 @@ use serde::Deserialize;
 use shared::storage::StableState;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
-use crate::queries::get_users::Request;
 
 #[derive(Default)]
 pub struct UserStore {
@@ -16,6 +15,7 @@ pub struct User {
     id: UserId,
     username: String,
     joined: Timestamp,
+    last_online: Timestamp,
     last_updated: Timestamp,
     version: u32
 }
@@ -24,6 +24,7 @@ pub struct User {
 pub struct UserSummary {
     id: UserId,
     username: String,
+    seconds_since_last_online: u32,
     version: u32
 }
 
@@ -51,11 +52,12 @@ impl UserStore {
             id: user_id.clone(),
             username: username.clone(),
             joined: now,
+            last_online: now,
             last_updated: now,
             version: 1
         };
 
-        let user_summary = UserSummary::new(&user);
+        let user_summary = UserSummary::new(&user, None);
 
         self.data.insert(user_id, username, user);
 
@@ -73,6 +75,7 @@ impl UserStore {
 
         if let Some(mut user) = self.data.remove(&user_id) {
             user.username = username.clone();
+            user.last_online = now;
             user.last_updated = now;
             user.version += 1;
 
@@ -84,20 +87,31 @@ impl UserStore {
         }
     }
 
+    pub fn mark_as_online(&mut self, user_id: &UserId, now: Timestamp) {
+        if let Some(user) = self.data.get_mut(user_id) {
+            user.last_online = now;
+        }
+    }
+
     pub fn get_user_id(&self, username: &String) -> Option<UserId> {
         self.data.get_alt(username).map(|u| u.id.clone())
     }
 
-    pub fn get_user(&self, user_id: &UserId) -> Option<UserSummary> {
-        self.data.get(user_id).map(UserSummary::new)
+    // You can pass in now = None if you know that the user is online now
+    pub fn get_user(&self, user_id: &UserId, now: Option<Timestamp>) -> Option<UserSummary> {
+        self.data.get(user_id).map(|u| UserSummary::new(u, now))
     }
 
-    pub fn get_users(&self, users: Vec<Request>) -> Vec<UserSummary> {
+    pub fn get_users(&self, users: Vec<UserId>, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<UserSummary> {
+        fn filter(user: &User, updated_since: Timestamp) -> bool {
+            user.last_online > updated_since || user.last_updated > updated_since
+        }
+
         users
             .iter()
-            .filter_map(|r| self.data.get(&r.id).map(|u| (u, r.cached_version)))
-            .filter(|(u, v)| v.is_none() || v.unwrap() < u.version)
-            .map(|(u, _)| UserSummary::new(u))
+            .filter_map(|id| self.data.get(&id))
+            .filter(|u| if updated_since.is_some() { filter(u, updated_since.unwrap()) } else { true })
+            .map(|u| UserSummary::new(u, Some(now)))
             .collect()
     }
 }
@@ -126,10 +140,18 @@ impl StableState for UserStore {
 }
 
 impl UserSummary {
-    fn new(user: &User) -> UserSummary {
+    // You can pass in now = None if you know that the user is online now
+    fn new(user: &User, now: Option<Timestamp>) -> UserSummary {
+        let mut seconds_since_last_online: u32 = 0;
+        if let Some(t) = now {
+            let millis_since_last_online = t - user.last_online;
+            seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+        }
+
         UserSummary {
             id: user.id.clone(),
             username: user.username.clone(),
+            seconds_since_last_online,
             version: user.version
         }
     }
