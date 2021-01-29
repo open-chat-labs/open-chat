@@ -464,6 +464,12 @@ main header>div >div {
     color: white;
 }
 
+.message .emoji {
+    width: 24px;  
+    height: 24px;
+    font-size: 24px;  
+}
+
 .message.media {
     padding: 0px;
     position: relative;
@@ -578,21 +584,49 @@ main footer {
     align-items: center;
 }
 
-main footer input {
-    background-color: white;
-    flex-grow: 1;
-    border: 0;
+.message-input-container {
+    flex: 1 1 auto;    
+    display: flex;
     border-radius: 25px;
     padding: 8px 15px 10px 15px;
-    font-size: 15px;
-    font-weight: 300;
-    outline: none;
-    color: #111111;
+    background-color: white;
 }
 
-main footer input::placeholder {
-    color: #bbbbbb;
+.message-input {
+    border: 0;
+    outline: none;
+    flex: 1 1 auto;    
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #111111;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 1;
+    min-height: 20px;
+    max-height: 100px;    
+    user-select: text;
 }
+
+.message-input .emoji {
+    width: 18px;  
+    height: 18px;
+    font-size: 18px; 
+    display: inline-block;
+}
+
+@media
+    not screen and (min-device-pixel-ratio: 2),
+    not screen and (min-resolution: 192dpi) {
+        span.emoji {
+            margin-right: 3px;
+        }
+    }
+
+/* main footer input::placeholder {
+    color: #bbbbbb;
+} */
 
 main footer button.send {
     outline: 0;
