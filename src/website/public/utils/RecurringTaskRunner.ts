@@ -21,6 +21,9 @@ export default class RecurringTaskRunner {
     }
 
     public start = () => {
+        if (this.stopped) {
+            return;
+        }
         const runInLoop = () => {
             if (this.stopped) return;
             this.timeoutId = setTimeout(_ => this.task().finally(runInLoop), this.intervalMs);
