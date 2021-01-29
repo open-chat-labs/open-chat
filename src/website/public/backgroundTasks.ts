@@ -1,21 +1,26 @@
-import { Dispatch, useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { UserId } from "./model/users";
 import { RootState } from "./reducers";
-import { GetUserRequest } from "./services/userMgmt/getUsers";
+import userMgmtService from "./services/userMgmt/service";
+import * as chatFunctions from "./model/chats";
+import RecurringTaskRunner from "./utils/RecurringTaskRunner";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
 import getUpdatedChats from "./actions/chats/getUpdatedChats";
-
 import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
-import * as chatFunctions from "./model/chats";
+import updateMinutesSinceLastOnline from "./actions/users/updateMinutesSinceLastOnline";
 
-import { APP_TITLE, PAGE_SIZE, REFRESH_CHATS_INTERVAL_MILLISECONDS } from "./constants";
-import { Option, Timestamp } from "./model/common";
+import {
+    APP_TITLE,
+    MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS,
+    PAGE_SIZE,
+    REFRESH_CHATS_INTERVAL_MS,
+    UPDATE_USERS_INTERVAL_MS
+} from "./constants";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();
@@ -56,11 +61,7 @@ export function setupBackgroundTasks() {
     // As new userIds are seen, fetch their usernames
     useEffect(() => {
         if (usersState.unknownUserIds.length) {
-            const users: GetUserRequest[] = usersState
-                .unknownUserIds
-                .map((u: UserId) => ({ userId: u, cachedVersion: null }));
-
-            dispatch(getUsers(users));
+            dispatch(getUsers(usersState.unknownUserIds));
         }
     }, [usersState.unknownUserIds]);
 
@@ -76,23 +77,31 @@ export function setupBackgroundTasks() {
     // Check for new messages at regular intervals
     useEffect(() => {
         if (chatsState.runUpdateChatsTask) {
-            return updateChatsRegularlyTask(chatsState.chatsSyncedUpTo, dispatch);
+            const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsState.chatsSyncedUpTo)) as any;
+            const taskRunner = RecurringTaskRunner.startNew(getUpdates, REFRESH_CHATS_INTERVAL_MS, true);
+            return () => taskRunner.stop();
         }
     }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo]);
-}
 
-function updateChatsRegularlyTask(chatsSyncedUpTo: Option<Timestamp>, dispatch: Dispatch<any>) : () => void {
-    let timeoutId: NodeJS.Timeout;
-    let stopped = false;
-    const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsSyncedUpTo)) as any;
-    const waitThenGetUpdatesLoop = () => {
-        if (stopped) return;
-        timeoutId = setTimeout(_ => getUpdates().finally(waitThenGetUpdatesLoop), REFRESH_CHATS_INTERVAL_MILLISECONDS);
-    }
+    // Mark current user as online at regular intervals
+    useEffect(() => {
+        if (usersState.me?.userId) {
+            const markAsOnline: () => Promise<void> = () => userMgmtService.markAsOnline();
+            const taskRunner = RecurringTaskRunner.startNew(markAsOnline, MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS, false);
+            return () => taskRunner.stop();
+        }
+    }, [usersState.me?.userId]);
 
-    waitThenGetUpdatesLoop();
-    return () => {
-        stopped = true;
-        clearTimeout(timeoutId);
-    }
+    // Update user details at regular intervals
+    const userIdsCount = usersState.userDictionary ? Object.keys(usersState.userDictionary).length : 0;
+    useEffect(() => {
+        if (usersState.userDictionary) {
+            const updateUsers: () => Promise<void> = () => {
+                const updateUsersTask: Promise<void> = dispatch(getUsers(Object.keys(usersState.userDictionary), usersState.usersSyncedUpTo)) as any;
+                return updateUsersTask.finally(() => dispatch(updateMinutesSinceLastOnline()));
+            }
+            const taskRunner = RecurringTaskRunner.startNew(updateUsers, UPDATE_USERS_INTERVAL_MS, true);
+            return () => taskRunner.stop();
+        }
+    }, [userIdsCount, usersState.usersSyncedUpTo]);
 }

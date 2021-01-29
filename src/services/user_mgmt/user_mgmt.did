@@ -1,9 +1,11 @@
 type UserId = principal;
+type Timestamp = nat64;
 
 type UserSummary =
     record {
         id: UserId;
         username: text;
+        minutes_since_last_online: nat32;
         version: nat32;
     };
 
@@ -34,21 +36,25 @@ type GetUserIdResponse =
         UserNotFound;
     };
 
-type GetUserRequest =
+type GetUsersRequest =
     record {
-        id: UserId;
-        cached_version: opt nat32;
+        users: vec UserId;
+        updated_since: opt Timestamp;
     };
 
 type GetUsersResponse =
     variant {
-        Success: vec UserSummary;
+        Success: record {
+            users: vec UserSummary;
+            timestamp: Timestamp;
+        }
     };
 
 service : {
     register_user: (text) -> (RegisterUserResponse);
     update_username: (text) -> (UpdateUsernameResponse);
+    mark_as_online: () -> ();
     get_current_user: () -> (GetCurrentUserResponse) query;
     get_user_id: (text) -> (GetUserIdResponse) query;
-    get_users: (vec GetUserRequest) -> (GetUsersResponse) query;
+    get_users: (GetUsersRequest) -> (GetUsersResponse) query;
 }

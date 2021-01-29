@@ -1,35 +1,34 @@
 import canister from "ic:canisters/user_mgmt";
 import { UserId, UserSummary } from "../../model/users";
-import { Option } from "../../model/common";
+import { Option, Timestamp } from "../../model/common";
 import { toCandid as optionToCandid } from "../candidConverters/option";
-import { fromCandid as userIdFromCandid, toCandid as userIdToCandid } from "../candidConverters/userId";
+import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";
+import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
 
-export default async function(users: GetUserRequest[]) : Promise<GetUsersResponse> {
-    let request = users.map(u => ({
-        id: userIdToCandid(u.userId),
-        cached_version: optionToCandid(u.cachedVersion)
-    }));
+export default async function(request: GetUsersRequest) : Promise<GetUsersResponse> {
+    let canisterRequest = {
+        users: request.users.map(userIdToCandid),
+        updated_since: optionToCandid(request.updatedSince ? timestampToCandid(request.updatedSince) : null)
+    };
 
-    let response = await canister.get_users(request);
+    let response = await canister.get_users(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
-        let success: any[] = response.Success;
+        let success: any = response.Success;
         return {
             kind: "success",
-            users: success.map(u => ({
-                userId: userIdFromCandid(u.id),
-                username: u.username,
-                version: u.version
-            }))
+            users: success.users.map(userSummaryFromCandid),
+            timestamp: timestampFromCandid(success.timestamp)
         };
     } else {
         throw new Error("Unrecognised 'get_user_id' response");
     }
 }
 
-export type GetUserRequest = {
-    userId: UserId,
-    cachedVersion: Option<number>
+export type GetUsersRequest = {
+    users: UserId[],
+    updatedSince: Option<Timestamp>
 }
 
 export type GetUsersResponse =
@@ -37,5 +36,6 @@ export type GetUsersResponse =
 
 export type Success = {
     kind: "success",
-    users: UserSummary[]
+    users: UserSummary[],
+    timestamp: Timestamp
 }

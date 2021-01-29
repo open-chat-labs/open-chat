@@ -68,7 +68,6 @@ import {
 import { MARK_MESSAGES_AS_READ, MarkMessagesAsReadEvent } from "../actions/chats/markMessagesAsRead";
 import {
     MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED,
-    MarkMessagesAsReadServerSyncRequestedEvent,
     MarkMessagesAsReadServerSyncSucceededEvent
 } from "../actions/chats/markMessagesAsReadServerSync";
 

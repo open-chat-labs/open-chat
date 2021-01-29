@@ -1,6 +1,6 @@
 import canister from "ic:canisters/user_mgmt";
 import { UserSummary } from "../../model/users";
-import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
+import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
 
 export default async function(username: string) : Promise<RegisterUserResponse> {
     let response = await canister.register_user(username);
@@ -9,11 +9,7 @@ export default async function(username: string) : Promise<RegisterUserResponse> 
         let success = response.Success;
         return {
             kind: "success",
-            userSummary: {
-                userId: userIdFromCandid(success.id),
-                username: success.username,
-                version: success.version
-            }
+            userSummary: userSummaryFromCandid(success)
         };
     } else if (response.hasOwnProperty("UserExists")) {
         return {

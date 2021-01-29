@@ -16,6 +16,12 @@ export function addDays(date: Date, days: number) : Date {
     return copy;
 }
 
+export function addMinutes(date: Date, minutes: number) : Date {
+    const copy = new Date(date);
+    copy.setMinutes(date.getMinutes() + minutes);
+    return copy;
+}
+
 export function areOnSameDay(left: Date, right: Date) : boolean {
     const dayLeft = left.getDate();
     const dayRight = right.getDate();
@@ -31,4 +37,10 @@ export function areOnSameDay(left: Date, right: Date) : boolean {
     const yearRight = right.getFullYear();
 
     return yearLeft === yearRight;
+}
+
+export function getMinutesSince(date: Date) : number {
+    const now = new Date();
+    const diffMillis: number = now.getTime() - date.getTime();
+    return (diffMillis / 1000) / 60;
 }
