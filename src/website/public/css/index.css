@@ -465,9 +465,9 @@ main header>div >div {
 }
 
 .message .emoji {
-    width: 24px;  
-    height: 24px;
-    font-size: 24px;  
+    width: 20px;  
+    height: 20px;
+    font-size: 20px;  
 }
 
 .message.media {
@@ -609,20 +609,28 @@ main footer {
     user-select: text;
 }
 
+span.emoji {
+    display: inline-block;    
+}
+
 .message-input .emoji {
     width: 18px;  
     height: 18px;
     font-size: 18px; 
-    display: inline-block;
 }
 
 @media
-    not screen and (min-device-pixel-ratio: 2),
-    not screen and (min-resolution: 192dpi) {
-        span.emoji {
-            margin-right: 3px;
-        }
+    not screen and (-webkit-min-device-pixel-ratio: 2),
+    not screen and (   min--moz-device-pixel-ratio: 2),
+    not screen and (     -o-min-device-pixel-ratio: 2/1),
+    not screen and (        min-device-pixel-ratio: 2),
+    not screen and (                min-resolution: 192dpi),
+    not screen and (                min-resolution: 2dppx) { 
+    /* non-Retina-specific stuff here */
+    span.emoji {
+        margin-right: 3px;
     }
+}
 
 /* main footer input::placeholder {
     color: #bbbbbb;
