@@ -1,5 +1,5 @@
 import { MessageContent } from "../../model/messages";
-import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "../candidConverters/option";
+import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "./option";
 
 export function fromCandid(content: any) : MessageContent {
     if (content.hasOwnProperty("Text")) {
