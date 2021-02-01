@@ -444,7 +444,7 @@ main header>div >div {
 .day-change-marker {
     padding: 6px 12px;
     border-radius: 10px;
-    background-color: #dddddd;
+    background-color: rgb(221,221,221, 0.9);
     margin-top: 14px;
     align-self: center;
     font-size: 13px;

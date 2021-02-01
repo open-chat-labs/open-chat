@@ -5,14 +5,14 @@ import Smiley from "../assets/icons/smiley.svg";
 export default React.memo(EmojiPicker);
 
 type Props = {
-    appendNewMessageText: (text: string) => void,
-    focusOnTextInput: () => void,
+    onEmojiSelected: (text: string) => void,
+    onHidePicker: () => void,
 }
 
 function EmojiPicker(props: Props) {
     return (
         <>
-            <div className="smiley button hide-on-click-ignore" onClick={_ => toggleEmojiPicker()}>
+            <div className="smiley button hide-on-click-ignore" onClick={toggleEmojiPicker}>
                 <Smiley />
             </div>
             <div id="emojisContainer" className="emojis-container hide-on-click-outside hide">
@@ -28,8 +28,7 @@ function EmojiPicker(props: Props) {
 
     function onSelectEmoji(emojiData: EmojiData) {
         if ("native" in emojiData) {
-            props.appendNewMessageText(emojiData.native + " ");
-            props.focusOnTextInput();
+            props.onEmojiSelected(emojiData.native);
         }
     }
 
@@ -37,7 +36,7 @@ function EmojiPicker(props: Props) {
         const elemClassList = document.getElementById("emojisContainer")!.classList;
         elemClassList.toggle("hide");
         if (elemClassList.contains("hide")) {
-            props.focusOnTextInput();
+            props.onHidePicker();
         } else {
             focusOnEmojiSearch();
         }

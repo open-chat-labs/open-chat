@@ -278,13 +278,12 @@
                     <div 
                         id="messageInput" 
                         class="message-input" 
-                        onkeyup="saveSelection()"
-                        onmouseup="saveSelection()"
                         onpaste="pastePlainText(event)"
+                        onblur="saveSelection()"
                         contenteditable="true" 
                         spellcheck="true"></div>
                 </div>
-                <button onclick="newMessage.value=''; scrollMessagesToBottom()" class="send"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg></button>
+                <button onclick="onSendMessage()" class="send"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg></button>
             </footer>
         </main>
     </section>
@@ -298,8 +297,16 @@
         function onBodyLoad() {
             scrollMessagesToBottom();
 
-            let textBox = document.getElementById("messageInput");
+            const textBox = document.getElementById("messageInput");
             textBox.addEventListener("textInput", onTextBoxTextInput, true);
+        }
+
+        function onSendMessage() {
+            const textBox = document.getElementById("messageInput");
+            alert(textBox.textContent);
+            textBox.innerHTML = "";
+
+            scrollMessagesToBottom();
         }
 
         function onTextBoxTextInput(e) {
@@ -316,21 +323,8 @@
         }
 
         function insertTextAtCaret(text) {
-            // We want to manually insert text in the editable textbox at the selection. However the 
-            // document selection might not currently be inside the textbox so we save the range of the 
-            // last seen selection inside the textbox and then use that here. If there is no existing 
-            // saved range then initialise one at the end of the text box.
-            if (!savedRange) {
-                let textBox = document.getElementById("messageInput");
-                savedRange = new Range();
-                savedRange.selectNodeContents(textBox);
-                savedRange.collapse(false);
-            }
-
-            // Apply the saved range selection to the document
-            let selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(savedRange);
+            // Focus on the message box and re-apply any saved range selection
+            focusOnTextBox();
 
             // Markup the text so it will appear correctly in the textbox and manually insert it
             document.execCommand("insertHTML", false, markupNewTextForTextBox(text));
@@ -341,6 +335,30 @@
 
         function saveSelection() {
             savedRange = window.getSelection().getRangeAt(0);
+        }
+
+        function clearSelection() {
+            savedRange = null;
+        }
+
+        function focusOnTextBox() {
+            document.getElementById("messageInput").focus();
+            restoreSelection();
+        }
+
+        function restoreSelection() {
+            // Set the window selection to the last saved range. If there is no existing 
+            // saved range then initialise one at the end of the text box.
+            if (!savedRange) {
+                const textBox = document.getElementById("messageInput");
+                savedRange = new Range();
+                savedRange.selectNodeContents(textBox);
+                savedRange.collapse(false);
+            }
+
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedRange);
         }
 
         function pastePlainText(e) {
@@ -449,12 +467,16 @@
         }
 
         window.onclick = function (event) {
-            if (event.target.matches('.hide-on-click-ignore, .hide-on-click-ignore *, .hide-on-click-outside, .hide-on-click-outside *'))
+            if (!event.target.matches(".enter-message, .enter-message *")) {
+                clearSelection();
+            }
+
+            if (event.target.matches(".hide-on-click-ignore, .hide-on-click-ignore *, .hide-on-click-outside, .hide-on-click-outside *"))
                 return;
 
             const dropdowns = document.getElementsByClassName("hide-on-click-outside");
             for (let dropdown of dropdowns) {
-                dropdown.classList.add('hide');
+                dropdown.classList.add("hide");
             }
         }
 
