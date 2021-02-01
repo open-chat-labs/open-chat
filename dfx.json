@@ -15,7 +15,7 @@
     "website": {
       "frontend": {
         "sourceDir": "src/website",
-        "entrypoint": "src/website/public/index.tsx"
+        "entrypoint": "src/website/index.tsx"
       },
       "source": [
         "dist/website/"
