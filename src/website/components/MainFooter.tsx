@@ -7,6 +7,7 @@ import SendButtonIcon from "../assets/icons/sendButton.svg";
 import AttachFile from "./AttachFile";
 import { RootState } from "../reducers";
 import EmojiPicker from "./EmojiPicker";
+import { buildEmojiSpan, containsEmoji } from "../model/messages";
 
 export default React.memo(MainFooter);
 
@@ -22,10 +23,10 @@ function MainFooter() {
         const textbox = document.getElementById("textbox");
         textbox?.addEventListener("textInput", onTextBoxTextInput, true);
 
-        window.addEventListener("click", clearSelection, false);
+        window.addEventListener("click", onWindowClick, false);
     
         return () => {
-            window.removeEventListener("click", clearSelection);
+            window.removeEventListener("click", onWindowClick);
             textbox?.removeEventListener("textInput", onTextBoxTextInput);
         };
       }, []);    
@@ -66,12 +67,12 @@ function MainFooter() {
     // from the picker
     let savedRange: Option<Range>;
 
-    function insertTextAtCaret(text: string) {
+    function insertEmojiAtCaret(text: string) {
         // Focus on the message box and re-apply any saved range selection
         restoreSelection();
 
         // Markup the text so it will appear correctly in the textbox and manually insert it
-        document.execCommand("insertHTML", false, markupNewTextForTextBox(text));
+        document.execCommand("insertHTML", false, buildEmojiSpan(text));
 
         // Save the new selection range
         saveSelection();
@@ -82,13 +83,12 @@ function MainFooter() {
         savedRange = window.getSelection()?.getRangeAt(0) ?? null;
     }
 
-    function clearSelection(e: MouseEvent) {
-        // Clear the textbox range selection if the user clicks outside of the 
-        // main footer or its descendants - the emoji picker is a descandant of
-        // the main footer so clicking on it does not clear the textbox selection
-        if (!(e.target instanceof Element) || 
-            !e.target.matches(".enter-message, .enter-message *")) {
-            savedRange = null;
+    function onWindowClick(e: MouseEvent) {
+        // Clear the textbox range selection if the user clicks outside of the main footer or its 
+        // descendants - the emoji picker is a descandant of the main footer so clicking on it does 
+        // not clear the textbox selection
+        if (!(e.target instanceof Element) || !e.target.matches(".enter-message, .enter-message *")) {
+            clearSelection();
         } 
     }
 
@@ -108,6 +108,10 @@ function MainFooter() {
         const selection = window.getSelection()!;
         selection.removeAllRanges();
         selection.addRange(savedRange);
+    }
+
+    function clearSelection() {
+        savedRange = null;
     }
 
     function pastePlainText(e: React.ClipboardEvent<HTMLDivElement>) {
@@ -170,24 +174,15 @@ function MainFooter() {
             || (parent.nodeName == "#text" && (grandParent.nodeName == "SPAN" && grandParent.classList.contains("emoji")));
     }
 
-    function buildEmojiSpan(c: string): string {
-        return `<span class="emoji">${c}</span>`;
-    }
-
     function buildPlainSpan(text: string): string {
         return `<span>${text}</span>`;
-    }
-
-    function containsEmoji(text: string): boolean {
-        const regex_emoji = /[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\u{1F9B0}-\u{1F9B3}]/u;
-        return regex_emoji.test(text);
     }
 
     return (
         <footer className="enter-message">
             <div className="buttons">
                 <EmojiPicker 
-                    onEmojiSelected={insertTextAtCaret} 
+                    onEmojiSelected={insertEmojiAtCaret} 
                     onHidePicker={restoreSelection} />
                 <AttachFile chat={chat} />
             </div>
