@@ -1,5 +1,5 @@
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import sendMessage from "../actions/chats/sendMessage";
 import Paperclip from "../assets/icons/paperclip.svg";
 import { Chat } from "../model/chats";
