@@ -7,8 +7,8 @@ import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import { MessageContent } from "../../model/messages";
 
-export default async function(userId: UserId, content: MessageContent) : Promise<SendDirectMessageResponse> {
-    let response = await canister.send_direct_message(userIdToCandid(userId), messagePayloadToCandid(content));
+export default async function(userId: UserId, clientMessageId: string, content: MessageContent) : Promise<SendDirectMessageResponse> {
+    let response = await canister.send_direct_message(userIdToCandid(userId), clientMessageId, messagePayloadToCandid(content));
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

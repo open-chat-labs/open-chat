@@ -212,7 +212,7 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
         }
         chat.messages[messageIndex] = message;
 
-        const unconfirmedMessage = removeMatchingUnconfirmedMessage(chat, message.content);
+        const unconfirmedMessage = removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
         if (unconfirmedMessage) {
             message.key = unconfirmedMessage.key;
         }
@@ -224,10 +224,11 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
     queueMissingMessagesForDownload(chat);
 }
 
-export const addUnconfirmedMessage = (chat: Chat, content: MessageContent) : void => {
+export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, content: MessageContent) : void => {
     const message: UnconfirmedMessage = {
         kind: "unconfirmed",
-        key: uuidv1().toString(),
+        key: clientMessageId,
+        clientMessageId,
         date: new Date(),
         content
     };
@@ -382,16 +383,13 @@ export const maintainScrollBottom = (chat: Chat) : void => {
     }
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
         if (message.kind !== "unconfirmed") {
             chat.minimumUnconfirmedMessageIndex = index;
-        } else if (
-            (message.content.kind === "text" && content.kind === "text" && message.content.text === content.text) ||
-            (message.content.kind === "media" && content.kind === "media" && message.content.id === content.id) ||
-            (message.content.kind === "file" && content.kind === "file" && message.content.id === content.id)) {
+        } else if (message.clientMessageId === clientMessageId) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
             return message;

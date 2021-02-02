@@ -17,7 +17,7 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
-    fn push_message(&mut self, sender: &UserId, content: MessageContent, timestamp: Timestamp) -> u32;
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, timestamp: Timestamp) -> u32;
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
@@ -64,6 +64,7 @@ pub enum MessageContent {
 #[derive(CandidType, Deserialize, Clone)]
 pub struct Message {
     id: u32,
+    client_message_id: String,
     timestamp: Timestamp,
     sender: UserId,
     content: MessageContent
@@ -113,9 +114,10 @@ impl ChatId {
 }
 
 impl Message {
-    pub fn new(id: u32, now: Timestamp, sender: UserId, content: MessageContent) -> Message {
+    pub fn new(id: u32, client_message_id: String, now: Timestamp, sender: UserId, content: MessageContent) -> Message {
         Message {
             id,
+            client_message_id,
             timestamp: now,
             sender,
             content

@@ -10,13 +10,13 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> create_group
 }
 
 #[update]
-fn send_direct_message(recipient: UserId, content: MessageContent) -> send_direct_message::Response {
-    send_direct_message::update(recipient, content)
+fn send_direct_message(recipient: UserId, client_message_id: String, content: MessageContent) -> send_direct_message::Response {
+    send_direct_message::update(recipient, client_message_id, content)
 }
 
 #[update]
-fn send_message(chat_id: ChatId, content: MessageContent) -> send_message::Response {
-    send_message::update(chat_id, content)
+fn send_message(chat_id: ChatId, client_message_id: String, content: MessageContent) -> send_message::Response {
+    send_message::update(chat_id, client_message_id, content)
 }
 
 #[update]

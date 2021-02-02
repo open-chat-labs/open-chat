@@ -5,8 +5,8 @@ import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 
-export default async function(chatId: ChatId, content: MessageContent) : Promise<SendMessageResponse> {
-    let response = await canister.send_message(chatIdToCandid(chatId), messagePayloadToCandid(content));
+export default async function(chatId: ChatId, clientMessageId: string, content: MessageContent) : Promise<SendMessageResponse> {
+    let response = await canister.send_message(chatIdToCandid(chatId), clientMessageId, messagePayloadToCandid(content));
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;
