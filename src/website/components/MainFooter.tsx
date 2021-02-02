@@ -20,18 +20,14 @@ function MainFooter() {
     }
 
     useEffect(() => {
-        const textbox = document.getElementById("textbox");
-        textbox?.addEventListener("textInput", onTextBoxTextInput, true);
-
         window.addEventListener("click", onWindowClick, false);
     
         return () => {
             window.removeEventListener("click", onWindowClick);
-            textbox?.removeEventListener("textInput", onTextBoxTextInput);
         };
       }, []);    
 
-    function onTextBoxTextInput(e: any) {
+    function handleBeforeInput(e: any) {
         // Markup the text so it will appear correctly in the textbox
         const text = markupNewTextForTextBox(e.data);
 
@@ -42,6 +38,12 @@ function MainFooter() {
         // Otherwise cancel it and manually insert the mark-up 
         e.preventDefault();
         document.execCommand("insertHTML", false, text);
+    }
+
+    function handleInput(e: any) {
+        if (e.target.innerHTML.trim() =="<br>") {
+            e.target.innerHTML = "";
+        }
     }
 
     function handleSendMessage() {
@@ -190,6 +192,9 @@ function MainFooter() {
                 <div 
                     id="textbox" 
                     className="message-input" 
+                    placeholder="Type a message"
+                    onBeforeInput={handleBeforeInput}
+                    onInput={handleInput}
                     onPaste={pastePlainText}
                     onKeyDown={handleKeyPress}
                     onBlur={saveSelection}

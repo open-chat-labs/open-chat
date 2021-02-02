@@ -609,6 +609,13 @@ main footer {
     user-select: text;
 }
 
+[contenteditable][placeholder]:empty:before {
+    content: attr(placeholder);
+    position: absolute;
+    color: #cccccc; 
+    background-color: transparent;
+}
+
 span.emoji {
     display: inline-block;    
 }

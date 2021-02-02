@@ -278,8 +278,10 @@
                     <div 
                         id="messageInput" 
                         class="message-input" 
+                        placeholder="Type a message"
                         onpaste="pastePlainText(event)"
                         onblur="saveSelection()"
+                        oninput="if(this.innerHTML.trim()==='<br>')this.innerHTML=''"
                         contenteditable="true" 
                         spellcheck="true"></div>
                 </div>

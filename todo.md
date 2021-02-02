@@ -27,6 +27,7 @@
 - <del>Send images</del>
 - <del>Send videos</del>
 - Captions on images and video
+- Audio message
 - Stream videos
 - Fully responsive to mobile devices
 - Dark-mode
@@ -64,7 +65,7 @@
 
 # Bugs
 - Emoji Picker categories don't seem to work until the the picker has been used (https://github.com/missive/emoji-mart/issues/473)
-- Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)
+- <del>Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)</del>
 - Also give each chat a client-generated uuid
 - The UI is not shrinking properly when there is a chat whose latest message is quite long
 - Cross-browser render issues in general
@@ -75,8 +76,9 @@
 # Micro-features
 - <del>Store draft message with each chat on client</del>
 - <del>Support line-breaks in messages</del>
+- <del>Placeholder text in message input box</del>
+- Store avatar image against user in user_mgmt canister
 - Support bold italics etc in messages
-- Prompt text in message input box
 - Change name of group chat
 - UI support for creating chats (should be able to select from all users known to me)
 - Dropdown menu on each message
