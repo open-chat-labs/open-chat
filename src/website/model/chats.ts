@@ -22,7 +22,8 @@ export type ChatId = BigInt;
 
 type ChatCommon = {
     scrollTop: Option<number>,
-    scrollBottom: Option<number>
+    scrollBottom: Option<number>,
+    draftMessage: string
 }
 
 type ConfirmedChatCommon = ChatCommon & {
@@ -111,7 +112,8 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         latestConfirmedMessageId,
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
-        scrollBottom: 0
+        scrollBottom: 0,
+        draftMessage: "",
     };
 }
 
@@ -136,7 +138,8 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         latestConfirmedMessageId,
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
-        scrollBottom: 0
+        scrollBottom: 0,
+        draftMessage: "",
     };
 }
 
@@ -146,7 +149,8 @@ export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat
         them: userId,
         messages: [],
         scrollTop: null,
-        scrollBottom: 0
+        scrollBottom: 0,
+        draftMessage: "",
     };
 }
 
@@ -159,7 +163,8 @@ export const newUnconfirmedGroupChat = (tempId: Symbol, subject: string, users: 
         pendingParticipants: [],
         messages: [],
         scrollTop: null,
-        scrollBottom: 0
+        scrollBottom: 0,
+        draftMessage: "",
     };
 }
 
@@ -382,6 +387,18 @@ export const maintainScrollBottom = (chat: Chat) : void => {
     }
 }
 
+export const saveDraftMessage = (chat: Chat) => {
+    const textbox = document.getElementById("textbox");
+    if (!textbox) return;
+    chat.draftMessage = textbox.innerHTML;
+}
+
+export const restoreDraftMessage = (chat: Chat) => {
+    const textbox = document.getElementById("textbox");
+    if (!textbox) return;
+    textbox.innerHTML = chat.draftMessage;
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, content: MessageContent) : Option<UnconfirmedMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
@@ -436,4 +453,3 @@ const getScrollTopAndBottom = () : Option<[number, number]> => {
     }
     return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
 }
-
