@@ -4,13 +4,14 @@ import { buildEmojiSpan, containsEmoji } from "../model/messages";
 export default React.memo(TextContent);
 
 export interface Props {
-    text: string
+    text: string,
+    insertLineBreaks?: boolean
 }
 
 function TextContent(props : Props): JSX.Element {
 
-    // Wrap contiguous emoji chars in an "emoji span"
-    function markupEmojis(text: string): string {
+    function markupText(text: string, linebreaks: boolean): string {
+        // Wrap contiguous emoji chars in an "emoji span"
         let markup = "";
         let emojis = "";
         for (const c of text) {
@@ -32,10 +33,19 @@ function TextContent(props : Props): JSX.Element {
             markup += buildEmojiSpan(emojis);
         }
 
-        return markup;
+        if (linebreaks) {
+            // Replace newlines with <br> tags
+            markup = markup.replace(/(?:\r\n|\r|\n)/g, '<br>');
+        }
+
+        return markup
     }
 
+    const markup = markupText(
+        props.text, 
+        props.insertLineBreaks !== undefined ? props.insertLineBreaks : true);
+
     return (
-        <span dangerouslySetInnerHTML={{ __html: markupEmojis(props.text) }}></span>
+        <span dangerouslySetInnerHTML={{ __html: markup }}></span>
     );
 }

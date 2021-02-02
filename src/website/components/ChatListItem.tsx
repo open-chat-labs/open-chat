@@ -39,7 +39,7 @@ function ChatListItem(props: Props) {
                 </div>
                 <div>
                     {props.unreadCount > 0 ? <div className="unread-count">{props.unreadCount.toString()}</div> : null} 
-                    <div className="chats-message"><TextContent text={props.latestMessage} /></div>
+                    <div className="chats-message"><TextContent text={props.latestMessage} insertLineBreaks={false} /></div>
                 </div>
             </div>
         </li>
