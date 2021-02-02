@@ -4,6 +4,7 @@
 - Split reducers into a handler per message
 - Use interfaces for core chat and message models
 - Use a request object for each canister API method
+- Give each chat a client-generated uuid
 - Tests
 
 # Features
@@ -66,12 +67,16 @@
 # Bugs
 - Emoji Picker categories don't seem to work until the the picker has been used (https://github.com/missive/emoji-mart/issues/473)
 - <del>Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)</del>
-- Also give each chat a client-generated uuid
 - The UI is not shrinking properly when there is a chat whose latest message is quite long
 - Cross-browser render issues in general
 - Validation - usernanme length, group name length, message length etc
 - Lots of places where long content is not overflowing/scrolling properly
 - Memory leak on client due to storing media blobs in main memory. We should make use of http cache. Would be good if we could serve images from canister over http
+- In message box
+  0 Add emoji
+  0 Delete emoji
+  0 Type test and it appear in font-size: 18px span
+- Add multiple emojis in a row and they appear on separate lines
 
 # Micro-features
 - <del>Store draft message with each chat on client</del>
