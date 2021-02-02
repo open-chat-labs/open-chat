@@ -274,7 +274,7 @@ export default produce((state: ChatsState, event: Event) => {
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
             const [chat, index] = chatFunctions.getChat(state.chats, payload.chat);
-            chatFunctions.addUnconfirmedMessage(chat, payload.content);
+            chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content);
 
             state.chats.splice(index, 1);
             state.chats.unshift(chat);

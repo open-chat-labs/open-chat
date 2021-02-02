@@ -23,6 +23,7 @@ export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_F
 
 export default function(chat: Chat, sendMessageContent: SendMessageContent) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+        const clientMessageId = uuidv1().toString();
 
         // If the "send message content" is media the message itself will contain
         // meta info about the media and the data will be uploaded separately in parallel
@@ -41,6 +42,7 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
                 type: SEND_MESSAGE_REQUESTED,
                 payload: {
                     chat,
+                    clientMessageId,
                     content
                 }
             };
@@ -65,8 +67,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
 
         // Send the message to the IC
         const response = chat.kind === UNCONFIRMED_DIRECT_CHAT
-            ? await chatsService.sendDirectMessage(chat.them, content)
-            : await chatsService.sendMessage(chat.chatId, content);
+            ? await chatsService.sendDirectMessage(chat.them, clientMessageId, content)
+            : await chatsService.sendMessage(chat.chatId, clientMessageId, content);
 
         // Dispatch a failed event
         if (response.kind !== "success") {
@@ -80,6 +82,7 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
             const message: LocalMessage = {
                 kind: "local",
                 id: response.result.messageId,
+                clientMessageId,
                 key: response.result.messageId.toString(),
                 date: response.result.date,
                 sender: myUserId,
@@ -168,6 +171,7 @@ export type SendMessageFailedToUploadContentEvent = {
 
 export type SendMessageRequest = {
     chat: Chat,
+    clientMessageId: string,
     content: MessageContent
 }
 

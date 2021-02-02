@@ -37,9 +37,9 @@ pub struct DirectChatStableState {
 }
 
 impl DirectChat {
-    pub fn new(id: ChatId, sender: UserId, recipient: UserId, content: MessageContent, now: Timestamp) -> DirectChat {
+    pub fn new(id: ChatId, sender: UserId, recipient: UserId, client_message_id: String, content: MessageContent, now: Timestamp) -> DirectChat {
 
-        let message = Message::new(1, now, sender.clone(), content);
+        let message = Message::new(1, client_message_id, now, sender.clone(), content);
 
         DirectChat {
             id,
@@ -61,12 +61,13 @@ impl Chat for DirectChat {
         self.user1 == *user || self.user2 == *user
     }
 
-    fn push_message(&mut self, sender: &UserId, content: MessageContent, timestamp: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, timestamp: Timestamp) -> u32 {
         let prev_id = self.messages.last().unwrap().get_id();
         let id = prev_id + 1;
 
         let message = Message::new(
             id,
+            client_message_id,
             timestamp,
             sender.clone(),
             content

@@ -13,8 +13,16 @@ pub struct ChatList {
 }
 
 impl ChatList {
-    pub fn create_direct_chat(&mut self, chat_id: ChatId, sender: UserId, recipient: UserId, content: MessageContent, now: Timestamp) -> u32 {
-        let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, content, now));
+    pub fn create_direct_chat(
+        &mut self,
+        chat_id: ChatId,
+        sender: UserId,
+        recipient: UserId,
+        client_message_id: String,
+        content: MessageContent,
+        now: Timestamp) -> u32 {
+
+        let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, client_message_id, content, now));
         self.chats.insert(chat_id, chat);
         1
     }

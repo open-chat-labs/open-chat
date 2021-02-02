@@ -106,6 +106,7 @@ type GetChatsRequest =
 type Message =
     record {
         id: nat32;
+        client_message_id: text;
         timestamp: Timestamp;
         sender: UserId;
         content: MessageContent
@@ -161,8 +162,8 @@ type GetMessagesByIdResponse =
 
 service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
-    send_direct_message: (UserId, MessageContent) -> (SendDirectMessageResponse);
-    send_message: (ChatId, MessageContent) -> (SendMessageResponse);
+    send_direct_message: (UserId, text, MessageContent) -> (SendDirectMessageResponse);
+    send_message: (ChatId, text, MessageContent) -> (SendMessageResponse);
     mark_read: (ChatId, nat32, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);

@@ -10,6 +10,7 @@ export type LocalMessage = {
     kind: "local",
     id: number,
     key: string,
+    clientMessageId: string,
     date: Date,
     sender: UserId,
     content: MessageContent
@@ -23,6 +24,7 @@ export type RemoteMessage = {
 export type UnconfirmedMessage = {
     kind: "unconfirmed",
     key: string,
+    clientMessageId: string,
     date: Date,
     content: MessageContent
 }
