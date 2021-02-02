@@ -3,6 +3,7 @@
 - Ensure components return only required state from useSelector hook 
 - Split reducers into a handler per message
 - Use interfaces for core chat and message models
+- Use a request object for each canister API method
 - Tests
 
 # Features
@@ -73,7 +74,7 @@
 
 # Micro-features
 - <del>Store draft message with each chat on client</del>
-- Support line-breaks in messages
+- <del>Support line-breaks in messages</del>
 - Support bold italics etc in messages
 - Prompt text in message input box
 - Change name of group chat
