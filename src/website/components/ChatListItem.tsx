@@ -7,6 +7,7 @@ import { Option } from "../model/common";
 import { UserId } from "../model/users";
 import { toDateString, toDayOfWeekString, toShortTimeString } from "../formatters/date";
 import * as dateFunctions from "../utils/dateFunctions";
+import TextContent from "./TextContent";
 
 type Props = {
     name: string,
@@ -38,7 +39,7 @@ function ChatListItem(props: Props) {
                 </div>
                 <div>
                     {props.unreadCount > 0 ? <div className="unread-count">{props.unreadCount.toString()}</div> : null} 
-                    <div className="chats-message">{props.latestMessage}</div>
+                    <div className="chats-message"><TextContent text={props.latestMessage} /></div>
                 </div>
             </div>
         </li>

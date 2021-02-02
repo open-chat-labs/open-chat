@@ -1,12 +1,12 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-
 import gotoUser from "../actions/chats/gotoUser";
 import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
 import MediaContent from "./MediaContent";
 import FileContent from "./FileContent";
+import TextContent from "./TextContent";
 import { toShortTimeString } from "../formatters/date";
 
 export type Props = {
@@ -61,7 +61,7 @@ function Message(props : Props) {
         className += " file";
         contentElement = <FileContent content={props.content} />;
     } else {
-        contentElement = props.content.text;
+        contentElement = <TextContent text={props.content.text} />
     }
 
     return (
