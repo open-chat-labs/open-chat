@@ -7,6 +7,7 @@ export const DEFAULT_UPDATED_DATE = new Date(2000, 1, 1);
 
 export const MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS = 30000; // 30 seconds
 export const REFRESH_CHATS_INTERVAL_MS = 1000; // 1 second
+export const REFRESH_P2P_CONNECTIONS_MS = 1000; // 1 second
 export const UPDATE_USERS_INTERVAL_MS = 30000; // 30 seconds
 
 export const CONFIRMED_DIRECT_CHAT = "cd";

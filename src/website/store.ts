@@ -3,10 +3,11 @@ import { composeWithDevTools } from "redux-devtools-extension/developmentOnly";
 import thunk from "redux-thunk";
 
 import rootReducer from "./reducers";
+import webRtcMiddleware from "./webRtc/webRtcMiddleware";
 
 const initialState = {};
 
-const middleware = [thunk];
+const middleware = [webRtcMiddleware, thunk];
 
 const store = createStore(
     rootReducer,

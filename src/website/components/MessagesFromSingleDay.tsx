@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Option } from "../model/common";
-import { LocalMessage, UnconfirmedMessage } from "../model/messages";
+import { Message, RemoteMessage } from "../model/messages";
 import { UserId, UserSummary } from "../model/users";
 
 import DayChangeMarker from "./DayChangeMarker";
@@ -14,8 +14,11 @@ type Props = {
     isGroupChat: boolean,
     myUserId: UserId,
     usersDictionary: any,
-    messages: (LocalMessage | UnconfirmedMessage)[],
-    unreadMessageIds: Set<number>
+    messages: (Exclude<Message, RemoteMessage>)[],
+    unreadMessageIds: Set<number>,
+    unreadClientMessageIds: Set<string>,
+    markAsReadPending: Set<number>,
+    markAsReadByClientIdPending: Set<string>
 }
 
 export default React.memo(MessagesFromSingleDay);
@@ -56,7 +59,12 @@ function MessagesFromSingleDay(props: Props) {
         } else {
             sentByMe = message.sender === props.myUserId;
             senderUserId = message.sender;
-            unread = props.unreadMessageIds.has(message.id);
+
+            unread = (props.unreadClientMessageIds.has(message.clientMessageId) ||
+                ("id" in message && props.unreadMessageIds.has(message.id))) &&
+                !props.markAsReadByClientIdPending.has(message.clientMessageId) &&
+                !("id" in message && props.markAsReadPending.has(message.id));
+
             if (props.isGroupChat && !sentByMe) {
                 senderDetails = props.usersDictionary.hasOwnProperty(message.sender)
                     ? props.usersDictionary[message.sender]
@@ -82,8 +90,9 @@ function MessagesFromSingleDay(props: Props) {
         }
 
         children.push(<MessageComponent
-            key={message.key}
-            id={message.key}
+            key={message.clientMessageId}
+            messageId={"id" in message ? message.id : null}
+            clientMessageId={message.clientMessageId}
             content={message.content}
             dateConfirmed={message.kind === "unconfirmed" ? null : message.date}
             sentByMe={sentByMe}

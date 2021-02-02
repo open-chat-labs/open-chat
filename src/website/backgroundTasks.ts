@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
 import * as chatFunctions from "./model/chats";
+import * as stateFunctions from "./utils/stateFunctions";
 import RecurringTaskRunner from "./utils/RecurringTaskRunner";
+import RtcConnectionHandler from "./webRtc/RtcConnectionHandler";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
@@ -18,7 +20,7 @@ import {
     APP_TITLE,
     MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS,
     PAGE_SIZE,
-    REFRESH_CHATS_INTERVAL_MS,
+    REFRESH_CHATS_INTERVAL_MS, REFRESH_P2P_CONNECTIONS_MS,
     UPDATE_USERS_INTERVAL_MS
 } from "./constants";
 
@@ -27,6 +29,8 @@ export function setupBackgroundTasks() {
 
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const usersState = useSelector((state: RootState) => state.usersState);
+    const selectedChat = stateFunctions.getSelectedChat(chatsState);
+    const selectedChatUsers = selectedChat ? chatFunctions.getUsers(selectedChat) : [];
 
     useEffect(() => {
         const count = chatFunctions.getUnreadChatCount(chatsState.chats);
@@ -104,4 +108,22 @@ export function setupBackgroundTasks() {
             return () => taskRunner.stop();
         }
     }, [userIdsCount, usersState.usersSyncedUpTo]);
+
+    // Each time the users in the selected chat change, attempt to make p2p connections to each user
+    useEffect(() => {
+        if (!selectedChat || !selectedChatUsers.length) {
+            return;
+        }
+        RtcConnectionHandler.setupMissingConnections(selectedChat);
+    }, [selectedChatUsers]);
+
+    // Poll for new p2p connection details at regular intervals, this could be responses to our connection offers or new
+    // offers from other users trying to establish a p2p connection with us
+    useEffect(() => {
+        if (!usersState.me?.userId) {
+            return;
+        }
+        const taskRunner = RecurringTaskRunner.startNew(RtcConnectionHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
+        return () => taskRunner.stop();
+    }, [usersState.me?.userId]);
 }

@@ -6,6 +6,12 @@
       "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
       "build": "./generate-wasm.sh chats"
     },
+    "p2p": {
+      "type": "custom",
+      "candid": "src/services/p2p/p2p.did",
+      "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
+      "build": "./generate-wasm.sh p2p"
+    },
     "user_mgmt": {
       "type": "custom",
       "candid": "src/services/user_mgmt/user_mgmt.did",
@@ -28,7 +34,7 @@
       "packtool": ""
     }
   },
-  "dfx": "0.6.18",
+  "dfx": "0.6.21",
   "networks": {
     "ic": {
       "providers": [

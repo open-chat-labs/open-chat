@@ -65,11 +65,17 @@ import {
     AddParticipantsRequestedEvent,
     AddParticipantsSucceededEvent
 } from "../actions/chats/addParticipants";
-import { MARK_MESSAGES_AS_READ, MarkMessagesAsReadEvent } from "../actions/chats/markMessagesAsRead";
+import {
+    MARK_MESSAGES_AS_READ,
+    MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
+    MarkMessagesAsReadByClientIdEvent,
+    MarkMessagesAsReadEvent
+} from "../actions/chats/markMessagesAsRead";
 import {
     MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED,
     MarkMessagesAsReadServerSyncSucceededEvent
 } from "../actions/chats/markMessagesAsReadServerSync";
+import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 
 export type ChatsState = {
     chats: Chat[],
@@ -101,7 +107,9 @@ type Event =
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
     MarkMessagesAsReadEvent |
+    MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadServerSyncSucceededEvent |
+    ReceiveP2PMessageEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -257,16 +265,30 @@ export default produce((state: ChatsState, event: Event) => {
         case MARK_MESSAGES_AS_READ: {
             const { chatId, messageIds } = event.payload;
             const [chat] = chatFunctions.getChatById(state.chats, chatId);
-            setFunctions.unionWith(chat.markAsReadPending, messageIds);
+            chatFunctions.markMessagesAsReadLocally(chat, messageIds);
+            break;
+        }
+
+        case MARK_MESSAGES_AS_READ_BY_CLIENT_ID: {
+            const { chatId, clientMessageIds } = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            chatFunctions.markMessagesAsReadByClientIdLocally(chat, clientMessageIds);
             break;
         }
 
         case MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED: {
             const { chatId, fromId, toId } = event.payload.request;
             const [chat] = chatFunctions.getChatById(state.chats, chatId);
-            for (let messageId = fromId; messageId <= toId; messageId++) {
-                setFunctions.remove(chat.markAsReadPending, messageId);
-                setFunctions.remove(chat.unreadMessageIds, messageId);
+            chatFunctions.markMessagesAsReadOnServer(chat, fromId, toId);
+            break;
+        }
+
+        case RECEIVE_P2P_MESSAGE: {
+            const { chatId, message } = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            // Chat may not exist locally yet
+            if (chat) {
+                chatFunctions.addP2PMessage(chat, message);
             }
             break;
         }

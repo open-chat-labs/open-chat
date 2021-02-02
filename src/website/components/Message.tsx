@@ -10,7 +10,8 @@ import TextContent from "./TextContent";
 import { toShortTimeString } from "../formatters/date";
 
 export type Props = {
-    id: string,
+    messageId: Option<number>,
+    clientMessageId: string,
     content: MessageContent,
     dateConfirmed: Option<Date>,
     sentByMe: boolean,
@@ -65,7 +66,7 @@ function Message(props : Props) {
     }
 
     return (
-        <div id={"message-" + props.id} className={className}>
+        <div id={props.clientMessageId} data-message-id={props.messageId} className={className}>
             {senderLink}
             {contentElement}
             <span className="message-time">{props.dateConfirmed ? toShortTimeString(props.dateConfirmed) : "..."}</span>

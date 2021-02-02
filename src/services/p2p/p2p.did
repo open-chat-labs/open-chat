@@ -1,0 +1,87 @@
+type UserId = principal;
+type Timestamp = nat64;
+
+type AddOfferRequest =
+    record {
+        id: text;
+        user_id: UserId;
+        connection_string: text;
+    };
+
+type AddOfferResponse =
+    variant {
+        Success: AddOfferResult;
+    };
+
+type CounterOffer =
+    record {
+        id: text;
+        connection_string: text;
+        age_seconds: nat32;
+    };
+
+type AddOfferResult =
+    record {
+        offer_added: bool;
+        existing_counter_offer: opt CounterOffer;
+    };
+
+type AddAnswerRequest =
+    record {
+        id: text;
+        offer_id: text;
+        user_id: UserId;
+        connection_string: text;
+    };
+
+type RemoveConnectionDetailsRequest =
+    record {
+        connections: vec RemoveSingleConnectionRequest;
+    };
+
+type RemoveSingleConnectionRequest =
+    record {
+        user_id: UserId;
+        id: text;
+    };
+
+type ConnectionDetails =
+    variant {
+        Offer: Offer;
+        Answer: Answer;
+    };
+
+type Offer =
+    record {
+        id: text;
+        user_id: UserId;
+        connection_string: text;
+        age_seconds: nat32;
+    };
+
+type Answer =
+    record {
+        id: text;
+        offer_id: text;
+        user_id: UserId;
+        connection_string: text;
+        age_seconds: nat32;
+    };
+
+type GetConnectionDetailsResponse =
+    variant {
+        Success: GetConnectionDetailsResult;
+    };
+
+type GetConnectionDetailsResult =
+    record {
+        connections: vec ConnectionDetails;
+        timestamp: Timestamp;
+    };
+
+service : {
+    add_offer: (AddOfferRequest) -> (AddOfferResponse);
+    add_answer: (AddAnswerRequest) -> ();
+    remove_connection_details: (RemoveConnectionDetailsRequest) -> (nat32);
+    get_connection_details: (opt Timestamp) -> (GetConnectionDetailsResponse) query;
+}
