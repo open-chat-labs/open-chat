@@ -117,6 +117,11 @@ export default produce((state: ChatsState, event: Event) => {
             if (event.payload === state.selectedChatIndex) {
                 return;
             }
+            const prevChat = state.selectedChatIndex != null ? state.chats[state.selectedChatIndex] : null;
+            if (prevChat) {
+                chatFunctions.saveDraftMessage(prevChat);
+            }
+
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
             if ("chatId" in chat && chat.latestConfirmedMessageId) {
@@ -125,6 +130,8 @@ export default produce((state: ChatsState, event: Event) => {
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
                 chatFunctions.queueMissingMessagesForDownload(chat);
             }
+
+            chatFunctions.restoreDraftMessage(chat);
             break;
         }
 

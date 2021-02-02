@@ -2,6 +2,7 @@
 - Error handling - in particular around canister calls
 - Ensure components return only required state from useSelector hook 
 - Split reducers into a handler per message
+- Use interfaces for core chat and message models
 - Tests
 
 # Features
@@ -16,17 +17,22 @@
   - About
   - Status
   - QR code (principal)
-- Emoticons
+- <del>Emoticons</del>
 - Authentication
 - Read receipts
 - Delete my account
 - Find contacts (phone number, email, ...)
 - Add contacts
-- Send images + caption
+- <del>Send images</del>
+- <del>Send videos</del>
+- Captions on images and video
+- Stream videos
+- Fully responsive to mobile devices
+- Dark-mode
 - Send cycles / tokens
 - Block contact
 - Draft/notes area 
-- Send video + caption
+- Peer 2 peer
 - User preferences
   - keep messages
   - keep transactional messages
@@ -46,10 +52,6 @@
 - Have auto-inc participant ids for group chat so that each message has this id rather than the large principal
 - Shard chats
 
-# Performance
-
-- Peer-to-peer
-
 # Questions
 
 - Authentication - how can we get to an MVP to be able to demo open-chat on IC?
@@ -57,4 +59,27 @@
 - Writing e2e tests - we want to be able to use the generated .js for canister endpoints but with the principal as a parameter
 - Serve assets like images over http from canister
 - Circumvent 2Mb limit so we can run FE code in development mode
-- 
+- How close are clocks on different canisters around the world?
+
+# Bugs
+- Emoji Picker categories don't seem to work until the the picker has been used (https://github.com/missive/emoji-mart/issues/473)
+- Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)
+- Also give each chat a client-generated uuid
+- The UI is not shrinking properly when there is a chat whose latest message is quite long
+- Cross-browser render issues in general
+- Validation - usernanme length, group name length, message length etc
+- Lots of places where long content is not overflowing/scrolling properly
+- Memory leak on client due to storing media blobs in main memory. We should make use of http cache. Would be good if we could serve images from canister over http
+
+# Micro-features
+- <del>Store draft message with each chat on client</del>
+- Support line-breaks in messages
+- Support bold italics etc in messages
+- Prompt text in message input box
+- Change name of group chat
+- UI support for creating chats (should be able to select from all users known to me)
+- Dropdown menu on each message
+  - Delete message
+  - Star message
+  - Reply to message
+  - Forward message
