@@ -237,11 +237,15 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
 
         removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
 
-        // We only add to markAsReadByClientIdPending if we don't yet know the messageId, so if this incoming message
-        // matches one in the pending queue, now that we know the messageId we can mark it as read on the server
-        if (setFunctions.remove(chat.markAsReadByClientIdPending, message.clientMessageId)) {
-            setFunctions.add(chat.markAsReadPending, message.id);
-            MarkAsReadHandler.markRead(chat.chatId, [message.id]);
+        if (setFunctions.remove(chat.unreadClientMessageIds, message.clientMessageId)) {
+            setFunctions.add(chat.unreadMessageIds, message.id);
+
+            // We only add to markAsReadByClientIdPending if we don't yet know the messageId, so if this incoming message
+            // matches one in the pending queue, now that we know the messageId we can mark it as read on the server
+            if (setFunctions.remove(chat.markAsReadByClientIdPending, message.clientMessageId)) {
+                setFunctions.add(chat.markAsReadPending, message.id);
+                MarkAsReadHandler.markRead(chat.chatId, [message.id]);
+            }
         }
 
         if (chat.updatedDate < message.date) {
