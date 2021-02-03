@@ -62,6 +62,9 @@ function MainHeader() {
 }
 
 function formatLastOnlineDate(minutesSinceLastOnline: number) : string {
+    if (isNaN(minutesSinceLastOnline)) {
+        return "";
+    }
     if (minutesSinceLastOnline < 2) {
         return "Online now";
     }

@@ -615,6 +615,7 @@ main footer {
     position: absolute;
     color: #cccccc; 
     background-color: transparent;
+    cursor: text;
 }
 
 span.emoji {
