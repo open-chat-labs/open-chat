@@ -5,13 +5,14 @@ import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import { ChatId, ConfirmedChat } from "../model/chats";
 import { Option } from "../model/common";
-import { LocalMessage, UnconfirmedMessage } from "../model/messages";
+import { Message, RemoteMessage } from "../model/messages";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import MessagesFromSingleDay from "./MessagesFromSingleDay";
-import UnreadMessagesHandler from "../services/UnreadMessagesHandler";
+import UnreadMessageDetector from "../utils/UnreadMessageDetector";
+import UnreadMessagesHandler from "../utils/UnreadMessagesHandler";
 
 export default React.memo(MessagesList);
 
@@ -28,16 +29,12 @@ function MessagesList() {
 
     const children: JSX.Element[] = [];
 
-    let unreadMessageIds = new Set<number>();
-    if (chatFunctions.isConfirmedChat(chat)) {
-        chat.unreadMessageIds.forEach(id => unreadMessageIds.add(id));
-        chat.markAsReadPending.forEach(id => unreadMessageIds.delete(id));
-    }
+    const unreadMessageDetector = new UnreadMessageDetector(chat);
 
     // Ignore remote messages
-    const messages = chat.messages.filter(m => m.kind !== "remote") as (LocalMessage | UnconfirmedMessage)[];
+    const messages = chat.messages.filter(m => m.kind !== "remote") as (Exclude<Message, RemoteMessage>)[];
 
-    let messagesFromSameDay: (LocalMessage | UnconfirmedMessage)[] = [];
+    let messagesFromSameDay: (Exclude<Message, RemoteMessage>)[] = [];
     let lastMessageDate: Option<Date> = null;
     for (const message of messages) {
         if (lastMessageDate && !areOnSameDay(lastMessageDate, message.date)) {
@@ -52,14 +49,14 @@ function MessagesList() {
         addDay(lastMessageDate!, messagesFromSameDay);
     }
 
-    function addDay(date: Date, messages: (LocalMessage | UnconfirmedMessage)[]) {
+    function addDay(date: Date, messages: Exclude<Message, RemoteMessage>[]) {
         children.push(<MessagesFromSingleDay
             key = {date.toDateString()}
             isGroupChat={isGroupChat}
             myUserId={myUserId}
             usersDictionary={usersDictionary}
-            messages={messagesFromSameDay}
-            unreadMessageIds={unreadMessageIds} />);
+            messages={messages}
+            unreadMessageDetector={unreadMessageDetector} />);
     }
 
     let className = "detail";
@@ -93,7 +90,7 @@ function MessagesList() {
     let hasUnreadMessages: boolean = false;
     if (chatFunctions.isConfirmedChat(chat)) {
         chatId = chat.chatId;
-        hasUnreadMessages = chat.unreadMessageIds.length > chat.markAsReadPending.length;
+        hasUnreadMessages = chatFunctions.getUnreadMessageCount(chat) > 0;
     }
 
     // Start a new UnreadMessagesHandler to mark messages as read once they have been visible for a certain duration

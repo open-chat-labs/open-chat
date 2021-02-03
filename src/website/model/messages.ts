@@ -1,7 +1,7 @@
 import { UserId } from "./users";
 import { Option } from "./common";
 
-export type Message = ConfirmedMessage | UnconfirmedMessage;
+export type Message = ConfirmedMessage | UnconfirmedMessage | P2PMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
 export type MessageContent = TextContent | MediaContent | FileContent;
 export type SendMessageContent = TextContent | SendMediaContent | SendFileContent;
@@ -9,7 +9,6 @@ export type SendMessageContent = TextContent | SendMediaContent | SendFileConten
 export type LocalMessage = {
     kind: "local",
     id: number,
-    key: string,
     clientMessageId: string,
     date: Date,
     sender: UserId,
@@ -23,9 +22,16 @@ export type RemoteMessage = {
 
 export type UnconfirmedMessage = {
     kind: "unconfirmed",
-    key: string,
     clientMessageId: string,
     date: Date,
+    content: MessageContent
+}
+
+export type P2PMessage = {
+    kind: "p2p",
+    clientMessageId: string,
+    date: Date,
+    sender: UserId,
     content: MessageContent
 }
 

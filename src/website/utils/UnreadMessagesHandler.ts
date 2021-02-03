@@ -1,8 +1,8 @@
 import store from "../store";
 import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
-import markMessagesAsRead from "../actions/chats/markMessagesAsRead";
-import RecurringTaskRunner from "../utils/RecurringTaskRunner";
+import { markMessagesAsRead, markMessagesAsReadByClientId } from "../actions/chats/markMessagesAsRead";
+import RecurringTaskRunner from "./RecurringTaskRunner";
 
 const INTERVAL_MS = 200;
 const COUNT_REQUIRED = 10;
@@ -13,7 +13,7 @@ export default class UnreadMessagesHandler {
     chatId: ChatId;
     stopped: boolean = false;
     timeout: Option<NodeJS.Timeout> = null;
-    messageIdToAppearanceCountMap: Map<number, number> = new Map<number, number>();
+    messageIdToAppearanceCountMap: Map<string, number> = new Map<string, number>();
     taskRunner: Option<RecurringTaskRunner> = null;
 
     constructor(chatId: ChatId) {
@@ -36,23 +36,31 @@ export default class UnreadMessagesHandler {
 
     runSingleIteration = () : Promise<void> => {
         const visibleUnreadMessages = this.getVisibleUnreadMessages();
-        const newMessageIdToAppearanceCountMap: Map<number, number> = new Map<number, number>();
+        const newMessageIdToAppearanceCountMap: Map<string, number> = new Map<string, number>();
         const messagesToMarkAsRead: number[] = [];
-        for (const messageId of visibleUnreadMessages) {
-            const prevCount = this.messageIdToAppearanceCountMap.get(messageId);
+        const messagesToMarkAsReadByClientId: string[] = [];
+        for (const { clientMessageId, messageId } of visibleUnreadMessages) {
+            const prevCount = this.messageIdToAppearanceCountMap.get(clientMessageId);
             if (prevCount) {
                 const count = prevCount + 1;
                 if (count >= COUNT_REQUIRED) {
-                    messagesToMarkAsRead.push(messageId);
+                    if (messageId) {
+                        messagesToMarkAsRead.push(messageId);
+                    } else {
+                        messagesToMarkAsReadByClientId.push(clientMessageId);
+                    }
                 } else {
-                    newMessageIdToAppearanceCountMap.set(messageId, count);
+                    newMessageIdToAppearanceCountMap.set(clientMessageId, count);
                 }
             } else {
-                newMessageIdToAppearanceCountMap.set(messageId, 1);
+                newMessageIdToAppearanceCountMap.set(clientMessageId, 1);
             }
         }
         if (messagesToMarkAsRead.length) {
             store.dispatch(markMessagesAsRead(this.chatId, messagesToMarkAsRead));
+        }
+        if (messagesToMarkAsReadByClientId.length) {
+            store.dispatch(markMessagesAsReadByClientId(this.chatId, messagesToMarkAsReadByClientId));
         }
 
         this.messageIdToAppearanceCountMap = newMessageIdToAppearanceCountMap;
@@ -60,9 +68,9 @@ export default class UnreadMessagesHandler {
         return Promise.resolve();
     }
 
-    getVisibleUnreadMessages = () : number[] => {
+    getVisibleUnreadMessages = () : UnreadMessage[] => {
         const messagesDiv = document.getElementById("messages");
-        const visibleUnreadMessageIds: number[] = [];
+        const visibleUnreadMessageIds: UnreadMessage[] = [];
 
         if (!messagesDiv) {
             return visibleUnreadMessageIds;
@@ -73,7 +81,6 @@ export default class UnreadMessagesHandler {
             return visibleUnreadMessageIds;
         }
 
-        const substringStart = "message-".length;
         const outerBox = messagesDiv.getBoundingClientRect();
         const min = outerBox.top - 10;
         const max = outerBox.bottom - 30;
@@ -83,8 +90,20 @@ export default class UnreadMessagesHandler {
             if (box.top < min || box.top > max) {
                 continue;
             }
-            visibleUnreadMessageIds.push(parseInt(element.id.substring(substringStart)));
+            const clientMessageId = element.id;
+            const messageIdAttr = element.getAttribute("data-message-id");
+            const messageId: Option<number> = messageIdAttr ? parseInt(messageIdAttr) : null;
+
+            visibleUnreadMessageIds.push({
+                clientMessageId,
+                messageId
+            });
         }
         return visibleUnreadMessageIds;
     }
+}
+
+type UnreadMessage = {
+    clientMessageId: string,
+    messageId: Option<number>
 }

@@ -79,6 +79,7 @@ export default produce((state: UsersState, event: Event) => {
             const { chats } = event.payload;
             const unknownUserIds = state.unknownUserIds;
             const userDictionary: any = state.userDictionary;
+            const myUserId = state.me!.userId;
 
             for (const chat of chats) {
                 if (chat.kind === CONFIRMED_DIRECT_CHAT) {
@@ -87,7 +88,7 @@ export default produce((state: UsersState, event: Event) => {
                     }
                 } else if (chat.kind === CONFIRMED_GROUP_CHAT) {
                     chat.participants.forEach((p: UserId) => {
-                        if (!userDictionary.hasOwnProperty(p)) {
+                        if (p !== myUserId && !userDictionary.hasOwnProperty(p)) {
                             setFunctions.add(unknownUserIds, p);
                         }
                     });

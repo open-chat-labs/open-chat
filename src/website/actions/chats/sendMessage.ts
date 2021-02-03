@@ -1,5 +1,5 @@
 import { Dispatch } from "react";
-import { v1 as uuidv1 } from 'uuid';
+import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
 import { Chat, ChatId } from "../../model/chats";
@@ -83,7 +83,6 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
                 kind: "local",
                 id: response.result.messageId,
                 clientMessageId,
-                key: response.result.messageId.toString(),
                 date: response.result.date,
                 sender: myUserId,
                 content

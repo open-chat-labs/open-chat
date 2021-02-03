@@ -1,9 +1,15 @@
-import { v1 as uuidv1 } from 'uuid';
-
 import { Option } from "./common";
-import { LocalMessage, Message, MessageContent, RemoteMessage, UnconfirmedMessage } from "./messages";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
+import MarkAsReadHandler from "../utils/MarkAsReadHandler";
+import {
+    LocalMessage,
+    Message,
+    MessageContent,
+    P2PMessage,
+    RemoteMessage,
+    UnconfirmedMessage
+} from "./messages";
 import {
     CONFIRMED_DIRECT_CHAT,
     CONFIRMED_GROUP_CHAT,
@@ -29,14 +35,20 @@ type ChatCommon = {
 type ConfirmedChatCommon = ChatCommon & {
     chatId: ChatId,
     updatedDate: Date,
-    unreadMessageIds: number[],
-    markAsReadPending: number[],
     messages: Message[],
     messagesToDownload: number[],
     messagesDownloading: number[],
     earliestConfirmedMessageId: Option<number>,
     latestConfirmedMessageId: Option<number>,
-    minimumUnconfirmedMessageIndex: number
+    minimumUnconfirmedMessageIndex: number,
+
+    // If the messageId is known, add to unreadMessageIds, otherwise add to unreadClientMessageIds, never add to both
+    unreadMessageIds: number[],
+    unreadClientMessageIds: string[],
+
+    // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
+    markAsReadPending: number[],
+    markAsReadByClientIdPending: string[],
 }
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
@@ -80,7 +92,9 @@ export const isConfirmedChat = (chat: Chat) : chat is ConfirmedChat => {
 }
 
 export const getUnreadMessageCount = (chat: Chat) : number => {
-    return isConfirmedChat(chat) ? chat.unreadMessageIds.length - chat.markAsReadPending.length : 0;
+    return isConfirmedChat(chat)
+        ? chat.unreadMessageIds.length + chat.unreadClientMessageIds.length - chat.markAsReadPending.length - chat.markAsReadByClientIdPending.length
+        : 0;
 }
 
 export const getUnreadChatCount = (chats: Chat[]) : number => {
@@ -93,8 +107,10 @@ export const getUnreadChatCount = (chats: Chat[]) : number => {
     return count;
 }
 
-export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, unreadMessageIds: number[] = [],
-                                       markAsReadPending: number[] = [], messages: Message[] = []) : ConfirmedDirectChat => {
+export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate: Date, messages: Message[] = [],
+                                       unreadMessageIds: number[] = [], unreadClientMessageIds: string[] = [],
+                                       markAsReadPending: number[] = [], markAsReadByClientIdPending: string[] = []) : ConfirmedDirectChat => {
+
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
@@ -104,7 +120,9 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         them,
         updatedDate,
         unreadMessageIds,
+        unreadClientMessageIds,
         markAsReadPending,
+        markAsReadByClientIdPending,
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
@@ -113,13 +131,14 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: "",
+        draftMessage: ""
     };
 }
 
 export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participants: UserId[], updatedDate: Date,
-                                      unreadMessageIds: number[] = [], markAsReadPending: number[] = [],
-                                      messages: Message[] = []) : ConfirmedGroupChat => {
+                                      messages: Message[] = [], unreadMessageIds: number[] = [], unreadClientMessageIds: string[] = [],
+                                      markAsReadPending: number[] = [], markAsReadByClientIdPending: string[] = []) : ConfirmedGroupChat => {
+
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
 
@@ -130,7 +149,9 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         participants,
         updatedDate,
         unreadMessageIds,
+        unreadClientMessageIds,
         markAsReadPending,
+        markAsReadByClientIdPending,
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
@@ -176,8 +197,7 @@ export const mergeUpdates = (currentChat: Exclude<Chat, UnconfirmedGroupChat>, u
         : currentChat;
 
     addMessages(chat, messages, isSelectedChat);
-    chat.unreadMessageIds = setFunctions.except(updatedChat.unreadMessageIds, chat.markAsReadPending);
-
+    chat.unreadMessageIds = updatedChat.unreadMessageIds;
     return chat;
 }
 
@@ -186,8 +206,6 @@ export const confirmDirectChat = (chat: UnconfirmedDirectChat, chatId: ChatId) :
         chatId,
         chat.them,
         DEFAULT_UPDATED_DATE,
-        [],
-        [],
         chat.messages);
 }
 
@@ -217,10 +235,15 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
         }
         chat.messages[messageIndex] = message;
 
-        const unconfirmedMessage = removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
-        if (unconfirmedMessage) {
-            message.key = unconfirmedMessage.key;
+        removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
+
+        // We only add to markAsReadByClientIdPending if we don't yet know the messageId, so if this incoming message
+        // matches one in the pending queue, now that we know the messageId we can mark it as read on the server
+        if (setFunctions.remove(chat.markAsReadByClientIdPending, message.clientMessageId)) {
+            setFunctions.add(chat.markAsReadPending, message.id);
+            MarkAsReadHandler.markRead(chat.chatId, [message.id]);
         }
+
         if (chat.updatedDate < message.date) {
             chat.updatedDate = message.date;
         }
@@ -232,7 +255,6 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
 export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, content: MessageContent) : void => {
     const message: UnconfirmedMessage = {
         kind: "unconfirmed",
-        key: clientMessageId,
         clientMessageId,
         date: new Date(),
         content
@@ -240,6 +262,11 @@ export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, conte
     chat.messages.push(message);
     chat.scrollBottom = 0;
     chat.scrollTop = null;
+}
+
+export const addP2PMessage = (chat: ConfirmedChat, message: P2PMessage) : void => {
+    chat.messages.push(message);
+    chat.unreadClientMessageIds.push(message.clientMessageId);
 }
 
 export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
@@ -400,11 +427,40 @@ export const restoreDraftMessage = (chat: Chat) => {
     textbox.innerHTML = chat.draftMessage;
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage> => {
+export const getUsers = (chat: Chat) : UserId[] => {
+    if (isDirectChat(chat)) {
+        return [chat.them];
+    }
+    if (isConfirmedChat(chat)) {
+        return chat.participants;
+    }
+    return chat.initialParticipants.concat(chat.pendingParticipants);
+}
+
+export const markMessagesAsReadLocally = (chat: ConfirmedChat, messageIds: number[]) : void => {
+    setFunctions.unionWith(chat.markAsReadPending, messageIds);
+    MarkAsReadHandler.markRead(chat.chatId, messageIds);
+}
+
+export const markMessagesAsReadByClientIdLocally = (chat: ConfirmedChat, clientMessageIds: string[]) : void => {
+    setFunctions.unionWith(chat.markAsReadByClientIdPending, clientMessageIds);
+}
+
+export const markMessagesAsReadOnServer = (chat: ConfirmedChat, fromId: number, toId: number) : void => {
+    for (let messageId = fromId; messageId <= toId; messageId++) {
+        const clientMessageId = getClientMessageId(chat.messages, messageId);
+        setFunctions.remove(chat.unreadMessageIds, messageId);
+        setFunctions.remove(chat.markAsReadPending, messageId);
+        setFunctions.remove(chat.unreadClientMessageIds, clientMessageId);
+        setFunctions.remove(chat.markAsReadByClientIdPending, clientMessageId);
+    }
+}
+
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage | P2PMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
-        if (message.kind !== "unconfirmed") {
+        if (message.kind !== "unconfirmed" && message.kind != "p2p") {
             chat.minimumUnconfirmedMessageIndex = index;
         } else if (message.clientMessageId === clientMessageId) {
             indexOfMatch = index;
@@ -416,7 +472,7 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: 
 }
 
 const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<number> => {
-    return messages.length && messages[0].kind !== "unconfirmed"
+    return messages.length && messages[0].kind !== "unconfirmed" && messages[0].kind !== "p2p"
         ? messages[0].id
         : null;
 }
@@ -424,7 +480,7 @@ const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<numbe
 const calculateLatestConfirmedMessageId = (messages: Message[]) : Option<number> => {
     for (let index = messages.length - 1; index >= 0; index--) {
         const message = messages[index];
-        if (message.kind !== "unconfirmed") {
+        if (message.kind !== "unconfirmed" && message.kind !== "p2p") {
             return message.id;
         }
     }
@@ -432,11 +488,17 @@ const calculateLatestConfirmedMessageId = (messages: Message[]) : Option<number>
 }
 
 const getMessageIndex = (messages: Message[], messageId: number) : number => {
-    const lowestMessageId = messages.length && messages[0].kind !== "unconfirmed"
+    const lowestMessageId = messages.length && messages[0].kind !== "unconfirmed" && messages[0].kind !== "p2p"
         ? messages[0].id
         : messageId;
 
     return messageId - lowestMessageId;
+}
+
+const getClientMessageId = (messages: Message[], messageId: number) : string => {
+    const index = getMessageIndex(messages, messageId);
+    const message = messages[index];
+    return message.kind === "remote" ? "" : message.clientMessageId;
 }
 
 const isScrolledToBottom = () : boolean => {

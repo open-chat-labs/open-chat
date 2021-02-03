@@ -66,9 +66,8 @@ function convertToDirectChat(value: any) : ConfirmedDirectChat {
         chatIdFromCandid(value.id),
         userIdFromCandid(value.them),
         timestampToDate(value.updated_date),
-        convertRangeSetToArray(value.unread_message_id_ranges),
-        [],
-        value.latest_messages.reverse().map(localMessageFromCandid));
+        value.latest_messages.reverse().map(localMessageFromCandid),
+        convertRangeSetToArray(value.unread_message_id_ranges));
 }
 
 function convertToGroupChat(value: any) : ConfirmedGroupChat {
@@ -77,9 +76,8 @@ function convertToGroupChat(value: any) : ConfirmedGroupChat {
         value.subject,
         value.participants.map(userIdFromCandid),
         timestampToDate(value.updated_date),
-        convertRangeSetToArray(value.unread_message_id_ranges),
-        [],
-        value.latest_messages.reverse().map(localMessageFromCandid));
+        value.latest_messages.reverse().map(localMessageFromCandid),
+        convertRangeSetToArray(value.unread_message_id_ranges));
 }
 
 function convertRangeSetToArray(rangeSet: number[][]) : number[] {

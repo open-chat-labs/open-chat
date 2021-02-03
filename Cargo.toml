@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "src/services/chats",
+    "src/services/p2p",
     "src/services/shared",
     "src/services/user_mgmt"
 ]
