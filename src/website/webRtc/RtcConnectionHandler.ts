@@ -1,4 +1,4 @@
-import { Chat, ConfirmedChat } from "../model/chats";
+import { ConfirmedChat } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
 import { MessageContent } from "../model/messages";
 import { p2pConnectionAnswer, p2pConnectionDetails, p2pConnectionOffer } from "../model/p2pConnectionDetails";
@@ -10,8 +10,7 @@ import p2pService from "../services/p2p/service";
 export class RtcConnectionHandler {
     lastUpdated: Option<Timestamp> = null;
 
-    public setupMissingConnections = async (chat: Chat) : Promise<void> => {
-        const users = chatFunctions.getUsers(chat);
+    public setupMissingConnections = async (users: UserId[]) : Promise<void> => {
         const promises: Promise<void>[] = [];
         for (const user of users) {
             if (!RtcConnectionsStore.exists(user)) {

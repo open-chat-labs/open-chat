@@ -19,7 +19,7 @@ class RtcConnectionsStore {
 
     public create(user: UserId) : RtcConnection {
         console.log("connection created for " + user);
-        const connection = new RtcConnection(user, this.handleReceivedMessage);
+        const connection = new RtcConnection(user, this.handleReceivedMessage, () => this.remove(user));
         this.connections.set(user, connection);
         return connection;
     }

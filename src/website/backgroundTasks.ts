@@ -3,7 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
+import { UserId, UserSummary } from "./model/users";
 import * as chatFunctions from "./model/chats";
+import * as setFunctions from "./utils/setFunctions";
 import * as stateFunctions from "./utils/stateFunctions";
 import RecurringTaskRunner from "./utils/RecurringTaskRunner";
 import RtcConnectionHandler from "./webRtc/RtcConnectionHandler";
@@ -31,10 +33,15 @@ export function setupBackgroundTasks() {
     const usersState = useSelector((state: RootState) => state.usersState);
     const selectedChat = stateFunctions.getSelectedChat(chatsState);
     const selectedChatUsers = selectedChat ? chatFunctions.getUsers(selectedChat) : [];
+    const usersOnline = (Object.values(usersState.userDictionary) as UserSummary[])
+        .filter(u => u.minutesSinceLastOnline < 2)
+        .map(u => u.userId);
+
+    const selectedChatUsersOnline = setFunctions.intersect(selectedChatUsers, usersOnline);
 
     useEffect(() => {
         const count = chatFunctions.getUnreadChatCount(chatsState.chats);
-        document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;;
+        document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;
     }, [chatsState.chats]);
 
     // If 'usersState.mustRegisterAsNewUser' is false, attempt to get details of the current user if not already known
@@ -111,11 +118,11 @@ export function setupBackgroundTasks() {
 
     // Each time the users in the selected chat change, attempt to make p2p connections to each user
     useEffect(() => {
-        if (!selectedChat || !selectedChatUsers.length) {
+        if (!selectedChat || !selectedChatUsersOnline.length) {
             return;
         }
-        RtcConnectionHandler.setupMissingConnections(selectedChat);
-    }, [selectedChatUsers]);
+        RtcConnectionHandler.setupMissingConnections(selectedChatUsersOnline);
+    }, [JSON.stringify(selectedChatUsersOnline)]);
 
     // Poll for new p2p connection details at regular intervals, this could be responses to our connection offers or new
     // offers from other users trying to establish a p2p connection with us

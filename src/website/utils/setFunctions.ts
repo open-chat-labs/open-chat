@@ -17,6 +17,20 @@ export function remove<T>(array: T[], item: T) : boolean {
     return true;
 }
 
+export function intersect<T>(left: T[], right: T[]) : T[] {
+    const clone = left.slice();
+    intersectWith(clone, right);
+    return clone;
+}
+
+export function intersectWith<T>(left: T[], right: T[]) : void {
+    for (let index = left.length - 1; index >= 0; index--) {
+        if (!right.includes(left[index])) {
+            left.splice(index, 1);
+        }
+    }
+}
+
 export function union<T>(left: T[], right: T[]) : T[] {
     const clone = left.slice();
     unionWith(clone, right);
@@ -34,10 +48,10 @@ export function except<T>(left: T[], right: T[]) : T[] {
 }
 
 export function exceptWith<T>(left: T[], right: T[]) : void {
-    right.forEach(x => {
+    for (const x of right) {
         const index = left.indexOf(x);
         if (index >= 0) {
             left.splice(index, 1);
         }
-    })
+    }
 }

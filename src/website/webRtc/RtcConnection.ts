@@ -11,7 +11,7 @@ export default class RtcConnection {
     offerId: Option<string> = null;
     answerId: Option<string> = null;
 
-    constructor(userId: UserId, onMessage: (message: string) => void) {
+    constructor(userId: UserId, onMessage: (message: string) => void, onDisconnected: () => void) {
         this.userId = userId;
         this.connection = new RTCPeerConnection();
         this.onMessage = onMessage;
