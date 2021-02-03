@@ -2,7 +2,7 @@ import store from "../store";
 import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
 import { markMessagesAsRead, markMessagesAsReadByClientId } from "../actions/chats/markMessagesAsRead";
-import RecurringTaskRunner from "../utils/RecurringTaskRunner";
+import RecurringTaskRunner from "./RecurringTaskRunner";
 
 const INTERVAL_MS = 200;
 const COUNT_REQUIRED = 10;

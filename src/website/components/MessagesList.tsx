@@ -11,7 +11,8 @@ import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import MessagesFromSingleDay from "./MessagesFromSingleDay";
-import UnreadMessagesHandler from "../services/UnreadMessagesHandler";
+import UnreadMessageDetector from "../utils/UnreadMessageDetector";
+import UnreadMessagesHandler from "../utils/UnreadMessagesHandler";
 
 export default React.memo(MessagesList);
 
@@ -28,16 +29,7 @@ function MessagesList() {
 
     const children: JSX.Element[] = [];
 
-    const unreadMessageIds = new Set<number>();
-    const unreadClientMessageIds = new Set<string>();
-    const markAsReadPending = new Set<number>();
-    const markAsReadByClientIdPending = new Set<string>();
-    if (chatFunctions.isConfirmedChat(chat)) {
-        chat.unreadMessageIds.forEach(id => unreadMessageIds.add(id));
-        chat.unreadClientMessageIds.forEach(id => unreadClientMessageIds.add(id));
-        chat.markAsReadPending.forEach(id => markAsReadPending.add(id));
-        chat.markAsReadByClientIdPending.forEach(id => markAsReadByClientIdPending.add(id));
-    }
+    const unreadMessageDetector = new UnreadMessageDetector(chat);
 
     // Ignore remote messages
     const messages = chat.messages.filter(m => m.kind !== "remote") as (Exclude<Message, RemoteMessage>)[];
@@ -64,10 +56,7 @@ function MessagesList() {
             myUserId={myUserId}
             usersDictionary={usersDictionary}
             messages={messages}
-            unreadMessageIds={unreadMessageIds}
-            unreadClientMessageIds={unreadClientMessageIds}
-            markAsReadPending={markAsReadPending}
-            markAsReadByClientIdPending={markAsReadByClientIdPending} />);
+            unreadMessageDetector={unreadMessageDetector} />);
     }
 
     let className = "detail";

@@ -1,7 +1,7 @@
 import { Option } from "./common";
 import { UserId } from "./users";
 import * as setFunctions from "../utils/setFunctions";
-import MarkAsReadHandler from "../services/MarkAsReadHandler";
+import MarkAsReadHandler from "../utils/MarkAsReadHandler";
 import {
     LocalMessage,
     Message,
@@ -197,6 +197,7 @@ export const mergeUpdates = (currentChat: Exclude<Chat, UnconfirmedGroupChat>, u
         : currentChat;
 
     addMessages(chat, messages, isSelectedChat);
+    chat.unreadMessageIds = updatedChat.unreadMessageIds;
     return chat;
 }
 
@@ -238,7 +239,8 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
 
         // We only add to markAsReadByClientIdPending if we don't yet know the messageId, so if this incoming message
         // matches one in the pending queue, now that we know the messageId we can mark it as read on the server
-        if (chat.markAsReadByClientIdPending.indexOf(message.clientMessageId) >= 0) {
+        if (setFunctions.remove(chat.markAsReadByClientIdPending, message.clientMessageId)) {
+            setFunctions.add(chat.markAsReadPending, message.id);
             MarkAsReadHandler.markRead(chat.chatId, [message.id]);
         }
 

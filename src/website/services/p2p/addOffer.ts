@@ -1,6 +1,6 @@
 import canister from "ic:canisters/p2p";
 import { Option } from "../../model/common";
-import { p2pConnectionOffer } from "../../model/p2pConnectionDetails";
+import { P2PConnectionOffer } from "../../model/p2pConnectionDetails";
 import { UserId } from "../../model/users";
 import { fromCandid as optionFromCandid } from "../candidConverters/option";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
@@ -17,7 +17,7 @@ export default async function(request: AddOfferRequest) : Promise<AddOfferRespon
     if (response.hasOwnProperty("Success")) {
         const result = response.Success;
         const candidCounterOffer: any = optionFromCandid(result.existing_counter_offer);
-        const counterOffer: Option<p2pConnectionOffer> = candidCounterOffer
+        const counterOffer: Option<P2PConnectionOffer> = candidCounterOffer
             ? {
                 kind: "offer",
                 id: candidCounterOffer.id,
@@ -49,5 +49,5 @@ export type AddOfferResponse =
 export type Success = {
     kind: "success",
     offerAdded: boolean,
-    existingCounterOffer: Option<p2pConnectionOffer>
+    existingCounterOffer: Option<P2PConnectionOffer>
 }
