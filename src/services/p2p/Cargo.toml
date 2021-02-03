@@ -11,7 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-ic-cdk = "0.2.0"
-ic-cdk-macros = "0.2.0"
+ic-cdk = "0.2.1"
+ic-cdk-macros = "0.2.1"
 serde = "1.0.111"
 shared = { path = "../shared", version = "0.1.0" }
