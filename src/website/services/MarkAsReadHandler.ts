@@ -4,7 +4,7 @@ import { Option } from "../model/common";
 import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadServerSync";
 
 const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();
-const SYNC_DELAY_MS = 10_000;
+const SYNC_DELAY_MS = 5_000;
 
 export default class MarkAsReadHandler {
     public static markRead(chatId: ChatId, messageIds: number[]) : void {

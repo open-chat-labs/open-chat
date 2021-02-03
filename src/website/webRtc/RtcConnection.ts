@@ -1,6 +1,6 @@
 import { v1 as uuidv1 } from "uuid";
 import { Option } from "../model/common";
-import { p2pConnectionAnswer, p2pConnectionOffer } from "../model/p2pConnectionDetails";
+import { P2PConnectionAnswer, P2PConnectionOffer } from "../model/p2pConnectionDetails";
 import { UserId } from "../model/users";
 
 export default class RtcConnection {
@@ -28,7 +28,7 @@ export default class RtcConnection {
         }
     }
 
-    public createOffer = async () : Promise<p2pConnectionOffer> => {
+    public createOffer = async () : Promise<P2PConnectionOffer> => {
         if (this.offerId) {
             throw new Error("Offer already set for connection");
         }
@@ -52,7 +52,7 @@ export default class RtcConnection {
         };
     }
 
-    public answerRemoteOffer = async (offer: p2pConnectionOffer) : Promise<p2pConnectionAnswer> => {
+    public answerRemoteOffer = async (offer: P2PConnectionOffer) : Promise<P2PConnectionAnswer> => {
         if (this.offerId) {
             throw new Error("Offer already set for connection");
         } else if (this.answerId) {
@@ -81,7 +81,7 @@ export default class RtcConnection {
         };
     }
 
-    public addRemoteAnswer = async (answer: p2pConnectionAnswer) : Promise<boolean> => {
+    public addRemoteAnswer = async (answer: P2PConnectionAnswer) : Promise<boolean> => {
         if (this.offerId !== answer.offerId) {
             return false;
         }

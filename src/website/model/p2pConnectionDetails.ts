@@ -1,8 +1,8 @@
 import { UserId } from "./users";
 
-export type p2pConnectionDetails = p2pConnectionOffer | p2pConnectionAnswer;
+export type P2PConnectionDetails = P2PConnectionOffer | P2PConnectionAnswer;
 
-export type p2pConnectionOffer = {
+export type P2PConnectionOffer = {
     kind: "offer",
     id: string,
     userId: UserId,
@@ -10,7 +10,7 @@ export type p2pConnectionOffer = {
     ageSeconds: number
 }
 
-export type p2pConnectionAnswer = {
+export type P2PConnectionAnswer = {
     kind: "answer",
     id: string,
     offerId: string,

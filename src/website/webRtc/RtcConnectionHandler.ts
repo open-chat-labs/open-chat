@@ -1,7 +1,7 @@
 import { ConfirmedChat } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
 import { MessageContent } from "../model/messages";
-import { p2pConnectionAnswer, p2pConnectionDetails, p2pConnectionOffer } from "../model/p2pConnectionDetails";
+import { P2PConnectionAnswer, P2PConnectionDetails, P2PConnectionOffer } from "../model/p2pConnectionDetails";
 import { UserId } from "../model/users";
 import * as chatFunctions from "../model/chats";
 import RtcConnectionsStore from "./RtcConnectionsStore";
@@ -63,7 +63,7 @@ export class RtcConnectionHandler {
         }
     }
 
-    handleRemoteConnectionDetails = async (connectionDetails: p2pConnectionDetails) : Promise<void> => {
+    handleRemoteConnectionDetails = async (connectionDetails: P2PConnectionDetails) : Promise<void> => {
         if (connectionDetails.kind === "offer") {
             await this.handleRemoteOffer(connectionDetails);
         } else {
@@ -71,7 +71,7 @@ export class RtcConnectionHandler {
         }
     }
 
-    handleRemoteOffer = async (offer: p2pConnectionOffer) : Promise<void> => {
+    handleRemoteOffer = async (offer: P2PConnectionOffer) : Promise<void> => {
         let rtcConnection = RtcConnectionsStore.get(offer.userId);
         if (rtcConnection) {
             if (rtcConnection.offerId === offer.id) {
@@ -89,7 +89,7 @@ export class RtcConnectionHandler {
         });
     }
 
-    handleRemoteAnswer = async (answer: p2pConnectionAnswer) : Promise<void> => {
+    handleRemoteAnswer = async (answer: P2PConnectionAnswer) : Promise<void> => {
         const rtcConnection = RtcConnectionsStore.get(answer.userId);
         if (rtcConnection) {
             await rtcConnection.addRemoteAnswer(answer);

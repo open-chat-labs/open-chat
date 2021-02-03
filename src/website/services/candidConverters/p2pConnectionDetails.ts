@@ -1,7 +1,7 @@
-import { p2pConnectionDetails } from "../../model/p2pConnectionDetails";
+import { P2PConnectionDetails } from "../../model/p2pConnectionDetails";
 import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 
-export function fromCandid(connectionDetails: any) : p2pConnectionDetails {
+export function fromCandid(connectionDetails: any) : P2PConnectionDetails {
     if (connectionDetails.hasOwnProperty("Offer")) {
         const offer = connectionDetails.Offer;
         return {
