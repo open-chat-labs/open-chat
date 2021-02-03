@@ -15,7 +15,13 @@ export default class RtcConnection {
         this.userId = userId;
         this.connection = new RTCPeerConnection();
         this.onMessage = onMessage;
-        this.connection.onconnectionstatechange = () => console.log("Connection state: " + this.connection.connectionState);
+        this.connection.onconnectionstatechange = () => {
+            if (this.connection.connectionState === "disconnected" ||
+                this.connection.connectionState === "closed" ||
+                this.connection.connectionState === "failed") {
+                onDisconnected();
+            }
+        }
         this.connection.ondatachannel = (e) => {
             this.configureDataChannel(e.channel);
             this.dataChannel = e.channel;
