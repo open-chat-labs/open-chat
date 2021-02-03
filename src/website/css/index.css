@@ -456,6 +456,7 @@ main header>div >div {
 .detail .day-container {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
 .message.me {
