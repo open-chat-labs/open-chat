@@ -122,7 +122,7 @@ export function setupBackgroundTasks() {
             return;
         }
         RtcConnectionHandler.setupMissingConnections(selectedChatUsersOnline);
-    }, [JSON.stringify(selectedChatUsersOnline)]);
+    }, [selectedChatUsersOnline.join()]);
 
     // Poll for new p2p connection details at regular intervals, this could be responses to our connection offers or new
     // offers from other users trying to establish a p2p connection with us
