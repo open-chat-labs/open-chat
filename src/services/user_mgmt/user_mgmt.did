@@ -13,7 +13,7 @@ type MyProfile =
     record {
         id: UserId;
         username: text;
-        account_balance: nat128;
+        account_balance: nat;
         version: nat32;
     };
 
