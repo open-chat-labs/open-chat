@@ -402,6 +402,11 @@ main header>div >div {
     border-radius: 2px;
 }
 
+.detail .them-typing,
+.detail .participants-typing {
+    font-size: 12px;
+}
+
 .message-time, .file-size {
     display: block;
     margin-top: 8px;

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
-import { ChatId, ConfirmedChat } from "../model/chats";
+import { ChatId, ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../model/chats";
 import { Option } from "../model/common";
 import { Message, RemoteMessage } from "../model/messages";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
@@ -11,6 +11,8 @@ import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import MessagesFromSingleDay from "./MessagesFromSingleDay";
+import ParticipantsTyping from "./ParticipantsTyping";
+import ThemTyping from "./ThemTyping";
 import UnreadMessageDetector from "../utils/UnreadMessageDetector";
 import UnreadMessagesHandler from "../utils/UnreadMessagesHandler";
 
@@ -25,6 +27,7 @@ function MessagesList() {
         return <div></div>;
     }
 
+    const isConfirmedChat = chatFunctions.isConfirmedChat(chat);
     const isGroupChat = chatFunctions.isGroupChat(chat);
 
     const children: JSX.Element[] = [];
@@ -62,6 +65,22 @@ function MessagesList() {
     let className = "detail";
     if (isGroupChat) {
         className += " group";
+
+        if (isConfirmedChat) {
+            const groupChat = chat as ConfirmedGroupChat;
+            if (groupChat.participantsTyping.length) {
+                const usernames = groupChat.participantsTyping
+                    .filter(p => usersDictionary.hasOwnProperty(p))
+                    .map(p => usersDictionary[p].username);
+
+                children.push(<ParticipantsTyping usernames={usernames} />);
+            }
+        }
+    } else if (isConfirmedChat) {
+        const directChat = chat as ConfirmedDirectChat;
+        if (directChat.themTyping) {
+            children.push(<ThemTyping />);
+        }
     }
 
     const dispatch = useDispatch();
