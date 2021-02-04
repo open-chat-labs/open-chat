@@ -17,6 +17,15 @@ pub struct User {
     joined: Timestamp,
     last_online: Timestamp,
     last_updated: Timestamp,
+    account_balance: u128,
+    version: u32
+}
+
+#[derive(CandidType)]
+pub struct MyProfile {
+    id: UserId,
+    username: String,
+    account_balance: u128,
     version: u32
 }
 
@@ -30,7 +39,7 @@ pub struct UserSummary {
 
 #[derive(CandidType)]
 pub enum RegisterUserResponse {
-    Success(UserSummary),
+    Success(MyProfile),
     UserExists,
     UsernameTaken
 }
@@ -54,14 +63,15 @@ impl UserStore {
             joined: now,
             last_online: now,
             last_updated: now,
+            account_balance: 10_000_000_000_000,
             version: 1
         };
 
-        let user_summary = UserSummary::new(&user, None);
+        let my_profile = MyProfile::new(&user);
 
         self.data.insert(user_id, username, user);
 
-        RegisterUserResponse::Success(user_summary)
+        RegisterUserResponse::Success(my_profile)
     }
 
     pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResponse {
@@ -97,9 +107,8 @@ impl UserStore {
         self.data.get_alt(username).map(|u| u.id.clone())
     }
 
-    // You can pass in now = None if you know that the user is online now
-    pub fn get_user(&self, user_id: &UserId, now: Option<Timestamp>) -> Option<UserSummary> {
-        self.data.get(user_id).map(|u| UserSummary::new(u, now))
+    pub fn get_my_profile(&self, user_id: &UserId) -> Option<MyProfile> {
+        self.data.get(user_id).map(|u| MyProfile::new(u))
     }
 
     pub fn get_users(&self, users: Vec<UserId>, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<UserSummary> {
@@ -135,6 +144,17 @@ impl StableState for UserStore {
 
         UserStore {
             data
+        }
+    }
+}
+
+impl MyProfile {
+    fn new(user: &User) -> MyProfile {
+        MyProfile {
+            id: user.id.clone(),
+            username: user.username.clone(),
+            account_balance: user.account_balance,
+            version: user.version
         }
     }
 }

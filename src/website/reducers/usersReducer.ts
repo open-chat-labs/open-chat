@@ -1,7 +1,7 @@
 import produce from "immer";
 
 import { Option, Timestamp } from "../model/common";
-import { UserId, UserSummary } from "../model/users";
+import { UserId, UserSummary, MyProfile } from "../model/users";
 import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 
@@ -58,7 +58,7 @@ export type Event =
 
 export type UsersState = {
     mustRegisterAsNewUser: boolean,
-    me: Option<UserSummary>,
+    me: Option<MyProfile>,
     unknownUserIds: UserId[],
     userDictionary: any,
     usersSyncedUpTo: Option<Timestamp>

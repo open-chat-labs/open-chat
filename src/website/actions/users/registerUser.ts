@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
 import userMgmtService from "../../services/userMgmt/service";
-import { UserSummary } from "../../model/users";
+import { MyProfile } from "../../model/users";
 
 export const REGISTER_USER_REQUESTED = "REGISTER_USER_REQUESTED";
 export const REGISTER_USER_SUCCEEDED = "REGISTER_USER_SUCCEEDED";
@@ -24,7 +24,7 @@ export default function(username: string) {
             case "success":
                 outcomeEvent = {
                     type: REGISTER_USER_SUCCEEDED,
-                    payload: result.userSummary
+                    payload: result.myProfile
                 } as  RegisterUserSucceededEvent;
                 break;
 
@@ -53,7 +53,7 @@ export type RegisterUserRequestedEvent = {
 
 export type RegisterUserSucceededEvent = {
     type: typeof REGISTER_USER_SUCCEEDED,
-    payload: UserSummary
+    payload: MyProfile
 }
 
 export type RegisterUserFailedUserExistsEvent = {

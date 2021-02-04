@@ -1,6 +1,6 @@
 import { Dispatch } from "react";
 
-import { UserSummary } from "../../model/users";
+import { MyProfile } from "../../model/users";
 import userMgmtService from "../../services/userMgmt/service";
 
 export const GET_CURRENT_USER_REQUESTED = "GET_CURRENT_USER_REQUESTED";
@@ -21,7 +21,7 @@ export default function() {
         if (result.kind === "success") {
             outcomeEvent = {
                 type: GET_CURRENT_USER_SUCCEEDED,
-                payload: result.userSummary
+                payload: result.myProfile
             } as GetCurrentUserSucceededEvent;
         } else {
             outcomeEvent = {
@@ -39,7 +39,7 @@ export type GetCurrentUserRequestedEvent = {
 
 export type GetCurrentUserSucceededEvent = {
     type: typeof GET_CURRENT_USER_SUCCEEDED,
-    payload: UserSummary
+    payload: MyProfile
 }
 
 export type GetCurrentUserFailedEvent = {

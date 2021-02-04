@@ -1,20 +1,20 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
-use crate::domain::user_store::{UserStore, UserSummary};
+use crate::domain::user_store::{UserStore, MyProfile};
 use self::Response::*;
 
 pub fn query() -> Response {
     let me = shared::user_id::get_current();
     let user_store: &UserStore = storage::get();
     
-    match user_store.get_user(&me, None) {
+    match user_store.get_my_profile(&me) {
         None => UserNotFound,
-        Some(user_summary) => Success(user_summary)
+        Some(my_profile) => Success(my_profile)
     }
 }
 
 #[derive(CandidType)]
 pub enum Response {
-    Success(UserSummary),
+    Success(MyProfile),
     UserNotFound
 }
