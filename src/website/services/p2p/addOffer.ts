@@ -9,7 +9,8 @@ export default async function(request: AddOfferRequest) : Promise<AddOfferRespon
     const canisterRequest = {
         id: request.id,
         user_id: userIdToCandid(request.userId),
-        connection_string: request.connectionString
+        connection_string: request.connectionString,
+        ice_candidates: request.iceCandidates
     };
 
     const response = await canister.add_offer(canisterRequest);
@@ -23,6 +24,7 @@ export default async function(request: AddOfferRequest) : Promise<AddOfferRespon
                 id: candidCounterOffer.id,
                 userId: request.userId,
                 connectionString: candidCounterOffer.connection_string,
+                iceCandidates: candidCounterOffer.ice_candidates,
                 ageSeconds: candidCounterOffer.age_seconds
             }
             : null;
@@ -40,7 +42,8 @@ export default async function(request: AddOfferRequest) : Promise<AddOfferRespon
 export type AddOfferRequest = {
     id: string,
     userId: UserId,
-    connectionString: string
+    connectionString: string,
+    iceCandidates: string[]
 }
 
 export type AddOfferResponse =

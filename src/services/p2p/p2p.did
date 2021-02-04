@@ -6,6 +6,7 @@ type AddOfferRequest =
         id: text;
         user_id: UserId;
         connection_string: text;
+        ice_candidates: vec text;
     };
 
 type AddOfferResponse =
@@ -17,6 +18,7 @@ type CounterOffer =
     record {
         id: text;
         connection_string: text;
+        ice_candidates: vec text;
         age_seconds: nat32;
     };
 
@@ -32,6 +34,7 @@ type AddAnswerRequest =
         offer_id: text;
         user_id: UserId;
         connection_string: text;
+        ice_candidates: vec text;
     };
 
 type RemoveConnectionDetailsRequest =
@@ -56,6 +59,7 @@ type Offer =
         id: text;
         user_id: UserId;
         connection_string: text;
+        ice_candidates: vec text;
         age_seconds: nat32;
     };
 
@@ -65,6 +69,7 @@ type Answer =
         offer_id: text;
         user_id: UserId;
         connection_string: text;
+        ice_candidates: vec text;
         age_seconds: nat32;
     };
 

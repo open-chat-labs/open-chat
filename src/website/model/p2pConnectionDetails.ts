@@ -7,6 +7,7 @@ export type P2PConnectionOffer = {
     id: string,
     userId: UserId,
     connectionString: string,
+    iceCandidates: string[],
     ageSeconds: number
 }
 
@@ -16,5 +17,6 @@ export type P2PConnectionAnswer = {
     offerId: string,
     userId: UserId,
     connectionString: string,
+    iceCandidates: string[],
     ageSeconds: number
 }

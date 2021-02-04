@@ -14,6 +14,7 @@ pub fn update(request: Request) {
         me,
         request.user_id,
         request.connection_string,
+        request.ice_candidates,
         now);
 }
 
@@ -22,5 +23,6 @@ pub struct Request {
     id: String,
     offer_id: String,
     user_id: UserId,
-    connection_string: String
+    connection_string: String,
+    ice_candidates: Vec<String>
 }

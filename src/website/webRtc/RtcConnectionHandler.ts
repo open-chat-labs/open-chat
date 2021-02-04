@@ -6,6 +6,7 @@ import { UserId } from "../model/users";
 import * as chatFunctions from "../model/chats";
 import RtcConnectionsStore from "./RtcConnectionsStore";
 import p2pService from "../services/p2p/service";
+import RtcConnection from "./RtcConnection";
 
 export class RtcConnectionHandler {
     lastUpdated: Option<Timestamp> = null;
@@ -48,19 +49,29 @@ export class RtcConnectionHandler {
         }
     }
 
-    createConnection = async (user: UserId) : Promise<void> => {
+    createConnection = async (user: UserId, onlyIfNotExists: boolean = true) : Promise<RtcConnection> => {
+        const oldConnection = RtcConnectionsStore.get(user);
+        if (oldConnection) {
+            if (onlyIfNotExists) {
+                return oldConnection;
+            }
+            RtcConnectionsStore.remove(user);
+        }
         const connection = RtcConnectionsStore.create(user);
 
         const offer = await connection.createOffer();
         const addOfferResponse = await p2pService.addOffer({
             id: offer.id,
             userId: offer.userId,
-            connectionString: offer.connectionString
+            connectionString: offer.connectionString,
+            iceCandidates: offer.iceCandidates
         });
 
         if (addOfferResponse.existingCounterOffer) {
             await this.handleRemoteOffer(addOfferResponse.existingCounterOffer);
         }
+
+        return connection;
     }
 
     handleRemoteConnectionDetails = async (connectionDetails: P2PConnectionDetails) : Promise<void> => {
@@ -85,7 +96,8 @@ export class RtcConnectionHandler {
             id: answer.id,
             offerId: answer.offerId,
             userId: answer.userId,
-            connectionString: answer.connectionString
+            connectionString: answer.connectionString,
+            iceCandidates: answer.iceCandidates
         });
     }
 
@@ -93,12 +105,6 @@ export class RtcConnectionHandler {
         const rtcConnection = RtcConnectionsStore.get(answer.userId);
         if (rtcConnection) {
             await rtcConnection.addRemoteAnswer(answer);
-            if (rtcConnection.connection.connectionState !== "connecting" && rtcConnection.connection.connectionState !== "connected") {
-                // Something went wrong, retry the connection
-                console.log("Retrying connection");
-                RtcConnectionsStore.remove(answer.userId);
-                await this.createConnection(answer.userId);
-            }
         }
     }
 }

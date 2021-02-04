@@ -7,7 +7,8 @@ export default async function(request: AddAnswerRequest) : Promise<AddAnswerResp
         id: request.id,
         offer_id: request.offerId,
         user_id: userIdToCandid(request.userId),
-        connection_string: request.connectionString
+        connection_string: request.connectionString,
+        ice_candidates: request.iceCandidates
     };
 
     await canister.add_answer(candidRequest);
@@ -21,7 +22,8 @@ export type AddAnswerRequest = {
     id: string,
     offerId: string,
     userId: UserId,
-    connectionString: string
+    connectionString: string,
+    iceCandidates: string[]
 }
 
 export type AddAnswerResponse =

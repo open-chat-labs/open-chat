@@ -21,6 +21,7 @@ pub struct Offer {
     from: UserId,
     to: UserId,
     connection_string: String,
+    ice_candidates: Vec<String>,
     timestamp: Timestamp
 }
 
@@ -31,6 +32,7 @@ pub struct Answer {
     from: UserId,
     to: UserId,
     connection_string: String,
+    ice_candidates: Vec<String>,
     timestamp: Timestamp
 }
 
@@ -45,6 +47,7 @@ pub struct OfferSummary {
     id: String,
     user_id: UserId,
     connection_string: String,
+    ice_candidates: Vec<String>,
     age_seconds: u32
 }
 
@@ -54,6 +57,7 @@ pub struct AnswerSummary {
     offer_id: String,
     user_id: UserId,
     connection_string: String,
+    ice_candidates: Vec<String>,
     age_seconds: u32
 }
 
@@ -61,11 +65,20 @@ pub struct AnswerSummary {
 pub struct CounterOffer {
     id: String,
     connection_string: String,
+    ice_candidates: Vec<String>,
     age_seconds: u32
 }
 
 impl AllConnectionDetails {
-    pub fn add_offer(&mut self, id: String, me: UserId, them: UserId, connection_string: String, now: Timestamp) -> Option<CounterOffer> {
+    pub fn add_offer(
+        &mut self,
+        id: String,
+        me: UserId,
+        them: UserId,
+        connection_string: String,
+        ice_candidates: Vec<String>,
+        now: Timestamp) -> Option<CounterOffer> {
+
         // If the reverse offer already exists, return that
         if let Occupied(e) = self.connection_details_per_user.entry(me.clone()) {
             if let Some(o) = e.get().iter().find_map(|c| match c {
@@ -75,20 +88,36 @@ impl AllConnectionDetails {
                 return Some(CounterOffer {
                     id: o.id.clone(),
                     connection_string: o.connection_string.clone(),
+                    ice_candidates: o.ice_candidates.to_vec(),
                     age_seconds: ((now - o.timestamp) / 1000) as u32
                 });
             }
         }
 
-        let offer = ConnectionDetails::new_offer(id, me.clone(), them.clone(), connection_string, now);
+        let offer = ConnectionDetails::new_offer(
+            id,
+            me.clone(),
+            them.clone(),
+            connection_string,
+            ice_candidates,
+            now);
 
         self.add_connection_details(me, them, offer);
 
         None
     }
 
-    pub fn add_answer(&mut self, id: String, offer_id: String, me: UserId, them: UserId, connection_string: String, now: Timestamp) {
-        let answer = ConnectionDetails::new_answer(id, offer_id, me.clone(), them.clone(), connection_string, now);
+    pub fn add_answer(
+        &mut self,
+        id: String,
+        offer_id: String,
+        me: UserId,
+        them: UserId,
+        connection_string: String,
+        ice_candidates: Vec<String>,
+        now: Timestamp) {
+
+        let answer = ConnectionDetails::new_answer(id, offer_id, me.clone(), them.clone(), connection_string, ice_candidates, now);
 
         self.add_connection_details(me, them, answer);
     }
@@ -134,23 +163,25 @@ impl AllConnectionDetails {
 }
 
 impl ConnectionDetails {
-    pub fn new_offer(id: String, from: UserId, to: UserId, connection_string: String, timestamp: Timestamp) -> ConnectionDetails {
+    pub fn new_offer(id: String, from: UserId, to: UserId, connection_string: String, ice_candidates: Vec<String>, timestamp: Timestamp) -> ConnectionDetails {
         ConnectionDetails::Offer(Offer {
             id,
             from,
             to,
             connection_string,
+            ice_candidates,
             timestamp
         })
     }
 
-    pub fn new_answer(id: String, offer_id: String, from: UserId, to: UserId, connection_string: String, timestamp: Timestamp) -> ConnectionDetails {
+    pub fn new_answer(id: String, offer_id: String, from: UserId, to: UserId, connection_string: String, ice_candidates: Vec<String>, timestamp: Timestamp) -> ConnectionDetails {
         ConnectionDetails::Answer(Answer {
             id,
             offer_id,
             from,
             to,
             connection_string,
+            ice_candidates,
             timestamp
         })
     }
@@ -185,6 +216,7 @@ impl ConnectionDetailsSummary {
                     id: o.id.clone(),
                     user_id: o.from.clone(),
                     connection_string: o.connection_string.clone(),
+                    ice_candidates: o.ice_candidates.to_vec(),
                     age_seconds: ((now - o.timestamp) / 1000) as u32
                 })
             },
@@ -194,6 +226,7 @@ impl ConnectionDetailsSummary {
                     offer_id: a.offer_id.clone(),
                     user_id: a.from.clone(),
                     connection_string: a.connection_string.clone(),
+                    ice_candidates: a.ice_candidates.to_vec(),
                     age_seconds: ((now - a.timestamp) / 1000) as u32
                 })
             }
