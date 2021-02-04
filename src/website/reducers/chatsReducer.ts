@@ -76,6 +76,12 @@ import {
     MarkMessagesAsReadServerSyncSucceededEvent
 } from "../actions/chats/markMessagesAsReadServerSync";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
+import {
+    TYPING_MESSAGE_STARTED_REMOTELY, TYPING_MESSAGE_STOPPED_REMOTELY,
+    TypingMessageStartedLocallyEvent,
+    TypingMessageStartedRemotelyEvent,
+    TypingMessageStoppedRemotelyEvent
+} from "../actions/chats/typingMessage";
 
 export type ChatsState = {
     chats: Chat[],
@@ -92,6 +98,9 @@ const initialState: ChatsState = {
 };
 
 type Event =
+    AddParticipantsRequestedEvent |
+    AddParticipantsSucceededEvent |
+    AddParticipantsFailedEvent |
     ChatSelectedEvent |
     CreateGroupChatRequestedEvent |
     CreateGroupChatSucceededEvent |
@@ -114,9 +123,10 @@ type Event =
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
     SetupNewDirectChatSucceededEvent |
-    AddParticipantsRequestedEvent |
-    AddParticipantsSucceededEvent |
-    AddParticipantsFailedEvent;
+    TypingMessageStartedLocallyEvent |
+    TypingMessageStartedRemotelyEvent |
+    TypingMessageStartedRemotelyEvent |
+    TypingMessageStoppedRemotelyEvent;
 
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
@@ -285,10 +295,12 @@ export default produce((state: ChatsState, event: Event) => {
 
         case RECEIVE_P2P_MESSAGE: {
             const { chatId, message } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+
             // Chat may not exist locally yet
             if (chat) {
                 chatFunctions.addP2PMessage(chat, message);
+                state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
             }
             break;
         }
@@ -329,6 +341,36 @@ export default produce((state: ChatsState, event: Event) => {
             const newChat = chatFunctions.newUnconfirmedDirectChat(userId);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
+            break;
+        }
+
+        case TYPING_MESSAGE_STARTED_REMOTELY: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+
+            // Chat may not exist locally yet
+            if (chat) {
+                if (chatFunctions.isDirectChat(chat)) {
+                    chat.themTyping = true;
+                } else {
+                    setFunctions.add(chat.participantsTyping, userId);
+                }
+            }
+            break;
+        }
+
+        case TYPING_MESSAGE_STOPPED_REMOTELY: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+
+            // Chat may not exist locally yet
+            if (chat) {
+                if (chatFunctions.isDirectChat(chat)) {
+                    chat.themTyping = false;
+                } else {
+                    setFunctions.remove(chat.participantsTyping, userId);
+                }
+            }
             break;
         }
 

@@ -33,6 +33,7 @@ export default class RtcConnection {
             this.configureDataChannel(e.channel);
             this.dataChannel = e.channel;
         }
+        console.log(`Creating connection to ${this.userId}`);
     }
 
     public createOffer = async () : Promise<P2PConnectionOffer> => {

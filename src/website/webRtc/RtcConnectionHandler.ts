@@ -1,9 +1,6 @@
-import { ConfirmedChat } from "../model/chats";
 import { Option, Timestamp } from "../model/common";
-import { MessageContent } from "../model/messages";
 import { P2PConnectionAnswer, P2PConnectionDetails, P2PConnectionOffer } from "../model/p2pConnectionDetails";
 import { UserId } from "../model/users";
-import * as chatFunctions from "../model/chats";
 import RtcConnectionsStore from "./RtcConnectionsStore";
 import p2pService from "../services/p2p/service";
 import RtcConnection from "./RtcConnection";
@@ -32,19 +29,11 @@ export class RtcConnectionHandler {
         }
     }
 
-    public sendMessage = (chat: ConfirmedChat, clientMessageId: string, content: MessageContent, myUserId: UserId) : void => {
-        const users = chatFunctions.getUsers(chat);
-        const p2pMessage = JSON.stringify({
-            chatId: chat.chatId,
-            sender: myUserId,
-            clientMessageId,
-            content
-        });
-
+    public sendMessage = (users: UserId[], data: string) : void => {
         for (const user of users) {
             const connection = RtcConnectionsStore.get(user);
             if (connection && connection.isConnected()) {
-                connection.sendMessage(p2pMessage);
+                connection.sendMessage(data);
             }
         }
     }
