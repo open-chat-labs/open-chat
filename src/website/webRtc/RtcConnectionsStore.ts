@@ -1,7 +1,7 @@
 import RtcConnection from "./RtcConnection";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
-import { handleMessage } from "./RtcMessageReceiver";
+import RtcMessageReceiver from "./RtcMessageReceiver";
 
 class RtcConnectionsStore {
     connections: Map<UserId, RtcConnection> = new Map<UserId, RtcConnection>();
@@ -15,7 +15,7 @@ class RtcConnectionsStore {
     }
 
     public create(user: UserId) : RtcConnection {
-        const connection = new RtcConnection(user, m => handleMessage(user, m), () => this.remove(user));
+        const connection = new RtcConnection(user, m => RtcMessageReceiver.handleMessage(user, m), () => this.remove(user));
         this.connections.set(user, connection);
         return connection;
     }

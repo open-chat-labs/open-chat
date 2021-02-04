@@ -16,7 +16,7 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
     switch (event.type) {
         case SEND_MESSAGE_REQUESTED: {
             const { chat, clientMessageId, content } = (event as SendMessageRequestedEvent).payload;
-            if (chatFunctions.isConfirmedChat(chat)) {
+            if (content.kind === "text" && chatFunctions.isConfirmedChat(chat)) {
                 const users = chatFunctions.getUsers(chat);
                 const p2pMessage = {
                     kind: SEND_MESSAGE_REQUESTED,
