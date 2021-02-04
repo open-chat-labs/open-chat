@@ -32,6 +32,20 @@ type UpdateUsernameResponse =
         UserNotFound;
     };
 
+type TransferCyclesRequest = 
+    record {
+        recipient: UserId;
+        amount: nat;
+    };
+
+type TransferCyclesResponse = 
+    variant {
+        Success: record {
+            new_balance: nat;
+        };
+        BalanceExceeded;
+    };
+
 type GetCurrentUserResponse =
     variant {
         Success: MyProfile;
@@ -62,6 +76,7 @@ service : {
     register_user: (text) -> (RegisterUserResponse);
     update_username: (text) -> (UpdateUsernameResponse);
     mark_as_online: () -> ();
+    transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
     get_current_user: () -> (GetCurrentUserResponse) query;
     get_user_id: (text) -> (GetUserIdResponse) query;
     get_users: (GetUsersRequest) -> (GetUsersResponse) query;

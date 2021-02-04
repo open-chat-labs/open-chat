@@ -52,6 +52,19 @@ pub enum UpdateUsernameResponse {
     UserNotFound
 }
 
+#[derive(CandidType)]
+pub enum TransferCyclesResponse {
+    Success(TransferCyclesResult),
+    UserNotFound,
+    RecipientNotFound,
+    BalanceExceeded
+}
+
+#[derive(CandidType)]
+pub struct TransferCyclesResult {
+    new_balance: u128
+}
+
 impl UserStore {
     pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResponse {
         if self.data.contains_key(&user_id) { return RegisterUserResponse::UserExists; }
@@ -122,6 +135,37 @@ impl UserStore {
             .filter(|u| if updated_since.is_some() { filter(u, updated_since.unwrap()) } else { true })
             .map(|u| UserSummary::new(u, Some(now)))
             .collect()
+    }
+
+    pub fn transfer_cycles(&mut self, my_id: &UserId, recipient_id: &UserId, amount: u128) -> TransferCyclesResponse {
+
+        let new_balance: u128;
+        {
+            let me = self.data.get_mut(my_id);
+            if me.is_none() {
+                return TransferCyclesResponse::UserNotFound;
+            }
+            let me = me.unwrap();
+
+            if me.account_balance < amount {
+                return TransferCyclesResponse::BalanceExceeded;
+            }
+
+            me.account_balance = me.account_balance - amount;
+            new_balance = me.account_balance;
+        }
+        
+        {
+            let recipient = self.data.get_mut(recipient_id);
+            if recipient.is_none() {
+                return TransferCyclesResponse::RecipientNotFound;
+            }
+            let recipient = recipient.unwrap();
+            
+            recipient.account_balance = recipient.account_balance + amount;
+        }
+
+        TransferCyclesResponse::Success(TransferCyclesResult { new_balance })
     }
 }
 
