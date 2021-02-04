@@ -88,10 +88,11 @@ function MessagesFromSingleDay(props: Props) {
             messageId={"id" in message ? message.id : null}
             clientMessageId={message.clientMessageId}
             content={message.content}
-            dateConfirmed={message.kind === "unconfirmed" ? null : message.date}
+            date={message.date}
             sentByMe={sentByMe}
             sender={senderDetails}
             unread={unread}
+            unconfirmed={message.kind === "unconfirmed"}
             groupPosition={groupPosition} />);
     }
 
