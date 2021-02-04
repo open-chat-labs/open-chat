@@ -1,7 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Option } from "../model/common";
+import * as chatFunctions from "../model/chats";
 import sendMessage from "../actions/chats/sendMessage";
+import { startedLocally as typingMessageStarted, stoppedLocally as typingMessageStopped } from "../actions/chats/typingMessage";
 import { getSelectedChat } from "../utils/stateFunctions";
 import SendButtonIcon from "../assets/icons/sendButton.svg";
 import AttachFile from "./AttachFile";
@@ -19,12 +21,17 @@ function MainFooter() {
         return <div></div>;
     }
 
+    const isTextBoxEmptyRef = useRef(true);
+
+    // After each render, set the isTextBoxEmptyRef value by checking the text box
+    useEffect(() => {
+        isTextBoxEmptyRef.current = isTextBoxEmpty();
+    });
+
     useEffect(() => {
         window.addEventListener("click", onWindowClick, false);
     
-        return () => {
-            window.removeEventListener("click", onWindowClick);
-        };
+        return () => window.removeEventListener("click", onWindowClick);
       }, []);    
 
     function handleBeforeInput(e: any) {
@@ -44,6 +51,19 @@ function MainFooter() {
         if (e.target.innerHTML.trim() =="<br>") {
             e.target.innerHTML = "";
         }
+
+        const isTextBoxEmptyLatest = isTextBoxEmpty();
+
+        if (chat && chatFunctions.isConfirmedChat(chat)) {
+            if (isTextBoxEmptyLatest != isTextBoxEmptyRef.current) {
+                if (isTextBoxEmptyLatest) {
+                    dispatch(typingMessageStopped(chat.chatId));
+                } else {
+                    dispatch(typingMessageStarted(chat.chatId));
+                }
+            }
+        }
+        isTextBoxEmptyRef.current = isTextBoxEmptyLatest;
     }
 
     function handleSendMessage() {
@@ -56,6 +76,7 @@ function MainFooter() {
 
         textbox.innerHTML = "";
         textbox.focus();
+        isTextBoxEmptyRef.current = true;
     }
 
     function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -178,6 +199,11 @@ function MainFooter() {
 
     function buildPlainSpan(text: string): string {
         return `<span>${text}</span>`;
+    }
+
+    function isTextBoxEmpty() : boolean {
+        const textbox = document.getElementById("textbox");
+        return (textbox?.textContent?.length ?? 0) === 0;
     }
 
     return (

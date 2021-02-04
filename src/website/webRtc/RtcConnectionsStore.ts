@@ -1,10 +1,7 @@
 import RtcConnection from "./RtcConnection";
-import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
-import { P2PMessage } from "../model/messages";
 import { UserId } from "../model/users";
-import store from "../store";
-import receiveP2PMessage from "../actions/chats/receiveP2PMessage";
+import { handleMessage } from "./RtcMessageReceiver";
 
 class RtcConnectionsStore {
     connections: Map<UserId, RtcConnection> = new Map<UserId, RtcConnection>();
@@ -18,7 +15,7 @@ class RtcConnectionsStore {
     }
 
     public create(user: UserId) : RtcConnection {
-        const connection = new RtcConnection(user, this.handleReceivedMessage, () => this.remove(user));
+        const connection = new RtcConnection(user, m => handleMessage(user, m), () => this.remove(user));
         this.connections.set(user, connection);
         return connection;
     }
@@ -31,20 +28,6 @@ class RtcConnectionsStore {
         connection.close();
         this.connections.delete(user);
         return true;
-    }
-
-    handleReceivedMessage = (message: string) : void => {
-        const p2pMessageRaw = JSON.parse(message);
-        const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
-        const p2pMessage: P2PMessage = {
-            kind: "p2p",
-            clientMessageId: p2pMessageRaw.clientMessageId,
-            date: new Date(),
-            sender: p2pMessageRaw.sender,
-            content: p2pMessageRaw.content
-        }
-
-        store.dispatch(receiveP2PMessage(chatId, p2pMessage))
     }
 }
 

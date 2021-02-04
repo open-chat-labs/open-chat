@@ -53,13 +53,15 @@ type ConfirmedChatCommon = ChatCommon & {
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
     kind: typeof CONFIRMED_DIRECT_CHAT,
-    them: UserId
+    them: UserId,
+    themTyping: boolean
 }
 
 export type ConfirmedGroupChat = ConfirmedChatCommon & {
     kind: typeof CONFIRMED_GROUP_CHAT,
     subject: string,
-    participants: UserId[]
+    participants: UserId[],
+    participantsTyping: UserId[]
 }
 
 type UnconfirmedChatCommon = ChatCommon & {
@@ -131,7 +133,8 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: ""
+        draftMessage: "",
+        themTyping: false
     };
 }
 
@@ -161,6 +164,7 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
+        participantsTyping: []
     };
 }
 
@@ -271,6 +275,7 @@ export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, conte
 export const addP2PMessage = (chat: ConfirmedChat, message: P2PMessage) : void => {
     chat.messages.push(message);
     chat.unreadClientMessageIds.push(message.clientMessageId);
+    chat.updatedDate = message.date;
 }
 
 export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
@@ -331,6 +336,10 @@ export const findChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => 
 
 export const getChatById = (chats: Chat[], chatId: ChatId) : [ConfirmedChat, number] => {
     return tryFindChat(chats, { chatId }) as [ConfirmedChat, number];
+}
+
+export const tryGetChatById = (chats: Chat[], chatId: ChatId) : [Option<ConfirmedChat>, number] => {
+    return tryFindChat(chats, { chatId }) as [Option<ConfirmedChat>, number];
 }
 
 export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
