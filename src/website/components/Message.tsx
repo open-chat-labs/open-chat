@@ -13,11 +13,12 @@ export type Props = {
     messageId: Option<number>,
     clientMessageId: string,
     content: MessageContent,
-    dateConfirmed: Option<Date>,
+    date: Date,
     sentByMe: boolean,
     sender: Option<UserSummary>,
     groupPosition: MessageGroupPosition
     unread: boolean,
+    unconfirmed: boolean
 }
 
 export default React.memo(Message);
@@ -40,6 +41,10 @@ function Message(props : Props) {
 
     if (props.unread) {
         className += " unread";
+    }
+
+    if (props.unconfirmed) {
+        className += " unconfirmed";
     }
 
     switch (props.groupPosition) {
@@ -69,7 +74,7 @@ function Message(props : Props) {
         <div id={props.clientMessageId} data-message-id={props.messageId} className={className}>
             {senderLink}
             {contentElement}
-            <span className="message-time">{props.dateConfirmed ? toShortTimeString(props.dateConfirmed) : "..."}</span>
+            <span className="message-time">{toShortTimeString(props.date)}</span>
         </div>
     );
 }
