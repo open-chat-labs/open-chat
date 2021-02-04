@@ -9,6 +9,7 @@ export function fromCandid(connectionDetails: any) : P2PConnectionDetails {
             id: offer.id,
             userId: userIdFromCandid(offer.user_id),
             connectionString: offer.connection_string,
+            iceCandidates: offer.ice_candidates,
             ageSeconds: offer.age_seconds
         };
     } else if (connectionDetails.hasOwnProperty("Answer")) {
@@ -19,6 +20,7 @@ export function fromCandid(connectionDetails: any) : P2PConnectionDetails {
             offerId: answer.offer_id,
             userId: userIdFromCandid(answer.user_id),
             connectionString: answer.connection_string,
+            iceCandidates: answer.ice_candidates,
             ageSeconds: answer.age_seconds
         };
     } else {

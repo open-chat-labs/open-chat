@@ -6,6 +6,7 @@ import { UserId } from "../model/users";
 export default class RtcConnection {
     userId: UserId;
     connection: RTCPeerConnection;
+    iceCandidates: RTCIceCandidate[] = [];
     onMessage: (message: string) => void;
     dataChannel: Option<RTCDataChannel> = null;
     offerId: Option<string> = null;
@@ -15,7 +16,13 @@ export default class RtcConnection {
         this.userId = userId;
         this.connection = new RTCPeerConnection();
         this.onMessage = onMessage;
+        this.connection.onicecandidate = (e) => {
+            if (e.candidate) {
+                this.iceCandidates.push(e.candidate);
+            }
+        }
         this.connection.onconnectionstatechange = () => {
+            console.log(`Connection to user: ${this.userId}. Connection state: ${this.connection.connectionState}`);
             if (this.connection.connectionState === "disconnected" ||
                 this.connection.connectionState === "closed" ||
                 this.connection.connectionState === "failed") {
@@ -47,7 +54,8 @@ export default class RtcConnection {
             kind: "offer",
             id: offerId,
             userId: this.userId,
-            connectionString: this.connection.localDescription!.sdp,
+            connectionString: offer.sdp!,
+            iceCandidates: this.iceCandidates.map(c => JSON.stringify(c)),
             ageSeconds: 0
         };
     }
@@ -63,6 +71,9 @@ export default class RtcConnection {
             sdp: offer.connectionString,
             type: "offer"
         });
+
+        offer.iceCandidates.forEach(c => this.connection.addIceCandidate(JSON.parse(c)));
+
         const answer = await this.connection.createAnswer();
         await this.connection.setLocalDescription(answer);
 
@@ -76,7 +87,8 @@ export default class RtcConnection {
             id: answerId,
             offerId: offer.id,
             userId: this.userId,
-            connectionString: this.connection.localDescription!.sdp,
+            connectionString: answer.sdp!,
+            iceCandidates: this.iceCandidates.map(c => JSON.stringify(c)),
             ageSeconds: 0
         };
     }
@@ -89,6 +101,8 @@ export default class RtcConnection {
             sdp: answer.connectionString,
             type: "answer"
         });
+
+        answer.iceCandidates.forEach(c => this.connection.addIceCandidate(JSON.parse(c)));
 
         this.answerId = answer.id;
         return true;
@@ -116,7 +130,7 @@ export default class RtcConnection {
             const timeout = setTimeout(() => resolve(null), 1000);
 
             // Listen for onicegatheringstatechange events and resolve the promise once the ice gathering is complete.
-            // The localdescription.sdp value will then contain all of the ICE candidates
+            // At this point this.iceCandidates will contain the complete set of ICE candidates.
             this.connection.addEventListener("onicegatheringstatechange", () => {
                 if (this.connection.iceGatheringState === "complete") {
                     clearTimeout(timeout);
