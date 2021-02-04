@@ -1,6 +1,6 @@
 import canister from "ic:canisters/user_mgmt";
-import { UserSummary } from "../../model/users";
-import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
+import { MyProfile } from "../../model/users";
+import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
 
 export default async function() : Promise<GetCurrentUserResponse> {
     let response = await canister.get_current_user();
@@ -9,7 +9,7 @@ export default async function() : Promise<GetCurrentUserResponse> {
         let success = response.Success;
         return {
             kind: "success",
-            userSummary: userSummaryFromCandid(success)
+            myProfile: myProfileFromCandid(success)
         };
     } else if (response.hasOwnProperty("UserNotFound")) {
         return {
@@ -26,7 +26,7 @@ export type GetCurrentUserResponse =
 
 export type Success = {
     kind: "success",
-    userSummary: UserSummary
+    myProfile: MyProfile
 }
 
 export type UserNotFound = {

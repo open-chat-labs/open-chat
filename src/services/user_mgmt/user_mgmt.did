@@ -9,9 +9,17 @@ type UserSummary =
         version: nat32;
     };
 
+type MyProfile = 
+    record {
+        id: UserId;
+        username: text;
+        account_balance: nat128;
+        version: nat32;
+    };
+
 type RegisterUserResponse =
     variant {
-        Success: UserSummary;
+        Success: MyProfile;
         UserExists;
         UsernameTaken;
     };
@@ -26,7 +34,7 @@ type UpdateUsernameResponse =
 
 type GetCurrentUserResponse =
     variant {
-        Success: UserSummary;
+        Success: MyProfile;
         UserNotFound;
     };
 

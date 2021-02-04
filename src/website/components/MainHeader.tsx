@@ -5,15 +5,14 @@ import { Option } from "../model/common";
 import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import { CONFIRMED_GROUP_CHAT } from "../constants";
-import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
-import { UserSummary } from "../model/users";
+import { MyProfile, UserSummary } from "../model/users";
 
 export default React.memo(MainHeader);
 
 function MainHeader() {
-    const me: Option<UserSummary> = useSelector((state: RootState) => state.usersState.me);
+    const me: Option<MyProfile> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
