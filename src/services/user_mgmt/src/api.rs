@@ -1,5 +1,5 @@
 use ic_cdk_macros::*;
-use crate::domain::user_store::{RegisterUserResponse, UpdateUsernameResponse};
+use crate::domain::user_store::{RegisterUserResponse, TransferCyclesResponse, UpdateUsernameResponse};
 use crate::queries::*;
 use crate::updates::*;
 
@@ -16,6 +16,11 @@ pub fn update_username(username: String) -> UpdateUsernameResponse {
 #[update]
 pub fn mark_as_online() {
     mark_as_online::update();
+}
+
+#[update]
+pub fn transfer_cycles(request: transfer_cycles::Request) -> TransferCyclesResponse {
+    transfer_cycles::update(request)
 }
 
 #[query]
