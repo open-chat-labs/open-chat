@@ -67,6 +67,7 @@
 # Bugs
 - Emoji Picker categories don't seem to work until the the picker has been used (https://github.com/missive/emoji-mart/issues/473)
 - <del>Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)</del>
+- Videos not working on Safari
 - The UI is not shrinking properly when there is a chat whose latest message is quite long
 - Cross-browser render issues in general
 - Validation - usernanme length, group name length, message length etc
