@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import gotoUser from "../actions/chats/gotoUser";
+import Tick from "../assets/icons/tick.svg";
 import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
@@ -75,6 +76,7 @@ function Message(props : Props) {
             {senderLink}
             {contentElement}
             <span className="message-time">{toShortTimeString(props.date)}</span>
+            {props.sentByMe && !props.unconfirmed ? <Tick className="tick-confirmed" /> : null}
         </div>
     );
 }

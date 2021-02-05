@@ -430,6 +430,14 @@ main header>div >div {
     color: #cccccc;
 }
 
+.tick-confirmed {
+    position: absolute;
+    height: 10px;
+    width: 10px;
+    right: -5px;
+    bottom: 9px;
+}
+
 .message a.participant {
     font-size: 13px;
     font-weight: bolder;
