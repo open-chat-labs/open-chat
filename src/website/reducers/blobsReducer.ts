@@ -64,7 +64,6 @@ export default produce((state: BlobsState, event: Event) => {
 }, initialState);
 
 function dataToBlobUrl(data: Uint8Array, type: string): string {
-    console.log(type);
     const blob = new Blob([data], { type });
     return URL.createObjectURL(blob);
 }
