@@ -30,7 +30,8 @@ function MediaContent(props : Props): JSX.Element {
         }
     } else if (!isDataDownloading) {
         dispatch(getData(
-            content.id, 
+            content.id,
+            content.mimeType,
             content.size, 
             content.chunkSize,
             true));

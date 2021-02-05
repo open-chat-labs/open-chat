@@ -6,13 +6,14 @@ export const PUT_DATA_REQUESTED = "PUT_DATA_REQUESTED";
 export const PUT_DATA_SUCCEEDED = "PUT_DATA_SUCCEEDED";
 export const PUT_DATA_FAILED = "PUT_DATA_FAILED";
 
-export default function(key: string, data: Uint8Array) {
+export default function(key: string, data: Uint8Array, mimeType: string) {
     return async (dispatch: Dispatch<any>) => {
         const requestEvent: PutDataRequestedEvent = {
             type: PUT_DATA_REQUESTED,
             payload: {
                 key,
-                data
+                data,
+                mimeType
             }
         };
 
@@ -26,7 +27,8 @@ export default function(key: string, data: Uint8Array) {
                 type: PUT_DATA_SUCCEEDED,
                 payload: {
                     key,
-                    data
+                    data,
+                    mimeType
                 }
             } as PutDataSucceededEvent;
         } else {
@@ -34,7 +36,8 @@ export default function(key: string, data: Uint8Array) {
                 type: PUT_DATA_FAILED,
                 payload: {
                     key,
-                    data
+                    data,
+                    mimeType
                 }
             } as PutDataFailedEvent;
         }
@@ -51,7 +54,8 @@ export type PutDataRequestedEvent = {
     type: typeof PUT_DATA_REQUESTED,
     payload: {
         key: string,
-        data: Uint8Array
+        data: Uint8Array,
+        mimeType: string
     }
 }
 
@@ -59,7 +63,8 @@ export type PutDataSucceededEvent = {
     type: typeof PUT_DATA_SUCCEEDED,
     payload: {
         key: string,
-        data: Uint8Array
+        data: Uint8Array,
+        mimeType: string
     }
 }
 
@@ -67,6 +72,7 @@ export type PutDataFailedEvent = {
     type: typeof PUT_DATA_FAILED,
     payload: {
         key: string,
-        data: Uint8Array
+        data: Uint8Array,
+        mimeType: string
     }
 }

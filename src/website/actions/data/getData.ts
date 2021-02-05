@@ -6,7 +6,7 @@ export const GET_DATA_REQUESTED = "GET_DATA_REQUESTED";
 export const GET_DATA_SUCCEEDED = "GET_DATA_SUCCEEDED";
 export const GET_DATA_FAILED = "GET_DATA_FAILED";
 
-export default function(key: string, totalBytes: number, chunkSize: number, cacheResult: boolean) {
+export default function(key: string, mimeType: string, totalBytes: number, chunkSize: number, cacheResult: boolean) {
     return async (dispatch: Dispatch<any>) => {
         const requestEvent: GetDataRequestedEvent = {
             type: GET_DATA_REQUESTED,
@@ -31,6 +31,7 @@ export default function(key: string, totalBytes: number, chunkSize: number, cach
                     totalBytes,
                     chunkSize,
                     data: response.data,
+                    mimeType: mimeType,
                     cacheResult
                 }
             } as GetDataSucceededEvent;
@@ -65,6 +66,7 @@ export type GetDataSucceededEvent = {
         totalBytes: number,
         chunkSize: number,
         data: Uint8Array,
+        mimeType: string,
         cacheResult: boolean
     }
 }

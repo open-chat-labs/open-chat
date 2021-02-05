@@ -48,8 +48,9 @@ function FileContent(props : Props): JSX.Element {
             downloading = true;
 
             const getDataAsync: () => Promise<GetDataOutcome> = () => dispatch(getData(
-                content.id, 
-                content.size, 
+                content.id,
+                content.mimeType,
+                content.size,
                 content.chunkSize,
                 false)) as any;	
 
