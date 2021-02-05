@@ -114,7 +114,10 @@ main {
     }
 }
 
-.date {
+.date,
+header .chat-summary .participants,
+header .chat-summary .them-typing,
+header .chat-summary .participants-typing {
     font-size: 12px;
     color: #808080;
 }
@@ -436,6 +439,7 @@ main header>div >div {
     width: 10px;
     right: -5px;
     bottom: 9px;
+    z-index: 100;
 }
 
 .message a.participant {

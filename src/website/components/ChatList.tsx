@@ -3,8 +3,8 @@ import { useSelector } from "react-redux";
 import { Option } from "../model/common";
 import { UserId } from "../model/users";
 import { RootState } from "../reducers";
-import { CONFIRMED_GROUP_CHAT } from "../constants";
 import * as chatFunctions from "../model/chats";
+import * as stateFunctions from "../utils/stateFunctions";
 import ChatListItem from "./ChatListItem";
 
 export default React.memo(ChatList);
@@ -19,17 +19,25 @@ function ChatList() {
         let key: string;
         let isGroup: boolean;
         let userId: Option<UserId>;
+        let themTyping: boolean = false;
+        let participantsTyping: string[] = [];
 
-        if ("them" in c) {
+        if (chatFunctions.isDirectChat(c)) {
             name = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
             key = "D-" + c.them.toString();
             isGroup = false;
             userId = c.them;
+            themTyping = chatFunctions.isConfirmedChat(c) && c.themTyping;
         } else {
             name = c.subject;
-            key = c.kind === CONFIRMED_GROUP_CHAT ? "G-" + c.chatId.toString() : key = "NG-" + c.subject;
             isGroup = true;
             userId = null;
+            if (chatFunctions.isConfirmedChat(c)) {
+                key = "G-" + c.chatId.toString();
+                participantsTyping = stateFunctions.getUsers(c.participantsTyping, userDictionary).map(u => u.username);
+            } else {
+                key = "NG-" + c.subject;
+            }
         }
 
         let latestMessageText = "";
@@ -60,7 +68,9 @@ function ChatList() {
                 latestMessage={latestMessageText}
                 isGroup={isGroup}
                 userId={userId}
-                unreadCount={chatFunctions.getUnreadMessageCount(c)} />
+                unreadCount={chatFunctions.getUnreadMessageCount(c)}
+                themTyping={themTyping}
+                participantsTyping={participantsTyping} />
         );
     });
 

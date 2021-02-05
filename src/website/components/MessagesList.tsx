@@ -65,22 +65,6 @@ function MessagesList() {
     let className = "detail";
     if (isGroupChat) {
         className += " group";
-
-        if (isConfirmedChat) {
-            const groupChat = chat as ConfirmedGroupChat;
-            if (groupChat.participantsTyping.length) {
-                const usernames = groupChat.participantsTyping
-                    .filter(p => usersDictionary.hasOwnProperty(p))
-                    .map(p => usersDictionary[p].username);
-
-                children.push(<ParticipantsTyping usernames={usernames} />);
-            }
-        }
-    } else if (isConfirmedChat) {
-        const directChat = chat as ConfirmedDirectChat;
-        if (directChat.themTyping) {
-            children.push(<ThemTyping />);
-        }
     }
 
     const dispatch = useDispatch();
