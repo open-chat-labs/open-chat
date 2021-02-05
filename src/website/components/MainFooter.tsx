@@ -4,18 +4,25 @@ import { Option } from "../model/common";
 import * as chatFunctions from "../model/chats";
 import sendMessage from "../actions/chats/sendMessage";
 import { startedLocally as typingMessageStarted, stoppedLocally as typingMessageStopped } from "../actions/chats/typingMessage";
-import { getSelectedChat } from "../utils/stateFunctions";
+import { getSelectedChat, getUserSummary } from "../utils/stateFunctions";
 import SendButtonIcon from "../assets/icons/sendButton.svg";
 import AttachFile from "./AttachFile";
 import { RootState } from "../reducers";
 import EmojiPicker from "./EmojiPicker";
 import { buildEmojiSpan, containsEmoji } from "../model/messages";
+import SendCycles from "./SendCycles";
 
 export default React.memo(MainFooter);
 
 function MainFooter() {
     const dispatch = useDispatch();
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+
+    const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
+        ? getUserSummary(state.usersState, chat.them) 
+        : null);
+
+    const me = useSelector((state: RootState) => state.usersState.me)!;
 
     if (chat === null) {
         return <div></div>;
@@ -48,7 +55,7 @@ function MainFooter() {
     }
 
     function handleInput(e: any) {
-        if (e.target.innerHTML.trim() =="<br>") {
+        if (e.target.innerHTML.trim() == "<br>") {
             e.target.innerHTML = "";
         }
 
@@ -112,7 +119,7 @@ function MainFooter() {
         // not clear the textbox selection
         if (!(e.target instanceof Element) || !e.target.matches(".enter-message, .enter-message *")) {
             clearSelection();
-        } 
+        }
     }
 
     function restoreSelection() {
@@ -146,11 +153,11 @@ function MainFooter() {
 
         // Markup the text so it will appear correctly in the textbox
         text = markupNewTextForTextBox(text);
-        
+
         // Manually insert marked-up text
         document.execCommand("insertHTML", false, text);
     }
-    
+
     function markupNewTextForTextBox(text: string): string {
         // If the selection is inside an "emoji span" then ensure that any initial non-emoji characters 
         // are inside their own "plain span" to split them out
@@ -175,8 +182,8 @@ function MainFooter() {
             } else {
                 markup += c;
             }
-        }      
-        
+        }
+
         if (insideEmojiSpan && !foundEmoji && textForPlainSpan.length > 0) {
             markup = buildPlainSpan(textForPlainSpan);
         }
@@ -193,7 +200,7 @@ function MainFooter() {
         const parent = range.commonAncestorContainer as Element;
         const grandParent = parent.parentElement as Element;
 
-        return (parent.nodeName == "SPAN" && parent.classList.contains("emoji")) 
+        return (parent.nodeName == "SPAN" && parent.classList.contains("emoji"))
             || (parent.nodeName == "#text" && (grandParent.nodeName == "SPAN" && grandParent.classList.contains("emoji")));
     }
 
@@ -209,22 +216,28 @@ function MainFooter() {
     return (
         <footer className="enter-message">
             <div className="buttons">
-                <EmojiPicker 
-                    onEmojiSelected={insertEmojiAtCaret} 
+                <EmojiPicker
+                    onEmojiSelected={insertEmojiAtCaret}
                     onHidePicker={restoreSelection} />
-                <AttachFile chat={chat} />
+                <AttachFile 
+                    chat={chat} />
+                {them ? <SendCycles 
+                    chat={chat}
+                    myProfile={me}
+                    recipient={them} 
+                    onHidePicker={restoreSelection} /> : null}
             </div>
             <div className="message-input-container">
-                <div 
-                    id="textbox" 
-                    className="message-input" 
+                <div
+                    id="textbox"
+                    className="message-input"
                     placeholder="Type a message"
                     onBeforeInput={handleBeforeInput}
                     onInput={handleInput}
                     onPaste={pastePlainText}
                     onKeyDown={handleKeyPress}
                     onBlur={saveSelection}
-                    contentEditable={true} 
+                    contentEditable={true}
                     spellCheck="true"></div>
             </div>
             <button onClick={handleSendMessage} className="send">

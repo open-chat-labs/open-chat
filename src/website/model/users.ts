@@ -3,7 +3,7 @@ export type UserId = string;
 export type MyProfile = {
     userId: UserId,
     username: string,
-    accountBalance: BigInt,
+    accountBalance: bigint,
     version: number
 }
 

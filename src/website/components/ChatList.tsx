@@ -6,6 +6,8 @@ import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
 import * as stateFunctions from "../utils/stateFunctions";
 import ChatListItem from "./ChatListItem";
+import { CyclesContent, MediaContent } from "../model/messages";
+import * as cycleFunctions from "../utils/cycleFunctions";
 
 export default React.memo(ChatList);
 
@@ -48,9 +50,11 @@ function ChatList() {
                 if (content.kind === "text") {
                     latestMessageText = content.text;
                 } else if (content.kind === "media") {
-                    latestMessageText = content.caption ?? getMimeTypeDisplayName(content.mimeType);
+                    latestMessageText = buildTextForMediaContent(content);
                 } else if (content.kind === "file") {
                     latestMessageText = content.name;
+                } else if (content.kind === "cycles") {
+                    latestMessageText = buildTextForCyclesContent(content);
                 } else {
                     throw new Error("Unrecognised content type - " + (content as any).kind);
                 }
@@ -81,7 +85,12 @@ function ChatList() {
     );
 }
 
-function getMimeTypeDisplayName(mimeType: string) : string {
+function buildTextForMediaContent(content: MediaContent) : string {
+    if (content.caption)
+        return content.caption;
+
+    const mimeType = content.mimeType;
+
     const mimeTypeLower = mimeType.toLowerCase();
     if (mimeTypeLower.startsWith("video/")) {
         return "video";
@@ -90,4 +99,14 @@ function getMimeTypeDisplayName(mimeType: string) : string {
     } else {
         return "file";
     }
+}
+
+function buildTextForCyclesContent(content: CyclesContent) : string {
+    if (content.caption)
+        return content.caption;
+
+    const cycles = cycleFunctions.toT(content.amount);
+    const pounds = cycleFunctions.toCurrency(content.amount, "GBP").toFixed(2);
+
+    return `${cycles} T (£${pounds})`;
 }

@@ -43,6 +43,8 @@ type TransferCyclesResponse =
         Success: record {
             new_balance: nat;
         };
+        UserNotFound;
+        RecipientNotFound;
         BalanceExceeded;
     };
 

@@ -469,7 +469,7 @@ export const markMessagesAsReadOnServer = (chat: ConfirmedChat, fromId: number, 
     }
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage | P2PMessage> => {
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : boolean => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
@@ -478,10 +478,10 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: 
         } else if (message.clientMessageId === clientMessageId) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
-            return message;
+            return true;
         }
     }
-    return null;
+    return false;
 }
 
 const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<number> => {

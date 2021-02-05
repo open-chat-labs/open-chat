@@ -37,11 +37,18 @@ type FileContent =
         chunk_size: nat32;
     };
 
+type CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
         Media: MediaContent;
         File: FileContent;
+        Cycles: CyclesContent;
     };
 
 type SendDirectMessageResult =
@@ -54,6 +61,9 @@ type SendDirectMessageResult =
 type SendDirectMessageResponse =
     variant {
         Success: SendDirectMessageResult;
+        UserNotFound;
+        RecipientNotFound;
+        BalanceExceeded;
     };
 
 type SendMessageResult =

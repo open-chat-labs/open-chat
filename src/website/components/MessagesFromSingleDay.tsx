@@ -14,6 +14,7 @@ const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 type Props = {
     isGroupChat: boolean,
     myUserId: UserId,
+    theirUserId: Option<UserId>,
     usersDictionary: any,
     messages: (Exclude<Message, RemoteMessage>)[],
     unreadMessageDetector: UnreadMessageDetector
@@ -70,6 +71,10 @@ function MessagesFromSingleDay(props: Props) {
             }
         }
 
+        const theirUserName = props.theirUserId && props.usersDictionary.hasOwnProperty(props.theirUserId) 
+            ? props.usersDictionary[props.theirUserId].username
+            : null;
+
         // Determine whether the message should be grouped with others and if so whether it is
         // at the top, middle, or bottom of the group
         const groupWithPrevious = messagesToGroup[i];
@@ -91,6 +96,7 @@ function MessagesFromSingleDay(props: Props) {
             date={message.date}
             sentByMe={sentByMe}
             sender={senderDetails}
+            theirUsername={theirUserName}
             unread={unread}
             unconfirmed={message.kind === "unconfirmed"}
             groupPosition={groupPosition} />);

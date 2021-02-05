@@ -55,10 +55,17 @@ pub struct FileContent {
 }
 
 #[derive(CandidType, Deserialize, Clone)]
+pub struct CycleContent {
+    amount: u128,
+    caption: Option<String>
+}
+
+#[derive(CandidType, Deserialize, Clone)]
 pub enum MessageContent {
     Text(TextContent),
     Media(MediaContent),
     File(FileContent),
+    Cycles(CycleContent),
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -165,5 +172,11 @@ impl From<ChatEnum> for ChatStableState {
             ChatEnum::Direct(c) => ChatStableState::Direct(c.into()),
             ChatEnum::Group(c) => ChatStableState::Group(c.into())
         }
+    }
+}
+
+impl CycleContent {
+    pub fn get_amount(&self) -> u128 {
+        self.amount
     }
 }

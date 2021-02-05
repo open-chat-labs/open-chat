@@ -3,8 +3,8 @@ import { Option } from "./common";
 
 export type Message = ConfirmedMessage | UnconfirmedMessage | P2PMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
-export type MessageContent = TextContent | MediaContent | FileContent;
-export type SendMessageContent = TextContent | SendMediaContent | SendFileContent;
+export type MessageContent = TextContent | MediaContent | FileContent | CyclesContent;
+export type SendMessageContent = TextContent | SendMediaContent | SendFileContent | CyclesContent;
 
 export type LocalMessage = {
     kind: "local",
@@ -44,7 +44,7 @@ export type MediaContent = {
     kind: "media",
     id: string,
     size: number,
-    caption: Option<string>;
+    caption: Option<string>,
     mimeType: string,
     chunkSize: number,
 }
@@ -56,6 +56,12 @@ export type FileContent = {
     name: string;
     mimeType: string,
     chunkSize: number,
+}
+
+export type CyclesContent = {
+    kind: "cycles",
+    amount: bigint,
+    caption: Option<string>
 }
 
 export type SendMediaContent = {

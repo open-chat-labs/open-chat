@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
 import * as chatFunctions from "../model/chats";
-import { ChatId, ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../model/chats";
+import { ChatId, ConfirmedChat } from "../model/chats";
 import { Option } from "../model/common";
 import { Message, RemoteMessage } from "../model/messages";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
@@ -11,10 +11,9 @@ import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import MessagesFromSingleDay from "./MessagesFromSingleDay";
-import ParticipantsTyping from "./ParticipantsTyping";
-import ThemTyping from "./ThemTyping";
 import UnreadMessageDetector from "../utils/UnreadMessageDetector";
 import UnreadMessagesHandler from "../utils/UnreadMessagesHandler";
+import { UserId } from "../model/users";
 
 export default React.memo(MessagesList);
 
@@ -29,6 +28,7 @@ function MessagesList() {
 
     const isConfirmedChat = chatFunctions.isConfirmedChat(chat);
     const isGroupChat = chatFunctions.isGroupChat(chat);
+    const theirUserId: Option<UserId> = chatFunctions.isDirectChat(chat) ? chat.them : null;
 
     const children: JSX.Element[] = [];
 
@@ -57,6 +57,7 @@ function MessagesList() {
             key = {date.toDateString()}
             isGroupChat={isGroupChat}
             myUserId={myUserId}
+            theirUserId={theirUserId}
             usersDictionary={usersDictionary}
             messages={messages}
             unreadMessageDetector={unreadMessageDetector} />);
