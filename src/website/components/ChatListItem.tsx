@@ -35,7 +35,7 @@ function ChatListItem(props: Props) {
 
     let snippet: JSX.Element;
     if (props.themTyping) {
-        snippet = <ThemTyping/>;
+        snippet = <ThemTyping />;
     } else if (props.participantsTyping.length) {
         snippet = <ParticipantsTyping usernames={props.participantsTyping} />
     } else {
