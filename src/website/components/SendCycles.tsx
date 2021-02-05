@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import sendMessage from "../actions/chats/sendMessage";
 import getCurrentUser from "../actions/users/getCurrentUser";
 import Dollar from "../assets/icons/dollar.svg";
+import { formatCycles } from "../formatters/cycles";
 import { Chat } from "../model/chats";
 import { SendMessageContent } from "../model/messages";
 import { MyProfile, UserSummary } from "../model/users";
@@ -42,18 +43,12 @@ function SendCycles(props: Props) {
         clearInput();
     }
 
-    function formatBalance() : string {
-        const cycles = cycleFunctions.toT(props.myProfile.accountBalance);
-        const pounds = cycleFunctions.toCurrency(props.myProfile.accountBalance, "GBP").toFixed(2);
-        return `${cycles} T (£${pounds})`;
-    }
-
     return (
         <div className="send-cycles-container">
             <div id="sendCyclesDialog" className="send-cycles-dialog hide-on-click-outside hide">
                 <div>
                     <h2>Send cycles to {props.recipient.username}</h2>
-                    <p>Current balance: {formatBalance()}</p>
+                    <p>Current balance: {formatCycles(props.myProfile.accountBalance)}</p>
                     <div>
                         <input 
                             id="cyclesInput" 
