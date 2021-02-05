@@ -32,7 +32,7 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         // Start uploading the media data
         let uploadContentTask: Option<Promise<PutDataOutcome>> = null;
         if ("id" in content && "data" in sendMessageContent) {
-            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.id, sendMessageContent.data)) as any;	
+            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.id, sendMessageContent.data, sendMessageContent.mimeType)) as any;
             uploadContentTask = putDataAsync();
         }
 
