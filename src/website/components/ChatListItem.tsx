@@ -7,7 +7,9 @@ import { Option } from "../model/common";
 import { UserId } from "../model/users";
 import { toDateString, toDayOfWeekString, toShortTimeString } from "../formatters/date";
 import * as dateFunctions from "../utils/dateFunctions";
+import ParticipantsTyping from "./ParticipantsTyping";
 import TextContent from "./TextContent";
+import ThemTyping from "./ThemTyping";
 
 type Props = {
     name: string,
@@ -17,7 +19,9 @@ type Props = {
     latestMessage: string,
     isGroup: boolean,
     userId: Option<UserId>,
-    unreadCount: number
+    unreadCount: number,
+    themTyping: boolean,
+    participantsTyping: string[]
 }
 
 export default React.memo(ChatListItem);
@@ -29,6 +33,15 @@ function ChatListItem(props: Props) {
         ? <GroupChatIcon className="avatar" />
         : <DefaultAvatar userId={props.userId} />;
 
+    let snippet: JSX.Element;
+    if (props.themTyping) {
+        snippet = <ThemTyping />;
+    } else if (props.participantsTyping.length) {
+        snippet = <ParticipantsTyping usernames={props.participantsTyping} />
+    } else {
+        snippet = <TextContent text={props.latestMessage} insertLineBreaks={false} />;
+    }
+
     return (
         <li className={className} onClick={() => dispatch(selectChat(props.index))}>
             {icon}
@@ -39,7 +52,9 @@ function ChatListItem(props: Props) {
                 </div>
                 <div>
                     {props.unreadCount > 0 ? <div className="unread-count">{props.unreadCount.toString()}</div> : null} 
-                    <div className="chats-message"><TextContent text={props.latestMessage} insertLineBreaks={false} /></div>
+                    <div className="chats-message">
+                        {snippet}
+                    </div>
                 </div>
             </div>
         </li>

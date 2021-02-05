@@ -4,10 +4,13 @@ import { RootState } from "../reducers";
 import { Option } from "../model/common";
 import DefaultAvatar from "./DefaultAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
-import { CONFIRMED_GROUP_CHAT } from "../constants";
+import * as chatFunctions from "../model/chats";
 import * as setFunctions from "../utils/setFunctions";
+import * as stateFunctions from "../utils/stateFunctions";
 import { getSelectedChat } from "../utils/stateFunctions";
 import { MyProfile, UserSummary } from "../model/users";
+import ParticipantsTyping from "./ParticipantsTyping";
+import ThemTyping from "./ThemTyping";
 
 export default React.memo(MainHeader);
 
@@ -24,26 +27,36 @@ function MainHeader() {
     let chatName: string = "";
     let subTitle: Option<JSX.Element> = null;
 
-    if ("them" in chat) {
+    if (chatFunctions.isDirectChat(chat)) {
         icon = <DefaultAvatar userId={chat.them} />;
         if (userDictionary.hasOwnProperty(chat.them)) {
             const userSummary = userDictionary[chat.them] as UserSummary;
             chatName = userSummary.username;
-            subTitle = <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
+            subTitle = chatFunctions.isConfirmedChat(chat) && chat.themTyping
+                ? <ThemTyping />
+                : <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
         }
     } else {
         icon = <GroupChatIcon className="avatar" />;
         chatName = chat.subject;
 
-        if (chat.kind === CONFIRMED_GROUP_CHAT && me) {
-            let allButMe = setFunctions.except(chat.participants, [me.userId]);
-            let participants = allButMe
-                .filter(userId => userDictionary.hasOwnProperty(userId))
-                .map(userId => userDictionary[userId].username)
-                .concat(["You"])
-                .join(", ");
+        if (chatFunctions.isConfirmedChat(chat) && me) {
+            if (chat.participantsTyping.length) {
+                const usernames = stateFunctions
+                    .getUsers(chat.participantsTyping, userDictionary)
+                    .map(u => u.username);
 
-            subTitle = <div className="date">{participants}</div>
+                subTitle = <ParticipantsTyping usernames={usernames} />;
+            } else {
+                let allButMe = setFunctions.except(chat.participants, [me.userId]);
+                let participants = stateFunctions
+                    .getUsers(allButMe, userDictionary)
+                    .map(u => u.username)
+                    .concat(["You"])
+                    .join(", ");
+
+                subTitle = <div className="participants">{participants}</div>
+            }
         } 
     }
 
@@ -52,8 +65,8 @@ function MainHeader() {
             <button className="avatar-button">
                 {icon}
             </button>
-            <div>
-            <div className="name">{chatName}</div>
+            <div className="chat-summary">
+                <div className="name">{chatName}</div>
                 {subTitle}
             </div>
         </header>
