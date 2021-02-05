@@ -65,7 +65,7 @@ pub enum MessageContent {
     Text(TextContent),
     Media(MediaContent),
     File(FileContent),
-    Cycle(CycleContent),
+    Cycles(CycleContent),
 }
 
 #[derive(CandidType, Deserialize, Clone)]

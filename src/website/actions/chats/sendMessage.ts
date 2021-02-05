@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
+import * as chatFunctions from "../../model/chats";
 import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
@@ -72,19 +73,18 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         }
 
         // Send the message to the IC
-        const response = chat.kind === UNCONFIRMED_DIRECT_CHAT
+        const response = chat.kind === UNCONFIRMED_DIRECT_CHAT || (chat.kind === CONFIRMED_DIRECT_CHAT && sendMessageContent.kind === "cycles")
             ? await chatsService.sendDirectMessage(chat.them, clientMessageId, content)
             : await chatsService.sendMessage(chat.chatId, clientMessageId, content);
 
-        // Dispatch a failed event
         if (response.kind !== "success") {
-            dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
-
             // Increment my account balance
             if (content.kind === "cycles") {
                 dispatch({ type: INCREMENT_BALANCE, payload: content.amount } as IncrementBalanceEvent);
             }
-    
+
+            // Dispatch a failed event
+            dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
             return;
         }
 
@@ -156,6 +156,7 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
                 chunkSize: CHUNK_SIZE_BYTES
             };
         case "text":
+        case "cycles":
             return sendMessageContent;
         default:
             throw Error("Unrecognised content type");

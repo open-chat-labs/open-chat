@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import { MessageContent } from "../../model/messages";
 import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "./option";
 
@@ -31,6 +32,14 @@ export function fromCandid(content: any) : MessageContent {
             chunkSize: inner.chunk_size
         };
     }
+    if (content.hasOwnProperty("Cycles")) {
+        const inner = content.Cycles;
+        return {
+            kind: "cycles",
+            caption: optionFromCandid(inner.caption),
+            amount: BigInt(inner.amount)
+        };
+    }
     throw new Error("Unrecognised content type - " + JSON.stringify(content));
 }
 
@@ -61,6 +70,13 @@ export function toCandid(content: MessageContent) : any {
                     blob_id: content.id,
                     blob_size: content.size,
                     chunk_size: content.chunkSize
+                }
+            };
+        case "cycles":
+            return {
+                Cycles: {
+                    amount: new BigNumber(content.amount.toString()),
+                    caption: optionToCandid(content.caption)
                 }
             };
     }

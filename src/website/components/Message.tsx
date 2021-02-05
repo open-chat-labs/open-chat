@@ -18,6 +18,7 @@ export type Props = {
     date: Date,
     sentByMe: boolean,
     sender: Option<UserSummary>,
+    theirUsername: Option<string>,
     groupPosition: MessageGroupPosition
     unread: boolean,
     unconfirmed: boolean
@@ -66,11 +67,11 @@ function Message(props : Props) {
         className += " media";
         contentElement = <MediaContent content={props.content} />;
     } else if (props.content.kind === "file") {
-        className += " file";
         contentElement = <FileContent content={props.content} />;
+        className += " file";
     } else if (props.content.kind === "cycles") {
         className += " cycles";
-        contentElement = <CyclesContent content={props.content} />;
+        contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />;
     } else {
         contentElement = <TextContent text={props.content.text} />
     }

@@ -3,7 +3,6 @@ import { Option } from "../model/common";
 import { UserId, UserSummary } from "../model/users";
 import { ChatsState } from "../reducers/chatsReducer";
 import { UsersState } from "../reducers/usersReducer";
-import { UserId, UserSummary } from "../model/users";
 
 export function getSelectedChat(chatsState: ChatsState) : Option<Chat> {
     return chatsState.selectedChatIndex === null
@@ -12,7 +11,6 @@ export function getSelectedChat(chatsState: ChatsState) : Option<Chat> {
 }
 
 export function getUserSummary(usersState: UsersState, them: UserId) : Option<UserSummary> {
-    console.log(them);
     return them && usersState.userDictionary.hasOwnProperty(them) 
         ? usersState.userDictionary[them] 
         : null;

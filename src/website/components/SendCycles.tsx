@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import sendMessage from "../actions/chats/sendMessage";
+import getCurrentUser from "../actions/users/getCurrentUser";
 import Dollar from "../assets/icons/dollar.svg";
 import { Chat } from "../model/chats";
 import { SendMessageContent } from "../model/messages";
@@ -21,12 +22,15 @@ type Props = {
 function SendCycles(props: Props) {
     const dispatch = useDispatch();
     const [text, setText] = useState("");
-    // const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
     const clearInput = () => setText("");
+
+    // Go fetch the current user - specifically we are interested in the latest account balance    
+    React.useEffect(() => {
+        dispatch(getCurrentUser());
+    }, []);
 
     function sendCycles() {
         toggleDialog();
-        clearInput();
 
         const content: SendMessageContent = {
             kind: "cycles",
@@ -35,6 +39,13 @@ function SendCycles(props: Props) {
         };
 
         dispatch(sendMessage(props.chat!, content));
+        clearInput();
+    }
+
+    function formatBalance() : string {
+        const cycles = cycleFunctions.toT(props.myProfile.accountBalance);
+        const pounds = cycleFunctions.toCurrency(props.myProfile.accountBalance, "GBP").toFixed(2);
+        return `${cycles} T (£${pounds})`;
     }
 
     return (
@@ -42,7 +53,7 @@ function SendCycles(props: Props) {
             <div id="sendCyclesDialog" className="send-cycles-dialog hide-on-click-outside hide">
                 <div>
                     <h2>Send cycles to {props.recipient.username}</h2>
-                    <p>Current balance: <span>{cycleFunctions.toT(props.myProfile.accountBalance)} T</span> cycles / £{cycleFunctions.toCurrency(props.myProfile.accountBalance, "GBP").toFixed(2)}</p>
+                    <p>Current balance: {formatBalance()}</p>
                     <div>
                         <input 
                             id="cyclesInput" 

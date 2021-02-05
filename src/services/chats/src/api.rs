@@ -10,8 +10,8 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> create_group
 }
 
 #[update]
-async fn send_direct_message(recipient: UserId, client_message_id: String, content: MessageContent) -> send_direct_message::Response {
-    send_direct_message::update(recipient, client_message_id, content).await
+fn send_direct_message(recipient: UserId, client_message_id: String, content: MessageContent) -> send_direct_message::Response {
+    send_direct_message::update(recipient, client_message_id, content)
 }
 
 #[update]
