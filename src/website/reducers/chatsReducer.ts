@@ -77,9 +77,13 @@ import {
 } from "../actions/chats/markMessagesAsReadServerSync";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import {
-    TYPING_MESSAGE_STARTED_REMOTELY, TYPING_MESSAGE_STOPPED_REMOTELY,
+    TYPING_MESSAGE_STARTED_LOCALLY,
+    TYPING_MESSAGE_STARTED_REMOTELY,
+    TYPING_MESSAGE_STOPPED_LOCALLY,
+    TYPING_MESSAGE_STOPPED_REMOTELY,
     TypingMessageStartedLocallyEvent,
     TypingMessageStartedRemotelyEvent,
+    TypingMessageStoppedLocallyEvent,
     TypingMessageStoppedRemotelyEvent
 } from "../actions/chats/typingMessage";
 
@@ -124,7 +128,7 @@ type Event =
     SendMessageFailedEvent |
     SetupNewDirectChatSucceededEvent |
     TypingMessageStartedLocallyEvent |
-    TypingMessageStartedRemotelyEvent |
+    TypingMessageStoppedLocallyEvent |
     TypingMessageStartedRemotelyEvent |
     TypingMessageStoppedRemotelyEvent;
 
@@ -132,17 +136,14 @@ export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
     switch (event.type) {
         case CHAT_SELECTED: {
-            if (event.payload === state.selectedChatIndex) {
-                return;
-            }
-            const prevChat = state.selectedChatIndex != null ? state.chats[state.selectedChatIndex] : null;
-            if (prevChat) {
+            if (state.selectedChatIndex != null) {
+                const prevChat = state.chats[state.selectedChatIndex];
                 chatFunctions.saveDraftMessage(prevChat);
             }
 
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
-            if ("chatId" in chat && chat.latestConfirmedMessageId) {
+            if (chatFunctions.isConfirmedChat(chat) && chat.latestConfirmedMessageId) {
                 chat = chatFunctions.findChat(state.chats, { index: state.selectedChatIndex })[0] as ConfirmedChat;
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, MIN_MESSAGE_ID);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
@@ -341,6 +342,20 @@ export default produce((state: ChatsState, event: Event) => {
             const newChat = chatFunctions.newUnconfirmedDirectChat(userId);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
+            break;
+        }
+
+        case TYPING_MESSAGE_STARTED_LOCALLY: {
+            const chatId = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            chat.meTyping = true;
+            break;
+        }
+
+        case TYPING_MESSAGE_STOPPED_LOCALLY: {
+            const chatId = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            chat.meTyping = false;
             break;
         }
 

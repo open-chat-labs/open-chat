@@ -28,13 +28,6 @@ function MainFooter() {
         return <div></div>;
     }
 
-    const isTextBoxEmptyRef = useRef(true);
-
-    // After each render, set the isTextBoxEmptyRef value by checking the text box
-    useEffect(() => {
-        isTextBoxEmptyRef.current = isTextBoxEmpty();
-    });
-
     useEffect(() => {
         window.addEventListener("click", onWindowClick, false);
     
@@ -59,18 +52,16 @@ function MainFooter() {
             e.target.innerHTML = "";
         }
 
-        const isTextBoxEmptyLatest = isTextBoxEmpty();
-
         if (chat && chatFunctions.isConfirmedChat(chat)) {
-            if (isTextBoxEmptyLatest != isTextBoxEmptyRef.current) {
-                if (isTextBoxEmptyLatest) {
-                    dispatch(typingMessageStopped(chat.chatId));
-                } else {
+            const isTyping = !isTextBoxEmpty();
+            if (chat.meTyping !== isTyping && chatFunctions.isConfirmedChat(chat)) {
+                if (isTyping) {
                     dispatch(typingMessageStarted(chat.chatId));
+                } else {
+                    dispatch(typingMessageStopped(chat.chatId));
                 }
             }
         }
-        isTextBoxEmptyRef.current = isTextBoxEmptyLatest;
     }
 
     function handleSendMessage() {
@@ -83,7 +74,6 @@ function MainFooter() {
 
         textbox.innerHTML = "";
         textbox.focus();
-        isTextBoxEmptyRef.current = true;
     }
 
     function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
