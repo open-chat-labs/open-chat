@@ -658,10 +658,6 @@ span.emoji {
     }
 }
 
-/* main footer input::placeholder {
-    color: #bbbbbb;
-} */
-
 main footer button.send {
     outline: 0;
     height: 25px;
@@ -677,20 +673,66 @@ main footer button.send {
 
 main footer .buttons {
     display: flex;
-    align-items: center;
 }
 
 main footer .button {
     border-radius: 50%;
     padding: 4px;
+    cursor: pointer;
 }
 
 main footer .smiley {
-    margin-right: 5px;
+    margin-right: 10px;
 }
 
 main footer .attach {
+    margin-right: 5px;
+}
+
+main footer .dollar {
     margin-right: 10px;
+    width: 32px;
+    height: 32px;
+}
+
+.send-cycles-container {
+    position: relative;
+}
+
+.send-cycles-dialog {
+    position: absolute;
+    z-index: 100;
+    bottom: 54px;
+    left: -88px;
+}
+
+.send-cycles-dialog > div {
+    background-color: white;
+    padding: 10px;
+    min-width: 352px;
+    min-height: 426px;
+    border-radius: 5px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border: 1px solid #d9d9d9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.send-cycles-dialog h2 {
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.send-cycles-dialog .button-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.send-cycles-dialog .button-container button {
+    padding: 6px;
 }
 
 main footer .button svg {
@@ -698,8 +740,8 @@ main footer .button svg {
     pointer-events: none;
 }
 
-main footer .buttons > *:hover,
-main footer .buttons > *:focus {
+main footer .buttons .button:hover,
+main footer .buttons .button:focus {
     background-color: #e0e0e0;
 }
 
@@ -719,6 +761,6 @@ footer button svg {
 
 .emoji-mart {
     position: absolute;
-    bottom: 35px;
+    bottom: 54px;
     left: -49px;
 }

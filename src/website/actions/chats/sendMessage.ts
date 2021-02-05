@@ -15,6 +15,7 @@ import {
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
+import { IncrementBalanceEvent, DecrementBalanceEvent, INCREMENT_BALANCE, DECREMENT_BALANCE } from "./updateAccountBalance";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -56,6 +57,11 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
             return;
         }
 
+        // Decrement my account balance
+        if (content.kind === "cycles") {
+            dispatch({ type: DECREMENT_BALANCE, payload: content.amount } as DecrementBalanceEvent);
+        }
+
         // Wait for the media data to finish uploading
         if (content.kind === "media" || content.kind === "file") {
             let outcomeEvent = await uploadContentTask;	
@@ -73,6 +79,12 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         // Dispatch a failed event
         if (response.kind !== "success") {
             dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
+
+            // Increment my account balance
+            if (content.kind === "cycles") {
+                dispatch({ type: INCREMENT_BALANCE, payload: content.amount } as IncrementBalanceEvent);
+            }
+    
             return;
         }
 

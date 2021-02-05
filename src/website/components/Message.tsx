@@ -5,8 +5,9 @@ import Tick from "../assets/icons/tick.svg";
 import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
-import MediaContent from "./MediaContent";
+import CyclesContent from "./CyclesContent";
 import FileContent from "./FileContent";
+import MediaContent from "./MediaContent";
 import TextContent from "./TextContent";
 import { toShortTimeString } from "../formatters/date";
 
@@ -67,6 +68,9 @@ function Message(props : Props) {
     } else if (props.content.kind === "file") {
         className += " file";
         contentElement = <FileContent content={props.content} />;
+    } else if (props.content.kind === "cycles") {
+        className += " cycles";
+        contentElement = <CyclesContent content={props.content} />;
     } else {
         contentElement = <TextContent text={props.content.text} />
     }

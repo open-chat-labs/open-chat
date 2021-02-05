@@ -40,6 +40,14 @@ import {
     UpdateMinutesSinceLastOnline
 } from "../actions/users/updateMinutesSinceLastOnline";
 
+import { 
+    INCREMENT_BALANCE, 
+    DECREMENT_BALANCE, 
+    IncrementBalanceEvent, 
+    DecrementBalanceEvent 
+} from "../actions/chats/updateAccountBalance";
+
+
 export type Event =
     GetAllChatsSucceededEvent |
     GetCurrentUserRequestedEvent |
@@ -54,7 +62,9 @@ export type Event =
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
     SetupNewDirectChatSucceededEvent |
-    UpdateMinutesSinceLastOnline;
+    UpdateMinutesSinceLastOnline |
+    IncrementBalanceEvent |
+    DecrementBalanceEvent;
 
 export type UsersState = {
     mustRegisterAsNewUser: boolean,
@@ -160,6 +170,23 @@ export default produce((state: UsersState, event: Event) => {
                 const user = value as UserSummary;
                 user.minutesSinceLastOnline = Math.floor(dateFunctions.getMinutesSince(user.lastOnline));
             }
+            break;
+        }
+
+        case INCREMENT_BALANCE: {
+            const amount = event.payload;
+            if (state.me) {
+                state.me.accountBalance += amount;
+            }
+            break;
+        }
+
+        case DECREMENT_BALANCE: {
+            const amount = event.payload;
+            if (state.me) {
+                state.me.accountBalance -= amount;
+            }
+            break;
         }
     }
 }, initialState);
