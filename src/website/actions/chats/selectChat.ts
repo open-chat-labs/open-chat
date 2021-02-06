@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { RootState } from "../../reducers";
-import { stoppedLocally as typingStopped } from "./typingMessage";
 import * as chatFunctions from "../../model/chats";
+import CurrentUserTypingHandler from "../../utils/CurrentUserTypingHandler";
 
 export const CHAT_SELECTED = "CHAT_SELECTED";
 
@@ -15,8 +15,8 @@ export default function(index: number) {
 
         if (chatsState.selectedChatIndex != null) {
             const prevChat = chatsState.chats[chatsState.selectedChatIndex];
-            if (chatFunctions.isConfirmedChat(prevChat) && prevChat.meTyping) {
-                dispatch(typingStopped(prevChat.chatId));
+            if (chatFunctions.isConfirmedChat(prevChat)) {
+                CurrentUserTypingHandler.markTypingStopped(prevChat.chatId);
             }
         }
 

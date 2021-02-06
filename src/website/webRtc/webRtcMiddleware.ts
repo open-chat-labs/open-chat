@@ -2,13 +2,13 @@ import { Middleware } from "redux";
 import { RootState } from "../reducers";
 import { SEND_MESSAGE_REQUESTED, SendMessageRequestedEvent } from "../actions/chats/sendMessage";
 import {
-    TYPING_MESSAGE_STARTED_LOCALLY,
-    TYPING_MESSAGE_STARTED_REMOTELY,
-    TYPING_MESSAGE_STOPPED_LOCALLY,
-    TYPING_MESSAGE_STOPPED_REMOTELY,
-    TypingMessageStartedLocallyEvent,
-    TypingMessageStoppedLocallyEvent
-} from "../actions/chats/typingMessage";
+    CURRENT_USER_TYPING,
+    CURRENT_USER_STOPPED_TYPING,
+    CurrentUserTypingEvent,
+    CurrentUserStoppedTypingEvent,
+    REMOTE_USER_TYPING,
+    REMOTE_USER_STOPPED_TYPING
+} from "../actions/chats/userTyping";
 import * as chatFunctions from "../model/chats";
 import RtcConnectionHandler from "./RtcConnectionHandler";
 import { Chat } from "../model/chats";
@@ -29,22 +29,22 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
             break;
         }
 
-        case TYPING_MESSAGE_STARTED_LOCALLY: {
-            const chatId = (event as TypingMessageStartedLocallyEvent).payload;
+        case CURRENT_USER_TYPING: {
+            const chatId = (event as CurrentUserTypingEvent).payload;
             const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
             const p2pMessage = {
-                kind: TYPING_MESSAGE_STARTED_REMOTELY,
+                kind: REMOTE_USER_TYPING,
                 chatId: chat.chatId
             };
             sendMessage(p2pMessage, chat);
             break;
         }
 
-        case TYPING_MESSAGE_STOPPED_LOCALLY: {
-            const chatId = (event as TypingMessageStoppedLocallyEvent).payload;
+        case CURRENT_USER_STOPPED_TYPING: {
+            const chatId = (event as CurrentUserStoppedTypingEvent).payload;
             const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
             const p2pMessage = {
-                kind: TYPING_MESSAGE_STOPPED_REMOTELY,
+                kind: REMOTE_USER_STOPPED_TYPING,
                 chatId: chat.chatId
             };
             sendMessage(p2pMessage, chat);

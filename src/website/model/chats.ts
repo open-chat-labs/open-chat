@@ -30,7 +30,6 @@ type ChatCommon = {
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
     draftMessage: string,
-    meTyping: boolean
 }
 
 type ConfirmedChatCommon = ChatCommon & {
@@ -135,7 +134,6 @@ export const newConfirmedDirectChat = (chatId: ChatId, them: UserId, updatedDate
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        meTyping: false,
         themTyping: false
     };
 }
@@ -166,7 +164,6 @@ export const newConfirmedGroupChat = (chatId: ChatId, subject: string, participa
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        meTyping: false,
         participantsTyping: []
     };
 }
@@ -178,8 +175,7 @@ export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: "",
-        meTyping: false
+        draftMessage: ""
     };
 }
 
@@ -193,8 +189,7 @@ export const newUnconfirmedGroupChat = (tempId: Symbol, subject: string, users: 
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: "",
-        meTyping: false
+        draftMessage: ""
     };
 }
 

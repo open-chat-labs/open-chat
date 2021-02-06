@@ -77,15 +77,13 @@ import {
 } from "../actions/chats/markMessagesAsReadServerSync";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import {
-    TYPING_MESSAGE_STARTED_LOCALLY,
-    TYPING_MESSAGE_STARTED_REMOTELY,
-    TYPING_MESSAGE_STOPPED_LOCALLY,
-    TYPING_MESSAGE_STOPPED_REMOTELY,
-    TypingMessageStartedLocallyEvent,
-    TypingMessageStartedRemotelyEvent,
-    TypingMessageStoppedLocallyEvent,
-    TypingMessageStoppedRemotelyEvent
-} from "../actions/chats/typingMessage";
+    CurrentUserStoppedTypingEvent,
+    CurrentUserTypingEvent,
+    REMOTE_USER_STOPPED_TYPING,
+    REMOTE_USER_TYPING,
+    RemoteUserStoppedTypingEvent,
+    RemoteUserTypingEvent
+} from "../actions/chats/userTyping";
 
 export type ChatsState = {
     chats: Chat[],
@@ -109,6 +107,8 @@ type Event =
     CreateGroupChatRequestedEvent |
     CreateGroupChatSucceededEvent |
     CreateGroupChatFailedEvent |
+    CurrentUserTypingEvent |
+    CurrentUserStoppedTypingEvent |
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
@@ -123,14 +123,12 @@ type Event =
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadServerSyncSucceededEvent |
     ReceiveP2PMessageEvent |
+    RemoteUserTypingEvent |
+    RemoteUserStoppedTypingEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
-    SetupNewDirectChatSucceededEvent |
-    TypingMessageStartedLocallyEvent |
-    TypingMessageStoppedLocallyEvent |
-    TypingMessageStartedRemotelyEvent |
-    TypingMessageStoppedRemotelyEvent;
+    SetupNewDirectChatSucceededEvent;
 
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
@@ -306,6 +304,36 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
+        case REMOTE_USER_TYPING: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+
+            // Chat may not exist locally yet
+            if (chat) {
+                if (chatFunctions.isDirectChat(chat)) {
+                    chat.themTyping = true;
+                } else {
+                    setFunctions.add(chat.participantsTyping, userId);
+                }
+            }
+            break;
+        }
+
+        case REMOTE_USER_STOPPED_TYPING: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+
+            // Chat may not exist locally yet
+            if (chat) {
+                if (chatFunctions.isDirectChat(chat)) {
+                    chat.themTyping = false;
+                } else {
+                    setFunctions.remove(chat.participantsTyping, userId);
+                }
+            }
+            break;
+        }
+
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
             const [chat, index] = chatFunctions.getChat(state.chats, payload.chat);
@@ -342,50 +370,6 @@ export default produce((state: ChatsState, event: Event) => {
             const newChat = chatFunctions.newUnconfirmedDirectChat(userId);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
-            break;
-        }
-
-        case TYPING_MESSAGE_STARTED_LOCALLY: {
-            const chatId = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
-            chat.meTyping = true;
-            break;
-        }
-
-        case TYPING_MESSAGE_STOPPED_LOCALLY: {
-            const chatId = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
-            chat.meTyping = false;
-            break;
-        }
-
-        case TYPING_MESSAGE_STARTED_REMOTELY: {
-            const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
-
-            // Chat may not exist locally yet
-            if (chat) {
-                if (chatFunctions.isDirectChat(chat)) {
-                    chat.themTyping = true;
-                } else {
-                    setFunctions.add(chat.participantsTyping, userId);
-                }
-            }
-            break;
-        }
-
-        case TYPING_MESSAGE_STOPPED_REMOTELY: {
-            const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
-
-            // Chat may not exist locally yet
-            if (chat) {
-                if (chatFunctions.isDirectChat(chat)) {
-                    chat.themTyping = false;
-                } else {
-                    setFunctions.remove(chat.participantsTyping, userId);
-                }
-            }
             break;
         }
 

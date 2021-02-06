@@ -41,7 +41,6 @@ function generateWebpackConfigForCanister(name, info) {
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint),
     },
-    devtool: "source-map",
     optimization: {
       minimize: false,
       minimizer: [new TerserPlugin()],
