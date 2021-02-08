@@ -34,6 +34,7 @@ type UpdateUsernameResponse =
 
 type TransferCyclesRequest = 
     record {
+        sender: UserId;
         recipient: UserId;
         amount: nat;
     };

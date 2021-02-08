@@ -30,8 +30,11 @@ export default function() {
         }
 
         dispatch(outcomeEvent);
+        return outcomeEvent;
     }
 }
+
+export type GetCurrentUserOutcome = GetCurrentUserSucceededEvent | GetCurrentUserFailedEvent;
 
 export type GetCurrentUserRequestedEvent = {
     type: typeof GET_CURRENT_USER_REQUESTED

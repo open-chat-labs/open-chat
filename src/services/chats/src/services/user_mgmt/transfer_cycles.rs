@@ -1,9 +1,11 @@
+use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use shared::user_id::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Request {
+    pub sender: UserId,
     pub recipient: UserId,
     pub amount: u128
 }
@@ -19,5 +21,16 @@ pub enum Response {
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Result {
     new_balance: u128
+}
+
+pub async fn update(request: Request) -> Response {
+    let user_mgmt_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+
+    let (response, ): (Response, ) = ic_cdk::call(
+        user_mgmt_id, 
+        "transfer_cycles", 
+        (request, )).await.unwrap();
+
+    response
 }
 

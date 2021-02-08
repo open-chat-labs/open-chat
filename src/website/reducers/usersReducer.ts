@@ -172,21 +172,5 @@ export default produce((state: UsersState, event: Event) => {
             }
             break;
         }
-
-        case INCREMENT_BALANCE: {
-            const amount = event.payload;
-            if (state.me) {
-                state.me.accountBalance += amount;
-            }
-            break;
-        }
-
-        case DECREMENT_BALANCE: {
-            const amount = event.payload;
-            if (state.me) {
-                state.me.accountBalance -= amount;
-            }
-            break;
-        }
     }
 }, initialState);

@@ -7,7 +7,7 @@ import * as chatFunctions from "../model/chats";
 import * as stateFunctions from "../utils/stateFunctions";
 import ChatListItem from "./ChatListItem";
 import { CyclesContent, MediaContent } from "../model/messages";
-import * as cycleFunctions from "../utils/cycleFunctions";
+import { formatCycles } from "../formatters/cycles";
 
 export default React.memo(ChatList);
 
@@ -105,8 +105,5 @@ function buildTextForCyclesContent(content: CyclesContent) : string {
     if (content.caption)
         return content.caption;
 
-    const cycles = cycleFunctions.toT(content.amount);
-    const pounds = cycleFunctions.toCurrency(content.amount, "GBP").toFixed(2);
-
-    return `${cycles} T (£${pounds})`;
+    return formatCycles(content.amount);
 }

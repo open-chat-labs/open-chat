@@ -78,13 +78,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
             : await chatsService.sendMessage(chat.chatId, clientMessageId, content);
 
         if (response.kind !== "success") {
-            // Increment my account balance
-            if (content.kind === "cycles") {
-                dispatch({ type: INCREMENT_BALANCE, payload: content.amount } as IncrementBalanceEvent);
-            }
-
             // Dispatch a failed event
-            dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
+            dispatch ({ type: SEND_MESSAGE_FAILED,  payload: { content } } as SendMessageFailedEvent);
             return;
         }
 
@@ -174,7 +169,8 @@ export type SendMessageSucceededEvent = {
 }
 
 export type SendMessageFailedEvent = {
-    type: typeof SEND_MESSAGE_FAILED
+    type: typeof SEND_MESSAGE_FAILED,
+    payload: SendMessageFailed
 }
 
 export type SendMessageFailedToUploadContentEvent = {
@@ -200,4 +196,8 @@ export type SendGroupMessageSuccess = {
     kind: "group",
     chatId: ChatId,
     message: LocalMessage
+}
+
+export type SendMessageFailed = {
+    content: MessageContent
 }
