@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
+import * as chatFunctions from "../../model/chats";
 import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
@@ -15,6 +16,7 @@ import {
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
+import { IncrementBalanceEvent, DecrementBalanceEvent, INCREMENT_BALANCE, DECREMENT_BALANCE } from "./updateAccountBalance";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -54,6 +56,11 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         // the chat and those messages will be sent once the chat is confirmed.
         if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
             return;
+        }
+
+        // Decrement my account balance
+        if (content.kind === "cycles") {
+            dispatch({ type: DECREMENT_BALANCE, payload: content.amount } as DecrementBalanceEvent);
         }
 
         // Wait for the media data to finish uploading

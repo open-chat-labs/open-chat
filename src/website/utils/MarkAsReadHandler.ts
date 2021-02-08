@@ -6,8 +6,8 @@ import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadSer
 const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();
 const SYNC_DELAY_MS = 5_000;
 
-export default class MarkAsReadHandler {
-    public static markRead(chatId: ChatId, messageIds: number[]) : void {
+class MarkAsReadHandler {
+    public markRead(chatId: ChatId, messageIds: number[]) : void {
         let values = pending.get(chatId);
         if (!values) {
             const timeout = setTimeout(() => this.updateServer(chatId), SYNC_DELAY_MS);
@@ -19,7 +19,7 @@ export default class MarkAsReadHandler {
         }
     }
 
-    static updateServer(chatId: ChatId) : void {
+    updateServer(chatId: ChatId) : void {
         const values = pending.get(chatId);
         if (!values) return;
 
@@ -48,3 +48,7 @@ export default class MarkAsReadHandler {
         ranges.forEach(r => store.dispatch<any>(markMessagesAsReadServerSync(chatId, r[0], r[1])));
     }
 }
+
+const handler = new MarkAsReadHandler();
+
+export default handler;

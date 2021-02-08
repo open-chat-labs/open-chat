@@ -40,6 +40,14 @@ import {
     UpdateMinutesSinceLastOnline
 } from "../actions/users/updateMinutesSinceLastOnline";
 
+import { 
+    INCREMENT_BALANCE, 
+    DECREMENT_BALANCE, 
+    IncrementBalanceEvent, 
+    DecrementBalanceEvent 
+} from "../actions/chats/updateAccountBalance";
+
+
 export type Event =
     GetAllChatsSucceededEvent |
     GetCurrentUserRequestedEvent |
@@ -54,7 +62,9 @@ export type Event =
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
     SetupNewDirectChatSucceededEvent |
-    UpdateMinutesSinceLastOnline;
+    UpdateMinutesSinceLastOnline |
+    IncrementBalanceEvent |
+    DecrementBalanceEvent;
 
 export type UsersState = {
     mustRegisterAsNewUser: boolean,

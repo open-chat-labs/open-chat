@@ -1,3 +1,4 @@
+use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::{timestamp, timestamp::Timestamp};

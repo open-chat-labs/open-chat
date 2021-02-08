@@ -65,10 +65,10 @@ export function setupBackgroundTasks() {
 
     // Each time 'usersState.me' changes and is not null, get the full list of chats
     useEffect(() => {
-        if (usersState.me) {
+        if (usersState.me?.userId) {
             dispatch(getAllChats());
         }
-    }, [usersState.me]);
+    }, [usersState.me?.userId]);
 
     // As new userIds are seen, fetch their usernames
     useEffect(() => {
@@ -80,7 +80,7 @@ export function setupBackgroundTasks() {
     // Whenever a chat has messages to download, call off to get those messages
     useEffect(() => {
         chatsState.chats.forEach(c => {
-            if ("chatId" in c && c.messagesToDownload.length && !c.messagesDownloading.length) {
+            if (chatFunctions.isConfirmedChat(c) && c.messagesToDownload.length && !c.messagesDownloading.length) {
                 dispatch(getMessagesById(c.chatId, c.messagesToDownload.slice(0, PAGE_SIZE)));
             }
         })
