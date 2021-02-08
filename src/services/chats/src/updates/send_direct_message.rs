@@ -1,4 +1,3 @@
-use ic_cdk::export::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::{timestamp, timestamp::Timestamp};
@@ -15,7 +14,7 @@ pub async fn update(recipient: UserId, client_message_id: String, content: Messa
     let chat_id = ChatId::for_direct_chat(&me, &recipient);
     let chat = chat_list.get_mut(chat_id, &me);
 
-    if let MessageContent::Cycles(cycle_content) = content.clone() {
+    if let MessageContent::Cycles(cycle_content) = &content {
 
         let request = transfer_cycles::Request {
             sender: me.clone(),
