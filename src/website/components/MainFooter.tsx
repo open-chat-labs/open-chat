@@ -22,8 +22,6 @@ function MainFooter() {
         ? getUserSummary(state.usersState, chat.them) 
         : null);
 
-    const me = useSelector((state: RootState) => state.usersState.me)!;
-
     if (chat === null) {
         return <div></div>;
     }
@@ -223,7 +221,6 @@ function MainFooter() {
                     chat={chat} />
                 {them ? <SendCycles 
                     chat={chat}
-                    myProfile={me}
                     recipient={them} 
                     onHidePicker={restoreSelection} /> : null}
             </div>

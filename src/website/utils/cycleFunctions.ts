@@ -27,3 +27,9 @@ export function toT(val: bigint) : number {
 export function fromT(val: number) : bigint {
     return BigInt(val * MILLION) * MILLION_BIGINT;
 }
+
+// Rounds to 2 decimal places
+// https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
+export function round(num: number) {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+}

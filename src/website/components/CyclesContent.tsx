@@ -13,8 +13,6 @@ export interface Props {
 
 function CyclesContent(props : Props): JSX.Element {
     return (
-        <>
-            <span>{formatCycles(props.content.amount)} {props.sentByMe ? "sent to" : "received from"} {props.theirUsername ?? "unknown"}</span>
-        </>
+        <span>{formatCycles(props.content.amount)} {props.sentByMe ? "sent to" : "received from"} {props.theirUsername ?? "unknown"}</span>
     );
 }

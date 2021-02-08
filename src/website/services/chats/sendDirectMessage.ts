@@ -20,13 +20,22 @@ export default async function(userId: UserId, clientMessageId: string, content: 
                 date: timestampToDate(success.timestamp)
             }
         };
+    } else if (response.hasOwnProperty("UserNotFound")) {
+        return { kind: "userNotFound" };
+    } else if (response.hasOwnProperty("RecipientNotFound")) {
+        return { kind: "recipientNotFound" };
+    } else if (response.hasOwnProperty("BalanceExceeded")) {
+        return { kind: "balanceExceeded" };
     } else {
         throw new Error("Unrecognised 'send_direct_message' response");
     }
 }
 
 export type SendDirectMessageResponse =
-    Success;
+    Success |
+    UserNotFound |
+    RecipientNotFound |
+    BalanceExceeded;
 
 export type Success = {
     kind: "success",
@@ -37,4 +46,16 @@ export type SendDirectMessageResult = {
     chatId: ChatId,
     messageId: number,
     date: Date
+}
+
+export type UserNotFound = {
+    kind: "userNotFound"
+}
+
+export type RecipientNotFound = {
+    kind: "recipientNotFound"
+}
+
+export type BalanceExceeded = {
+    kind: "balanceExceeded"
 }

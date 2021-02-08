@@ -2,7 +2,6 @@ import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
-import * as chatFunctions from "../../model/chats";
 import { Chat, ChatId } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
@@ -16,7 +15,6 @@ import {
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
-import { IncrementBalanceEvent, DecrementBalanceEvent, INCREMENT_BALANCE, DECREMENT_BALANCE } from "./updateAccountBalance";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -58,11 +56,6 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
             return;
         }
 
-        // Decrement my account balance
-        if (content.kind === "cycles") {
-            dispatch({ type: DECREMENT_BALANCE, payload: content.amount } as DecrementBalanceEvent);
-        }
-
         // Wait for the media data to finish uploading
         if (content.kind === "media" || content.kind === "file") {
             let outcomeEvent = await uploadContentTask;	
@@ -78,13 +71,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
             : await chatsService.sendMessage(chat.chatId, clientMessageId, content);
 
         if (response.kind !== "success") {
-            // Increment my account balance
-            if (content.kind === "cycles") {
-                dispatch({ type: INCREMENT_BALANCE, payload: content.amount } as IncrementBalanceEvent);
-            }
-
             // Dispatch a failed event
-            dispatch ({ type: SEND_MESSAGE_FAILED } as SendMessageFailedEvent);
+            dispatch ({ type: SEND_MESSAGE_FAILED,  payload: { content } } as SendMessageFailedEvent);
             return;
         }
 
@@ -174,7 +162,8 @@ export type SendMessageSucceededEvent = {
 }
 
 export type SendMessageFailedEvent = {
-    type: typeof SEND_MESSAGE_FAILED
+    type: typeof SEND_MESSAGE_FAILED,
+    payload: SendMessageFailed
 }
 
 export type SendMessageFailedToUploadContentEvent = {
@@ -200,4 +189,8 @@ export type SendGroupMessageSuccess = {
     kind: "group",
     chatId: ChatId,
     message: LocalMessage
+}
+
+export type SendMessageFailed = {
+    content: MessageContent
 }

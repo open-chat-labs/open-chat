@@ -697,6 +697,7 @@ main footer .dollar {
 
 .send-cycles-container {
     position: relative;
+    color: #111111;
 }
 
 .send-cycles-dialog {
@@ -710,7 +711,6 @@ main footer .dollar {
     background-color: white;
     padding: 10px;
     min-width: 352px;
-    min-height: 426px;
     border-radius: 5px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     border: 1px solid #d9d9d9;
@@ -719,9 +719,8 @@ main footer .dollar {
     align-items: center;
 }
 
-.send-cycles-dialog h2 {
-    font-size: 16px;
-    font-weight: 400;
+.send-cycles-dialog .cycles-balance  {
+    margin-bottom: 40px;
 }
 
 .send-cycles-dialog .button-container {
@@ -732,7 +731,26 @@ main footer .dollar {
 }
 
 .send-cycles-dialog .button-container button {
-    padding: 6px;
+    padding: 6px 20px;
+    border-radius: 5px;
+}
+
+.send-cycles-dialog input {
+    width: 200px;
+    margin-left: 11px;
+}
+
+.send-cycles-dialog .cycles-container {
+    margin-bottom: 4px;
+}
+
+.send-cycles-dialog .pounds-container {
+    margin-top: 4px;
+    margin-bottom: 40px;
+}
+
+.send-cycles-dialog .cycles-recipient {
+    font-size: 12px;
 }
 
 main footer .button svg {
