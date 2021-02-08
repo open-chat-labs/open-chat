@@ -4,12 +4,8 @@ import { P2PMessage } from "../model/messages";
 import store from "../store";
 import receiveP2PMessage from "../actions/chats/receiveP2PMessage";
 import { SEND_MESSAGE_REQUESTED } from "../actions/chats/sendMessage";
-import {
-    startedRemotely as typingMessageStarted,
-    stoppedRemotely as typingMessageStopped,
-    TYPING_MESSAGE_STARTED_REMOTELY,
-    TYPING_MESSAGE_STOPPED_REMOTELY
-} from "../actions/chats/typingMessage";
+import { REMOTE_USER_TYPING, REMOTE_USER_STOPPED_TYPING } from "../actions/chats/userTyping";
+import RemoteUserTypingHandler from "../utils/RemoteUserTypingHandler";
 
 class RtcMessageReceiver {
     public handleMessage = (from: UserId, message: string) : void => {
@@ -25,20 +21,20 @@ class RtcMessageReceiver {
                     content: p2pMessageRaw.content
                 }
 
-                store.dispatch(typingMessageStopped(chatId, from));
+                RemoteUserTypingHandler.markTypingStopped(chatId, from);
                 store.dispatch(receiveP2PMessage(chatId, p2pMessage));
                 break;
             }
 
-            case TYPING_MESSAGE_STARTED_REMOTELY: {
+            case REMOTE_USER_TYPING: {
                 const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
-                store.dispatch(typingMessageStarted(chatId, from));
+                RemoteUserTypingHandler.markTyping(chatId, from);
                 break;
             }
 
-            case TYPING_MESSAGE_STOPPED_REMOTELY: {
+            case REMOTE_USER_STOPPED_TYPING: {
                 const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
-                store.dispatch(typingMessageStopped(chatId, from));
+                RemoteUserTypingHandler.markTypingStopped(chatId, from);
                 break;
             }
         }

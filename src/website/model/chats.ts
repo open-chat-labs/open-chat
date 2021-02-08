@@ -29,7 +29,7 @@ export type ChatId = BigInt;
 type ChatCommon = {
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
-    draftMessage: string
+    draftMessage: string,
 }
 
 type ConfirmedChatCommon = ChatCommon & {
@@ -175,7 +175,7 @@ export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: "",
+        draftMessage: ""
     };
 }
 
@@ -189,7 +189,7 @@ export const newUnconfirmedGroupChat = (tempId: Symbol, subject: string, users: 
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: "",
+        draftMessage: ""
     };
 }
 
