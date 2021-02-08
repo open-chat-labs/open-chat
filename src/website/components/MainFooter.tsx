@@ -201,7 +201,6 @@ function MainFooter() {
                     chat={chat} />
                 {them ? <SendCycles 
                     chat={chat}
-                    myProfile={me}
                     recipient={them} 
                     onHidePicker={restoreSelection} /> : null}
             </div>

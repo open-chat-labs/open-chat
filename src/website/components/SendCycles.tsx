@@ -23,7 +23,6 @@ function SendCycles(props: Props) {
     const [cycles, setCycles] = useState("");
     const [pounds, setPounds] = useState("");
     const [balance, setBalance] = useState("...");
-    const clearInput = () => setCycles("");
 
     function sendCycles() {
         toggleDialog();
@@ -35,7 +34,9 @@ function SendCycles(props: Props) {
         };
 
         dispatch(sendMessage(props.chat!, content));
-        clearInput();
+
+        setCycles("");
+        setPounds("");
     }
 
     return (
