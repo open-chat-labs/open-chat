@@ -63,8 +63,8 @@ export default class UnreadMessageDetector {
                 this.markAsReadByThemByClientIdPending.has(message.clientMessageId);
 
             return !isPendingBeingMarkedAsRead;
+        } else {
+            return !this.markAsReadByThemByClientIdPending.has(message.clientMessageId);
         }
-
-        return true;
     }
 }

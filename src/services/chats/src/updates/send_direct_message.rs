@@ -1,10 +1,10 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
-use shared::{timestamp, timestamp::Timestamp};
+use shared::timestamp::{self, Timestamp};
 use shared::user_id::UserId;
 use crate::domain::chat::{Chat, ChatEnum, ChatId, MessageContent};
 use crate::domain::chat_list::ChatList;
-use crate::domain::direct_chat::{DirectChatSummary};
+use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::user_mgmt::*;
 use self::Response::*;
 

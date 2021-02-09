@@ -43,12 +43,6 @@ function Message(props : Props) {
             onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
 
-    if (props.confirmed) {
-        className += " confirmed";
-        if (props.readByThem) {
-            className += " readByThem";
-        }
-    }
     if (!props.readByMe) {
         className += " unread";
     }
@@ -85,7 +79,7 @@ function Message(props : Props) {
             {contentElement}
             <span className="message-time">{toShortTimeString(props.date)}</span>
             {props.sentByMe && props.confirmed ? <Tick className="message-tick confirmed" /> : null}
-            {props.sentByMe && props.readByThem ? <Tick className="message-tick read-by-them" /> : null}
+            {props.sentByMe && props.confirmed && props.readByThem ? <Tick className="message-tick read-by-them" /> : null}
         </div>
     );
 }

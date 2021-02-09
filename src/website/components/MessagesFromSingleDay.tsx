@@ -56,7 +56,7 @@ function MessagesFromSingleDay(props: Props) {
         if (message.kind === "unconfirmed") {
             sentByMe = true;
             senderUserId = props.myUserId;
-            readByThem = false;
+            readByThem = !props.unreadMessageDetector.isUnreadByThem(message);
         } else {
             sentByMe = message.sender === props.myUserId;
             senderUserId = message.sender;
