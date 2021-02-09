@@ -29,12 +29,12 @@ function MediaContent(props : Props): JSX.Element {
             contentElement = <Video key={props.content.id} blobUrl={blobUrl} />
         }
     } else if (!isDataDownloading) {
-        dispatch(getData(
+        setTimeout(() => dispatch(getData(
             content.id,
             content.mimeType,
             content.size, 
             content.chunkSize,
-            true));
+            true)), 0);
         contentElement = "Loading...";
     }
 
