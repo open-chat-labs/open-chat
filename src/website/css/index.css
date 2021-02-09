@@ -445,13 +445,20 @@ main header>div >div {
     color: #cccccc;
 }
 
-.tick-confirmed {
+.message-tick {
     position: absolute;
     height: 10px;
     width: 10px;
-    right: -5px;
     bottom: 9px;
     z-index: 100;
+}
+
+.message-tick.confirmed {
+    right: -5px;
+}
+
+.message-tick.read-by-them {
+    right: -15px;
 }
 
 .message a.participant {

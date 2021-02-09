@@ -6,11 +6,29 @@ import receiveP2PMessage from "../actions/chats/receiveP2PMessage";
 import { SEND_MESSAGE_REQUESTED } from "../actions/chats/sendMessage";
 import { REMOTE_USER_TYPING, REMOTE_USER_STOPPED_TYPING } from "../actions/chats/userTyping";
 import RemoteUserTypingHandler from "../utils/RemoteUserTypingHandler";
+import {
+    MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
+    MARK_MESSAGES_AS_READ_REMOTELY,
+    markMessagesAsReadByClientIdRemotely,
+    markMessagesAsReadRemotely
+} from "../actions/chats/markMessagesAsRead";
 
 class RtcMessageReceiver {
     public handleMessage = (from: UserId, message: string) : void => {
         const p2pMessageRaw: any = JSON.parse(message);
         switch (p2pMessageRaw.kind) {
+            case MARK_MESSAGES_AS_READ_REMOTELY: {
+                const { messageIds } = p2pMessageRaw;
+                store.dispatch(markMessagesAsReadRemotely(from, messageIds));
+                break;
+            }
+
+            case MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY: {
+                const { clientMessageIds } = p2pMessageRaw;
+                store.dispatch(markMessagesAsReadByClientIdRemotely(from, clientMessageIds));
+                break;
+            }
+
             case SEND_MESSAGE_REQUESTED: {
                 const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
                 const p2pMessage: P2PMessage = {

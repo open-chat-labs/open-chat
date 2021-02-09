@@ -56,8 +56,7 @@ export default function(subject: string, users: UserId[]) {
             type: CREATE_GROUP_CHAT_SUCCEEDED,
             payload: {
                 tempId,
-                chatId: response.result.chatId,
-                date: response.result.date
+                chat: response.result
             }
         } as CreateGroupChatSucceededEvent);
 
@@ -89,8 +88,7 @@ export type CreateGroupChatSucceededEvent = {
     type: typeof CREATE_GROUP_CHAT_SUCCEEDED,
     payload: {
         tempId: Symbol,
-        chatId: ChatId,
-        date: Date
+        chat: ConfirmedGroupChat
     }
 }
 

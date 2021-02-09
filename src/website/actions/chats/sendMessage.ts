@@ -1,17 +1,14 @@
 import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
-import { SendDirectMessageResult } from "../../services/chats/sendDirectMessage";
-import { Chat, ChatId } from "../../model/chats";
+import { Chat, ConfirmedChat } from "../../model/chats";
 import { Option } from "../../model/common";
 import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
-import { UserId } from "../../model/users";
 import { RootState } from "../../reducers";
 import putData, { PutDataOutcome, PUT_DATA_FAILED } from "../data/putData";
 import {
     CHUNK_SIZE_BYTES,
     CONFIRMED_DIRECT_CHAT,
-    CONFIRMED_GROUP_CHAT,
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
@@ -87,37 +84,12 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
                 sender: myUserId,
                 content
             };
-
-            let payload;
-            switch (chat.kind) {
-                case CONFIRMED_GROUP_CHAT:
-                    payload = {
-                        kind: "group",
-                        chatId: chat.chatId,
-                        message
-                    }
-                    break;
-                case UNCONFIRMED_DIRECT_CHAT:
-                    payload = {
-                        kind: "direct",
-                        userId: chat.them,
-                        chatId: (response.result as SendDirectMessageResult).chatId,
-                        message
-                    }
-                    break;
-                case CONFIRMED_DIRECT_CHAT:
-                    payload = {
-                        kind: "direct",
-                        userId: chat.them,
-                        chatId: chat.chatId,
-                        message
-                    }
-                    break;            
-            }
+            const chat: ConfirmedChat = response.result.chat;
+            chat.messages.push(message);
 
             dispatch({
                 type: SEND_MESSAGE_SUCCEEDED,
-                payload
+                payload: chat
             } as SendMessageSucceededEvent);
         }
     }
@@ -158,7 +130,7 @@ export type SendMessageRequestedEvent = {
 
 export type SendMessageSucceededEvent = {
     type: typeof SEND_MESSAGE_SUCCEEDED,
-    payload: SendMessageSuccess
+    payload: ConfirmedChat
 }
 
 export type SendMessageFailedEvent = {
@@ -174,21 +146,6 @@ export type SendMessageRequest = {
     chat: Chat,
     clientMessageId: string,
     content: MessageContent
-}
-
-export type SendMessageSuccess = SendDirectMessageSuccess | SendGroupMessageSuccess;
-
-export type SendDirectMessageSuccess = {
-    kind: "direct",
-    userId: UserId,
-    chatId: ChatId,
-    message: LocalMessage
-}
-
-export type SendGroupMessageSuccess = {
-    kind: "group",
-    chatId: ChatId,
-    message: LocalMessage
 }
 
 export type SendMessageFailed = {

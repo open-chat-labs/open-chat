@@ -1,8 +1,7 @@
 import canister from "ic:canisters/chats";
+import { ConfirmedGroupChat } from "../../model/chats";
 import { UserId } from "../../model/users";
-import { ChatId } from "../../model/chats";
-import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
-import { toDate as timestampToDate } from "../candidConverters/timestamp";
+import { groupChatFromCandid } from "../candidConverters/chat";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
 export default async function(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
@@ -14,10 +13,7 @@ export default async function(subject: string, users: UserId[]) : Promise<Create
         let success = response.Success;
         return {
             kind: "success",
-            result: {
-                chatId: chatIdFromCandid(success.chat_id),
-                date: timestampToDate(success.timestamp)
-            }
+            result: groupChatFromCandid(success)
         };
     } else if (response.hasOwnProperty("ChatAlreadyExists")) {
         return {
@@ -28,18 +24,13 @@ export default async function(subject: string, users: UserId[]) : Promise<Create
     }
 }
 
-export type CreateGroupChatResult = {
-    chatId: ChatId,
-    date: Date
-}
-
 export type CreateGroupChatResponse =
     Success |
     ChatAlreadyExists;
 
 export type Success = {
     kind: "success",
-    result: CreateGroupChatResult
+    result: ConfirmedGroupChat
 }
 
 export type ChatAlreadyExists = {

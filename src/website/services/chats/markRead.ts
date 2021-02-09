@@ -1,6 +1,7 @@
 import canister from "ic:canisters/chats";
 import { ChatId } from "../../model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
+import { toArray as rangeSetToArray } from "../candidConverters/rangeSet";
 
 export default async function(chatId: ChatId, fromId: number, toId: number) : Promise<MarkReadResponse> {
     let response = await canister.mark_read(chatIdToCandid(chatId), fromId, toId);
@@ -10,7 +11,7 @@ export default async function(chatId: ChatId, fromId: number, toId: number) : Pr
         return {
             kind: "success",
             result: {
-                unreadMessageIds: success.unread_message_ids
+                unreadMessageIds: rangeSetToArray(success.unread_message_id_ranges)
             }
         };
     } else if (response.hasOwnProperty("ChatNotFound")) {

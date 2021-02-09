@@ -1,7 +1,7 @@
 import store from "../store";
 import { ChatId } from "../model/chats";
 import { Option } from "../model/common";
-import { markMessagesAsRead, markMessagesAsReadByClientId } from "../actions/chats/markMessagesAsRead";
+import { markMessagesAsReadLocally, markMessagesAsReadByClientIdLocally } from "../actions/chats/markMessagesAsRead";
 import RecurringTaskRunner from "./RecurringTaskRunner";
 
 const INTERVAL_MS = 200;
@@ -57,10 +57,10 @@ export default class UnreadMessagesHandler {
             }
         }
         if (messagesToMarkAsRead.length) {
-            store.dispatch(markMessagesAsRead(this.chatId, messagesToMarkAsRead));
+            store.dispatch(markMessagesAsReadLocally(this.chatId, messagesToMarkAsRead));
         }
         if (messagesToMarkAsReadByClientId.length) {
-            store.dispatch(markMessagesAsReadByClientId(this.chatId, messagesToMarkAsReadByClientId));
+            store.dispatch(markMessagesAsReadByClientIdLocally(this.chatId, messagesToMarkAsReadByClientId));
         }
 
         this.messageIdToAppearanceCountMap = newMessageIdToAppearanceCountMap;

@@ -12,9 +12,43 @@ import {
 import * as chatFunctions from "../model/chats";
 import RtcConnectionHandler from "./RtcConnectionHandler";
 import { Chat } from "../model/chats";
+import {
+    MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
+    MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
+    MARK_MESSAGES_AS_READ,
+    MARK_MESSAGES_AS_READ_REMOTELY,
+    MarkMessagesAsReadByClientIdEvent,
+    MarkMessagesAsReadEvent
+} from "../actions/chats/markMessagesAsRead";
 
 const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
     switch (event.type) {
+        case MARK_MESSAGES_AS_READ: {
+            const { chatId, messageIds } = (event as MarkMessagesAsReadEvent).payload;
+            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            if (chatFunctions.isDirectChat(chat)) {
+                const p2pMessage = {
+                    kind: MARK_MESSAGES_AS_READ_REMOTELY,
+                    messageIds
+                };
+                sendMessage(p2pMessage, chat);
+            }
+            break;
+        }
+
+        case MARK_MESSAGES_AS_READ_BY_CLIENT_ID: {
+            const { chatId, clientMessageIds } = (event as MarkMessagesAsReadByClientIdEvent).payload;
+            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            if (chatFunctions.isDirectChat(chat)) {
+                const p2pMessage = {
+                    kind: MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
+                    clientMessageIds
+                };
+                sendMessage(p2pMessage, chat);
+            }
+            break;
+        }
+
         case SEND_MESSAGE_REQUESTED: {
             const { chat, clientMessageId, content } = (event as SendMessageRequestedEvent).payload;
             if (content.kind === "text" && chatFunctions.isConfirmedChat(chat)) {
