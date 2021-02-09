@@ -160,9 +160,21 @@ header {
     justify-content: space-between;
 }
 
-.sidebar header > div {
+.sidebar header .avatar-button {
+    flex-grow: 0;    
+}
+
+.sidebar header .my-display-name {
+    flex-grow: 0;    
+    align-self: center;
+    font-size: 20px;
+    margin-left: 24px;
+}
+
+.chats-menu-container {
+    flex-grow: 1;
     display: flex;
-    align-items: center;
+    justify-content: flex-end;
 }
 
 .ddl {
@@ -491,7 +503,11 @@ main header>div >div {
 .message.media {
     padding: 0px;
     position: relative;
-    background-color: transparent;
+}
+
+.message.media,
+.message-media {
+    height: 175px;
 }
 
 .message.media .participant {
@@ -709,7 +725,7 @@ main footer .dollar {
 
 .send-cycles-dialog > div {
     background-color: white;
-    padding: 10px;
+    padding: 6px;
     min-width: 352px;
     border-radius: 5px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
@@ -717,6 +733,18 @@ main footer .dollar {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.send-cycles-links {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 40px;
+}
+
+.send-cycles-links > a {
+    font-size: 12px;
+    text-decoration: underline;
 }
 
 .send-cycles-dialog .cycles-balance  {

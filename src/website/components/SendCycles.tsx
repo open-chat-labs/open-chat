@@ -34,9 +34,6 @@ function SendCycles(props: Props) {
         };
 
         dispatch(sendMessage(props.chat!, content));
-
-        setCycles("");
-        setPounds("");
     }
 
     return (
@@ -62,7 +59,7 @@ function SendCycles(props: Props) {
                             id="poundsInput" 
                             value={pounds}
                             onChange={e => onPoundsChanged(e.target.value)}
-                            placeholder="Enter pounds..." 
+                            placeholder="Enter GBP..." 
                             type="number"
                             max="100"
                             min="0.0001"
@@ -73,6 +70,10 @@ function SendCycles(props: Props) {
                         <button onClick={sendCycles} type="button">Send</button>
                     </div>
                     <div className="cycles-recipient">to {props.recipient.username}</div>
+                    <div className="send-cycles-links">
+                        <a href="#">A58435DF2E8A0DD121D8CF9EE</a>
+                        <a href="#">add funds</a>
+                    </div>
                 </div>
             </div>
             <div className="dollar button hide-on-click-ignore" onClick={toggleDialog}>
@@ -112,7 +113,8 @@ function SendCycles(props: Props) {
         
         if (elemClassList.contains("hide")) {
             fetchCurrentBalance();
-            document.getElementById("cyclesInput")?.focus();
+            setCycles("");
+            setPounds("");    
         }
 
         elemClassList.toggle("hide");
@@ -127,6 +129,7 @@ function SendCycles(props: Props) {
         getCurrentUserAsync().then((outcome) => {
             if (outcome.type === "GET_CURRENT_USER_SUCCEEDED") {
                 setBalance(formatCycles(outcome.payload.accountBalance));            
+                document.getElementById("cyclesInput")?.focus();
             }
         });
     }

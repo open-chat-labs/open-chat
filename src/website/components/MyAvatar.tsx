@@ -28,9 +28,8 @@ function onAvatarFileSelected(event: any) {
     reader.onload = function(e: any) {
         const avatarElem = document.getElementById("myAvatar");
         if (avatarElem != null) {
-            const base64String = "data:*/*;base64," + btoa(String.fromCharCode(...e.target.result));
-            avatarElem.setAttribute("src", base64String);
+            avatarElem.setAttribute("src", e.target.result);
         }
     }
-    reader.readAsArrayBuffer(files[0]);
+    reader.readAsDataURL(files[0]);
 }
