@@ -52,16 +52,13 @@ function MessagesFromSingleDay(props: Props) {
         let senderUserId: UserId;
         let senderDetails: Option<UserSummary> = null;
         let readByMe: boolean = true;
-        let readByThem: boolean;
         if (message.kind === "unconfirmed") {
             sentByMe = true;
             senderUserId = props.myUserId;
-            readByThem = !props.unreadMessageDetector.isUnreadByThem(message);
         } else {
             sentByMe = message.sender === props.myUserId;
             senderUserId = message.sender;
             readByMe = !props.unreadMessageDetector.isUnread(message);
-            readByThem = !props.unreadMessageDetector.isUnreadByThem(message);
 
             if (props.isGroupChat && !sentByMe) {
                 senderDetails = props.usersDictionary.hasOwnProperty(message.sender)
@@ -73,6 +70,8 @@ function MessagesFromSingleDay(props: Props) {
                     };
             }
         }
+
+        const readByThem = !props.unreadMessageDetector.isUnreadByThem(message);
 
         const theirUserName = props.theirUserId && props.usersDictionary.hasOwnProperty(props.theirUserId) 
             ? props.usersDictionary[props.theirUserId].username
