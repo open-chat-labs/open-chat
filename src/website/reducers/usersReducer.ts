@@ -5,10 +5,11 @@ import { UserId, UserSummary, MyProfile } from "../model/users";
 import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 
+import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
+import { MARK_REMOTE_USER_ONLINE, MarkRemoteUserOnlineEvent } from "../actions/users/markRemoteUserOnline";
 import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
-import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -49,6 +50,7 @@ export type Event =
     GetUsersRequestedEvent |
     GetUsersSucceededEvent |
     GetUsersFailedEvent |
+    MarkRemoteUserOnlineEvent |
     RegisterUserRequestedEvent |
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
@@ -122,6 +124,18 @@ export default produce((state: UsersState, event: Event) => {
             // Only bump the usersSyncedUpTo value if all users were requested
             if (request.users.length === Object.keys(userDictionary).length) {
                 state.usersSyncedUpTo = result.timestamp;
+            }
+            break;
+        }
+
+        case MARK_REMOTE_USER_ONLINE: {
+            const userId = event.payload;
+            if (state.userDictionary.hasOwnProperty(userId)) {
+                const user = state.userDictionary[userId] as UserSummary;
+                if (user.minutesSinceLastOnline > 0) {
+                    user.minutesSinceLastOnline = 0;
+                    user.lastOnline = new Date();
+                }
             }
             break;
         }

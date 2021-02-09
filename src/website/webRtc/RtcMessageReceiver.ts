@@ -12,9 +12,12 @@ import {
     markMessagesAsReadByClientIdRemotely,
     markMessagesAsReadRemotely
 } from "../actions/chats/markMessagesAsRead";
+import markRemoteUserOnline from "../actions/users/markRemoteUserOnline";
 
 class RtcMessageReceiver {
     public handleMessage = (from: UserId, message: string) : void => {
+        store.dispatch(markRemoteUserOnline(from));
+
         const p2pMessageRaw: any = JSON.parse(message);
         switch (p2pMessageRaw.kind) {
             case MARK_MESSAGES_AS_READ_REMOTELY: {
