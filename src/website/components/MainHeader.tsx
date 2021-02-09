@@ -11,6 +11,7 @@ import { getSelectedChat } from "../utils/stateFunctions";
 import { MyProfile, UserSummary } from "../model/users";
 import ParticipantsTyping from "./ParticipantsTyping";
 import ThemTyping from "./ThemTyping";
+import UserOnlineMarker from "./UserOnlineMarker";
 
 export default React.memo(MainHeader);
 
@@ -26,6 +27,7 @@ function MainHeader() {
     let icon: JSX.Element;
     let chatName: string = "";
     let subTitle: Option<JSX.Element> = null;
+    let userOnlineMarker: Option<JSX.Element> = null;
 
     if (chatFunctions.isDirectChat(chat)) {
         icon = <DefaultAvatar userId={chat.them} />;
@@ -35,6 +37,10 @@ function MainHeader() {
             subTitle = chatFunctions.isConfirmedChat(chat) && chat.themTyping
                 ? <ThemTyping />
                 : <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
+
+            if (userSummary.minutesSinceLastOnline < 2) {
+                userOnlineMarker = <UserOnlineMarker />;
+            }
         }
     } else {
         icon = <GroupChatIcon className="avatar" />;
@@ -65,6 +71,7 @@ function MainHeader() {
             <button className="avatar-button">
                 {icon}
             </button>
+            {userOnlineMarker}
             <div className="chat-summary">
                 <div className="name">{chatName}</div>
                 {subTitle}

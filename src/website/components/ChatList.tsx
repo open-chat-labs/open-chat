@@ -22,6 +22,7 @@ function ChatList() {
         let isGroup: boolean;
         let userId: Option<UserId>;
         let themTyping: boolean = false;
+        let userOnline = false;
         let participantsTyping: string[] = [];
 
         if (chatFunctions.isDirectChat(c)) {
@@ -30,6 +31,7 @@ function ChatList() {
             isGroup = false;
             userId = c.them;
             themTyping = chatFunctions.isConfirmedChat(c) && c.themTyping;
+            userOnline = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].minutesSinceLastOnline < 2 : false);
         } else {
             name = c.subject;
             isGroup = true;
@@ -74,6 +76,7 @@ function ChatList() {
                 userId={userId}
                 unreadCount={chatFunctions.getUnreadMessageCount(c)}
                 themTyping={themTyping}
+                userOnline={userOnline}
                 participantsTyping={participantsTyping} />
         );
     });

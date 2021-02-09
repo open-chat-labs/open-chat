@@ -234,16 +234,17 @@ main header {
     border-left: 1px solid #dddddd;
     display: flex;
     flex-direction: row;
+    position: relative;
 }
 
-main header>div {
+main header .chat-summary {
     padding: 0 18px;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
 }
 
-main header>div >div {
+main header .chat-summary >div {
     line-height: normal;
 }
 
@@ -264,6 +265,7 @@ main header>div >div {
     height: 64px;
     display: flex;
     flex-direction: row;
+    position: relative;
 }
 
 .chats li .message-container {
@@ -298,7 +300,7 @@ main header>div >div {
 .chats .message-container .unread-count {
     font-size: 12px;
     float: right;
-    background-color: #05d755;
+    background-color: #32cd32;
     color: white;
     line-height: 1;
     border-radius: 10px;
@@ -307,6 +309,26 @@ main header>div >div {
     line-height: 20px;
     min-width: 20px;
     padding: 0 4px;
+}
+
+.user-online-marker {
+    background-color: #32cd32;
+    border-radius: 50%;
+    position: absolute;
+}
+
+.chats li .user-online-marker {
+    height: 12px;
+    width: 12px;
+    bottom: 12px;
+    left: 55px;
+}
+
+main header .user-online-marker {
+    height: 10px;
+    width: 10px;
+    bottom: 10px;
+    left: 48px;
 }
 
 .detail {
