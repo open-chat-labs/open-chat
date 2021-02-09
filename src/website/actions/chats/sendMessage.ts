@@ -12,7 +12,6 @@ import {
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
-import { DecrementBalanceEvent, DECREMENT_BALANCE } from "./updateAccountBalance";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -52,11 +51,6 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
         // the chat and those messages will be sent once the chat is confirmed.
         if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
             return;
-        }
-
-        // Decrement my account balance
-        if (content.kind === "cycles") {
-            dispatch({ type: DECREMENT_BALANCE, payload: content.amount } as DecrementBalanceEvent);
         }
 
         // Wait for the media data to finish uploading
@@ -153,8 +147,6 @@ export type SendMessageRequest = {
     clientMessageId: string,
     content: MessageContent
 }
-
-export type SendMessageSuccess = ConfirmedChat;
 
 export type SendMessageFailed = {
     content: MessageContent
