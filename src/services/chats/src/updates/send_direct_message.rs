@@ -2,8 +2,9 @@ use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::{timestamp, timestamp::Timestamp};
 use shared::user_id::UserId;
-use crate::domain::chat::{Chat, ChatId, MessageContent};
+use crate::domain::chat::{Chat, ChatEnum, ChatId, MessageContent};
 use crate::domain::chat_list::ChatList;
+use crate::domain::direct_chat::{DirectChatSummary};
 use crate::services::user_mgmt::*;
 use self::Response::*;
 
@@ -32,13 +33,21 @@ pub async fn update(recipient: UserId, client_message_id: String, content: Messa
         }
     }
 
-    let message_id = match chat {
-        Some(c) => c.push_message(&me, client_message_id, content, now),
-        None => chat_list.create_direct_chat(chat_id, me, recipient, client_message_id, content, now)
+    let chat_summary: DirectChatSummary;
+    let message_id: u32;
+    match chat {
+        Some(ChatEnum::Direct(c)) => {
+            message_id = c.push_message(&me, client_message_id, content, now);
+            chat_summary = DirectChatSummary::new(c, &me, 0);
+        },
+        _ => {
+            message_id = 1;
+            chat_summary = chat_list.create_direct_chat(chat_id, me, recipient, client_message_id, content, now);
+        }
     };
 
     Success(Result {
-        chat_id,
+        chat_summary,
         message_id,
         timestamp: now
     })
@@ -54,7 +63,7 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct Result {
-    chat_id: ChatId,
+    chat_summary: DirectChatSummary,
     message_id: u32,
     timestamp: Timestamp,
 }

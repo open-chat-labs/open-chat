@@ -17,13 +17,14 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, timestamp: Timestamp) -> u32;
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, now: Timestamp) -> u32;
     fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
-    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32) -> MarkReadResult;
+    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
     fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
-    fn get_updated_date(&self, user_id: &UserId) -> Timestamp;
+    fn get_display_date(&self, user_id: &UserId) -> Timestamp;
+    fn get_updated_date(&self) -> Timestamp;
     fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary;
 }
 
@@ -85,7 +86,7 @@ pub enum ChatSummary {
 
 #[derive(CandidType)]
 pub struct MarkReadResult {
-    unread_message_ids: Vec<u32>
+    unread_message_id_ranges: Vec<[u32; 2]>
 }
 
 #[derive(CandidType, Deserialize)]
@@ -141,9 +142,9 @@ impl Message {
 }
 
 impl MarkReadResult {
-    pub fn new(unread_message_ids: Vec<u32>) -> MarkReadResult {
+    pub fn new(unread_message_id_ranges: Vec<[u32; 2]>) -> MarkReadResult {
         MarkReadResult {
-            unread_message_ids
+            unread_message_id_ranges
         }
     }
 }

@@ -6,6 +6,8 @@ use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 use crate::domain::chat::ChatStableState;
+use crate::domain::direct_chat::DirectChatSummary;
+use crate::domain::group_chat::GroupChatSummary;
 
 #[derive(Default)]
 pub struct ChatList {
@@ -20,20 +22,25 @@ impl ChatList {
         recipient: UserId,
         client_message_id: String,
         content: MessageContent,
-        now: Timestamp) -> u32 {
+        now: Timestamp) -> DirectChatSummary {
 
-        let chat = ChatEnum::Direct(DirectChat::new(chat_id, sender, recipient, client_message_id, content, now));
-        self.chats.insert(chat_id, chat);
-        1
+        let chat = DirectChat::new(chat_id, sender.clone(), recipient, client_message_id, content, now);
+        let chat_summary = DirectChatSummary::new(&chat, &sender, 0);
+
+        self.chats.insert(chat_id, ChatEnum::Direct(chat));
+        chat_summary
     }
 
-    pub fn create_group_chat(&mut self, creator: UserId, participants: Vec<UserId>, subject: String, now: Timestamp) -> Option<ChatId> {
+    pub fn create_group_chat(&mut self, creator: UserId, participants: Vec<UserId>, subject: String, now: Timestamp) -> Option<GroupChatSummary> {
         let chat_id = ChatId::for_group_chat(&creator, now);
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
-                e.insert(ChatEnum::Group(GroupChat::new(chat_id, subject, creator, participants, now)));
-                Some(chat_id)
+                let chat = GroupChat::new(chat_id, subject, creator.clone(), participants, now);
+                let chat_summary = GroupChatSummary::new(&chat, &creator, 0);
+
+                e.insert(ChatEnum::Group(chat));
+                Some(chat_summary)
             }
         }
     }
@@ -70,12 +77,12 @@ impl ChatList {
             .chats
             .values()
             .filter(|chat| chat.involves_user(user))
-            .filter(|chat| updated_since.is_none() || chat.get_updated_date(user) > updated_since.unwrap())
+            .filter(|chat| updated_since.is_none() || chat.get_updated_date() > updated_since.unwrap())
             .collect();
 
         list.sort_unstable_by(|c1, c2| {
-            let t1 = c1.get_updated_date(user);
-            let t2 = c2.get_updated_date(user);
+            let t1 = c1.get_updated_date();
+            let t2 = c2.get_updated_date();
             t2.cmp(&t1)
         });
 

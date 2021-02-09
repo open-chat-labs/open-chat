@@ -2,15 +2,9 @@ type UserId = principal;
 type ChatId = nat64;
 type Timestamp = nat64;
 
-type CreateGroupChatResult =
-    record {
-        chat_id: ChatId;
-        timestamp: Timestamp;
-    };
-
 type CreateGroupChatResponse =
     variant {
-        Success: CreateGroupChatResult;
+        Success: GroupChatSummary;
         ChatAlreadyExists;
     };
 
@@ -53,7 +47,7 @@ type MessageContent =
 
 type SendDirectMessageResult =
     record {
-        chat_id: ChatId;
+        chat_summary: DirectChatSummary;
         message_id: nat32;
         timestamp: Timestamp;
     };
@@ -68,6 +62,7 @@ type SendDirectMessageResponse =
 
 type SendMessageResult =
     record {
+        chat_summary: ChatSummary;
         message_id: nat32;
         timestamp: Timestamp;
     };
@@ -80,7 +75,7 @@ type SendMessageResponse =
 
 type MarkReadResult =
     record {
-        unread_message_ids: vec nat32;
+        unread_message_id_ranges: vec vec nat32;
     };
 
 type MarkReadResponse =
@@ -132,8 +127,10 @@ type DirectChatSummary =
     record {
         id: ChatId;
         them: UserId;
-        updated_date: Timestamp;
-        unread_message_id_ranges: vec vec nat32;
+        display_date: Timestamp;
+        last_updated: Timestamp;
+        unread_by_me_message_id_ranges: vec vec nat32;
+        unread_by_them_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
     };
 
@@ -141,9 +138,11 @@ type GroupChatSummary =
     record {
         id: ChatId;
         subject: text;
-        updated_date: Timestamp;
+        display_date: Timestamp;
+        last_updated: Timestamp;
         participants: vec UserId;
-        unread_message_id_ranges: vec vec nat32;
+        unread_by_me_message_id_ranges: vec vec nat32;
+        unread_by_any_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
     };
 

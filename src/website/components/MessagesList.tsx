@@ -26,7 +26,6 @@ function MessagesList() {
         return <div></div>;
     }
 
-    const isConfirmedChat = chatFunctions.isConfirmedChat(chat);
     const isGroupChat = chatFunctions.isGroupChat(chat);
     const theirUserId: Option<UserId> = chatFunctions.isDirectChat(chat) ? chat.them : null;
 

@@ -66,7 +66,7 @@ function ChatList() {
             <ChatListItem
                 key={key}
                 name={name}
-                date={"updatedDate" in c ? c.updatedDate : undefined}
+                date={"lastUpdated" in c ? c.lastUpdated : undefined}
                 index={index}
                 selected={index === selectedChatIndex}
                 latestMessage={latestMessageText}

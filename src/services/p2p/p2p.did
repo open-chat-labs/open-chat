@@ -88,5 +88,6 @@ service : {
     add_offer: (AddOfferRequest) -> (AddOfferResponse);
     add_answer: (AddAnswerRequest) -> ();
     remove_connection_details: (RemoveConnectionDetailsRequest) -> (nat32);
+
     get_connection_details: (opt Timestamp) -> (GetConnectionDetailsResponse) query;
 }

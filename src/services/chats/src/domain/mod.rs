@@ -1,6 +1,6 @@
+pub mod blob_storage;
 pub mod chat;
 pub mod chat_list;
-pub mod blob_storage;
-mod direct_chat;
-mod group_chat;
-mod messages;
+pub mod direct_chat;
+pub mod group_chat;
+pub mod messages;

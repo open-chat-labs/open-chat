@@ -19,9 +19,10 @@ export type Props = {
     sentByMe: boolean,
     sender: Option<UserSummary>,
     theirUsername: Option<string>,
-    groupPosition: MessageGroupPosition
-    unread: boolean,
-    unconfirmed: boolean
+    groupPosition: MessageGroupPosition,
+    confirmed: boolean,
+    readByMe: boolean,
+    readByThem: boolean
 }
 
 export default React.memo(Message);
@@ -42,12 +43,14 @@ function Message(props : Props) {
             onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
     }
 
-    if (props.unread) {
-        className += " unread";
+    if (props.confirmed) {
+        className += " confirmed";
+        if (props.readByThem) {
+            className += " readByThem";
+        }
     }
-
-    if (props.unconfirmed) {
-        className += " unconfirmed";
+    if (!props.readByMe) {
+        className += " unread";
     }
 
     switch (props.groupPosition) {
@@ -81,7 +84,8 @@ function Message(props : Props) {
             {senderLink}
             {contentElement}
             <span className="message-time">{toShortTimeString(props.date)}</span>
-            {props.sentByMe && !props.unconfirmed ? <Tick className="tick-confirmed" /> : null}
+            {props.sentByMe && props.confirmed ? <Tick className="message-tick confirmed" /> : null}
+            {props.sentByMe && props.readByThem ? <Tick className="message-tick read-by-them" /> : null}
         </div>
     );
 }
