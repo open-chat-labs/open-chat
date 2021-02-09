@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import gotoUser from "../actions/chats/gotoUser";
 import Tick from "../assets/icons/tick.svg";
+import DoubleTick from "../assets/icons/doubleTick.svg";
 import { Option } from "../model/common";
 import { UserSummary } from "../model/users";
 import { MessageContent } from "../model/messages";
@@ -73,13 +74,21 @@ function Message(props : Props) {
         contentElement = <TextContent text={props.content.text} />
     }
 
+    let tick: Option<JSX.Element> = null;
+    if (props.sentByMe && props.confirmed) {
+        if (props.readByThem) {
+            tick = <DoubleTick className="message-tick" />;
+        } else {
+            tick = <Tick className="message-tick" />;
+        }
+    }
+
     return (
         <div id={props.clientMessageId} data-message-id={props.messageId} className={className}>
             {senderLink}
             {contentElement}
             <span className="message-time">{toShortTimeString(props.date)}</span>
-            {props.sentByMe && props.confirmed ? <Tick className="message-tick confirmed" /> : null}
-            {props.sentByMe && props.confirmed && props.readByThem ? <Tick className="message-tick read-by-them" /> : null}
+            {tick}
         </div>
     );
 }

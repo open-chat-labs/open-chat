@@ -433,6 +433,7 @@ main header>div >div {
 .message-time {
     float: right;
     margin-left: 10px;
+    margin-right: 12px;
     text-align: right;
 }
 
@@ -447,18 +448,11 @@ main header>div >div {
 
 .message-tick {
     position: absolute;
-    height: 10px;
-    width: 10px;
-    bottom: 9px;
+    height: 15px;
+    width: 15px;
+    bottom: 6px;
     z-index: 100;
-}
-
-.message-tick.confirmed {
-    right: -5px;
-}
-
-.message-tick.read-by-them {
-    right: -15px;
+    right: 4px;
 }
 
 .message a.participant {
