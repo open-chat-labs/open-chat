@@ -1,9 +1,9 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
-use shared::{timestamp, timestamp::Timestamp};
+use shared::timestamp;
 use shared::user_id::UserId;
-use crate::domain::chat::ChatId;
 use crate::domain::chat_list::ChatList;
+use crate::domain::group_chat::GroupChatSummary;
 use self::Response::*;
 
 pub fn update(participants: Vec<UserId>, subject: String) -> Response {
@@ -12,22 +12,13 @@ pub fn update(participants: Vec<UserId>, subject: String) -> Response {
     let now = timestamp::now();
 
     match chat_list.create_group_chat(me, participants, subject, now) {
-        Some(chat_id) => Success(Result {
-            chat_id,
-            timestamp: now
-        }),
+        Some(chat_summary) => Success(chat_summary),
         None => ChatAlreadyExists,
     }
 }
 
 #[derive(CandidType)]
-pub struct Result {
-    chat_id: ChatId,
-    timestamp: Timestamp
-}
-
-#[derive(CandidType)]
 pub enum Response {
-    Success(Result),
+    Success(GroupChatSummary),
     ChatAlreadyExists,
 }

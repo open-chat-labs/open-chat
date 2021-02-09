@@ -1,7 +1,7 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::{timestamp, timestamp::Timestamp};
-use crate::domain::chat::{Chat, ChatId, MessageContent};
+use crate::domain::chat::{Chat, ChatId, MessageContent, ChatSummary};
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
 
@@ -13,7 +13,8 @@ pub fn update(chat_id: ChatId, client_message_id: String, content: MessageConten
         Some(chat) => {
             let now = timestamp::now();
             let message_id = chat.push_message(&me, client_message_id, content, now);
-            Success(Result::new(message_id, now))
+            let chat_summary = chat.to_summary(&me, 0);
+            Success(Result::new(chat_summary, message_id, now))
         }
     }
 }
@@ -26,13 +27,15 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct Result {
+    chat_summary: ChatSummary,
     message_id: u32,
     timestamp: Timestamp
 }
 
 impl Result {
-    pub fn new(message_id: u32, timestamp: Timestamp) -> Result {
+    pub fn new(chat_summary: ChatSummary, message_id: u32, timestamp: Timestamp) -> Result {
         Result {
+            chat_summary,
             message_id,
             timestamp
         }

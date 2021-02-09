@@ -1,6 +1,7 @@
 import canister from "ic:canisters/chats";
-import { ChatId } from "../../model/chats";
+import { ChatId, ConfirmedChat } from "../../model/chats";
 import { MessageContent } from "../../model/messages";
+import { chatFromCandid } from "../candidConverters/chat";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
@@ -13,6 +14,7 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
         return {
             kind: "success",
             result: {
+                chat: chatFromCandid(success.chat_summary),
                 messageId: success.message_id,
                 date: timestampToDate(success.timestamp)
             }
@@ -40,6 +42,7 @@ export type ChatNotFound = {
 }
 
 export type SendMessageResult = {
+    chat: ConfirmedChat,
     messageId: number,
     date: Date
 }
