@@ -570,6 +570,11 @@ main header .user-online-marker {
     padding: 0px 4px;
 }
 
+.message.media.me .message-tick {
+    bottom: 4px;
+    right: 3px;
+}
+
 .message.file {
   padding: 3px;
 }
@@ -619,6 +624,11 @@ main header .user-online-marker {
     margin-right: 9px;
 }
 
+.message.me.media .message-time,
+.message.me.file .message-time {
+    margin-right: 19px;
+}
+
 .message.file .file-size {
     margin-left: 9px;
 }
@@ -628,9 +638,6 @@ main header .user-online-marker {
     background-size: contain;
     width: 26px;
     height: 30px;
-}
-
-.message.file .file-icon {
 }
 
 main footer {
