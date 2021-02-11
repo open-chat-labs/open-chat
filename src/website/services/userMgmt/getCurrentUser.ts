@@ -1,5 +1,5 @@
 import canister from "ic:canisters/user_mgmt";
-import { MyProfile } from "../../model/users";
+import { MyProfile } from "../../domain/model/users";
 import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
 
 export default async function() : Promise<GetCurrentUserResponse> {

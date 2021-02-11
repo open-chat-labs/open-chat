@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { RootState } from "../../reducers";
-import * as chatFunctions from "../../model/chats";
-import CurrentUserTypingHandler from "../../utils/CurrentUserTypingHandler";
+import * as chatFunctions from "../../domain/model/chats";
+import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 
 export const CHAT_SELECTED = "CHAT_SELECTED";
 

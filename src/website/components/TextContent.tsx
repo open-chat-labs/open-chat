@@ -1,5 +1,5 @@
 import React from "react";
-import { buildEmojiSpan, containsEmoji } from "../model/messages";
+import { buildEmojiSpan, containsEmoji } from "../domain/model/messages";
 
 export default React.memo(TextContent);
 

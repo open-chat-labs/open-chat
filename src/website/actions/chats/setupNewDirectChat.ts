@@ -2,9 +2,9 @@ import { Dispatch } from "react";
 
 import userMgmtService from "../../services/userMgmt/service";
 import { RootState } from "../../reducers";
-import { Chat } from "../../model/chats";
-import { Option } from "../../model/common";
-import { UserId, UserSummary } from "../../model/users";
+import { Chat } from "../../domain/model/chats";
+import { Option } from "../../domain/model/common";
+import { UserId, UserSummary } from "../../domain/model/users";
 
 export const SETUP_NEW_DIRECT_CHAT_REQUESTED = "SETUP_NEW_DIRECT_CHAT_REQUESTED";
 export const SETUP_NEW_DIRECT_CHAT_SUCCEEDED = "SETUP_NEW_DIRECT_CHAT_SUCCEEDED";

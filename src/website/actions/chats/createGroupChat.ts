@@ -1,14 +1,14 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ChatId, ConfirmedGroupChat, UnconfirmedGroupChat } from "../../model/chats";
-import { UserId } from "../../model/users";
+import { ConfirmedGroupChat, UnconfirmedGroupChat } from "../../domain/model/chats";
+import { UserId } from "../../domain/model/users";
 import { RootState } from "../../reducers";
 
 import sendMessage from "./sendMessage";
 import { addParticipantsByUserId } from "./addParticipants";
 import { CONFIRMED_GROUP_CHAT, UNCONFIRMED_GROUP_CHAT } from "../../constants";
-import { TextContent } from "../../model/messages";
+import { TextContent } from "../../domain/model/messages";
 
 export const CREATE_GROUP_CHAT_REQUESTED = "CREATE_GROUP_CHAT_REQUESTED";
 export const CREATE_GROUP_CHAT_SUCCEEDED = "CREATE_GROUP_CHAT_SUCCEEDED";

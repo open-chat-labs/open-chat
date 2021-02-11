@@ -1,6 +1,6 @@
 import canister from "ic:canisters/user_mgmt";
-import { UserId, UserSummary } from "../../model/users";
-import { Option, Timestamp } from "../../model/common";
+import { UserId, UserSummary } from "../../domain/model/users";
+import { Option, Timestamp } from "../../domain/model/common";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";

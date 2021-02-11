@@ -1,6 +1,6 @@
 import canister from "ic:canisters/p2p";
-import { Option, Timestamp } from "../../model/common";
-import { P2PConnectionDetails } from "../../model/p2pConnectionDetails";
+import { Option, Timestamp } from "../../domain/model/common";
+import { P2PConnectionDetails } from "../../domain/model/p2pConnectionDetails";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as connectionDetailsFromCandid } from "../candidConverters/p2pConnectionDetails";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";

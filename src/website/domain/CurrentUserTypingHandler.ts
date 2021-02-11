@@ -1,5 +1,5 @@
-import { ChatId } from "../model/chats";
-import { Option } from "../model/common";
+import { ChatId } from "./model/chats";
+import { Option } from "./model/common";
 import store from "../store";
 import {
     CURRENT_USER_STOPPED_TYPING,

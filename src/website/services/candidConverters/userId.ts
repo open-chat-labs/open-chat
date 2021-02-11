@@ -1,6 +1,6 @@
 import { Principal } from "@dfinity/agent";
 
-import { UserId } from "../../model/users";
+import { UserId } from "../../domain/model/users";
 
 export function fromCandid(value: Principal) : UserId {
     return value.toString();

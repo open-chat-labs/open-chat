@@ -1,8 +1,8 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ConfirmedChat } from "../../model/chats";
-import { Option, Timestamp } from "../../model/common";
+import { ConfirmedChat } from "../../domain/model/chats";
+import { Option, Timestamp } from "../../domain/model/common";
 
 export const GET_UPDATED_CHATS_REQUESTED = "GET_UPDATED_CHATS_REQUESTED";
 export const GET_UPDATED_CHATS_SUCCEEDED = "GET_UPDATED_CHATS_SUCCEEDED";

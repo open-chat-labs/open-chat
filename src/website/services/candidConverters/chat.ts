@@ -1,5 +1,5 @@
-import { ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../../model/chats";
-import * as chatFunctions from "../../model/chats";
+import { ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../../domain/model/chats";
+import * as chatFunctions from "../../domain/model/chats";
 import { fromCandid as chatIdFromCandid } from "./chatId";
 import { fromCandid as localMessageFromCandid } from "./localMessage";
 import { toArray as rangeSetToArray } from "./rangeSet";

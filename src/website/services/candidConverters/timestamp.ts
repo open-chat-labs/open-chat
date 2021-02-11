@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { Timestamp } from "../../model/common";
+import { Timestamp } from "../../domain/model/common";
 
 export function toDate(value: BigNumber) : Date {
     return new Date(Number(value));

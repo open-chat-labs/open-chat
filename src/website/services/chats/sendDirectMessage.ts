@@ -1,10 +1,10 @@
 import canister from "ic:canisters/chats";
-import { UserId } from "../../model/users";
-import { ConfirmedDirectChat } from "../../model/chats";
+import { UserId } from "../../domain/model/users";
+import { ConfirmedDirectChat } from "../../domain/model/chats";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
-import { MessageContent } from "../../model/messages";
+import { MessageContent } from "../../domain/model/messages";
 import { directChatFromCandid } from "../candidConverters/chat";
 
 export default async function(userId: UserId, clientMessageId: string, content: MessageContent) : Promise<SendDirectMessageResponse> {

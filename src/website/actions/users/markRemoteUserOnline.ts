@@ -1,4 +1,4 @@
-import { UserId } from "../../model/users";
+import { UserId } from "../../domain/model/users";
 
 export const MARK_REMOTE_USER_ONLINE = "MARK_REMOTE_USER_ONLINE";
 

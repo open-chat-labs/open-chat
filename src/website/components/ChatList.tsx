@@ -1,12 +1,12 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Option } from "../model/common";
-import { UserId } from "../model/users";
+import { Option } from "../domain/model/common";
+import { UserId } from "../domain/model/users";
 import { RootState } from "../reducers";
-import * as chatFunctions from "../model/chats";
-import * as stateFunctions from "../utils/stateFunctions";
+import * as chatFunctions from "../domain/model/chats";
+import * as stateFunctions from "../domain/stateFunctions";
 import ChatListItem from "./ChatListItem";
-import { CyclesContent, MediaContent } from "../model/messages";
+import { CyclesContent, MediaContent } from "../domain/model/messages";
 import { formatCycles } from "../formatters/cycles";
 
 export default React.memo(ChatList);

@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
-import { ConfirmedGroupChat } from "../../model/chats";
-import { UserId } from "../../model/users";
+import { ConfirmedGroupChat } from "../../domain/model/chats";
+import { UserId } from "../../domain/model/users";
 import { groupChatFromCandid } from "../candidConverters/chat";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 

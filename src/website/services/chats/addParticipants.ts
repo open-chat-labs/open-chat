@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
-import { UserId } from "../../model/users";
-import { ChatId } from "../../model/chats";
+import { UserId } from "../../domain/model/users";
+import { ChatId } from "../../domain/model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 

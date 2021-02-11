@@ -1,4 +1,4 @@
-import { Currency } from "../model/common";
+import { Currency } from "../domain/model/common";
 
 const GBP_TO_MILLION_CYCLES = 810_000;
 const MILLION = 1_000_000;

@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
-import { ChatId } from "../../model/chats";
-import { LocalMessage } from "../../model/messages";
+import { ChatId } from "../../domain/model/chats";
+import { LocalMessage } from "../../domain/model/messages";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { fromCandid as localMessageFromCandid } from "../candidConverters/localMessage";
 

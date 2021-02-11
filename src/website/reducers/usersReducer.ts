@@ -1,7 +1,7 @@
 import produce from "immer";
 
-import { Option, Timestamp } from "../model/common";
-import { UserId, UserSummary, MyProfile } from "../model/users";
+import { Option, Timestamp } from "../domain/model/common";
+import { UserId, UserSummary, MyProfile } from "../domain/model/users";
 import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 

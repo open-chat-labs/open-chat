@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
 import userMgmtService from "../../services/userMgmt/service";
-import { MyProfile } from "../../model/users";
+import { MyProfile } from "../../domain/model/users";
 
 export const REGISTER_USER_REQUESTED = "REGISTER_USER_REQUESTED";
 export const REGISTER_USER_SUCCEEDED = "REGISTER_USER_SUCCEEDED";

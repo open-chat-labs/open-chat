@@ -1,4 +1,4 @@
-import { LocalMessage } from "../../model/messages";
+import { LocalMessage } from "../../domain/model/messages";
 import { fromCandid as messageContentFromCandid } from "./messageContent";
 import { toDate as timestampToDate } from "./timestamp";
 import { fromCandid as userIdFromCandid } from "./userId";

@@ -1,4 +1,4 @@
-import { Option } from "../model/common";
+import { Option } from "./model/common";
 
 export default class RecurringTaskRunner {
     task: () => Promise<void>;

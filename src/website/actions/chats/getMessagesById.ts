@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ChatId } from "../../model/chats";
+import { ChatId } from "../../domain/model/chats";
 import { GetMessagesResult } from "../../services/chats/getMessages";
 
 export const GET_MESSAGES_BY_ID_REQUESTED = "GET_MESSAGES_BY_ID_REQUESTED";

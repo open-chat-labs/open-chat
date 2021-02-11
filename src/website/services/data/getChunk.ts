@@ -1,5 +1,5 @@
 import canister from "ic:canisters/chats";
-import { Option } from "../../model/common";
+import { Option } from "../../domain/model/common";
 import { fromCandid as optionFromCandid } from "../candidConverters/option";
 
 export default async function(key: string, chunkIndex: number, chunkSize: number) : Promise<GetChunkResponse> {

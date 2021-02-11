@@ -1,4 +1,4 @@
-import { Option } from "../../model/common";
+import { Option } from "../../domain/model/common";
 
 export function fromCandid<T>(value: T[]) : Option<T> {
     return Array.isArray(value) && value.length

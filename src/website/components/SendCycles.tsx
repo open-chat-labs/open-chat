@@ -5,9 +5,9 @@ import getCurrentUser, { GetCurrentUserOutcome } from "../actions/users/getCurre
 import Dollar from "../assets/icons/dollar.svg";
 import UpDownArrow from "../assets/icons/upDownArrow.svg";
 import { formatCycles } from "../formatters/cycles";
-import { Chat } from "../model/chats";
-import { SendMessageContent } from "../model/messages";
-import { UserSummary } from "../model/users";
+import { Chat } from "../domain/model/chats";
+import { SendMessageContent } from "../domain/model/messages";
+import { UserSummary } from "../domain/model/users";
 import * as cycleFunctions from "../utils/cycleFunctions";
 
 export default React.memo(SendCycles);

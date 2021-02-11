@@ -1,7 +1,7 @@
 import React from "react";
 import { formatCycles } from "../formatters/cycles";
-import { Option } from "../model/common";
-import { CyclesContent as Cycles } from "../model/messages";
+import { Option } from "../domain/model/common";
+import { CyclesContent as Cycles } from "../domain/model/messages";
 
 export default React.memo(CyclesContent);
 

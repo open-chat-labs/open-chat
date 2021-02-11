@@ -1,5 +1,5 @@
-import { ChatId } from "../../model/chats";
-import { UserId } from "../../model/users";
+import { ChatId } from "../../domain/model/chats";
+import { UserId } from "../../domain/model/users";
 
 export const MARK_MESSAGES_AS_READ = "MARK_MESSAGES_AS_READ";
 export const MARK_MESSAGES_AS_READ_BY_CLIENT_ID = "MARK_MESSAGES_AS_READ_BY_CLIENT_ID";
