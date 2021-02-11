@@ -89,7 +89,7 @@ impl GroupChat {
             if self.find_participant(&user_to_add).is_some() {
                 continue;
             }
-            self.participants.push(Participant::new(user_to_add, false, now));
+            self.participants.push(Participant::new(user_to_add, true, now));
             count_added += 1;
         }
 
