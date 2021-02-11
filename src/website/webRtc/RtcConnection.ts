@@ -12,9 +12,9 @@ export default class RtcConnection {
     offerId: Option<string> = null;
     answerId: Option<string> = null;
 
-    constructor(userId: UserId, onMessage: (message: string) => void, onDisconnected: () => void) {
+    constructor(userId: UserId, config: RTCConfiguration, onMessage: (message: string) => void, onDisconnected: () => void) {
         this.userId = userId;
-        this.connection = new RTCPeerConnection();
+        this.connection = new RTCPeerConnection(config);
         this.onMessage = onMessage;
         this.connection.onicecandidate = (e) => {
             if (e.candidate) {

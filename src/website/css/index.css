@@ -321,14 +321,14 @@ main header .chat-summary >div {
     height: 12px;
     width: 12px;
     bottom: 12px;
-    left: 55px;
+    left: 54px;
 }
 
 main header .user-online-marker {
     height: 10px;
     width: 10px;
     bottom: 10px;
-    left: 48px;
+    left: 47px;
 }
 
 .detail {
