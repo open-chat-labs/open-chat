@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
-import { UserSummary } from "./model/users";
-import * as chatFunctions from "./model/chats";
+import { UserSummary } from "./domain/model/users";
+import * as chatFunctions from "./domain/model/chats";
 import * as setFunctions from "./utils/setFunctions";
-import * as stateFunctions from "./utils/stateFunctions";
-import RecurringTaskRunner from "./utils/RecurringTaskRunner";
-import RtcConnectionsHandler from "./webRtc/RtcConnectionsHandler";
+import * as stateFunctions from "./domain/stateFunctions";
+import RecurringTaskRunner from "./domain/RecurringTaskRunner";
+import RtcConnectionsHandler from "./domain/webRtc/RtcConnectionsHandler";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";

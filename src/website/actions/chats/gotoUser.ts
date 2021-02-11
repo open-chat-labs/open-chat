@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { RootState } from "../../reducers";
-import { UserSummary } from "../../model/users";
-import { findDirectChatIndex } from "../../model/chats";
+import { UserSummary } from "../../domain/model/users";
+import { findDirectChatIndex } from "../../domain/model/chats";
 import selectChat from "./selectChat";
 import { SetupNewDirectChatSucceededEvent, SETUP_NEW_DIRECT_CHAT_SUCCEEDED } from "./setupNewDirectChat";
 

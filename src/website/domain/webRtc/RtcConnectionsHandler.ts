@@ -2,7 +2,7 @@ import { Option, Timestamp } from "../model/common";
 import { P2PConnectionAnswer, P2PConnectionDetails, P2PConnectionOffer } from "../model/p2pConnectionDetails";
 import { UserId } from "../model/users";
 import RtcConnectionsStore from "./RtcConnectionsStore";
-import p2pService from "../services/p2p/service";
+import p2pService from "../../services/p2p/service";
 import RtcConnection from "./RtcConnection";
 
 class RtcConnectionsHandler {

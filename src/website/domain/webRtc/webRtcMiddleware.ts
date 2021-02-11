@@ -1,6 +1,6 @@
 import { Middleware } from "redux";
-import { RootState } from "../reducers";
-import { SEND_MESSAGE_REQUESTED, SendMessageRequestedEvent } from "../actions/chats/sendMessage";
+import { RootState } from "../../reducers";
+import { SEND_MESSAGE_REQUESTED, SendMessageRequestedEvent } from "../../actions/chats/sendMessage";
 import {
     CURRENT_USER_TYPING,
     CURRENT_USER_STOPPED_TYPING,
@@ -8,7 +8,7 @@ import {
     CurrentUserStoppedTypingEvent,
     REMOTE_USER_TYPING,
     REMOTE_USER_STOPPED_TYPING
-} from "../actions/chats/userTyping";
+} from "../../actions/chats/userTyping";
 import * as chatFunctions from "../model/chats";
 import RtcConnectionsHandler from "./RtcConnectionsHandler";
 import { Chat } from "../model/chats";
@@ -19,7 +19,7 @@ import {
     MARK_MESSAGES_AS_READ_REMOTELY,
     MarkMessagesAsReadByClientIdEvent,
     MarkMessagesAsReadEvent
-} from "../actions/chats/markMessagesAsRead";
+} from "../../actions/chats/markMessagesAsRead";
 
 const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
     switch (event.type) {

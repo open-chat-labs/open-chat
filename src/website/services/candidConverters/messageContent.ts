@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { MessageContent } from "../../model/messages";
+import { MessageContent } from "../../domain/model/messages";
 import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "./option";
 
 export function fromCandid(content: any) : MessageContent {

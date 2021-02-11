@@ -1,4 +1,4 @@
-import { Option, Timestamp } from "../../model/common";
+import { Option, Timestamp } from "../../domain/model/common";
 import addAnswer, { AddAnswerRequest, AddAnswerResponse } from "./addAnswer";
 import addOffer, { AddOfferRequest, AddOfferResponse } from "./addOffer";
 import getConnectionDetails, { GetConnectionDetailsResponse } from "./getConnectionDetails";

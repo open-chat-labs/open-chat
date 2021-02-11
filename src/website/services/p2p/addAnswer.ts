@@ -1,5 +1,5 @@
 import canister from "ic:canisters/p2p";
-import { UserId } from "../../model/users";
+import { UserId } from "../../domain/model/users";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
 export default async function(request: AddAnswerRequest) : Promise<AddAnswerResponse> {

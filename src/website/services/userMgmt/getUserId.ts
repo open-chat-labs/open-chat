@@ -1,5 +1,5 @@
 import canister from "ic:canisters/user_mgmt";
-import { UserId } from "../../model/users";
+import { UserId } from "../../domain/model/users";
 import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 
 export default async function(username: string) : Promise<GetUserIdResponse> {

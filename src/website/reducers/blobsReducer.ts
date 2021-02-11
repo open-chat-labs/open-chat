@@ -1,5 +1,6 @@
 import produce from "immer";
 import * as setFunctions from "../utils/setFunctions";
+import { dataToBlobUrl } from "../utils/blobFunctions";
 
 import {
     GET_DATA_REQUESTED,
@@ -62,8 +63,3 @@ export default produce((state: BlobsState, event: Event) => {
         }
     }
 }, initialState);
-
-function dataToBlobUrl(data: Uint8Array, type: string): string {
-    const blob = new Blob([data], { type });
-    return URL.createObjectURL(blob);
-}

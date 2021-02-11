@@ -1,9 +1,9 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ConfirmedChat } from "../../model/chats";
+import { ConfirmedChat } from "../../domain/model/chats";
 import { PAGE_SIZE } from "../../constants";
-import { Option, Timestamp } from "../../model/common";
+import { Option, Timestamp } from "../../domain/model/common";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";

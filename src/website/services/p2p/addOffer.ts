@@ -1,7 +1,7 @@
 import canister from "ic:canisters/p2p";
-import { Option } from "../../model/common";
-import { P2PConnectionOffer } from "../../model/p2pConnectionDetails";
-import { UserId } from "../../model/users";
+import { Option } from "../../domain/model/common";
+import { P2PConnectionOffer } from "../../domain/model/p2pConnectionDetails";
+import { UserId } from "../../domain/model/users";
 import { fromCandid as optionFromCandid } from "../candidConverters/option";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 

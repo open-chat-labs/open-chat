@@ -1,8 +1,9 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { FileContent as File } from "../model/messages";
+import { FileContent as File } from "../domain/model/messages";
 import getData, { GetDataOutcome, GET_DATA_FAILED } from "../actions/data/getData";
 import formatFileSize from "../formatters/fileSize";
+import { dataToBlobUrl } from "../utils/blobFunctions";
 
 export interface Props {
     content: File
@@ -81,9 +82,4 @@ function FileContent(props : Props): JSX.Element {
         }
         return node;
     }
-}
-
-function dataToBlobUrl(data: Uint8Array, type: string): string {
-    const blob = new Blob([data], { type });
-    return URL.createObjectURL(blob);
 }

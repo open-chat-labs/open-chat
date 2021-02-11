@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
-import { ChatId } from "../../model/chats";
+import { ChatId } from "../../domain/model/chats";
 
 export const MARK_MESSAGES_AS_READ_SERVER_SYNC_REQUESTED = "MARK_MESSAGES_AS_READ_SERVER_SYNC_REQUESTED";
 export const MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED = "MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED";

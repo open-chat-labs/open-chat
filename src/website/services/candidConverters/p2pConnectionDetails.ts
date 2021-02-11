@@ -1,4 +1,4 @@
-import { P2PConnectionDetails } from "../../model/p2pConnectionDetails";
+import { P2PConnectionDetails } from "../../domain/model/p2pConnectionDetails";
 import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 
 export function fromCandid(connectionDetails: any) : P2PConnectionDetails {

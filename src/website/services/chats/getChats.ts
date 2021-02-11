@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
-import { ConfirmedChat } from "../../model/chats";
-import { Option, Timestamp } from "../../model/common";
+import { ConfirmedChat } from "../../domain/model/chats";
+import { Option, Timestamp } from "../../domain/model/common";
 import { chatFromCandid } from "../candidConverters/chat";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";

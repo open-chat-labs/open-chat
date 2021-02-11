@@ -1,8 +1,8 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Option } from "../model/common";
+import { Option } from "../domain/model/common";
 import getData from "../actions/data/getData";
-import { MediaContent as Media } from "../model/messages";
+import { MediaContent as Media } from "../domain/model/messages";
 import { RootState } from "../reducers";
 import Image from "./Image";
 import Video from "./Video";

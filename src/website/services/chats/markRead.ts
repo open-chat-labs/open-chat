@@ -1,5 +1,5 @@
 import canister from "ic:canisters/chats";
-import { ChatId } from "../../model/chats";
+import { ChatId } from "../../domain/model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toArray as rangeSetToArray } from "../candidConverters/rangeSet";
 

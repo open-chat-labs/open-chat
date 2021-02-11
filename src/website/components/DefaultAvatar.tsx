@@ -1,8 +1,8 @@
 import React from "react";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { Option } from "../model/common";
-import { UserId } from "../model/users";
+import { Option } from "../domain/model/common";
+import { UserId } from "../domain/model/users";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
 
 type Props = {

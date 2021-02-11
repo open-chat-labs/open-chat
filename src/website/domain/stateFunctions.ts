@@ -1,6 +1,6 @@
-import { Chat } from "../model/chats";
-import { Option } from "../model/common";
-import { UserId, UserSummary } from "../model/users";
+import { Chat } from "./model/chats";
+import { Option } from "./model/common";
+import { UserId, UserSummary } from "./model/users";
 import { ChatsState } from "../reducers/chatsReducer";
 import { UsersState } from "../reducers/usersReducer";
 

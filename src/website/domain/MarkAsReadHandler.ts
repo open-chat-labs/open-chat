@@ -1,6 +1,6 @@
 import store from "../store";
-import { ChatId } from "../model/chats";
-import { Option } from "../model/common";
+import { ChatId } from "./model/chats";
+import { Option } from "./model/common";
 import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadServerSync";
 
 const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();

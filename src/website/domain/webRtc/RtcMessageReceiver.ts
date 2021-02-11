@@ -1,18 +1,18 @@
 import { UserId } from "../model/users";
 import { ChatId } from "../model/chats";
 import { P2PMessage } from "../model/messages";
-import store from "../store";
-import receiveP2PMessage from "../actions/chats/receiveP2PMessage";
-import { SEND_MESSAGE_REQUESTED } from "../actions/chats/sendMessage";
-import { REMOTE_USER_TYPING, REMOTE_USER_STOPPED_TYPING } from "../actions/chats/userTyping";
-import RemoteUserTypingHandler from "../utils/RemoteUserTypingHandler";
+import store from "../../store";
+import receiveP2PMessage from "../../actions/chats/receiveP2PMessage";
+import { SEND_MESSAGE_REQUESTED } from "../../actions/chats/sendMessage";
+import { REMOTE_USER_TYPING, REMOTE_USER_STOPPED_TYPING } from "../../actions/chats/userTyping";
+import RemoteUserTypingHandler from "../../domain/RemoteUserTypingHandler";
 import {
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
     MARK_MESSAGES_AS_READ_REMOTELY,
     markMessagesAsReadByClientIdRemotely,
     markMessagesAsReadRemotely
-} from "../actions/chats/markMessagesAsRead";
-import markRemoteUserOnline from "../actions/users/markRemoteUserOnline";
+} from "../../actions/chats/markMessagesAsRead";
+import markRemoteUserOnline from "../../actions/users/markRemoteUserOnline";
 
 class RtcMessageReceiver {
     public handleMessage = (from: UserId, message: string) : void => {

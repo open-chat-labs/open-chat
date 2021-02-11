@@ -1,6 +1,6 @@
-import { Message, RemoteMessage } from "../model/messages";
-import { Chat } from "../model/chats";
-import * as chatFunctions from "../model/chats";
+import { Message, RemoteMessage } from "./model/messages";
+import { Chat } from "./model/chats";
+import * as chatFunctions from "./model/chats";
 
 export default class UnreadMessageDetector {
     unreadMessageIds: Set<number>;

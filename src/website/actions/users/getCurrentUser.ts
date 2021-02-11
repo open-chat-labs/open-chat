@@ -1,6 +1,6 @@
 import { Dispatch } from "react";
 
-import { MyProfile } from "../../model/users";
+import { MyProfile } from "../../domain/model/users";
 import userMgmtService from "../../services/userMgmt/service";
 
 export const GET_CURRENT_USER_REQUESTED = "GET_CURRENT_USER_REQUESTED";

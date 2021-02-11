@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 
-import { Option, Timestamp } from "../../model/common";
-import { UserId, UserSummary } from "../../model/users";
+import { Option, Timestamp } from "../../domain/model/common";
+import { UserId, UserSummary } from "../../domain/model/users";
 import { GetUsersRequest } from "../../services/userMgmt/getUsers";
 import userMgmtService from "../../services/userMgmt/service";
 

@@ -1,4 +1,4 @@
-import { MyProfile } from "../../model/users";
+import { MyProfile } from "../../domain/model/users";
 import { fromCandid as userIdFromCandid } from "./userId";
 
 export function fromCandid(myProfile: any) : MyProfile {

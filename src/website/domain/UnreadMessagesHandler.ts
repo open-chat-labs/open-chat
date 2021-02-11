@@ -1,6 +1,6 @@
 import store from "../store";
-import { ChatId } from "../model/chats";
-import { Option } from "../model/common";
+import { ChatId } from "./model/chats";
+import { Option } from "./model/common";
 import { markMessagesAsReadLocally, markMessagesAsReadByClientIdLocally } from "../actions/chats/markMessagesAsRead";
 import RecurringTaskRunner from "./RecurringTaskRunner";
 

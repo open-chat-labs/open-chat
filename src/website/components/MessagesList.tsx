@@ -2,18 +2,18 @@ import React, { Dispatch, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "../reducers";
-import * as chatFunctions from "../model/chats";
-import { ChatId, ConfirmedChat } from "../model/chats";
-import { Option } from "../model/common";
-import { Message, RemoteMessage } from "../model/messages";
+import * as chatFunctions from "../domain/model/chats";
+import { ChatId, ConfirmedChat } from "../domain/model/chats";
+import { Option } from "../domain/model/common";
+import { Message, RemoteMessage } from "../domain/model/messages";
 import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
-import { getSelectedChat } from "../utils/stateFunctions";
+import { getSelectedChat } from "../domain/stateFunctions";
 import MessagesFromSingleDay from "./MessagesFromSingleDay";
-import UnreadMessageDetector from "../utils/UnreadMessageDetector";
-import UnreadMessagesHandler from "../utils/UnreadMessagesHandler";
-import { UserId } from "../model/users";
+import UnreadMessageDetector from "../domain/UnreadMessageDetector";
+import UnreadMessagesHandler from "../domain/UnreadMessagesHandler";
+import { UserId } from "../domain/model/users";
 
 export default React.memo(MessagesList);
 

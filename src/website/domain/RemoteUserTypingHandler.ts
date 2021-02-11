@@ -1,5 +1,5 @@
-import { ChatId } from "../model/chats";
-import { UserId } from "../model/users";
+import { ChatId } from "./model/chats";
+import { UserId } from "./model/users";
 import store from "../store";
 import {
     REMOTE_USER_STOPPED_TYPING,

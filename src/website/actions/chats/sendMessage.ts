@@ -1,9 +1,9 @@
 import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
-import { Chat, ConfirmedChat } from "../../model/chats";
-import { Option } from "../../model/common";
-import { LocalMessage, MessageContent, SendMessageContent } from "../../model/messages";
+import { Chat, ConfirmedChat } from "../../domain/model/chats";
+import { Option } from "../../domain/model/common";
+import { LocalMessage, MessageContent, SendMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
 import putData, { PutDataOutcome, PUT_DATA_FAILED } from "../data/putData";
 import {

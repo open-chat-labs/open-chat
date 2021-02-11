@@ -5,9 +5,9 @@ import { addParticipantsByUsername } from "../actions/chats/addParticipants";
 import createGroupChat from "../actions/chats/createGroupChat";
 import setupNewDirectChat from "../actions/chats/setupNewDirectChat";
 import DropdownMenuIcon from "../assets/icons/dropdownMenuIcon.svg";
-import { isGroupChat } from "../model/chats";
+import { isGroupChat } from "../domain/model/chats";
 import { RootState } from "../reducers";
-import { getSelectedChat } from "../utils/stateFunctions";
+import { getSelectedChat } from "../domain/stateFunctions";
 
 type Props = {
     text: string,

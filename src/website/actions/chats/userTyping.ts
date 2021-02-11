@@ -1,5 +1,5 @@
-import { ChatId } from "../../model/chats";
-import { UserId } from "../../model/users";
+import { ChatId } from "../../domain/model/chats";
+import { UserId } from "../../domain/model/users";
 
 export const CURRENT_USER_TYPING = "CURRENT_USER_TYPING";
 export const CURRENT_USER_STOPPED_TYPING = "CURRENT_USER_STOPPED_TYPING";

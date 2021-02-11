@@ -1,6 +1,6 @@
 import canister from "ic:canisters/chats";
-import { ChatId, ConfirmedChat } from "../../model/chats";
-import { MessageContent } from "../../model/messages";
+import { ChatId, ConfirmedChat } from "../../domain/model/chats";
+import { MessageContent } from "../../domain/model/messages";
 import { chatFromCandid } from "../candidConverters/chat";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";

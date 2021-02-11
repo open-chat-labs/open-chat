@@ -1,6 +1,6 @@
-import { ChatId } from "../../model/chats";
-import { MessageContent } from "../../model/messages";
-import { UserId } from "../../model/users";
+import { ChatId } from "../../domain/model/chats";
+import { MessageContent } from "../../domain/model/messages";
+import { UserId } from "../../domain/model/users";
 import createGroupChat, { CreateGroupChatResponse } from "./createGroupChat";
 import sendDirectMessage, { SendDirectMessageResponse } from "./sendDirectMessage";
 import sendMessage, { SendMessageResponse } from "./sendMessage";

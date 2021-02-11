@@ -2,8 +2,8 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import sendMessage from "../actions/chats/sendMessage";
 import Paperclip from "../assets/icons/paperclip.svg";
-import { Chat } from "../model/chats";
-import { SendMessageContent } from "../model/messages";
+import { Chat } from "../domain/model/chats";
+import { SendMessageContent } from "../domain/model/messages";
 
 export interface Props {
     chat: Chat

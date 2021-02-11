@@ -3,7 +3,7 @@ import { composeWithDevTools } from "redux-devtools-extension/developmentOnly";
 import thunk from "redux-thunk";
 
 import rootReducer from "./reducers";
-import webRtcMiddleware from "./webRtc/webRtcMiddleware";
+import webRtcMiddleware from "./domain/webRtc/webRtcMiddleware";
 
 const initialState = {};
 

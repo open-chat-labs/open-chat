@@ -1,13 +1,13 @@
 import React from "react";
 
-import { Option } from "../model/common";
-import { Message, RemoteMessage } from "../model/messages";
-import { UserId, UserSummary } from "../model/users";
+import { Option } from "../domain/model/common";
+import { Message, RemoteMessage } from "../domain/model/messages";
+import { UserId, UserSummary } from "../domain/model/users";
 
 import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
 import { getStartOfDay } from "../utils/dateFunctions";
-import UnreadMessageDetector from "../utils/UnreadMessageDetector";
+import UnreadMessageDetector from "../domain/UnreadMessageDetector";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 

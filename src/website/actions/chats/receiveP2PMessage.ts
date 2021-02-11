@@ -1,5 +1,5 @@
-import { ChatId } from "../../model/chats";
-import { P2PMessage } from "../../model/messages";
+import { ChatId } from "../../domain/model/chats";
+import { P2PMessage } from "../../domain/model/messages";
 
 export const RECEIVE_P2P_MESSAGE = "RECEIVE_P2P_MESSAGE";
 

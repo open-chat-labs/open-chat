@@ -1,4 +1,4 @@
-import { UserSummary } from "../../model/users";
+import { UserSummary } from "../../domain/model/users";
 import { fromCandid as userIdFromCandid } from "./userId";
 import * as dateFunctions from "../../utils/dateFunctions";
 

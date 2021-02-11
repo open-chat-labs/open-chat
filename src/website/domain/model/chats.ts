@@ -1,7 +1,7 @@
 import { Option } from "./common";
 import { UserId } from "./users";
-import * as setFunctions from "../utils/setFunctions";
-import MarkAsReadHandler from "../utils/MarkAsReadHandler";
+import * as setFunctions from "../../utils/setFunctions";
+import MarkAsReadHandler from "../MarkAsReadHandler";
 import {
     LocalMessage,
     Message,
@@ -16,7 +16,7 @@ import {
     DEFAULT_UPDATED_DATE,
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
-} from "../constants";
+} from "../../constants";
 
 export type Chat = ConfirmedChat | UnconfirmedChat;
 export type GroupChat = ConfirmedGroupChat | UnconfirmedGroupChat;
