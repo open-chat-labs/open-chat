@@ -264,7 +264,7 @@ impl GroupChatSummary {
             .iter()
             .rev()
             .take(message_count as usize)
-            .filter(|m| m.get_id() >= min_visible_message_id)
+            .take_while(|m| m.get_id() >= min_visible_message_id)
             .map(|m| m.clone())
             .collect();
 
