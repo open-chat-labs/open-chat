@@ -81,8 +81,8 @@ impl ChatList {
             .collect();
 
         list.sort_unstable_by(|c1, c2| {
-            let t1 = c1.get_updated_date();
-            let t2 = c2.get_updated_date();
+            let t1 = c1.get_display_date(user);
+            let t2 = c2.get_display_date(user);
             t2.cmp(&t1)
         });
 
