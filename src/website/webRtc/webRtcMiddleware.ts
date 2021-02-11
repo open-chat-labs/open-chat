@@ -10,7 +10,7 @@ import {
     REMOTE_USER_STOPPED_TYPING
 } from "../actions/chats/userTyping";
 import * as chatFunctions from "../model/chats";
-import RtcConnectionHandler from "./RtcConnectionHandler";
+import RtcConnectionsHandler from "./RtcConnectionsHandler";
 import { Chat } from "../model/chats";
 import {
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
@@ -93,5 +93,5 @@ export default webRtcMiddleware;
 
 function sendMessage(message: {}, chat: Chat) {
     const users = chatFunctions.getUsers(chat);
-    RtcConnectionHandler.sendMessage(users, JSON.stringify(message));
+    RtcConnectionsHandler.sendMessage(users, JSON.stringify(message));
 }

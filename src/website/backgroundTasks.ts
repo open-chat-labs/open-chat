@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
-import { UserId, UserSummary } from "./model/users";
+import { UserSummary } from "./model/users";
 import * as chatFunctions from "./model/chats";
 import * as setFunctions from "./utils/setFunctions";
 import * as stateFunctions from "./utils/stateFunctions";
 import RecurringTaskRunner from "./utils/RecurringTaskRunner";
-import RtcConnectionHandler from "./webRtc/RtcConnectionHandler";
+import RtcConnectionsHandler from "./webRtc/RtcConnectionsHandler";
 
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
@@ -122,7 +122,7 @@ export function setupBackgroundTasks() {
         if (!selectedChat || !selectedChatUsersOnline.length) {
             return;
         }
-        RtcConnectionHandler.setupMissingConnections(selectedChatUsersOnline);
+        RtcConnectionsHandler.setupMissingConnections(selectedChatUsersOnline);
     }, [selectedChatUsersOnline.join()]);
 
     // Poll for new p2p connection details at regular intervals, this could be responses to our connection offers or new
@@ -131,7 +131,7 @@ export function setupBackgroundTasks() {
         if (!usersState.me?.userId) {
             return;
         }
-        const taskRunner = RecurringTaskRunner.startNew(RtcConnectionHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
+        const taskRunner = RecurringTaskRunner.startNew(RtcConnectionsHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
         return () => taskRunner.stop();
     }, [usersState.me?.userId]);
 }

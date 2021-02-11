@@ -5,7 +5,7 @@ import RtcConnectionsStore from "./RtcConnectionsStore";
 import p2pService from "../services/p2p/service";
 import RtcConnection from "./RtcConnection";
 
-class RtcConnectionHandler {
+class RtcConnectionsHandler {
     lastUpdated: Option<Timestamp> = null;
 
     public setupMissingConnections = async (users: UserId[]) : Promise<void> => {
@@ -98,6 +98,6 @@ class RtcConnectionHandler {
     }
 }
 
-const handler = new RtcConnectionHandler();
+const handler = new RtcConnectionsHandler();
 
 export default handler;
