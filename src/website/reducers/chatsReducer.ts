@@ -148,8 +148,10 @@ export default produce((state: ChatsState, event: Event) => {
             if (chatFunctions.isConfirmedChat(chat) && chat.latestConfirmedMessageId) {
                 const minMessageId = chatFunctions.getMinMessageId(chat);
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, minMessageId);
-                chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
-                chatFunctions.queueMissingMessagesForDownload(chat);
+                if (minMessageId !== minMessageIdRequired) {
+                    chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
+                    chatFunctions.queueMissingMessagesForDownload(chat);
+                }
             }
 
             chatFunctions.restoreDraftMessage(chat);
