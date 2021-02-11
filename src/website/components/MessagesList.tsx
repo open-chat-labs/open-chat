@@ -6,7 +6,7 @@ import * as chatFunctions from "../domain/model/chats";
 import { ChatId, ConfirmedChat } from "../domain/model/chats";
 import { Option } from "../domain/model/common";
 import { Message, RemoteMessage } from "../domain/model/messages";
-import { MIN_MESSAGE_ID, PAGE_SIZE } from "../constants";
+import { PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../domain/stateFunctions";
@@ -116,14 +116,16 @@ function MessagesList() {
 
 // Listen to scroll events and load more messages if the user scrolls near the top of the currently loaded messages
 function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
+    const minMessageId = chatFunctions.getMinMessageId(chat);
+
     const downloadMoreMessages =
         !chat.messagesDownloading.length &&
         chat.earliestConfirmedMessageId !== null &&
-        chat.earliestConfirmedMessageId > MIN_MESSAGE_ID &&
+        chat.earliestConfirmedMessageId > minMessageId &&
         messagesDiv.scrollTop < 200;
 
     if (downloadMoreMessages) {
-        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, MIN_MESSAGE_ID);
+        const fromId = Math.max(chat.earliestConfirmedMessageId! - PAGE_SIZE, minMessageId);
         const count = chat.earliestConfirmedMessageId! - fromId;
         dispatch(getMessages(chat.chatId, fromId, count));
     }

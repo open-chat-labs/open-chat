@@ -18,8 +18,8 @@ pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
     fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, now: Timestamp) -> u32;
-    fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message>;
-    fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message>;
+    fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message>;
+    fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
     fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
     fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
