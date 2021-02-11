@@ -64,6 +64,7 @@ export type ConfirmedDirectChat = ConfirmedChatCommon & {
 export type ConfirmedGroupChat = ConfirmedChatCommon & {
     kind: typeof CONFIRMED_GROUP_CHAT,
     subject: string,
+    minVisibleMessageId: number,
     participants: UserId[],
     participantsTyping: UserId[],
     unreadByAnyMessageIds: number[]
@@ -148,8 +149,8 @@ export const newConfirmedDirectChat = (
 }
 
 export const newConfirmedGroupChat = (
-    chatId: ChatId, subject: string, participants: UserId[], displayDate: Date, lastUpdated: Date, messages: Message[] = [],
-    unreadMessageIds: number[] = [], unreadByAnyMessageIds: number[] = []) : ConfirmedGroupChat => {
+    chatId: ChatId, subject: string, participants: UserId[], displayDate: Date, lastUpdated: Date, minVisibleMessageId: number,
+    messages: Message[] = [], unreadMessageIds: number[] = [], unreadByAnyMessageIds: number[] = []) : ConfirmedGroupChat => {
 
     const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
     const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
@@ -161,6 +162,7 @@ export const newConfirmedGroupChat = (
         participants,
         displayDate,
         lastUpdated,
+        minVisibleMessageId,
         unreadMessageIds,
         unreadClientMessageIds: [],
         markAsReadPending: [],
@@ -370,9 +372,6 @@ export const getChatByUserId = (chats: Chat[], userId: UserId) : [DirectChat, nu
 
 export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, number] => {
     let index: number = -1;
-    if (filter.index != null) {
-        index = filter.index;
-    }
     if (index === -1 && filter.chatId) {
         index = findChatIndex(chats, filter.chatId);
     }
@@ -389,7 +388,6 @@ export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, 
 }
 
 export type ChatFilter = {
-    index?: number,
     chatId?: ChatId,
     unconfirmedChatId?: Symbol,
     userId?: UserId

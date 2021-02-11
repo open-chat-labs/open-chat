@@ -11,7 +11,7 @@ pub fn query(chat_id: ChatId, ids: Vec<u32>) -> Response {
     match chat_list.get(chat_id, &me) {
         None => ChatNotFound,
         Some(chat) => {
-            let messages = chat.get_messages_by_id(ids);
+            let messages = chat.get_messages_by_id(&me, ids);
             let latest_message_id = chat.get_latest_message_id();
             Success(Result::new(messages, latest_message_id))
         }

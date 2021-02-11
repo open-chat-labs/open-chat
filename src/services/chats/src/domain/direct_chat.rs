@@ -91,12 +91,12 @@ impl Chat for DirectChat {
         id
     }
 
-    fn get_messages(&self, from_id: u32, page_size: u32) -> Vec<Message> {
-        get_messages(&self.messages, from_id, page_size)
+    fn get_messages(&self, _user: &UserId, from_id: u32, page_size: u32) -> Vec<Message> {
+        get_messages(&self.messages, from_id, page_size, 1)
     }
 
-    fn get_messages_by_id(&self, ids: Vec<u32>) -> Vec<Message> {
-        get_messages_by_id(&self.messages, ids)
+    fn get_messages_by_id(&self, _user: &UserId, ids: Vec<u32>) -> Vec<Message> {
+        get_messages_by_id(&self.messages, ids, 1)
     }
 
     fn get_latest_message_id(&self) -> u32 {

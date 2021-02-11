@@ -10,7 +10,7 @@ pub fn query(chat_id: ChatId, from_id: u32, page_size: u32) -> Response {
     match chat_list.get(chat_id, &me) {
         None => ChatNotFound,
         Some(chat) => {
-            let messages = chat.get_messages(from_id, page_size);
+            let messages = chat.get_messages(&me, from_id, page_size);
             let latest_message_id = chat.get_latest_message_id();
             Success(Result::new(messages, latest_message_id))
         }

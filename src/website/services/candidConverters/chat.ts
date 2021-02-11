@@ -34,6 +34,7 @@ export function groupChatFromCandid(value: any) : ConfirmedGroupChat {
         value.participants.map(userIdFromCandid),
         timestampToDate(value.display_date),
         timestampToDate(value.last_updated),
+        value.min_visible_message_id,
         value.latest_messages.reverse().map(localMessageFromCandid),
         rangeSetToArray(value.unread_by_me_message_id_ranges),
         rangeSetToArray(value.unread_by_any_message_id_ranges));
