@@ -586,7 +586,6 @@ main header .user-online-marker {
     background-color: #e9e9e9;
     font-size: 14px;
     line-height: 14px;
-    display: block;
     text-decoration: none;
     display: flex;
     flex-direction: row;

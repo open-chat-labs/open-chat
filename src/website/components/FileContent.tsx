@@ -25,20 +25,20 @@ function FileContent(props : Props): JSX.Element {
                 href="#" 
                 role="button" 
                 onClick={onClick}
-                title={'Download "' + props.content.name + '"'}>
+                title={'Download "' + content.name + '"'}>
                 <div className="file-icon"></div>
-                <div className="file-name">{props.content.name}</div>
+                <div className="file-name">{content.name}</div>
             </a>
-            <span className="file-size">{props.content.mimeType.toUpperCase()} - {formatFileSize(props.content.size)}</span>
+            <span className="file-size">{content.mimeType.toUpperCase()} - {formatFileSize(content.size)}</span>
         </>
     );
 
     async function onClick(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
-
-        const anchor = e.target as HTMLAnchorElement;
+        const anchor = findAnchor(e.target);
+        const href = anchor.getAttribute("href");
 
         // If the file is already downloading or the anchor is now pointing at the blob then return
-        if (downloading || anchor.href && anchor.href.startsWith("blob")) {
+        if (downloading ||  href && href.startsWith("blob")) {
             return;
         }
 
@@ -59,24 +59,31 @@ function FileContent(props : Props): JSX.Element {
             downloading = false;
 
             if (result.type === GET_DATA_FAILED) {
-                console.log("Failed to download file");
                 return;
             }
         }
 
         // Point anchor at blob and re-click it to trigger download
-        anchor.href = dataToBlobUrl(result.payload.data, content.mimeType);
-        anchor.download = content.name;
+        const blobUrl = dataToBlobUrl(result.payload.data, content.mimeType);
+        anchor.setAttribute("href", blobUrl);
+        anchor.setAttribute("download", content.name)
         anchor.click();
 
         // Reset anchor back to initial state and remove the blob from memory
         URL.revokeObjectURL(anchor.href);
         anchor.removeAttribute("download");
-        anchor.href = "#";
+        anchor.setAttribute("href", "#");
+    }
+
+    function findAnchor(node: any) : HTMLAnchorElement {
+        while (node != null && !(node instanceof HTMLAnchorElement)) {
+            node = node.parentNode;
+        }
+        return node;
     }
 }
 
-function dataToBlobUrl(data: Uint8Array, mimeType: string): string {
-    const blob = new Blob([data], {type : mimeType});
+function dataToBlobUrl(data: Uint8Array, type: string): string {
+    const blob = new Blob([data], { type });
     return URL.createObjectURL(blob);
 }
