@@ -140,6 +140,7 @@ type GroupChatSummary =
         subject: text;
         display_date: Timestamp;
         last_updated: Timestamp;
+        min_visible_message_id: nat32;
         participants: vec UserId;
         unread_by_me_message_id_ranges: vec vec nat32;
         unread_by_any_message_id_ranges: vec vec nat32;
