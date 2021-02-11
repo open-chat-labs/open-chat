@@ -6,9 +6,7 @@ import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
 import {
     CONFIRMED_GROUP_CHAT,
-    MIN_MESSAGE_ID,
     PAGE_SIZE,
-    UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../constants";
 
@@ -148,7 +146,7 @@ export default produce((state: ChatsState, event: Event) => {
             state.selectedChatIndex = event.payload;
             let chat = state.chats[state.selectedChatIndex];
             if (chatFunctions.isConfirmedChat(chat) && chat.latestConfirmedMessageId) {
-                const minMessageId = chatFunctions.isGroupChat(chat) ? chat.minVisibleMessageId : MIN_MESSAGE_ID;
+                const minMessageId = chatFunctions.getMinMessageId(chat);
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, minMessageId);
                 chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
                 chatFunctions.queueMissingMessagesForDownload(chat);

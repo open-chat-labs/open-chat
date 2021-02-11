@@ -501,6 +501,10 @@ export const markMessagesAsReadOnServer = (chat: ConfirmedChat, fromId: number, 
     }
 }
 
+export const getMinMessageId = (chat: ConfirmedChat) : number => {
+    return isGroupChat(chat) ? chat.minVisibleMessageId : 1;
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : boolean => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {

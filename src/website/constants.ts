@@ -1,7 +1,6 @@
 export const APP_TITLE = "Open Chat";
 
 export const PAGE_SIZE = 20;
-export const MIN_MESSAGE_ID = 1;
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 export const DEFAULT_UPDATED_DATE = new Date(2000, 1, 1);
 
