@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 import { RootState } from "../../reducers";
 import * as chatFunctions from "../../domain/model/chats";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
+import MarkAsReadHandler from "../../domain/MarkAsReadHandler";
 
 export const CHAT_SELECTED = "CHAT_SELECTED";
 
@@ -17,6 +18,7 @@ export default function(index: number) {
             const prevChat = chatsState.chats[chatsState.selectedChatIndex];
             if (chatFunctions.isConfirmedChat(prevChat)) {
                 CurrentUserTypingHandler.markTypingStopped(prevChat.chatId);
+                MarkAsReadHandler.updateServer();
             }
         }
 
