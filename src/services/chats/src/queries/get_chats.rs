@@ -10,7 +10,7 @@ pub fn query(request: Request) -> Response {
     let chat_list: &ChatList = storage::get();
     let me = shared::user_id::get_current();
 
-    Success(chat_list.get_chats(
+    Success(chat_list.get_summaries(
         &me,
         request.updated_since,
         request.message_count_for_top_chat))

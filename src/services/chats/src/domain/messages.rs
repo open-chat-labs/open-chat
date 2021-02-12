@@ -51,3 +51,11 @@ pub fn get_latest_message_id(messages: &Vec<Message>) -> u32 {
         messages.last().unwrap().get_id()
     }
 }
+
+pub fn search_messages(messages: &Vec<Message>, search_term: &str) -> Vec<Message> {
+    messages
+        .iter()
+        .filter(|&m| m.matches_search(search_term))
+        .cloned()
+        .collect()
+}

@@ -61,7 +61,16 @@ impl ChatList {
         Some(chat)
     }
 
-    pub fn get_chats(
+    pub fn get_all(&self, me: &UserId) -> Vec<&ChatEnum> {
+        // For now this will iterate through every chat...
+        self
+            .chats
+            .values()
+            .filter(|chat| chat.involves_user(me))
+            .collect()
+    }
+
+    pub fn get_summaries(
         &self,
         user: &UserId,
         updated_since: Option<Timestamp>,
