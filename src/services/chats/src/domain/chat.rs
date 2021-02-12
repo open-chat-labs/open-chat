@@ -144,9 +144,12 @@ impl Message {
     }
 
     pub fn matches_search(&self, search_term: &str) -> bool {
+        let search_term = &search_term.to_lowercase();
         match &self.content {
-            MessageContent::Text(t) => t.text.contains(search_term),
-            _ => false
+            MessageContent::Text(t) => t.text.to_lowercase().contains(search_term),
+            MessageContent::Media(m) => m.caption.is_some() && m.caption.as_ref().unwrap().to_lowercase().contains(search_term),
+            MessageContent::File(f) => f.name.to_lowercase().contains(search_term),
+            MessageContent::Cycles(c) => c.caption.is_some() && c.caption.as_ref().unwrap().to_lowercase().contains(search_term)
         }
     }
 }

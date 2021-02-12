@@ -1,5 +1,5 @@
-use range_set::RangeSet;
 use std::ops::RangeInclusive;
+use range_set::RangeSet;
 use smallvec::SmallVec;
 
 pub fn range_set_to_vec(range_set: RangeSet<[RangeInclusive<u32>; 2]>) -> Vec<[u32; 2]> {
