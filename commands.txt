@@ -31,3 +31,6 @@ dfx --identity=matt canister call chats send_message '(12_699_180_841_646_933_66
 
 -- Get Users
 dfx --identity=matt canister call user_mgmt get_users '(vec { record { id = principal "uhpjy-crxbe-6chrq-vadba-aqrmz-f4d2e-h7nxj-7hrso-ebvqe-gnygw-tae"; cached_version = opt 1 } })'
+
+-- Search for users
+dfx canister call user_mgmt search_users '(record { search_term = "ali"; max_results = 10 })'

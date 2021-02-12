@@ -37,3 +37,8 @@ pub fn get_user_id(username: String) -> get_user_id::Response {
 pub fn get_users(request: get_users::Request) -> get_users::Response {
     get_users::query(request)
 }
+
+#[query]
+pub fn search_users(request: search_users::Request) -> search_users::Response {
+    search_users::query(request)
+}

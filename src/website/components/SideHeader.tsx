@@ -5,7 +5,7 @@ import SideHeaderMenu from "./SideHeaderMenu";
 import MyAvatar from "./MyAvatar";
 import SearchIcon from "../assets/icons/search.svg";
 
-const PLACEHOLDER_TEXT = "Search or start a new chat";
+const PLACEHOLDER_TEXT = "Search chats, users and messages";
 
 export default React.memo(SideHeader);
 
