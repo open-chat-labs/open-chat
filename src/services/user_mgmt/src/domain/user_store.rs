@@ -138,17 +138,18 @@ impl UserStore {
             .collect()
     }
 
-    pub fn search_users(&self, search_term: String, max_results: u8, now: Timestamp) -> Vec<UserSummary> {
+    pub fn search_users(&self, search_term: String, max_results: u8, me: &UserId, now: Timestamp) -> Vec<UserSummary> {
         // Filter
+        let search_term_lower = search_term.to_lowercase();
         let mut matches: Vec<&String> = self
             .data
             .iter()
+            .filter(|(user_id, (username, _))| UserStore::username_matches(&search_term_lower, username) && *user_id != me)
             .map(|(_, (username, _))| username)
-            .filter(|username| UserStore::does_username_match(&search_term, username))
             .collect();
 
         // Sort
-        matches.sort_unstable_by(|u1, u2| UserStore::compare_usernames(&search_term, *u1, *u2));
+        matches.sort_unstable_by(|u1, u2| UserStore::order_usernames(&search_term, *u1, *u2));
 
         // Page
         matches
@@ -190,12 +191,11 @@ impl UserStore {
         TransferCyclesResponse::Success(TransferCyclesResult { new_balance })
     }
 
-    fn does_username_match(search_term: &str, username: &str) -> bool {
-        // Could use https://crates.io/crates/unicase
-        username.to_lowercase().starts_with(&search_term.to_lowercase())
+    fn username_matches(search_term_lower: &str, username: &str) -> bool {
+        username.to_lowercase().starts_with(search_term_lower)
     }
 
-    fn compare_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
+    fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
         let u1_starts = u1.starts_with(&search_term);
         let u2_starts = u2.starts_with(&search_term);
 

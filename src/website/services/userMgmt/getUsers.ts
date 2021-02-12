@@ -22,7 +22,7 @@ export default async function(request: GetUsersRequest) : Promise<GetUsersRespon
             timestamp: timestampFromCandid(success.timestamp)
         };
     } else {
-        throw new Error("Unrecognised 'get_user_id' response");
+        throw new Error("Unrecognised 'get_users' response");
     }
 }
 

@@ -311,6 +311,14 @@ main header .chat-summary >div {
     padding: 0 4px;
 }
 
+.new_chat_icon {
+    background-color: #e0e0e0;
+    color: #9b9b9b;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;    
+}
+
 .user-online-marker {
     background-color: #32cd32;
     border-radius: 50%;

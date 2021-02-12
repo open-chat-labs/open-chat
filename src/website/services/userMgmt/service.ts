@@ -4,6 +4,7 @@ import markAsOnline from "./markAsOnline";
 import getCurrentUser, { GetCurrentUserResponse } from "./getCurrentUser";
 import getUserId, { GetUserIdResponse } from "./getUserId";
 import getUsers, { GetUsersRequest, GetUsersResponse } from "./getUsers";
+import searchUsers, { SearchUsersRequest, SearchUsersResponse } from "./searchUsers";
 
 export default class service {
     public static registerUser(username: string) : Promise<RegisterUserResponse> {
@@ -28,5 +29,9 @@ export default class service {
 
     public static async getUsers(request: GetUsersRequest) : Promise<GetUsersResponse> {
         return getUsers(request);
+    }
+
+    public static async searchUsers(request: SearchUsersRequest) : Promise<SearchUsersResponse> {
+        return searchUsers(request);
     }
 }
