@@ -3,7 +3,7 @@ import { ChatId } from "./model/chats";
 import { Option } from "./model/common";
 import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadServerSync";
 
-const SYNC_DELAY_MS = 5_000;
+const SYNC_DELAY_MS = 3_000;
 
 type MarkAsReadPending = {
     chatId: ChatId,
@@ -18,8 +18,9 @@ class MarkAsReadHandler {
         if (this.pending) {
             if (this.pending.chatId !== chatId) {
                 this.updateServer();
-                this.pending = null;
             } else {
+                // Clear the current timeout and start waiting again, so we flush to the server once no new messages are
+                // marked as read for SYNC_DELAY_MS
                 clearTimeout(this.pending.timeoutId);
                 this.pending.timeoutId = setTimeout(() => this.updateServer(), SYNC_DELAY_MS);
             }
