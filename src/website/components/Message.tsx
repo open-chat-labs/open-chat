@@ -11,6 +11,7 @@ import FileContent from "./FileContent";
 import MediaContent from "./MediaContent";
 import TextContent from "./TextContent";
 import { toShortTimeString } from "../formatters/date";
+import { styleMediaMessage } from "./mediaComponentFunctions";
 
 export type Props = {
     messageId: Option<number>,
@@ -61,9 +62,11 @@ function Message(props : Props) {
     }
 
     let contentElement;
+    let style;
     if (props.content.kind === "media") {
         className += " media";
         contentElement = <MediaContent content={props.content} />;
+        style = styleMediaMessage(props.content.width, props.content.height);
     } else if (props.content.kind === "file") {
         contentElement = <FileContent content={props.content} />;
         className += " file";
@@ -84,7 +87,11 @@ function Message(props : Props) {
     }
 
     return (
-        <div id={props.clientMessageId} data-message-id={props.messageId} className={className}>
+        <div 
+            id={props.clientMessageId} 
+            data-message-id={props.messageId} 
+            className={className} 
+            style={style}>
             {senderLink}
             {contentElement}
             <span className="message-time">{toShortTimeString(props.date)}</span>

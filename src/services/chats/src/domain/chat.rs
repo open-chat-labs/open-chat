@@ -41,6 +41,8 @@ pub struct TextContent {
 pub struct MediaContent {
     caption: Option<String>,
     mime_type: String,
+    width: u32,
+    height: u32,
     blob_id: String,
     blob_size: u32,
     chunk_size: u32

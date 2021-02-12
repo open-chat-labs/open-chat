@@ -16,6 +16,8 @@ export function fromCandid(content: any) : MessageContent {
             kind: "media",
             caption: optionFromCandid(inner.caption),
             mimeType: inner.mime_type,
+            width: inner.width,
+            height: inner.height,
             id: inner.blob_id,
             size: inner.blob_size,
             chunkSize: inner.chunk_size
@@ -57,6 +59,8 @@ export function toCandid(content: MessageContent) : any {
                 Media: {
                     caption: optionToCandid(content.caption),
                     mime_type: content.mimeType,
+                    width: content.width,
+                    height: content.height,
                     blob_id: content.id,
                     blob_size: content.size,
                     chunk_size: content.chunkSize
