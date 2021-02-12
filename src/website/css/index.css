@@ -332,7 +332,7 @@ main header .user-online-marker {
 }
 
 .detail {
-    padding: 0 20px 14px 20px;
+    padding: 14px 20px 0 20px;
     flex: 1 1;
     overflow:auto;
     display: flex;
@@ -497,11 +497,10 @@ main header .user-online-marker {
     padding: 6px 12px;
     border-radius: 10px;
     background-color: rgb(221,221,221, 0.9);
-    margin-top: 14px;
     align-self: center;
     font-size: 13px;
     position: sticky;
-    top: 14px;
+    top: 0;
     z-index: 60;
 }
 
@@ -509,6 +508,7 @@ main header .user-online-marker {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    padding-bottom: 14px;
 }
 
 .message.me {
