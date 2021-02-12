@@ -21,6 +21,7 @@ pub trait Chat {
     fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
+    fn search_messages(&self, search_term: &str) -> Vec<Message>;
     fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
     fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
     fn get_display_date(&self, user_id: &UserId) -> Timestamp;
@@ -134,12 +135,19 @@ impl Message {
         }
     }
 
+    pub fn get_id(&self) -> u32 {
+        self.id
+    }
+
     pub fn get_timestamp(&self) -> Timestamp {
         self.timestamp
     }
 
-    pub fn get_id(&self) -> u32 {
-        self.id
+    pub fn matches_search(&self, search_term: &str) -> bool {
+        match &self.content {
+            MessageContent::Text(t) => t.text.contains(search_term),
+            _ => false
+        }
     }
 }
 

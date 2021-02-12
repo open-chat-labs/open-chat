@@ -199,6 +199,10 @@ impl Chat for GroupChat {
         get_latest_message_id(&self.messages)
     }
 
+    fn search_messages(&self, search_term: &str) -> Vec<Message> {
+        search_messages(&self.messages, search_term)
+    }
+
     fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult {
 
         let participant = self

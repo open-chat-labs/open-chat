@@ -172,6 +172,22 @@ type GetMessagesByIdResponse =
         ChatNotFound;
     };
 
+type SearchAllMessagesResponse =
+    variant {
+        Success: SearchAllMessagesResult;
+    };
+
+type SearchAllMessagesResult =
+    record {
+        matches: vec SearchMessagesMatch;
+    };
+
+type SearchMessagesMatch =
+    record {
+        chat_id: ChatId;
+        message: Message;
+    };
+
 service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
     send_direct_message: (UserId, text, MessageContent) -> (SendDirectMessageResponse);
@@ -185,4 +201,5 @@ service : {
     get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
     get_chunk: (text, nat32) -> (opt vec nat8) query;
+    search_all_messages: (text, nat8) -> (SearchAllMessagesResponse) query;
 }

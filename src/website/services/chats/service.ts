@@ -9,6 +9,7 @@ import addParticipants, { AddParticipantsResponse } from "./addParticipants";
 import removeParticipant, { RemoveParticipantResponse } from "./removeParticipant";
 import getChats, { GetChatsRequest, GetChatsResponse } from "./getChats";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
+import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessages";
 
 export default class service {
     public static createGroupChat(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
@@ -45,6 +46,10 @@ export default class service {
 
     public static getMessagesById(chatId: ChatId, ids: number[]) : Promise<GetMessagesResponse> {
         return getMessagesById(chatId, ids);
+    }
+
+    public static searchAllMessages(searchTerm: string, maxResults: number) : Promise<SearchAllMessagesResponse> {
+        return searchAllMessages(searchTerm, maxResults);
     }
 }
 
