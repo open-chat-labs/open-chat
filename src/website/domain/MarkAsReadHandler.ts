@@ -3,32 +3,45 @@ import { ChatId } from "./model/chats";
 import { Option } from "./model/common";
 import markMessagesAsReadServerSync from "../actions/chats/markMessagesAsReadServerSync";
 
-const pending = new Map<ChatId, [Set<number>, NodeJS.Timeout]>();
 const SYNC_DELAY_MS = 5_000;
 
+type MarkAsReadPending = {
+    chatId: ChatId,
+    messageIds: Set<number>,
+    timeoutId: NodeJS.Timeout
+}
+
 class MarkAsReadHandler {
-    public markRead(chatId: ChatId, messageIds: number[]) : void {
-        let values = pending.get(chatId);
-        if (!values) {
-            const timeout = setTimeout(() => this.updateServer(chatId), SYNC_DELAY_MS);
-            values = [new Set<number>(), timeout];
-            pending.set(chatId, values);
+    pending: Option<MarkAsReadPending> = null;
+
+    public markRead = (chatId: ChatId, messageIds: number[]) : void => {
+        if (this.pending) {
+            if (this.pending.chatId !== chatId) {
+                this.updateServer();
+                this.pending = null;
+            } else {
+                clearTimeout(this.pending.timeoutId);
+                this.pending.timeoutId = setTimeout(() => this.updateServer(), SYNC_DELAY_MS);
+            }
         }
+        if (!this.pending) {
+            this.pending = {
+                chatId,
+                messageIds: new Set<number>(),
+                timeoutId: setTimeout(() => this.updateServer(), SYNC_DELAY_MS)
+            }
+        }
+
         for (const messageId of messageIds) {
-            values[0].add(messageId);
+            this.pending.messageIds.add(messageId);
         }
     }
 
-    updateServer(chatId: ChatId) : void {
-        const values = pending.get(chatId);
-        if (!values) return;
+    public updateServer = () : void => {
+        const pending = this.pending;
+        if (!pending || !pending.messageIds.size) return;
 
-        pending.delete(chatId);
-
-        const [messageIds] = values;
-        if (!messageIds.size) return;
-
-        const ordered = Array.from(messageIds).sort();
+        const ordered = Array.from(pending.messageIds).sort();
         const ranges: [number, number][] = [];
         let current: Option<[number, number]> = null;
         for (const messageId of ordered) {
@@ -45,7 +58,9 @@ class MarkAsReadHandler {
             ranges.push(current);
         }
 
-        ranges.forEach(r => store.dispatch<any>(markMessagesAsReadServerSync(chatId, r[0], r[1])));
+        ranges.forEach(r => store.dispatch<any>(markMessagesAsReadServerSync(pending.chatId, r[0], r[1])));
+
+        this.pending = null;
     }
 }
 
