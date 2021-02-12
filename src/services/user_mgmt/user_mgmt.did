@@ -75,6 +75,19 @@ type GetUsersResponse =
         }
     };
 
+type SearchUsersRequest =
+    record {
+        search_term: text;
+        max_results: nat8
+    };
+
+type SearchUsersResponse =
+    variant {
+        Success: record {
+            users: vec UserSummary;
+        }
+    };
+
 service : {
     register_user: (text) -> (RegisterUserResponse);
     update_username: (text) -> (UpdateUsernameResponse);
@@ -84,4 +97,5 @@ service : {
     get_current_user: () -> (GetCurrentUserResponse) query;
     get_user_id: (text) -> (GetUserIdResponse) query;
     get_users: (GetUsersRequest) -> (GetUsersResponse) query;
+    search_users: (SearchUsersRequest) -> (SearchUsersResponse) query;
 }
