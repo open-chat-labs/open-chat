@@ -17,6 +17,8 @@ type MediaContent =
     record {
         caption: opt text;
         mime_type: text;
+        width: nat32;
+        height: nat32;
         blob_id: text;
         blob_size: nat32;
         chunk_size: nat32;

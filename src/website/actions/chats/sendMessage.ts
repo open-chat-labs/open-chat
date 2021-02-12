@@ -102,6 +102,8 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
                 kind: sendMessageContent.kind,
                 caption: sendMessageContent.caption,
                 mimeType: sendMessageContent.mimeType,
+                width: sendMessageContent.width,
+                height: sendMessageContent.height,
                 id: uuidv1().toString(),
                 size: sendMessageContent.data.length,
                 chunkSize: CHUNK_SIZE_BYTES

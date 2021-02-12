@@ -46,6 +46,8 @@ export type MediaContent = {
     size: number,
     caption: Option<string>,
     mimeType: string,
+    width: number,
+    height: number,
     chunkSize: number,
 }
 
@@ -68,6 +70,8 @@ export type SendMediaContent = {
     kind: "media",
     caption: Option<string>,
     mimeType: string,
+    width: number,
+    height: number,
     data: Uint8Array
 }
 

@@ -528,11 +528,6 @@ main header .user-online-marker {
     position: relative;
 }
 
-.message.media,
-.message-media {
-    height: 175px;
-}
-
 .message.media .participant {
     position: absolute;
     display: block;
@@ -545,11 +540,6 @@ main header .user-online-marker {
     border-radius: 16px 0px 2px 0px;
     line-height: 13px;
     opacity: 0.6;
-}
-
-.message-media {
-    max-width: 500px;
-    max-height: 500px;
 }
 
 .message.media video {
