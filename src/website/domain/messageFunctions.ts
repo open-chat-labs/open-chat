@@ -1,4 +1,4 @@
-import { CyclesContent, MediaContent, MessageContent } from "../domain/model/messages";
+import { CyclesContent, MediaContent, MessageContent } from "./model/messages";
 import { formatCycles } from "../formatters/cycles";
 
 export function getContentAsText(content: MessageContent) : string {

@@ -8,7 +8,7 @@ import { RootState } from "../reducers";
 import selectChat from "../actions/chats/selectChat";
 import { formatMessageDate } from "../formatters/date";
 import TextContent from "./TextContent";
-import { getContentAsText } from "../utils/messageFunctions";
+import { getContentAsText } from "../domain/messageFunctions";
 
 export default React.memo(MessageSearchMatch);
 

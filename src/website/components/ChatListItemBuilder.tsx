@@ -5,7 +5,7 @@ import { Option } from "../domain/model/common";
 import { UserId } from "../domain/model/users";
 import * as chatFunctions from "../domain/model/chats";
 import * as stateFunctions from "../domain/stateFunctions";
-import { getContentAsText } from "../utils/messageFunctions";
+import { getContentAsText } from "../domain/messageFunctions";
 
 export function build(chat: Chat, userDictionary: any, index: number, selectedChatIndex: Option<number>) : JSX.Element {
     let name: string;
