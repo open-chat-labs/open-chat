@@ -3,35 +3,30 @@ import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import SideHeaderMenu from "./SideHeaderMenu";
 import MyAvatar from "./MyAvatar";
-import SearchIcon from "../assets/icons/search.svg";
+import SearchBox from "./SearchBox";
 
 const PLACEHOLDER_TEXT = "Search chats, users and messages";
 
 export default React.memo(SideHeader);
 
-function SideHeader() {
+type Props = {
+    text: string,
+    setText: (text: string) => void
+}
+
+function SideHeader(props: Props) {
     const myUsername = useSelector((state: RootState) => state.usersState.me?.username)!;
 
-    const [text, setText] = useState("");
-    const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
-    const clearInput = () => setText("");
+    const clearInput = () => props.setText("");
 
     return (
         <>
             <header>
                 <MyAvatar />    
                 <div className="my-display-name"><a href="#">{myUsername}</a></div>
-                <div className="chats-menu-container"><SideHeaderMenu text={text} clearInput={clearInput} /></div>
+                <div className="chats-menu-container"><SideHeaderMenu text={props.text} clearInput={clearInput} /></div>
             </header>
-            <div className="search">
-                <input
-                    value={text}
-                    onChange={e => setText(e.target.value)}
-                    placeholder={placeholderText}
-                    onFocus={_ => setPlaceholderText("")}
-                    onBlur={_ => setPlaceholderText(PLACEHOLDER_TEXT)} />
-                <SearchIcon />
-            </div>
+            <SearchBox text={props.text} onChange={props.setText} defaultPlaceholderText={PLACEHOLDER_TEXT} />
         </>
     );
 }

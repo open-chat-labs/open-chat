@@ -19,10 +19,8 @@ function MainFooter() {
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
-        ? getUserSummary(state.usersState, chat.them) 
+        ? getUserSummary(chat.them, state.usersState.userDictionary)
         : null);
-
-    const me = useSelector((state: RootState) => state.usersState.me)!;
 
     if (chat === null) {
         return <div></div>;

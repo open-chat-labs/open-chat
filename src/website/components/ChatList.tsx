@@ -1,13 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Option } from "../domain/model/common";
-import { UserId } from "../domain/model/users";
 import { RootState } from "../reducers";
-import * as chatFunctions from "../domain/model/chats";
-import * as stateFunctions from "../domain/stateFunctions";
-import ChatListItem from "./ChatListItem";
-import { CyclesContent, MediaContent } from "../domain/model/messages";
-import { formatCycles } from "../formatters/cycles";
+import * as chatListItemBuilder from "./ChatListItemBuilder";
 
 export default React.memo(ChatList);
 
@@ -17,68 +11,7 @@ function ChatList() {
     const selectedChatIndex = chatsState.selectedChatIndex;
 
     const chats = chatsState.chats.map((c, index) => {
-        let name: string;
-        let key: string;
-        let isGroup: boolean;
-        let userId: Option<UserId>;
-        let themTyping: boolean = false;
-        let userOnline = false;
-        let participantsTyping: string[] = [];
-
-        if (chatFunctions.isDirectChat(c)) {
-            name = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].username : "");
-            key = "D-" + c.them.toString();
-            isGroup = false;
-            userId = c.them;
-            themTyping = chatFunctions.isConfirmedChat(c) && c.themTyping;
-            userOnline = (userDictionary.hasOwnProperty(c.them) ? userDictionary[c.them].minutesSinceLastOnline < 2 : false);
-        } else {
-            name = c.subject;
-            isGroup = true;
-            userId = null;
-            if (chatFunctions.isConfirmedChat(c)) {
-                key = "G-" + c.chatId.toString();
-                participantsTyping = stateFunctions.getUsers(c.participantsTyping, userDictionary).map(u => u.username);
-            } else {
-                key = "NG-" + c.subject;
-            }
-        }
-
-        let latestMessageText = "";
-        for (let i = c.messages.length - 1; i >= 0; i--) {
-            const message = c.messages[i];
-            if ("content" in message) {
-                const content = message.content;
-                if (content.kind === "text") {
-                    latestMessageText = content.text;
-                } else if (content.kind === "media") {
-                    latestMessageText = buildTextForMediaContent(content);
-                } else if (content.kind === "file") {
-                    latestMessageText = content.name;
-                } else if (content.kind === "cycles") {
-                    latestMessageText = buildTextForCyclesContent(content);
-                } else {
-                    throw new Error("Unrecognised content type - " + (content as any).kind);
-                }
-                break;
-            }
-        }
-
-        return (
-            <ChatListItem
-                key={key}
-                name={name}
-                date={"displayDate" in c ? c.displayDate : undefined}
-                index={index}
-                selected={index === selectedChatIndex}
-                latestMessage={latestMessageText}
-                isGroup={isGroup}
-                userId={userId}
-                unreadCount={chatFunctions.getUnreadMessageCount(c)}
-                themTyping={themTyping}
-                userOnline={userOnline}
-                participantsTyping={participantsTyping} />
-        );
+        return chatListItemBuilder.build(c, userDictionary, index, selectedChatIndex);
     });
 
     return (
@@ -86,27 +19,4 @@ function ChatList() {
             {chats}
         </ul>
     );
-}
-
-function buildTextForMediaContent(content: MediaContent) : string {
-    if (content.caption)
-        return content.caption;
-
-    const mimeType = content.mimeType;
-
-    const mimeTypeLower = mimeType.toLowerCase();
-    if (mimeTypeLower.startsWith("video/")) {
-        return "video";
-    } else if (mimeTypeLower.startsWith("image/")) {
-        return "image";
-    } else {
-        return "file";
-    }
-}
-
-function buildTextForCyclesContent(content: CyclesContent) : string {
-    if (content.caption)
-        return content.caption;
-
-    return formatCycles(content.amount);
 }
