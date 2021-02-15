@@ -550,6 +550,7 @@ main header .user-online-marker {
 .message.media {
     padding: 0px;
     position: relative;
+    background-color: transparent;
 }
 
 .message.media .participant {

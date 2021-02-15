@@ -2,7 +2,7 @@ import React from "react";
 import { scaleMediaContent } from "./mediaComponentFunctions";
 
 export interface Props {
-    blobUrl: string,
+    src: string,
     width: number,
     height: number
 }
@@ -13,7 +13,7 @@ function Image(props : Props): JSX.Element {
     const dimensions = scaleMediaContent(props.width, props.height);
     return <img 
         className="message-media" 
-        src={props.blobUrl} 
+        src={props.src} 
         width={dimensions.width}
         height={dimensions.height} />;
 }

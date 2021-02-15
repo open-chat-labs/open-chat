@@ -2,7 +2,7 @@ import React from "react";
 import { scaleMediaContent } from "./mediaComponentFunctions";
 
 export interface Props {
-    blobUrl: string
+    src: string
     width: number,
     height: number
 }
@@ -16,6 +16,6 @@ function Video(props : Props): JSX.Element {
         controls
         width={dimensions.width}
         height={dimensions.height}>
-        <source src={props.blobUrl}/>Your browser does not support the video tag
+        <source src={props.src}/>Your browser does not support the video tag
     </video>;
 }

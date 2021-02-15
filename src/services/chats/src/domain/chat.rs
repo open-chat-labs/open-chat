@@ -46,7 +46,8 @@ pub struct MediaContent {
     height: u32,
     blob_id: String,
     blob_size: u32,
-    chunk_size: u32
+    chunk_size: u32,
+    thumbnail_data: String
 }
 
 #[derive(CandidType, Deserialize, Clone)]

@@ -22,6 +22,7 @@ type MediaContent =
         blob_id: text;
         blob_size: nat32;
         chunk_size: nat32;
+        thumbnail_data: text
     };
 
 type FileContent =

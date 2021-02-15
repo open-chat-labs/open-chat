@@ -22,20 +22,22 @@ function MediaContent(props : Props): JSX.Element {
     let contentElement;
     const content = props.content;
 
-    if (blobUrl) {
-        if (content.mimeType.startsWith("image/")) {
-            contentElement = <Image key={props.content.id} blobUrl={blobUrl} width={props.content.width} height={props.content.height} />;
+    if (blobUrl || content.thumbnailData) {
+        const src = blobUrl ? blobUrl : content.thumbnailData as string;
+        if (content.mimeType.startsWith("image/") || !blobUrl) {
+            contentElement = <Image key={props.content.id} src={src} width={props.content.width} height={props.content.height} />;
         } else if (content.mimeType.startsWith("video/")) {
-            contentElement = <Video key={props.content.id} blobUrl={blobUrl} width={props.content.width} height={props.content.height} />
+            contentElement = <Video key={props.content.id} src={src} width={props.content.width} height={props.content.height} />
         }
-    } else if (!isDataDownloading) {
+    } 
+    
+    if (!blobUrl && !isDataDownloading) {
         setTimeout(() => dispatch(getData(
             content.id,
             content.mimeType,
             content.size, 
             content.chunkSize,
             true)), 0);
-        contentElement = "Loading...";
     }
 
     return (

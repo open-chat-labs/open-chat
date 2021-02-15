@@ -106,7 +106,8 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
                 height: sendMessageContent.height,
                 id: uuidv1().toString(),
                 size: sendMessageContent.data.length,
-                chunkSize: CHUNK_SIZE_BYTES
+                chunkSize: CHUNK_SIZE_BYTES,
+                thumbnailData: sendMessageContent.thumbnailData
             };
         case "file":
             return {
