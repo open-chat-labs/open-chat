@@ -6,10 +6,15 @@ use crate::domain::user_store::{UserStore, UserSummary};
 use self::Response::*;
 
 pub fn query(request: Request) -> Response {
+    let me = shared::user_id::get_current();
     let user_store: &UserStore = storage::get();
     let now = timestamp::now();
 
-    let users = user_store.search_users(request.search_term, request.max_results, now);
+    let users = user_store.search_users(
+        request.search_term, 
+        request.max_results, 
+        &me,
+        now);
 
     Success(Result {
         users
