@@ -5,8 +5,7 @@ import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";
 import { UserId } from "../domain/model/users";
-import { toDateString, toDayOfWeekString, toShortTimeString } from "../formatters/date";
-import * as dateFunctions from "../utils/dateFunctions";
+import { formatMessageDate } from "../formatters/date";
 import ParticipantsTyping from "./ParticipantsTyping";
 import TextContent from "./TextContent";
 import ThemTyping from "./ThemTyping";
@@ -54,7 +53,7 @@ function ChatListItem(props: Props) {
             {userOnlineMarker}
             <div className="message-container">
                 <div>
-                    <div className="date">{props.date ? formatDateTime(props.date) : null}</div>
+                    <div className="date">{props.date ? formatMessageDate(props.date) : null}</div>
                     <div className="name">{props.name}</div>
                 </div>
                 <div>
@@ -66,19 +65,4 @@ function ChatListItem(props: Props) {
             </div>
         </li>
     );
-
-    function formatDateTime(date: Date) : string {
-        const startOfToday = dateFunctions.getStartOfToday();
-        if (date >= startOfToday) {
-            return toShortTimeString(date);
-        }
-        const startOfYesterday = dateFunctions.addDays(startOfToday, -1);
-        if (date >= startOfYesterday) {
-            return "Yesterday";
-        }
-        const useDayNameOnly = date >= dateFunctions.addDays(startOfToday, -6);
-        return useDayNameOnly
-            ? toDayOfWeekString(date)
-            : toDateString(date);
-    }
 }

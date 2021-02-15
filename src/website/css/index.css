@@ -260,26 +260,30 @@ main header .chat-summary >div {
     overflow: auto;
 }
 
-.chats li {
+.chats li,
+.messages li {
     padding-left: 15px;
     height: 64px;
     display: flex;
     flex-direction: row;
     position: relative;
+    border-bottom: 1px solid #e6e6e6;
 }
 
-.chats li .message-container {
-    border-bottom: 1px solid #e6e6e6;
+.chats li .message-container,
+.messages li .message-container {
     padding: 6px 15px 6px 15px;
     min-width: 0;
     width: 100%;
 }
 
-.chats li .date {
+.chats li .date,
+.messages li .date {
     float: right;
 }
 
-.chats li .chats-message {
+.chats li .chats-message,
+.messages li .chats-message {
     font-size: 14px;
     color: #606060;
     white-space: nowrap;
@@ -288,7 +292,8 @@ main header .chat-summary >div {
     max-width: 450px;
 }
 
-.chats li:hover {
+.chats li:hover,
+.messages li:hover {
     background-color: #f0f0f0;
     cursor: pointer;
 }
@@ -311,7 +316,7 @@ main header .chat-summary >div {
     padding: 0 4px;
 }
 
-.new_chat_icon {
+.new-chat-icon {
     background-color: #e0e0e0;
     color: #9b9b9b;
     width: 40px;
@@ -330,6 +335,17 @@ main header .chat-summary >div {
     width: 12px;
     bottom: 12px;
     left: 54px;
+}
+
+.search-results {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.search-results-group .group-title {
+    border-bottom: 1px solid #e6e6e6;
+    padding: 4px 14px;
 }
 
 main header .user-online-marker {

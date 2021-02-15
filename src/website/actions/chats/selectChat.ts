@@ -6,7 +6,7 @@ import MarkAsReadHandler from "../../domain/MarkAsReadHandler";
 
 export const CHAT_SELECTED = "CHAT_SELECTED";
 
-export default function(index: number) {
+export default function(index: number, messageId?: number) {
     return (dispatch: Dispatch<any>, getState: () => RootState) => {
         const chatsState = getState().chatsState;
 

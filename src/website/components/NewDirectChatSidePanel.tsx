@@ -6,10 +6,9 @@ import CancelIcon from "../assets/icons/cancelIcon.svg";
 import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
 import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
 import { UserSummary } from "../domain/model/users";
-import DefaultAvatar from "./DefaultAvatar";
-import UserOnlineMarker from "./UserOnlineMarker";
-import SearchIcon from "../assets/icons/search.svg";
 import gotoUser from "../actions/chats/gotoUser";
+import SearchBox from "./SearchBox";
+import UserListItem from "./UserListItem";
 
 const PLACEHOLDER_TEXT = "Type a username";
 
@@ -21,7 +20,6 @@ function NewDirectChatSidePanel() {
     const emptyResults: UserSummary[] = [];
     const [text, setText] = useState("");
     const [results, setResults] = useState(emptyResults);
-    const [placeholderText, setPlaceholderText] = useState(PLACEHOLDER_TEXT);
     const clearInput = () => setText("");
 
     function handleInputChange(text: string) {
@@ -45,16 +43,16 @@ function NewDirectChatSidePanel() {
         dispatch(changeSidePanel(SidePanelType.Chats));
     }
 
-    function handleSelectUser(item: UserSummary) {
+    function handleSelectUser(user: UserSummary) {
         clearInput();
         dispatch(changeSidePanel(SidePanelType.Chats));
-        dispatch(gotoUser(item));
+        dispatch(gotoUser(user));
     }
 
     return (
         <section id="newDirectChatSidePanel" className="sidebar">
             <header>
-                <div className="new_chat_icon"><CreateGroupChatIcon /></div>
+                <div className="new-chat-icon"><CreateGroupChatIcon /></div>
                 <div className="my-display-name">Start a new chat</div>
                 <div className="chats-menu-container">
                     <div className="ddl-button" onClick={_ => handleCancel()}>
@@ -62,25 +60,9 @@ function NewDirectChatSidePanel() {
                     </div>
                 </div>
             </header>
-            <div className="search">
-                <input
-                    value={text}
-                    onChange={e => handleInputChange(e.target.value)}
-                    placeholder={placeholderText}
-                    onFocus={_ => setPlaceholderText("")}
-                    onBlur={_ => setPlaceholderText(PLACEHOLDER_TEXT)} />
-                <SearchIcon />
-            </div>
+            <SearchBox text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
-                {results.map((item, _) => (
-                    <li onClick={_ => handleSelectUser(item)}>
-                        <DefaultAvatar userId={item.userId} />
-                        {item.minutesSinceLastOnline < 2 ? <UserOnlineMarker /> : null }
-                        <div className="message-container">
-                            <div className="name">{item.username}</div>
-                        </div>
-                    </li>
-                ))}
+                {results.map(user => <UserListItem userSummary={user} handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>
         </section>
     );

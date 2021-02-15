@@ -1,3 +1,5 @@
+import * as dateFunctions from "../utils/dateFunctions";
+
 export function toDayOfWeekString(date: Date) : string {
     return date.toLocaleDateString(undefined, { weekday: "long" });
 }
@@ -18,6 +20,21 @@ export function toLongDateString(date: Date) : string {
 
 export function toShortTimeString(date: Date) : string {
     return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+export function formatMessageDate(date: Date) : string {
+    const startOfToday = dateFunctions.getStartOfToday();
+    if (date >= startOfToday) {
+        return toShortTimeString(date);
+    }
+    const startOfYesterday = dateFunctions.addDays(startOfToday, -1);
+    if (date >= startOfYesterday) {
+        return "Yesterday";
+    }
+    const useDayNameOnly = date >= dateFunctions.addDays(startOfToday, -6);
+    return useDayNameOnly
+        ? toDayOfWeekString(date)
+        : toDateString(date);
 }
 
 function getOrdinal(n: number) : string {

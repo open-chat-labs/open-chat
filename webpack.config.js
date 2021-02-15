@@ -42,7 +42,7 @@ function generateWebpackConfigForCanister(name, info) {
       index: path.join(__dirname, info.frontend.entrypoint),
     },
     optimization: {
-      minimize: false,
+      minimize: true,
       minimizer: [new TerserPlugin()],
     },
     node: {
