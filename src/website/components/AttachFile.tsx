@@ -40,17 +40,18 @@ function AttachFile(props: Props) {
                 
                 const blobUrl = dataToBlobUrl(e.target.result, mimeType);
 
-                const dimensions = mimeType.startsWith("image/")
-                    ? await getImageDimensions(blobUrl)
-                    : await getVideoDimensions(blobUrl)
+                const extract = mimeType.startsWith("image/")
+                    ? await extractImageThumbnail(blobUrl)
+                    : await extractVideoThumbnail(blobUrl)
 
                 content = {
                     kind: "media", 
                     caption: null,
                     mimeType: mimeType,
-                    width: dimensions.width,
-                    height: dimensions.height,
-                    data: new Uint8Array(e.target.result)
+                    width: extract.dimensions.width,
+                    height: extract.dimensions.height,
+                    data: new Uint8Array(e.target.result),
+                    thumbnailData: extract.thumbnailData
                 };
             } else {
                 content = {
@@ -66,23 +67,44 @@ function AttachFile(props: Props) {
         reader.readAsArrayBuffer(file);
     }        
 
-    async function getImageDimensions(blobUrl: string) {
-        return new Promise<Dimensions>((resolve, _) => {
+    async function extractImageThumbnail(blobUrl: string) {
+        return new Promise<MediaExtract>((resolve, _) => {
             const img = new Image;    
             img.onload = function() {
-                resolve(new Dimensions(img.width, img.height));
+                resolve(extractThumbnail(img, new Dimensions(img.width, img.height)));
             }
             img.src = blobUrl;
         });
     }
 
-    async function getVideoDimensions(blobUrl: string) {
-        return new Promise<Dimensions>((resolve, _) => {
+    async function extractVideoThumbnail(blobUrl: string) {
+        return new Promise<MediaExtract>((resolve, _) => {
             const video = document.createElement("video");
             video.addEventListener("loadedmetadata", function () {
-                resolve(new Dimensions(this.videoWidth, this.videoHeight));
+                video.addEventListener("seeked", function () {
+                    resolve(extractThumbnail(video, new Dimensions(this.videoWidth, this.videoHeight)));
+                });
+                video.currentTime = 1;
             });
             video.src = blobUrl;
         });
+    }
+
+    function extractThumbnail(original: HTMLImageElement | HTMLVideoElement, dimensions: Dimensions): MediaExtract {
+        const thumbnailDimensions = dimensions.scaleToFit(new Dimensions(20, 20));
+        const canvas = document.createElement("canvas");
+        canvas.width = thumbnailDimensions.width;
+        canvas.height = thumbnailDimensions.height;
+        const context = canvas.getContext("2d")!;
+        context.drawImage(original, 0, 0, canvas.width, canvas.height);
+        return{
+            dimensions: dimensions,
+            thumbnailData: canvas.toDataURL()
+        };
+    }
+
+    type MediaExtract = {
+        dimensions: Dimensions,
+        thumbnailData: string
     }
 }

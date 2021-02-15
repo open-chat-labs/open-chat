@@ -20,7 +20,8 @@ export function fromCandid(content: any) : MessageContent {
             height: inner.height,
             id: inner.blob_id,
             size: inner.blob_size,
-            chunkSize: inner.chunk_size
+            chunkSize: inner.chunk_size,
+            thumbnailData: inner.thumbnail_data
         };
     }
     if (content.hasOwnProperty("File")) {
@@ -63,7 +64,8 @@ export function toCandid(content: MessageContent) : any {
                     height: content.height,
                     blob_id: content.id,
                     blob_size: content.size,
-                    chunk_size: content.chunkSize
+                    chunk_size: content.chunkSize,
+                    thumbnail_data: content.thumbnailData
                 }
             };
         case "file":

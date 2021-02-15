@@ -49,6 +49,7 @@ export type MediaContent = {
     width: number,
     height: number,
     chunkSize: number,
+    thumbnailData: string
 }
 
 export type FileContent = {
@@ -72,7 +73,8 @@ export type SendMediaContent = {
     mimeType: string,
     width: number,
     height: number,
-    data: Uint8Array
+    data: Uint8Array,
+    thumbnailData: string
 }
 
 export type SendFileContent = {
