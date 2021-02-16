@@ -1,8 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { addParticipantsByUsername } from "../actions/chats/addParticipants";
-import createGroupChat from "../actions/chats/createGroupChat";
 import DropdownMenuIcon from "../assets/icons/dropdownMenuIcon.svg";
 import { isGroupChat } from "../domain/model/chats";
 import { RootState } from "../reducers";
@@ -29,7 +27,7 @@ function SideHeaderMenu(props: Props) {
     }
 
     buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(changeSidePanel(SidePanelType.NewDirectChat))}>New chat</a>);
-    buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(createGroupChat(props.text, []))}>New group</a>);
+    buttons.push(<a href="#" onClick={_ => dispatchAndClearInput(changeSidePanel(SidePanelType.NewGroupChat))}>New group</a>);
 
     if (selectedChat && isGroupChat(selectedChat)) {
         const groupChat = selectedChat;

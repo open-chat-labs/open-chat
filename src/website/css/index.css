@@ -854,3 +854,52 @@ footer button svg {
     bottom: 54px;
     left: -49px;
 }
+
+.sidebar .name-input {
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    padding-left: 30px;
+}
+
+.name-input-container {
+    padding-bottom: 4px;
+    border-bottom: 2px solid #3dc5ee;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.name-input-container span {
+    margin-right: 12px;
+    color: #cccccc;
+    font-size: 14px;
+}
+
+.name-input input {
+    border: 0;
+    outline: none;
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.name-input button {
+    align-self: center;
+    margin-top: 40px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #09e85e;
+    box-shadow: 0 1px 3px rgba(80,80,80,0.4);
+    /* padding: 4px; */
+}
+
+.name-input button svg {
+    color: white;
+    vertical-align: middle;
+    pointer-events: none;
+}

@@ -14,6 +14,7 @@ export type SidePanelChangedEvent = {
 
 export enum SidePanelType {
     Chats,
-    NewDirectChat
+    NewDirectChat,
+    NewGroupChat
 }
 
