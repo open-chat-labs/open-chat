@@ -859,10 +859,10 @@ footer button svg {
     margin-top: 60px;
     display: flex;
     flex-direction: column;
-    padding-left: 30px;
 }
 
 .name-input-container {
+    margin-left: 30px;
     padding-bottom: 4px;
     border-bottom: 2px solid #3dc5ee;
     display: flex;
@@ -893,9 +893,8 @@ footer button svg {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #09e85e;
+    background-color: #32cd32;
     box-shadow: 0 1px 3px rgba(80,80,80,0.4);
-    /* padding: 4px; */
 }
 
 .name-input button svg {

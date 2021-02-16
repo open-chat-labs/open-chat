@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import changeSidePanel, { SidePanelType } from "../actions/changeSidePanel";
 import userMgmtService from "../services/userMgmt/service";
@@ -48,6 +48,10 @@ function NewDirectChatSidePanel() {
         dispatch(changeSidePanel(SidePanelType.Chats));
         dispatch(gotoUser(user));
     }
+
+    useLayoutEffect(() => {
+        document.getElementById("searchBox")?.focus();
+    }, []);    
 
     return (
         <section id="newDirectChatSidePanel" className="sidebar">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import Tick from "../assets/icons/tick2.svg";
 
 export default React.memo(NameInput);
@@ -11,8 +11,7 @@ type Props = {
 
 function NameInput(props: Props) {
     const [text, setText] = useState("");
-    const [remainingCharCount, setRemainingCharCount] = useState(props.maxLength);
-    const [showSubmit, setShowSubmit] = useState(false);
+    const remainingCharCount = props.maxLength - text.length;
     const clearInput = () => setText("");
 
     function handleSubmit() {
@@ -24,9 +23,7 @@ function NameInput(props: Props) {
     }
 
     function handleInputChange(text: string) {
-        setShowSubmit(text.length > 0);
         setText(text);
-        setRemainingCharCount(props.maxLength - text.length);
     }
 
     function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -36,7 +33,7 @@ function NameInput(props: Props) {
         }
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         document.getElementById("nameInput")?.focus();
     }, []);    
 
@@ -53,6 +50,6 @@ function NameInput(props: Props) {
 
             <span>{remainingCharCount}</span>
         </div>
-        {showSubmit ? <button onClick={_ => handleSubmit()}><Tick /></button> : null}
+        {text.length > 0 ? <button onClick={_ => handleSubmit()}><Tick /></button> : null}
     </div>;
 }
