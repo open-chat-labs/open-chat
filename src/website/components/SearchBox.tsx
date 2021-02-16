@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import SearchIcon from "../assets/icons/search.svg";
 
 export default React.memo(SearchBox);
@@ -6,19 +6,16 @@ export default React.memo(SearchBox);
 type Props = {
     text: string,
     onChange: (text: string) => void,
-    defaultPlaceholderText: string
+    defaultPlaceholderText: string,
 }
 
 function SearchBox(props: Props) {
-    const [placeholderText, setPlaceholderText] = useState(props.defaultPlaceholderText);
-
     return <div className="search">
         <input
+            id="searchBox"
             value={props.text}
             onChange={e => props.onChange(e.target.value)}
-            placeholder={placeholderText}
-            onFocus={_ => setPlaceholderText("")}
-            onBlur={_ => setPlaceholderText(props.defaultPlaceholderText)} />
+            placeholder={props.defaultPlaceholderText} />
         <SearchIcon />
-    </div>
+    </div>;
 }
