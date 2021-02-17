@@ -13,9 +13,9 @@ function Side() {
         : <ChatList />;
 
     return (
-        <section className="sidebar">
+        <>
             <SideHeader text={inputText} setText={setInputText} />
             {contentPanel}
-        </section>
+        </>
     );
 }

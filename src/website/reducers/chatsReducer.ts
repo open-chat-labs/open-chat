@@ -1,7 +1,7 @@
 import produce from "immer";
 
 import * as chatFunctions from "../domain/model/chats";
-import { Chat, ChatFilter, ChatId, ConfirmedChat, UnconfirmedGroupChat } from "../domain/model/chats";
+import { Chat, ChatFilter, ChatId, UnconfirmedGroupChat } from "../domain/model/chats";
 import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
 import {

@@ -17,10 +17,10 @@ function Main() {
     }
 
     return (
-        <main>
+        <>
             <MainHeader />
             <MessagesList />
             <MainFooter />
-        </main>
+        </>
     );
 }

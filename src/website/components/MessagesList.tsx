@@ -1,6 +1,5 @@
 import React, { Dispatch, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { RootState } from "../reducers";
 import * as chatFunctions from "../domain/model/chats";
 import { ChatId, ConfirmedChat } from "../domain/model/chats";
