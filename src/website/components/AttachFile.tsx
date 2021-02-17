@@ -62,7 +62,7 @@ function AttachFile(props: Props) {
                 };
             }
 
-            dispatch(sendMessage(props.chat!, content));
+            dispatch(sendMessage(props.chat!, content, null));
         }
         reader.readAsArrayBuffer(file);
     }        

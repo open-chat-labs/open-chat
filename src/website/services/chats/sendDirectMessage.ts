@@ -1,14 +1,22 @@
 import canister from "ic:canisters/chats";
-import { UserId } from "../../domain/model/users";
 import { ConfirmedDirectChat } from "../../domain/model/chats";
+import { Option } from "../../domain/model/common";
+import { MessageContent, ReplyContext } from "../../domain/model/messages";
+import { UserId } from "../../domain/model/users";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
+import { toCandid as replyContextToCandid } from "../candidConverters/replyContext";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
-import { MessageContent } from "../../domain/model/messages";
 import { directChatFromCandid } from "../candidConverters/chat";
 
-export default async function(userId: UserId, clientMessageId: string, content: MessageContent) : Promise<SendDirectMessageResponse> {
-    let response = await canister.send_direct_message(userIdToCandid(userId), clientMessageId, messagePayloadToCandid(content));
+export default async function(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
+    const canisterRequest = {
+        user_id: userIdToCandid(userId),
+        client_message_id: clientMessageId,
+        content: messagePayloadToCandid(content),
+        replies_to: replyContextToCandid(repliesTo)
+    }
+    const response = await canister.send_direct_message(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

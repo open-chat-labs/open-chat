@@ -8,6 +8,7 @@ import {
     MessageContent,
     P2PMessage,
     RemoteMessage,
+    ReplyContext,
     UnconfirmedMessage
 } from "./messages";
 import {
@@ -284,12 +285,13 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
     queueMissingMessagesForDownload(chat);
 }
 
-export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, content: MessageContent) : void => {
+export const addUnconfirmedMessage = (chat: Chat, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : void => {
     const message: UnconfirmedMessage = {
         kind: "unconfirmed",
         clientMessageId,
         date: new Date(),
-        content
+        content,
+        repliesTo
     };
     chat.messages.push(message);
     chat.scrollBottom = 0;

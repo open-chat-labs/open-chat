@@ -1,5 +1,6 @@
 import { ChatId } from "../../domain/model/chats";
-import { MessageContent } from "../../domain/model/messages";
+import { Option } from "../../domain/model/common";
+import { MessageContent, ReplyContext } from "../../domain/model/messages";
 import { UserId } from "../../domain/model/users";
 import createGroupChat, { CreateGroupChatResponse } from "./createGroupChat";
 import sendDirectMessage, { SendDirectMessageResponse } from "./sendDirectMessage";
@@ -16,12 +17,12 @@ export default class service {
         return createGroupChat(subject, users);
     }
 
-    public static sendDirectMessage(userId: UserId, clientMessageId: string, content: MessageContent) : Promise<SendDirectMessageResponse> {
-        return sendDirectMessage(userId, clientMessageId, content);
+    public static sendDirectMessage(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
+        return sendDirectMessage(userId, clientMessageId, content, repliesTo);
     }
 
-    public static sendMessage(chatId: ChatId, clientMessageId: string, content: MessageContent) : Promise<SendMessageResponse> {
-        return sendMessage(chatId, clientMessageId, content);
+    public static sendMessage(chatId: ChatId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
+        return sendMessage(chatId, clientMessageId, content, repliesTo);
     }
 
     public static markRead(chatId: ChatId, fromId: number, toId: number) : Promise<MarkReadResponse> {

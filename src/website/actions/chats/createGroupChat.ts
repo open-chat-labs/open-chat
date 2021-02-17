@@ -60,17 +60,17 @@ export default function(subject: string, users: UserId[]) {
             }
         } as CreateGroupChatSucceededEvent);
 
-        const particpantsToAdd = oldChat.pendingParticipants;
+        const participantsToAdd = oldChat.pendingParticipants;
         const messagesToSend = oldChat.messages;
 
-        if (particpantsToAdd.length || messagesToSend.length) {
+        if (participantsToAdd.length || messagesToSend.length) {
             const chat = getState().chatsState.chats.find(c => c.kind === CONFIRMED_GROUP_CHAT && c.chatId === response.result.chatId) as ConfirmedGroupChat;
 
-            if (particpantsToAdd.length) {
-                dispatch(addParticipantsByUserId(chat, particpantsToAdd));
+            if (participantsToAdd.length) {
+                dispatch(addParticipantsByUserId(chat, participantsToAdd));
             }
 
-            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content as TextContent)));
+            messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content as TextContent, m.repliesTo)));
         }    
     }
 }

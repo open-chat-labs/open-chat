@@ -1,13 +1,21 @@
 import canister from "ic:canisters/chats";
 import { ChatId, ConfirmedChat } from "../../domain/model/chats";
-import { MessageContent } from "../../domain/model/messages";
+import { Option } from "../../domain/model/common";
+import { MessageContent, ReplyContext } from "../../domain/model/messages";
 import { chatFromCandid } from "../candidConverters/chat";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
+import { toCandid as replyContextToCandid } from "../candidConverters/replyContext";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 
-export default async function(chatId: ChatId, clientMessageId: string, content: MessageContent) : Promise<SendMessageResponse> {
-    let response = await canister.send_message(chatIdToCandid(chatId), clientMessageId, messagePayloadToCandid(content));
+export default async function(chatId: ChatId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
+    const candidRequest = {
+        chat_id: chatIdToCandid(chatId),
+        client_message_id: clientMessageId,
+        content: messagePayloadToCandid(content),
+        replies_to: replyContextToCandid(repliesTo)
+    }
+    const response = await canister.send_message(candidRequest);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

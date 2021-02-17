@@ -33,7 +33,7 @@ function SendCycles(props: Props) {
             caption: null
         };
 
-        dispatch(sendMessage(props.chat!, content));
+        dispatch(sendMessage(props.chat!, content, null));
     }
 
     return (

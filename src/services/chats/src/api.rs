@@ -1,6 +1,6 @@
 use ic_cdk_macros::*;
 use shared::user_id::UserId;
-use crate::domain::chat::{ChatId, MessageContent};
+use crate::domain::chat::ChatId;
 use crate::queries::*;
 use crate::updates::*;
 
@@ -10,13 +10,13 @@ fn create_group_chat(participants: Vec<UserId>, subject: String) -> create_group
 }
 
 #[update]
-async fn send_direct_message(recipient: UserId, client_message_id: String, content: MessageContent) -> send_direct_message::Response {
-    send_direct_message::update(recipient, client_message_id, content).await
+async fn send_direct_message(request: send_direct_message::Request) -> send_direct_message::Response {
+    send_direct_message::update(request).await
 }
 
 #[update]
-fn send_message(chat_id: ChatId, client_message_id: String, content: MessageContent) -> send_message::Response {
-    send_message::update(chat_id, client_message_id, content)
+fn send_message(request: send_message::Request) -> send_message::Response {
+    send_message::update(request)
 }
 
 #[update]

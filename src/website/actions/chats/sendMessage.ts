@@ -3,7 +3,7 @@ import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { Chat, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
-import { LocalMessage, MessageContent, SendMessageContent } from "../../domain/model/messages";
+import { LocalMessage, MessageContent, ReplyContext, SendMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
 import putData, { PutDataOutcome, PUT_DATA_FAILED } from "../data/putData";
 import {
@@ -18,7 +18,7 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_FAILED";
 
-export default function(chat: Chat, sendMessageContent: SendMessageContent) {
+export default function(chat: Chat, sendMessageContent: SendMessageContent, repliesTo: Option<ReplyContext>) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const clientMessageId = uuidv1().toString();
 
@@ -40,7 +40,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
                 payload: {
                     chat,
                     clientMessageId,
-                    content
+                    content,
+                    repliesTo
                 }
             };
             dispatch(requestEvent);
@@ -64,8 +65,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
 
         // Send the message to the IC
         const response = chat.kind === UNCONFIRMED_DIRECT_CHAT || (chat.kind === CONFIRMED_DIRECT_CHAT && sendMessageContent.kind === "cycles")
-            ? await chatsService.sendDirectMessage(chat.them, clientMessageId, content)
-            : await chatsService.sendMessage(chat.chatId, clientMessageId, content);
+            ? await chatsService.sendDirectMessage(chat.them, clientMessageId, content, repliesTo)
+            : await chatsService.sendMessage(chat.chatId, clientMessageId, content, repliesTo);
 
         if (response.kind !== "success") {
             // Dispatch a failed event
@@ -82,7 +83,8 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent) {
                 clientMessageId,
                 date: response.result.date,
                 sender: myUserId,
-                content
+                content,
+                repliesTo
             };
             const chat: ConfirmedChat = response.result.chat;
             chat.messages.push(message);
@@ -148,7 +150,8 @@ export type SendMessageFailedToUploadContentEvent = {
 export type SendMessageRequest = {
     chat: Chat,
     clientMessageId: string,
-    content: MessageContent
+    content: MessageContent,
+    repliesTo: Option<ReplyContext>
 }
 
 export type SendMessageFailed = {

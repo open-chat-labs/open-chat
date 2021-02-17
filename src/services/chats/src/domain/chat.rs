@@ -17,7 +17,7 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, now: Timestamp) -> u32;
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32;
     fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
     fn get_latest_message_id(&self) -> u32;
@@ -70,7 +70,7 @@ pub enum MessageContent {
     Text(TextContent),
     Media(MediaContent),
     File(FileContent),
-    Cycles(CycleContent),
+    Cycles(CycleContent)
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -79,6 +79,15 @@ pub struct Message {
     client_message_id: String,
     timestamp: Timestamp,
     sender: UserId,
+    content: MessageContent,
+    replies_to: Option<ReplyContext>
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct ReplyContext {
+    chat_id: ChatId,
+    user_id: UserId,
+    message_id: u32,
     content: MessageContent
 }
 
@@ -126,13 +135,14 @@ impl ChatId {
 }
 
 impl Message {
-    pub fn new(id: u32, client_message_id: String, now: Timestamp, sender: UserId, content: MessageContent) -> Message {
+    pub fn new(id: u32, client_message_id: String, now: Timestamp, sender: UserId, content: MessageContent, replies_to: Option<ReplyContext>) -> Message {
         Message {
             id,
             client_message_id,
             timestamp: now,
             sender,
-            content
+            content,
+            replies_to
         }
     }
 

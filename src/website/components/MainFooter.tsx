@@ -60,7 +60,7 @@ function MainFooter() {
         const text = textbox.textContent;
 
         if (text) {
-            dispatch(sendMessage(chat!, { kind: "text", text: text }));
+            dispatch(sendMessage(chat!, { kind: "text", text: text }, null));
         }
 
         textbox.innerHTML = "";
