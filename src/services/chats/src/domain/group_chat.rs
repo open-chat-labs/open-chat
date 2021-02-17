@@ -161,7 +161,7 @@ impl Chat for GroupChat {
         self.participants.iter().any(|p| p.user_id == *user)
     }
 
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, now: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32 {
 
         let id = match self.messages.last() {
             Some(message) => message.get_id() + 1,
@@ -173,7 +173,8 @@ impl Chat for GroupChat {
             client_message_id,
             now,
             sender.clone(),
-            content
+            content,
+            replies_to
         );
 
         self.messages.push(message);

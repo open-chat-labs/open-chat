@@ -1,5 +1,6 @@
-import { UserId } from "./users";
+import { ChatId } from "./chats";
 import { Option } from "./common";
+import { UserId } from "./users";
 
 export type Message = ConfirmedMessage | UnconfirmedMessage | P2PMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
@@ -12,7 +13,8 @@ export type LocalMessage = {
     clientMessageId: string,
     date: Date,
     sender: UserId,
-    content: MessageContent
+    content: MessageContent,
+    repliesTo: Option<ReplyContext>
 }
 
 export type RemoteMessage = {
@@ -24,7 +26,8 @@ export type UnconfirmedMessage = {
     kind: "unconfirmed",
     clientMessageId: string,
     date: Date,
-    content: MessageContent
+    content: MessageContent,
+    repliesTo: Option<ReplyContext>
 }
 
 export type P2PMessage = {
@@ -32,7 +35,8 @@ export type P2PMessage = {
     clientMessageId: string,
     date: Date,
     sender: UserId,
-    content: MessageContent
+    content: MessageContent,
+    repliesTo: Option<ReplyContext>
 }
 
 export type TextContent = {
@@ -82,6 +86,13 @@ export type SendFileContent = {
     name: string,
     mimeType: string,
     data: Uint8Array
+}
+
+export type ReplyContext = {
+    chatId: ChatId,
+    userId: UserId,
+    messageId: number,
+    content: MessageContent
 }
 
 export function containsEmoji(text: string): boolean {

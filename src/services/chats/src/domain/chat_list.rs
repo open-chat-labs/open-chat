@@ -5,7 +5,7 @@ use shared::user_id::UserId;
 use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
-use crate::domain::chat::ChatStableState;
+use crate::domain::chat::{ChatStableState, ReplyContext};
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::domain::group_chat::GroupChatSummary;
 
@@ -22,9 +22,10 @@ impl ChatList {
         recipient: UserId,
         client_message_id: String,
         content: MessageContent,
+        replies_to: Option<ReplyContext>,
         now: Timestamp) -> DirectChatSummary {
 
-        let chat = DirectChat::new(chat_id, sender.clone(), recipient, client_message_id, content, now);
+        let chat = DirectChat::new(chat_id, sender.clone(), recipient, client_message_id, content, replies_to, now);
         let chat_summary = DirectChatSummary::new(&chat, &sender, 0);
 
         self.chats.insert(chat_id, ChatEnum::Direct(chat));

@@ -39,7 +39,8 @@ class RtcMessageReceiver {
                     clientMessageId: p2pMessageRaw.clientMessageId,
                     date: new Date(),
                     sender: from,
-                    content: p2pMessageRaw.content
+                    content: p2pMessageRaw.content,
+                    repliesTo: p2pMessageRaw.repliesTo
                 }
 
                 RemoteUserTypingHandler.markTypingStopped(chatId, from);

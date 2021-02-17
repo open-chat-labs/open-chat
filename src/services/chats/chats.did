@@ -48,6 +48,14 @@ type MessageContent =
         Cycles: CyclesContent;
     };
 
+type SendDirectMessageRequest =
+    record {
+        user_id: UserId;
+        client_message_id: text;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
 type SendDirectMessageResult =
     record {
         chat_summary: DirectChatSummary;
@@ -61,6 +69,14 @@ type SendDirectMessageResponse =
         UserNotFound;
         RecipientNotFound;
         BalanceExceeded;
+    };
+
+type SendMessageRequest =
+    record {
+        chat_id: ChatId;
+        client_message_id: text;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
     };
 
 type SendMessageResult =
@@ -111,13 +127,22 @@ type GetChatsRequest =
         message_count_for_top_chat: opt nat16;
     };
 
+type ReplyContext =
+    record {
+        chat_id: ChatId;
+        user_id: UserId;
+        message_id: nat32;
+        content: MessageContent;
+    };
+
 type Message =
     record {
         id: nat32;
         client_message_id: text;
         timestamp: Timestamp;
         sender: UserId;
-        content: MessageContent
+        content: MessageContent;
+        replies_to: opt ReplyContext;
     };
 
 type ChatSummary =
@@ -191,8 +216,8 @@ type SearchMessagesMatch =
 
 service : {
     create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
-    send_direct_message: (UserId, text, MessageContent) -> (SendDirectMessageResponse);
-    send_message: (ChatId, text, MessageContent) -> (SendMessageResponse);
+    send_direct_message: (SendDirectMessageRequest) -> (SendDirectMessageResponse);
+    send_message: (SendMessageRequest) -> (SendMessageResponse);
     mark_read: (ChatId, nat32, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
