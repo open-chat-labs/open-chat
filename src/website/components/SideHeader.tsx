@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
-import SideHeaderMenu from "./SideHeaderMenu";
+import UserMenu from "./UserMenu";
 import MyAvatar from "./MyAvatar";
 import SearchBox from "./SearchBox";
 
@@ -17,14 +17,12 @@ type Props = {
 function SideHeader(props: Props) {
     const myUsername = useSelector((state: RootState) => state.usersState.me?.username)!;
 
-    const clearInput = () => props.setText("");
-
     return (
         <>
             <header>
                 <MyAvatar />    
                 <div className="my-display-name"><a href="#">{myUsername}</a></div>
-                <div className="chats-menu-container"><SideHeaderMenu text={props.text} clearInput={clearInput} /></div>
+                <div className="user-menu-container"><UserMenu /></div>
             </header>
             <SearchBox text={props.text} onChange={props.setText} defaultPlaceholderText={PLACEHOLDER_TEXT} />
         </>

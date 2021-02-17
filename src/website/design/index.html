@@ -11,19 +11,19 @@
 
 <body onload="onBodyLoad()">
     <section id="app" class="app">        
-        <section class="sidebar">
+        <section class="sidebar left-panel">
             <header>   
                 <label class="avatar-button">   
                     <img id="myAvatar" class="avatar" data-identicon-value="f62142836846128685a" />
                     <input style="display:none" type="file" accept=".jpg, .jpeg, .png, .gif" onchange="onAvatarFileSelected(event)" />
                 </label>
                 <div class="my-display-name"><a href="#">Igor Levy</a></div>
-                <div class="chats-menu-container">
+                <div class="user-menu-container">
                     <div class="ddl">
-                        <button onclick="toggleDDL('chatsMenu')" class="ddl-button hide-on-click-ignore">
+                        <button onclick="toggleDDL('userMenu')" class="ddl-button hide-on-click-ignore">
                             <svg class="ddl-button-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"></path></svg>
                         </button>
-                        <div id="chatsMenu" class="ddl-content hide-on-click-outside hide" onclick="toggleDDL('chatsMenu')">
+                        <div id="userMenu" class="ddl-content hide-on-click-outside hide" onclick="toggleDDL('userMenu')">
                             <a href="#">New group</a>
                             <a href="#">New chat</a>
                             <a href="#">Profile</a>
@@ -145,14 +145,28 @@
                 </li>   
             </ul>
         </section>
-        <main>
+        <main class="main-panel">
             <header>            
-                <button class="avatar-button">  
-                    <img class="avatar" src="matt.jpeg" />                  
-                </button>      
-                <div>   
-                    <div class="name">Matt Grogan</div>
-                    <div class="date">last seen today at 15:10</div>
+                <div class="chat-header-container">
+                    <button class="avatar-button">  
+                        <img class="avatar" src="matt.jpeg" />                  
+                    </button>      
+                    <div class="chat-summary">   
+                        <div class="name">Matt Grogan</div>
+                        <div class="date">last seen today at 15:10</div>
+                    </div>
+                </div>
+                <div className="chat-menu-container">
+                    <div class="ddl">
+                        <button onclick="toggleDDL('chatMenu')" class="ddl-button hide-on-click-ignore">
+                            <svg class="ddl-button-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"></path></svg>
+                        </button>
+                        <div id="chatMenu" class="ddl-content hide-on-click-outside hide" onclick="toggleDDL('chatMenu')">
+                            <a href="#">Contact info</a>
+                            <a href="#">Mute notifications</a>
+                            <a href="#">Delete chat</a>
+                        </div>
+                    </div>
                 </div>
             </header>
             <div id="messages" class="detail">

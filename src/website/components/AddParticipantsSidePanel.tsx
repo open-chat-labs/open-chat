@@ -1,21 +1,25 @@
 import React, { useLayoutEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { changeLeftPanel, LeftPanelType } from "../actions/changeSidePanel";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../reducers";
+import { getSelectedChat } from "../domain/stateFunctions";
+import { changeRightPanel, RightPanelType } from "../actions/changeSidePanel";
 import userMgmtService from "../services/userMgmt/service";
+import { addParticipantsByUserId } from "../actions/chats/addParticipants";
 import CancelIcon from "../assets/icons/cancelIcon.svg";
 import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
-import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
-import { UserSummary } from "../domain/model/users";
-import gotoUser from "../actions/chats/gotoUser";
 import SearchBox from "./SearchBox";
 import UserListItem from "./UserListItem";
+import { UserSummary } from "../domain/model/users";
+import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
+import { GroupChat } from "../domain/model/chats";
 
 const PLACEHOLDER_TEXT = "Type a username";
 
-export default React.memo(NewDirectChatSidePanel);
+export default React.memo(AddParticipantsSidePanel);
 
-function NewDirectChatSidePanel() {
+function AddParticipantsSidePanel() {
     const dispatch = useDispatch();
+    const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState) as GroupChat);
 
     const emptyResults: UserSummary[] = [];
     const [text, setText] = useState("");
@@ -40,13 +44,12 @@ function NewDirectChatSidePanel() {
 
     function closePanel() {
         clearInput();
-        dispatch(changeLeftPanel(LeftPanelType.Chats));
-
+        dispatch(changeRightPanel(RightPanelType.None));
     }
 
     function handleSelectUser(user: UserSummary) {
         closePanel();
-        dispatch(gotoUser(user));
+        dispatch(addParticipantsByUserId(chat, [user.userId]));
     }
 
     useLayoutEffect(() => {
@@ -56,13 +59,13 @@ function NewDirectChatSidePanel() {
     return (
         <>
             <header>
-                <div className="new-chat-icon"><CreateGroupChatIcon /></div>
-                <div className="my-display-name">Start a new chat</div>
-                <div className="chats-menu-container">
+                <div className="title-container">
                     <div className="ddl-button" onClick={_ => closePanel()}>
                         <CancelIcon className="ddl-button-svg" />
                     </div>
+                    <div className="title">Add participants</div>
                 </div>
+                <div className="new-chat-icon"><CreateGroupChatIcon /></div>
             </header>
             <SearchBox text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">

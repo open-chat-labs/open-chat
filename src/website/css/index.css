@@ -89,29 +89,29 @@ a {
     max-width: 1400px;
 }
 
-.sidebar {
-    flex: 1 1 40%;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+.left-panel             { flex: 1 1 40%; }
+.left-panel.with-right  { flex: 1 1 30%; }
+.main-panel             { flex: 1 1 60%; }
+.main-panel.with-right  { flex: 1 1 40%; }
+.right-panel            { flex: 1 1 30%; }
+
+@media screen and (min-width: 1280px) {
+    .left-panel         { flex: 0 0 480px; }
+    .main-panel         { flex: 1 1 auto; }
 }
 
 main {
-    flex: 1 1 60%;
     background-color: #e5ddd5;
     background-color: #3dc5ee;
     display: flex;
     flex-direction: column;
 }
 
-@media screen and (min-width: 1200px) {
-    .sidebar {
-        flex: 0 0 480px;
-    }
-    main {
-        flex: 1 1 auto;
-    }
+.sidebar {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 .date,
@@ -171,7 +171,7 @@ header {
     margin-left: 24px;
 }
 
-.chats-menu-container {
+.user-menu-container {
     flex-grow: 1;
     display: flex;
     justify-content: flex-end;
@@ -188,7 +188,7 @@ header {
     min-width: 160px;
     overflow: auto;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 100;
     right: 0;
 }
 
@@ -198,6 +198,7 @@ header {
     padding: 10px 16px;
     text-decoration: none;
     display: block;
+    white-space: nowrap;
 }
 
 .ddl-content a:hover {
@@ -231,10 +232,9 @@ header {
 }
 
 main header {
-    border-left: 1px solid #dddddd;
     display: flex;
     flex-direction: row;
-    position: relative;
+    justify-content: space-between;
 }
 
 main header .chat-summary {
@@ -248,11 +248,29 @@ main header .chat-summary >div {
     line-height: normal;
 }
 
+
+main header .chat-header-container {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+}
+
+main header .chat-menu-container {
+}
+
 .sidebar ul, li {
     display: block;
     list-style: none;
     margin: 0;
     padding: 0;
+}
+
+.sidebar.left-panel {
+    border-right: 1px solid #dddddd;
+}
+
+.sidebar.right-panel {
+    border-left: 1px solid #dddddd;
 }
 
 .chats {
@@ -497,7 +515,7 @@ main header .user-online-marker {
     height: 15px;
     width: 15px;
     bottom: 6px;
-    z-index: 100;
+    z-index: 55;
     right: 4px;
 }
 
@@ -901,4 +919,21 @@ footer button svg {
     color: white;
     vertical-align: middle;
     pointer-events: none;
+}
+
+.right-panel header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.right-panel header .title-container {
+    display: flex;
+    flex-direction: row;    
+}
+
+.right-panel header .title {
+    margin-left: 12px;
+    font-size: 20px;
+    align-self: center;
 }

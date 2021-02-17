@@ -12,6 +12,8 @@ import { MyProfile, UserSummary } from "../domain/model/users";
 import ParticipantsTyping from "./ParticipantsTyping";
 import ThemTyping from "./ThemTyping";
 import UserOnlineMarker from "./UserOnlineMarker";
+import DirectChatMenu from "./DirectChatMenu";
+import GroupChatMenu from "./GroupChatMenu";
 
 export default React.memo(MainHeader);
 
@@ -28,9 +30,11 @@ function MainHeader() {
     let chatName: string = "";
     let subTitle: Option<JSX.Element> = null;
     let userOnlineMarker: Option<JSX.Element> = null;
+    let chatMenu;
 
     if (chatFunctions.isDirectChat(chat)) {
         icon = <DefaultAvatar userId={chat.them} />;
+        chatMenu = <DirectChatMenu />;
         if (userDictionary.hasOwnProperty(chat.them)) {
             const userSummary = userDictionary[chat.them] as UserSummary;
             chatName = userSummary.username;
@@ -44,6 +48,7 @@ function MainHeader() {
         }
     } else {
         icon = <GroupChatIcon className="avatar" />;
+        chatMenu = <GroupChatMenu />;
         chatName = chat.subject;
 
         if (chatFunctions.isConfirmedChat(chat) && me) {
@@ -68,14 +73,17 @@ function MainHeader() {
 
     return (
         <header>
-            <button className="avatar-button">
-                {icon}
-            </button>
-            {userOnlineMarker}
-            <div className="chat-summary">
-                <div className="name">{chatName}</div>
-                {subTitle}
+            <div className="chat-header-container">
+                <button className="avatar-button">
+                    {icon}
+                </button>
+                {userOnlineMarker}
+                <div className="chat-summary">
+                    <div className="name">{chatName}</div>
+                    {subTitle}
+                </div>
             </div>
+            <div className="chat-menu-container">{chatMenu}</div>            
         </header>
     );
 }

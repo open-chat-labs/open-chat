@@ -7,7 +7,7 @@ import * as chatFunctions from "../domain/model/chats";
 import { Option } from "../domain/model/common";
 import { LocalMessage } from "../domain/model/messages";
 import { UserId, UserSummary } from "../domain/model/users";
-import changeSidePanel, { SidePanelType } from "../actions/changeSidePanel";
+import { changeLeftPanel, LeftPanelType } from "../actions/changeSidePanel";
 import gotoUser from "../actions/chats/gotoUser";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
 import MessageSearchMatch from "./MessageSearchMatch";
@@ -52,7 +52,7 @@ function SearchResults(props: Props) {
 
     function handleSelectUser(user: UserSummary) {
         props.clearSearchTerm();
-        dispatch(changeSidePanel(SidePanelType.Chats));
+        dispatch(changeLeftPanel(LeftPanelType.Chats));
         dispatch(gotoUser(user));
     }
 
