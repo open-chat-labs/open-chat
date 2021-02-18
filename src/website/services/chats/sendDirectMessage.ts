@@ -11,7 +11,7 @@ import { directChatFromCandid } from "../candidConverters/chat";
 
 export default async function(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
     const canisterRequest = {
-        user_id: userIdToCandid(userId),
+        recipient: userIdToCandid(userId),
         client_message_id: clientMessageId,
         content: messagePayloadToCandid(content),
         replies_to: replyContextToCandid(repliesTo)
