@@ -30,7 +30,7 @@ function MainHeader() {
     let chatName: string = "";
     let subTitle: Option<JSX.Element> = null;
     let userOnlineMarker: Option<JSX.Element> = null;
-    let chatMenu;
+    let chatMenu: Option<JSX.Element> = null;
 
     if (chatFunctions.isDirectChat(chat)) {
         icon = <DefaultAvatar userId={chat.them} />;
@@ -48,10 +48,10 @@ function MainHeader() {
         }
     } else {
         icon = <GroupChatIcon className="avatar" />;
-        chatMenu = <GroupChatMenu />;
         chatName = chat.subject;
 
         if (chatFunctions.isConfirmedChat(chat) && me) {
+            chatMenu = <GroupChatMenu />;
             if (chat.participantsTyping.length) {
                 const usernames = stateFunctions
                     .getUsers(chat.participantsTyping, userDictionary)
@@ -83,7 +83,7 @@ function MainHeader() {
                     {subTitle}
                 </div>
             </div>
-            <div className="chat-menu-container">{chatMenu}</div>            
+            {chatMenu ? <div className="chat-menu-container">{chatMenu}</div> : null}            
         </header>
     );
 }

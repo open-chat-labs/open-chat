@@ -14,6 +14,7 @@ import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
 import { GroupChat } from "../domain/model/chats";
 
 const PLACEHOLDER_TEXT = "Type a username";
+const SEARCH_BOX_ID = "addParticipantsSearchBox";
 
 export default React.memo(AddParticipantsSidePanel);
 
@@ -44,7 +45,7 @@ function AddParticipantsSidePanel() {
 
     function closePanel() {
         clearInput();
-        dispatch(changeRightPanel(RightPanelType.None));
+        dispatch(changeRightPanel(RightPanelType.Particpants));
     }
 
     function handleSelectUser(user: UserSummary) {
@@ -53,7 +54,7 @@ function AddParticipantsSidePanel() {
     }
 
     useLayoutEffect(() => {
-        document.getElementById("searchBox")?.focus();
+        document.getElementById(SEARCH_BOX_ID)?.focus();
     }, []);    
 
     return (
@@ -67,7 +68,7 @@ function AddParticipantsSidePanel() {
                 </div>
                 <div className="new-chat-icon"><CreateGroupChatIcon /></div>
             </header>
-            <SearchBox text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
+            <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
                 {results.map(user => <UserListItem userSummary={user} handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>
