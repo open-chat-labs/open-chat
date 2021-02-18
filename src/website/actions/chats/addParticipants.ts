@@ -4,6 +4,7 @@ import { UserId, UserSummary } from "../../domain/model/users";
 import { RootState } from "../../reducers";
 import { ChatId, GroupChat } from "../../domain/model/chats";
 import { CONFIRMED_GROUP_CHAT, UNCONFIRMED_GROUP_CHAT } from "../../constants";
+import Stopwatch from "../../utils/Stopwatch";
 
 export const ADD_PARTICIPANTS_REQUESTED = "ADD_PARTICIPANTS_REQUESTED";
 export const ADD_PARTICIPANTS_SUCCEEDED = "ADD_PARTICIPANTS_SUCCEEDED";
@@ -27,6 +28,7 @@ export function addParticipantsByUsername(chat: GroupChat, usernames: string[]) 
 
 export function addParticipantsByUserId(chat: GroupChat, userIds: UserId[]) {
     return async (dispatch: Dispatch<any>) => {
+        const timer = Stopwatch.startNew();
 
         {
             const chatId: ChatId | Symbol = chat.kind === CONFIRMED_GROUP_CHAT 
@@ -54,7 +56,8 @@ export function addParticipantsByUserId(chat: GroupChat, userIds: UserId[]) {
                 type: ADD_PARTICIPANTS_SUCCEEDED,
                 payload: {
                     chatId: chat.chatId,
-                    users: userIds
+                    users: userIds,
+                    durationMs: timer.getElapsedMs()
                 }
             } as AddParticipantsSucceededEvent);
         } else {
@@ -62,7 +65,8 @@ export function addParticipantsByUserId(chat: GroupChat, userIds: UserId[]) {
                 type: ADD_PARTICIPANTS_FAILED,
                 payload: {
                     chatId: chat.chatId,
-                    users: userIds
+                    users: userIds,
+                    durationMs: timer.getElapsedMs()
                 }    
              } as AddParticipantsFailedEvent);
         }
@@ -81,7 +85,8 @@ export type AddParticipantsSucceededEvent = {
     type: typeof ADD_PARTICIPANTS_SUCCEEDED,
     payload: {
         chatId: ChatId,
-        users: UserId[]
+        users: UserId[],
+        durationMs: number
     }
 }
 
@@ -89,6 +94,7 @@ export type AddParticipantsFailedEvent = {
     type: typeof ADD_PARTICIPANTS_FAILED,
     payload: {
         chatId: ChatId,
-        users: UserId[]
+        users: UserId[],
+        durationMs: number
     }
 }

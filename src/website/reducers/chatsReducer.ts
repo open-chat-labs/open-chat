@@ -152,7 +152,7 @@ export default produce((state: ChatsState, event: Event) => {
             }
 
             state.selectedChatIndex = event.payload;
-            let chat = state.chats[state.selectedChatIndex];
+            const chat = state.chats[state.selectedChatIndex];
             if (chatFunctions.isConfirmedChat(chat) && chat.latestConfirmedMessageId) {
                 const minMessageId = chatFunctions.getMinMessageId(chat);
                 const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, minMessageId);
@@ -372,7 +372,7 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case SEND_MESSAGE_SUCCEEDED: {
-            const updatedChat = event.payload;
+            const updatedChat = event.payload.chat;
             const filter = {
                 chatId: updatedChat.chatId,
                 userId: chatFunctions.isDirectChat(updatedChat) ? updatedChat.them : undefined

@@ -12,6 +12,7 @@ import {
     UNCONFIRMED_DIRECT_CHAT,
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
+import Stopwatch from "../../utils/Stopwatch";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -20,6 +21,7 @@ export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_F
 
 export default function(chat: Chat, sendMessageContent: SendMessageContent, repliesTo: Option<ReplyContext>) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+        const timer = Stopwatch.startNew();
         const clientMessageId = uuidv1().toString();
 
         // If the "send message content" is media the message itself will contain
@@ -33,16 +35,18 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
             uploadContentTask = putDataAsync();
         }
 
+        const request: SendMessageRequest = {
+            chat,
+            clientMessageId,
+            content,
+            repliesTo
+        };
+
         // Dispatch the message requested event - this will put the message in the chat
         {
             const requestEvent: SendMessageRequestedEvent = {
                 type: SEND_MESSAGE_REQUESTED,
-                payload: {
-                    chat,
-                    clientMessageId,
-                    content,
-                    repliesTo
-                }
+                payload: request
             };
             dispatch(requestEvent);
         }
@@ -91,7 +95,11 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
 
             dispatch({
                 type: SEND_MESSAGE_SUCCEEDED,
-                payload: chat
+                payload: {
+                    request,
+                    chat,
+                    durationMs: timer.getElapsedMs()
+                }
             } as SendMessageSucceededEvent);
         }
     }
@@ -135,7 +143,11 @@ export type SendMessageRequestedEvent = {
 
 export type SendMessageSucceededEvent = {
     type: typeof SEND_MESSAGE_SUCCEEDED,
-    payload: ConfirmedChat
+    payload: {
+        request: SendMessageRequest,
+        chat: ConfirmedChat,
+        durationMs: number
+    }
 }
 
 export type SendMessageFailedEvent = {
