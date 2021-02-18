@@ -2,9 +2,10 @@ import canister from "ic:canisters/chats";
 import { UserId } from "../../domain/model/users";
 import { ChatId } from "../../domain/model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
+import { toCandid as userIdToCandid } from "../candidConverters/userId";
 
-export default async function(chatId: ChatId, user: UserId) : Promise<RemoveParticipantResponse> {
-    let response = await canister.remove_participant(chatIdToCandid(chatId), user);
+export default async function(chatId: ChatId, userId: UserId) : Promise<RemoveParticipantResponse> {
+    let response = await canister.remove_participant(chatIdToCandid(chatId), userIdToCandid(userId));
 
     if (response.hasOwnProperty("Success")) {
         return RemoveParticipantResponse.Success;

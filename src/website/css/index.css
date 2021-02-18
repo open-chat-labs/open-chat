@@ -71,12 +71,6 @@ a {
     cursor: pointer;
 }
 
-.chats li .avatar {
-    width: 49px;
-    height: 49px;
-    margin-top: 7px;
-}
-
 .chats li svg.avatar {
     width: 56px;
     height: 56px;
@@ -112,6 +106,10 @@ main {
     display: flex;
     flex-direction: column;
     min-width: 0;
+}
+
+header {
+    height: 52px;
 }
 
 .date,
@@ -229,6 +227,26 @@ header {
 
 .ddl-button:hover, .ddl-button:focus {
     background-color: #e0e0e0;
+}
+
+.down-arrow {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    opacity: 0.85;
+    display: none;
+    z-index: 51;
+}
+
+.down-arrow svg {
+    color: #aaaaaa;
+    background-color: inherit;
+    width: 18px;
+    height: 18px;
+}
+
+.down-arrow-container:hover .down-arrow {
+    display: block;
 }
 
 main header {
@@ -395,22 +413,6 @@ main header .user-online-marker {
     background-color: #e6e6e6;
 }
 
-.message .down-arrow {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    opacity: 0.85;
-    display: none;
-    z-index: 51;
-    background-color: inherit;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    padding: 5px;
-    vertical-align: middle;
-    color: #aaaaaa;
-}
-
 .message.file.them .down-arrow {
     background-color: #e9e9e9;
 }
@@ -419,9 +421,6 @@ main header .user-online-marker {
     background-color: #ea4091;
 }
 
-.message:hover .down-arrow {
-    display: block;
-}
 
 .message.merge {
     margin-top: 2px;
@@ -936,4 +935,26 @@ footer button svg {
     margin-left: 12px;
     font-size: 20px;
     align-self: center;
+}
+
+.chats .new-chat-icon {
+    align-self: center;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.chats li .action-container {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+}
+
+.chats li .icon-container,
+.chats li .avatar {
+    width: 49px;
+    height: 49px;
+    margin-top: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

@@ -14,3 +14,13 @@ export type UserSummary = {
     minutesSinceLastOnline: number,
     version: number
 }
+
+export function toUserSummary(myProfile: MyProfile): UserSummary {
+    return {
+        userId: myProfile.userId,
+        username: myProfile.username,
+        lastOnline: new Date(),
+        minutesSinceLastOnline: 0,
+        version : myProfile.version
+    };
+}

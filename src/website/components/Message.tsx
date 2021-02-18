@@ -32,7 +32,7 @@ export default React.memo(Message);
 function Message(props : Props) {
     const dispatch = useDispatch();
 
-    let className = "message " + (props.sentByMe ? "me" : "them");
+    let className = "message down-arrow-container " + (props.sentByMe ? "me" : "them");
     let senderLink = null;
 
     if (props.sender && (props.groupPosition == MessageGroupPosition.None || props.groupPosition == MessageGroupPosition.Top)) {

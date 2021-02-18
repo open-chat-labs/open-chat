@@ -10,6 +10,7 @@ import NewDirectChatSidePanel from "./components/NewDirectChatSidePanel";
 import NewGroupChatSidePanel from "./components/NewGroupChatSidePanel";
 import AddParticipantsSidePanel from "./components/AddParticipantsSidePanel";
 import { SidePanelState } from "./reducers/sidePanelReducer";
+import ParticipantsSidePanel from "./components/ParticipantsSidePanel";
 
 export default App;
 
@@ -56,6 +57,9 @@ function App() {
         switch (sidePanelState.rightPanel) {
             case RightPanelType.AddParticpants: 
                 panel = <AddParticipantsSidePanel />
+                break;
+            case RightPanelType.Particpants: 
+                panel = <ParticipantsSidePanel />
                 break;
         }    
 

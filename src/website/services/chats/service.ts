@@ -33,8 +33,8 @@ export default class service {
         return addParticipants(chatId, users);
     }
 
-    public static removeParticipant(chatId: ChatId, user: UserId) : Promise<RemoveParticipantResponse> {
-        return removeParticipant(chatId, user);
+    public static removeParticipant(chatId: ChatId, userId: UserId) : Promise<RemoveParticipantResponse> {
+        return removeParticipant(chatId, userId);
     }
 
     public static getChats(request: GetChatsRequest) : Promise<GetChatsResponse> {

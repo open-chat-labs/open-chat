@@ -11,6 +11,7 @@ import SearchBox from "./SearchBox";
 import UserListItem from "./UserListItem";
 
 const PLACEHOLDER_TEXT = "Type a username";
+const SEARCH_BOX_ID = "newDirectChatSearchBox";
 
 export default React.memo(NewDirectChatSidePanel);
 
@@ -50,7 +51,7 @@ function NewDirectChatSidePanel() {
     }
 
     useLayoutEffect(() => {
-        document.getElementById("searchBox")?.focus();
+        document.getElementById(SEARCH_BOX_ID)?.focus();
     }, []);    
 
     return (
@@ -64,7 +65,7 @@ function NewDirectChatSidePanel() {
                     </div>
                 </div>
             </header>
-            <SearchBox text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
+            <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
                 {results.map(user => <UserListItem userSummary={user} handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>

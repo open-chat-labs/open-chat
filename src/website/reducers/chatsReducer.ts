@@ -60,9 +60,16 @@ import {
     ADD_PARTICIPANTS_FAILED,
     ADD_PARTICIPANTS_REQUESTED,
     AddParticipantsFailedEvent,
-    AddParticipantsRequestedEvent,
-    AddParticipantsSucceededEvent
+    AddParticipantsRequestedEvent
 } from "../actions/chats/addParticipants";
+
+import {
+    REMOVE_PARTICIPANT_FAILED,
+    REMOVE_PARTICIPANT_REQUESTED,
+    RemoveParticipantFailedEvent,
+    RemoveParticipantRequestedEvent,
+} from "../actions/chats/removeParticipant";
+
 import {
     MARK_MESSAGES_AS_READ,
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
@@ -103,7 +110,6 @@ const initialState: ChatsState = {
 
 type Event =
     AddParticipantsRequestedEvent |
-    AddParticipantsSucceededEvent |
     AddParticipantsFailedEvent |
     ChatSelectedEvent |
     CreateGroupChatRequestedEvent |
@@ -127,6 +133,8 @@ type Event =
     MarkMessagesAsReadByClientIdRemotelyEvent |
     MarkMessagesAsReadServerSyncSucceededEvent |
     ReceiveP2PMessageEvent |
+    RemoveParticipantFailedEvent |
+    RemoveParticipantRequestedEvent |
     RemoteUserTypingEvent |
     RemoteUserStoppedTypingEvent |
     SendMessageRequestedEvent |
@@ -413,6 +421,26 @@ export default produce((state: ChatsState, event: Event) => {
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Adding the participants failed so remove them from the chat
                 setFunctions.exceptWith(chat.participants, users);
+            }
+            break;
+        }
+
+        case REMOVE_PARTICIPANT_REQUESTED: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            if (chat.kind === CONFIRMED_GROUP_CHAT) {
+                // Remove the participant immediately but add them back if the call fails
+                setFunctions.remove(chat.participants, userId);
+            }
+            break;
+        }
+
+        case REMOVE_PARTICIPANT_FAILED: {
+            const { chatId, userId } = event.payload;
+            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            if (chat.kind === CONFIRMED_GROUP_CHAT) {
+                // Removing the participant failed so add them back to the chat
+                setFunctions.add(chat.participants, userId);
             }
             break;
         }

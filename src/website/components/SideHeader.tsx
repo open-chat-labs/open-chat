@@ -6,6 +6,7 @@ import MyAvatar from "./MyAvatar";
 import SearchBox from "./SearchBox";
 
 const PLACEHOLDER_TEXT = "Search chats, users and messages";
+const SEARCH_BOX_ID = "mainSearchBox";
 
 export default React.memo(SideHeader);
 
@@ -24,7 +25,7 @@ function SideHeader(props: Props) {
                 <div className="my-display-name"><a href="#">{myUsername}</a></div>
                 <div className="user-menu-container"><UserMenu /></div>
             </header>
-            <SearchBox text={props.text} onChange={props.setText} defaultPlaceholderText={PLACEHOLDER_TEXT} />
+            <SearchBox id={SEARCH_BOX_ID} text={props.text} onChange={props.setText} defaultPlaceholderText={PLACEHOLDER_TEXT} />
         </>
     );
 }
