@@ -5,3 +5,8 @@ members = [
     "src/services/shared",
     "src/services/user_mgmt"
 ]
+
+[profile.release]
+lto = true
+opt-level = "z"
+codegen-units = 1
