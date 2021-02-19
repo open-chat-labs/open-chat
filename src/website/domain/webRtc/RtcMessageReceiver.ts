@@ -33,7 +33,7 @@ class RtcMessageReceiver {
             }
 
             case SEND_MESSAGE_REQUESTED: {
-                const chatId: ChatId = p2pMessageRaw.chatId;
+                const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
                 const p2pMessage: P2PMessage = {
                     kind: "p2p",
                     clientMessageId: p2pMessageRaw.clientMessageId,
@@ -49,13 +49,13 @@ class RtcMessageReceiver {
             }
 
             case REMOTE_USER_TYPING: {
-                const chatId: ChatId = p2pMessageRaw.chatId;
+                const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
                 RemoteUserTypingHandler.markTyping(chatId, from);
                 break;
             }
 
             case REMOTE_USER_STOPPED_TYPING: {
-                const chatId: ChatId = p2pMessageRaw.chatId;
+                const chatId: ChatId = BigInt(p2pMessageRaw.chatId);
                 RemoteUserTypingHandler.markTypingStopped(chatId, from);
                 break;
             }
