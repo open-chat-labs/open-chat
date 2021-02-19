@@ -40,8 +40,8 @@ type ConfirmedChatCommon = ChatCommon & {
     messages: Message[],
     messagesToDownload: number[],
     messagesDownloading: number[],
-    earliestConfirmedMessageId: Option<number>,
-    latestConfirmedMessageId: Option<number>,
+    minLocalMessageId: Option<number>,
+    maxLocalMessageId: Option<number>,
     minimumUnconfirmedMessageIndex: number,
 
     // If the messageId is known, add to unreadMessageIds, otherwise add to unreadClientMessageIds, never add to both
@@ -65,7 +65,7 @@ export type ConfirmedDirectChat = ConfirmedChatCommon & {
 export type ConfirmedGroupChat = ConfirmedChatCommon & {
     kind: typeof CONFIRMED_GROUP_CHAT,
     subject: string,
-    minVisibleMessageId: number,
+    minMessageIdOnServer: number,
     participants: UserId[],
     participantsTyping: UserId[],
     unreadByAnyMessageIds: number[]
@@ -120,8 +120,8 @@ export const newConfirmedDirectChat = (
     chatId: ChatId, them: UserId, displayDate: Date, lastUpdated: Date, messages: Message[] = [],
     unreadMessageIds: number[] = [], unreadByThemMessageIds: number[] = []) : ConfirmedDirectChat => {
 
-    const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
-    const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
+    const earliestConfirmedMessageId = getMinMessageId(messages);
+    const latestConfirmedMessageId = getMaxMessageId(messages);
 
     return {
         kind: CONFIRMED_DIRECT_CHAT,
@@ -139,8 +139,8 @@ export const newConfirmedDirectChat = (
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
-        earliestConfirmedMessageId,
-        latestConfirmedMessageId,
+        minLocalMessageId: earliestConfirmedMessageId,
+        maxLocalMessageId: latestConfirmedMessageId,
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
         scrollBottom: 0,
@@ -150,11 +150,11 @@ export const newConfirmedDirectChat = (
 }
 
 export const newConfirmedGroupChat = (
-    chatId: ChatId, subject: string, participants: UserId[], displayDate: Date, lastUpdated: Date, minVisibleMessageId: number,
+    chatId: ChatId, subject: string, participants: UserId[], displayDate: Date, lastUpdated: Date, minMessageIdOnServer: number,
     messages: Message[] = [], unreadMessageIds: number[] = [], unreadByAnyMessageIds: number[] = []) : ConfirmedGroupChat => {
 
-    const earliestConfirmedMessageId = calculateEarliestConfirmedMessageId(messages);
-    const latestConfirmedMessageId = calculateLatestConfirmedMessageId(messages);
+    const earliestConfirmedMessageId = getMinMessageId(messages);
+    const latestConfirmedMessageId = getMaxMessageId(messages);
 
     return {
         kind: CONFIRMED_GROUP_CHAT,
@@ -163,7 +163,7 @@ export const newConfirmedGroupChat = (
         participants,
         displayDate,
         lastUpdated,
-        minVisibleMessageId,
+        minMessageIdOnServer,
         unreadMessageIds,
         unreadClientMessageIds: [],
         markAsReadPending: [],
@@ -172,8 +172,8 @@ export const newConfirmedGroupChat = (
         messages,
         messagesToDownload: [],
         messagesDownloading: [],
-        earliestConfirmedMessageId,
-        latestConfirmedMessageId,
+        minLocalMessageId: earliestConfirmedMessageId,
+        maxLocalMessageId: latestConfirmedMessageId,
         minimumUnconfirmedMessageIndex: 0,
         scrollTop: null,
         scrollBottom: 0,
@@ -310,14 +310,14 @@ export const queueMissingMessagesForDownload = (chat: ConfirmedChat) : void => {
 }
 
 export const extendMessagesRangeDownTo = (chat: ConfirmedChat, messageId: number, isSelectedChat: boolean) : void => {
-    if (!chat.earliestConfirmedMessageId) {
+    if (!chat.minLocalMessageId) {
         chat.messages.splice(0, 0, { kind: "remote", id: messageId });
-        chat.latestConfirmedMessageId = messageId;
-    } else if (messageId >= chat.earliestConfirmedMessageId) {
+        chat.maxLocalMessageId = messageId;
+    } else if (messageId >= chat.minLocalMessageId) {
         return;
     } else {
         const toPrepend: RemoteMessage[] = [];
-        for (let id = messageId; id < chat.earliestConfirmedMessageId; id++) {
+        for (let id = messageId; id < chat.minLocalMessageId; id++) {
             toPrepend.push({kind: "remote", id});
         }
         chat.messages.splice(0, 0, ...toPrepend);
@@ -325,26 +325,26 @@ export const extendMessagesRangeDownTo = (chat: ConfirmedChat, messageId: number
             maintainScrollBottom(chat);
         }
     }
-    chat.earliestConfirmedMessageId = messageId;
+    chat.minLocalMessageId = messageId;
 }
 
 export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number, isSelectedChat: boolean) : void => {
-    if (!chat.latestConfirmedMessageId) {
+    if (!chat.maxLocalMessageId) {
         chat.messages.splice(0, 0, { kind: "remote", id: messageId });
-        chat.earliestConfirmedMessageId = messageId;
-    } else if (messageId <= chat.latestConfirmedMessageId) {
+        chat.minLocalMessageId = messageId;
+    } else if (messageId <= chat.maxLocalMessageId) {
         return;
     } else {
         const toAdd: RemoteMessage[] = [];
-        for (let id = chat.latestConfirmedMessageId + 1; id <= messageId; id++) {
+        for (let id = chat.maxLocalMessageId + 1; id <= messageId; id++) {
             toAdd.push({ kind: "remote", id });
         }
-        chat.messages.splice(getMessageIndex(chat.messages, chat.latestConfirmedMessageId + 1), 0, ...toAdd);
+        chat.messages.splice(getMessageIndex(chat.messages, chat.maxLocalMessageId + 1), 0, ...toAdd);
         if (isSelectedChat) {
             maintainScroll(chat);
         }
     }
-    chat.latestConfirmedMessageId = messageId;
+    chat.maxLocalMessageId = messageId;
 }
 
 export const getChat = (chats: Chat[], old_chat: Chat): [Chat, number] => {
@@ -503,8 +503,25 @@ export const markMessagesAsReadOnServer = (chat: ConfirmedChat, fromId: number, 
     }
 }
 
-export const getMinMessageId = (chat: ConfirmedChat) : number => {
-    return isGroupChat(chat) ? chat.minVisibleMessageId : 1;
+export const getMinMessageId = (messages: Message[]) : Option<number> => {
+    return messages.length && messages[0].kind !== "unconfirmed" && messages[0].kind !== "p2p"
+        ? messages[0].id
+        : null;
+}
+
+export const getMaxMessageId = (messages: Message[]) : Option<number> => {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        if (message.kind !== "unconfirmed" && message.kind !== "p2p") {
+            return message.id;
+        }
+    }
+    return null;
+}
+
+
+export const getMinMessageIdOnServer = (chat: ConfirmedChat) : number => {
+    return isGroupChat(chat) ? chat.minMessageIdOnServer : 1;
 }
 
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : boolean => {
@@ -520,22 +537,6 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: 
         }
     }
     return false;
-}
-
-const calculateEarliestConfirmedMessageId = (messages: Message[]) : Option<number> => {
-    return messages.length && messages[0].kind !== "unconfirmed" && messages[0].kind !== "p2p"
-        ? messages[0].id
-        : null;
-}
-
-const calculateLatestConfirmedMessageId = (messages: Message[]) : Option<number> => {
-    for (let index = messages.length - 1; index >= 0; index--) {
-        const message = messages[index];
-        if (message.kind !== "unconfirmed" && message.kind !== "p2p") {
-            return message.id;
-        }
-    }
-    return null;
 }
 
 const getMessageIndex = (messages: Message[], messageId: number) : number => {

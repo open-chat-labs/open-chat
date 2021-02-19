@@ -153,11 +153,13 @@ export default produce((state: ChatsState, event: Event) => {
 
             state.selectedChatIndex = event.payload;
             const chat = state.chats[state.selectedChatIndex];
-            if (chatFunctions.isConfirmedChat(chat) && chat.latestConfirmedMessageId) {
-                const minMessageId = chatFunctions.getMinMessageId(chat);
-                const minMessageIdRequired = Math.max((chat.latestConfirmedMessageId ?? 0) + 1 - PAGE_SIZE, minMessageId);
-                if (minMessageId !== minMessageIdRequired) {
-                    chatFunctions.extendMessagesRangeDownTo(chat, minMessageIdRequired, true);
+            if (chatFunctions.isConfirmedChat(chat) && chat.maxLocalMessageId) {
+                const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
+                const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
+                const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);
+
+                if (minLocalMessageId !== minLocalMessageIdRequired) {
+                    chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
                     chatFunctions.queueMissingMessagesForDownload(chat);
                 }
             }
