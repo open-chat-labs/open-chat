@@ -85,6 +85,8 @@ function MessagesList() {
         const onScroll = (e: Event) => onMessagesScroll(chat, e.target as HTMLElement, dispatch);
         messagesDiv.addEventListener("scroll", onScroll);
 
+        onMessagesScroll(chat, messagesDiv, dispatch);
+
         return () => messagesDiv.removeEventListener("scroll", onScroll);
     }, [chat, messagesRef.current])
 
