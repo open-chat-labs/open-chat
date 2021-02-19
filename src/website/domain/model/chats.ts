@@ -25,7 +25,7 @@ export type DirectChat = ConfirmedDirectChat | UnconfirmedDirectChat;
 export type ConfirmedChat = ConfirmedDirectChat | ConfirmedGroupChat;
 export type UnconfirmedChat = UnconfirmedDirectChat | UnconfirmedGroupChat;
 
-export type ChatId = string;
+export type ChatId = bigint;
 
 type ChatCommon = {
     scrollTop: Option<number>,
