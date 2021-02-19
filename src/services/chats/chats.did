@@ -50,7 +50,7 @@ type MessageContent =
 
 type SendDirectMessageRequest =
     record {
-        user_id: UserId;
+        recipient: UserId;
         client_message_id: text;
         content: MessageContent;
         replies_to: opt ReplyContext;

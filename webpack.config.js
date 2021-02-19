@@ -72,6 +72,10 @@ function generateWebpackConfigForCanister(name, info) {
           test: /\.svg$/,
           use: 'svg-react-loader',
           include: sourceDir
+        },
+        {
+          test: /\.html$/i,
+          loader: 'html-loader',
         }
       ]
     },

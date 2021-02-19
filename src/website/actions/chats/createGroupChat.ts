@@ -9,6 +9,7 @@ import sendMessage from "./sendMessage";
 import { addParticipantsByUserId } from "./addParticipants";
 import { CONFIRMED_GROUP_CHAT, UNCONFIRMED_GROUP_CHAT } from "../../constants";
 import { TextContent } from "../../domain/model/messages";
+import Stopwatch from "../../utils/Stopwatch";
 
 export const CREATE_GROUP_CHAT_REQUESTED = "CREATE_GROUP_CHAT_REQUESTED";
 export const CREATE_GROUP_CHAT_SUCCEEDED = "CREATE_GROUP_CHAT_SUCCEEDED";
@@ -16,6 +17,7 @@ export const CREATE_GROUP_CHAT_FAILED = "CREATE_GROUP_CHAT_FAILED";
 
 export default function(subject: string, users: UserId[]) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+        const timer = Stopwatch.startNew();
         const tempId = Symbol("id");
 
         const requestEvent: CreateGroupChatRequestedEvent = {
@@ -56,7 +58,8 @@ export default function(subject: string, users: UserId[]) {
             type: CREATE_GROUP_CHAT_SUCCEEDED,
             payload: {
                 tempId,
-                chat: response.result
+                chat: response.result,
+                durationMs: timer.getElapsedMs()
             }
         } as CreateGroupChatSucceededEvent);
 
@@ -88,7 +91,8 @@ export type CreateGroupChatSucceededEvent = {
     type: typeof CREATE_GROUP_CHAT_SUCCEEDED,
     payload: {
         tempId: Symbol,
-        chat: ConfirmedGroupChat
+        chat: ConfirmedGroupChat,
+        durationMs: number
     }
 }
 

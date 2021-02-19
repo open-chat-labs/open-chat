@@ -7,9 +7,9 @@ export function toDate(value: BigNumber) : Date {
 }
 
 export function fromCandid(value: BigNumber) : Timestamp {
-    return BigInt(value);
+    return Number(value);
 }
 
 export function toCandid(timestamp: Timestamp) : BigNumber {
-    return new BigNumber(timestamp.toString());
+    return new BigNumber(timestamp);
 }
