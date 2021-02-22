@@ -1,6 +1,6 @@
 import { Currency } from "../domain/model/common";
 
-const GBP_TO_MILLION_CYCLES = 810_000;
+const GBP_TO_MILLION_CYCLES = 1_260_000;
 const MILLION = 1_000_000;
 const MILLION_BIGINT = BigInt(MILLION);
 

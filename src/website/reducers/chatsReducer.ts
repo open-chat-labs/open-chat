@@ -1,4 +1,5 @@
 import produce from "immer";
+import { dataToBlobUrl } from "../utils/blobFunctions";
 
 import * as chatFunctions from "../domain/model/chats";
 import { Chat, ChatFilter, ChatId, UnconfirmedGroupChat } from "../domain/model/chats";
@@ -94,6 +95,8 @@ import {
     RemoteUserTypingEvent
 } from "../actions/chats/userTyping";
 
+import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMedia";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -120,6 +123,7 @@ type Event =
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
+    GetMediaSucceededEvent |
     GetMessagesRequestedEvent |
     GetMessagesSucceededEvent |
     GetMessagesFailedEvent |
@@ -149,6 +153,7 @@ export default produce((state: ChatsState, event: Event) => {
             if (state.selectedChatIndex != null) {
                 const prevChat = state.chats[state.selectedChatIndex];
                 chatFunctions.saveDraftMessage(prevChat);
+                chatFunctions.freeMediaData(prevChat);
             }
 
             state.selectedChatIndex = event.payload;
@@ -445,6 +450,20 @@ export default produce((state: ChatsState, event: Event) => {
                 setFunctions.add(chat.participants, userId);
             }
             break;
+        }
+
+        case GET_MEDIA_SUCCEEDED: {
+            const { chatId, messageId, data } = event.payload;
+            const [chat, index] = chatFunctions.getChatById(state.chats, chatId);            
+            // Only set the media data against the message if the chat is the selected chat
+            const message = chatFunctions.tryFindMessge(chat.messages, messageId);
+            if (message && 
+                message.kind === "local" && 
+                message.content.kind === "media" && 
+                !message.content.data && 
+                index === state.selectedChatIndex) {
+                message.content.data = dataToBlobUrl(data, message.content.mimeType);
+            }
         }
     }
 }, initialState);

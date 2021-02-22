@@ -53,6 +53,7 @@ export type MediaContent = {
     width: number,
     height: number,
     chunkSize: number,
+    data: Option<string>,
     thumbnailData: string
 }
 

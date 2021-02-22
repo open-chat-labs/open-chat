@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { FileContent as File } from "../domain/model/messages";
-import getData, { GetDataOutcome, GET_DATA_FAILED } from "../actions/data/getData";
+import dataService from "../services/data/service";
 import formatFileSize from "../formatters/fileSize";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 
@@ -44,28 +44,15 @@ function FileContent(props : Props): JSX.Element {
         }
 
         // Get the file from the IC
-        let result: GetDataOutcome;
-        {
-            downloading = true;
-
-            const getDataAsync: () => Promise<GetDataOutcome> = () => dispatch(getData(
-                content.id,
-                content.mimeType,
-                content.size,
-                content.chunkSize,
-                false)) as any;	
-
-            result = await getDataAsync();
-
-            downloading = false;
-
-            if (result.type === GET_DATA_FAILED) {
-                return;
-            }
+        downloading = true;
+        const result = await dataService.getData(content.id, content.size, content.chunkSize);
+        downloading = false;
+        if (result.kind !== "success") {
+            return;
         }
 
         // Point anchor at blob and re-click it to trigger download
-        const blobUrl = dataToBlobUrl(result.payload.data, content.mimeType);
+        const blobUrl = dataToBlobUrl(result.data, content.mimeType);
         anchor.setAttribute("href", blobUrl);
         anchor.setAttribute("download", content.name)
         anchor.click();
