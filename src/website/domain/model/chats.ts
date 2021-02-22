@@ -519,9 +519,35 @@ export const getMaxMessageId = (messages: Message[]) : Option<number> => {
     return null;
 }
 
-
 export const getMinMessageIdOnServer = (chat: ConfirmedChat) : number => {
     return isGroupChat(chat) ? chat.minMessageIdOnServer : 1;
+}
+
+export const tryFindMessge = (messages: Message[], messageId: number): Option<Message> => {
+    const index = getMessageIndex(messages, messageId);
+    return messages[index];
+}
+
+export const freeMediaData = (chat: Chat) => {
+    if (!isConfirmedChat(chat))
+        return;
+
+    const blobUrlsToRevoke: string[] = [];
+
+    for (const message of chat.messages) {
+        if (message.kind !== "remote" && message.content.kind === "media" && message.content.data) {
+            blobUrlsToRevoke.push(message.content.data);
+            message.content.data = null;
+        }
+    }
+
+    // Make sure this happens after current reduce/render loop otherwise there can be a race 
+    // where a video player can still try to load more data from blob
+    setTimeout(() => {
+        for (const blobUrl of blobUrlsToRevoke) {
+            URL.revokeObjectURL(blobUrl);
+        }
+    }, 100);
 }
 
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : boolean => {

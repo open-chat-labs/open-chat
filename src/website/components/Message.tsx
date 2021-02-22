@@ -12,8 +12,10 @@ import MediaContent from "./MediaContent";
 import TextContent from "./TextContent";
 import { toShortTimeString } from "../formatters/date";
 import { styleMediaMessage } from "./mediaComponentFunctions";
+import { ChatId } from "../domain/model/chats";
 
 export type Props = {
+    chatId: Option<ChatId>,
     messageId: Option<number>,
     clientMessageId: string,
     content: MessageContent,
@@ -65,7 +67,7 @@ function Message(props : Props) {
     let style;
     if (props.content.kind === "media") {
         className += " media";
-        contentElement = <MediaContent content={props.content} />;
+        contentElement = <MediaContent chatId={props.chatId} messageId={props.messageId} content={props.content} />;
         style = styleMediaMessage(props.content.width, props.content.height);
     } else if (props.content.kind === "file") {
         contentElement = <FileContent content={props.content} />;

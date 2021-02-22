@@ -5,7 +5,7 @@ import * as chatFunctions from "../domain/model/chats";
 import { ChatId, ConfirmedChat } from "../domain/model/chats";
 import { Option } from "../domain/model/common";
 import { Message, RemoteMessage } from "../domain/model/messages";
-import { PAGE_SIZE } from "../constants";
+import { CONFIRMED_DIRECT_CHAT, PAGE_SIZE, UNCONFIRMED_GROUP_CHAT } from "../constants";
 import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../domain/stateFunctions";
@@ -27,6 +27,7 @@ function MessagesList() {
 
     const isGroupChat = chatFunctions.isGroupChat(chat);
     const theirUserId: Option<UserId> = chatFunctions.isDirectChat(chat) ? chat.them : null;
+    let chatId: Option<ChatId> = chatFunctions.isConfirmedChat(chat) ? chat.chatId : null;
 
     const children: JSX.Element[] = [];
 
@@ -52,6 +53,7 @@ function MessagesList() {
 
     function addDay(date: Date, messages: Exclude<Message, RemoteMessage>[]) {
         children.push(<MessagesFromSingleDay
+            chatId = {chatId}
             key = {date.toDateString()}
             isGroupChat={isGroupChat}
             myUserId={myUserId}
@@ -90,12 +92,9 @@ function MessagesList() {
         return () => messagesDiv.removeEventListener("scroll", onScroll);
     }, [chat, messagesRef.current])
 
-    let chatId: Option<ChatId> = null;
-    let hasUnreadMessages: boolean = false;
-    if (chatFunctions.isConfirmedChat(chat)) {
-        chatId = chat.chatId;
-        hasUnreadMessages = chatFunctions.getUnreadMessageCount(chat) > 0;
-    }
+    const hasUnreadMessages = chatId 
+        ? chatFunctions.getUnreadMessageCount(chat) > 0 
+        : false;
 
     // Start a new UnreadMessagesHandler to mark messages as read once they have been visible for a certain duration
     useLayoutEffect(() => {

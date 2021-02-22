@@ -8,10 +8,12 @@ import DayChangeMarker from "./DayChangeMarker";
 import MessageComponent, { MessageGroupPosition } from "./Message";
 import { getStartOfDay } from "../utils/dateFunctions";
 import UnreadMessageDetector from "../domain/UnreadMessageDetector";
+import { ChatId } from "../domain/model/chats";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 type Props = {
+    chatId: Option<ChatId>,
     isGroupChat: boolean,
     myUserId: UserId,
     theirUserId: Option<UserId>,
@@ -92,6 +94,7 @@ function MessagesFromSingleDay(props: Props) {
 
         children.push(<MessageComponent
             key={message.clientMessageId}
+            chatId={props.chatId}
             messageId={"id" in message ? message.id : null}
             clientMessageId={message.clientMessageId}
             content={message.content}

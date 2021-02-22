@@ -5,7 +5,8 @@ import { Chat, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { LocalMessage, MessageContent, ReplyContext, SendMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
-import putData, { PutDataOutcome, PUT_DATA_FAILED } from "../data/putData";
+import dataService from "../../services/data/service";
+import { dataToBlobUrl } from "../../utils/blobFunctions";
 import {
     CHUNK_SIZE_BYTES,
     CONFIRMED_DIRECT_CHAT,
@@ -29,27 +30,23 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
         const content = convertContent(sendMessageContent);
 
         // Start uploading the media data
-        let uploadContentTask: Option<Promise<PutDataOutcome>> = null;
+        let uploadContentTask: Option<Promise<boolean>> = null;
         if ("id" in content && "data" in sendMessageContent) {
-            const putDataAsync: () => Promise<PutDataOutcome> = () => dispatch(putData(content.id, sendMessageContent.data, sendMessageContent.mimeType)) as any;
-            uploadContentTask = putDataAsync();
+            uploadContentTask = dataService.putData(content.id, sendMessageContent.data);
         }
 
+        // Dispatch the message requested event - this will put the message in the chat
         const request: SendMessageRequest = {
             chat,
             clientMessageId,
             content,
             repliesTo
         };
-
-        // Dispatch the message requested event - this will put the message in the chat
-        {
-            const requestEvent: SendMessageRequestedEvent = {
-                type: SEND_MESSAGE_REQUESTED,
-                payload: request
-            };
-            dispatch(requestEvent);
-        }
+        const requestEvent: SendMessageRequestedEvent = {
+            type: SEND_MESSAGE_REQUESTED,
+            payload: request
+        };
+        dispatch(requestEvent);
 
         // We can't send messages to a new group until the group has been confirmed at which point we will receive the chatId.
         // So we only signal the 'requestEvent', the reducer will then add the message to the 'unconfirmedMessages' array for
@@ -59,12 +56,9 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
         }
 
         // Wait for the media data to finish uploading
-        if (content.kind === "media" || content.kind === "file") {
-            let outcomeEvent = await uploadContentTask;	
-            if (outcomeEvent?.type === PUT_DATA_FAILED) {
-                dispatch ({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
-                return;
-            }
+        if (uploadContentTask && !await uploadContentTask) {
+            dispatch ({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
+            return;
         }
 
         // Send the message to the IC
@@ -117,6 +111,7 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
                 id: uuidv1().toString(),
                 size: sendMessageContent.data.length,
                 chunkSize: CHUNK_SIZE_BYTES,
+                data: dataToBlobUrl(sendMessageContent.data, sendMessageContent.mimeType),
                 thumbnailData: sendMessageContent.thumbnailData
             };
         case "file":

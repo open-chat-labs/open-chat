@@ -1,5 +1,4 @@
 import { Dispatch } from "react";
-
 import chatsService from "../../services/chats/service";
 import { ChatId } from "../../domain/model/chats";
 import { GetMessagesResult } from "../../services/chats/getMessages";
@@ -24,7 +23,8 @@ export default function(chatId: ChatId, messageIds: number[]) {
 
         const response = await chatsService.getMessagesById(chatId, messageIds);
 
-        let outcomeEvent;
+        let outcomeEvent: GetMessagesByIdReponseEvent; 
+
         if (response.kind === "success") {
             outcomeEvent = {
                 type: GET_MESSAGES_BY_ID_SUCCEEDED,
@@ -32,12 +32,12 @@ export default function(chatId: ChatId, messageIds: number[]) {
                     request: request,
                     result: response.result
                 }
-            } as GetMessagesByIdSucceededEvent;
+            };
         } else {
             outcomeEvent = {
                 type: GET_MESSAGES_BY_ID_FAILED,
                 payload: request
-            } as GetMessagesByIdFailedEvent;
+            };
         }
 
         dispatch(outcomeEvent);
@@ -48,6 +48,8 @@ export type GetMessagesByIdRequestedEvent = {
     type: typeof GET_MESSAGES_BY_ID_REQUESTED,
     payload: GetMessagesByIdRequest
 }
+
+export type GetMessagesByIdReponseEvent = GetMessagesByIdSucceededEvent | GetMessagesByIdFailedEvent;
 
 export type GetMessagesByIdSucceededEvent = {
     type: typeof GET_MESSAGES_BY_ID_SUCCEEDED,
