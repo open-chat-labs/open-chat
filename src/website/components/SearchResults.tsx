@@ -6,7 +6,7 @@ import { Chat, ChatId } from "../domain/model/chats";
 import * as chatFunctions from "../domain/model/chats";
 import { Option } from "../domain/model/common";
 import { LocalMessage } from "../domain/model/messages";
-import { UserId, UserSummary } from "../domain/model/users";
+import { fromUserSummary, UserId, UserSummary } from "../domain/model/users";
 import { changeLeftPanel, LeftPanelType } from "../actions/changeSidePanel";
 import gotoUser from "../actions/chats/gotoUser";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
@@ -53,7 +53,7 @@ function SearchResults(props: Props) {
     function handleSelectUser(user: UserSummary) {
         props.clearSearchTerm();
         dispatch(changeLeftPanel(LeftPanelType.Chats));
-        dispatch(gotoUser(user));
+        dispatch(gotoUser(user.userId, user.username));
     }
 
     const groups: JSX.Element[] = [];
@@ -65,7 +65,7 @@ function SearchResults(props: Props) {
     if (userMatches.length) {
         groups.push(createGroup("Users", userMatches.map(u => <UserListItem
             key={u.userId}
-            userSummary={u}
+            user={fromUserSummary(u)} 
             handleSelectUser={() => handleSelectUser(u)} />)));
     }
 

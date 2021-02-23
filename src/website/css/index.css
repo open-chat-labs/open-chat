@@ -949,12 +949,18 @@ footer button svg {
     margin-left: 15px;
 }
 
-.chats li .icon-container,
-.chats li .avatar {
-    width: 49px;
-    height: 49px;
-    margin-top: 7px;
+.icon-container {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+li .icon-container {
+    margin-top: 7px;
+}
+
+li .icon-container,
+li .avatar {
+    width: 49px;
+    height: 49px;    
 }

@@ -11,7 +11,6 @@ import { getSelectedChat } from "../domain/stateFunctions";
 import { MyProfile, UserSummary } from "../domain/model/users";
 import ParticipantsTyping from "./ParticipantsTyping";
 import ThemTyping from "./ThemTyping";
-import UserOnlineMarker from "./UserOnlineMarker";
 import DirectChatMenu from "./DirectChatMenu";
 import GroupChatMenu from "./GroupChatMenu";
 
@@ -29,23 +28,25 @@ function MainHeader() {
     let icon: JSX.Element;
     let chatName: string = "";
     let subTitle: Option<JSX.Element> = null;
-    let userOnlineMarker: Option<JSX.Element> = null;
     let chatMenu: Option<JSX.Element> = null;
 
     if (chatFunctions.isDirectChat(chat)) {
-        icon = <DefaultAvatar userId={chat.them} />;
         chatMenu = <DirectChatMenu />;
+        let imageId = null;
+        let isOnline = false;
         if (userDictionary.hasOwnProperty(chat.them)) {
             const userSummary = userDictionary[chat.them] as UserSummary;
+            imageId = userSummary.imageId;
             chatName = userSummary.username;
+            isOnline = userSummary.minutesSinceLastOnline < 2;
             subTitle = chatFunctions.isConfirmedChat(chat) && chat.themTyping
                 ? <ThemTyping />
                 : <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
-
-            if (userSummary.minutesSinceLastOnline < 2) {
-                userOnlineMarker = <UserOnlineMarker />;
-            }
         }
+        icon = <DefaultAvatar 
+            userId={chat.them}
+            imageId={imageId}
+            isUserOnline={isOnline} />;
     } else {
         icon = <GroupChatIcon className="avatar" />;
         chatName = chat.subject;
@@ -77,7 +78,6 @@ function MainHeader() {
                 <button className="avatar-button">
                     {icon}
                 </button>
-                {userOnlineMarker}
                 <div className="chat-summary">
                     <div className="name">{chatName}</div>
                     {subTitle}

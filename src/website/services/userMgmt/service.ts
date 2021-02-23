@@ -5,6 +5,7 @@ import getCurrentUser, { GetCurrentUserResponse } from "./getCurrentUser";
 import getUserId, { GetUserIdResponse } from "./getUserId";
 import getUsers, { GetUsersRequest, GetUsersResponse } from "./getUsers";
 import searchUsers, { SearchUsersRequest, SearchUsersResponse } from "./searchUsers";
+import setProfileImage, { SetProfileImageResponse } from "./setProfileImage";
 
 export default class service {
     public static registerUser(username: string) : Promise<RegisterUserResponse> {
@@ -13,6 +14,10 @@ export default class service {
 
     public static async updateUsername(username: string) : Promise<UpdateUsernameResponse> {
         return updateUsername(username);
+    }
+
+    public static async setProfileImage(imageId: string) : Promise<SetProfileImageResponse> {
+        return setProfileImage(imageId);
     }
 
     public static async markAsOnline() : Promise<void> {

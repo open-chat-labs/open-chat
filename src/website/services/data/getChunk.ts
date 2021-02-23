@@ -2,7 +2,7 @@ import canister from "ic:canisters/chats";
 import { Option } from "../../domain/model/common";
 import { fromCandid as optionFromCandid } from "../candidConverters/option";
 
-export default async function(key: string, chunkIndex: number, chunkSize: number) : Promise<GetChunkResponse> {
+export default async function(key: string, chunkIndex: number) : Promise<GetChunkResponse> {
     const response = await canister.get_chunk(key, chunkIndex);
 
     const result: Option<number[]> = optionFromCandid(response);

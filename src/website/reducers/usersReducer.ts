@@ -41,6 +41,15 @@ import {
     UpdateMinutesSinceLastOnline
 } from "../actions/users/updateMinutesSinceLastOnline";
 
+import { 
+    SET_PROFILE_IMAGE_REQUESTED,
+    SET_PROFILE_IMAGE_FAILED,
+    SET_PROFILE_IMAGE_DATA_UPLOAD_FAILED,
+    SetProfileImageRequestedEvent, 
+    SetProfileImageFailedEvent,
+    SetProfileImageDataUploadFailedEvent
+} from "../actions/users/setProfileImage";
+
 export type Event =
     GetAllChatsSucceededEvent |
     GetCurrentUserRequestedEvent |
@@ -55,6 +64,9 @@ export type Event =
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
+    SetProfileImageRequestedEvent |
+    SetProfileImageFailedEvent |
+    SetProfileImageDataUploadFailedEvent |
     SetupNewDirectChatSucceededEvent |
     UpdateMinutesSinceLastOnline;
 
@@ -101,7 +113,7 @@ export default produce((state: UsersState, event: Event) => {
 
         case GET_CURRENT_USER_SUCCEEDED: {
             state.mustRegisterAsNewUser = false;
-            state.me = event.payload;
+            state.me = {...event.payload, imageBlobUrl: state.me?.imageBlobUrl ?? null};
             break;
         }
 
@@ -174,6 +186,31 @@ export default produce((state: UsersState, event: Event) => {
                 const user = value as UserSummary;
                 user.minutesSinceLastOnline = Math.floor(dateFunctions.getMinutesSince(user.lastOnline));
             }
+            break;
+        }
+
+        case SET_PROFILE_IMAGE_REQUESTED: {
+            const { imageId, blobUrl } = event.payload;
+            const user = state.me;
+            if (user != null) {
+                user.imageId = imageId;
+                user.imageBlobUrl = blobUrl;
+            }
+            break;
+        }
+
+        case SET_PROFILE_IMAGE_FAILED: 
+        case SET_PROFILE_IMAGE_DATA_UPLOAD_FAILED: {
+            const { userId } = event.payload;
+            const user = userId === state.me?.userId 
+                ? state.me
+                : (state.userDictionary.hasOwnProperty(userId) 
+                    ? state.userDictionary[userId]
+                    : null);
+
+            URL.revokeObjectURL(user.imageBlobUrl);
+            user.imageBlobUrl = null;
+            user.imageId = null;
             break;
         }
     }

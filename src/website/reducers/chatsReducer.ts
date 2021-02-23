@@ -95,7 +95,7 @@ import {
     RemoteUserTypingEvent
 } from "../actions/chats/userTyping";
 
-import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMedia";
+import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 
 export type ChatsState = {
     chats: Chat[],

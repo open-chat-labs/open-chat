@@ -5,7 +5,7 @@ import userMgmtService from "../services/userMgmt/service";
 import CancelIcon from "../assets/icons/cancelIcon.svg";
 import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
 import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
-import { UserSummary } from "../domain/model/users";
+import { fromUserSummary, UserSummary } from "../domain/model/users";
 import gotoUser from "../actions/chats/gotoUser";
 import SearchBox from "./SearchBox";
 import UserListItem from "./UserListItem";
@@ -47,7 +47,7 @@ function NewDirectChatSidePanel() {
 
     function handleSelectUser(user: UserSummary) {
         closePanel();
-        dispatch(gotoUser(user));
+        dispatch(gotoUser(user.userId, user.username));
     }
 
     useLayoutEffect(() => {
@@ -67,7 +67,7 @@ function NewDirectChatSidePanel() {
             </header>
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
-                {results.map(user => <UserListItem userSummary={user} handleSelectUser={() => handleSelectUser(user)} />)}
+                {results.map(user => <UserListItem key={user.userId} user={fromUserSummary(user)}  handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>
         </>
     );

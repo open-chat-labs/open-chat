@@ -10,7 +10,7 @@ export default class service {
         const chunks = this.getChunkIndexes(totalBytes, chunkSize);
 
         await async.mapLimit(chunks, 10, async (i, callback) => {
-            const response = await getChunk(key, i, chunkSize);
+            const response = await getChunk(key, i);
             if (response.kind === "success") {
                 const offset = i * chunkSize;
                 bytes.set(response.data, offset);
@@ -43,7 +43,7 @@ export default class service {
 
         return true;
     }
-
+    
     static getChunkIndexes(totalBytes: number, chunkSize: number) : number[] {
         const chunks = [];
         let index = 0;

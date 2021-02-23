@@ -19,6 +19,7 @@ pub struct User {
     last_online: Timestamp,
     last_updated: Timestamp,
     account_balance: u128,
+    image_id: Option<String>,
     version: u32
 }
 
@@ -27,6 +28,7 @@ pub struct MyProfile {
     id: UserId,
     username: String,
     account_balance: u128,
+    image_id: Option<String>,
     version: u32
 }
 
@@ -35,6 +37,7 @@ pub struct UserSummary {
     id: UserId,
     username: String,
     seconds_since_last_online: u32,
+    image_id: Option<String>,
     version: u32
 }
 
@@ -78,6 +81,7 @@ impl UserStore {
             last_online: now,
             last_updated: now,
             account_balance: 10_000_000_000_000,
+            image_id: None,
             version: 1
         };
 
@@ -108,6 +112,19 @@ impl UserStore {
             UpdateUsernameResponse::Success
         } else {
             UpdateUsernameResponse::UserNotFound
+        }
+    }
+
+    pub fn set_profile_image(&mut self, user_id: &UserId, image_id: String, now: Timestamp) -> bool {
+        match self.data.get_mut(user_id) {
+            Some(user) => {
+                user.image_id = Some(image_id);
+                user.last_online = now;
+                user.last_updated = now;
+                user.version += 1;
+                true
+            },
+            None => false
         }
     }
 
@@ -250,6 +267,7 @@ impl MyProfile {
             id: user.id.clone(),
             username: user.username.clone(),
             account_balance: user.account_balance,
+            image_id: user.image_id.clone(),
             version: user.version
         }
     }
@@ -268,6 +286,7 @@ impl UserSummary {
             id: user.id.clone(),
             username: user.username.clone(),
             seconds_since_last_online,
+            image_id: user.image_id.clone(),
             version: user.version
         }
     }

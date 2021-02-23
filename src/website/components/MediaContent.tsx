@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Option } from "../domain/model/common";
 import { ChatId } from "../domain/model/chats";
-import getMedia from "../actions/chats/getMedia";
+import getMedia from "../actions/chats/getMessageMedia";
 import { MediaContent as Media } from "../domain/model/messages";
 import Image from "./Image";
 import Video from "./Video";
@@ -21,10 +21,9 @@ function MediaContent(props : Props): JSX.Element {
 
     useEffect(() => {
         if (!content.data && props.chatId && props.messageId) {
-            const { chatId, messageId } = props;
             dispatch(getMedia(
-                chatId, 
-                messageId, 
+                props.chatId, 
+                props.messageId, 
                 content.id, 
                 content.size, 
                 content.chunkSize));

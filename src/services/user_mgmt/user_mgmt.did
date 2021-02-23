@@ -6,6 +6,7 @@ type UserSummary =
         id: UserId;
         username: text;
         seconds_since_last_online: nat32;
+        image_id: opt text;
         version: nat32;
     };
 
@@ -14,6 +15,7 @@ type MyProfile =
         id: UserId;
         username: text;
         account_balance: nat;
+        image_id: opt text;
         version: nat32;
     };
 
@@ -29,6 +31,12 @@ type UpdateUsernameResponse =
         Success;
         SuccessNoChange;
         UsernameTaken;
+        UserNotFound;
+    };
+
+type SetProfileImageResponse =
+    variant {
+        Success;
         UserNotFound;
     };
 
@@ -91,6 +99,7 @@ type SearchUsersResponse =
 service : {
     register_user: (text) -> (RegisterUserResponse);
     update_username: (text) -> (UpdateUsernameResponse);
+    set_profile_image: (text) -> (SetProfileImageResponse);
     mark_as_online: () -> ();
     transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
 

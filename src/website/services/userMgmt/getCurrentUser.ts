@@ -3,10 +3,10 @@ import { MyProfile } from "../../domain/model/users";
 import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
 
 export default async function() : Promise<GetCurrentUserResponse> {
-    let response = await canister.get_current_user();
+    const response = await canister.get_current_user();
 
     if (response.hasOwnProperty("Success")) {
-        let success = response.Success;
+        const success = response.Success;        
         return {
             kind: "success",
             myProfile: myProfileFromCandid(success)

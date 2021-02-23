@@ -11,22 +11,24 @@ export function build(chat: Chat, userDictionary: any, index: number, selectedCh
     let name: string;
     let key: string;
     let isGroup: boolean;
-    let userId: Option<UserId>;
+    let userId: Option<UserId> = null;
+    let userImageId: Option<string> = null;
     let themTyping: boolean = false;
     let userOnline = false;
     let participantsTyping: string[] = [];
 
     if (chatFunctions.isDirectChat(chat)) {
-        name = (userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].username : "");
+        const user = userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them] : null;
+        name = user?.username ?? "";
         key = "D-" + chat.them.toString();
         isGroup = false;
-        userId = chat.them;
         themTyping = chatFunctions.isConfirmedChat(chat) && chat.themTyping;
         userOnline = (userDictionary.hasOwnProperty(chat.them) ? userDictionary[chat.them].minutesSinceLastOnline < 2 : false);
+        userId = chat.them;
+        userImageId = user?.imageId ?? null;
     } else {
         name = chat.subject;
         isGroup = true;
-        userId = null;
         if (chatFunctions.isConfirmedChat(chat)) {
             key = "G-" + chat.chatId.toString();
             participantsTyping = stateFunctions.getUsers(chat.participantsTyping, userDictionary).map(u => u.username);
@@ -54,6 +56,7 @@ export function build(chat: Chat, userDictionary: any, index: number, selectedCh
             latestMessage={latestMessageText}
             isGroup={isGroup}
             userId={userId}
+            userImageId={userImageId}
             unreadCount={chatFunctions.getUnreadMessageCount(chat)}
             themTyping={themTyping}
             userOnline={userOnline}
