@@ -14,19 +14,39 @@ import RightPanel from "./components/rightPanel/RightPanel";
 export default App;
 
 const useStyles = makeStyles((theme: Theme) => ({
+    container: {
+        padding: 24,
+        height: "100vh",
+        "&.no-padding": {
+            padding: 0
+        }
+    },
+    grid: {
+        height: "100%",
+        overflow: "hidden"
+    },
     left: {
         height: "100%",
         backgroundColor: "white",
-        borderRight: "1px solid #dddddd"
+        borderRight: "1px solid #dddddd",
+        width: "40%",
+        "&.rightPanelActive": {
+            width: "30%"
+        }
     },
     main: {
         height: "100%",
-        backgroundColor: "#3dc5ee"
+        backgroundColor: "#3dc5ee",
+        width: "60%",
+        "&.rightPanelActive": {
+            width: "40%"
+        }
     },
     right: {
         height: "100%",
         backgroundColor: "white",
-        borderLeft: "1px solid #dddddd"
+        borderLeft: "1px solid #dddddd",
+        width: "30%"
     }
 }));
 
@@ -34,12 +54,16 @@ function App() {
     const classes = useStyles();
     const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
     const theme = useTheme();
-    const removePadding = useMediaQuery(theme.breakpoints.down('md'));
+    const removePadding = useMediaQuery(theme.breakpoints.down("md"));
 
     setupBackgroundTasks();
 
     function buildLeftPanel(sidePanelState: SidePanelState): JSX.Element {
         const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
+        let className = "sidebar left-panel " + classes.left;
+        if (rightPanelActive) {
+            className += " rightPanelActive";
+        }
 
         return (
             <Grid
@@ -47,27 +71,25 @@ function App() {
                 container
                 direction="column"
                 wrap="nowrap"
-                className={"sidebar left-panel " + classes.left}
-                xs={rightPanelActive ? 3 : 5}
-                lg={rightPanelActive ? 3 : 4}
-            >
-                <LeftPanel type={sidePanelState.leftPanel} rightPanelActive={rightPanelActive} />
+                className={className}>
+                <LeftPanel type={sidePanelState.leftPanel} />
             </Grid>
         );
     }
 
     function buildMainPanel(sidePanelState: SidePanelState): JSX.Element  {
         const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
+        let className = "main-panel " + classes.main;
+        if (rightPanelActive) {
+            className += " rightPanelActive";
+        }
 
         return (
             <Grid
                 item
                 container
                 direction="column"
-                className={"main-panel " + classes.main}
-                xs={rightPanelActive ? 4 : 7}
-                lg={rightPanelActive ? 5 : 8}
-            >
+                className={className}>
                 <MainPanel />
             </Grid>
         );
@@ -79,15 +101,20 @@ function App() {
         }
 
         return (
-            <Grid item className={"sidebar right-panel " + classes.right} xs={4}>
+            <Grid item className={"sidebar right-panel " + classes.right}>
                 <RightPanel type={sidePanelState.rightPanel} />
             </Grid>
         );
     }
 
+    let containerClass = classes.container;
+    if (removePadding) {
+        containerClass += " no-padding";
+    }
+
     return (
-        <Container maxWidth="lg" style={{ padding: removePadding ? 0 : 24, height: "100vh" }}>
-            <Grid container style={{ height: "100%", overflow: "hidden" }}>
+        <Container maxWidth="lg" className={containerClass}>
+            <Grid container wrap="nowrap" className={classes.grid}>
                 {buildLeftPanel(sidePanelState)}
                 {buildMainPanel(sidePanelState)}
                 {buildRightPanel(sidePanelState)}
