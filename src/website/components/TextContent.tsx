@@ -1,10 +1,12 @@
 import React from "react";
 import { buildEmojiSpan, containsEmoji } from "../domain/model/messages";
+import { Typography, TypographyVariant } from "@material-ui/core";
 
 export default React.memo(TextContent);
 
 export interface Props {
     text: string,
+    variant: TypographyVariant,
     insertLineBreaks?: boolean
 }
 
@@ -46,6 +48,6 @@ function TextContent(props : Props): JSX.Element {
         props.insertLineBreaks !== undefined ? props.insertLineBreaks : true);
 
     return (
-        <span dangerouslySetInnerHTML={{ __html: markup }}></span>
+        <Typography variant={props.variant} dangerouslySetInnerHTML={{ __html: markup }}></Typography>
     );
 }

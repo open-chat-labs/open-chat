@@ -52,60 +52,9 @@ a {
     color: #111111;
 }
 
-@media screen and (min-width: 1450px) {
-    body {
-        padding: 25px;
-    }
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: transparent;
-}
-
-.avatar-button {
-    border-radius: 50%;
-    height: 40px;
-    cursor: pointer;
-}
-
-.chats li svg.avatar {
-    width: 56px;
-    height: 56px;
-    margin-top: 3px;
-}
-
 #app {
-    flex-grow: 1;
-    display: flex;
-    max-width: 1400px;
-}
-
-.left-panel             { flex: 1 1 40%; }
-.left-panel.with-right  { flex: 1 1 30%; }
-.main-panel             { flex: 1 1 60%; }
-.main-panel.with-right  { flex: 1 1 40%; }
-.right-panel            { flex: 1 1 30%; }
-
-@media screen and (min-width: 1280px) {
-    .left-panel         { flex: 0 0 480px; }
-    .main-panel         { flex: 1 1 auto; }
-}
-
-main {
-    background-color: #e5ddd5;
-    background-color: #3dc5ee;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar {
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+    height: 100%;
+    width: 100%;
 }
 
 header {
@@ -152,21 +101,8 @@ header {
     background-color: #ededed;
 }
 
-.sidebar header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.sidebar header .avatar-button {
-    flex-grow: 0;    
-}
-
-.sidebar header .my-display-name {
-    flex-grow: 0;    
-    align-self: center;
-    font-size: 20px;
-    margin-left: 24px;
+h6 {
+    font-weight: normal;
 }
 
 .user-menu-container {
@@ -249,31 +185,34 @@ header {
     display: block;
 }
 
-main header {
+.main-panel header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
 
-main header .chat-summary {
+.main-panel header .chat-summary {
     padding: 0 18px;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
 }
 
-main header .chat-summary >div {
+.main-panel header .chat-summary >div {
     line-height: normal;
 }
 
-
-main header .chat-header-container {
+.main-panel header .chat-header-container {
     display: flex;
     flex-direction: row;
     position: relative;
 }
 
-main header .chat-menu-container {
+.main-panel header .chat-menu-container {
+}
+
+.main-panel .header-titles span {
+    line-height: normal;
 }
 
 .sidebar ul, li {
@@ -283,32 +222,21 @@ main header .chat-menu-container {
     padding: 0;
 }
 
-.sidebar.left-panel {
-    border-right: 1px solid #dddddd;
-}
-
-.sidebar.right-panel {
-    border-left: 1px solid #dddddd;
-}
-
 .chats {
     flex: 1 1;
     overflow: auto;
 }
 
-.chats li,
-.messages li {
-    padding-left: 15px;
+.chats li {
+    padding: 7px 15px;
     height: 64px;
     display: flex;
     flex-direction: row;
     position: relative;
-    border-bottom: 1px solid #e6e6e6;
 }
 
-.chats li .message-container,
-.messages li .message-container {
-    padding: 6px 15px 6px 15px;
+.chats li .message-container {
+    padding-left: 10px;
     min-width: 0;
     width: 100%;
 }
@@ -338,39 +266,12 @@ main header .chat-menu-container {
     background-color: #e0e0e0;
 }
 
-.chats .message-container .unread-count {
-    font-size: 12px;
-    float: right;
-    background-color: #32cd32;
-    color: white;
-    line-height: 1;
-    border-radius: 10px;
-    text-align: center;
-    vertical-align: middle;
-    line-height: 20px;
-    min-width: 20px;
-    padding: 0 4px;
-}
-
 .new-chat-icon {
     background-color: #e0e0e0;
     color: #9b9b9b;
     width: 40px;
     height: 40px;
     border-radius: 50%;    
-}
-
-.user-online-marker {
-    background-color: #32cd32;
-    border-radius: 50%;
-    position: absolute;
-}
-
-.chats li .user-online-marker {
-    height: 12px;
-    width: 12px;
-    bottom: 12px;
-    left: 54px;
 }
 
 .search-results {
@@ -382,13 +283,6 @@ main header .chat-menu-container {
 .search-results-group .group-title {
     border-bottom: 1px solid #e6e6e6;
     padding: 4px 14px;
-}
-
-main header .user-online-marker {
-    height: 10px;
-    width: 10px;
-    bottom: 10px;
-    left: 47px;
 }
 
 .detail {
@@ -534,17 +428,6 @@ main header .user-online-marker {
     align-self: flex-start;
 }
 
-.day-change-marker {
-    padding: 6px 12px;
-    border-radius: 10px;
-    background-color: rgb(221,221,221, 0.9);
-    align-self: center;
-    font-size: 13px;
-    position: sticky;
-    top: 0;
-    z-index: 60;
-}
-
 .detail .day-container {
     display: flex;
     flex-direction: column;
@@ -671,7 +554,7 @@ main header .user-online-marker {
     height: 30px;
 }
 
-main footer {
+.main-panel footer {
     display: flex;
     padding: 11px 16px;
     color: #9b9b9b;
@@ -735,7 +618,7 @@ span.emoji {
     }
 }
 
-main footer button.send {
+.main-panel footer button.send {
     outline: 0;
     height: 25px;
     border: 0;
@@ -748,25 +631,25 @@ main footer button.send {
     color: #9b9b9b;
 }
 
-main footer .buttons {
+.main-panel footer .buttons {
     display: flex;
 }
 
-main footer .button {
+.main-panel footer .button {
     border-radius: 50%;
     padding: 4px;
     cursor: pointer;
 }
 
-main footer .smiley {
+.main-panel footer .smiley {
     margin-right: 10px;
 }
 
-main footer .attach {
+.main-panel footer .attach {
     margin-right: 5px;
 }
 
-main footer .dollar {
+.main-panel footer .dollar {
     margin-right: 10px;
     width: 32px;
     height: 32px;
@@ -842,13 +725,13 @@ main footer .dollar {
     font-size: 12px;
 }
 
-main footer .button svg {
+.main-panel footer .button svg {
     vertical-align: middle;
     pointer-events: none;
 }
 
-main footer .buttons .button:hover,
-main footer .buttons .button:focus {
+.main-panel footer .buttons .button:hover,
+.main-panel footer .buttons .button:focus {
     background-color: #e0e0e0;
 }
 
@@ -947,20 +830,4 @@ footer button svg {
     display: flex;
     align-items: center;
     margin-left: 15px;
-}
-
-.icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-li .icon-container {
-    margin-top: 7px;
-}
-
-li .icon-container,
-li .avatar {
-    width: 49px;
-    height: 49px;    
 }

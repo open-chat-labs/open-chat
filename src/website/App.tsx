@@ -1,76 +1,97 @@
 import React from "react";
 import { useSelector } from "react-redux";
+import { Container, Grid, makeStyles, Theme, useMediaQuery, useTheme } from "@material-ui/core";
+
 import { RootState } from "./reducers";
 import { setupBackgroundTasks } from "./backgroundTasks";
 import { Option } from "./domain/model/common";
-import Main from "./components/Main";
-import Side from "./components/Side";
-import { LeftPanelType, RightPanelType } from "./actions/changeSidePanel";
-import NewDirectChatSidePanel from "./components/NewDirectChatSidePanel";
-import NewGroupChatSidePanel from "./components/NewGroupChatSidePanel";
-import AddParticipantsSidePanel from "./components/AddParticipantsSidePanel";
 import { SidePanelState } from "./reducers/sidePanelReducer";
-import ParticipantsSidePanel from "./components/ParticipantsSidePanel";
+import { RightPanelType } from "./actions/changeSidePanel";
+import LeftPanel from "./components/leftPanel/LeftPanel";
+import MainPanel from "./components/mainPanel/MainPanel";
+import RightPanel from "./components/rightPanel/RightPanel";
 
 export default App;
 
+const useStyles = makeStyles((theme: Theme) => ({
+    left: {
+        height: "100%",
+        backgroundColor: "white",
+        borderRight: "1px solid #dddddd"
+    },
+    main: {
+        height: "100%",
+        backgroundColor: "#3dc5ee"
+    },
+    right: {
+        height: "100%",
+        backgroundColor: "white",
+        borderLeft: "1px solid #dddddd"
+    }
+}));
+
 function App() {
+    const classes = useStyles();
     const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
+    const theme = useTheme();
+    const removePadding = useMediaQuery(theme.breakpoints.down('md'));
 
     setupBackgroundTasks();
 
     function buildLeftPanel(sidePanelState: SidePanelState): JSX.Element {
-        let panel;
-        switch (sidePanelState.leftPanel) {
-            case LeftPanelType.NewDirectChat: 
-                panel = <NewDirectChatSidePanel />; 
-                break;
-            case LeftPanelType.NewGroupChat: 
-                panel = <NewGroupChatSidePanel />; 
-                break;
-            case LeftPanelType.Chats: 
-                panel = <Side />; 
-                break;
-        }
+        const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
 
-        let className = "sidebar left-panel";
-        if (sidePanelState.rightPanel != RightPanelType.None) {
-            className += " with-right";
-        }
-        return <section className={className}>{panel}</section>;
+        return (
+            <Grid
+                item
+                container
+                direction="column"
+                wrap="nowrap"
+                className={"sidebar left-panel " + classes.left}
+                xs={rightPanelActive ? 3 : 5}
+                lg={rightPanelActive ? 3 : 4}
+            >
+                <LeftPanel type={sidePanelState.leftPanel} rightPanelActive={rightPanelActive} />
+            </Grid>
+        );
     }
 
     function buildMainPanel(sidePanelState: SidePanelState): JSX.Element  {
-        let className = "main-panel";
-        if (sidePanelState.rightPanel != RightPanelType.None) {
-            className += " with-right";
-        }
-        return <main className={className}><Main /></main>;
+        const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
+
+        return (
+            <Grid
+                item
+                container
+                direction="column"
+                className={"main-panel " + classes.main}
+                xs={rightPanelActive ? 4 : 7}
+                lg={rightPanelActive ? 5 : 8}
+            >
+                <MainPanel />
+            </Grid>
+        );
     }
     
     function buildRightPanel(sidePanelState: SidePanelState): Option<JSX.Element>  {
-        if (sidePanelState.rightPanel == RightPanelType.None) {
+        if (sidePanelState.rightPanel === RightPanelType.None) {
             return null;
         }
 
-        let panel;
-        switch (sidePanelState.rightPanel) {
-            case RightPanelType.AddParticpants: 
-                panel = <AddParticipantsSidePanel />
-                break;
-            case RightPanelType.Particpants: 
-                panel = <ParticipantsSidePanel />
-                break;
-        }    
-
-        return <section className="sidebar right-panel">{panel}</section>;
+        return (
+            <Grid item className={"sidebar right-panel " + classes.right} xs={4}>
+                <RightPanel type={sidePanelState.rightPanel} />
+            </Grid>
+        );
     }
 
     return (
-        <>
-            {buildLeftPanel(sidePanelState)}
-            {buildMainPanel(sidePanelState)}
-            {buildRightPanel(sidePanelState)}
-        </>
+        <Container maxWidth="lg" style={{ padding: removePadding ? 0 : 24, height: "100vh" }}>
+            <Grid container style={{ height: "100%", overflow: "hidden" }}>
+                {buildLeftPanel(sidePanelState)}
+                {buildMainPanel(sidePanelState)}
+                {buildRightPanel(sidePanelState)}
+            </Grid>
+        </Container>
     );
 }

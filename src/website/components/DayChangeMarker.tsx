@@ -1,15 +1,29 @@
 import React from "react";
 import { toDayOfWeekString, toLongDateString } from "../formatters/date";
 import * as dateFunctions from "../utils/dateFunctions";
+import { makeStyles, Theme, Typography } from "@material-ui/core";
 
 type Props = {
     date: Date
 }
 
+const useStyles = makeStyles((theme: Theme) => ({
+    dayChangeMarker: {
+        padding: "6px 12px",
+        borderRadius: 10,
+        backgroundColor: "rgb(221,221,221, 0.9)",
+        alignSelf: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 60
+    }
+}));
+
 export default React.memo(DayChangeMarker);
 
 function DayChangeMarker(props : Props) {
-    return <div className="day-change-marker">{formatDate(props.date)}</div>;
+    const classes = useStyles();
+    return <Typography variant="body2" className={classes.dayChangeMarker}>{formatDate(props.date)}</Typography>;
 }
 
 function formatDate(date: Date) : string {

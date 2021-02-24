@@ -14,6 +14,7 @@ import MessageSearchMatch from "./MessageSearchMatch";
 import UserListItem from "./UserListItem";
 import chatsService from "../services/chats/service";
 import { SearchAllMessagesResponse } from "../services/chats/searchAllMessages";
+import { Box, Divider, Grid, List, makeStyles, Theme } from "@material-ui/core";
 
 type Props = {
     searchTerm: string,
@@ -24,6 +25,12 @@ type MessageMatch = {
     chatId: ChatId,
     message: LocalMessage
 }
+
+const useStyles = makeStyles((theme: Theme) => ({
+    groupTitle: {
+        padding: "4px 16px"
+    }
+}));
 
 export default React.memo(SearchResults);
 
@@ -56,21 +63,23 @@ function SearchResults(props: Props) {
         dispatch(gotoUser(user.userId, user.username));
     }
 
+    const classes = useStyles();
+
     const groups: JSX.Element[] = [];
     if (chatMatches.length) {
-        groups.push(createGroup("Chats", chatMatches.map(([chat, index]) =>
+        groups.push(createGroup("Chats", classes.groupTitle, chatMatches.map(([chat, index]) =>
             chatListItemBuilder.build(chat, userDictionary, index, null))));
     }
 
     if (userMatches.length) {
-        groups.push(createGroup("Users", userMatches.map(u => <UserListItem
+        groups.push(createGroup("Users", classes.groupTitle, userMatches.map(u => <UserListItem
             key={u.userId}
             user={fromUserSummary(u)} 
             handleSelectUser={() => handleSelectUser(u)} />)));
     }
 
     if (messageMatches.length) {
-        groups.push(createGroup("Messages", messageMatches.map(m => <MessageSearchMatch
+        groups.push(createGroup("Messages", classes.groupTitle, messageMatches.map(m => <MessageSearchMatch
             key={`${m.chatId}_${m.message.id}`}
             chatId={m.chatId}
             message={m.message}
@@ -78,20 +87,21 @@ function SearchResults(props: Props) {
     }
 
     return (
-        <div className="search-results">
+        <Grid container direction="column" wrap="nowrap" style={{ overflow: "scroll" }}>
             {groups}
-        </div>
+        </Grid>
     );
 }
 
-function createGroup(title: string, items: JSX.Element[]) {
+function createGroup(title: string, className: string, items: JSX.Element[]) {
     return (
-        <div className="search-results-group">
-            <div className="group-title">{title}</div>
-            <ul className={title.toLowerCase()}>
+        <Grid item>
+            <Box className={className}>{title}</Box>
+            <Divider />
+            <List>
                 {items}
-            </ul>
-        </div>
+            </List>
+        </Grid>
     );
 }
 

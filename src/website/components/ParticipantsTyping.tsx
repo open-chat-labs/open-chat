@@ -1,4 +1,5 @@
 import React from "react";
+import { Typography } from "@material-ui/core";
 
 export default React.memo(ParticipantsTyping);
 
@@ -16,13 +17,13 @@ function ParticipantsTyping(props: Props) {
         text = `${props.usernames[0]} is typing...`;
     } else {
         text = props.usernames[0];
-        for (let i = 1; i < props.usernames.length - 1; i++) {
-            text += `, ${props.usernames[i]}`;
+        for (const username in props.usernames) {
+            text += `, ${username}`;
         }
         text += ` and ${props.usernames[props.usernames.length - 1]} are typing...`;
     }
 
     return (
-        <div className="participants-typing">{text}</div>
+        <Typography variant="caption">{text}</Typography>
     );
 }

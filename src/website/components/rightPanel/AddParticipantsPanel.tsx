@@ -1,24 +1,26 @@
 import React, { useLayoutEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../reducers";
-import { getSelectedChat } from "../domain/stateFunctions";
-import { changeRightPanel, RightPanelType } from "../actions/changeSidePanel";
-import userMgmtService from "../services/userMgmt/service";
-import { addParticipantsByUserId } from "../actions/chats/addParticipants";
-import CancelIcon from "../assets/icons/cancelIcon.svg";
-import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
-import SearchBox from "./SearchBox";
-import UserListItem from "./UserListItem";
-import { fromUserSummary, UserSummary } from "../domain/model/users";
-import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
-import { GroupChat } from "../domain/model/chats";
+import { Grid, Typography } from "@material-ui/core";
+
+import { RootState } from "../../reducers";
+import { getSelectedChat } from "../../domain/stateFunctions";
+import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import userMgmtService from "../../services/userMgmt/service";
+import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
+import CreateGroupChatIcon from "../../assets/icons/createGroupChat.svg";
+import SearchBox from "../SearchBox";
+import UserListItem from "../UserListItem";
+import { fromUserSummary, UserSummary } from "../../domain/model/users";
+import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
+import { GroupChat } from "../../domain/model/chats";
+import Header from "./Header";
 
 const PLACEHOLDER_TEXT = "Type a username";
 const SEARCH_BOX_ID = "addParticipantsSearchBox";
 
-export default React.memo(AddParticipantsSidePanel);
+export default React.memo(AddParticipantsPanel);
 
-function AddParticipantsSidePanel() {
+function AddParticipantsPanel() {
     const dispatch = useDispatch();
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState) as GroupChat);
 
@@ -59,20 +61,12 @@ function AddParticipantsSidePanel() {
 
     return (
         <>
-            <header>
-                <div className="title-container">
-                    <div className="ddl-button" onClick={_ => closePanel()}>
-                        <CancelIcon className="ddl-button-svg" />
-                    </div>
-                    <div className="title">Add participants</div>
-                </div>
-                <div className="new-chat-icon"><CreateGroupChatIcon /></div>
-            </header>
+            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
-                {results.map(user => <UserListItem 
+                {results.map(user => <UserListItem
                     key={user.userId}
-                    user={fromUserSummary(user)} 
+                    user={fromUserSummary(user)}
                     handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>
         </>

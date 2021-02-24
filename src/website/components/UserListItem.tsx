@@ -1,4 +1,5 @@
 import React from "react";
+import { ListItem, ListItemIcon, makeStyles, Theme, Typography } from "@material-ui/core";
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";
 import { UserItem } from "../domain/model/users";
@@ -8,7 +9,7 @@ export default React.memo(UserListItem, shouldSkipRerender);
 
 type Props = {
     user: UserItem,
-    handleSelectUser: () => void,
+    handleSelectUser: Option<() => void>,
     buttons: Option<MenuButton[]>
 }
 
@@ -24,17 +25,34 @@ function shouldSkipRerender(p1: Props, p2: Props) {
         p1.user.isOnline === p2.user.isOnline;
 }
 
+const useStyles = makeStyles((theme: Theme) => ({
+    selectable: theme.selectableListItem,
+    username: {
+        paddingLeft: 10,
+        width: "100%"
+    }
+}));
+
 function UserListItem(props: Props) {
+    const classes = useStyles();
+    let className = "user-list-item down-arrow-container";
+    if (props.handleSelectUser) {
+        className += " " + classes.selectable;
+    }
+
     return (
-        <li onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className="user-list-item down-arrow-container">
-            <UserAvatar
-                userId={props.user.username}
-                imageId={props.user.imageId}
-                isUserOnline={props.user.isOnline} />
-            <div className="message-container">
-                <div className="name">{props.user.username}</div>
-            </div>
-            {props.buttons ? <DropDownMenu menuId={props.user.userId as string} useDownArrow={true} buttons={props.buttons} /> :  null}
-        </li>
+        <ListItem onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className={className} divider={true}>
+            <ListItemIcon>
+                <UserAvatar
+                    userId={props.user.username}
+                    imageId={props.user.imageId}
+                    isUserOnline={props.user.isOnline}
+                    size="md" />
+            </ListItemIcon>
+            <Typography variant="body1" className={classes.username}>{props.user.username}</Typography>
+            {props.buttons
+                ? <DropDownMenu menuId={props.user.userId} useDownArrow={true} buttons={props.buttons} />
+                : null}
+        </ListItem>
     );
 }

@@ -76,7 +76,7 @@ function Message(props : Props) {
         className += " cycles";
         contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />;
     } else {
-        contentElement = <TextContent text={props.content.text} />
+        contentElement = <TextContent text={props.content.text} variant="body1" />
     }
 
     let tick: Option<JSX.Element> = null;

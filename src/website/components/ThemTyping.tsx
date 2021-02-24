@@ -1,9 +1,14 @@
 import React from "react";
+import { Typography, TypographyVariant } from "@material-ui/core";
+
+type Props = {
+    variant: TypographyVariant
+}
 
 export default React.memo(ThemTyping);
 
-function ThemTyping() {
+function ThemTyping(props: Props) {
     return (
-        <div className="them-typing">typing...</div>
+        <Typography variant={props.variant}>typing...</Typography>
     );
 }

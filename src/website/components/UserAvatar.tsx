@@ -1,25 +1,44 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Option } from "../domain/model/common";
+import { Avatar, Badge, makeStyles, Theme } from "@material-ui/core";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
+import { Option } from "../domain/model/common";
 import { UserId } from "../domain/model/users";
 import getChunk, { GetChunkResponse } from "../services/data/getChunk";
 import { dataToBlobUrl } from "../utils/blobFunctions";
-import UserOnlineMarker from "./UserOnlineMarker";
 
 type Props = {
+    size: "sm" | "md",
     isUserOnline: boolean,
     userId: Option<UserId>,
     imageId: Option<string>,
-    blobUrl: Option<string>
+    blobUrl: Option<string>,
+    cursor: string
 }
 
 UserAvatar.defaultProps = {
-    blobUrl: null
+    blobUrl: null,
+    cursor: "default"
 };
 
 export default React.memo(UserAvatar);
+
+const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
+    avatar: {
+        height: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size,
+        width: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size,
+        cursor: props => props.cursor
+    },
+    userOnlineMarker: {
+        backgroundColor: "#32cd32",
+        color: "white",
+        boxShadow: "0 0 0 2px #ededed",
+        height: props => props.size === "md" ? theme.avatars.md.userOnlineMarkerSize : theme.avatars.sm.userOnlineMarkerSize,
+        width: props => props.size === "md" ? theme.avatars.md.userOnlineMarkerSize : theme.avatars.sm.userOnlineMarkerSize,
+        borderRadius: "50%"
+    }
+}));
 
 function UserAvatar(props: Props) : JSX.Element {
     let icon: JSX.Element;
@@ -27,27 +46,34 @@ function UserAvatar(props: Props) : JSX.Element {
     const unmounted = useRef(false);
     const blobsToRevoke = useRef<string[]>([]);
     const [src, setSrc] = useState(() => setInitialSrc(props));
+    const classes = useStyles(props);
 
     useEffect(() => {
-        if (props.imageId && !props.blobUrl && !isLoading.current) {
+        if (!props.userId) {
+            if (src) {
+                setSrc(null);
+            }
+            return;
+        }
+
+        if (!props.imageId) {
+            setSrc(buildIdenticonUrl(props.userId));
+        } else if (!props.blobUrl && !isLoading.current) {
             // Start loading the image from the IC and once loaded set the image src
             isLoading.current = true;
             getChunk(props.imageId, 0).then((res: GetChunkResponse) =>  {
                 isLoading.current = false;
-                if (res.kind !== "success") { 
-                    return; 
+                if (res.kind !== "success") {
+                    return;
                 }
                 if (!unmounted.current) {
                     const blobUrl = dataToBlobUrl(res.data, null);
                     blobsToRevoke.current.push(blobUrl);
                     setSrc(blobUrl);
                 }
-            });            
-        } else if (!props.imageId && props.userId) {
-            // If the user removes their profile image show the identicon
-            setSrc(buildIdenticonUrl(props.userId));
+            });
         }
-    }, [props.imageId]);
+    }, [props.userId, props.imageId]);
     
     useLayoutEffect(() => {
         return () => {
@@ -64,9 +90,31 @@ function UserAvatar(props: Props) : JSX.Element {
     }, []);
  
     if (src) {
-        icon = <img className="avatar" src={props.blobUrl ?? src} />;
+        if (props.isUserOnline) {
+            icon = (
+                <Badge
+                    id="myAvatar"
+                    classes={{ badge: classes.userOnlineMarker }}
+                    className={classes.avatar}
+                    variant="dot"
+                    overlap="circle"
+                    anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                    }}
+                >
+                    <Avatar className={classes.avatar} src={src} />
+                </Badge>
+            );
+        } else {
+            icon = <Avatar className={classes.avatar} src={src} />
+        }
     } else {
-        icon = <UnknownUserAvatar className="avatar" />;
+        icon = (
+            <Avatar className={classes.avatar}>
+                <UnknownUserAvatar />
+            </Avatar>
+        );
     }
 
     function setInitialSrc(props: Props): Option<string> {
@@ -83,10 +131,5 @@ function UserAvatar(props: Props) : JSX.Element {
         return "data:image/svg+xml;base64," + identicon.toString();
     }
 
-    return (
-        <>
-            <div className="icon-container">{icon}</div>
-            {props.isUserOnline ? <UserOnlineMarker /> : null }
-        </>
-    );
+    return icon;
 }
