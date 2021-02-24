@@ -13,13 +13,11 @@ type Props = {
     isUserOnline: boolean,
     userId: Option<UserId>,
     imageId: Option<string>,
-    blobUrl: Option<string>,
-    cursor: string
+    blobUrl: Option<string>
 }
 
 UserAvatar.defaultProps = {
-    blobUrl: null,
-    cursor: "default"
+    blobUrl: null
 };
 
 export default React.memo(UserAvatar);
@@ -27,8 +25,7 @@ export default React.memo(UserAvatar);
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     avatar: {
         height: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size,
-        width: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size,
-        cursor: props => props.cursor
+        width: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size
     },
     userOnlineMarker: {
         backgroundColor: "#32cd32",
@@ -90,24 +87,20 @@ function UserAvatar(props: Props) : JSX.Element {
     }, []);
  
     if (src) {
+        icon = <Avatar className={classes.avatar} src={src} />
         if (props.isUserOnline) {
             icon = (
                 <Badge
-                    id="myAvatar"
-                    classes={{ badge: classes.userOnlineMarker }}
-                    className={classes.avatar}
+                    classes={{ root: classes.avatar, badge: classes.userOnlineMarker }}
                     variant="dot"
                     overlap="circle"
                     anchorOrigin={{
                         vertical: "bottom",
                         horizontal: "right",
-                    }}
-                >
-                    <Avatar className={classes.avatar} src={src} />
+                    }}>
+                    {icon}
                 </Badge>
             );
-        } else {
-            icon = <Avatar className={classes.avatar} src={src} />
         }
     } else {
         icon = (

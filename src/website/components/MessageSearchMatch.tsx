@@ -58,7 +58,7 @@ function MessageSearchMatch(props: Props) {
     }
 
     return (
-        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.selectable} divider={true}>
+        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.selectable} divider>
             <div className={classes.messageSummary}>
                 <div>
                     <Typography variant="caption" className={classes.date}>{formatMessageDate(props.message.date)}</Typography>

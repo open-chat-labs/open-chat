@@ -41,7 +41,7 @@ function UserListItem(props: Props) {
     }
 
     return (
-        <ListItem onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className={className} divider={true}>
+        <ListItem onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className={className} divider>
             <ListItemIcon>
                 <UserAvatar
                     userId={props.user.username}
