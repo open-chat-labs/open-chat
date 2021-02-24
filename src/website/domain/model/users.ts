@@ -1,9 +1,13 @@
+import { Option } from "./common";
+
 export type UserId = string;
 
 export type MyProfile = {
     userId: UserId,
     username: string,
     accountBalance: bigint,
+    imageId: Option<string>,
+    imageBlobUrl: Option<string>,
     version: number
 }
 
@@ -12,15 +16,30 @@ export type UserSummary = {
     username: string,
     lastOnline: Date,
     minutesSinceLastOnline: number,
+    imageId: Option<string>,
     version: number
 }
 
-export function toUserSummary(myProfile: MyProfile): UserSummary {
+export type UserItem = {
+    userId: UserId,
+    username: string,
+    imageId: Option<string>,
+    isOnline: boolean
+}
+
+export function fromMyProfile(myProfile: MyProfile): UserItem {
     return {
         userId: myProfile.userId,
-        username: myProfile.username,
-        lastOnline: new Date(),
-        minutesSinceLastOnline: 0,
-        version : myProfile.version
+        username: "You",
+        isOnline: true,
+        imageId: myProfile.imageId
+    };
+}
+export function fromUserSummary(user: UserSummary): UserItem {
+    return {
+        userId: user.userId,
+        username: user.username,
+        isOnline: user.minutesSinceLastOnline < 2,
+        imageId: user.imageId
     };
 }

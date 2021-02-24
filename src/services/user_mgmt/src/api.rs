@@ -14,6 +14,11 @@ pub fn update_username(username: String) -> UpdateUsernameResponse {
 }
 
 #[update]
+pub fn set_profile_image(image_id: String) -> set_profile_image::Response {
+    set_profile_image::update(image_id)
+}
+
+#[update]
 pub fn mark_as_online() {
     mark_as_online::update();
 }

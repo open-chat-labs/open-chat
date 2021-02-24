@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import DefaultAvatar from "./DefaultAvatar";
+import UserAvatar from "./UserAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";
@@ -9,7 +9,6 @@ import { formatMessageDate } from "../formatters/date";
 import ParticipantsTyping from "./ParticipantsTyping";
 import TextContent from "./TextContent";
 import ThemTyping from "./ThemTyping";
-import UserOnlineMarker from "./UserOnlineMarker";
 
 type Props = {
     name: string,
@@ -19,6 +18,7 @@ type Props = {
     latestMessage: string,
     isGroup: boolean,
     userId: Option<UserId>,
+    userImageId: Option<string>,
     unreadCount: number,
     themTyping: boolean,
     userOnline: boolean,
@@ -32,11 +32,10 @@ function ChatListItem(props: Props) {
     const className = props.selected ? "selected" : "";
     const icon = props.isGroup
         ? <GroupChatIcon className="avatar" />
-        : <DefaultAvatar userId={props.userId} />;
-
-    const userOnlineMarker: Option<JSX.Element> = props.userOnline
-        ? <UserOnlineMarker />
-        : null;
+        : <UserAvatar 
+            isUserOnline={props.userOnline} 
+            userId={props.userId} 
+            imageId={props.userImageId} />;
 
     let snippet: JSX.Element;
     if (props.themTyping) {
@@ -50,7 +49,6 @@ function ChatListItem(props: Props) {
     return (
         <li className={className} onClick={() => dispatch(selectChat(props.index))}>
             {icon}
-            {userOnlineMarker}
             <div className="message-container">
                 <div>
                     <div className="date">{props.date ? formatMessageDate(props.date) : null}</div>

@@ -9,7 +9,7 @@ import CancelIcon from "../assets/icons/cancelIcon.svg";
 import CreateGroupChatIcon from "../assets/icons/createGroupChat.svg";
 import SearchBox from "./SearchBox";
 import UserListItem from "./UserListItem";
-import { UserSummary } from "../domain/model/users";
+import { fromUserSummary, UserSummary } from "../domain/model/users";
 import { SearchUsersRequest } from "../services/userMgmt/searchUsers";
 import { GroupChat } from "../domain/model/chats";
 
@@ -70,7 +70,10 @@ function AddParticipantsSidePanel() {
             </header>
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <ul className="chats">
-                {results.map(user => <UserListItem userSummary={user} handleSelectUser={() => handleSelectUser(user)} />)}
+                {results.map(user => <UserListItem 
+                    key={user.userId}
+                    user={fromUserSummary(user)} 
+                    handleSelectUser={() => handleSelectUser(user)} />)}
             </ul>
         </>
     );

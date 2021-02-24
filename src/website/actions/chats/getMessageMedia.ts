@@ -1,6 +1,5 @@
 import { Dispatch } from "react";
 import { ChatId } from "src/website/domain/model/chats";
-
 import dataService from "../../services/data/service";
 
 export const GET_MEDIA_REQUESTED = "GET_MEDIA_REQUESTED";
