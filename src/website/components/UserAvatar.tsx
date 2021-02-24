@@ -15,21 +15,21 @@ type Props = {
     blobUrl: Option<string>
 }
 
-DefaultAvatar.defaultProps = {
+UserAvatar.defaultProps = {
     blobUrl: null
 };
 
-export default React.memo(DefaultAvatar);
+export default React.memo(UserAvatar);
 
-function DefaultAvatar(props: Props) : JSX.Element {
+function UserAvatar(props: Props) : JSX.Element {
     let icon: JSX.Element;
     const isLoading = useRef(false);
     const unmounted = useRef(false);
-    const blobsToRevoke = useRef([] as string[]);
-    const [src, setSrc] = useState(() => buildInitialSrc(props.userId));
+    const blobsToRevoke = useRef<string[]>([]);
+    const [src, setSrc] = useState(() => setInitialSrc(props));
 
     useEffect(() => {
-        if (props.imageId && !props.blobUrl && !src?.startsWith("blob:") && !isLoading.current) {
+        if (props.imageId && !props.blobUrl && !isLoading.current) {
             // Start loading the image from the IC and once loaded set the image src
             isLoading.current = true;
             getChunk(props.imageId, 0).then((res: GetChunkResponse) =>  {
@@ -43,11 +43,16 @@ function DefaultAvatar(props: Props) : JSX.Element {
                     setSrc(blobUrl);
                 }
             });            
+        } else if (!props.imageId && props.userId) {
+            // If the user removes their profile image show the identicon
+            setSrc(buildIdenticonUrl(props.userId));
         }
     }, [props.imageId]);
-
+    
     useLayoutEffect(() => {
-        unmounted.current = true;
+        return () => {
+            unmounted.current = true
+        };
     }, []);
 
     useEffect(() => {
@@ -64,11 +69,13 @@ function DefaultAvatar(props: Props) : JSX.Element {
         icon = <UnknownUserAvatar className="avatar" />;
     }
 
-    function buildInitialSrc(userId: Option<UserId>): Option<string> {
-        if (!userId) {
-            return null;
-        }
+    function setInitialSrc(props: Props): Option<string> {
+        return props.userId && !props.imageId 
+            ? buildIdenticonUrl(props.userId) 
+            : null;
+    }
 
+    function buildIdenticonUrl(userId: UserId) {
         const identicon = new Identicon(
             md5(userId), 
             { margin: 0, format: 'svg' });

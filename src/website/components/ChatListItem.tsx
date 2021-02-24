@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import DefaultAvatar from "./DefaultAvatar";
+import UserAvatar from "./UserAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";
@@ -32,7 +32,7 @@ function ChatListItem(props: Props) {
     const className = props.selected ? "selected" : "";
     const icon = props.isGroup
         ? <GroupChatIcon className="avatar" />
-        : <DefaultAvatar 
+        : <UserAvatar 
             isUserOnline={props.userOnline} 
             userId={props.userId} 
             imageId={props.userImageId} />;

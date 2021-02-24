@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { RootState } from "../reducers";
-import DefaultAvatar from "./DefaultAvatar";
+import UserAvatar from "./UserAvatar";
 import setProfileImage from "../actions/users/setProfileImage";
 
 export default React.memo(MyAvatar);
@@ -36,7 +36,7 @@ function MyAvatar() {
     
     return (
         <label className="avatar-button">
-            <DefaultAvatar 
+            <UserAvatar 
                 isUserOnline={true}
                 userId={userImage?.userId ?? null}
                 imageId={userImage?.imageId ?? null}

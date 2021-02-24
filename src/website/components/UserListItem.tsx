@@ -1,6 +1,6 @@
 import React from "react";
 import { Option } from "../domain/model/common";
-import DefaultAvatar from "./DefaultAvatar";
+import UserAvatar from "./UserAvatar";
 import { UserItem } from "../domain/model/users";
 import DropDownMenu, { MenuButton } from "./DropDownMenu";
 
@@ -27,7 +27,7 @@ function shouldSkipRerender(p1: Props, p2: Props) {
 function UserListItem(props: Props) {
     return (
         <li onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className="user-list-item down-arrow-container">
-            <DefaultAvatar
+            <UserAvatar
                 userId={props.user.username}
                 imageId={props.user.imageId}
                 isUserOnline={props.user.isOnline} />

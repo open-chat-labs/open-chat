@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import { Option } from "../domain/model/common";
-import DefaultAvatar from "./DefaultAvatar";
+import UserAvatar from "./UserAvatar";
 import GroupChatIcon from "../assets/icons/groupChatIcon.svg";
 import * as chatFunctions from "../domain/model/chats";
 import * as setFunctions from "../utils/setFunctions";
@@ -43,7 +43,7 @@ function MainHeader() {
                 ? <ThemTyping />
                 : <div className="date">{formatLastOnlineDate(userSummary.minutesSinceLastOnline)}</div>;
         }
-        icon = <DefaultAvatar 
+        icon = <UserAvatar 
             userId={chat.them}
             imageId={imageId}
             isUserOnline={isOnline} />;

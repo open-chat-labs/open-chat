@@ -33,19 +33,17 @@ export default function(userId: UserId, data: Uint8Array) {
         dispatch(requestEvent);
 
         // Wait for the media data to finish uploading
-        if (putDataTask) {
-            const res = await putDataTask;
-            if (res.kind !== "success") {                
-                const outcomeEvent: SetProfileImageDataUploadFailedEvent = { 
-                    type: SET_PROFILE_IMAGE_DATA_UPLOAD_FAILED,
-                    payload: {
-                        userId,
-                        imageId,
-                    } 
-                };
-                dispatch(outcomeEvent);
-                return;
-            }
+        const res = await putDataTask;
+        if (res.kind !== "success") {                
+            const outcomeEvent: SetProfileImageDataUploadFailedEvent = { 
+                type: SET_PROFILE_IMAGE_DATA_UPLOAD_FAILED,
+                payload: {
+                    userId,
+                    imageId,
+                } 
+            };
+            dispatch(outcomeEvent);
+            return;
         }
 
         // Set the imageId against the user profile on the IC
