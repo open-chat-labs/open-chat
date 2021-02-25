@@ -1,15 +1,15 @@
 import React from "react";
 import { useSelector } from "react-redux";
 
-import { RootState } from "../reducers";
+import { RootState } from "../../reducers";
 
-import MessagesList from "./MessagesList";
-import MainHeader from "./MainHeader";
-import MainFooter from "./MainFooter";
+import MessagesList from "../MessagesList";
+import Header from "./Header";
+import Footer from "./Footer";
 
-export default React.memo(Main);
+export default React.memo(MainPanel);
 
-function Main() {
+function MainPanel() {
     const showMainWindow = useSelector((state: RootState) => state.chatsState.selectedChatIndex !== null);
 
     if (!showMainWindow) {
@@ -18,9 +18,9 @@ function Main() {
 
     return (
         <>
-            <MainHeader />
+            <Header />
             <MessagesList />
-            <MainFooter />
+            <Footer />
         </>
     );
 }

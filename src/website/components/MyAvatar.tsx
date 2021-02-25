@@ -6,7 +6,11 @@ import setProfileImage from "../actions/users/setProfileImage";
 
 export default React.memo(MyAvatar);
 
-function MyAvatar() {
+type Props = {
+    size: "sm" | "md"
+}
+
+function MyAvatar(props: Props) {
     const dispatch = useDispatch();
     const userImage = useSelector((state: RootState) => {
         const me = state.usersState.me;
@@ -16,6 +20,8 @@ function MyAvatar() {
             blobUrl: me.imageBlobUrl
         } : null;
     }, shallowEqual);
+
+    const userExists = userImage !== null;
 
     function onAvatarFileSelected(event: any) {
         if (!userImage) {
@@ -35,14 +41,15 @@ function MyAvatar() {
     }
     
     return (
-        <label className="avatar-button">
+        <label>
             <UserAvatar 
                 isUserOnline={true}
                 userId={userImage?.userId ?? null}
                 imageId={userImage?.imageId ?? null}
-                blobUrl={userImage?.blobUrl ?? null} />
+                blobUrl={userImage?.blobUrl ?? null}
+                size={props.size} />
 
-            {userImage ? <input 
+            {userExists ? <input
                 className="hide" 
                 type="file" 
                 accept=".jpg, .jpeg, .png, .gif" 

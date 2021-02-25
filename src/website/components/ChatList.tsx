@@ -1,5 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
+import { List } from "@material-ui/core";
 import { RootState } from "../reducers";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
 
@@ -15,8 +16,8 @@ function ChatList() {
     });
 
     return (
-        <ul className="chats">
+        <List disablePadding={true}>
             {chats}
-        </ul>
+        </List>
     );
 }

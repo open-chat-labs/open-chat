@@ -9,6 +9,8 @@ import selectChat from "../actions/chats/selectChat";
 import { formatMessageDate } from "../formatters/date";
 import TextContent from "./TextContent";
 import { getContentAsText } from "../domain/messageFunctions";
+import { ListItem, makeStyles, Theme, Typography } from "@material-ui/core";
+import { fade } from "@material-ui/core/styles/colorManipulator";
 
 export default React.memo(MessageSearchMatch);
 
@@ -18,8 +20,30 @@ type Props = {
     searchTerm: string
 }
 
+const useStyles = makeStyles((theme: Theme) => ({
+    selectable: theme.selectableListItem,
+    messageSummary: {
+        width: "100%"
+    },
+    chatName: {
+        color: theme.palette.text.primary
+    },
+    messageSnippet: {
+        color: fade(theme.palette.text.primary, 0.6),
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        maxWidth: 450
+    },
+    date: {
+        color: fade(theme.palette.text.primary, 0.6),
+        float: "right"
+    }
+}));
+
 function MessageSearchMatch(props: Props) {
     const dispatch = useDispatch();
+    const classes = useStyles();
 
     const [chat, index] = useSelector((state: RootState) =>
         chatFunctions.getChatById(state.chatsState.chats, props.chatId));
@@ -34,18 +58,18 @@ function MessageSearchMatch(props: Props) {
     }
 
     return (
-        <li onClick={() => dispatch(selectChat(index, props.message.id))}>
-            <div className="message-container">
+        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.selectable} divider>
+            <div className={classes.messageSummary}>
                 <div>
-                    <div className="date">{formatMessageDate(props.message.date)}</div>
-                    <div className="name">{chatName}</div>
+                    <Typography variant="caption" className={classes.date}>{formatMessageDate(props.message.date)}</Typography>
+                    <Typography variant="body1" className={classes.chatName}>{chatName}</Typography>
                 </div>
                 <div>
-                    <div className="chats-message">
-                        <TextContent text={getContentAsText(props.message.content)} insertLineBreaks={false} />
+                    <div className={classes.messageSnippet}>
+                        <TextContent text={getContentAsText(props.message.content)} variant="body2" insertLineBreaks={false} />
                     </div>
                 </div>
             </div>
-        </li>
+        </ListItem>
     );
 }

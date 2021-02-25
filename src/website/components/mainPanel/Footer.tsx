@@ -1,20 +1,20 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Option } from "../domain/model/common";
-import * as chatFunctions from "../domain/model/chats";
-import sendMessage from "../actions/chats/sendMessage";
-import { getSelectedChat, getUserSummary } from "../domain/stateFunctions";
-import SendButtonIcon from "../assets/icons/sendButton.svg";
-import AttachFile from "./AttachFile";
-import { RootState } from "../reducers";
-import EmojiPicker from "./EmojiPicker";
-import { buildEmojiSpan, containsEmoji } from "../domain/model/messages";
-import SendCycles from "./SendCycles";
-import CurrentUserTypingHandler from "../domain/CurrentUserTypingHandler";
+import { Option } from "../../domain/model/common";
+import * as chatFunctions from "../../domain/model/chats";
+import sendMessage from "../../actions/chats/sendMessage";
+import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
+import SendButtonIcon from "../../assets/icons/sendButton.svg";
+import AttachFile from "../AttachFile";
+import { RootState } from "../../reducers";
+import EmojiPicker from "../EmojiPicker";
+import { buildEmojiSpan, containsEmoji } from "../../domain/model/messages";
+import SendCycles from "../SendCycles";
+import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 
-export default React.memo(MainFooter);
+export default React.memo(Footer);
 
-function MainFooter() {
+function Footer() {
     const dispatch = useDispatch();
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 

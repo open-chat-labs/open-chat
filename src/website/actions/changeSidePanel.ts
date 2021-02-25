@@ -33,7 +33,7 @@ export enum LeftPanelType {
 
 export enum RightPanelType {
     None,
-    AddParticpants,
+    AddParticipants,
     Particpants,
 }
 

@@ -14,6 +14,7 @@ import MessageSearchMatch from "./MessageSearchMatch";
 import UserListItem from "./UserListItem";
 import chatsService from "../services/chats/service";
 import { SearchAllMessagesResponse } from "../services/chats/searchAllMessages";
+import { Box, Divider, Grid, List, makeStyles, Theme } from "@material-ui/core";
 
 type Props = {
     searchTerm: string,
@@ -24,6 +25,15 @@ type MessageMatch = {
     chatId: ChatId,
     message: LocalMessage
 }
+
+const useStyles = makeStyles((theme: Theme) => ({
+    searchResults: {
+        overflow: "scroll"
+    },
+    groupTitle: {
+        padding: "4px 16px"
+    }
+}));
 
 export default React.memo(SearchResults);
 
@@ -56,6 +66,20 @@ function SearchResults(props: Props) {
         dispatch(gotoUser(user.userId, user.username));
     }
 
+    const classes = useStyles();
+
+    function createGroup(title: string, items: JSX.Element[]) {
+        return (
+            <Grid item>
+                <Box className={classes.groupTitle}>{title}</Box>
+                <Divider />
+                <List disablePadding={true}>
+                    {items}
+                </List>
+            </Grid>
+        );
+    }
+
     const groups: JSX.Element[] = [];
     if (chatMatches.length) {
         groups.push(createGroup("Chats", chatMatches.map(([chat, index]) =>
@@ -78,20 +102,9 @@ function SearchResults(props: Props) {
     }
 
     return (
-        <div className="search-results">
+        <Grid container direction="column" wrap="nowrap" className={classes.searchResults}>
             {groups}
-        </div>
-    );
-}
-
-function createGroup(title: string, items: JSX.Element[]) {
-    return (
-        <div className="search-results-group">
-            <div className="group-title">{title}</div>
-            <ul className={title.toLowerCase()}>
-                {items}
-            </ul>
-        </div>
+        </Grid>
     );
 }
 
