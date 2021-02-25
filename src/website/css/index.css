@@ -69,33 +69,6 @@ header .chat-summary .participants-typing {
     color: #808080;
 }
 
-.search {
-    background-color: #f6f6f6;
-    padding: 6px 15px;
-    position: relative;
-}
-
-.search > svg {
-    display: block;
-    float: left;
-    position: absolute;
-    top: 11px;
-    left: 25px;
-    color: #aaaaaa;
-}
-
-.search input {
-    background-color: white;
-    width: 100%;
-    border: 0;
-    border-radius: 25px;
-    padding: 4px 15px 6px 64px;
-    font-size: 15px;
-    font-weight: 300;
-    outline: none;
-    color: #111111;
-}
-
 header {
     padding: 6px 15px;
     background-color: #ededed;
