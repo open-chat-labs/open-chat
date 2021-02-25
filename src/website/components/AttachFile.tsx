@@ -71,7 +71,9 @@ function AttachFile(props: Props) {
         return new Promise<MediaExtract>((resolve, _) => {
             const img = new Image;    
             img.onload = function() {
-                resolve(extractThumbnail(img, new Dimensions(img.width, img.height)));
+                const extract = extractThumbnail(img, new Dimensions(img.width, img.height));
+                URL.revokeObjectURL(blobUrl);
+                resolve(extract);
             }
             img.src = blobUrl;
         });
@@ -82,7 +84,9 @@ function AttachFile(props: Props) {
             const video = document.createElement("video");
             video.addEventListener("loadedmetadata", function () {
                 video.addEventListener("seeked", function () {
-                    resolve(extractThumbnail(video, new Dimensions(this.videoWidth, this.videoHeight)));
+                    const extract = extractThumbnail(video, new Dimensions(this.videoWidth, this.videoHeight));
+                    URL.revokeObjectURL(blobUrl);
+                    resolve(extract);
                 });
                 video.currentTime = 1;
             });

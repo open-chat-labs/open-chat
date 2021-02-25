@@ -264,8 +264,13 @@ export const addMessages = (chat: ConfirmedChat, messages: LocalMessage[], isSel
         }
         chat.messages[messageIndex] = message;
 
-        removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
-
+        const unconfirmedMessage = removeMatchingUnconfirmedMessage(chat, message.clientMessageId);
+        if (unconfirmedMessage) {
+            // If we are confirming the message then we know the content hasn't changed so we keep the old
+            // reference to avoid re-renders in particular for media messages
+            message.content = unconfirmedMessage.content;
+        }
+        
         if (setFunctions.remove(chat.unreadClientMessageIds, message.clientMessageId)) {
             setFunctions.add(chat.unreadMessageIds, message.id);
 
@@ -550,7 +555,7 @@ export const freeMediaData = (chat: Chat) => {
     }, 100);
 }
 
-const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : boolean => {
+const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage | P2PMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
         const message = chat.messages[index];
@@ -559,10 +564,10 @@ const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: 
         } else if (message.clientMessageId === clientMessageId) {
             indexOfMatch = index;
             chat.messages.splice(indexOfMatch, 1);
-            return true;
+            return message;
         }
     }
-    return false;
+    return null;
 }
 
 const getMessageIndex = (messages: Message[], messageId: number) : number => {

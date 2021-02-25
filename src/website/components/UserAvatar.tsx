@@ -3,8 +3,8 @@ import { Option } from "../domain/model/common";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
+import dataService, { GetDataResponse } from "../services/data/service";
 import { UserId } from "../domain/model/users";
-import getChunk, { GetChunkResponse } from "../services/data/getChunk";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 import UserOnlineMarker from "./UserOnlineMarker";
 
@@ -32,7 +32,7 @@ function UserAvatar(props: Props) : JSX.Element {
         if (props.imageId && !props.blobUrl && !isLoading.current) {
             // Start loading the image from the IC and once loaded set the image src
             isLoading.current = true;
-            getChunk(props.imageId, 0).then((res: GetChunkResponse) =>  {
+            dataService.getData(props.imageId).then((res: GetDataResponse) => {
                 isLoading.current = false;
                 if (res.kind !== "success") { 
                     return; 
