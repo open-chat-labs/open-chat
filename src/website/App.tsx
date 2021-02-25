@@ -60,7 +60,7 @@ function App() {
 
     function buildLeftPanel(sidePanelState: SidePanelState): JSX.Element {
         const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
-        let className = "sidebar left-panel " + classes.left;
+        let className = classes.left;
         if (rightPanelActive) {
             className += " rightPanelActive";
         }
@@ -101,7 +101,7 @@ function App() {
         }
 
         return (
-            <Grid item className={"sidebar right-panel " + classes.right}>
+            <Grid item className={classes.right}>
                 <RightPanel type={sidePanelState.rightPanel} />
             </Grid>
         );

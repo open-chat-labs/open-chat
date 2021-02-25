@@ -59,7 +59,7 @@ function NewDirectChatPanel() {
         <>
             <Header leftIcon={<CreateGroupChatIcon />} title="Start a new chat" rightIcon={<CancelButton onClick={closePanel} />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
-            <List className="chats">
+            <List disablePadding={true}>
                 {results.map(user => <UserListItem
                     key={user.userId}
                     user={fromUserSummary(user)}

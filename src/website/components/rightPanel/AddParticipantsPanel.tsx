@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid, Typography } from "@material-ui/core";
+import { List } from "@material-ui/core";
 
 import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
@@ -63,12 +63,12 @@ function AddParticipantsPanel() {
         <>
             <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
-            <ul className="chats">
+            <List disablePadding={true}>
                 {results.map(user => <UserListItem
                     key={user.userId}
                     user={fromUserSummary(user)}
                     handleSelectUser={() => handleSelectUser(user)} />)}
-            </ul>
+            </List>
         </>
     );
 }

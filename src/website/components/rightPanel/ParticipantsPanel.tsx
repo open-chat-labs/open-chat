@@ -65,7 +65,7 @@ function ParticipantsPanel() {
     return (
         <>
             <Header title="Participants" onCancelButtonClick={closePanel} />
-            <List>
+            <List disablePadding={true}>
                 <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.selectable} divider>
                     <ListItemIcon>
                         <CreateGroupChatIcon />

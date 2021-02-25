@@ -16,7 +16,7 @@ function ChatList() {
     });
 
     return (
-        <List className="chats">
+        <List disablePadding={true}>
             {chats}
         </List>
     );
