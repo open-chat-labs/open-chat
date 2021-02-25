@@ -10,9 +10,9 @@ import UserListItem from "../UserListItem";
 import { fromMyProfile, fromUserSummary, UserId, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
 import gotoUser from "../../actions/chats/gotoUser";
-import { MenuButton } from "../DropDownMenu";
 import removeParticipant from "../../actions/chats/removeParticipant";
 import Header from "./Header";
+import { MenuItem } from "../PopOverMenu";
 
 export default React.memo(ParticipantsPanel);
 
@@ -40,10 +40,6 @@ function ParticipantsPanel() {
             dispatch(gotoUser(user.userId, user.username));
         }
     }
-
-    const buttons: MenuButton[] = [];
-    buttons.push({ text: "Remove", action: (userId: string) => dispatch(removeParticipant(chat.chatId, userId as UserId)) });
-    buttons.push({ text: "Dismiss as admin", action: () => null });
 
     function compareUsers(left: UserSummary[], right: UserSummary[]): boolean {
         if (left.length !== right.length)
@@ -75,11 +71,18 @@ function ParticipantsPanel() {
                 <UserListItem
                     key={me.userId}
                     user={fromMyProfile(me)} />
-                {users.map(user => <UserListItem
-                        key={user.userId}
+                {users.map(user => {
+                    const userId = user.userId;
+                    const buttons: MenuItem[] = [];
+                    buttons.push({ text: "Remove", action: () => dispatch(removeParticipant(chat.chatId, userId)) });
+                    buttons.push({ text: "Dismiss as admin", action: () => {} });
+
+                    return <UserListItem
+                        key={userId}
                         user={user}
                         buttons={buttons}
-                        handleSelectUser={handleSelectUser(user)} />)}
+                        handleSelectUser={handleSelectUser(user)} />
+                })}
             </List>
         </>
     );

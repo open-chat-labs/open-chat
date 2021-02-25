@@ -12,17 +12,18 @@ import {
     Typography
 } from "@material-ui/core";
 import { fade } from "@material-ui/core/styles/colorManipulator";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
 
 export default React.memo(PopOverMenu);
 
 type Props = {
+    icon: JSX.Element,
     menuItems: MenuItem[],
-    placement: PopperPlacementType
+    placement: PopperPlacementType,
+    className?: string
 }
 
 export type MenuItem = {
-    title: string,
+    text: string,
     action: () => void
 }
 
@@ -43,8 +44,13 @@ function PopOverMenu(props: Props) {
     const classes = useStyles();
     const [open, setOpen] = useState(false);
     const anchorRef = useRef<HTMLElement>(null);
+    let buttonClassName = classes.button;
+    if (props.className) {
+        buttonClassName += " " + props.className;
+    }
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         event.preventDefault();
         setOpen(!open);
     };
@@ -55,7 +61,8 @@ function PopOverMenu(props: Props) {
 
     function buildMenuItemElement(text: string, action: () => void) : JSX.Element {
         return (
-            <MenuItem onClick={() => {
+            <MenuItem onClick={event => {
+                event.stopPropagation();
                 action();
                 handleClose();
             }}>
@@ -66,8 +73,8 @@ function PopOverMenu(props: Props) {
 
     return (
         <>
-            <IconButton onClick={handleClick} buttonRef={anchorRef} className={classes.button}>
-                <MoreVertIcon />
+            <IconButton onClick={handleClick} buttonRef={anchorRef} className={buttonClassName}>
+                {props.icon}
             </IconButton>
             <Popper open={open} anchorEl={anchorRef.current} placement={props.placement} className={classes.popper}>
                 <Paper>
@@ -75,7 +82,7 @@ function PopOverMenu(props: Props) {
                         <MenuList
                             variant="menu"
                             className={classes.menu}>
-                            {props.menuItems.map(m => buildMenuItemElement(m.title, m.action))}
+                            {props.menuItems.map(m => buildMenuItemElement(m.text, m.action))}
                         </MenuList>
                     </ClickAwayListener>
                 </Paper>

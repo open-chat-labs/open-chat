@@ -116,44 +116,6 @@ header {
     display: none;
 }
 
-.ddl-button {
-    color: #919191;
-    border-radius: 50%;
-    padding: 6px;
-    background-color: transparent;
-    width: 36px;
-    height: 36px;
-}
-
-.ddl-button-svg {
-    vertical-align: middle;
-    pointer-events: none;
-}
-
-.ddl-button:hover, .ddl-button:focus {
-    background-color: #e0e0e0;
-}
-
-.down-arrow {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    opacity: 0.85;
-    display: none;
-    z-index: 51;
-}
-
-.down-arrow svg {
-    color: #aaaaaa;
-    background-color: inherit;
-    width: 18px;
-    height: 18px;
-}
-
-.down-arrow-container:hover .down-arrow {
-    display: block;
-}
-
 .main-panel header {
     display: flex;
     flex-direction: row;

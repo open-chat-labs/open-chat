@@ -1,16 +1,17 @@
 import React from "react";
 import { ListItem, ListItemIcon, makeStyles, Theme, Typography } from "@material-ui/core";
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";
 import { UserItem } from "../domain/model/users";
-import DropDownMenu, { MenuButton } from "./DropDownMenu";
+import PopOverMenu, {MenuItem} from "./PopOverMenu";
 
 export default React.memo(UserListItem, shouldSkipRerender);
 
 type Props = {
     user: UserItem,
     handleSelectUser: Option<() => void>,
-    buttons: Option<MenuButton[]>
+    buttons: Option<MenuItem[]>
 }
 
 UserListItem.defaultProps = {
@@ -26,16 +27,29 @@ function shouldSkipRerender(p1: Props, p2: Props) {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
+    container: {
+        position: "relative",
+        "&:hover .show-on-hover": {
+            visibility: "visible"
+        }
+    },
     selectable: theme.selectableListItem,
     username: {
         paddingLeft: 10,
         width: "100%"
+    },
+    menu: {
+        position: "absolute",
+        padding: 6,
+        top: 3,
+        right: 3,
+        visibility: "hidden"
     }
 }));
 
 function UserListItem(props: Props) {
     const classes = useStyles();
-    let className = "user-list-item down-arrow-container";
+    let className = classes.container;
     if (props.handleSelectUser) {
         className += " " + classes.selectable;
     }
@@ -51,7 +65,7 @@ function UserListItem(props: Props) {
             </ListItemIcon>
             <Typography variant="body1" className={classes.username}>{props.user.username}</Typography>
             {props.buttons
-                ? <DropDownMenu menuId={props.user.userId} useDownArrow={true} buttons={props.buttons} />
+                ? <PopOverMenu icon={<ExpandMoreIcon />} menuItems={props.buttons} placement="bottom-end" className={classes.menu + " show-on-hover"} />
                 : null}
         </ListItem>
     );

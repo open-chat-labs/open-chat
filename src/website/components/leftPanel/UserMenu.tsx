@@ -1,5 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../PopOverMenu";
 
@@ -9,12 +10,12 @@ function UserMenu() {
     const dispatch = useDispatch();
 
     const menuItems: MenuItem[] = [];
-    menuItems.push({ title: "New chat", action: () => dispatch(changeLeftPanel(LeftPanelType.NewDirectChat)) });
-    menuItems.push({ title: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
-    menuItems.push({ title: "Profile", action: () => {} });
-    menuItems.push({ title: "Settings", action: () => {} });
-    menuItems.push({ title: "Logout", action: () => {} });
+    menuItems.push({ text: "New chat", action: () => dispatch(changeLeftPanel(LeftPanelType.NewDirectChat)) });
+    menuItems.push({ text: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
+    menuItems.push({ text: "Profile", action: () => {} });
+    menuItems.push({ text: "Settings", action: () => {} });
+    menuItems.push({ text: "Logout", action: () => {} });
 
-    return <PopOverMenu placement="bottom-start" menuItems={menuItems} />;
+    return <PopOverMenu icon={<MoreVertIcon />} placement="bottom-start" menuItems={menuItems} />;
 }
 
