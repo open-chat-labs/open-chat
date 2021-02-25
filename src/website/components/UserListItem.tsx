@@ -4,7 +4,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";
 import { UserItem } from "../domain/model/users";
-import PopOverMenu, {MenuItem} from "./PopOverMenu";
+import PopOverMenu, { MenuItem } from "./PopOverMenu";
 
 export default React.memo(UserListItem, shouldSkipRerender);
 

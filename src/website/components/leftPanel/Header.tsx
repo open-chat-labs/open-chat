@@ -13,10 +13,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     header: theme.header,
     title: {
         marginLeft: 24,
-    },
-    myDisplayName: {
-        fontSize: 20,
-        marginLeft: 24
+        whiteSpace: "nowrap"
     }
 }));
 
