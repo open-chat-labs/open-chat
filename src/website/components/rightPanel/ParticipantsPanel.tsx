@@ -5,7 +5,6 @@ import { RootState } from "../../reducers";
 import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
-import CreateGroupChatIcon from "../../assets/icons/createGroupChat.svg";
 import UserListItem from "../UserListItem";
 import { fromMyProfile, fromUserSummary, UserId, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
@@ -13,6 +12,7 @@ import gotoUser from "../../actions/chats/gotoUser";
 import removeParticipant from "../../actions/chats/removeParticipant";
 import Header from "./Header";
 import { MenuItem } from "../PopOverMenu";
+import CreateGroupChatIcon from "../CreateGroupChatIcon";
 
 export default React.memo(ParticipantsPanel);
 
@@ -64,7 +64,7 @@ function ParticipantsPanel() {
             <List disablePadding={true}>
                 <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.selectable} divider>
                     <ListItemIcon>
-                        <CreateGroupChatIcon />
+                        <CreateGroupChatIcon color="#9b9b9b" backgroundColour="#e0e0e0" />
                     </ListItemIcon>
                     <Typography variant="body1">Add participant</Typography>
                 </ListItem>
