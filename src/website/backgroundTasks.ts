@@ -17,6 +17,7 @@ import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
 import registerUser from "./actions/users/registerUser";
 import updateMinutesSinceLastOnline from "./actions/users/updateMinutesSinceLastOnline";
+import dataService from "./services/data/CachingDataService";
 
 import {
     APP_TITLE,
@@ -24,6 +25,7 @@ import {
     PAGE_SIZE,
     REFRESH_CHATS_INTERVAL_MS,
     REFRESH_P2P_CONNECTIONS_MS,
+    SCAVENGE_CACHE_INTERVAL_MS,
     UPDATE_USERS_INTERVAL_MS
 } from "./constants";
 
@@ -134,4 +136,14 @@ export function setupBackgroundTasks() {
         const taskRunner = RecurringTaskRunner.startNew(RtcConnectionsHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
         return () => taskRunner.stop();
     }, [usersState.me?.userId]);
+
+    useEffect(() => {
+        const scavengeCache: () => Promise<void> = async () => {
+            await dataService.scavengeCache();
+            //console.log(await navigator.storage.estimate());
+        };
+
+        const taskRunner = RecurringTaskRunner.startNew(scavengeCache, SCAVENGE_CACHE_INTERVAL_MS, true);
+        return () => taskRunner.stop();
+    }, []);
 }

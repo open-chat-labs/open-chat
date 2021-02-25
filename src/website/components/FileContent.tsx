@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { FileContent as File } from "../domain/model/messages";
-import dataService from "../services/data/service";
+import dataService, { DataSource } from "../services/data/CachingDataService";
 import formatFileSize from "../formatters/fileSize";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 
@@ -45,7 +45,13 @@ function FileContent(props : Props): JSX.Element {
 
         // Get the file from the IC
         downloading = true;
-        const result = await dataService.getData(content.id, content.size, content.chunkSize);
+
+        const result = await dataService.getData(
+            DataSource.FileMessage, 
+            content.id, 
+            content.size, 
+            content.chunkSize);
+
         downloading = false;
         if (result.kind !== "success") {
             return;

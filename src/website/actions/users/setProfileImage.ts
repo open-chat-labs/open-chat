@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import { UserId } from "../../domain/model/users";
-import dataService from "../../services/data/service";
+import dataService, { DataSource } from "../../services/data/CachingDataService";
 import usersService from "../../services/userMgmt/service";
 import { SetProfileImageResponse } from "../../services/userMgmt/setProfileImage";
 import { dataToBlobUrl } from "../../utils/blobFunctions";
@@ -16,7 +16,7 @@ export default function(userId: UserId, data: Uint8Array) {
         const imageId = uuidv1().toString();
 
         // Start uploading the image data
-        let putDataTask = dataService.putData(imageId, data, true);
+        let putDataTask = dataService.putData(DataSource.Avatar, imageId, data, true);
 
         const blobUrl = dataToBlobUrl(data, null);
 

@@ -5,7 +5,7 @@ import { Chat, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { LocalMessage, MessageContent, ReplyContext, SendMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
-import dataService from "../../services/data/service";
+import dataService, { DataSource } from "../../services/data/CachingDataService";
 import { dataToBlobUrl } from "../../utils/blobFunctions";
 import {
     CHUNK_SIZE_BYTES,
@@ -32,7 +32,10 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
         // Start uploading the media data
         let uploadContentTask: Option<Promise<boolean>> = null;
         if ("id" in content && "data" in sendMessageContent) {
-            uploadContentTask = dataService.putData(content.id, sendMessageContent.data);
+            uploadContentTask = dataService.putData(
+                sendMessageContent.kind === "media" ? DataSource.MediaMessage : DataSource.FileMessage, 
+                content.id, 
+                sendMessageContent.data);
         }
 
         // Dispatch the message requested event - this will put the message in the chat
