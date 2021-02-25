@@ -40,8 +40,8 @@ function DropDownMenu(props: Props) {
 
     return ( 
         <div className="ddl">
-            <button onClick={e => onClickToggler(e)} className={"ddl-button hide-on-click-ignore" + (props.useDownArrow === true ? " down-arrow" : "")}>
-                {props.useDownArrow === true ? <DownArrow className="ddl-button-svg" /> : <DropdownMenuIcon className="ddl-button-svg" />}
+            <button onClick={e => onClickToggler(e)} className={"ddl-button hide-on-click-ignore" + (props.useDownArrow ? " down-arrow" : "")}>
+                {props.useDownArrow ? <DownArrow className="ddl-button-svg" /> : <DropdownMenuIcon className="ddl-button-svg" />}
             </button>
             <div id={menuContentId} className="ddl-content hide-on-click-outside hide">
                 {props.buttons.map(button => <a href="#" onClick={e => onClickMenuItem(e, button.action)}>{button.text}</a>)}
