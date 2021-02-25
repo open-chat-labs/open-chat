@@ -2,6 +2,7 @@ export const APP_TITLE = "Open Chat";
 
 export const PAGE_SIZE = 20;
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
+export const MAX_CACHE_OBJECT_SIZE_BYTES = 1024 * 1024 * 2; // 2MB
 export const DEFAULT_UPDATED_DATE = new Date(2000, 1, 1);
 
 export const MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS = 30000; // 30 seconds

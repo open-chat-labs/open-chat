@@ -4,8 +4,8 @@ import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
 import { Option } from "../domain/model/common";
+import dataService, { GetDataResponse } from "../services/data/service";
 import { UserId } from "../domain/model/users";
-import getChunk, { GetChunkResponse } from "../services/data/getChunk";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 
 type Props = {
@@ -58,7 +58,7 @@ function UserAvatar(props: Props) : JSX.Element {
         } else if (!props.blobUrl && !isLoading.current) {
             // Start loading the image from the IC and once loaded set the image src
             isLoading.current = true;
-            getChunk(props.imageId, 0).then((res: GetChunkResponse) =>  {
+            dataService.getData(props.imageId).then((res: GetDataResponse) => {
                 isLoading.current = false;
                 if (res.kind !== "success") {
                     return;
@@ -110,7 +110,7 @@ function UserAvatar(props: Props) : JSX.Element {
         );
     }
 
-    function setInitialSrc(props: Props): Option<string> {
+    function setInitialSrc(props: Props) : Option<string> {
         return props.userId && !props.imageId 
             ? buildIdenticonUrl(props.userId) 
             : null;

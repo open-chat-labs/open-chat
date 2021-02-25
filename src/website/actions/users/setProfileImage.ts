@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import { UserId } from "../../domain/model/users";
-import putChunk from "../../services/data/putChunk";
+import dataService from "../../services/data/service";
 import usersService from "../../services/userMgmt/service";
 import { SetProfileImageResponse } from "../../services/userMgmt/setProfileImage";
 import { dataToBlobUrl } from "../../utils/blobFunctions";
@@ -16,7 +16,7 @@ export default function(userId: UserId, data: Uint8Array) {
         const imageId = uuidv1().toString();
 
         // Start uploading the image data
-        let putDataTask = putChunk(imageId, 0, data);
+        let putDataTask = dataService.putData(imageId, data, true);
 
         const blobUrl = dataToBlobUrl(data, null);
 
@@ -33,8 +33,8 @@ export default function(userId: UserId, data: Uint8Array) {
         dispatch(requestEvent);
 
         // Wait for the media data to finish uploading
-        const res = await putDataTask;
-        if (res.kind !== "success") {                
+        const succeeded = await putDataTask;
+        if (!succeeded) {                
             const outcomeEvent: SetProfileImageDataUploadFailedEvent = { 
                 type: SET_PROFILE_IMAGE_DATA_UPLOAD_FAILED,
                 payload: {
