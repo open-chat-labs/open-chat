@@ -4,7 +4,7 @@ import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
 import { Option } from "../domain/model/common";
-import dataService, { GetDataResponse } from "../services/data/service";
+import dataService, { DataSource, GetDataResponse } from "../services/data/CachingDataService";
 import { UserId } from "../domain/model/users";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 
@@ -58,17 +58,18 @@ function UserAvatar(props: Props) : JSX.Element {
         } else if (!props.blobUrl && !isLoading.current) {
             // Start loading the image from the IC and once loaded set the image src
             isLoading.current = true;
-            dataService.getData(props.imageId).then((res: GetDataResponse) => {
-                isLoading.current = false;
-                if (res.kind !== "success") {
-                    return;
-                }
-                if (!unmounted.current) {
-                    const blobUrl = dataToBlobUrl(res.data, null);
-                    blobsToRevoke.current.push(blobUrl);
-                    setSrc(blobUrl);
-                }
-            });
+            dataService.getData(DataSource.Avatar, props.imageId)
+                .then((res: GetDataResponse) => {
+                    isLoading.current = false;
+                    if (res.kind !== "success") { 
+                        return; 
+                    }
+                    if (!unmounted.current) {
+                        const blobUrl = dataToBlobUrl(res.data, null);
+                        blobsToRevoke.current.push(blobUrl);
+                        setSrc(blobUrl);
+                    }
+                });            
         }
     }, [props.userId, props.imageId]);
     

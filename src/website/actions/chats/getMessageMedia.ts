@@ -1,6 +1,6 @@
 import { Dispatch } from "react";
-import { ChatId } from "src/website/domain/model/chats";
-import dataService from "../../services/data/service";
+import { ChatId } from "../../domain/model/chats";
+import dataService, { DataSource } from "../../services/data/CachingDataService";
 
 export const GET_MEDIA_REQUESTED = "GET_MEDIA_REQUESTED";
 export const GET_MEDIA_SUCCEEDED = "GET_MEDIA_SUCCEEDED";
@@ -21,7 +21,11 @@ export default function(chatId: ChatId, messageId: number, key: string, totalByt
 
         dispatch(requestEvent);
 
-        const response = await dataService.getData(key, totalBytes, chunkSize);
+        const response = await dataService.getData(
+            DataSource.MediaMessage, 
+            key, 
+            totalBytes, 
+            chunkSize);
 
         let outcomeEvent;
         if (response.kind === "success") {

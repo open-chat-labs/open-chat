@@ -9,6 +9,7 @@ export const MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS = 30000; // 30 seconds
 export const REFRESH_CHATS_INTERVAL_MS = 1000; // 1 second
 export const REFRESH_P2P_CONNECTIONS_MS = 1000; // 1 second
 export const UPDATE_USERS_INTERVAL_MS = 30000; // 30 seconds
+export const SCAVENGE_CACHE_INTERVAL_MS = 60000; // 1 minute
 
 export const CONFIRMED_DIRECT_CHAT = "cd";
 export const CONFIRMED_GROUP_CHAT = "cg";
