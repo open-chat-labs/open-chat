@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Grid, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { RootState } from "../../reducers";
 import UserAvatar from "../UserAvatar";
@@ -20,13 +20,16 @@ import LastOnline from "../LastOnline";
 export default React.memo(Header);
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: theme.header,
+    header: {
+        ...theme.header,
+        backgroundColor: theme.customColors.headerBackgroundColor
+    },
     titles: {
         lineHeight: "normal",
         padding: "0 18px"
     },
     subtitle: {
-        color: fade(theme.palette.text.primary, 0.6)
+        color: fade(theme.customColors.textColor, 0.6)
     }
 }));
 
@@ -34,6 +37,7 @@ function Header() {
     const me: Option<MyProfile> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+    const theme = useTheme();
 
     if (chat === null) {
         return <div></div>;
@@ -61,7 +65,8 @@ function Header() {
             userId={chat.them}
             imageId={imageId}
             isUserOnline={isOnline}
-            size="sm" />;
+            size="sm"
+            parentBackgroundColor={theme.customColors.headerBackgroundColor} />;
     } else {
         icon = <DefaultGroupChatIcon size="sm" />;
         chatName = chat.subject;

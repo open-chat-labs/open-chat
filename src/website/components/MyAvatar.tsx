@@ -7,7 +7,8 @@ import setProfileImage from "../actions/users/setProfileImage";
 export default React.memo(MyAvatar);
 
 type Props = {
-    size: "sm" | "md"
+    size: "sm" | "md",
+    parentBackgroundColor: string
 }
 
 function MyAvatar(props: Props) {
@@ -47,7 +48,8 @@ function MyAvatar(props: Props) {
                 userId={userImage?.userId ?? null}
                 imageId={userImage?.imageId ?? null}
                 blobUrl={userImage?.blobUrl ?? null}
-                size={props.size} />
+                size={props.size}
+                parentBackgroundColor={props.parentBackgroundColor} />
 
             {userExists ? <input
                 className="hide" 

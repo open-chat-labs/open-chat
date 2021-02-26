@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { ListItem, ListItemIcon, makeStyles, Theme, Typography } from "@material-ui/core";
+import { ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
 import { fade } from '@material-ui/core/styles/colorManipulator';
 
 import selectChat from "../actions/chats/selectChat";
@@ -68,13 +68,16 @@ export default React.memo(ChatListItem);
 function ChatListItem(props: Props) {
     const dispatch = useDispatch();
     const classes = useStyles(props);
+    const theme = useTheme();
+
     const icon = props.isGroup
         ? <DefaultGroupChatIcon size="md" />
         : <UserAvatar
             isUserOnline={props.userOnline}
             userId={props.userId}
             imageId={props.userImageId}
-            size="md" />;
+            size="md"
+            parentBackgroundColor={theme.customColors.sidePanelBackgroundColor} />;
 
     let snippet: JSX.Element;
     if (props.themTyping) {

@@ -10,7 +10,10 @@ type Props = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: theme.header,
+    header: {
+        ...theme.header,
+        backgroundColor: theme.customColors.headerBackgroundColor
+    },
     title: {
         marginLeft: 24,
         whiteSpace: "nowrap"

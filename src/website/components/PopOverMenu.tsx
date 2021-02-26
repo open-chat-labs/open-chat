@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, { useRef, useState } from "react";
 import {
     ClickAwayListener,
     IconButton,
@@ -32,7 +32,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         padding: 8
     },
     menu: {
-        color: fade(theme.palette.text.primary, 0.8),
+        color: fade(theme.customColors.textColor, 0.8),
+        backgroundColor: fade(theme.customColors.sidePanelBackgroundColor, 0.8),
         minWidth: 160
     },
     popper: {
@@ -50,7 +51,6 @@ function PopOverMenu(props: Props) {
     }
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-        event.stopPropagation();
         event.preventDefault();
         setOpen(!open);
     };
@@ -61,8 +61,7 @@ function PopOverMenu(props: Props) {
 
     function buildMenuItemElement(text: string, action: () => void) : JSX.Element {
         return (
-            <MenuItem onClick={event => {
-                event.stopPropagation();
+            <MenuItem onClick={_ => {
                 action();
                 handleClose();
             }}>
@@ -81,7 +80,7 @@ function PopOverMenu(props: Props) {
                     <ClickAwayListener onClickAway={handleClose}>
                         <MenuList
                             variant="menu"
-                            className={classes.menu}>
+                            className={classes.menu + " pop-over-menu"}>
                             {props.menuItems.map(m => buildMenuItemElement(m.text, m.action))}
                         </MenuList>
                     </ClickAwayListener>

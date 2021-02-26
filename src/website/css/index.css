@@ -23,11 +23,6 @@ img {
 
 body {
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
-    line-height: 1.5;
-    background-color: #41398b;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
 }
 
 button, input, optgroup, select, textarea {
@@ -50,11 +45,6 @@ button {
 a {
     text-decoration: none;
     color: #111111;
-}
-
-#app {
-    height: 100%;
-    width: 100%;
 }
 
 header {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTheme } from "@material-ui/core";
 import ChatList from "../ChatList";
 import Header from "./Header";
 import SearchResults from "../SearchResults";
@@ -16,14 +17,17 @@ export default React.memo(DefaultPanel);
 function DefaultPanel() {
     const [inputText, setInputText] = useState("");
     const myUsername = useSelector((state: RootState) => state.usersState.me?.username)!;
+    const theme = useTheme();
 
     const contentPanel = inputText.length
         ? <SearchResults searchTerm={inputText} clearSearchTerm={() => setInputText("")} />
         : <ChatList />;
 
+    const avatar = <MyAvatar size="sm" parentBackgroundColor={theme.customColors.headerBackgroundColor} />;
+
     return (
         <>
-            <Header leftIcon={<MyAvatar size="sm" />} title={myUsername} rightIcon={<UserMenu />} />
+            <Header leftIcon={avatar} title={myUsername} rightIcon={<UserMenu />} />
             <SearchBox id={SEARCH_BOX_ID} text={inputText} onChange={setInputText} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             {contentPanel}
         </>
