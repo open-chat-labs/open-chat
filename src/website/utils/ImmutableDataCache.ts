@@ -1,16 +1,19 @@
 import { CacheExpiration } from 'workbox-expiration';
 import { Option } from "../domain/model/common";
-import { MAX_CACHE_OBJECT_SIZE_BYTES } from "../constants";
+
+const DEFAULT_MAX_CACHE_OBJECT_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
 interface ImmutableDataCacheExpirationConfig {
     maxEntries?: number;
     maxAgeSeconds?: number;
+    maxObjectSizeBytes?: number
 }
 
 export class ImmutableDataCache {
 
     private _expirationManager: CacheExpiration;
     private _cacheName: string;
+    private _maxObjectSize: number;
 
     constructor(cacheName: string, config: ImmutableDataCacheExpirationConfig = {}) {
         this._cacheName = cacheName;
@@ -20,6 +23,7 @@ export class ImmutableDataCache {
                 maxAgeSeconds: config.maxAgeSeconds,
                 maxEntries: config.maxEntries
             });
+        this._maxObjectSize = config.maxObjectSizeBytes ?? DEFAULT_MAX_CACHE_OBJECT_SIZE_BYTES;
     }
 
     public async tryGet(key: string) : Promise<Option<Uint8Array>> {
@@ -46,7 +50,7 @@ export class ImmutableDataCache {
 
     public async put(key: string, data: Uint8Array) : Promise<boolean> {
         try {
-            if (data.length > MAX_CACHE_OBJECT_SIZE_BYTES) {
+            if (data.length > this._maxObjectSize) {
                 return false;
             }
 

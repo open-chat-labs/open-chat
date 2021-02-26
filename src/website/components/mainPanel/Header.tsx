@@ -20,10 +20,6 @@ import LastOnline from "../LastOnline";
 export default React.memo(Header);
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: {
-        ...theme.header,
-        backgroundColor: theme.customColors.headerBackgroundColor
-    },
     titles: {
         lineHeight: "normal",
         padding: "0 18px"
@@ -95,7 +91,7 @@ function Header() {
     const classes = useStyles();
 
     return (
-        <Grid container justify="space-between" className={classes.header} alignItems="center">
+        <Grid component="header" container justify="space-between" alignItems="center">
             <Grid item>
                 <Grid container alignItems="center">
                     <Grid item>

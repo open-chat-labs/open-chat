@@ -19,6 +19,12 @@ const useStyles = makeStyles((theme: Theme) => ({
             height: "100vh",
             width: "100vw",
             backgroundColor: theme.customColors.outerBackgroundColor
+        },
+        header: {
+            backgroundColor: theme.customColors.headerBackgroundColor,
+            height: 52,
+            flexShrink: 0,
+            padding: "0 15px"
         }
     },
     container: {

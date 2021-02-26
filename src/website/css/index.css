@@ -47,21 +47,9 @@ a {
     color: #111111;
 }
 
-header {
-    height: 52px;
-}
-
-.date,
-header .chat-summary .participants,
-header .chat-summary .them-typing,
-header .chat-summary .participants-typing {
+.date {
     font-size: 12px;
     color: #808080;
-}
-
-header {
-    padding: 6px 15px;
-    background-color: #ededed;
 }
 
 .user-menu-container {
@@ -104,36 +92,6 @@ header {
 
 .hide {
     display: none;
-}
-
-.main-panel header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.main-panel header .chat-summary {
-    padding: 0 18px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-}
-
-.main-panel header .chat-summary >div {
-    line-height: normal;
-}
-
-.main-panel header .chat-header-container {
-    display: flex;
-    flex-direction: row;
-    position: relative;
-}
-
-.main-panel header .chat-menu-container {
-}
-
-.main-panel .header-titles span {
-    line-height: normal;
 }
 
 .messages li .date {
