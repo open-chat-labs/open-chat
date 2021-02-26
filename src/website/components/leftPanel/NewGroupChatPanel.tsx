@@ -23,7 +23,7 @@ function NewGroupChatPanel() {
         dispatch(createGroupChat(text, []));
     }
 
-    const newChatIcon = <CreateGroupChatIcon color="#9b9b9b" backgroundColour="#e0e0e0" />;
+    const newChatIcon = <CreateGroupChatIcon size="sm" />;
 
     return (
         <>

@@ -1,5 +1,5 @@
 import React from "react";
-import { ListItem, ListItemIcon, makeStyles, Theme, Typography } from "@material-ui/core";
+import { ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";
@@ -28,8 +28,9 @@ function shouldSkipRerender(p1: Props, p2: Props) {
 
 const useStyles = makeStyles((theme: Theme) => ({
     container: {
+        backgroundColor: theme.customColors.sidePanelBackgroundColor,
         position: "relative",
-        "&:hover .show-on-hover": {
+        "&:hover .pop-over-menu-icon": {
             visibility: "visible"
         }
     },
@@ -47,25 +48,40 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
+const defaultOnClick: (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => void = _ => {};
+
 function UserListItem(props: Props) {
     const classes = useStyles();
+    const theme = useTheme();
+
     let className = classes.container;
+    let onClick = defaultOnClick;
     if (props.handleSelectUser) {
         className += " " + classes.selectable;
+        onClick = handleClick
+    }
+
+    function handleClick(event: React.MouseEvent<HTMLLIElement, MouseEvent>) {
+        const element = event.target as HTMLElement;
+        const clickedOnPopOver = element.closest(".pop-over-menu-icon, .pop-over-menu") !== null;
+        if (!clickedOnPopOver) {
+            props.handleSelectUser!();
+        }
     }
 
     return (
-        <ListItem onClick={_ => props.handleSelectUser ? props.handleSelectUser() : null} className={className} divider>
+        <ListItem onClick={onClick} className={className} divider>
             <ListItemIcon>
                 <UserAvatar
                     userId={props.user.username}
                     imageId={props.user.imageId}
                     isUserOnline={props.user.isOnline}
-                    size="md" />
+                    size="md"
+                    parentBackgroundColor={theme.customColors.sidePanelBackgroundColor} />
             </ListItemIcon>
             <Typography variant="body1" className={classes.username}>{props.user.username}</Typography>
             {props.buttons
-                ? <PopOverMenu icon={<ExpandMoreIcon />} menuItems={props.buttons} placement="bottom-end" className={classes.menu + " show-on-hover"} />
+                ? <PopOverMenu icon={<ExpandMoreIcon />} menuItems={props.buttons} placement="bottom-end" className={classes.menu + " pop-over-menu-icon"} />
                 : null}
         </ListItem>
     );

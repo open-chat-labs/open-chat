@@ -70,6 +70,5 @@
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true  /* Disallow inconsistently-cased references to the same file. */
   },
-  "include": ["src/website/**/*"],
-  "exclude": ["src/website/design/**/*"]
+  "include": ["src/website/**/*"]
 }

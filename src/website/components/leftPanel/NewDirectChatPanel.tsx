@@ -55,11 +55,9 @@ function NewDirectChatPanel() {
         document.getElementById(SEARCH_BOX_ID)?.focus();
     }, []);
 
-    const newChatIcon = <CreateGroupChatIcon color="#9b9b9b" backgroundColour="#e0e0e0" />;
-
     return (
         <>
-            <Header leftIcon={newChatIcon} title="Start a new chat" rightIcon={<CancelButton onClick={closePanel} />} />
+            <Header leftIcon={<CreateGroupChatIcon size="sm" />} title="Start a new chat" rightIcon={<CancelButton onClick={closePanel} />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem

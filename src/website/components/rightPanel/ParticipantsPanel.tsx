@@ -64,7 +64,7 @@ function ParticipantsPanel() {
             <List disablePadding={true}>
                 <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.selectable} divider>
                     <ListItemIcon>
-                        <CreateGroupChatIcon color="#9b9b9b" backgroundColour="#e0e0e0" />
+                        <CreateGroupChatIcon size="sm" />
                     </ListItemIcon>
                     <Typography variant="body1">Add participant</Typography>
                 </ListItem>

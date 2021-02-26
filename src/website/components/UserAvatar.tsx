@@ -13,7 +13,8 @@ type Props = {
     isUserOnline: boolean,
     userId: Option<UserId>,
     imageId: Option<string>,
-    blobUrl: Option<string>
+    blobUrl: Option<string>,
+    parentBackgroundColor: string
 }
 
 UserAvatar.defaultProps = {
@@ -24,15 +25,15 @@ export default React.memo(UserAvatar);
 
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     avatar: {
-        height: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size,
-        width: props => props.size === "md" ? theme.avatars.md.size : theme.avatars.sm.size
+        height: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm,
+        width: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm
     },
+    icon: theme.customColors.icon,
     userOnlineMarker: {
-        backgroundColor: "#32cd32",
-        color: "white",
-        boxShadow: "0 0 0 2px #ededed",
-        height: props => props.size === "md" ? theme.avatars.md.userOnlineMarkerSize : theme.avatars.sm.userOnlineMarkerSize,
-        width: props => props.size === "md" ? theme.avatars.md.userOnlineMarkerSize : theme.avatars.sm.userOnlineMarkerSize,
+        backgroundColor: theme.customColors.green,
+        boxShadow: props => "0 0 0 2px " + props.parentBackgroundColor,
+        height: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
+        width: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         borderRadius: "50%"
     }
 }));
@@ -105,7 +106,7 @@ function UserAvatar(props: Props) : JSX.Element {
         }
     } else {
         icon = (
-            <Avatar className={classes.avatar}>
+            <Avatar className={classes.avatar + " " + classes.icon}>
                 <UnknownUserAvatar />
             </Avatar>
         );

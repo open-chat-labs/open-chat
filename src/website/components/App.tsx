@@ -1,34 +1,40 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Container, Grid, makeStyles, Theme, useMediaQuery, useTheme } from "@material-ui/core";
+import { Container, Divider, Grid, makeStyles, Theme, useMediaQuery, useTheme } from "@material-ui/core";
 
-import { RootState } from "./reducers";
-import { setupBackgroundTasks } from "./backgroundTasks";
-import { Option } from "./domain/model/common";
-import { SidePanelState } from "./reducers/sidePanelReducer";
-import { RightPanelType } from "./actions/changeSidePanel";
-import LeftPanel from "./components/leftPanel/LeftPanel";
-import MainPanel from "./components/mainPanel/MainPanel";
-import RightPanel from "./components/rightPanel/RightPanel";
+import { RootState } from "../reducers";
+import { Option } from "../domain/model/common";
+import { SidePanelState } from "../reducers/sidePanelReducer";
+import { RightPanelType } from "../actions/changeSidePanel";
+import LeftPanel from "./leftPanel/LeftPanel";
+import MainPanel from "./mainPanel/MainPanel";
+import RightPanel from "./rightPanel/RightPanel";
+import { setupBackgroundTasks } from "../backgroundTasks";
 
 export default App;
 
 const useStyles = makeStyles((theme: Theme) => ({
+    "@global": {
+        body: {
+            height: "100vh",
+            width: "100vw",
+            backgroundColor: theme.customColors.outerBackgroundColor
+        }
+    },
     container: {
         padding: 24,
-        height: "100vh",
+        height: "100%",
         "&.no-padding": {
             padding: 0
         }
     },
     grid: {
         height: "100%",
-        overflow: "hidden"
+        overflow: "hidden",
+        backgroundColor: theme.customColors.sidePanelBackgroundColor
     },
     left: {
         height: "100%",
-        backgroundColor: "white",
-        borderRight: "1px solid #dddddd",
         width: "40%",
         "&.rightPanelActive": {
             width: "30%"
@@ -36,7 +42,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     main: {
         height: "100%",
-        backgroundColor: "#3dc5ee",
+        backgroundColor: theme.customColors.mainPanelBackgroundColor,
         width: "60%",
         "&.rightPanelActive": {
             width: "40%"
@@ -44,8 +50,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     right: {
         height: "100%",
-        backgroundColor: "white",
-        borderLeft: "1px solid #dddddd",
         width: "30%"
     }
 }));
@@ -66,14 +70,17 @@ function App() {
         }
 
         return (
-            <Grid
-                item
-                container
-                direction="column"
-                wrap="nowrap"
-                className={className}>
-                <LeftPanel type={sidePanelState.leftPanel} />
-            </Grid>
+            <>
+                <Grid
+                    item
+                    container
+                    direction="column"
+                    wrap="nowrap"
+                    className={className}>
+                    <LeftPanel type={sidePanelState.leftPanel} />
+                </Grid>
+                <Divider orientation="vertical" flexItem />
+            </>
         );
     }
 
@@ -94,16 +101,19 @@ function App() {
             </Grid>
         );
     }
-    
+
     function buildRightPanel(sidePanelState: SidePanelState): Option<JSX.Element>  {
         if (sidePanelState.rightPanel === RightPanelType.None) {
             return null;
         }
 
         return (
-            <Grid item className={classes.right}>
-                <RightPanel type={sidePanelState.rightPanel} />
-            </Grid>
+            <>
+                <Divider orientation="vertical" flexItem />
+                <Grid item className={classes.right}>
+                    <RightPanel type={sidePanelState.rightPanel} />
+                </Grid>
+            </>
         );
     }
 

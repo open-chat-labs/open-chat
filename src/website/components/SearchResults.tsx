@@ -28,7 +28,7 @@ type MessageMatch = {
 
 const useStyles = makeStyles((theme: Theme) => ({
     searchResults: {
-        overflow: "scroll"
+        overflow: "auto"
     },
     groupTitle: {
         padding: "4px 16px"

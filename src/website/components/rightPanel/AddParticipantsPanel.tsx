@@ -59,11 +59,9 @@ function AddParticipantsPanel() {
         document.getElementById(SEARCH_BOX_ID)?.focus();
     }, []);
 
-    const icon = <CreateGroupChatIcon color="#9b9b9b" backgroundColour="#e0e0e0" />;
-
     return (
         <>
-            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={icon} />
+            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon size="sm" />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem

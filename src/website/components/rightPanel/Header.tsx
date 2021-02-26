@@ -16,7 +16,10 @@ Header.defaultProps = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: theme.header,
+    header: {
+        ...theme.header,
+        backgroundColor: theme.customColors.headerBackgroundColor
+    },
     title: {
         padding: "0 16px"
     }
