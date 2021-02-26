@@ -7,6 +7,7 @@ import { Option } from "../domain/model/common";
 import dataService, { DataSource, GetDataResponse } from "../services/data/CachingDataService";
 import { UserId } from "../domain/model/users";
 import { dataToBlobUrl } from "../utils/blobFunctions";
+import CircularIcon from "./CircularIcon";
 
 type Props = {
     size: "sm" | "md",
@@ -105,11 +106,7 @@ function UserAvatar(props: Props) : JSX.Element {
             );
         }
     } else {
-        icon = (
-            <Avatar className={classes.avatar + " " + classes.icon}>
-                <UnknownUserAvatar />
-            </Avatar>
-        );
+        icon = <CircularIcon size={props.size} svg={<UnknownUserAvatar />} />;
     }
 
     function setInitialSrc(props: Props) : Option<string> {
