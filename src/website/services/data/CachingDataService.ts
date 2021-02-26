@@ -1,4 +1,4 @@
-import { DataCache } from "./DataCache";
+import { CacheManager } from "./CacheManager";
 import { DataService } from "./DataService";
 
 export enum DataSource {
@@ -8,11 +8,11 @@ export enum DataSource {
 }
 
 class CachingDataService {
-    private _cache: DataCache;
+    private _cache: CacheManager;
     private _service: DataService;
 
     constructor() {
-        this._cache = new DataCache();
+        this._cache = new CacheManager();
         this._service = new DataService();
     }
 

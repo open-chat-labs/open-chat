@@ -2,7 +2,7 @@ import { Option } from "../../domain/model/common";
 import { ImmutableDataCache } from "../../utils/ImmutableDataCache";
 import { DataSource } from "./CachingDataService";
 
-export class DataCache {
+export class CacheManager {
     private _caches: Map<DataSource, ImmutableDataCache> = new Map<DataSource, ImmutableDataCache>();
 
     constructor() {
