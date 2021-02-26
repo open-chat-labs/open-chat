@@ -1,6 +1,6 @@
 import React from "react";
 import GroupChatIconSvg from "../assets/icons/groupChatIcon.svg";
-import CircleIcon from "./CircleIcon";
+import CircleIcon from "./CircularIcon";
 
 export default React.memo(DefaultGroupChatIcon);
 

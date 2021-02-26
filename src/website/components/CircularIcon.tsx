@@ -1,7 +1,7 @@
 import React from "react";
 import { Avatar, makeStyles, Theme } from "@material-ui/core";
 
-export default React.memo(CircleIcon);
+export default React.memo(CircularIcon);
 
 type Props = {
     svg: JSX.Element,
@@ -20,7 +20,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     }
 }));
 
-function CircleIcon(props: Props) : JSX.Element {
+function CircularIcon(props: Props) : JSX.Element {
     const classes = useStyles(props);
 
     return (
