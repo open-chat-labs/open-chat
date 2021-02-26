@@ -1,6 +1,6 @@
 import React from "react";
 import CreateGroupChatIconSvg from "../assets/icons/createGroupChat.svg"
-import CircleIcon from "./CircularIcon";
+import CircularIcon from "./CircularIcon";
 
 export default CreateGroupChatIcon;
 
@@ -9,5 +9,5 @@ type Props = {
 }
 
 function CreateGroupChatIcon(props: Props) {
-    return <CircleIcon svg={<CreateGroupChatIconSvg />} size={props.size} />
+    return <CircularIcon svg={<CreateGroupChatIconSvg />} size={props.size} />
 }
