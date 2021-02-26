@@ -10,10 +10,6 @@ type Props = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: {
-        ...theme.header,
-        backgroundColor: theme.customColors.headerBackgroundColor
-    },
     title: {
         marginLeft: 24,
         whiteSpace: "nowrap"
@@ -25,7 +21,7 @@ function Header(props: Props) {
 
     return (
         <>
-            <Grid container justify="space-between" className={classes.header} alignItems="center">
+            <Grid component="header" container justify="space-between" alignItems="center">
                 <Grid item>
                     <Grid container alignItems="center">
                         <Grid item>

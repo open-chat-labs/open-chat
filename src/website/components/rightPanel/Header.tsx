@@ -16,10 +16,6 @@ Header.defaultProps = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    header: {
-        ...theme.header,
-        backgroundColor: theme.customColors.headerBackgroundColor
-    },
     title: {
         padding: "0 16px"
     }
@@ -33,7 +29,7 @@ function Header(props: Props) {
         : null
 
     return (
-        <Grid container justify="space-between" className={classes.header} alignItems="center">
+        <Grid component="header" container justify="space-between" alignItems="center">
             <Grid item>
                 <Grid container alignItems="center">
                     <Grid item>

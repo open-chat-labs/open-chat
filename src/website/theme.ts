@@ -27,11 +27,6 @@ interface ThemeExtensions {
         sm: number,
         md: number
     },
-    header: {
-        height: number,
-        flexShrink: number,
-        padding: string
-    },
     selectableListItem: {
         "&:hover": {
             backgroundColor: string,
@@ -103,11 +98,6 @@ const defaultOptions: ThemeOptions = {
     avatarSize: {
         sm: 40,
         md: 50
-    },
-    header: {
-        height: 52,
-        flexShrink: 0,
-        padding: "0 15px"
     },
     selectableListItem: {
         "&:hover": {
