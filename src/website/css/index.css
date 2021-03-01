@@ -88,50 +88,12 @@ a {
     display: none;
 }
 
-.messages li .date {
-    float: right;
-}
-
-.messages li .chats-message {
-    font-size: 14px;
-    color: #606060;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 450px;
-}
-
-.messages li:hover {
-    background-color: #f0f0f0;
-    cursor: pointer;
-}
-
-.detail {
-    padding: 14px 20px 0 20px;
-    flex: 1 1;
-    overflow:auto;
-    display: flex;
-    flex-direction: column;
-}
-
 .message.file.them .down-arrow {
     background-color: #e9e9e9;
 }
 
 .message.file.me .down-arrow {
     background-color: #ea4091;
-}
-
-.detail .them-typing,
-.detail .participants-typing {
-    font-size: 12px;
-}
-
-.detail .day-container {
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    padding-bottom: 14px;
 }
 
 .download-file > * {
@@ -180,7 +142,7 @@ a {
 }
 
 span.emoji {
-    display: inline-block;    
+    display: inline-block;
 }
 
 .message-input .emoji {

@@ -1,5 +1,7 @@
 import React, { Dispatch, useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../reducers";
 import * as chatFunctions from "../domain/model/chats";
 import { ChatId, ConfirmedChat } from "../domain/model/chats";
@@ -16,10 +18,24 @@ import { UserId } from "../domain/model/users";
 
 export default React.memo(MessagesList);
 
+const useStyles = makeStyles((theme: Theme) => ({
+    messagesList: {
+        padding: "14px 20px 0 20px",
+        flex: "1 1",
+        overflow: "auto",
+        display: "flex",
+        flexDirection: "column"
+    },
+    group: {
+
+    }
+}));
+
 function MessagesList() {
     const myUserId = useSelector((state: RootState) => state.usersState.me!.userId);
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+    const classes = useStyles();
 
     if (chat === null) {
         return <div></div>;
@@ -63,9 +79,9 @@ function MessagesList() {
             unreadMessageDetector={unreadMessageDetector} />);
     }
 
-    let className = "detail";
+    let className = classes.messagesList;
     if (isGroupChat) {
-        className += " group";
+        className += " " + classes.group;
     }
 
     const dispatch = useDispatch();
