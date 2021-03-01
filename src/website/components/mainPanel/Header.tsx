@@ -91,7 +91,7 @@ function Header() {
     const classes = useStyles();
 
     return (
-        <Grid component="header" container justify="space-between" alignItems="center">
+        <Grid component="header" container justifyContent="space-between" alignItems="center">
             <Grid item>
                 <Grid container alignItems="center">
                     <Grid item>

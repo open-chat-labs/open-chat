@@ -1,7 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
-import { fade } from '@material-ui/core/styles/colorManipulator';
+import { alpha, ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
 
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";
@@ -35,25 +34,25 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         width: "100%"
     },
     chatName: {
-        color: theme.palette.text.primary,
+        color: theme.customColors.textColor,
         visibility: props => props.name.length ? "visible" : "hidden"
     },
     latestMessage: {
-        color: fade(theme.palette.text.primary, 0.6),
+        color: alpha(theme.customColors.textColor, 0.6),
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
         maxWidth: 450
     },
     date: {
-        color: fade(theme.palette.text.primary, 0.6),
+        color: alpha(theme.customColors.textColor, 0.6),
         float: "right"
     },
     unreadCount: {
         fontSize: "0.75rem",
         float: "right",
-        backgroundColor: "#32cd32",
-        color: theme.palette.text.primary,
+        backgroundColor: theme.customColors.green.main,
+        color: theme.customColors.green.contrast,
         lineHeight: "20px",
         borderRadius: 10,
         textAlign: "center",

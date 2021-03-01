@@ -18,7 +18,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         body: {
             height: "100vh",
             width: "100vw",
-            backgroundColor: theme.customColors.outerBackgroundColor
+            backgroundColor: theme.customColors.outerBackgroundColor,
+            lineHeight: 1.5
         },
         header: {
             backgroundColor: theme.customColors.headerBackgroundColor,

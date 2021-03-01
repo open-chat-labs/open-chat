@@ -1,6 +1,8 @@
 import React from "react";
-import { buildEmojiSpan, containsEmoji } from "../domain/model/messages";
+import ReactDOMServer from 'react-dom/server';
 import { Typography, TypographyVariant } from "@material-ui/core";
+import { containsEmoji } from "../utils/emojiFunctions";
+import Emoji from "./Emoji";
 
 export default React.memo(TextContent);
 
@@ -11,7 +13,6 @@ export interface Props {
 }
 
 function TextContent(props : Props): JSX.Element {
-
     function markupText(text: string, linebreaks: boolean): string {
         // Wrap contiguous emoji chars in an "emoji span"
         let markup = "";
@@ -24,7 +25,7 @@ function TextContent(props : Props): JSX.Element {
                 emojis += c;
             } else {
                 if (emojis.length) {
-                    markup += buildEmojiSpan(emojis);
+                    markup += ReactDOMServer.renderToStaticMarkup(<Emoji text={emojis} />);
                     emojis = "";
                 }
                 markup += c;
@@ -32,7 +33,7 @@ function TextContent(props : Props): JSX.Element {
         }
 
         if (emojis.length) {
-            markup += buildEmojiSpan(emojis);
+            markup += ReactDOMServer.renderToStaticMarkup(<Emoji text={emojis} />);
         }
 
         if (linebreaks) {
@@ -48,6 +49,6 @@ function TextContent(props : Props): JSX.Element {
         props.insertLineBreaks !== undefined ? props.insertLineBreaks : true);
 
     return (
-        <Typography variant={props.variant} dangerouslySetInnerHTML={{ __html: markup }}></Typography>
+        <Typography variant={props.variant} dangerouslySetInnerHTML={{ __html: markup }} />
     );
 }

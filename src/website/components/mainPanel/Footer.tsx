@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from "react-redux";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
@@ -8,9 +9,10 @@ import SendButtonIcon from "../../assets/icons/sendButton.svg";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
 import EmojiPicker from "../EmojiPicker";
-import { buildEmojiSpan, containsEmoji } from "../../domain/model/messages";
+import { containsEmoji } from "../../utils/emojiFunctions";
 import SendCycles from "../SendCycles";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
+import Emoji from "../Emoji";
 
 export default React.memo(Footer);
 
@@ -83,7 +85,7 @@ function Footer() {
         restoreSelection();
 
         // Markup the text so it will appear correctly in the textbox and manually insert it
-        document.execCommand("insertHTML", false, buildEmojiSpan(text));
+        document.execCommand("insertHTML", false, ReactDOMServer.renderToStaticMarkup(<Emoji text={text} />));
 
         // Save the new selection range
         saveSelection();
@@ -159,7 +161,7 @@ function Footer() {
             if (insideEmojiSpan && !foundEmoji) {
                 textForPlainSpan += c;
             } else if (isEmoji) {
-                markup += buildEmojiSpan(c);
+                markup += ReactDOMServer.renderToStaticMarkup(<Emoji text={c} />);
             } else {
                 markup += c;
             }

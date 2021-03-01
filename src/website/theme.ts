@@ -19,7 +19,10 @@ interface CustomColors {
         backgroundColor: string
     },
     menuColor: string,
-    green: string
+    green: {
+        main: string,
+        contrast: string
+    }
 }
 
 interface ThemeExtensions {
@@ -36,9 +39,25 @@ interface ThemeExtensions {
     customColors: CustomColors
 }
 
-declare module '@material-ui/core/styles/createMuiTheme' {
+declare module "@material-ui/core/styles/createMuiTheme" {
     export interface Theme extends ThemeExtensions { }
     export interface ThemeOptions extends ThemeExtensions { }
+}
+
+declare module "@material-ui/core/styles" {
+    interface TypographyVariants {
+        smallest: React.CSSProperties;
+    }
+
+    interface TypographyVariantsOptions {
+        smallest?: React.CSSProperties;
+    }
+}
+
+declare module "@material-ui/core/Typography" {
+    interface TypographyPropsVariantOverrides {
+        smallest: true;
+    }
 }
 
 const defaultColours: CustomColors = {
@@ -60,17 +79,35 @@ const defaultColours: CustomColors = {
         backgroundColor: "#ffffff"
     },
     menuColor: "#ffffff",
-    green: "#32cd32"
+    green: {
+        main: "#32cd32",
+        contrast: "#ffffff"
+    }
 };
 
 const defaultOptions: ThemeOptions = {
     typography: {
-        fontFamily: "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\""
+        fontFamily: "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\"",
+        h6: {
+            fontWeight: "normal"
+        },
+        smallest: {
+            fontSize: "0.688rem"
+        }
     },
-    overrides: {
+    components: {
+        MuiButtonBase: {
+            defaultProps: {
+                disableRipple: true
+            }
+        },
         MuiTypography: {
-            h6: {
-                fontWeight: "normal"
+            defaultProps: {
+                variantMapping: {
+                    body1: "span",
+                    body2: "span",
+                    caption: "span"
+                }
             }
         }
     },
@@ -81,18 +118,6 @@ const defaultOptions: ThemeOptions = {
             md: 960,
             lg: 1400,
             xl: 1920
-        }
-    },
-    props: {
-        MuiButtonBase: {
-            disableRipple: true
-        },
-        MuiTypography: {
-            variantMapping: {
-                body1: "span",
-                body2: "span",
-                caption: "span"
-            }
         }
     },
     avatarSize: {

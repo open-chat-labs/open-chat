@@ -31,7 +31,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     },
     icon: theme.customColors.icon,
     userOnlineMarker: {
-        backgroundColor: theme.customColors.green,
+        backgroundColor: theme.customColors.green.main,
         boxShadow: props => "0 0 0 2px " + props.parentBackgroundColor,
         height: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         width: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
@@ -96,7 +96,7 @@ function UserAvatar(props: Props) : JSX.Element {
                 <Badge
                     classes={{ root: classes.avatar, badge: classes.userOnlineMarker }}
                     variant="dot"
-                    overlap="circle"
+                    overlap="circular"
                     anchorOrigin={{
                         vertical: "bottom",
                         horizontal: "right",
