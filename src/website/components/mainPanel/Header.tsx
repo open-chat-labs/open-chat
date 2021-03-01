@@ -1,7 +1,11 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Grid, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
-import { fade } from "@material-ui/core/styles/colorManipulator";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 import { RootState } from "../../reducers";
 import UserAvatar from "../UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
@@ -25,7 +29,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         padding: "0 18px"
     },
     subtitle: {
-        color: fade(theme.customColors.textColor, 0.6)
+        color: alpha(theme.customColors.textColor, 0.6)
     }
 }));
 

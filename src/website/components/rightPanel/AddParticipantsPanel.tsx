@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { List } from "@material-ui/core";
+import List from "@material-ui/core/List";
 
 import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";

@@ -1,7 +1,10 @@
 import React, { useLayoutEffect, useState } from "react";
 import Tick from "../assets/icons/tick2.svg";
-import { IconButton, makeStyles, Theme, Typography } from "@material-ui/core";
-import { fade } from "@material-ui/core/styles/colorManipulator";
+import IconButton from "@material-ui/core/IconButton";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 
 export default React.memo(NameInput);
 
@@ -46,7 +49,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         backgroundColor: "#32cd32",
         boxShadow: "0 1px 3px rgba(80,80,80,0.4)",
         "&:hover": {
-            backgroundColor: fade("#32cd32", 0.8)
+            backgroundColor: alpha("#32cd32", 0.8)
         }
     },
     buttonSvg: {

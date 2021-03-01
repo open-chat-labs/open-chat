@@ -1,6 +1,10 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { alpha, ListItem, makeStyles, Theme, Typography } from "@material-ui/core";
+import ListItem from "@material-ui/core/ListItem";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { ChatId } from "../domain/model/chats";
 import * as chatFunctions from "../domain/model/chats";
 import * as stateFunctions from "../domain/stateFunctions";

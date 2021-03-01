@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Box from "@material-ui/core/Box";
+import Divider from "@material-ui/core/Divider";
+import Grid from "@material-ui/core/Grid";
+import List from "@material-ui/core/List";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../reducers";
 import * as stateFunctions from "../domain/stateFunctions";
 import { Chat, ChatId } from "../domain/model/chats";
@@ -14,7 +20,6 @@ import MessageSearchMatch from "./MessageSearchMatch";
 import UserListItem from "./UserListItem";
 import chatsService from "../services/chats/service";
 import { SearchAllMessagesResponse } from "../services/chats/searchAllMessages";
-import { Box, Divider, Grid, List, makeStyles, Theme } from "@material-ui/core";
 
 type Props = {
     searchTerm: string,

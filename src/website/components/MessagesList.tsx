@@ -5,7 +5,7 @@ import * as chatFunctions from "../domain/model/chats";
 import { ChatId, ConfirmedChat } from "../domain/model/chats";
 import { Option } from "../domain/model/common";
 import { Message, RemoteMessage } from "../domain/model/messages";
-import { CONFIRMED_DIRECT_CHAT, PAGE_SIZE, UNCONFIRMED_GROUP_CHAT } from "../constants";
+import { PAGE_SIZE } from "../constants";
 import getMessages from "../actions/chats/getMessages";
 import { areOnSameDay } from "../utils/dateFunctions";
 import { getSelectedChat } from "../domain/stateFunctions";

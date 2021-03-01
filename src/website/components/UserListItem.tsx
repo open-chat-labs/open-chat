@@ -1,5 +1,10 @@
 import React from "react";
-import { ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import Typography from "@material-ui/core/Typography";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";

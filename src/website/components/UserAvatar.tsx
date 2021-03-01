@@ -1,5 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Avatar, Badge, makeStyles, Theme } from "@material-ui/core";
+import Avatar from "@material-ui/core/Avatar";
+import Badge from "@material-ui/core/Badge";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";

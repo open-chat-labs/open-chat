@@ -1,6 +1,12 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { alpha, ListItem, ListItemIcon, makeStyles, Theme, Typography, useTheme } from "@material-ui/core";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";

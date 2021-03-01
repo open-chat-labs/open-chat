@@ -1,5 +1,6 @@
 import React from "react";
-import { Typography, TypographyVariant } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import { Variant as TypographyVariant } from "@material-ui/core/styles/createTypography";
 
 type Props = {
     variant: TypographyVariant,

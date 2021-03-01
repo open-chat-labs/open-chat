@@ -1,5 +1,6 @@
 import React from "react";
-import { makeStyles, Theme } from "@material-ui/core";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 
 type Props = {
     text: string

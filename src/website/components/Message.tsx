@@ -1,6 +1,9 @@
 import React, { CSSProperties } from "react";
 import { useDispatch } from "react-redux";
-import { alpha, makeStyles, Theme, Typography } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import gotoUser from "../actions/chats/gotoUser";
 import Tick from "../assets/icons/tick.svg";
 import DoubleTick from "../assets/icons/doubleTick.svg";

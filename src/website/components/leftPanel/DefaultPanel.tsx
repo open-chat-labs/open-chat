@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTheme } from "@material-ui/core";
+import useTheme from "@material-ui/core/styles/useTheme";
 import ChatList from "../ChatList";
 import Header from "./Header";
 import SearchResults from "../SearchResults";

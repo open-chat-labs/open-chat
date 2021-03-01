@@ -1,5 +1,7 @@
 import React from "react";
-import { alpha, makeStyles, Theme } from "@material-ui/core";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { FileContent as File } from "../domain/model/messages";
 import dataService, { DataSource } from "../services/data/CachingDataService";
 import formatFileSize from "../formatters/fileSize";

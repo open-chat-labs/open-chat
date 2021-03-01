@@ -1,4 +1,4 @@
-import { createMuiTheme, Theme, ThemeOptions } from "@material-ui/core";
+import createMuiTheme, { Theme, ThemeOptions } from "@material-ui/core/styles/createMuiTheme";
 
 interface CustomColors {
     outerBackgroundColor: string,

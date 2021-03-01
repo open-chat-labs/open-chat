@@ -1,5 +1,8 @@
 import React from "react";
-import { Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import CancelButton from "../CancelButton";
 import { Option } from "../../domain/model/common";
 

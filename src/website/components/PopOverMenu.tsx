@@ -1,17 +1,14 @@
 import React, { useRef, useState } from "react";
-import {
-    ClickAwayListener,
-    IconButton,
-    makeStyles,
-    MenuItem,
-    MenuList,
-    Paper,
-    Popper,
-    PopperPlacementType,
-    Theme,
-    Typography
-} from "@material-ui/core";
-import { fade } from "@material-ui/core/styles/colorManipulator";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
+import IconButton from "@material-ui/core/IconButton";
+import MenuItem from "@material-ui/core/MenuItem";
+import MenuList from "@material-ui/core/MenuList";
+import Paper from "@material-ui/core/Paper";
+import Popper, { PopperPlacementType } from "@material-ui/core/Popper";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 
 export default React.memo(PopOverMenu);
 
@@ -32,8 +29,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         padding: 8
     },
     menu: {
-        color: fade(theme.customColors.textColor, 0.8),
-        backgroundColor: fade(theme.customColors.sidePanelBackgroundColor, 0.8),
+        color: alpha(theme.customColors.textColor, 0.8),
+        backgroundColor: alpha(theme.customColors.sidePanelBackgroundColor, 0.8),
         minWidth: 160
     },
     popper: {

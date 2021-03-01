@@ -1,6 +1,7 @@
 import React from "react";
 import { Provider } from "react-redux";
-import { MuiThemeProvider, StyledEngineProvider } from "@material-ui/core";
+import MuiThemeProvider from "@material-ui/core/styles/ThemeProvider";
+import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 
 import App from "./components/App";
 import store from "./store";
