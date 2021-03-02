@@ -47,11 +47,6 @@ a {
     color: #111111;
 }
 
-.date {
-    font-size: 12px;
-    color: #808080;
-}
-
 .ddl {
     position: relative;
     display: inline-block;
@@ -80,14 +75,6 @@ a {
     background-color: #f0f0f0;
 }
 
-.show {
-    display: block;
-}
-
-.hide {
-    display: none;
-}
-
 .message.file.them .down-arrow {
     background-color: #e9e9e9;
 }
@@ -98,39 +85,6 @@ a {
 
 .download-file > * {
     flex: 0 0 auto;
-}
-
-.main-panel footer {
-    display: flex;
-    padding: 11px 16px;
-    color: #9b9b9b;
-    background-color: #f0f0f0;
-    align-items: center;
-}
-
-.message-input-container {
-    flex: 1 1 auto;    
-    display: flex;
-    border-radius: 25px;
-    padding: 8px 15px 10px 15px;
-    background-color: white;
-}
-
-.message-input {
-    border: 0;
-    outline: none;
-    flex: 1 1 auto;    
-    font-size: 15px;
-    line-height: 20px;
-    font-weight: 400;
-    color: #111111;
-    white-space: pre-wrap;
-    overflow-x: hidden;
-    overflow-y: auto;
-    z-index: 1;
-    min-height: 20px;
-    max-height: 100px;    
-    user-select: text;
 }
 
 [contenteditable][placeholder]:empty:before {
@@ -162,141 +116,4 @@ span.emoji {
     span.emoji {
         margin-right: 3px;
     }
-}
-
-.main-panel footer button.send {
-    outline: 0;
-    height: 25px;
-    border: 0;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    align-self: center;
-    background-color: transparent;
-    margin-left: 20px;
-    color: #9b9b9b;
-}
-
-.main-panel footer .buttons {
-    display: flex;
-}
-
-.main-panel footer .button {
-    border-radius: 50%;
-    padding: 4px;
-    cursor: pointer;
-}
-
-.main-panel footer .smiley {
-    margin-right: 10px;
-}
-
-.main-panel footer .attach {
-    margin-right: 5px;
-}
-
-.main-panel footer .dollar {
-    margin-right: 10px;
-    width: 32px;
-    height: 32px;
-}
-
-.send-cycles-container {
-    position: relative;
-    color: #111111;
-}
-
-.send-cycles-dialog {
-    position: absolute;
-    z-index: 100;
-    bottom: 54px;
-    left: -88px;
-}
-
-.send-cycles-dialog > div {
-    background-color: white;
-    padding: 6px;
-    min-width: 352px;
-    border-radius: 5px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    border: 1px solid #d9d9d9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.send-cycles-links {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 40px;
-}
-
-.send-cycles-links > a {
-    font-size: 12px;
-    text-decoration: underline;
-}
-
-.send-cycles-dialog .cycles-balance  {
-    margin-bottom: 40px;
-}
-
-.send-cycles-dialog .button-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.send-cycles-dialog .button-container button {
-    padding: 6px 20px;
-    border-radius: 5px;
-}
-
-.send-cycles-dialog input {
-    width: 200px;
-    margin-left: 11px;
-}
-
-.send-cycles-dialog .cycles-container {
-    margin-bottom: 4px;
-}
-
-.send-cycles-dialog .pounds-container {
-    margin-top: 4px;
-    margin-bottom: 40px;
-}
-
-.send-cycles-dialog .cycles-recipient {
-    font-size: 12px;
-}
-
-.main-panel footer .button svg {
-    vertical-align: middle;
-    pointer-events: none;
-}
-
-.main-panel footer .buttons .button:hover,
-.main-panel footer .buttons .button:focus {
-    background-color: #e0e0e0;
-}
-
-footer button svg {
-    margin: 0;
-    padding: 0;
-}
-
-.emojis-container {
-    z-index: 100;
-    position: relative;
-}
-
-.emoji-mart-preview {
-  /* display: none; */
-}
-
-.emoji-mart {
-    position: absolute;
-    bottom: 54px;
-    left: -49px;
 }
