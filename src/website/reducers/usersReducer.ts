@@ -71,15 +71,21 @@ export type Event =
     UpdateMinutesSinceLastOnline;
 
 export type UsersState = {
-    mustRegisterAsNewUser: boolean,
+    userRegistrationStatus: UserRegistrationStatus,
     me: Option<MyProfile>,
     unknownUserIds: UserId[],
     userDictionary: any,
     usersSyncedUpTo: Option<Timestamp>
 }
 
+export enum UserRegistrationStatus {
+    Unknown,
+    NotRegistered,
+    Registered
+}
+
 const initialState: UsersState = {
-    mustRegisterAsNewUser: false,
+    userRegistrationStatus: UserRegistrationStatus.Unknown,
     me: null,
     unknownUserIds: [],
     userDictionary: {},
@@ -112,13 +118,13 @@ export default produce((state: UsersState, event: Event) => {
         }
 
         case GET_CURRENT_USER_SUCCEEDED: {
-            state.mustRegisterAsNewUser = false;
+            state.userRegistrationStatus = UserRegistrationStatus.Registered;
             state.me = {...event.payload, imageBlobUrl: state.me?.imageBlobUrl ?? null};
             break;
         }
 
         case GET_CURRENT_USER_FAILED: {
-            state.mustRegisterAsNewUser = true;
+            state.userRegistrationStatus = UserRegistrationStatus.NotRegistered;
             state.me = null;
             break;
         }
@@ -153,21 +159,18 @@ export default produce((state: UsersState, event: Event) => {
         }
 
         case REGISTER_USER_SUCCEEDED: {
-            alert("Hi " + event.payload.username + "!");
-            state.mustRegisterAsNewUser = false;
+            state.userRegistrationStatus = UserRegistrationStatus.Registered;
             state.me = event.payload;
             break;
         }
 
         case REGISTER_USER_FAILED_USER_EXISTS: {
-            alert("You already have a user account");
-            state.mustRegisterAsNewUser = false;
+            state.userRegistrationStatus = UserRegistrationStatus.Registered;
             break;
         }
 
         case REGISTER_USER_FAILED_USERNAME_EXISTS: {
-            alert("Username taken");
-            state.mustRegisterAsNewUser = true;
+            state.userRegistrationStatus = UserRegistrationStatus.NotRegistered;
             break;
         }
 

@@ -9,16 +9,23 @@ import makeStyles from "@material-ui/styles/makeStyles";
 export default React.memo(NameInput);
 
 type Props = {
+    className?: string,
     onSubmit: (text: string) => void,
     defaultPlaceholderText: string,
+    minLength: number,
     maxLength: number
 }
 
+NameInput.defaultProps = {
+    minLength: 1
+};
+
 const useStyles = makeStyles((theme: Theme) => ({
     nameInput: {
-        marginTop: 60,
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        maxWidth: 400,
+        margin: "auto"
     },
     textBoxContainer: {
         marginLeft: 30,
@@ -50,6 +57,9 @@ const useStyles = makeStyles((theme: Theme) => ({
         boxShadow: "0 1px 3px rgba(80,80,80,0.4)",
         "&:hover": {
             backgroundColor: alpha("#32cd32", 0.8)
+        },
+        "&:disabled": {
+            visibility: "hidden"
         }
     },
     buttonSvg: {
@@ -88,8 +98,10 @@ function NameInput(props: Props) {
         document.getElementById("nameInput")?.focus();
     }, []);    
 
+    const className = classes.nameInput + (props.className ? " " + classes.nameInput : "");
+
     return (
-        <div className={classes.nameInput}>
+        <div className={className}>
             <div className={classes.textBoxContainer}>
                 <input
                     id="nameInput"
@@ -99,15 +111,14 @@ function NameInput(props: Props) {
                     onChange={e => handleInputChange(e.target.value)}
                     placeholder={props.defaultPlaceholderText}
                     onKeyDown={handleKeyPress}
+                    minLength={props.minLength}
                     maxLength={props.maxLength} />
 
                 <Typography variant="body2" className={classes.charsRemaining}>{remainingCharCount}</Typography>
             </div>
-            {text.length > 0
-                ? <IconButton onClick={_ => handleSubmit()} className={classes.submitButton}>
-                    <Tick className={classes.buttonSvg} />
-                </IconButton>
-                : null}
+            <IconButton disabled={text.length < props.minLength} onClick={_ => handleSubmit()} className={classes.submitButton}>
+                <Tick className={classes.buttonSvg} />
+            </IconButton>
         </div>
     );
 }
