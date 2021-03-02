@@ -1,8 +1,8 @@
-import canister from "ic:canisters/user_mgmt";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(imageId: string) : Promise<SetProfileImageResponse> {
-
-    let response = await canister.set_profile_image(imageId);
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    const response = await client.set_profile_image(imageId);
 
     if (response.hasOwnProperty("Success")) {
         return SetProfileImageResponse.Success;

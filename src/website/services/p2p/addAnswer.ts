@@ -1,8 +1,9 @@
-import canister from "ic:canisters/p2p";
 import { UserId } from "../../domain/model/users";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(request: AddAnswerRequest) : Promise<AddAnswerResponse> {
+    const client = CanisterClientFactory.current!.p2pClient;
     const candidRequest = {
         id: request.id,
         offer_id: request.offerId,
@@ -10,8 +11,9 @@ export default async function(request: AddAnswerRequest) : Promise<AddAnswerResp
         connection_string: request.connectionString,
         ice_candidates: request.iceCandidates
     };
+    await client.add_answer(candidRequest);
 
-    await canister.add_answer(candidRequest);
+    //TODO
 
     return {
         kind: "success"

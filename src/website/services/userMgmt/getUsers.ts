@@ -1,18 +1,18 @@
-import canister from "ic:canisters/user_mgmt";
 import { UserId, UserSummary } from "../../domain/model/users";
 import { Option, Timestamp } from "../../domain/model/common";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(request: GetUsersRequest) : Promise<GetUsersResponse> {
-    let canisterRequest = {
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    const canisterRequest = {
         users: request.users.map(userIdToCandid),
         updated_since: optionToCandid(request.updatedSince ? timestampToCandid(request.updatedSince) : null)
     };
-
-    let response = await canister.get_users(canisterRequest);
+    const response = await client.get_users(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
         let success: any = response.Success;

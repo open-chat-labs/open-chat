@@ -1,9 +1,10 @@
-import canister from "ic:canisters/user_mgmt";
 import { MyProfile } from "../../domain/model/users";
 import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function() : Promise<GetCurrentUserResponse> {
-    const response = await canister.get_current_user();
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    const response = await client.get_current_user();
 
     if (response.hasOwnProperty("Success")) {
         const success = response.Success;        

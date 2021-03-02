@@ -1,19 +1,19 @@
-import canister from "ic:canisters/p2p";
 import { Option } from "../../domain/model/common";
 import { P2PConnectionOffer } from "../../domain/model/p2pConnectionDetails";
 import { UserId } from "../../domain/model/users";
 import { fromCandid as optionFromCandid } from "../candidConverters/option";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(request: AddOfferRequest) : Promise<AddOfferResponse> {
+    const client = CanisterClientFactory.current!.p2pClient;
     const canisterRequest = {
         id: request.id,
         user_id: userIdToCandid(request.userId),
         connection_string: request.connectionString,
         ice_candidates: request.iceCandidates
     };
-
-    const response = await canister.add_offer(canisterRequest);
+    const response = await client.add_offer(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
         const result = response.Success;

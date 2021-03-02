@@ -1,11 +1,12 @@
-import canister from "ic:canisters/chats";
 import { ChatId } from "../../domain/model/chats";
 import { LocalMessage } from "../../domain/model/messages";
 import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { fromCandid as messageFromCandid } from "../candidConverters/localMessage";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(searchTerm: string, maxResults: number) : Promise<SearchAllMessagesResponse> {
-    let response = await canister.search_all_messages(searchTerm, maxResults);
+    const client = CanisterClientFactory.current!.chatsClient;
+    const response = await client.search_all_messages(searchTerm, maxResults);
 
     if (response.hasOwnProperty("Success")) {
         const success = response.Success;

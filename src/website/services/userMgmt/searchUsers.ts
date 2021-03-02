@@ -1,14 +1,14 @@
-import canister from "ic:canisters/user_mgmt";
 import { UserSummary } from "../../domain/model/users";
 import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(request: SearchUsersRequest) : Promise<SearchUsersResponse> {
+    const client = CanisterClientFactory.current!.userMgmtClient;
     const canisterRequest = {
         search_term: request.search_term,
         max_results: request.max_results
     };
-
-    const response = await canister.search_users(canisterRequest);
+    const response = await client.search_users(canisterRequest);
 
     if (response.hasOwnProperty("Success")) {
         let success: any = response.Success;

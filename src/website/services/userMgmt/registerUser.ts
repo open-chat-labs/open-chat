@@ -1,9 +1,10 @@
-import canister from "ic:canisters/user_mgmt";
 import { MyProfile } from "../../domain/model/users";
 import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(username: string) : Promise<RegisterUserResponse> {
-    let response = await canister.register_user(username);
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    const response = await client.register_user(username);
 
     if (response.hasOwnProperty("Success")) {
         let success = response.Success;

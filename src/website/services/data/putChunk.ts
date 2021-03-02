@@ -1,7 +1,10 @@
-import canister from "ic:canisters/chats";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(key: string, index: number, value: Uint8Array) : Promise<PutChunkResponse> {
-    let response = await canister.put_chunk(key, index, Array.from(value));
+    const client = CanisterClientFactory.current!.chatsClient;
+    const response = await client.put_chunk(key, index, Array.from(value));
+
+    //TODO
 
     return {
         kind: "success"

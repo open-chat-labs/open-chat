@@ -1,14 +1,14 @@
-import canister from "ic:canisters/chats";
 import { UserId } from "../../domain/model/users";
 import { ChatId } from "../../domain/model/chats";
 import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(chatId: ChatId, users: UserId[]) : Promise<AddParticipantsResponse> {
+    const client = CanisterClientFactory.current!.chatsClient;
     const candidChatId = chatIdToCandid(chatId);
     const candidUserIds = users.map(userIdToCandid);
-
-    let response = await canister.add_participants(candidChatId, candidUserIds);
+    const response = await client.add_participants(candidChatId, candidUserIds);
 
     if (response.hasOwnProperty("Success")) {
         return {
