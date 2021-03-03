@@ -28,7 +28,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     nameInput: {
         margin: "auto",
-        maxWidth: 400
+        maxWidth: 400,
+        marginTop: 30
     },
     backdrop: {
         zIndex: theme.zIndex.drawer + 1,
@@ -71,7 +72,6 @@ export default function RegisterUser() {
             <Paper className={classes.paper}>
                 <PersonIcon className={classes.icon} />
                 <Typography variant="h2">Register user</Typography>
-                <p>Please choose a username:</p>
                 <NameInput onSubmit={handleSubmit} defaultPlaceholderText="Enter username" minLength={3} maxLength={25} className={classes.nameInput} />
                 {errorText.length > 0 ? <Typography variant="body1" className={classes.errorText}>{errorText}</Typography> : null}
             </Paper>
