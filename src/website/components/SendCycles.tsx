@@ -1,5 +1,9 @@
 import React, {useRef, useState} from "react";
 import { useDispatch } from "react-redux";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
+import IconButton from "@material-ui/core/IconButton";
+import Paper from "@material-ui/core/Paper";
+import Popper from "@material-ui/core/Popper";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import sendMessage from "../actions/chats/sendMessage";
@@ -11,9 +15,6 @@ import { Chat } from "../domain/model/chats";
 import { SendMessageContent } from "../domain/model/messages";
 import { UserSummary } from "../domain/model/users";
 import * as cycleFunctions from "../utils/cycleFunctions";
-import {ClickAwayListener, Popper} from "@material-ui/core";
-import IconButton from "@material-ui/core/IconButton";
-import Paper from "@material-ui/core/Paper";
 
 export default React.memo(SendCycles);
 
