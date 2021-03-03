@@ -36,6 +36,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         color: '#fff',
     },
     errorText: {
+        height: 20,
+        marginTop: 20,
         color: "red"
     }
 }));
@@ -43,12 +45,13 @@ const useStyles = makeStyles((theme: Theme) => ({
 export default function RegisterUser() {
     const dispatch = useDispatch();
     const classes = useStyles();
-    const [open, setOpen] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
     const [errorText, setErrorText] = React.useState("");
 
     function handleSubmit(text: string) {
         if (text && text.length > 2) {
-            setOpen(true);
+            setLoading(true);
+            setErrorText("");
             const registerUserAsync: () => Promise<RegisterUserOutcomeEvent> = () => dispatch(registerUser(text)) as any;
             registerUserAsync().then((outcome) => {
                 switch (outcome.type) {
@@ -59,10 +62,10 @@ export default function RegisterUser() {
                         setErrorText("You already have a name");
                         break;
                     case REGISTER_USER_FAILED_USERNAME_EXISTS:
-                        setErrorText("A user already exists with this name - please try another name");
+                        setErrorText("A user already exists with this username - please try another username");
                         break;
                 }
-                setOpen(false);
+                setLoading(false);
             });
         }
     }
@@ -72,10 +75,21 @@ export default function RegisterUser() {
             <Paper className={classes.paper}>
                 <PersonIcon className={classes.icon} />
                 <Typography variant="h2">Register user</Typography>
-                <NameInput onSubmit={handleSubmit} defaultPlaceholderText="Enter username" minLength={3} maxLength={25} className={classes.nameInput} />
-                {errorText.length > 0 ? <Typography variant="body1" className={classes.errorText}>{errorText}</Typography> : null}
+                <NameInput
+                    onSubmit={handleSubmit}
+                    defaultPlaceholderText="Enter username"
+                    minLength={3}
+                    maxLength={25}
+                    className={classes.nameInput}
+                    disabled={loading} />
+                <Typography
+                    component="div"
+                    variant="body1"
+                    className={classes.errorText}>
+                    {errorText}
+                </Typography>
             </Paper>
-            <Backdrop className={classes.backdrop} open={open}>
+            <Backdrop className={classes.backdrop} open={loading}>
                 <CircularProgress color="inherit" />
             </Backdrop>        
         </>

@@ -15,7 +15,8 @@ export default React.memo(NewGroupChatPanel);
 
 const useStyles = makeStyles((theme: Theme) => ({
     nameInput: {
-        marginTop: 60
+        marginTop: 60,
+        marginLeft: 30
     }
 }));
 
