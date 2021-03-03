@@ -43,8 +43,11 @@ export default function(username: string) {
         }
 
         dispatch(outcomeEvent);
+        return outcomeEvent;
     }
 }
+
+export type RegisterUserOutcomeEvent = RegisterUserSucceededEvent | RegisterUserFailedUserExistsEvent | RegisterUserFailedUsernameExistsEvent;
 
 export type RegisterUserRequestedEvent = {
     type: typeof REGISTER_USER_REQUESTED,
