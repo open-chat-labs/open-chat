@@ -3,7 +3,6 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import authClient from "../utils/authClient";
 import { Principal } from "@dfinity/agent";
 import Button from "@material-ui/core/Button";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import Paper from "@material-ui/core/Paper";
 import React from "react";
 import ChatIcon from '@material-ui/icons/Chat';
@@ -30,7 +29,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         backgroundColor: theme.customColors.mainPanelBackgroundColor,
         "&:hover": {
             backgroundColor: theme.customColors.mainPanelBackgroundColor,
-            //filter: "brightness(0.9)"
         }
     }
 }));

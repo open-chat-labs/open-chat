@@ -4,6 +4,10 @@ import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import IconButton from "@material-ui/core/IconButton";
 import Paper from "@material-ui/core/Paper";
 import Popper from "@material-ui/core/Popper";
+import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
+import TextField from '@material-ui/core/TextField';
+import InputAdornment from '@material-ui/core/InputAdornment';
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import sendMessage from "../actions/chats/sendMessage";
@@ -35,53 +39,40 @@ const useStyles = makeStyles((theme: Theme) => ({
     popUp: {
         zIndex: 100
     },
-    sendCyclesDialog: {
-        backgroundColor: "white",
-        padding: 6,
-        minWidth: 352,
-        borderRadius: 5,
-        boxShadow: "0px 8px 16px 0px rgba(0,0,0,0.2)",
-        border: "1px solid #d9d9d9",
+    paper: {
+        textAlign: "center",
+        paddingTop: 16,
+        paddingRight: 4,
+        paddingBottom: 2,
+        paddingLeft: 4,
+        minWidth: 353,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        "& input": {
-            width: 200,
-            marginLeft: 11
-        }
-    },
-    cyclesBalance: {
-        marginBottom: 40
-    },
-    cyclesContainer: {
-        marginBottom: 4
-    },
-    poundsContainer: {
-        marginTop: 4,
-        marginBottom: 40
-    },
-    buttonContainer: {
-        flexGrow: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        "& button": {
-            padding: "6px 20px",
-            borderRadius: 5
-        }
-    },
-    cyclesRecipient: {
-        fontSize: 12
+        alignItems: "center"
     },
     sendCyclesLinks: {
         display: "flex",
         justifyContent: "space-between",
         width: "100%",
-        marginTop: 40,
+        marginTop: 30,
         "& a": {
             fontSize: 12,
             textDecoration: "underline"
         }
+    },
+    button: {
+        backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        "&:hover": {
+            backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        }
+    },
+    cyclesInput: {
+        marginTop: 40,
+        marginBottom: 6,
+    },
+    poundsInput: {
+        marginTop: 6,
+        marginBottom: 30,
     }
 }));
 
@@ -106,49 +97,52 @@ function SendCycles(props: Props) {
         dispatch(sendMessage(props.chat!, content, null));
     }
 
+    const popperModifiers = [
+        {
+          name: 'offset',
+          options: {
+                offset: [-90, 18],
+            },
+        },
+    ];
+ 
     return (
         <>
             <IconButton className={props.buttonClassName + " " + classes.dollarButton} buttonRef={anchorRef} onClick={toggleDialog}>
                 <Dollar />
             </IconButton>
-            <Popper open={open} anchorEl={anchorRef.current} placement="top-start" className={classes.popUp}>
+            <Popper open={open} anchorEl={anchorRef.current} placement="top-start" modifiers={popperModifiers} className={classes.popUp}>
                 <ClickAwayListener onClickAway={toggleDialog}>
-                    <Paper>
-                        <div className={classes.sendCyclesDialog}>
-                            <div className={classes.cyclesBalance}>Current balance <strong>{balance}</strong></div>
-                            <div className={classes.cyclesContainer}>
-                                <input
-                                    id="cyclesInput"
-                                    value={cycles}
-                                    onChange={e => onCyclesChanged(e.target.value)}
-                                    placeholder="Enter cycles..."
-                                    type="number"
-                                    max="100"
-                                    min="0.0001"
-                                    required
-                                /> T
-                            </div>
-                            <UpDownArrow />
-                            <div className={classes.poundsContainer}>
-                                <input
-                                    id="poundsInput"
-                                    value={pounds}
-                                    onChange={e => onPoundsChanged(e.target.value)}
-                                    placeholder="Enter GBP..."
-                                    type="number"
-                                    max="100"
-                                    min="0.0001"
-                                    required
-                                /> £
-                            </div>
-                            <div className={classes.buttonContainer}>
-                                <button onClick={sendCycles} type="button">Send</button>
-                            </div>
-                            <div className={classes.cyclesRecipient}>to {props.recipient.username}</div>
-                            <div className={classes.sendCyclesLinks}>
-                                <a href="#">A58435DF2E8A0DD121D8CF9EE</a>
-                                <a href="#">add funds</a>
-                            </div>
+                    <Paper elevation={2} className={classes.paper}>
+                        <Typography component="div" variant="body1">
+                            Current balance <strong>{balance}</strong>
+                        </Typography> 
+                        <TextField
+                            id="cyclesInput" 
+                            label="Enter cycles"
+                            InputProps={{ endAdornment: <InputAdornment position="end">T</InputAdornment> }}
+                            type="number"
+                            value={cycles}
+                            className={classes.cyclesInput}   
+                            onChange={e => onCyclesChanged(e.target.value)}                         
+                        />                        
+                        <UpDownArrow />
+                        <TextField
+                            id="poundsInput" 
+                            label="Enter GBP"
+                            InputProps={{ endAdornment: <InputAdornment position="end">GBP</InputAdornment> }}
+                            type="number"
+                            value={pounds}
+                            className={classes.poundsInput}   
+                            onChange={e => onPoundsChanged(e.target.value)} 
+                        />                        
+                        <Button variant="contained" className={classes.button} onClick={_ => sendCycles()}>Send Cycles</Button>
+                        <Typography variant="caption">
+                            to {props.recipient.username}
+                        </Typography> 
+                        <div className={classes.sendCyclesLinks}>
+                            <a href="#">A58435DF2E8A0DD121D8CF9EE</a>
+                            <a href="#">add funds</a>
                         </div>
                     </Paper>
                 </ClickAwayListener>
