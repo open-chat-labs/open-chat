@@ -42,9 +42,9 @@ const useStyles = makeStyles((theme: Theme) => ({
     paper: {
         textAlign: "center",
         paddingTop: 16,
-        paddingRight: 4,
-        paddingBottom: 2,
-        paddingLeft: 4,
+        paddingRight: 6,
+        paddingBottom: 4,
+        paddingLeft: 6,
         minWidth: 353,
         display: "flex",
         flexDirection: "column",
@@ -69,10 +69,12 @@ const useStyles = makeStyles((theme: Theme) => ({
     cyclesInput: {
         marginTop: 40,
         marginBottom: 6,
+        width: 200
     },
     poundsInput: {
         marginTop: 6,
         marginBottom: 30,
+        width: 200
     }
 }));
 
@@ -193,7 +195,6 @@ function SendCycles(props: Props) {
         getCurrentUserAsync().then((outcome) => {
             if (outcome.type === "GET_CURRENT_USER_SUCCEEDED") {
                 setBalance(formatCycles(outcome.payload.accountBalance));            
-                document.getElementById("cyclesInput")?.focus();
             }
         });
     }
