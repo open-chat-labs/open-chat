@@ -1,13 +1,9 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import Container from "@material-ui/core/Container";
 import Divider from "@material-ui/core/Divider";
 import Grid from "@material-ui/core/Grid";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import useTheme from "@material-ui/core/styles/useTheme";
-
 import { RootState } from "../reducers";
 import { Option } from "../domain/model/common";
 import { SidePanelState } from "../reducers/sidePanelReducer";
@@ -20,27 +16,6 @@ import { setupBackgroundTasks } from "../backgroundTasks";
 export default App;
 
 const useStyles = makeStyles((theme: Theme) => ({
-    "@global": {
-        body: {
-            height: "100vh",
-            width: "100vw",
-            backgroundColor: theme.customColors.outerBackgroundColor,
-            lineHeight: 1.5
-        },
-        header: {
-            backgroundColor: theme.customColors.headerBackgroundColor,
-            height: 52,
-            flexShrink: 0,
-            padding: "0 15px"
-        }
-    },
-    container: {
-        padding: 24,
-        height: "100%",
-        "&.no-padding": {
-            padding: 0
-        }
-    },
     grid: {
         height: "100%",
         overflow: "hidden",
@@ -70,8 +45,6 @@ const useStyles = makeStyles((theme: Theme) => ({
 function App() {
     const classes = useStyles();
     const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
-    const theme = useTheme();
-    const removePadding = useMediaQuery(theme.breakpoints.down("md"));
 
     setupBackgroundTasks();
 
@@ -130,18 +103,11 @@ function App() {
         );
     }
 
-    let containerClass = classes.container;
-    if (removePadding) {
-        containerClass += " no-padding";
-    }
-
     return (
-        <Container maxWidth="lg" className={containerClass}>
-            <Grid container wrap="nowrap" className={classes.grid}>
-                {buildLeftPanel(sidePanelState)}
-                {buildMainPanel(sidePanelState)}
-                {buildRightPanel(sidePanelState)}
-            </Grid>
-        </Container>
+        <Grid container wrap="nowrap" className={classes.grid}>
+            {buildLeftPanel(sidePanelState)}
+            {buildMainPanel(sidePanelState)}
+            {buildRightPanel(sidePanelState)}
+        </Grid>
     );
 }

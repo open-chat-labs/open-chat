@@ -13,9 +13,7 @@ import RtcConnectionsHandler from "./domain/webRtc/RtcConnectionsHandler";
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
 import getUpdatedChats from "./actions/chats/getUpdatedChats";
-import getCurrentUser from "./actions/users/getCurrentUser";
 import getUsers from "./actions/users/getUsers";
-import registerUser from "./actions/users/registerUser";
 import updateMinutesSinceLastOnline from "./actions/users/updateMinutesSinceLastOnline";
 import dataService from "./services/data/CachingDataService";
 
@@ -46,24 +44,6 @@ export function setupBackgroundTasks() {
         const count = chatFunctions.getUnreadChatCount(chatsState.chats);
         document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;
     }, [chatsState.chats]);
-
-    // If 'usersState.mustRegisterAsNewUser' is false, attempt to get details of the current user if not already known
-    useEffect(() => {
-        if (!usersState.mustRegisterAsNewUser && !usersState.me) {
-            dispatch(getCurrentUser());
-        }
-    }, [usersState.mustRegisterAsNewUser]);
-
-    // If 'usersState.mustRegisterAsNewUser' is true then prompt the user to register
-    useEffect(() => {
-        if (usersState.mustRegisterAsNewUser) {
-            const username = window.prompt("Enter username:");
-
-            if (username) {
-                dispatch(registerUser(username));
-            }
-        }
-    }, [usersState.mustRegisterAsNewUser]);
 
     // Each time 'usersState.me' changes and is not null, get the full list of chats
     useEffect(() => {

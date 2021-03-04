@@ -7,3 +7,8 @@ export function removeFragment() {
         history.replaceState({}, "", window.location.href.slice(0, -1));
     }
 }
+
+export function extractQueryStringAsObject(): any {
+    var search = location.search.substring(1);
+    return JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}');    
+}
