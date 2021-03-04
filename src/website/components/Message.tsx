@@ -42,7 +42,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         borderRadius: 16,
         margin: 0,
         marginTop: 14,
-        position: "relative"
+        position: "relative",
+        overflowWrap: "anywhere"
     },
     sentByMe: {
         alignSelf: "flex-end",

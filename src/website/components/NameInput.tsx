@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import Tick from "../assets/icons/tick2.svg";
 import IconButton from "@material-ui/core/IconButton";
 import Typography from "@material-ui/core/Typography";
@@ -13,11 +13,13 @@ type Props = {
     onSubmit: (text: string) => void,
     defaultPlaceholderText: string,
     minLength: number,
-    maxLength: number
+    maxLength: number,
+    disabled: boolean
 }
 
 NameInput.defaultProps = {
-    minLength: 1
+    minLength: 1,
+    disabled: false
 };
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -26,7 +28,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         flexDirection: "column"
     },
     textBoxContainer: {
-        marginLeft: 30,
         paddingBottom: 4,
         borderBottom: "2px solid #3dc5ee",
         display: "flex",
@@ -70,15 +71,14 @@ const useStyles = makeStyles((theme: Theme) => ({
 function NameInput(props: Props) {
     const [text, setText] = useState("");
     const remainingCharCount = props.maxLength - text.length;
-    const clearInput = () => setText("");
     const classes = useStyles();
+    const textBoxRef = useRef<HTMLInputElement>(null);
 
     function handleSubmit() {
         if (text.length < 1) {
             return;
         }
         props.onSubmit(text);
-        clearInput();
     }
 
     function handleInputChange(text: string) {
@@ -93,8 +93,10 @@ function NameInput(props: Props) {
     }
 
     useLayoutEffect(() => {
-        document.getElementById("nameInput")?.focus();
-    }, []);    
+        if (!props.disabled) {
+            textBoxRef.current?.focus();
+        }
+    }, [props.disabled]);
 
     const className = classes.nameInput + (props.className ? " " + props.className : "");
 
@@ -102,19 +104,20 @@ function NameInput(props: Props) {
         <div className={className}>
             <div className={classes.textBoxContainer}>
                 <input
-                    id="nameInput"
                     className={classes.textBox}
+                    ref={textBoxRef}
                     type="text"
                     value={text}
                     onChange={e => handleInputChange(e.target.value)}
                     placeholder={props.defaultPlaceholderText}
                     onKeyDown={handleKeyPress}
                     minLength={props.minLength}
-                    maxLength={props.maxLength} />
+                    maxLength={props.maxLength}
+                    disabled={props.disabled} />
 
                 <Typography variant="body2" className={classes.charsRemaining}>{remainingCharCount}</Typography>
             </div>
-            <IconButton disabled={text.length < props.minLength} onClick={_ => handleSubmit()} className={classes.submitButton}>
+            <IconButton disabled={props.disabled || text.length < props.minLength} onClick={handleSubmit} className={classes.submitButton}>
                 <Tick className={classes.buttonSvg} />
             </IconButton>
         </div>

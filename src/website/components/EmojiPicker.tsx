@@ -21,8 +21,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         marginRight: 10
     },
     emojisContainer: {
-        zIndex: 100,
-        position: "relative"
+        zIndex: 100
     }
 }));
 
@@ -31,12 +30,21 @@ function EmojiPicker(props: Props) {
     const anchorRef = useRef<HTMLElement>(null);
     const classes = useStyles();
 
+    const popperModifiers = [
+        {
+          name: 'offset',
+          options: {
+                offset: [-11, 18],
+            },
+        },
+    ];
+
     return (
         <>
             <IconButton className={props.buttonClassName + " " + classes.smileyButton} buttonRef={anchorRef} onClick={toggleEmojiPicker}>
                 <Smiley />
             </IconButton>
-            <Popper id="emojisContainer" open={open} anchorEl={anchorRef.current} placement="top-start" className={classes.emojisContainer}>
+            <Popper id="emojisContainer" open={open} anchorEl={anchorRef.current} modifiers={popperModifiers} placement="top-start" className={classes.emojisContainer}>
                 <ClickAwayListener onClickAway={toggleEmojiPicker}>
                     <Paper>
                         <Picker

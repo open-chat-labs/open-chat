@@ -65,7 +65,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         zIndex: 1,
         minHeight: 20,
         maxHeight: 100,
-        userSelect: "text"
+        userSelect: "text",
+        overflowWrap: "anywhere"
     },
     sendButton: {
         outline: 0,

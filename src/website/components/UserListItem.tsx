@@ -78,7 +78,7 @@ function UserListItem(props: Props) {
         <ListItem onClick={onClick} className={className} divider>
             <ListItemIcon>
                 <UserAvatar
-                    userId={props.user.username}
+                    userId={props.user.userId}
                     imageId={props.user.imageId}
                     isUserOnline={props.user.isOnline}
                     size="md"

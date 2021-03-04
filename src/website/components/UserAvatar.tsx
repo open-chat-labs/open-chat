@@ -93,7 +93,7 @@ function UserAvatar(props: Props) : JSX.Element {
     }, []);
  
     if (src) {
-        icon = <Avatar className={classes.avatar} src={src} />
+        icon = <Avatar className={classes.avatar} src={props.blobUrl ? props.blobUrl : src} />
         if (props.isUserOnline) {
             icon = (
                 <Badge

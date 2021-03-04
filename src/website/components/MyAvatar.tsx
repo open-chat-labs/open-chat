@@ -1,5 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../reducers";
 import UserAvatar from "./UserAvatar";
 import setProfileImage from "../actions/users/setProfileImage";
@@ -10,6 +12,12 @@ type Props = {
     size: "sm" | "md",
     parentBackgroundColor: string
 }
+
+const useStyles = makeStyles((theme: Theme) => ({
+    myAvatar: {
+        cursor: "pointer"
+    }
+}));
 
 function MyAvatar(props: Props) {
     const dispatch = useDispatch();
@@ -23,6 +31,7 @@ function MyAvatar(props: Props) {
     }, shallowEqual);
 
     const userExists = userImage !== null;
+    const classes = useStyles();
 
     function onAvatarFileSelected(event: any) {
         if (!userImage) {
@@ -42,7 +51,7 @@ function MyAvatar(props: Props) {
     }
     
     return (
-        <label>
+        <label className={classes.myAvatar}>
             <UserAvatar 
                 isUserOnline={true}
                 userId={userImage?.userId ?? null}
