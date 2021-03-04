@@ -17,8 +17,8 @@ function ParticipantsTyping(props: Props) {
         text = `${props.usernames[0]} is typing...`;
     } else {
         text = props.usernames[0];
-        for (const username of props.usernames) {
-            text += `, ${username}`;
+        for (let i = 1; i < props.usernames.length - 1; i++) {
+            text += `, ${props.usernames[i]}`;
         }
         text += ` and ${props.usernames[props.usernames.length - 1]} are typing...`;
     }
