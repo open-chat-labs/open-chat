@@ -23,6 +23,10 @@ const useStyles = makeStyles((theme: Theme) => ({
         "&:hover": {
             backgroundColor: alpha(theme.customColors.mainPanelBackgroundColor, 0.1),
         }
+    },
+    nameInput: {
+        margin: "auto",
+        maxWidth: 400
     }
 }));
 
@@ -41,7 +45,7 @@ export default function RegisterUser() {
             <PersonIcon className={classes.icon} />
             <Typography variant="h2">Register user</Typography>
             <p>Please choose a username:</p>
-            <NameInput onSubmit={handleSubmit} defaultPlaceholderText="Enter username" minLength={3} maxLength={25} />
+            <NameInput onSubmit={handleSubmit} defaultPlaceholderText="Enter username" minLength={3} maxLength={25} className={classes.nameInput} />
         </Paper>
     );
 }

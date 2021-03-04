@@ -10,7 +10,8 @@ export default React.memo(ChatList);
 
 const useStyles = makeStyles((theme: Theme) => ({
     list: {
-        overflow: "auto"
+        overflowX: "hidden",
+        overflowY: "auto"
     }
 }));
 

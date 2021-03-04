@@ -38,7 +38,7 @@ export default React.memo(Message);
 const useStyles = makeStyles((theme: Theme) => ({
     message: {
         maxWidth: 500,
-        padding: "6px 11px",
+        padding: "6px 11px 4px 11px",
         borderRadius: 16,
         margin: 0,
         marginTop: 14,
@@ -156,7 +156,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         position: "absolute",
         height: 15,
         width: 15,
-        bottom: 6,
+        bottom: 4,
         right: 4,
         zIndex: 55
     }

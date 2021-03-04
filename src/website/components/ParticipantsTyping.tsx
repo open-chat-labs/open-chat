@@ -24,6 +24,6 @@ function ParticipantsTyping(props: Props) {
     }
 
     return (
-        <Typography variant="caption">{text}</Typography>
+        <Typography variant="body2">{text}</Typography>
     );
 }

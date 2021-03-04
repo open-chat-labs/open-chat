@@ -22,12 +22,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     messagesList: {
         padding: "14px 20px 0 20px",
         flex: "1 1",
-        overflow: "auto",
+        overflowY: "auto",
+        overflowX: "hidden",
         display: "flex",
         flexDirection: "column"
-    },
-    group: {
-
     }
 }));
 
@@ -79,11 +77,6 @@ function MessagesList() {
             unreadMessageDetector={unreadMessageDetector} />);
     }
 
-    let className = classes.messagesList;
-    if (isGroupChat) {
-        className += " " + classes.group;
-    }
-
     const dispatch = useDispatch();
     const messagesRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +117,7 @@ function MessagesList() {
     }, [chatId, hasUnreadMessages]);
 
     return (
-        <div id="messages" ref={messagesRef} className={className}>
+        <div id="messages" ref={messagesRef} className={classes.messagesList}>
             {children}
         </div>
     );

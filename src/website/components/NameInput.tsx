@@ -23,9 +23,7 @@ NameInput.defaultProps = {
 const useStyles = makeStyles((theme: Theme) => ({
     nameInput: {
         display: "flex",
-        flexDirection: "column",
-        maxWidth: 400,
-        margin: "auto"
+        flexDirection: "column"
     },
     textBoxContainer: {
         marginLeft: 30,
@@ -98,7 +96,7 @@ function NameInput(props: Props) {
         document.getElementById("nameInput")?.focus();
     }, []);    
 
-    const className = classes.nameInput + (props.className ? " " + classes.nameInput : "");
+    const className = classes.nameInput + (props.className ? " " + props.className : "");
 
     return (
         <div className={className}>
