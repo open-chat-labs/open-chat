@@ -3,7 +3,8 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import CancelButton from "../CancelButton";
+import CloseButton from "../CloseButton";
+import BackButton from "../BackButton";
 import { Option } from "../../domain/model/common";
 
 export default React.memo(Header);
@@ -11,11 +12,13 @@ export default React.memo(Header);
 type Props = {
     title: string,
     rightIcon: Option<JSX.Element>,
+    back: boolean,
     onCancelButtonClick: () => void
 }
 
 Header.defaultProps = {
-    rightIcon: null
+    rightIcon: null,
+    back: false
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -36,7 +39,9 @@ function Header(props: Props) {
             <Grid item>
                 <Grid container alignItems="center">
                     <Grid item>
-                        <CancelButton onClick={props.onCancelButtonClick} />
+                        {props.back 
+                            ? <BackButton onClick={props.onCancelButtonClick} /> 
+                            : <CloseButton onClick={props.onCancelButtonClick} />}                        
                     </Grid>
                     <Grid item>
                         <Typography variant="h6" className={classes.title}>{props.title}</Typography>
