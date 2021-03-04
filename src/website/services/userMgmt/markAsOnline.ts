@@ -1,5 +1,6 @@
-import canister from "ic:canisters/user_mgmt";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function() : Promise<void> {
-    await canister.mark_as_online();
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    await client.mark_as_online();
 }

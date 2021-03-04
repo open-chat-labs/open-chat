@@ -1,11 +1,14 @@
 {
   "chats": {
-    "ic": "jyi7r-7aaaa-aaaab-aaabq-cai"
+    "ic": "sadjp-vqaaa-aaaab-qaipa-cai"
+  },
+  "p2p": {
+    "ic": "shcp3-yiaaa-aaaab-qaipq-cai"
   },
   "user_mgmt": {
-    "ic": "f4zqk-siaaa-aaaab-qaaba-cai"
+    "ic": "x3zv6-taaaa-aaaab-qaiqa-cai"
   },
   "website": {
-    "ic": "3cwd2-fiaaa-aaaaa-qaava-cai"
+    "ic": "m3agh-3qaaa-aaaab-aahba-cai"
   }
 }

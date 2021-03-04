@@ -63,7 +63,7 @@ export function setupBackgroundTasks() {
                 dispatch(registerUser(username));
             }
         }
-    });
+    }, [usersState.mustRegisterAsNewUser]);
 
     // Each time 'usersState.me' changes and is not null, get the full list of chats
     useEffect(() => {

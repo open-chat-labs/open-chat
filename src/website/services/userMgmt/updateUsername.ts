@@ -1,7 +1,8 @@
-import canister from "ic:canisters/user_mgmt";
+import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(username: string) : Promise<UpdateUsernameResponse> {
-    let response = await canister.update_username(username);
+    const client = CanisterClientFactory.current!.userMgmtClient;
+    const response = await client.update_username(username);
 
     if (response.hasOwnProperty("Success")) {
         return UpdateUsernameResponse.Success;
