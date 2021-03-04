@@ -9,7 +9,7 @@ import gotoUser from "../../actions/chats/gotoUser";
 import SearchBox from "../SearchBox";
 import UserListItem from "../UserListItem";
 import Header from "./Header";
-import CancelButton from "../CancelButton";
+import CloseButton from "../CloseButton";
 import CreateGroupChatIcon from "../CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Type a username";
@@ -57,7 +57,7 @@ function NewDirectChatPanel() {
 
     return (
         <>
-            <Header leftIcon={<CreateGroupChatIcon size="sm" />} title="Start a new chat" rightIcon={<CancelButton onClick={closePanel} />} />
+            <Header leftIcon={<CreateGroupChatIcon size="sm" />} title="Start a new chat" rightIcon={<CloseButton onClick={closePanel} />} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem

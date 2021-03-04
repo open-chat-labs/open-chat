@@ -3,11 +3,11 @@ import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
+import SendButtonIcon from "@material-ui/icons/Send";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
-import SendButtonIcon from "../../assets/icons/sendButton.svg";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
 import EmojiPicker from "../EmojiPicker";
@@ -31,7 +31,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         display: "flex",
         borderRadius: 25,
         padding: "8px 15px 10px 15px",
-        backgroundColor: "white"
+        backgroundColor: "white",
+        marginLeft: 10
     },
     buttons: {
         display: "flex"

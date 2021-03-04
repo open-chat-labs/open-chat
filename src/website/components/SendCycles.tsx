@@ -31,9 +31,9 @@ type Props = {
 
 const useStyles = makeStyles((theme: Theme) => ({
     dollarButton: {
-        marginRight: 10,
+        marginLeft: 1,
+        marginRight: 1,
         width: 32,
-        height: 32,
         color: "#111111"
     },
     popUp: {

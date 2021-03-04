@@ -6,7 +6,7 @@ import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import createGroupChat from "../../actions/chats/createGroupChat";
 import NameInput from "../NameInput";
 import Header from "./Header";
-import CancelButton from "../CancelButton";
+import CancelButton from "../CloseButton";
 import CreateGroupChatIcon from "../CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Group Name";
