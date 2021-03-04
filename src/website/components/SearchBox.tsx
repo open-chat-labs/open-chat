@@ -1,6 +1,7 @@
 import React from "react";
 import SearchIcon from "../assets/icons/search.svg";
-import { makeStyles, Theme } from "@material-ui/core";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 
 export default React.memo(SearchBox);
 

@@ -1,6 +1,12 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Container, Divider, Grid, makeStyles, Theme, useMediaQuery, useTheme } from "@material-ui/core";
+import Container from "@material-ui/core/Container";
+import Divider from "@material-ui/core/Divider";
+import Grid from "@material-ui/core/Grid";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 
 import { RootState } from "../reducers";
 import { Option } from "../domain/model/common";
@@ -18,7 +24,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         body: {
             height: "100vh",
             width: "100vw",
-            backgroundColor: theme.customColors.outerBackgroundColor
+            backgroundColor: theme.customColors.outerBackgroundColor,
+            lineHeight: 1.5
         },
         header: {
             backgroundColor: theme.customColors.headerBackgroundColor,

@@ -1,4 +1,6 @@
 import React from "react";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 
 import { Option } from "../domain/model/common";
 import { Message, RemoteMessage } from "../domain/model/messages";
@@ -24,7 +26,18 @@ type Props = {
 
 export default React.memo(MessagesFromSingleDay);
 
+const useStyles = makeStyles((theme: Theme) => ({
+    dayContainer: {
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        paddingBottom: 14
+    }
+}));
+
 function MessagesFromSingleDay(props: Props) {
+    const classes = useStyles();
+
     // Determine which messages should be grouped with the previous message
     const messagesToGroup: boolean[] = [];
     let prevMessageSender: Option<UserId> = null;
@@ -109,7 +122,7 @@ function MessagesFromSingleDay(props: Props) {
     }
 
     return (
-        <div className="day-container">
+        <div className={classes.dayContainer}>
             {children}
         </div>
     );

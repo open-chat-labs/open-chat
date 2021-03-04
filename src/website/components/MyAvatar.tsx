@@ -52,7 +52,7 @@ function MyAvatar(props: Props) {
                 parentBackgroundColor={props.parentBackgroundColor} />
 
             {userExists ? <input
-                className="hide" 
+                hidden={true}
                 type="file" 
                 accept=".jpg, .jpeg, .png, .gif" 
                 onChange={onAvatarFileSelected} /> : null}            

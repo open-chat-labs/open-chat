@@ -1,6 +1,11 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { List, ListItem, ListItemIcon, makeStyles, Theme, Typography } from "@material-ui/core";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import Typography from "@material-ui/core/Typography";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";

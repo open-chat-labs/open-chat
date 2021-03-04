@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { List } from "@material-ui/core";
+import List from "@material-ui/core/List";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";

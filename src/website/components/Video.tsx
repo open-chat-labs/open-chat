@@ -4,7 +4,8 @@ import { scaleMediaContent } from "./mediaComponentFunctions";
 export interface Props {
     src: string
     width: number,
-    height: number
+    height: number,
+    className: string
 }
 
 export default React.memo(Video);
@@ -12,7 +13,7 @@ export default React.memo(Video);
 function Video(props : Props): JSX.Element {
     const dimensions = scaleMediaContent(props.width, props.height);
     return <video 
-        className="message-media" 
+        className={props.className}
         controls
         width={dimensions.width}
         height={dimensions.height}>

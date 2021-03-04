@@ -1,5 +1,8 @@
 import React, { useEffect } from "react";
+import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from "react-redux";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
@@ -8,11 +11,75 @@ import SendButtonIcon from "../../assets/icons/sendButton.svg";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
 import EmojiPicker from "../EmojiPicker";
-import { buildEmojiSpan, containsEmoji } from "../../domain/model/messages";
+import { containsEmoji } from "../../utils/emojiFunctions";
 import SendCycles from "../SendCycles";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
+import Emoji from "../Emoji";
 
 export default React.memo(Footer);
+
+const useStyles = makeStyles((theme: Theme) => ({
+    footer: {
+        display: "flex",
+        padding: "11px 16px",
+        color: "#9b9b9b",
+        backgroundColor: "#f0f0f0",
+        alignItems: "center"
+    },
+    container: {
+        flex: "1 1 auto",
+        display: "flex",
+        borderRadius: 25,
+        padding: "8px 15px 10px 15px",
+        backgroundColor: "white"
+    },
+    buttons: {
+        display: "flex"
+    },
+    button: {
+        borderRadius: "50%",
+        padding: 4,
+        cursor: "pointer",
+        "&:hover,:focus": {
+            backgroundColor: "#e0e0e0"
+        },
+        "& svg": {
+            verticalAlign: "middle",
+            pointerEvents: "none",
+            margin: 0,
+            padding: 0,
+            color: "#9b9b9b"
+        }
+    },
+    input: {
+        border: 0,
+        outline: "none",
+        flex: "1 1 auto",
+        fontSize: 15,
+        lineHeight: "20px",
+        fontWeight: 400,
+        color: "#111111",
+        whiteSpace: "pre-wrap",
+        overflowX: "hidden",
+        overflowY: "auto",
+        zIndex: 1,
+        minHeight: 20,
+        maxHeight: 100,
+        userSelect: "text"
+    },
+    sendButton: {
+        outline: 0,
+        height: 25,
+        border: 0,
+        margin: 0,
+        padding: 0,
+        cursor: "pointer",
+        alignSelf: "center",
+        backgroundColor: "transparent",
+        marginLeft: 20,
+        color: "#9b9b9b"
+    }
+}));
 
 function Footer() {
     const dispatch = useDispatch();
@@ -83,7 +150,7 @@ function Footer() {
         restoreSelection();
 
         // Markup the text so it will appear correctly in the textbox and manually insert it
-        document.execCommand("insertHTML", false, buildEmojiSpan(text));
+        document.execCommand("insertHTML", false, ReactDOMServer.renderToStaticMarkup(<Emoji text={text} />));
 
         // Save the new selection range
         saveSelection();
@@ -159,7 +226,7 @@ function Footer() {
             if (insideEmojiSpan && !foundEmoji) {
                 textForPlainSpan += c;
             } else if (isEmoji) {
-                markup += buildEmojiSpan(c);
+                markup += ReactDOMServer.renderToStaticMarkup(<Emoji text={c} />);
             } else {
                 markup += c;
             }
@@ -189,23 +256,28 @@ function Footer() {
         return `<span>${text}</span>`;
     }
 
+    const classes = useStyles();
+
     return (
-        <footer className="enter-message">
-            <div className="buttons">
+        <footer className={classes.footer}>
+            <div className={classes.buttons}>
                 <EmojiPicker
                     onEmojiSelected={insertEmojiAtCaret}
-                    onHidePicker={restoreSelection} />
+                    onHidePicker={restoreSelection}
+                    buttonClassName={classes.button} />
                 <AttachFile 
-                    chat={chat} />
+                    chat={chat}
+                    buttonClassName={classes.button} />
                 {them ? <SendCycles 
                     chat={chat}
                     recipient={them} 
-                    onHidePicker={restoreSelection} /> : null}
+                    onHidePicker={restoreSelection}
+                    buttonClassName={classes.button} /> : null}
             </div>
-            <div className="message-input-container">
+            <div className={classes.container}>
                 <div
                     id="textbox"
-                    className="message-input"
+                    className={classes.input}
                     placeholder="Type a message"
                     onBeforeInput={handleBeforeInput}
                     onInput={handleInput}
@@ -215,7 +287,7 @@ function Footer() {
                     contentEditable={true}
                     spellCheck="true"></div>
             </div>
-            <button onClick={handleSendMessage} className="send">
+            <button onClick={handleSendMessage} className={classes.sendButton}>
                 <SendButtonIcon />
             </button>
         </footer>

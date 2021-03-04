@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { Option } from "../domain/model/common";
 import { ChatId } from "../domain/model/chats";
 import getMedia from "../actions/chats/getMessageMedia";
@@ -15,8 +17,15 @@ export interface Props {
 
 export default React.memo(MediaContent);
 
+const useStyles = makeStyles((theme: Theme) => ({
+    media: {
+        borderRadius: "inherit"
+    }
+}));
+
 function MediaContent(props : Props): JSX.Element {
     const dispatch = useDispatch();
+    const classes = useStyles();
     const content = props.content;
 
     useEffect(() => {
@@ -34,9 +43,9 @@ function MediaContent(props : Props): JSX.Element {
 
     let contentElement;
     if (content.mimeType.startsWith("image/") || !content.data) {
-        contentElement = <Image key={props.content.id} src={src} width={props.content.width} height={props.content.height} />;
+        contentElement = <Image key={props.content.id} src={src} width={props.content.width} height={props.content.height} className={classes.media} />;
     } else if (content.mimeType.startsWith("video/")) {
-        contentElement = <Video key={props.content.id} src={src} width={props.content.width} height={props.content.height} />
+        contentElement = <Video key={props.content.id} src={src} width={props.content.width} height={props.content.height} className={classes.media} />
     }
 
     return (

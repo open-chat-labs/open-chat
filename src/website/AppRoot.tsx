@@ -1,6 +1,7 @@
 import React from "react";
 import { Provider } from "react-redux";
-import { MuiThemeProvider } from "@material-ui/core";
+import MuiThemeProvider from "@material-ui/core/styles/ThemeProvider";
+import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 
 import App from "./components/App";
 import store from "./store";
@@ -13,9 +14,11 @@ function AppRoot() {
 
     return (
         <Provider store={store}>
-            <MuiThemeProvider theme={theme}>
-                <App />
-            </MuiThemeProvider>
+            <StyledEngineProvider injectFirst>
+                <MuiThemeProvider theme={theme}>
+                    <App />
+                </MuiThemeProvider>
+            </StyledEngineProvider>
         </Provider>
     );
 }

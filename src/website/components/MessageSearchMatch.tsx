@@ -1,5 +1,10 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import ListItem from "@material-ui/core/ListItem";
+import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { ChatId } from "../domain/model/chats";
 import * as chatFunctions from "../domain/model/chats";
 import * as stateFunctions from "../domain/stateFunctions";
@@ -9,8 +14,6 @@ import selectChat from "../actions/chats/selectChat";
 import { formatMessageDate } from "../formatters/date";
 import TextContent from "./TextContent";
 import { getContentAsText } from "../domain/messageFunctions";
-import { ListItem, makeStyles, Theme, Typography } from "@material-ui/core";
-import { fade } from "@material-ui/core/styles/colorManipulator";
 
 export default React.memo(MessageSearchMatch);
 
@@ -26,17 +29,17 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: "100%"
     },
     chatName: {
-        color: theme.palette.text.primary
+        color: theme.customColors.textColor
     },
     messageSnippet: {
-        color: fade(theme.palette.text.primary, 0.6),
+        color: alpha(theme.customColors.textColor, 0.6),
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
         maxWidth: 450
     },
     date: {
-        color: fade(theme.palette.text.primary, 0.6),
+        color: alpha(theme.customColors.textColor, 0.6),
         float: "right"
     }
 }));

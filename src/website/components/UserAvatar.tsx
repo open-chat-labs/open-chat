@@ -1,5 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Avatar, Badge, makeStyles, Theme } from "@material-ui/core";
+import Avatar from "@material-ui/core/Avatar";
+import Badge from "@material-ui/core/Badge";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import UnknownUserAvatar from "../assets/icons/unknownUserAvatar.svg";
@@ -31,7 +34,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     },
     icon: theme.customColors.icon,
     userOnlineMarker: {
-        backgroundColor: theme.customColors.green,
+        backgroundColor: theme.customColors.green.main,
         boxShadow: props => "0 0 0 2px " + props.parentBackgroundColor,
         height: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         width: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
@@ -96,7 +99,7 @@ function UserAvatar(props: Props) : JSX.Element {
                 <Badge
                     classes={{ root: classes.avatar, badge: classes.userOnlineMarker }}
                     variant="dot"
-                    overlap="circle"
+                    overlap="circular"
                     anchorOrigin={{
                         vertical: "bottom",
                         horizontal: "right",

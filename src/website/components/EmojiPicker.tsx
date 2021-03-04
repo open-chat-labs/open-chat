@@ -1,4 +1,10 @@
-import React from "react";
+import React, {useRef, useState} from "react";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
+import IconButton from "@material-ui/core/IconButton";
+import Paper from "@material-ui/core/Paper";
+import Popper from "@material-ui/core/Popper";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { EmojiData, Picker } from 'emoji-mart'
 import Smiley from "../assets/icons/smiley.svg";
 
@@ -7,22 +13,41 @@ export default React.memo(EmojiPicker);
 type Props = {
     onEmojiSelected: (text: string) => void,
     onHidePicker: () => void,
+    buttonClassName: string
 }
 
+const useStyles = makeStyles((theme: Theme) => ({
+    smileyButton: {
+        marginRight: 10
+    },
+    emojisContainer: {
+        zIndex: 100,
+        position: "relative"
+    }
+}));
+
 function EmojiPicker(props: Props) {
+    const [open, setOpen] = useState(false);
+    const anchorRef = useRef<HTMLElement>(null);
+    const classes = useStyles();
+
     return (
         <>
-            <div className="smiley button hide-on-click-ignore" onClick={toggleEmojiPicker}>
+            <IconButton className={props.buttonClassName + " " + classes.smileyButton} buttonRef={anchorRef} onClick={toggleEmojiPicker}>
                 <Smiley />
-            </div>
-            <div id="emojisContainer" className="emojis-container hide-on-click-outside hide">
-                <Picker 
-                    title={"Pick your emoji..."}
-                    theme="light"
-                    onSelect={onSelectEmoji}
-                    emoji="point_up" 
-                    native={true} />
-            </div>
+            </IconButton>
+            <Popper id="emojisContainer" open={open} anchorEl={anchorRef.current} placement="top-start" className={classes.emojisContainer}>
+                <ClickAwayListener onClickAway={toggleEmojiPicker}>
+                    <Paper>
+                        <Picker
+                            title={"Pick your emoji..."}
+                            theme="light"
+                            onSelect={onSelectEmoji}
+                            emoji="point_up"
+                            native={true} />
+                    </Paper>
+                </ClickAwayListener>
+            </Popper>
         </>
     );
 
@@ -33,11 +58,11 @@ function EmojiPicker(props: Props) {
     }
 
     function toggleEmojiPicker() {
-        const elemClassList = document.getElementById("emojisContainer")!.classList;
-        elemClassList.toggle("hide");
-        if (elemClassList.contains("hide")) {
+        if (open) {
+            setOpen(false);
             props.onHidePicker();
         } else {
+            setOpen(true);
             focusOnEmojiSearch();
         }
     }
