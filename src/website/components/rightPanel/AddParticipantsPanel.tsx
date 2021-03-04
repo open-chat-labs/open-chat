@@ -61,7 +61,7 @@ function AddParticipantsPanel() {
 
     return (
         <>
-            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon size="sm" />} />
+            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon size="sm" />} back={true} />
             <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem
