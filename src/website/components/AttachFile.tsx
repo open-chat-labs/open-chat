@@ -6,8 +6,6 @@ import { Chat } from "../domain/model/chats";
 import { SendMessageContent } from "../domain/model/messages";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 import Dimensions from "../utils/Dimensions";
-import {Theme} from "@material-ui/core/styles/createMuiTheme";
-import makeStyles from "@material-ui/styles/makeStyles";
 
 export interface Props {
     chat: Chat,
@@ -16,18 +14,11 @@ export interface Props {
 
 export default React.memo(AttachFile);
 
-const useStyles = makeStyles((theme: Theme) => ({
-    attachButton: {
-        marginRight: 5
-    }
-}))
-
 function AttachFile(props: Props) {
     const dispatch = useDispatch();
-    const classes = useStyles();
 
     return (
-        <label className={props.buttonClassName + " " + classes.attachButton}>
+        <label className={props.buttonClassName}>
             <Paperclip />
             <input 
                 hidden={true}

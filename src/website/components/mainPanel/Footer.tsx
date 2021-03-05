@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import IconButton from "@material-ui/core/IconButton";
 import makeStyles from "@material-ui/styles/makeStyles";
 import SendButtonIcon from "@material-ui/icons/Send";
 import { Option } from "../../domain/model/common";
@@ -10,29 +11,36 @@ import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
-import EmojiPicker from "../EmojiPicker";
 import { containsEmoji } from "../../utils/emojiFunctions";
 import SendCycles from "../SendCycles";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 import Emoji from "../Emoji";
+import Smiley from "../../assets/icons/smiley.svg";
+import Dollar from "../../assets/icons/dollar.svg";
+import EmojiPicker from "../EmojiPicker"
+import CloseButton from "../CloseButton";
 
 export default React.memo(Footer);
 
 const useStyles = makeStyles((theme: Theme) => ({
     footer: {
         display: "flex",
-        padding: "11px 16px",
-        color: "#9b9b9b",
         backgroundColor: "#f0f0f0",
-        alignItems: "center"
+        flexDirection: "column"
     },
     container: {
+        color: "#9b9b9b",
+        padding: "11px 16px 11px 10px",
+        display: "flex",
+        alignItems: "center"
+    },
+    inputContainer: {
         flex: "1 1 auto",
         display: "flex",
         borderRadius: 25,
         padding: "8px 15px 10px 15px",
         backgroundColor: "white",
-        marginLeft: 10
+        marginLeft: 6
     },
     buttons: {
         display: "flex"
@@ -40,6 +48,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     button: {
         borderRadius: "50%",
         padding: 4,
+        marginRight: 6,
         cursor: "pointer",
         "&:hover,:focus": {
             backgroundColor: "#e0e0e0"
@@ -80,11 +89,27 @@ const useStyles = makeStyles((theme: Theme) => ({
         backgroundColor: "transparent",
         marginLeft: 20,
         color: "#9b9b9b"
+    },
+    dollarButton: {
+        width: 32,
+        color: "#111111"
+    },
+    paperclipButton: {
+        marginLeft: 4
     }
 }));
 
+enum MessagePanelState {
+    Closed,
+    EmojiPicker,
+    SendCycles,
+    SendMedia,
+    SendFile
+}
+
 function Footer() {
     const dispatch = useDispatch();
+    const [messagePanelState, setMessagePanel] = useState(MessagePanelState.Closed);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
@@ -96,10 +121,15 @@ function Footer() {
     }
 
     useEffect(() => {
-        window.addEventListener("click", onWindowClick, false);
-    
+        window.addEventListener("click", onWindowClick, false);       
         return () => window.removeEventListener("click", onWindowClick);
-      }, []);    
+    }, []);    
+
+    useEffect(() => {
+        if (messagePanelState == MessagePanelState.Closed) {
+            restoreSelection();
+        }
+    }, [messagePanelState]);    
 
     function handleBeforeInput(e: any) {
         // Markup the text so it will appear correctly in the textbox
@@ -260,38 +290,66 @@ function Footer() {
 
     const classes = useStyles();
 
+    let messagePanel;
+
+    switch (messagePanelState) {
+        case MessagePanelState.Closed:
+            messagePanel = null;
+            break;
+        case MessagePanelState.EmojiPicker:
+            messagePanel = <EmojiPicker 
+                onEmojiSelected={insertEmojiAtCaret}/>;
+            break;
+        case MessagePanelState.SendCycles:
+            messagePanel = <SendCycles 
+                chat={chat}
+                recipient={them!} 
+                onSend={() => setMessagePanel(MessagePanelState.Closed)} />
+            break;
+    }
+
+    const closeButton = <CloseButton  
+        onClick={() => setMessagePanel(MessagePanelState.Closed)}
+        className={classes.button} />;
+
     return (
         <footer className={classes.footer}>
-            <div className={classes.buttons}>
-                <EmojiPicker
-                    onEmojiSelected={insertEmojiAtCaret}
-                    onHidePicker={restoreSelection}
-                    buttonClassName={classes.button} />
-                <AttachFile 
-                    chat={chat}
-                    buttonClassName={classes.button} />
-                {them ? <SendCycles 
-                    chat={chat}
-                    recipient={them} 
-                    onHidePicker={restoreSelection}
-                    buttonClassName={classes.button} /> : null}
-            </div>
+            {messagePanel}
             <div className={classes.container}>
-                <div
-                    id="textbox"
-                    className={classes.input}
-                    placeholder="Type a message"
-                    onBeforeInput={handleBeforeInput}
-                    onInput={handleInput}
-                    onPaste={pastePlainText}
-                    onKeyDown={handleKeyPress}
-                    onBlur={saveSelection}
-                    contentEditable={true}
-                    spellCheck="true"></div>
+                <div className={classes.buttons}>
+                    {messagePanelState != MessagePanelState.EmojiPicker ?
+                    <IconButton 
+                        onClick={_ => setMessagePanel(MessagePanelState.EmojiPicker)} 
+                        className={classes.button}>
+                        <Smiley />
+                    </IconButton> : closeButton}
+                    <AttachFile 
+                        chat={chat}
+                        buttonClassName={classes.button + " " + classes.paperclipButton} />
+                    {them && messagePanelState != MessagePanelState.SendCycles ? 
+                    <IconButton 
+                        className={classes.button + " " + classes.dollarButton} 
+                        onClick={_ => setMessagePanel(MessagePanelState.SendCycles)}>
+                        <Dollar />
+                    </IconButton> : closeButton}
+                </div>
+                <div className={classes.inputContainer}>
+                    <div
+                        id="textbox"
+                        className={classes.input}
+                        placeholder="Type a message"
+                        onBeforeInput={handleBeforeInput}
+                        onInput={handleInput}
+                        onPaste={pastePlainText}
+                        onKeyDown={handleKeyPress}
+                        onBlur={saveSelection}
+                        contentEditable={true}
+                        spellCheck="true"></div>
+                </div>
+                <button onClick={handleSendMessage} className={classes.sendButton}>
+                    <SendButtonIcon />
+                </button>
             </div>
-            <button onClick={handleSendMessage} className={classes.sendButton}>
-                <SendButtonIcon />
-            </button>
         </footer>
     );
 }
