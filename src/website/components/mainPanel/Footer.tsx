@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from "react-redux";
-import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import IconButton from "@material-ui/core/IconButton";
-import makeStyles from "@material-ui/styles/makeStyles";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import SendButtonIcon from "@material-ui/icons/Send";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
@@ -25,7 +25,7 @@ export default React.memo(Footer);
 const useStyles = makeStyles((theme: Theme) => ({
     footer: {
         display: "flex",
-        backgroundColor: "#f0f0f0",
+        backgroundColor: theme.colors.footer.backgroundColor,
         flexDirection: "column"
     },
     container: {
@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         display: "flex",
         borderRadius: 25,
         padding: "8px 15px 10px 15px",
-        backgroundColor: "white",
+        backgroundColor: theme.colors.textBox.backgroundColor,
         marginLeft: 6
     },
     buttons: {
@@ -58,7 +58,7 @@ const useStyles = makeStyles((theme: Theme) => ({
             pointerEvents: "none",
             margin: 0,
             padding: 0,
-            color: "#9b9b9b"
+            color: theme.colors.footer.iconColor
         }
     },
     input: {
@@ -68,7 +68,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         fontSize: 15,
         lineHeight: "20px",
         fontWeight: 400,
-        color: "#111111",
+        color: theme.colors.textBox.textColor,
         whiteSpace: "pre-wrap",
         overflowX: "hidden",
         overflowY: "auto",
@@ -91,8 +91,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         color: "#9b9b9b"
     },
     dollarButton: {
-        width: 32,
-        color: "#111111"
+        width: 32
     },
     paperclipButton: {
         marginLeft: 4
@@ -121,15 +120,16 @@ function Footer() {
     }
 
     useEffect(() => {
-        window.addEventListener("click", onWindowClick, false);       
+        window.addEventListener("click", onWindowClick, false);
+    
         return () => window.removeEventListener("click", onWindowClick);
-    }, []);    
+    }, []);
 
     useEffect(() => {
         if (messagePanelState == MessagePanelState.Closed) {
             restoreSelection();
         }
-    }, [messagePanelState]);    
+    }, [messagePanelState]);
 
     function handleBeforeInput(e: any) {
         // Markup the text so it will appear correctly in the textbox
@@ -154,16 +154,18 @@ function Footer() {
         }
     }
 
+    const textBoxRef = useRef<HTMLDivElement>(null);
+
     function handleSendMessage() {
-        const textbox = document.getElementById("textbox")!;
-        const text = textbox.textContent;
+        const textBox = textBoxRef.current!;
+        const text = textBox.textContent;
 
         if (text) {
             dispatch(sendMessage(chat!, { kind: "text", text: text }, null));
         }
 
-        textbox.innerHTML = "";
-        textbox.focus();
+        textBox.innerHTML = "";
+        textBox.focus();
     }
 
     function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -204,7 +206,7 @@ function Footer() {
 
     function restoreSelection() {
         // Set the focus on to the textbox
-        const textBox = document.getElementById("textbox")!;
+        const textBox = textBoxRef.current!;
         textBox.focus();
 
         // Set the window selection to the last saved range. If there is no existing 
@@ -335,7 +337,7 @@ function Footer() {
                 </div>
                 <div className={classes.inputContainer}>
                     <div
-                        id="textbox"
+                        ref={textBoxRef}
                         className={classes.input}
                         placeholder="Type a message"
                         onBeforeInput={handleBeforeInput}

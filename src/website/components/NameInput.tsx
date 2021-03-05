@@ -11,7 +11,7 @@ export default React.memo(NameInput);
 type Props = {
     className?: string,
     onSubmit: (text: string) => void,
-    defaultPlaceholderText: string,
+    placeholderText: string,
     minLength: number,
     maxLength: number,
     disabled: boolean
@@ -109,7 +109,7 @@ function NameInput(props: Props) {
                     type="text"
                     value={text}
                     onChange={e => handleInputChange(e.target.value)}
-                    placeholder={props.defaultPlaceholderText}
+                    placeholder={props.placeholderText}
                     onKeyDown={handleKeyPress}
                     minLength={props.minLength}
                     maxLength={props.maxLength}

@@ -34,31 +34,39 @@ type Props = {
 }
 
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
-    selectable: theme.selectableListItem,
+    listItem: {
+        backgroundColor: theme.colors.sidePanel.backgroundColor,
+        "&:hover": {
+            backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
+            cursor: "pointer"
+        },
+        "&.Mui-selected": {
+            backgroundColor: theme.colors.sidePanel.listItemSelectedBackgroundColor
+        }
+    },
     chatSummary: {
         paddingLeft: 10,
         width: "100%"
     },
     chatName: {
-        color: theme.customColors.textColor,
         visibility: props => props.name.length ? "visible" : "hidden"
     },
     latestMessage: {
-        color: alpha(theme.customColors.textColor, 0.6),
+        color: alpha(theme.colors.sidePanel.textColor, 0.6),
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
         maxWidth: 450
     },
     date: {
-        color: alpha(theme.customColors.textColor, 0.6),
+        color: alpha(theme.colors.sidePanel.textColor, 0.6),
         float: "right"
     },
     unreadCount: {
         fontSize: "0.75rem",
         float: "right",
-        backgroundColor: theme.customColors.green.main,
-        color: theme.customColors.green.contrast,
+        backgroundColor: theme.colors.green.main,
+        color: theme.colors.green.contrastText,
         lineHeight: "20px",
         borderRadius: 10,
         textAlign: "center",
@@ -82,7 +90,7 @@ function ChatListItem(props: Props) {
             userId={props.userId}
             imageId={props.userImageId}
             size="md"
-            parentBackgroundColor={theme.customColors.sidePanelBackgroundColor} />;
+            parentBackgroundColor={theme.colors.sidePanel.backgroundColor} />;
 
     let snippet: JSX.Element;
     if (props.themTyping) {
@@ -94,7 +102,7 @@ function ChatListItem(props: Props) {
     }
 
     return (
-        <ListItem selected={props.selected} onClick={() => dispatch(selectChat(props.index))} className={classes.selectable} divider>
+        <ListItem selected={props.selected} onClick={() => dispatch(selectChat(props.index))} className={classes.listItem} divider>
             <ListItemIcon>
                 {icon}
             </ListItemIcon>

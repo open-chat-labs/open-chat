@@ -4,7 +4,7 @@ import ArrorBackIcon from "@material-ui/icons/ArrowBack";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 
-export default React.memo(CancelButton);
+export default React.memo(BackButton);
 
 const useStyles = makeStyles((theme: Theme) => ({
     closeButton: {
@@ -13,14 +13,15 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 type Props = {
-    onClick: () => void
+    onClick: () => void,
+    className: string
 }
 
-function CancelButton(props: Props) {
+function BackButton(props: Props) {
     const classes = useStyles();
 
     return (
-        <IconButton onClick={props.onClick} className={classes.closeButton}>
+        <IconButton onClick={props.onClick} className={classes.closeButton + " " + props.className}>
             <ArrorBackIcon />
         </IconButton>
     );

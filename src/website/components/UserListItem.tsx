@@ -33,13 +33,17 @@ function shouldSkipRerender(p1: Props, p2: Props) {
 
 const useStyles = makeStyles((theme: Theme) => ({
     container: {
-        backgroundColor: theme.customColors.sidePanelBackgroundColor,
         position: "relative",
         "&:hover .pop-over-menu-icon": {
             visibility: "visible"
         }
     },
-    selectable: theme.selectableListItem,
+    listItem: {
+        "&:hover": {
+            backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
+            cursor: "pointer"
+        }
+    },
     username: {
         paddingLeft: 10,
         width: "100%"
@@ -62,7 +66,7 @@ function UserListItem(props: Props) {
     let className = classes.container;
     let onClick = defaultOnClick;
     if (props.handleSelectUser) {
-        className += " " + classes.selectable;
+        className += " " + classes.listItem;
         onClick = handleClick
     }
 
@@ -82,7 +86,7 @@ function UserListItem(props: Props) {
                     imageId={props.user.imageId}
                     isUserOnline={props.user.isOnline}
                     size="md"
-                    parentBackgroundColor={theme.customColors.sidePanelBackgroundColor} />
+                    parentBackgroundColor={theme.colors.sidePanel.backgroundColor} />
             </ListItemIcon>
             <Typography variant="body1" className={classes.username}>{props.user.username}</Typography>
             {props.buttons

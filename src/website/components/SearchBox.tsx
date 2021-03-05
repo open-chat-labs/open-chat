@@ -1,25 +1,24 @@
 import React from "react";
-import SearchIcon from "../assets/icons/search.svg";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
+import SearchIcon from "../assets/icons/search.svg";
 
 export default React.memo(SearchBox);
 
 type Props = {
-    id: string,
     text: string,
     onChange: (text: string) => void,
-    defaultPlaceholderText: string,
+    placeholderText: string,
+    ref?: React.RefObject<HTMLInputElement>
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
     container: {
-        backgroundColor: "#f6f6f6",
+        backgroundColor: theme.colors.sidePanel.subHeaderBackgroundColor,
         padding: "6px 15px",
         position: "relative"
     },
     textBox: {
-        backgroundColor: "white",
         width: "100%",
         border: 0,
         borderRadius: 25,
@@ -27,7 +26,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         fontSize: 15,
         fontWeight: 300,
         outline: "none",
-        color: "#111111"
+        color: theme.colors.textBox.textColor,
+        backgroundColor: theme.colors.textBox.backgroundColor
     },
     icon: {
         display: "block",
@@ -45,11 +45,11 @@ function SearchBox(props: Props) {
     return (
         <div className={classes.container}>
             <input
-                id={props.id}
                 className={classes.textBox}
+                ref={props.ref}
                 value={props.text}
                 onChange={e => props.onChange(e.target.value)}
-                placeholder={props.defaultPlaceholderText} />
+                placeholder={props.placeholderText} />
             <SearchIcon className={classes.icon} />
         </div>
     );

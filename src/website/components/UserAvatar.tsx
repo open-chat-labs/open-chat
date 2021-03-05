@@ -32,9 +32,8 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         height: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm,
         width: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm
     },
-    icon: theme.customColors.icon,
     userOnlineMarker: {
-        backgroundColor: theme.customColors.green.main,
+        backgroundColor: theme.colors.green.main,
         boxShadow: props => "0 0 0 2px " + props.parentBackgroundColor,
         height: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         width: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,

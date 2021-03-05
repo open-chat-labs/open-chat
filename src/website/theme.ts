@@ -2,26 +2,57 @@ import createMuiTheme, { Theme, ThemeOptions } from "@material-ui/core/styles/cr
 
 interface CustomColors {
     outerBackgroundColor: string,
-    mainPanelBackgroundColor: string,
-    sidePanelBackgroundColor: string,
-    headerBackgroundColor: string,
-    textColor: string,
+    mainPanel: {
+        backgroundColor: string
+    },
+    header: {
+        primaryTextColor: string,
+        secondaryTextColor: string,
+        backgroundColor: string
+    },
+    footer: {
+        iconColor: string,
+        backgroundColor: string
+    },
+    sidePanel: {
+        textColor: string,
+        backgroundColor: string,
+        subHeaderBackgroundColor: string,
+        listItemHoverBackgroundColor: string,
+        listItemSelectedBackgroundColor: string
+    },
+    textBox: {
+        backgroundColor: string,
+        textColor: string
+    },
+    messageSentByMe: {
+        textColor: string,
+        backgroundColor: string,
+        altBackgroundColor: string
+    },
+    messageSentByElse: {
+        textColor: string,
+        backgroundColor: string,
+        altBackgroundColor: string,
+        participantNameColor: string
+    }
+    dayChangeMarker: {
+        textColor: string,
+        backgroundColor: string
+    },
     icon: {
         color: string,
         backgroundColor: string
     },
-    messageSentByMe: {
-        color: string,
-        backgroundColor: string
-    },
-    messageSentByElse: {
-        color: string,
-        backgroundColor: string
-    },
-    menuColor: string,
     green: {
         main: string,
-        contrast: string
+        contrastText: string
+    },
+    loginRegister: {
+        textColor: string,
+        backgroundColor: string,
+        buttonBackgroundColor: string,
+        buttonTextColor: string
     }
 }
 
@@ -30,13 +61,7 @@ interface ThemeExtensions {
         sm: number,
         md: number
     },
-    selectableListItem: {
-        "&:hover": {
-            backgroundColor: string,
-            cursor: string
-        }
-    },
-    customColors: CustomColors
+    colors: CustomColors
 }
 
 declare module "@material-ui/core/styles/createMuiTheme" {
@@ -62,37 +87,103 @@ declare module "@material-ui/core/Typography" {
 
 const defaultColours: CustomColors = {
     outerBackgroundColor: "#41398b",
-    mainPanelBackgroundColor: "#3dc5ee",
-    sidePanelBackgroundColor: "#ffffff",
-    headerBackgroundColor: "#ededed",
-    textColor: "#000000",
+    mainPanel: {
+        backgroundColor: "#3dc5ee"
+    },
+    header: {
+        primaryTextColor: "#000000",
+        secondaryTextColor: "#666666",
+        backgroundColor: "#ededed"
+    },
+    footer: {
+        iconColor: "#9b9b9b",
+        backgroundColor: "#ededed"
+    },
+    sidePanel: {
+        textColor: "#000000",
+        backgroundColor: "#ffffff",
+        subHeaderBackgroundColor: "#f6f6f6",
+        listItemHoverBackgroundColor: "#f0f0f0",
+        listItemSelectedBackgroundColor: "#eeeeee"
+    },
+    textBox: {
+        backgroundColor: "#ffffff",
+        textColor: "#111111"
+    },
+    messageSentByMe: {
+        textColor: "#ffffff",
+        backgroundColor: "#d62c7d",
+        altBackgroundColor: "#ea4091"
+    },
+    messageSentByElse: {
+        textColor: "#000000",
+        backgroundColor: "#ffffff",
+        altBackgroundColor: "#e9e9e9",
+        participantNameColor: "#d62c7d"
+    },
+    dayChangeMarker: {
+        textColor: "#000000",
+        backgroundColor: "#dddddd"
+    },
     icon: {
         color: "#ffffff",
         backgroundColor: "#d8d8d8"
     },
-    messageSentByMe: {
-        color: "#ffffff",
-        backgroundColor: "#d62c7d"
-    },
-    messageSentByElse: {
-        color: "#000000",
-        backgroundColor: "#ffffff"
-    },
-    menuColor: "#ffffff",
     green: {
         main: "#32cd32",
-        contrast: "#ffffff"
+        contrastText: "#ffffff"
+    },
+    loginRegister: {
+        textColor: "#000000",
+        backgroundColor: "#ffffff",
+        buttonBackgroundColor: "#3dc5ee",
+        buttonTextColor: "#ffffff"
     }
 };
 
-const defaultOptions: ThemeOptions = {
+// const darkThemeColors: CustomColors = {
+//     outerBackgroundColor: "#201c45",
+//     mainPanelBackgroundColor: "#042b36",
+//     sidePanelBackgroundColor: "#111111",
+//     headerBackgroundColor: "#383838",
+//     subHeaderBackgroundColor: "#484848",
+//     dayChangeMarker: {
+//         color: "#111111",
+//         backgroundColor: "#aaaaaa"
+//     },
+//     listItemBackgroundColor: {
+//         main: "#111111",
+//         hover: "#222222",
+//         selected: "#333333"
+//     },
+//     textColor: "#cccccc",
+//     icon: {
+//         color: "#777777",
+//         backgroundColor: "#222222"
+//     },
+//     messageSentByMe: {
+//         color: "#dddddd",
+//         backgroundColor: "#444444"
+//     },
+//     messageSentByElse: {
+//         color: "#888888",
+//         backgroundColor: "#111111"
+//     },
+//     menuColor: "#111111",
+//     green: {
+//         main: "#28a428",
+//         contrast: "#cccccc"
+//     }
+// }
+
+const buildOptions = (colors: CustomColors) : ThemeOptions => ({
     typography: {
         fontFamily: "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\"",
         h6: {
             fontWeight: "normal"
         },
         smallest: {
-            fontSize: "0.688rem"
+            fontSize: "0.6875rem"
         }
     },
     components: {
@@ -124,30 +215,11 @@ const defaultOptions: ThemeOptions = {
         sm: 40,
         md: 50
     },
-    selectableListItem: {
-        "&:hover": {
-            backgroundColor: "#f0f0f0",
-            cursor: "pointer"
-        }
-    },
-    customColors: defaultColours
-}
+    colors: colors
+});
 
-function createDefaultTheme() : Theme {
-    return createMuiTheme(defaultOptions);
-}
-
-function createTheme(customColors: CustomColors) : Theme {
-    const options: ThemeOptions = {
-        ...defaultOptions,
-        customColors
-    };
-
-    return createMuiTheme(options);
-}
+const createDefaultTheme = () : Theme => createTheme(defaultColours);
+const createTheme = (customColors: CustomColors) : Theme => createMuiTheme(buildOptions(customColors));
 
 export const lightTheme = createDefaultTheme();
-export const darkTheme = createTheme({
-    ...defaultColours,
-    sidePanelBackgroundColor: "#000000"
-});
+export const darkTheme = createTheme(defaultColours);

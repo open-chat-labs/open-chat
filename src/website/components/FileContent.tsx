@@ -20,7 +20,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         minWidth: 300,
         padding: "10px 9px",
         maxWidth: 494,
-        backgroundColor: props => props.sentByMe ? theme.customColors.messageSentByMe.backgroundColor : theme.customColors.messageSentByElse.backgroundColor,
+        backgroundColor: props => props.sentByMe ? theme.colors.messageSentByMe.backgroundColor : theme.colors.messageSentByElse.backgroundColor,
         filter: props => props.sentByMe ? "brightness(1.1)" : "brightness(0.9)",
         fontSize: 14,
         lineHeight: 1,
@@ -38,7 +38,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     fileName: {
         flex: "1 0 auto",
         marginLeft: 8,
-        color: props => props.sentByMe ? theme.customColors.messageSentByMe.color : theme.customColors.messageSentByElse.color
+        color: props => props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor
     },
     fileSize: {
         margin: "6px 0 3px 9px",
@@ -47,7 +47,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         display: "block",
         zIndex: 10,
         fontSize: 11,
-        color: props => alpha(props.sentByMe ? theme.customColors.messageSentByMe.color : theme.customColors.messageSentByElse.color, 0.6)
+        color: props => alpha(props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor, 0.6)
     }
 }));
 

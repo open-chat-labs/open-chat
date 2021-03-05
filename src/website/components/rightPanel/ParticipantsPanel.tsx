@@ -11,7 +11,7 @@ import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
 import UserListItem from "../UserListItem";
-import { fromMyProfile, fromUserSummary, UserId, UserItem, UserSummary } from "../../domain/model/users";
+import { fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
 import gotoUser from "../../actions/chats/gotoUser";
 import removeParticipant from "../../actions/chats/removeParticipant";
@@ -22,7 +22,12 @@ import CreateGroupChatIcon from "../CreateGroupChatIcon";
 export default React.memo(ParticipantsPanel);
 
 const useStyles = makeStyles((theme: Theme) => ({
-    selectable: theme.selectableListItem
+    listItem: {
+        "&:hover": {
+            backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
+            cursor: "pointer"
+        }
+    }
 }));
 
 function ParticipantsPanel() {
@@ -65,9 +70,9 @@ function ParticipantsPanel() {
 
     return (
         <>
-            <Header title="Participants" onCancelButtonClick={closePanel} />
+            <Header title="Participants" onCloseButtonClick={closePanel} />
             <List disablePadding={true}>
-                <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.selectable} divider>
+                <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.listItem} divider>
                     <ListItemIcon>
                         <CreateGroupChatIcon size="sm" />
                     </ListItemIcon>

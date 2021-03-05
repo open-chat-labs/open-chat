@@ -6,7 +6,7 @@
       "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
       "build": "./generate-wasm.sh chats",
       "initialization_values": {
-        "memory_allocation": "8GB"
+        "memory_allocation": "1GB"
       }
     },
     "p2p": {
@@ -15,7 +15,7 @@
       "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
       "build": "./generate-wasm.sh p2p",
       "initialization_values": {
-        "memory_allocation": "8GB"
+        "memory_allocation": "1GB"
       }
     },
     "user_mgmt": {
@@ -24,7 +24,7 @@
       "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
       "build": "./generate-wasm.sh user_mgmt",
       "initialization_values": {
-        "memory_allocation": "8GB"
+        "memory_allocation": "1GB"
       }
     },
     "website": {

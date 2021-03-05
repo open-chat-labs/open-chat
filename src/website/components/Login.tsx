@@ -18,6 +18,8 @@ type Props = {
 
 const useStyles = makeStyles((theme: Theme) => ({
     paper: {
+        color: theme.colors.loginRegister.textColor,
+        backgroundColor: theme.colors.loginRegister.backgroundColor,
         textAlign: "center",
         padding: 20
     },
@@ -26,9 +28,10 @@ const useStyles = makeStyles((theme: Theme) => ({
         height: 80
     },
     button: {
-        backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        color: theme.colors.loginRegister.buttonTextColor,
+        backgroundColor: theme.colors.loginRegister.buttonBackgroundColor,
         "&:hover": {
-            backgroundColor: theme.customColors.mainPanelBackgroundColor,
+            backgroundColor: theme.colors.loginRegister.buttonBackgroundColor,
         }
     }
 }));

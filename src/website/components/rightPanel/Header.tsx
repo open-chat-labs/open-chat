@@ -1,7 +1,8 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import Typography from "@material-ui/core/Typography";
 import makeStyles from "@material-ui/styles/makeStyles";
 import CloseButton from "../CloseButton";
 import BackButton from "../BackButton";
@@ -13,7 +14,7 @@ type Props = {
     title: string,
     rightIcon: Option<JSX.Element>,
     back: boolean,
-    onCancelButtonClick: () => void
+    onCloseButtonClick: () => void
 }
 
 Header.defaultProps = {
@@ -24,6 +25,9 @@ Header.defaultProps = {
 const useStyles = makeStyles((theme: Theme) => ({
     title: {
         padding: "0 16px"
+    },
+    closeButton: {
+        color: alpha(theme.colors.header.primaryTextColor, 0.6)
     }
 }));
 
@@ -39,9 +43,9 @@ function Header(props: Props) {
             <Grid item>
                 <Grid container alignItems="center">
                     <Grid item>
-                        {props.back 
-                            ? <BackButton onClick={props.onCancelButtonClick} /> 
-                            : <CloseButton onClick={props.onCancelButtonClick} />}                        
+                        {props.back
+                            ? <BackButton onClick={props.onCloseButtonClick} className={classes.closeButton} />
+                            : <CloseButton onClick={props.onCloseButtonClick} className={classes.closeButton} />}
                     </Grid>
                     <Grid item>
                         <Typography variant="h6" className={classes.title}>{props.title}</Typography>

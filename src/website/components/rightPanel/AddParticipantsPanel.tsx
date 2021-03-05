@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import List from "@material-ui/core/List";
 
@@ -16,7 +16,6 @@ import Header from "./Header";
 import CreateGroupChatIcon from "../CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Type a username";
-const SEARCH_BOX_ID = "addParticipantsSearchBox";
 
 export default React.memo(AddParticipantsPanel);
 
@@ -28,6 +27,7 @@ function AddParticipantsPanel() {
     const [text, setText] = useState("");
     const [results, setResults] = useState(emptyResults);
     const clearInput = () => setText("");
+    const textBoxRef = useRef<HTMLInputElement>(null);
 
     function handleInputChange(text: string) {
         setText(text);
@@ -56,13 +56,20 @@ function AddParticipantsPanel() {
     }
 
     useLayoutEffect(() => {
-        document.getElementById(SEARCH_BOX_ID)?.focus();
+        textBoxRef.current?.focus();
     }, []);
 
     return (
         <>
-            <Header title="Add participants" onCancelButtonClick={closePanel} rightIcon={<CreateGroupChatIcon size="sm" />} back={true} />
-            <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
+            <Header
+                title="Add participants"
+                onCloseButtonClick={closePanel}
+                rightIcon={<CreateGroupChatIcon size="sm" />} />
+            <SearchBox
+                text={text}
+                onChange={handleInputChange}
+                placeholderText={PLACEHOLDER_TEXT}
+                ref={textBoxRef} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem
                     key={user.userId}
