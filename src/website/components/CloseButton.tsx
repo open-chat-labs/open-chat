@@ -13,14 +13,19 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 type Props = {
-    onClick: () => void
+    onClick: () => void,
+    className: string
+}
+
+CloseButton.defaultProps = {
+    className: ""
 }
 
 function CloseButton(props: Props) {
     const classes = useStyles();
 
     return (
-        <IconButton onClick={props.onClick} className={classes.closeButton}>
+        <IconButton onClick={props.onClick} className={props.className.length ? " " + props.className : classes.closeButton}>
             <CloseIcon />
         </IconButton>
     );

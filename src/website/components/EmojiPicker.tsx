@@ -1,82 +1,66 @@
-import React, {useRef, useState} from "react";
-import ClickAwayListener from "@material-ui/core/ClickAwayListener";
-import IconButton from "@material-ui/core/IconButton";
-import Paper from "@material-ui/core/Paper";
-import Popper from "@material-ui/core/Popper";
+import React from "react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { EmojiData, Picker } from 'emoji-mart'
-import Smiley from "../assets/icons/smiley.svg";
 
 export default React.memo(EmojiPicker);
 
 type Props = {
-    onEmojiSelected: (text: string) => void,
-    onHidePicker: () => void,
-    buttonClassName: string
+    onEmojiSelected: (text: string) => void
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    smileyButton: {
-        marginRight: 10
-    },
-    emojisContainer: {
-        zIndex: 100
+    "@global": {
+        ".emoji-mart": {
+            backgroundColor: "#f0f0f0",
+            border: 0,
+            borderRadius: 0
+        },
+        ".emoji-mart-search": {
+            paddingBottom: 6
+        },
+        ".emoji-mart-search input": {
+            paddingTop: 7,
+            backgroundColor: "#e0e0e0"
+        },
+        ".emoji-mart-category-label span": {
+            backgroundColor: "#f0f0f0",
+            opacity: 0.9,
+            color: "#444444"
+        },
+        ".emoji-mart-scroll": {
+            height: 215
+        }
     }
 }));
 
 function EmojiPicker(props: Props) {
-    const [open, setOpen] = useState(false);
-    const anchorRef = useRef<HTMLElement>(null);
-    const classes = useStyles();
 
-    const popperModifiers = [
-        {
-          name: 'offset',
-          options: {
-                offset: [-11, 18],
-            },
-        },
-    ];
+    useStyles();
 
     return (
-        <>
-            <IconButton className={props.buttonClassName + " " + classes.smileyButton} buttonRef={anchorRef} onClick={toggleEmojiPicker}>
-                <Smiley />
-            </IconButton>
-            <Popper id="emojisContainer" open={open} anchorEl={anchorRef.current} modifiers={popperModifiers} placement="top-start" className={classes.emojisContainer}>
-                <ClickAwayListener onClickAway={toggleEmojiPicker}>
-                    <Paper>
-                        <Picker
-                            title={"Pick your emoji..."}
-                            theme="light"
-                            onSelect={onSelectEmoji}
-                            emoji="point_up"
-                            native={true} />
-                    </Paper>
-                </ClickAwayListener>
-            </Popper>
-        </>
+        <Picker
+            title={"Pick your emoji..."}
+            theme="light"
+            color="#d62c7d"
+            onSelect={onSelectEmoji}
+            autoFocus={true}
+            showPreview={false}
+            showSkinTones={false}
+            emojiTooltip={true}
+            emoji="point_up"
+            emojiSize={28}
+            perLine={3}
+            native={true} 
+            style={{
+                width: "100%"
+            }}/>
     );
 
     function onSelectEmoji(emojiData: EmojiData) {
         if ("native" in emojiData) {
             props.onEmojiSelected(emojiData.native);
         }
-    }
-
-    function toggleEmojiPicker() {
-        if (open) {
-            setOpen(false);
-            props.onHidePicker();
-        } else {
-            setOpen(true);
-            focusOnEmojiSearch();
-        }
-    }
-
-    function focusOnEmojiSearch() {
-        document.getElementById("emoji-mart-search-1")?.focus();
     }
 }
 
