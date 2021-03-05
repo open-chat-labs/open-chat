@@ -17,8 +17,7 @@ type Props = {
     isUserOnline: boolean,
     userId: Option<UserId>,
     imageId: Option<string>,
-    blobUrl: Option<string>,
-    parentBackgroundColor: string
+    blobUrl: Option<string>
 }
 
 UserAvatar.defaultProps = {
@@ -34,7 +33,6 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     },
     userOnlineMarker: {
         backgroundColor: theme.colors.green.main,
-        boxShadow: props => "0 0 0 2px " + props.parentBackgroundColor,
         height: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         width: props => props.size === "md" ? theme.avatarSize.md / 4 : theme.avatarSize.sm / 4,
         borderRadius: "50%"
@@ -48,6 +46,7 @@ function UserAvatar(props: Props) : JSX.Element {
     const blobsToRevoke = useRef<string[]>([]);
     const [src, setSrc] = useState(() => setInitialSrc(props));
     const classes = useStyles(props);
+    const userOnlineMarkerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!props.userId) {
@@ -76,12 +75,44 @@ function UserAvatar(props: Props) : JSX.Element {
                 });            
         }
     }, [props.userId, props.imageId]);
-    
+
     useLayoutEffect(() => {
         return () => {
             unmounted.current = true
         };
     }, []);
+
+    // Set the boxShadow of the userOnlineMarker based on the first non-transparent parent's backgroundColor, then
+    // listen for changes to that backgroundColor and update the boxShadow on each change
+    useLayoutEffect(() => {
+        const userOnlineMarker = userOnlineMarkerRef.current;
+        if (!userOnlineMarker) {
+            return;
+        }
+
+        const dot = userOnlineMarker.getElementsByClassName("MuiBadge-dot")[0] as HTMLElement;
+        const backgroundColorElem = getFirstNonTransparentParent(userOnlineMarker);
+
+        const setBoxShadowColor = function() {
+            const latestBackgroundColor = window.getComputedStyle(backgroundColorElem).backgroundColor;
+            dot.style.boxShadow = "0 0 0 2px " + latestBackgroundColor;
+        };
+
+        setBoxShadowColor();
+
+        // Listen for style / class changes or for hover started / stopped
+        const observer = new MutationObserver(setBoxShadowColor);
+        observer.observe(backgroundColorElem, { attributes: true });
+        backgroundColorElem.addEventListener("mouseenter", setBoxShadowColor);
+        backgroundColorElem.addEventListener("mouseleave", setBoxShadowColor);
+
+        return () => {
+            // Dispose of all the listeners
+            observer.disconnect();
+            backgroundColorElem.removeEventListener("mouseenter", setBoxShadowColor);
+            backgroundColorElem.removeEventListener("mouseleave", setBoxShadowColor);
+        }
+    }, [src, props.isUserOnline]);
 
     useEffect(() => {
         return () => {
@@ -99,6 +130,7 @@ function UserAvatar(props: Props) : JSX.Element {
                     classes={{ root: classes.avatar, badge: classes.userOnlineMarker }}
                     variant="dot"
                     overlap="circular"
+                    ref={userOnlineMarkerRef}
                     anchorOrigin={{
                         vertical: "bottom",
                         horizontal: "right",
@@ -123,6 +155,26 @@ function UserAvatar(props: Props) : JSX.Element {
             { margin: 0, format: 'svg' });
 
         return "data:image/svg+xml;base64," + identicon.toString();
+    }
+
+    function getFirstNonTransparentParent(elem: HTMLElement) : HTMLElement {
+        let currentElem: Option<HTMLElement> = elem;
+        do {
+            const backgroundColor = window.getComputedStyle(currentElem).backgroundColor;
+            if (!backgroundColor.startsWith("rgba")) {
+                return currentElem;
+            }
+            const alpha = parseInt(backgroundColor.split("(")[1].split(")")[0].split(",")[3]);
+            // If alpha is 0 then this element is transparent
+            if (alpha > 0) {
+                return currentElem;
+            }
+            currentElem = currentElem.parentElement;
+        }
+        while (currentElem)
+
+        // This should never happen
+        throw new Error();
     }
 
     return icon;
