@@ -8,7 +8,8 @@ export default React.memo(CloseButton);
 
 const useStyles = makeStyles((theme: Theme) => ({
     closeButton: {
-        padding: 8
+        height: theme.avatarSize.sm,
+        width: theme.avatarSize.sm
     }
 }));
 
@@ -25,7 +26,7 @@ function CloseButton(props: Props) {
     const classes = useStyles();
 
     return (
-        <IconButton onClick={props.onClick} className={props.className.length ? " " + props.className : classes.closeButton}>
+        <IconButton onClick={props.onClick} className={classes.closeButton + " " + props.className}>
             <CloseIcon />
         </IconButton>
     );
