@@ -1,6 +1,7 @@
 import createMuiTheme, { Theme, ThemeOptions } from "@material-ui/core/styles/createMuiTheme";
 
 interface CustomColors {
+    linkColor: string,
     outerBackgroundColor: string,
     mainPanel: {
         backgroundColor: string
@@ -33,8 +34,7 @@ interface CustomColors {
     messageSentByElse: {
         textColor: string,
         backgroundColor: string,
-        altBackgroundColor: string,
-        participantNameColor: string
+        altBackgroundColor: string
     }
     dayChangeMarker: {
         textColor: string,
@@ -86,6 +86,7 @@ declare module "@material-ui/core/Typography" {
 }
 
 const defaultColours: CustomColors = {
+    linkColor: "#d62c7d",
     outerBackgroundColor: "#41398b",
     mainPanel: {
         backgroundColor: "#3dc5ee"
@@ -118,8 +119,7 @@ const defaultColours: CustomColors = {
     messageSentByElse: {
         textColor: "#000000",
         backgroundColor: "#ffffff",
-        altBackgroundColor: "#e9e9e9",
-        participantNameColor: "#d62c7d"
+        altBackgroundColor: "#e9e9e9"
     },
     dayChangeMarker: {
         textColor: "#000000",
@@ -190,6 +190,11 @@ const buildOptions = (colors: CustomColors) : ThemeOptions => ({
         MuiButtonBase: {
             defaultProps: {
                 disableRipple: true
+            }
+        },
+        MuiLink: {
+            defaultProps: {
+                color: colors.linkColor
             }
         },
         MuiTypography: {
