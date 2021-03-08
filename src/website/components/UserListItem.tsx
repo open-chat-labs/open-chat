@@ -4,7 +4,6 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import useTheme from "@material-ui/core/styles/useTheme";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Option } from "../domain/model/common";
 import UserAvatar from "./UserAvatar";
@@ -61,7 +60,6 @@ const defaultOnClick: (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => vo
 
 function UserListItem(props: Props) {
     const classes = useStyles();
-    const theme = useTheme();
 
     let className = classes.container;
     let onClick = defaultOnClick;
@@ -85,8 +83,7 @@ function UserListItem(props: Props) {
                     userId={props.user.userId}
                     imageId={props.user.imageId}
                     isUserOnline={props.user.isOnline}
-                    size="md"
-                    parentBackgroundColor={theme.colors.sidePanel.backgroundColor} />
+                    size="md" />
             </ListItemIcon>
             <Typography variant="body1" className={classes.username}>{props.user.username}</Typography>
             {props.buttons

@@ -6,7 +6,6 @@ import Typography from "@material-ui/core/Typography";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import useTheme from "@material-ui/core/styles/useTheme";
 
 import selectChat from "../actions/chats/selectChat";
 import { Option } from "../domain/model/common";
@@ -81,7 +80,6 @@ export default React.memo(ChatListItem);
 function ChatListItem(props: Props) {
     const dispatch = useDispatch();
     const classes = useStyles(props);
-    const theme = useTheme();
 
     const icon = props.isGroup
         ? <DefaultGroupChatIcon size="md" />
@@ -89,8 +87,7 @@ function ChatListItem(props: Props) {
             isUserOnline={props.userOnline}
             userId={props.userId}
             imageId={props.userImageId}
-            size="md"
-            parentBackgroundColor={theme.colors.sidePanel.backgroundColor} />;
+            size="md" />;
 
     let snippet: JSX.Element;
     if (props.themTyping) {

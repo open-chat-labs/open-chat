@@ -4,7 +4,6 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import useTheme from "@material-ui/core/styles/useTheme";
 import { RootState } from "../../reducers";
 import UserAvatar from "../UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
@@ -37,7 +36,6 @@ function Header() {
     const me: Option<MyProfile> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
-    const theme = useTheme();
 
     if (chat === null) {
         return <div></div>;
@@ -65,8 +63,7 @@ function Header() {
             userId={chat.them}
             imageId={imageId}
             isUserOnline={isOnline}
-            size="sm"
-            parentBackgroundColor={theme.colors.header.backgroundColor} />;
+            size="sm" />;
     } else {
         icon = <DefaultGroupChatIcon size="sm" />;
         chatName = chat.subject;
