@@ -12,12 +12,12 @@ type Props = {
 
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     icon: {
-        color: theme.customColors.icon.color,
-        backgroundColor: theme.customColors.icon.backgroundColor,
+        color: theme.colors.icon.color,
+        backgroundColor: theme.colors.icon.backgroundColor,
         height: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm,
         width: props => props.size === "md" ? theme.avatarSize.md : theme.avatarSize.sm,
         "& .background": {
-            fill: theme.customColors.icon.backgroundColor
+            fill: theme.colors.icon.backgroundColor
         }
     }
 }));

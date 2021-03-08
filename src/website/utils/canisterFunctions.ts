@@ -13,8 +13,8 @@ export function extractCanisterIds() {
         }
         : {
             // IC canister ids
-            chats: Principal.fromText("sadjp-vqaaa-aaaab-qaipa-cai"),
-            p2p: Principal.fromText("shcp3-yiaaa-aaaab-qaipq-cai"),
-            userMgmt: Principal.fromText("x3zv6-taaaa-aaaab-qaiqa-cai")
+            chats: Principal.fromText("xo6et-siaaa-aaaab-qaitq-cai"),
+            p2p: Principal.fromText("wdqa5-5aaaa-aaaab-qaiua-cai"),
+            userMgmt: Principal.fromText("2zip3-tqaaa-aaaaa-qahma-cai")
         };    
 }

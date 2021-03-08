@@ -47,9 +47,9 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     button: {
-        backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        backgroundColor: theme.colors.mainPanel.backgroundColor,
         "&:hover": {
-            backgroundColor: theme.customColors.mainPanelBackgroundColor,
+            backgroundColor: theme.colors.mainPanel.backgroundColor
         }
     },
     cyclesInput: {

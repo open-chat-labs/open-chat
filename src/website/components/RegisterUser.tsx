@@ -1,7 +1,6 @@
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import Paper from "@material-ui/core/Paper";
 import React from "react";
 import PersonIcon from '@material-ui/icons/Person';
@@ -13,6 +12,8 @@ import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_E
 
 const useStyles = makeStyles((theme: Theme) => ({
     paper: {
+        color: theme.colors.loginRegister.textColor,
+        backgroundColor: theme.colors.loginRegister.backgroundColor,
         textAlign: "center",
         padding: 20
     },
@@ -21,9 +22,10 @@ const useStyles = makeStyles((theme: Theme) => ({
         height: 80
     },
     button: {
-        backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        color: theme.colors.loginRegister.buttonTextColor,
+        backgroundColor: theme.colors.loginRegister.buttonBackgroundColor,
         "&:hover": {
-            backgroundColor: alpha(theme.customColors.mainPanelBackgroundColor, 0.1),
+            backgroundColor: theme.colors.loginRegister.buttonBackgroundColor
         }
     },
     nameInput: {
@@ -77,7 +79,7 @@ export default function RegisterUser() {
                 <Typography variant="h2">Register user</Typography>
                 <NameInput
                     onSubmit={handleSubmit}
-                    defaultPlaceholderText="Enter username"
+                    placeholderText="Enter username"
                     minLength={3}
                     maxLength={25}
                     className={classes.nameInput}

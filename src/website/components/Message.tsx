@@ -47,10 +47,10 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     sentByMe: {
         alignSelf: "flex-end",
-        color: theme.customColors.messageSentByMe.color,
-        backgroundColor: theme.customColors.messageSentByMe.backgroundColor,
+        color: theme.colors.messageSentByMe.textColor,
+        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
         "& $time": {
-            color: alpha(theme.customColors.messageSentByMe.color, 0.6)
+            color: alpha(theme.colors.messageSentByMe.textColor, 0.6)
         },
         "&$file $time": {
             marginRight: 19
@@ -58,11 +58,11 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     sentByElse: {
         alignSelf: "flex-start",
-        color: theme.customColors.messageSentByElse.color,
-        backgroundColor: theme.customColors.messageSentByElse.backgroundColor,
+        color: theme.colors.messageSentByElse.textColor,
+        backgroundColor: theme.colors.messageSentByElse.backgroundColor,
         "& $time": {
             marginRight: 0,
-            color: alpha(theme.customColors.messageSentByElse.color, 0.6)
+            color: alpha(theme.colors.messageSentByElse.textColor, 0.6)
         },
         "&$media $time": {
             right: 12
@@ -72,7 +72,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     unread: {
-        backgroundColor: alpha(theme.customColors.messageSentByElse.backgroundColor, 0.8)
+        backgroundColor: alpha(theme.colors.messageSentByElse.backgroundColor, 0.8)
     },
     mergeWithNext: {
         "&$sentByMe": {
@@ -141,7 +141,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         fontWeight: "bolder",
         display: "block",
         textDecoration: "none",
-        color: "#d62c7d",
+        color: theme.colors.messageSentByElse.participantNameColor,
         "&:hover": {
             textDecoration: "underline"
         }
@@ -153,7 +153,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         textAlign: "right"
     },
     tick: {
-        color: alpha(theme.customColors.messageSentByMe.color, 0.8),
+        color: alpha(theme.colors.messageSentByMe.textColor, 0.8),
         position: "absolute",
         height: 15,
         width: 15,

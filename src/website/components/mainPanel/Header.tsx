@@ -2,7 +2,6 @@ import React from "react";
 import { useSelector } from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
@@ -25,11 +24,12 @@ export default React.memo(Header);
 
 const useStyles = makeStyles((theme: Theme) => ({
     titles: {
+        color: theme.colors.header.primaryTextColor,
         lineHeight: "normal",
         padding: "0 18px"
     },
     subtitle: {
-        color: alpha(theme.customColors.textColor, 0.6)
+        color: theme.colors.header.secondaryTextColor
     }
 }));
 
@@ -66,7 +66,7 @@ function Header() {
             imageId={imageId}
             isUserOnline={isOnline}
             size="sm"
-            parentBackgroundColor={theme.customColors.headerBackgroundColor} />;
+            parentBackgroundColor={theme.colors.header.backgroundColor} />;
     } else {
         icon = <DefaultGroupChatIcon size="sm" />;
         chatName = chat.subject;

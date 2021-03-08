@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     grid: {
         height: "100%",
         overflow: "hidden",
-        backgroundColor: theme.customColors.sidePanelBackgroundColor
+        backgroundColor: theme.colors.sidePanel.backgroundColor
     },
     left: {
         height: "100%",
@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     main: {
         height: "100%",
-        backgroundColor: theme.customColors.mainPanelBackgroundColor,
+        backgroundColor: theme.colors.mainPanel.backgroundColor,
         width: "60%",
         "&.rightPanelActive": {
             width: "40%"

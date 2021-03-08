@@ -29,8 +29,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         padding: 8
     },
     menu: {
-        color: alpha(theme.customColors.textColor, 0.8),
-        backgroundColor: alpha(theme.customColors.sidePanelBackgroundColor, 0.8),
+        color: alpha(theme.colors.sidePanel.textColor, 0.8),
+        backgroundColor: alpha(theme.colors.sidePanel.backgroundColor, 0.8),
         minWidth: 160
     },
     popper: {

@@ -1,6 +1,9 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import List from "@material-ui/core/List";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
@@ -13,17 +16,24 @@ import CloseButton from "../CloseButton";
 import CreateGroupChatIcon from "../CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Type a username";
-const SEARCH_BOX_ID = "newDirectChatSearchBox";
 
 export default React.memo(NewDirectChatPanel);
 
+const useStyles = makeStyles((theme: Theme) => ({
+    closeButton: {
+        color: alpha(theme.colors.header.primaryTextColor, 0.6)
+    }
+}));
+
 function NewDirectChatPanel() {
     const dispatch = useDispatch();
+    const classes = useStyles();
 
     const emptyResults: UserSummary[] = [];
     const [text, setText] = useState("");
     const [results, setResults] = useState(emptyResults);
     const clearInput = () => setText("");
+    const textBoxRef = useRef<HTMLInputElement>(null);
 
     function handleInputChange(text: string) {
         setText(text);
@@ -52,13 +62,20 @@ function NewDirectChatPanel() {
     }
 
     useLayoutEffect(() => {
-        document.getElementById(SEARCH_BOX_ID)?.focus();
+        textBoxRef.current?.focus();
     }, []);
 
     return (
         <>
-            <Header leftIcon={<CreateGroupChatIcon size="sm" />} title="Start a new chat" rightIcon={<CloseButton onClick={closePanel} />} />
-            <SearchBox id={SEARCH_BOX_ID} text={text} onChange={handleInputChange} defaultPlaceholderText={PLACEHOLDER_TEXT} />
+            <Header
+                leftIcon={<CreateGroupChatIcon size="sm" />}
+                title="Start a new chat"
+                rightIcon={<CloseButton onClick={closePanel} className={classes.closeButton} />} />
+            <SearchBox
+                text={text}
+                onChange={handleInputChange}
+                placeholderText={PLACEHOLDER_TEXT}
+                ref={textBoxRef} />
             <List disablePadding={true}>
                 {results.map(user => <UserListItem
                     key={user.userId}

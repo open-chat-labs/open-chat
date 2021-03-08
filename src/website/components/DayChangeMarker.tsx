@@ -1,6 +1,7 @@
 import React from "react";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { toDayOfWeekString, toLongDateString } from "../formatters/date";
 import * as dateFunctions from "../utils/dateFunctions";
@@ -13,7 +14,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     dayChangeMarker: {
         padding: "6px 12px",
         borderRadius: 10,
-        backgroundColor: "rgb(221,221,221, 0.9)",
+        color: theme.colors.dayChangeMarker.textColor,
+        backgroundColor: theme.colors.dayChangeMarker.backgroundColor,
         alignSelf: "center",
         position: "sticky",
         top: 0,

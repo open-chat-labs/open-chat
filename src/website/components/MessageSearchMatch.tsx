@@ -24,22 +24,24 @@ type Props = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
-    selectable: theme.selectableListItem,
+    listItem: {
+        "&:hover": {
+            backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
+            cursor: "pointer"
+        }
+    },
     messageSummary: {
         width: "100%"
     },
-    chatName: {
-        color: theme.customColors.textColor
-    },
     messageSnippet: {
-        color: alpha(theme.customColors.textColor, 0.6),
+        color: alpha(theme.colors.sidePanel.textColor, 0.6),
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
         maxWidth: 450
     },
     date: {
-        color: alpha(theme.customColors.textColor, 0.6),
+        color: alpha(theme.colors.sidePanel.textColor, 0.6),
         float: "right"
     }
 }));
@@ -61,11 +63,11 @@ function MessageSearchMatch(props: Props) {
     }
 
     return (
-        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.selectable} divider>
+        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.listItem} divider>
             <div className={classes.messageSummary}>
                 <div>
                     <Typography variant="caption" className={classes.date}>{formatMessageDate(props.message.date)}</Typography>
-                    <Typography variant="body1" className={classes.chatName}>{chatName}</Typography>
+                    <Typography variant="body1">{chatName}</Typography>
                 </div>
                 <div>
                     <div className={classes.messageSnippet}>
