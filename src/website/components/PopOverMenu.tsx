@@ -26,7 +26,8 @@ export type MenuItem = {
 
 const useStyles = makeStyles((theme: Theme) => ({
     button: {
-        padding: 8
+        height: theme.avatarSize.sm,
+        width: theme.avatarSize.sm
     },
     menu: {
         color: alpha(theme.colors.sidePanel.textColor, 0.8),

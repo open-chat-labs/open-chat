@@ -64,7 +64,8 @@ function AddParticipantsPanel() {
             <Header
                 title="Add participants"
                 onCloseButtonClick={closePanel}
-                rightIcon={<CreateGroupChatIcon size="sm" />} />
+                rightIcon={<CreateGroupChatIcon size="sm" />}
+                back={true} />
             <SearchBox
                 text={text}
                 onChange={handleInputChange}
