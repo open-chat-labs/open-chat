@@ -35,6 +35,9 @@ const useStyles = makeStyles((theme: Theme) => ({
             height: 52,
             flexShrink: 0,
             padding: "0 15px"
+        },
+        a: {
+            color: theme.colors.linkColor
         }
     },
     container: {

@@ -141,7 +141,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         fontWeight: "bolder",
         display: "block",
         textDecoration: "none",
-        color: theme.colors.messageSentByElse.participantNameColor,
         "&:hover": {
             textDecoration: "underline"
         }

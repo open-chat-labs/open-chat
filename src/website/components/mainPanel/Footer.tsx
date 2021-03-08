@@ -12,7 +12,7 @@ import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
 import { containsEmoji } from "../../utils/emojiFunctions";
-import SendCycles from "../SendCycles";
+import SendCycles, { ISendCyclesRef } from "../SendCycles";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 import Emoji from "../Emoji";
 import Smiley from "../../assets/icons/smiley.svg";
@@ -119,6 +119,8 @@ function Footer() {
         return <div></div>;
     }
 
+    const sendCyclesRef = useRef<ISendCyclesRef>(null);
+
     useEffect(() => {
         window.addEventListener("click", onWindowClick, false);
     
@@ -130,6 +132,12 @@ function Footer() {
             restoreSelection();
         }
     }, [messagePanelState]);
+
+    useEffect(() => {
+        if (messagePanelState != MessagePanelState.Closed) {
+            setMessagePanel(MessagePanelState.Closed);
+        }
+    }, [chat]);    
 
     function handleBeforeInput(e: any) {
         // Markup the text so it will appear correctly in the textbox
@@ -160,12 +168,26 @@ function Footer() {
         const textBox = textBoxRef.current!;
         const text = textBox.textContent;
 
-        if (text) {
-            dispatch(sendMessage(chat!, { kind: "text", text: text }, null));
-        }
+        let sent = false;
+        switch (messagePanelState) {
+            case MessagePanelState.SendCycles:
+                if (sendCyclesRef.current) {
+                    sent = sendCyclesRef.current.sendCycles(text);
+                }
+                break;
+            default:
+                if (text) {
+                    dispatch(sendMessage(chat!, { kind: "text", text: text }, null));
+                    sent = true;
+                }
+                break;
+        }    
 
-        textBox.innerHTML = "";
-        textBox.focus();
+        if (sent) {
+            const textBox = textBoxRef.current!;
+            textBox.innerHTML = "";
+            textBox.focus();
+        }
     }
 
     function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -292,21 +314,21 @@ function Footer() {
 
     const classes = useStyles();
 
-    let messagePanel;
+    let messagePanel = null;
 
     switch (messagePanelState) {
-        case MessagePanelState.Closed:
-            messagePanel = null;
-            break;
         case MessagePanelState.EmojiPicker:
             messagePanel = <EmojiPicker 
                 onEmojiSelected={insertEmojiAtCaret}/>;
             break;
         case MessagePanelState.SendCycles:
-            messagePanel = <SendCycles 
-                chat={chat}
-                recipient={them!} 
-                onSend={() => setMessagePanel(MessagePanelState.Closed)} />
+            if (chatFunctions.isDirectChat(chat)) {
+                messagePanel = <SendCycles 
+                    ref={sendCyclesRef}
+                    chat={chat}
+                    recipient={them!} 
+                    onSend={() => setMessagePanel(MessagePanelState.Closed)} />
+            }
             break;
     }
 
@@ -333,7 +355,7 @@ function Footer() {
                         className={classes.button + " " + classes.dollarButton} 
                         onClick={_ => setMessagePanel(MessagePanelState.SendCycles)}>
                         <Dollar />
-                    </IconButton> : closeButton}
+                    </IconButton> : (them ? closeButton : null)}
                 </div>
                 <div className={classes.inputContainer}>
                     <div
