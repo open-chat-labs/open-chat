@@ -28,6 +28,9 @@ const useStyles = makeStyles((theme: Theme) => ({
             opacity: 0.9,
             color: "#444444"
         },
+        "emoji-mart-emoji span": {
+            cursor: "pointer"
+        },
         ".emoji-mart-scroll": {
             height: 215
         }
