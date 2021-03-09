@@ -460,9 +460,9 @@ export default produce((state: ChatsState, event: Event) => {
             if (message && 
                 message.kind === "local" && 
                 message.content.kind === "media" && 
-                !message.content.data && 
+                !message.content.blobUrl && 
                 index === state.selectedChatIndex) {
-                message.content.data = dataToBlobUrl(data, message.content.mimeType);
+                message.content.blobUrl = dataToBlobUrl(data, message.content.mimeType);
             }
         }
     }

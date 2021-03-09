@@ -6,7 +6,6 @@ import { Option } from "../../domain/model/common";
 import { LocalMessage, MessageContent, ReplyContext, SendMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
 import dataService, { DataSource } from "../../services/data/CachingDataService";
-import { dataToBlobUrl } from "../../utils/blobFunctions";
 import {
     CHUNK_SIZE_BYTES,
     CONFIRMED_DIRECT_CHAT,
@@ -114,7 +113,7 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
                 id: uuidv1().toString(),
                 size: sendMessageContent.data.length,
                 chunkSize: CHUNK_SIZE_BYTES,
-                data: dataToBlobUrl(sendMessageContent.data, sendMessageContent.mimeType),
+                blobUrl: sendMessageContent.blobUrl,
                 thumbnailData: sendMessageContent.thumbnailData
             };
         case "file":

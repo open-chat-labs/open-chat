@@ -540,9 +540,9 @@ export const freeMediaData = (chat: Chat) => {
     const blobUrlsToRevoke: string[] = [];
 
     for (const message of chat.messages) {
-        if (message.kind !== "remote" && message.content.kind === "media" && message.content.data) {
-            blobUrlsToRevoke.push(message.content.data);
-            message.content.data = null;
+        if (message.kind !== "remote" && message.content.kind === "media" && message.content.blobUrl) {
+            blobUrlsToRevoke.push(message.content.blobUrl);
+            message.content.blobUrl = null;
         }
     }
 

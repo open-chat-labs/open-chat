@@ -22,7 +22,7 @@ export function fromCandid(content: any) : MessageContent {
             size: inner.blob_size,
             chunkSize: inner.chunk_size,
             thumbnailData: inner.thumbnail_data,
-            data: null
+            blobUrl: null
         };
     }
     if (content.hasOwnProperty("File")) {
