@@ -38,8 +38,8 @@ function AttachFile(props: Props) {
         reader.onload = async function(e: any) {
             const mimeType = file.type;
             let content: SendMessageContent;
-            if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
-                
+            if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {                
+
                 const blobUrl = dataToBlobUrl(e.target.result, mimeType);
 
                 const extract = mimeType.startsWith("image/")
@@ -53,6 +53,7 @@ function AttachFile(props: Props) {
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
                     data: new Uint8Array(e.target.result),
+                    blobUrl,
                     thumbnailData: extract.thumbnailData
                 };
             } else {
@@ -74,7 +75,6 @@ function AttachFile(props: Props) {
             const img = new Image;    
             img.onload = function() {
                 const extract = extractThumbnail(img, new Dimensions(img.width, img.height));
-                URL.revokeObjectURL(blobUrl);
                 resolve(extract);
             }
             img.src = blobUrl;
@@ -87,7 +87,6 @@ function AttachFile(props: Props) {
             video.addEventListener("loadedmetadata", function () {
                 video.addEventListener("seeked", function () {
                     const extract = extractThumbnail(video, new Dimensions(this.videoWidth, this.videoHeight));
-                    URL.revokeObjectURL(blobUrl);
                     resolve(extract);
                 });
                 video.currentTime = 1;

@@ -53,7 +53,7 @@ export type MediaContent = {
     width: number,
     height: number,
     chunkSize: number,
-    data: Option<string>,
+    blobUrl: Option<string>,
     thumbnailData: string
 }
 
@@ -79,6 +79,7 @@ export type SendMediaContent = {
     width: number,
     height: number,
     data: Uint8Array,
+    blobUrl: string,
     thumbnailData: string
 }
 

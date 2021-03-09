@@ -29,7 +29,7 @@ function MediaContent(props : Props): JSX.Element {
     const content = props.content;
 
     useEffect(() => {
-        if (!content.data && props.chatId && props.messageId) {
+        if (!content.blobUrl && props.chatId && props.messageId) {
             dispatch(getMedia(
                 props.chatId, 
                 props.messageId, 
@@ -39,10 +39,10 @@ function MediaContent(props : Props): JSX.Element {
         }            
       }, []);    
 
-    const src = content.data ? content.data : content.thumbnailData;
+    const src = content.blobUrl ? content.blobUrl : content.thumbnailData;
 
     let contentElement;
-    if (content.mimeType.startsWith("image/") || !content.data) {
+    if (content.mimeType.startsWith("image/") || !content.blobUrl) {
         contentElement = <Image key={props.content.id} src={src} width={props.content.width} height={props.content.height} className={classes.media} />;
     } else if (content.mimeType.startsWith("video/")) {
         contentElement = <Video key={props.content.id} src={src} width={props.content.width} height={props.content.height} className={classes.media} />
