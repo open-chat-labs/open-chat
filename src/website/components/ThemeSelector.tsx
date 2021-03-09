@@ -54,8 +54,12 @@ function ThemeSelector(props: Props) {
         props.onClose();
     }
 
+    if (!props.open) {
+        return null;
+    }
+
     return (
-        <Dialog open={props.open}>
+        <Dialog open={true}>
             <DialogTitle>Select theme</DialogTitle>
             <DialogContent dividers>
                 <RadioGroup
