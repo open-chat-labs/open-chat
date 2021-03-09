@@ -24,6 +24,7 @@ Header.defaultProps = {
 
 const useStyles = makeStyles((theme: Theme) => ({
     title: {
+        color: theme.colors.header.primaryTextColor,
         padding: "0 16px"
     },
     closeButton: {

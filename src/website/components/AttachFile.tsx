@@ -6,10 +6,11 @@ import { Chat } from "../domain/model/chats";
 import { SendMessageContent } from "../domain/model/messages";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 import Dimensions from "../utils/Dimensions";
+import IconButton from "@material-ui/core/IconButton";
 
 export interface Props {
     chat: Chat,
-    buttonClassName: string
+    className: string
 }
 
 export default React.memo(AttachFile);
@@ -18,13 +19,13 @@ function AttachFile(props: Props) {
     const dispatch = useDispatch();
 
     return (
-        <label className={props.buttonClassName}>
+        <IconButton component="label" className={props.className}>
             <Paperclip />
             <input 
                 hidden={true}
                 type="file" 
-                onChange={onMediaSelected}/>
-        </label>
+                onChange={onMediaSelected} />
+        </ IconButton>
     );
 
     function onMediaSelected(event: any) {

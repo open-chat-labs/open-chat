@@ -10,6 +10,7 @@ import { dataToBlobUrl } from "../utils/blobFunctions";
 export interface Props {
     content: File,
     sentByMe: boolean,
+    isGroupChat: boolean,
     mergeWithPrevious: boolean
 }
 
@@ -20,14 +21,17 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         minWidth: 300,
         padding: "10px 9px",
         maxWidth: 494,
-        backgroundColor: props => props.sentByMe ? theme.colors.messageSentByMe.backgroundColor : theme.colors.messageSentByElse.backgroundColor,
-        filter: props => props.sentByMe ? "brightness(1.1)" : "brightness(0.9)",
+        backgroundColor: props => props.sentByMe
+            ? theme.colors.messageSentByMe.highlightedContentBackgroundColor
+            : theme.colors.messageSentByElse.highlightedContentBackgroundColor,
         fontSize: 14,
         lineHeight: 1,
         textDecoration: "none",
         display: "flex",
         alignItems: "center",
-        borderRadius: props => `${props.mergeWithPrevious && !props.sentByMe ? "2" : "13"}px ${props.mergeWithPrevious && props.sentByMe ? "2" : "13"}px 6px 6px`
+        borderRadius: props => props.isGroupChat && !props.sentByMe
+            ? 6
+            : `${props.mergeWithPrevious && !props.sentByMe ? "2" : "13"}px ${props.mergeWithPrevious && props.sentByMe ? "2" : "13"}px 6px 6px`
     },
     icon: {
         backgroundImage: "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAA8CAYAAADL94L/AAAByElEQVR4Ae3axdJTQRAFYFyegA3u8ALseCDcicsGhxt3x+G32BXc3X3NBnfXYTqp3sZlhuqpOlXZRL46He9ReJyJxGSTEreaPfEHZiX+1uSJvelVNu+Jvjd7Yk9zI8aSUe0eDpjCIYfNSuw5v/zF5In/6mU27478tXriLJvXjdSwPq1lCDTCmxjiCNav8GZYBVMwWKagX8kWjk9vCcMhYWhEFEw1+oV0wZjdPKY6Vn9EwmBDTYPwBoXCYPLGDQTJjkHQNQRJj0FQtmgs+C8wOHIIkh2DoDu5vD5Xfkz9hsTBWDyxhjDYUDqvLRYSY1JilSQGyyxXOt4QKJPX70NDQmI27gyxHcn9bH/5RFMNAUgoDI4afOAMHBiCdiDNj5woGAhgsCEYudSI1lBCRwoPL957slAoDDYEoPXb/ZVs3FE/y9072fDxsx4BMPVfGOpl1VY/y5++4EWM1Fm9LcCKpy8RpnchDGEIQxjCEIYwhCEMYQhDGMIQhjCEIQxhCEMYwhCGMIQhDGEIQxhYNlXiP+XHXLRDM5thQVpyzIfS2YtLceVEkRmzalsgMArPhp258bA6b/LEb8LqPM930VNdvY/fhMmCxw+Of+4BTcPInBo2AAAAAElFTkSuQmCC)",

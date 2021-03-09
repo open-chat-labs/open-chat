@@ -11,6 +11,7 @@ import dataService, { DataSource, GetDataResponse } from "../services/data/Cachi
 import { UserId } from "../domain/model/users";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 import CircularIcon from "./CircularIcon";
+import useTheme from "@material-ui/core/styles/useTheme";
 
 type Props = {
     size: "sm" | "md",
@@ -47,6 +48,7 @@ function UserAvatar(props: Props) : JSX.Element {
     const [src, setSrc] = useState(() => setInitialSrc(props));
     const classes = useStyles(props);
     const userOnlineMarkerRef = useRef<HTMLDivElement>(null);
+    const theme = useTheme();
 
     useEffect(() => {
         if (!props.userId) {
@@ -112,7 +114,7 @@ function UserAvatar(props: Props) : JSX.Element {
             backgroundColorElem.removeEventListener("mouseenter", setBoxShadowColor);
             backgroundColorElem.removeEventListener("mouseleave", setBoxShadowColor);
         }
-    }, [src, props.isUserOnline]);
+    }, [src, props.isUserOnline, theme]);
 
     useEffect(() => {
         return () => {

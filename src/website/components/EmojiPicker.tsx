@@ -1,6 +1,7 @@
 import React from "react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 import { EmojiData, Picker } from 'emoji-mart'
 
 export default React.memo(EmojiPicker);
@@ -12,7 +13,7 @@ type Props = {
 const useStyles = makeStyles((theme: Theme) => ({
     "@global": {
         ".emoji-mart": {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: theme.colors.footer.backgroundColor + " !important",
             border: 0,
             borderRadius: 0
         },
@@ -21,14 +22,18 @@ const useStyles = makeStyles((theme: Theme) => ({
         },
         ".emoji-mart-search input": {
             paddingTop: 7,
-            backgroundColor: "#e0e0e0"
+            backgroundColor: theme.colors.textBox.backgroundColor + " !important",
+            color: theme.colors.textBox.textColor + " !important"
+        },
+        ".emoji-mart-category-label": {
+            top: -1
         },
         ".emoji-mart-category-label span": {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: theme.colors.footer.backgroundColor + " !important",
             opacity: 0.9,
-            color: "#444444"
+            color: theme.colors.footer.mutedColor + " !important"
         },
-        "emoji-mart-emoji span": {
+        ".emoji-mart-category .emoji-mart-emoji span": {
             cursor: "pointer"
         },
         ".emoji-mart-scroll": {
@@ -38,13 +43,13 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 function EmojiPicker(props: Props) {
-
     useStyles();
+    const theme = useTheme();
 
     return (
         <Picker
             title={"Pick your emoji..."}
-            theme="light"
+            theme={theme.palette.mode}
             color="#d62c7d"
             onSelect={onSelectEmoji}
             autoFocus={true}
@@ -54,7 +59,7 @@ function EmojiPicker(props: Props) {
             emoji="point_up"
             emojiSize={28}
             perLine={3}
-            native={true} 
+            native={true}
             style={{
                 width: "100%"
             }}/>
