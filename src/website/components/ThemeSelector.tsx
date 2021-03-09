@@ -16,7 +16,6 @@ import { RootState } from "../reducers";
 export default ThemeSelector;
 
 type Props = {
-    open: boolean,
     onClose: () => void
 }
 
@@ -52,10 +51,6 @@ function ThemeSelector(props: Props) {
     function handleOk() {
         dispatch(selectTheme(value));
         props.onClose();
-    }
-
-    if (!props.open) {
-        return null;
     }
 
     return (

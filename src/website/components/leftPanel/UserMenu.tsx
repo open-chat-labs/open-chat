@@ -31,7 +31,9 @@ function UserMenu() {
     return (
         <>
             <PopOverMenu icon={<MoreVertIcon className={classes.menuIcon} />} placement="bottom-start" menuItems={menuItems} />
-            <ThemeSelector open={themeSelectorOpen} onClose={() => setThemeSelectorOpen(false)} />
+            {themeSelectorOpen
+                ? <ThemeSelector onClose={() => setThemeSelectorOpen(false)} />
+                : null}
         </>
     );
 }
