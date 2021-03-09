@@ -24,7 +24,6 @@ const useStyles = makeStyles((theme: Theme) => ({
     left: {
         height: "100%",
         width: "40%",
-        color: theme.colors.sidePanel.textColor,
         "&.rightPanelActive": {
             width: "30%"
         }
@@ -39,8 +38,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     right: {
         height: "100%",
-        width: "30%",
-        color: theme.colors.sidePanel.textColor
+        width: "30%"
     }
 }));
 

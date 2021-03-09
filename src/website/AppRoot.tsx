@@ -39,6 +39,9 @@ const useStyles = makeStyles((theme: Theme) => ({
         },
         a: {
             color: theme.colors.linkColor
+        },
+        "body, input": {
+            color: theme.colors.textColor
         }
     },
     container: {

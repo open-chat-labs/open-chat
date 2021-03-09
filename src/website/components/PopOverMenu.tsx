@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: theme.avatarSize.sm
     },
     menu: {
-        color: alpha(theme.colors.sidePanel.textColor, 0.8),
+        color: alpha(theme.colors.textColor, 0.8),
         backgroundColor: alpha(theme.colors.sidePanel.backgroundColor, 0.8),
         minWidth: 160
     },

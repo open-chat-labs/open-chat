@@ -63,6 +63,9 @@ const useStyles = makeStyles((theme: Theme) => ({
             color: theme.colors.footer.iconColor
         }
     },
+    attachFileIcon: {
+        marginRight: 3
+    },
     input: {
         border: 0,
         outline: "none",
@@ -265,7 +268,7 @@ function Footer() {
                         </IconButton> : closeButton}
                         <AttachFile
                             chat={chat}
-                            className={classes.button} />
+                            className={classes.button + " " + classes.attachFileIcon} />
                         {them && messagePanelState != MessagePanelState.SendCycles ?
                         <IconButton
                             className={classes.button}

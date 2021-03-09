@@ -51,14 +51,14 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         visibility: props => props.name.length ? "visible" : "hidden"
     },
     latestMessage: {
-        color: alpha(theme.colors.sidePanel.textColor, 0.6),
+        color: alpha(theme.colors.textColor, 0.6),
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
         maxWidth: 450
     },
     date: {
-        color: alpha(theme.colors.sidePanel.textColor, 0.6),
+        color: alpha(theme.colors.textColor, 0.6),
         float: "right"
     },
     unreadCount: {

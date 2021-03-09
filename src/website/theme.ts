@@ -3,6 +3,7 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 
 interface CustomColors {
     outerBackgroundColor: string,
+    textColor: string,
     mainPanel: {
         backgroundColor: string
     },
@@ -17,7 +18,6 @@ interface CustomColors {
         backgroundColor: string
     },
     sidePanel: {
-        textColor: string,
         backgroundColor: string,
         subHeaderBackgroundColor: string,
         listItemHoverBackgroundColor: string,
@@ -92,6 +92,7 @@ declare module "@material-ui/core/Typography" {
 
 const defaultColours: CustomColors = {
     outerBackgroundColor: "#41398b",
+    textColor: "#000000",
     mainPanel: {
         backgroundColor: "#3dc5ee"
     },
@@ -106,7 +107,6 @@ const defaultColours: CustomColors = {
         backgroundColor: "#ededed"
     },
     sidePanel: {
-        textColor: "#000000",
         backgroundColor: "#ffffff",
         subHeaderBackgroundColor: "#f6f6f6",
         listItemHoverBackgroundColor: "#f0f0f0",
@@ -152,6 +152,7 @@ const defaultColours: CustomColors = {
 
 const darkThemeColors: CustomColors = {
     outerBackgroundColor: "#000000",
+    textColor: "#bbbbbb",
     mainPanel: {
         backgroundColor: "#111111"
     },
@@ -166,7 +167,6 @@ const darkThemeColors: CustomColors = {
         backgroundColor: "#333333"
     },
     sidePanel: {
-        textColor: "#bbbbbb",
         backgroundColor: "#222222",
         subHeaderBackgroundColor: "#383838",
         listItemHoverBackgroundColor: "#383838",
