@@ -38,6 +38,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     listItem: {
+        backgroundColor: theme.colors.sidePanel.backgroundColor,
         "&:hover": {
             backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
             cursor: "pointer"
