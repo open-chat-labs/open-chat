@@ -112,6 +112,7 @@ function MessagesFromSingleDay(props: Props) {
             clientMessageId={message.clientMessageId}
             content={message.content}
             date={message.date}
+            isGroupChat={props.isGroupChat}
             sentByMe={sentByMe}
             sender={senderDetails}
             theirUsername={theirUserName}

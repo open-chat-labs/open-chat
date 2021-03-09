@@ -24,6 +24,7 @@ export type Props = {
     clientMessageId: string,
     content: MessageContent,
     date: Date,
+    isGroupChat: boolean,
     sentByMe: boolean,
     sender: Option<UserSummary>,
     theirUsername: Option<string>,
@@ -72,7 +73,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     unread: {
-        backgroundColor: alpha(theme.colors.messageSentByElse.backgroundColor, 0.8)
+        filter: `brightness(${theme.colors.messageSentByElse.unreadMessageBrightness})`
     },
     mergeWithNext: {
         "&$sentByMe": {
@@ -199,7 +200,7 @@ function Message(props : Props) {
         contentElement = <MediaContent chatId={props.chatId} messageId={props.messageId} content={props.content} />;
         style = styleMediaMessage(props.content.width, props.content.height);
     } else if (props.content.kind === "file") {
-        contentElement = <FileContent content={props.content} sentByMe={props.sentByMe} mergeWithPrevious={mergeWithPrevious} />;
+        contentElement = <FileContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} />;
         className += " " + classes.file;
     } else if (props.content.kind === "cycles") {
         contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />;

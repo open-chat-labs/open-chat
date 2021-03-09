@@ -30,7 +30,8 @@ const useStyles = makeStyles((theme: Theme) => ({
         color: "#9b9b9b",
         padding: "11px 16px 11px 10px",
         display: "flex",
-        alignItems: "center"
+        alignItems: "center",
+        height: 60
     },
     inputContainer: {
         flex: "1 1 auto",
@@ -41,15 +42,18 @@ const useStyles = makeStyles((theme: Theme) => ({
         marginLeft: 6
     },
     buttons: {
-        display: "flex"
+        display: "flex",
+        alignItems: "center"
     },
     button: {
         borderRadius: "50%",
-        padding: 4,
+        height: 32,
+        width: 32,
+        padding: 0,
         marginRight: 6,
         cursor: "pointer",
         "&:hover,:focus": {
-            backgroundColor: "#e0e0e0"
+            backgroundColor: theme.colors.icon.hover
         },
         "& svg": {
             verticalAlign: "middle",
@@ -58,6 +62,9 @@ const useStyles = makeStyles((theme: Theme) => ({
             padding: 0,
             color: theme.colors.footer.iconColor
         }
+    },
+    attachFileIcon: {
+        marginRight: 3
     },
     input: {
         border: 0,
@@ -87,12 +94,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         backgroundColor: "transparent",
         marginLeft: 20,
         color: "#9b9b9b"
-    },
-    dollarButton: {
-        width: 32
-    },
-    paperclipButton: {
-        marginLeft: 4
     }
 }));
 
@@ -223,7 +224,7 @@ function Footer() {
         e.preventDefault();
 
         // Get plain text representation of clipboard
-        var text = e.clipboardData.getData('text/plain');
+        const text = e.clipboardData.getData('text/plain');
 
         // Manually insert text
         document.execCommand("insertText", false, text);
@@ -249,28 +250,28 @@ function Footer() {
             break;
     }
 
-    const closeButton = <CloseButton  
+    const closeButton = <CloseButton
         onClick={() => setMessagePanel(MessagePanelState.Closed)}
         className={classes.button} />;
 
     return (
-        <ClickAwayListener onClickAway={handleClickAway}>            
+        <ClickAwayListener onClickAway={handleClickAway}>
             <footer className={classes.footer}>
                 {messagePanel}
                 <div className={classes.container}>
                     <div className={classes.buttons}>
                         {messagePanelState != MessagePanelState.EmojiPicker ?
-                        <IconButton 
-                            onClick={_ => setMessagePanel(MessagePanelState.EmojiPicker)} 
+                        <IconButton
+                            onClick={_ => setMessagePanel(MessagePanelState.EmojiPicker)}
                             className={classes.button}>
                             <Smiley />
                         </IconButton> : closeButton}
-                        <AttachFile 
+                        <AttachFile
                             chat={chat}
-                            buttonClassName={classes.button + " " + classes.paperclipButton} />
-                        {them && messagePanelState != MessagePanelState.SendCycles ? 
-                        <IconButton 
-                            className={classes.button + " " + classes.dollarButton} 
+                            className={classes.button + " " + classes.attachFileIcon} />
+                        {them && messagePanelState != MessagePanelState.SendCycles ?
+                        <IconButton
+                            className={classes.button}
                             onClick={_ => setMessagePanel(MessagePanelState.SendCycles)}>
                             <Dollar />
                         </IconButton> : (them ? closeButton : null)}
@@ -293,6 +294,6 @@ function Footer() {
                     </button>
                 </div>
             </footer>
-        </ClickAwayListener>        
+        </ClickAwayListener>
     );
 }

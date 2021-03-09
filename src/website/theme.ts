@@ -1,8 +1,9 @@
 import createMuiTheme, { Theme, ThemeOptions } from "@material-ui/core/styles/createMuiTheme";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
 
 interface CustomColors {
-    linkColor: string,
     outerBackgroundColor: string,
+    textColor: string,
     mainPanel: {
         backgroundColor: string
     },
@@ -12,11 +13,11 @@ interface CustomColors {
         backgroundColor: string
     },
     footer: {
+        mutedColor: string,
         iconColor: string,
         backgroundColor: string
     },
     sidePanel: {
-        textColor: string,
         backgroundColor: string,
         subHeaderBackgroundColor: string,
         listItemHoverBackgroundColor: string,
@@ -29,19 +30,23 @@ interface CustomColors {
     messageSentByMe: {
         textColor: string,
         backgroundColor: string,
-        altBackgroundColor: string
+        highlightedContentBackgroundColor: string
     },
     messageSentByElse: {
         textColor: string,
         backgroundColor: string,
-        altBackgroundColor: string
+        highlightedContentBackgroundColor: string,
+        unreadMessageBrightness: number
     }
     dayChangeMarker: {
         textColor: string,
         backgroundColor: string
     },
+    linkColor: string,
+    buttonColor: string,
     icon: {
         color: string,
+        hover: string,
         backgroundColor: string
     },
     green: {
@@ -86,8 +91,8 @@ declare module "@material-ui/core/Typography" {
 }
 
 const defaultColours: CustomColors = {
-    linkColor: "#d62c7d",
     outerBackgroundColor: "#41398b",
+    textColor: "#000000",
     mainPanel: {
         backgroundColor: "#3dc5ee"
     },
@@ -97,11 +102,11 @@ const defaultColours: CustomColors = {
         backgroundColor: "#ededed"
     },
     footer: {
+        mutedColor: "#444444",
         iconColor: "#9b9b9b",
         backgroundColor: "#ededed"
     },
     sidePanel: {
-        textColor: "#000000",
         backgroundColor: "#ffffff",
         subHeaderBackgroundColor: "#f6f6f6",
         listItemHoverBackgroundColor: "#f0f0f0",
@@ -114,19 +119,23 @@ const defaultColours: CustomColors = {
     messageSentByMe: {
         textColor: "#ffffff",
         backgroundColor: "#d62c7d",
-        altBackgroundColor: "#ea4091"
+        highlightedContentBackgroundColor: "#ea4091"
     },
     messageSentByElse: {
         textColor: "#000000",
         backgroundColor: "#ffffff",
-        altBackgroundColor: "#e9e9e9"
+        highlightedContentBackgroundColor: "#e9e9e9",
+        unreadMessageBrightness: 0.95
     },
     dayChangeMarker: {
         textColor: "#000000",
         backgroundColor: "#dddddd"
     },
+    linkColor: "#d62c7d",
+    buttonColor: "#d62c7d",
     icon: {
         color: "#ffffff",
+        hover: "rgba(0, 0, 0, 0.08)",
         backgroundColor: "#d8d8d8"
     },
     green: {
@@ -141,90 +150,119 @@ const defaultColours: CustomColors = {
     }
 };
 
-// const darkThemeColors: CustomColors = {
-//     outerBackgroundColor: "#201c45",
-//     mainPanelBackgroundColor: "#042b36",
-//     sidePanelBackgroundColor: "#111111",
-//     headerBackgroundColor: "#383838",
-//     subHeaderBackgroundColor: "#484848",
-//     dayChangeMarker: {
-//         color: "#111111",
-//         backgroundColor: "#aaaaaa"
-//     },
-//     listItemBackgroundColor: {
-//         main: "#111111",
-//         hover: "#222222",
-//         selected: "#333333"
-//     },
-//     textColor: "#cccccc",
-//     icon: {
-//         color: "#777777",
-//         backgroundColor: "#222222"
-//     },
-//     messageSentByMe: {
-//         color: "#dddddd",
-//         backgroundColor: "#444444"
-//     },
-//     messageSentByElse: {
-//         color: "#888888",
-//         backgroundColor: "#111111"
-//     },
-//     menuColor: "#111111",
-//     green: {
-//         main: "#28a428",
-//         contrast: "#cccccc"
-//     }
-// }
-
-const buildOptions = (colors: CustomColors) : ThemeOptions => ({
-    typography: {
-        fontFamily: "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\"",
-        h6: {
-            fontWeight: "normal"
-        },
-        smallest: {
-            fontSize: "0.6875rem"
-        }
+const darkThemeColors: CustomColors = {
+    outerBackgroundColor: "#000000",
+    textColor: "#bbbbbb",
+    mainPanel: {
+        backgroundColor: "#111111"
     },
-    components: {
-        MuiButtonBase: {
-            defaultProps: {
-                disableRipple: true
+    header: {
+        primaryTextColor: "#cccccc",
+        secondaryTextColor: "#a8a8a8",
+        backgroundColor: "#333333"
+    },
+    footer: {
+        mutedColor: "#bbbbbb",
+        iconColor: "#aaaaaa",
+        backgroundColor: "#333333"
+    },
+    sidePanel: {
+        backgroundColor: "#222222",
+        subHeaderBackgroundColor: "#383838",
+        listItemHoverBackgroundColor: "#383838",
+        listItemSelectedBackgroundColor: "#444444"
+    },
+    textBox: {
+        backgroundColor: "#555555",
+        textColor: "#cccccc"
+    },
+    messageSentByMe: {
+        textColor: "#cccccc",
+        backgroundColor: "#961f57",
+        highlightedContentBackgroundColor: "#c12871"
+    },
+    messageSentByElse: {
+        textColor: "#bbbbbb",
+        backgroundColor: "#383838",
+        highlightedContentBackgroundColor: "#494949",
+        unreadMessageBrightness: 1.05
+    },
+    dayChangeMarker: {
+        textColor: "#444444",
+        backgroundColor: "#aaaaaa"
+    },
+    linkColor: "#d62c7d",
+    buttonColor: "#d62c7d",
+    icon: {
+        color: "#777777",
+        hover: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#222222"
+    },
+    green: {
+        main: "#28a428",
+        contrastText: "#cccccc"
+    },
+    loginRegister: {
+        textColor: "#000000",
+        backgroundColor: "#ffffff",
+        buttonBackgroundColor: "#3dc5ee",
+        buttonTextColor: "#ffffff"
+    }
+}
+
+const buildOptions = (darkMode: boolean) : ThemeOptions => {
+    const colors = darkMode ? darkThemeColors : defaultColours;
+
+    return {
+        typography: {
+            fontFamily: "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\"",
+            h6: {
+                fontWeight: "normal"
+            },
+            smallest: {
+                fontSize: "0.6875rem"
             }
         },
-        MuiLink: {
-            defaultProps: {
-                color: colors.linkColor
-            }
-        },
-        MuiTypography: {
-            defaultProps: {
-                variantMapping: {
-                    body1: "span",
-                    body2: "span",
-                    caption: "span"
+        components: {
+            MuiButtonBase: {
+                defaultProps: {
+                    disableRipple: true
+                }
+            },
+            MuiLink: {
+                defaultProps: {
+                    color: colors.linkColor
+                }
+            },
+            MuiTypography: {
+                defaultProps: {
+                    variantMapping: {
+                        body1: "span",
+                        body2: "span",
+                        caption: "span"
+                    }
                 }
             }
+        },
+        breakpoints: {
+            values: {
+                xs: 0,
+                sm: 600,
+                md: 960,
+                lg: 1400,
+                xl: 1920
+            }
+        },
+        avatarSize: {
+            sm: 40,
+            md: 50
+        },
+        colors: darkMode ? darkThemeColors : defaultColours,
+        palette: {
+            mode: darkMode ? "dark" : "light"
         }
-    },
-    breakpoints: {
-        values: {
-            xs: 0,
-            sm: 600,
-            md: 960,
-            lg: 1400,
-            xl: 1920
-        }
-    },
-    avatarSize: {
-        sm: 40,
-        md: 50
-    },
-    colors: colors
-});
+    };
+}
 
-const createDefaultTheme = () : Theme => createTheme(defaultColours);
-const createTheme = (customColors: CustomColors) : Theme => createMuiTheme(buildOptions(customColors));
-
-export const lightTheme = createDefaultTheme();
-export const darkTheme = createTheme(defaultColours);
+export const lightTheme = createMuiTheme(buildOptions(false));
+export const darkTheme = createMuiTheme(buildOptions(true));

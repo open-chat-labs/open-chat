@@ -1,20 +1,18 @@
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { Provider, useDispatch, useSelector } from "react-redux";
 import { RootState } from "./reducers";
-import { Provider } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
-import MuiThemeProvider from "@material-ui/core/styles/ThemeProvider";
 import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 import Container from "@material-ui/core/Container";
 import App from "./components/App";
 import store from "./store";
-import { lightTheme } from "./theme";
 import CanisterClientFactory from "./services/CanisterClientFactory";
 import authClient from "./utils/authClient";
 import Login from "./components/Login";
+import ThemeProvider from "./components/ThemeProvider";
 import * as canisterFunctions from "./utils/canisterFunctions";
 import { UserRegistrationStatus } from "./reducers/usersReducer";
 import RegisterUser from "./components/RegisterUser";
@@ -36,8 +34,14 @@ const useStyles = makeStyles((theme: Theme) => ({
             flexShrink: 0,
             padding: "0 15px"
         },
+        input: {
+            backgroundColor: "transparent"
+        },
         a: {
             color: theme.colors.linkColor
+        },
+        "body, input": {
+            color: theme.colors.textColor
         }
     },
     container: {
@@ -53,9 +57,9 @@ function AppRoot() {
     return (
         <Provider store={store}>
             <StyledEngineProvider injectFirst>
-                <MuiThemeProvider theme={lightTheme}>
+                <ThemeProvider>
                     <AppContainer />
-                </MuiThemeProvider>
+                </ThemeProvider>
             </StyledEngineProvider>
         </Provider>
     );
