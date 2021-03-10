@@ -1,22 +1,18 @@
-import React, { CSSProperties } from "react";
+import React from "react";
 import { useDispatch } from "react-redux";
-import Typography from "@material-ui/core/Typography";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import gotoUser from "../actions/chats/gotoUser";
-import Tick from "../assets/icons/tick.svg";
-import DoubleTick from "../assets/icons/doubleTick.svg";
 import { Option } from "../domain/model/common";
 import { UserSummary } from "../domain/model/users";
 import { MessageContent } from "../domain/model/messages";
+import { scaleMediaContent } from "./mediaComponentFunctions";
 import CyclesContent from "./CyclesContent";
 import FileContent from "./FileContent";
 import MediaContent from "./MediaContent";
 import TextContent from "./TextContent";
-import { toShortTimeString } from "../formatters/date";
-import { styleMediaMessage } from "./mediaComponentFunctions";
 import { ChatId } from "../domain/model/chats";
+import MessageTimeAndTicks from "./MessageTimeAndTicks";
 
 export type Props = {
     chatId: Option<ChatId>,
@@ -45,31 +41,19 @@ const useStyles = makeStyles((theme: Theme) => ({
         marginTop: 14,
         position: "relative",
         overflowWrap: "anywhere"
-    },
+    },    
     sentByMe: {
         alignSelf: "flex-end",
         color: theme.colors.messageSentByMe.textColor,
-        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
-        "& $time": {
-            color: alpha(theme.colors.messageSentByMe.textColor, 0.6)
-        },
-        "&$file $time": {
-            marginRight: 19
-        }
+        backgroundColor: theme.colors.messageSentByMe.backgroundColor
     },
     sentByElse: {
         alignSelf: "flex-start",
         color: theme.colors.messageSentByElse.textColor,
         backgroundColor: theme.colors.messageSentByElse.backgroundColor,
-        "& $time": {
-            marginRight: 0,
-            color: alpha(theme.colors.messageSentByElse.textColor, 0.6)
-        },
-        "&$media $time": {
-            right: 12
-        },
-        "&$file $time": {
-            marginRight: 9
+        "& $caption": {
+            color: theme.colors.messageSentByElse.textColor,
+            backgroundColor: theme.colors.messageSentByElse.backgroundColor    
         }
     },
     unread: {
@@ -97,14 +81,12 @@ const useStyles = makeStyles((theme: Theme) => ({
         "& $participant": {
             marginLeft: 8
         },
-        "& $time": {
-            marginTop: 6,
-            marginBottom: 3
+        "& $timeAndTicks": {
+            marginRight: 7
         }
     },
     media: {
         padding: 0,
-        position: "relative",
         backgroundColor: "transparent",
         "& $participant": {
             position: "absolute",
@@ -118,24 +100,17 @@ const useStyles = makeStyles((theme: Theme) => ({
             borderRadius: "16px 0 2px 0",
             lineHeight: "13px",
             opacity: 0.6
-        },
-        "& $time": {
-            position: "absolute",
-            display: "inline",
-            float: "none",
-            margin: 0,
-            right: 24,
-            bottom: 4,
-            backgroundColor: "rgba(68, 68, 68, 0.6)",
-            color: "#dddddd",
-            textAlign: "center",
-            borderRadius: 6,
-            padding: "0 4px"
-        },
-        "& $tick": {
-            bottom: 4,
-            right: 3
         }
+    },
+    mediaUncaptioned: {
+        "& $timeAndTicks": {
+            position: "absolute",
+            right: 10,
+            bottom: 2    
+        }
+    },
+    timeAndTicks: {
+
     },
     participant: {
         fontSize: 13,
@@ -146,20 +121,13 @@ const useStyles = makeStyles((theme: Theme) => ({
             textDecoration: "underline"
         }
     },
-    time: {
-        display: "block",
-        float: "right",
-        margin: "10px 12px 0 10px",
-        textAlign: "right"
-    },
-    tick: {
-        color: alpha(theme.colors.messageSentByMe.textColor, 0.8),
-        position: "absolute",
-        height: 15,
-        width: 15,
-        bottom: 4,
-        right: 4,
-        zIndex: 55
+    caption: {
+        overflow: "auto",
+        padding: "6px 11px 4px 11px",
+        color: theme.colors.messageSentByMe.textColor,
+        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
+        borderBottomLeftRadius: "inherit",
+        borderBottomRightRadius: "inherit"
     }
 }));
 
@@ -194,39 +162,58 @@ function Message(props : Props) {
     }
 
     let contentElement;
-    let style: CSSProperties | undefined;
+    let caption;
     if (props.content.kind === "media") {
         className += " " + classes.media;
+        if (props.content.caption) {
+            caption = props.content.caption;
+        } else {
+            className += " " + classes.mediaUncaptioned;
+        }
         contentElement = <MediaContent chatId={props.chatId} messageId={props.messageId} content={props.content} />;
-        style = styleMediaMessage(props.content.width, props.content.height);
     } else if (props.content.kind === "file") {
         contentElement = <FileContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} />;
         className += " " + classes.file;
     } else if (props.content.kind === "cycles") {
         contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />;
     } else {
-        contentElement = <TextContent text={props.content.text} variant="body1" />
+        contentElement = <TextContent text={props.content.text} variant="body1" />;
     }
 
-    let tick: Option<JSX.Element> = null;
-    if (props.sentByMe && props.confirmed) {
-        if (props.readByThem) {
-            tick = <DoubleTick className={classes.tick} />;
-        } else {
-            tick = <Tick className={classes.tick} />;
-        }
+    const messageTimeAndTicks = <MessageTimeAndTicks 
+        sentByMe={props.sentByMe} 
+        confirmed={props.confirmed} 
+        read={props.readByThem} 
+        date={props.date}
+        isOnMedia={props.content.kind === "media" && !caption}
+        className={classes.timeAndTicks} />;
+
+    let bottom;
+    if (caption) {
+        let mediaCaptionStyle;
+        if (props.content.kind === "media") {
+            const dimensions = scaleMediaContent(props.content.width, props.content.height, true);
+            mediaCaptionStyle = {
+                width: dimensions.width + "px"
+            }
+        };
+    
+        bottom = <div className={classes.caption} style={mediaCaptionStyle}>
+            <TextContent text={caption} variant="body1" />
+            {messageTimeAndTicks}
+        </div>;
+    } else {
+        bottom = messageTimeAndTicks;
     }
 
     return (
         <div 
             id={props.clientMessageId}
             data-message-id={props.messageId}
-            className={className}
-            style={style}>
+            className={className}>
             {senderLink}
             {contentElement}
-            <Typography variant="smallest" className={classes.time}>{toShortTimeString(props.date)}</Typography>
-            {tick}
+            {bottom}
         </div>
     );
 }

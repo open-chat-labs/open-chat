@@ -1,23 +1,18 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import sendMessage from "../actions/chats/sendMessage";
 import Paperclip from "../assets/icons/paperclip.svg";
-import { Chat } from "../domain/model/chats";
-import { SendMessageContent } from "../domain/model/messages";
+import { DraftMessageContent } from "../domain/model/messages";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 import Dimensions from "../utils/Dimensions";
 import IconButton from "@material-ui/core/IconButton";
 
 export interface Props {
-    chat: Chat,
-    className: string
+    className: string,
+    onFileSelected: (content: DraftMessageContent) => void
 }
 
 export default React.memo(AttachFile);
 
 function AttachFile(props: Props) {
-    const dispatch = useDispatch();
-
     return (
         <IconButton component="label" className={props.className}>
             <Paperclip />
@@ -37,7 +32,7 @@ function AttachFile(props: Props) {
         const reader = new FileReader();
         reader.onload = async function(e: any) {
             const mimeType = file.type;
-            let content: SendMessageContent;
+            let content: DraftMessageContent;
             if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {                
 
                 const blobUrl = dataToBlobUrl(e.target.result, mimeType);
@@ -59,13 +54,14 @@ function AttachFile(props: Props) {
             } else {
                 content = {
                     kind: "file", 
+                    caption: null,
                     name: file.name,
                     mimeType: mimeType,
                     data: new Uint8Array(e.target.result)
                 };
             }
 
-            dispatch(sendMessage(props.chat!, content, null));
+            props.onFileSelected(content);
         }
         reader.readAsArrayBuffer(file);
     }        

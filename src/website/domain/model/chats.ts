@@ -30,7 +30,7 @@ export type ChatId = bigint;
 type ChatCommon = {
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
-    draftMessage: string,
+    draftMessage: string
 }
 
 type ConfirmedChatCommon = ChatCommon & {

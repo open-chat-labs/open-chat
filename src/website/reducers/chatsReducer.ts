@@ -464,6 +464,7 @@ export default produce((state: ChatsState, event: Event) => {
                 index === state.selectedChatIndex) {
                 message.content.blobUrl = dataToBlobUrl(data, message.content.mimeType);
             }
+            break;
         }
     }
 }, initialState);

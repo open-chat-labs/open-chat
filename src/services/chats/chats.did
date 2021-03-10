@@ -27,6 +27,7 @@ type MediaContent =
 
 type FileContent =
     record {
+        caption: opt text;
         name: text;
         mime_type: text;
         blob_id: text;

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, { useRef, useState} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import IconButton from "@material-ui/core/IconButton";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -12,11 +12,15 @@ import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
 import { RootState } from "../../reducers";
 import SendCycles, { ISendCyclesRef } from "../SendCycles";
+import MessageTextInput, { IMessageTextInputRef } from "../MessageTextInput";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 import Smiley from "../../assets/icons/smiley.svg";
 import Dollar from "../../assets/icons/dollar.svg";
 import EmojiPicker from "../EmojiPicker"
 import CloseButton from "../CloseButton";
+import DraftMediaMessage from "../DraftMediaMessage";
+import DraftFileMessage from "../DraftFileMessage";
+import { DraftMessageContent } from "../../domain/model/messages";
 
 export default React.memo(Footer);
 
@@ -31,15 +35,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         padding: "11px 16px 11px 10px",
         display: "flex",
         alignItems: "center",
-        height: 60
-    },
-    inputContainer: {
-        flex: "1 1 auto",
-        display: "flex",
-        borderRadius: 25,
-        padding: "8px 15px 10px 15px",
-        backgroundColor: theme.colors.textBox.backgroundColor,
-        marginLeft: 6
     },
     buttons: {
         display: "flex",
@@ -63,26 +58,6 @@ const useStyles = makeStyles((theme: Theme) => ({
             color: theme.colors.footer.iconColor
         }
     },
-    attachFileIcon: {
-        marginRight: 3
-    },
-    input: {
-        border: 0,
-        outline: "none",
-        flex: "1 1 auto",
-        fontSize: 18,
-        lineHeight: "20px",
-        fontWeight: 300,
-        color: theme.colors.textBox.textColor,
-        whiteSpace: "pre-wrap",
-        overflowX: "hidden",
-        overflowY: "auto",
-        zIndex: 1,
-        minHeight: 20,
-        maxHeight: 100,
-        userSelect: "text",
-        overflowWrap: "anywhere"
-    },
     sendButton: {
         outline: 0,
         height: 25,
@@ -101,7 +76,6 @@ enum MessagePanelState {
     Closed,
     EmojiPicker,
     SendCycles,
-    SendMedia,
     SendFile
 }
 
@@ -119,115 +93,80 @@ function Footer() {
     }
 
     const sendCyclesRef = useRef<ISendCyclesRef>(null);
+    const textBoxRef = useRef<IMessageTextInputRef>(null);
+    const [textBoxText, setTextBoxText] = useState("");
 
-    // The saved textbox range selection - used to restore the selection when inserting emojis from the picker
-    const savedRangeRef = useRef<Option<Range>>(null);     
+    // Hold draft (media) message
+    const draftMessageContentRef = useRef<Option<DraftMessageContent>>(null);
 
-    useEffect(() => {
-        if (messagePanelState == MessagePanelState.Closed) {
-            restoreSelection();
+    function changeMessagePanel(state: MessagePanelState) {
+        if (state !== MessagePanelState.SendFile && draftMessageContentRef.current) {
+            if (draftMessageContentRef.current.kind === "media") {
+                const blobUrl = draftMessageContentRef.current.blobUrl;
+                setTimeout(() => {
+                    URL.revokeObjectURL(blobUrl);
+                }, 100);
+            }
+
+            draftMessageContentRef.current = null;
         }
-    }, [messagePanelState]);
 
-    function handleInput(e: any) {
-        if (e.target.innerHTML.trim() == "<br>") {
-            e.target.innerHTML = "";
+        if (state === MessagePanelState.Closed) {
+            textBoxRef.current!.onFocusBack();
         }
 
-        if (chat && chatFunctions.isConfirmedChat(chat)) {
-            CurrentUserTypingHandler.markTyping(chat.chatId);
-        }
+        setMessagePanel(state);
     }
 
-    const textBoxRef = useRef<HTMLDivElement>(null);
+    function onSendMessage() {
+        let draftMessage: Option<DraftMessageContent> = null;
 
-    function handleSendMessage() {
-        const textBox = textBoxRef.current!;
-        const text = textBox.textContent;
-
-        let sent = false;
         switch (messagePanelState) {
             case MessagePanelState.SendCycles:
                 if (sendCyclesRef.current) {
-                    sent = sendCyclesRef.current.sendCycles(text);
+                    draftMessage = {
+                        kind: "cycles",
+                        amount: sendCyclesRef.current.getCycles(),
+                        caption: textBoxText
+                    };
+                }
+                break;
+            case MessagePanelState.SendFile:
+                if (draftMessageContentRef.current && 
+                    (draftMessageContentRef.current.kind === "media" || draftMessageContentRef.current.kind === "file")) {
+                    draftMessage = { ...draftMessageContentRef.current, caption: textBoxText };
                 }
                 break;
             default:
-                if (text) {
-                    dispatch(sendMessage(chat!, { kind: "text", text: text }, null));
-                    sent = true;
+                if (textBoxText) {
+                    draftMessage = { kind: "text", text: textBoxText };
                 }
                 break;
         }    
 
-        if (sent) {
-            const textBox = textBoxRef.current!;
-            textBox.innerHTML = "";
-            textBox.focus();
+        if (draftMessage) {
+            dispatch(sendMessage(chat!, draftMessage, null));
+            changeMessagePanel(MessagePanelState.Closed);
+            textBoxRef.current!.clearText();
         }
     }
 
-    function handleKeyPress(e: React.KeyboardEvent<HTMLDivElement>) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            handleSendMessage();
-            e.preventDefault();
-            e.stopPropagation();
+    function onFileAttached(content: DraftMessageContent) {
+        if (content.kind === "file") {
+            dispatch(sendMessage(chat!, content, null));
+            textBoxRef.current!.clearText();    
+        } else {
+            draftMessageContentRef.current = content;
+            changeMessagePanel(MessagePanelState.SendFile);
         }
     }
 
-    function insertEmojiAtCaret(text: string) {
-        // Focus on the message box and re-apply any saved range selection
-        restoreSelection();
+    function onTextChanged(text: string) {
+        setTextBoxText(text);
 
-        // // Markup the text so it will appear correctly in the textbox and manually insert it
-        // document.execCommand("insertHTML", false, ReactDOMServer.renderToStaticMarkup(<Emoji text={text} />));
-        document.execCommand("insertText", false, text);
-
-        // Save the new selection range
-        saveSelection();
-    }
-
-    function handleClickAway() {
-        clearSelection();
-    }
-
-    function saveSelection() {
-        // Save the textbox range selection so it can be restored when the textbox next gets focus
-        savedRangeRef.current = window.getSelection()?.getRangeAt(0) ?? null;
-    }
-
-    function restoreSelection() {
-        // Set the focus on to the textbox
-        const textBox = textBoxRef.current!;
-        textBox.focus();
-
-        // Set the window selection to the last saved range. If there is no existing 
-        // saved range then initialise one at the end of the text box.
-        if (!savedRangeRef.current) {
-            const range = new Range();
-            range.selectNodeContents(textBox);
-            range.collapse(false);
-            savedRangeRef.current = range;
+        if (chat && chatFunctions.isConfirmedChat(chat)) {
+            CurrentUserTypingHandler.markTyping(chat.chatId);
         }
-
-        const selection = window.getSelection()!;
-        selection.removeAllRanges();
-        selection.addRange(savedRangeRef.current);
-    }
-
-    function clearSelection() {
-        savedRangeRef.current = null;
-    }
-
-    function pastePlainText(e: React.ClipboardEvent<HTMLDivElement>) {
-        // Cancel the paste event
-        e.preventDefault();
-
-        // Get plain text representation of clipboard
-        const text = e.clipboardData.getData('text/plain');
-
-        // Manually insert text
-        document.execCommand("insertText", false, text);
     }
 
     const classes = useStyles();
@@ -236,60 +175,67 @@ function Footer() {
 
     switch (messagePanelState) {
         case MessagePanelState.EmojiPicker:
-            messagePanel = <EmojiPicker 
-                onEmojiSelected={insertEmojiAtCaret}/>;
+            messagePanel = <EmojiPicker onEmojiSelected={textBoxRef.current!.insertEmoji} />;
             break;
         case MessagePanelState.SendCycles:
             if (chatFunctions.isDirectChat(chat)) {
-                messagePanel = <SendCycles 
-                    ref={sendCyclesRef}
-                    chat={chat}
-                    recipient={them!} 
-                    onSend={() => setMessagePanel(MessagePanelState.Closed)} />
+                messagePanel = <SendCycles ref={sendCyclesRef} recipient={them!} />
+            }
+            break;
+        case MessagePanelState.SendFile:
+            if (draftMessageContentRef.current) {
+                if (draftMessageContentRef.current.kind === "media") {
+                    const draft = draftMessageContentRef.current;
+                    messagePanel = <DraftMediaMessage
+                        blobUrl={draft.blobUrl}
+                        width={draft.width}
+                        height={draft.height}
+                        mimeType={draft.mimeType} />;
+                } else if (draftMessageContentRef.current.kind === "file") {
+                    const draft = draftMessageContentRef.current;
+                    messagePanel = <DraftFileMessage
+                        name={draft.name}
+                        size={draft.data.length}
+                        mimeType={draft.mimeType} />;
+                }
             }
             break;
     }
 
     const closeButton = <CloseButton
-        onClick={() => setMessagePanel(MessagePanelState.Closed)}
+        onClick={() => changeMessagePanel(MessagePanelState.Closed)}
         className={classes.button} />;
 
     return (
-        <ClickAwayListener onClickAway={handleClickAway}>
+        <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
             <footer className={classes.footer}>
                 {messagePanel}
                 <div className={classes.container}>
                     <div className={classes.buttons}>
-                        {messagePanelState != MessagePanelState.EmojiPicker ?
+                        {messagePanelState !== MessagePanelState.EmojiPicker ?
                         <IconButton
-                            onClick={_ => setMessagePanel(MessagePanelState.EmojiPicker)}
+                            onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker)}
                             className={classes.button}>
                             <Smiley />
                         </IconButton> : closeButton}
+                        {(messagePanelState != MessagePanelState.SendFile) ?
                         <AttachFile
-                            chat={chat}
-                            className={classes.button + " " + classes.attachFileIcon} />
-                        {them && messagePanelState != MessagePanelState.SendCycles ?
+                            onFileSelected={onFileAttached}
+                            className={classes.button} /> : closeButton}
+                        {them && messagePanelState !== MessagePanelState.SendCycles ?
                         <IconButton
                             className={classes.button}
-                            onClick={_ => setMessagePanel(MessagePanelState.SendCycles)}>
+                            onClick={_ => changeMessagePanel(MessagePanelState.SendCycles)}>
                             <Dollar />
                         </IconButton> : (them ? closeButton : null)}
                     </div>
-                    <div className={classes.inputContainer}>
-                        <div
-                            id="textbox"
-                            ref={textBoxRef}
-                            className={classes.input}
-                            placeholder="Type a message"
-                            onInput={handleInput}
-                            onPaste={pastePlainText}
-                            onKeyDown={handleKeyPress}
-                            onBlur={saveSelection}
-                            contentEditable={true}
-                            spellCheck="true"></div>
-                    </div>
-                    <button onClick={handleSendMessage} className={classes.sendButton}>
+                    <MessageTextInput 
+                        ref={textBoxRef}
+                        placeholder={messagePanelState === MessagePanelState.Closed || messagePanelState === MessagePanelState.EmojiPicker ? "Type a message" : "Type a caption"}
+                        onEnterPressed={onSendMessage}
+                        onChange={onTextChanged}
+                        />
+                    <button onClick={onSendMessage} className={classes.sendButton}>
                         <SendButtonIcon />
                     </button>
                 </div>

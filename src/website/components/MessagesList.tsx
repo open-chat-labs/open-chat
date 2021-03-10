@@ -20,7 +20,7 @@ export default React.memo(MessagesList);
 
 const useStyles = makeStyles((theme: Theme) => ({
     messagesList: {
-        padding: "14px 20px 0 20px",
+        padding: "14px 14px 0 14px",
         flex: "1 1",
         overflowY: "auto",
         overflowX: "hidden",

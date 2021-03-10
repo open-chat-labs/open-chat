@@ -5,20 +5,14 @@ import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import TextField from '@material-ui/core/TextField';
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { Option } from "../domain/model/common";
-import sendMessage from "../actions/chats/sendMessage";
 import getCurrentUser, { GetCurrentUserOutcome } from "../actions/users/getCurrentUser";
 import { formatCycles } from "../formatters/cycles";
-import { Chat } from "../domain/model/chats";
-import { SendMessageContent } from "../domain/model/messages";
 import { UserSummary } from "../domain/model/users";
 import * as cycleFunctions from "../utils/cycleFunctions";
 import Link from "@material-ui/core/Link";
 
 type Props = {
-    chat: Chat,
-    recipient: UserSummary,
-    onSend: () => void
+    recipient: UserSummary
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -57,7 +51,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 export interface ISendCyclesRef {
-    sendCycles: (caption: Option<string>) => boolean
+    getCycles: () => bigint
 }
 
 const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
@@ -71,22 +65,10 @@ const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
         fetchCurrentBalance();
     }, []);    
 
-    useImperativeHandle(ref, () => ({ sendCycles }));    
+    useImperativeHandle(ref, () => ({ getCycles }));    
 
-    function sendCycles(caption: Option<string>) {
-        // if (invalid) return false
-
-        const content: SendMessageContent = {
-            kind: "cycles",
-            amount: cycleFunctions.fromT(parseFloat(cycles)),
-            caption: caption
-        };
-
-        dispatch(sendMessage(props.chat!, content, null));
-
-        props.onSend();
-
-        return true;
+    function getCycles(): bigint {
+        return cycleFunctions.fromT(parseFloat(cycles));
     }            
 
     function onCyclesChanged(text: string) {

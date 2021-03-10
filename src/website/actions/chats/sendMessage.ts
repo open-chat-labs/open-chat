@@ -3,7 +3,7 @@ import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
 import { Chat, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
-import { LocalMessage, MessageContent, ReplyContext, SendMessageContent } from "../../domain/model/messages";
+import { LocalMessage, MessageContent, ReplyContext, DraftMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
 import dataService, { DataSource } from "../../services/data/CachingDataService";
 import {
@@ -19,7 +19,7 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_FAILED";
 
-export default function(chat: Chat, sendMessageContent: SendMessageContent, repliesTo: Option<ReplyContext>) {
+export default function(chat: Chat, sendMessageContent: DraftMessageContent, repliesTo: Option<ReplyContext>) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const timer = Stopwatch.startNew();
         const clientMessageId = uuidv1().toString();
@@ -101,7 +101,7 @@ export default function(chat: Chat, sendMessageContent: SendMessageContent, repl
     }
 }
 
-function convertContent(sendMessageContent: SendMessageContent): MessageContent {
+function convertContent(sendMessageContent: DraftMessageContent): MessageContent {
     switch (sendMessageContent.kind) {
         case "media":
             return {
@@ -119,6 +119,7 @@ function convertContent(sendMessageContent: SendMessageContent): MessageContent 
         case "file":
             return {
                 kind: sendMessageContent.kind,
+                caption: sendMessageContent.caption,
                 name: sendMessageContent.name,
                 mimeType: sendMessageContent.mimeType,
                 id: uuidv1().toString(),

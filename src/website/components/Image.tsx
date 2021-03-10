@@ -1,5 +1,4 @@
 import React from "react";
-import { scaleMediaContent } from "./mediaComponentFunctions";
 
 export interface Props {
     src: string,
@@ -8,13 +7,16 @@ export interface Props {
     className: string
 }
 
+Image.defaultProps = {
+    className: ""
+}
+
 export default React.memo(Image);
 
 function Image(props : Props): JSX.Element {
-    const dimensions = scaleMediaContent(props.width, props.height);
     return <img
         className={props.className}
         src={props.src}
-        width={dimensions.width}
-        height={dimensions.height} />;
+        width={props.width}
+        height={props.height} />;
 }
