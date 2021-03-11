@@ -1,18 +1,15 @@
-import * as CSS from 'csstype';
-import { CSSProperties } from "react";
 import Dimensions from "../utils/Dimensions";
 
-export function scaleMediaContent(width: number, height: number) : Dimensions {
+const MIN_MEDIA_WIDTH: number = 330;
+const MAX_MEDIA_DIMENSION: number = 500;
+
+export function scaleMediaContent(width: number, height: number, applyMinWidth: boolean = false) : Dimensions {
+    if (applyMinWidth && width < MIN_MEDIA_WIDTH) {
+        return new Dimensions(
+            MIN_MEDIA_WIDTH,
+            Math.floor(MIN_MEDIA_WIDTH / (width / height)));
+    }
+
     let dimensions = new Dimensions(width, height);
-    return dimensions.scaleToFit(new Dimensions(500, 500));
-}
-
-export function styleMediaMessage(width: number, height: number) : CSSProperties {
-    let dimensions = scaleMediaContent(width, height);
-    const style: CSS.Properties = {
-        width: dimensions.width + 'px',
-        height: dimensions.height + 'px',
-    };
-
-    return style;
+    return dimensions.scaleToFit(new Dimensions(MAX_MEDIA_DIMENSION, MAX_MEDIA_DIMENSION));
 }

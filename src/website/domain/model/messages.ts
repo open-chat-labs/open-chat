@@ -5,7 +5,7 @@ import { UserId } from "./users";
 export type Message = ConfirmedMessage | UnconfirmedMessage | P2PMessage;
 export type ConfirmedMessage = LocalMessage | RemoteMessage;
 export type MessageContent = TextContent | MediaContent | FileContent | CyclesContent;
-export type SendMessageContent = TextContent | SendMediaContent | SendFileContent | CyclesContent;
+export type DraftMessageContent = TextContent | DraftMediaContent | DraftFileContent | CyclesContent;
 
 export type LocalMessage = {
     kind: "local",
@@ -62,6 +62,7 @@ export type FileContent = {
     id: string,
     size: number,
     name: string;
+    caption: Option<string>,
     mimeType: string,
     chunkSize: number,
 }
@@ -72,7 +73,7 @@ export type CyclesContent = {
     caption: Option<string>
 }
 
-export type SendMediaContent = {
+export type DraftMediaContent = {
     kind: "media",
     caption: Option<string>,
     mimeType: string,
@@ -83,9 +84,10 @@ export type SendMediaContent = {
     thumbnailData: string
 }
 
-export type SendFileContent = {
+export type DraftFileContent = {
     kind: "file",
     name: string,
+    caption: Option<string>,
     mimeType: string,
     data: Uint8Array
 }

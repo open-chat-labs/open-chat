@@ -29,6 +29,7 @@ export function fromCandid(content: any) : MessageContent {
         const inner = content.File;
         return {
             kind: "file",
+            caption: optionFromCandid(inner.caption),
             name: inner.name,
             mimeType: inner.mime_type,
             id: inner.blob_id,
@@ -72,6 +73,7 @@ export function toCandid(content: MessageContent) : any {
         case "file":
             return {
                 File: {
+                    caption: optionToCandid(content.caption),
                     name: content.name,
                     mime_type: content.mimeType,
                     blob_id: content.id,

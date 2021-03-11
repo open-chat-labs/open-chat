@@ -55,6 +55,7 @@ pub struct MediaContent {
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct FileContent {
+    caption: Option<String>,
     name: String,
     mime_type: String,
     blob_id: String,
@@ -173,12 +174,17 @@ impl Message {
     }
 
     pub fn matches_search(&self, search_term: &str) -> bool {
+
+        fn text_matches(text: &Option<String>, search_term: &str) -> bool {
+            text.is_some() && text.as_ref().unwrap().to_lowercase().contains(search_term)
+        }
+
         let search_term = &search_term.to_lowercase();
         match &self.content {
             MessageContent::Text(t) => t.text.to_lowercase().contains(search_term),
-            MessageContent::Media(m) => m.caption.is_some() && m.caption.as_ref().unwrap().to_lowercase().contains(search_term),
-            MessageContent::File(f) => f.name.to_lowercase().contains(search_term),
-            MessageContent::Cycles(c) => c.caption.is_some() && c.caption.as_ref().unwrap().to_lowercase().contains(search_term)
+            MessageContent::Media(m) => text_matches(&m.caption, search_term),
+            MessageContent::File(f) => text_matches(&f.caption, search_term) || f.name.to_lowercase().contains(search_term),
+            MessageContent::Cycles(c) => text_matches(&c.caption, search_term)
         }
     }
 }
