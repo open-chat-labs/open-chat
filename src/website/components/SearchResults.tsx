@@ -68,7 +68,7 @@ function SearchResults(props: Props) {
     function handleSelectUser(user: UserSummary) {
         props.clearSearchTerm();
         dispatch(changeLeftPanel(LeftPanelType.Chats));
-        dispatch(gotoUser(user.userId, user.username));
+        dispatch(gotoUser(user));
     }
 
     const classes = useStyles();

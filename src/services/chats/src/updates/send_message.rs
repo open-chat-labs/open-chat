@@ -1,8 +1,9 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::{timestamp, timestamp::Timestamp};
-use crate::domain::chat::{Chat, ChatId, MessageContent, ChatSummary, ReplyContext};
+use crate::domain::chat::{Chat, MessageContent, ChatSummary, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
 

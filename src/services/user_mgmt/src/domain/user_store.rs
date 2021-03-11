@@ -2,6 +2,7 @@ use core::cmp::Ordering;
 use ic_cdk::export::candid::CandidType;
 use multi_map::MultiMap;
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::storage::StableState;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
@@ -38,6 +39,7 @@ pub struct UserSummary {
     username: String,
     seconds_since_last_online: u32,
     image_id: Option<String>,
+    chat_id: ChatId,
     version: u32
 }
 
@@ -142,7 +144,7 @@ impl UserStore {
         self.data.get(user_id).map(|u| MyProfile::new(u))
     }
 
-    pub fn get_users(&self, users: Vec<UserId>, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<UserSummary> {
+    pub fn get_users(&self, users: Vec<UserId>, me: &UserId, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<UserSummary> {
         fn filter(user: &User, updated_since: Timestamp) -> bool {
             user.last_online > updated_since || user.last_updated > updated_since
         }
@@ -151,7 +153,7 @@ impl UserStore {
             .iter()
             .filter_map(|id| self.data.get(&id))
             .filter(|u| if updated_since.is_some() { filter(u, updated_since.unwrap()) } else { true })
-            .map(|u| UserSummary::new(u, Some(now)))
+            .map(|u| UserSummary::new(u, me, Some(now)))
             .collect()
     }
 
@@ -173,7 +175,7 @@ impl UserStore {
             .iter()
             .take(max_results as usize)
             .filter_map(|username| self.data.get_alt(username))
-            .map(|u| UserSummary::new(u, Some(now)))
+            .map(|u| UserSummary::new(u, me, Some(now)))
             .collect()
     }
 
@@ -275,7 +277,7 @@ impl MyProfile {
 
 impl UserSummary {
     // You can pass in now = None if you know that the user is online now
-    fn new(user: &User, now: Option<Timestamp>) -> UserSummary {
+    fn new(user: &User, me: &UserId, now: Option<Timestamp>) -> UserSummary {
         let mut seconds_since_last_online: u32 = 0;
         if let Some(t) = now {
             let millis_since_last_online = t - user.last_online;
@@ -287,6 +289,7 @@ impl UserSummary {
             username: user.username.clone(),
             seconds_since_last_online,
             image_id: user.image_id.clone(),
+            chat_id: ChatId::for_direct_chat(me, &user.id),
             version: user.version
         }
     }

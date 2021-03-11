@@ -25,7 +25,7 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
     switch (event.type) {
         case MARK_MESSAGES_AS_READ: {
             const { chatId, messageIds } = (event as MarkMessagesAsReadEvent).payload;
-            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            const [chat] = chatFunctions.getChat(store.getState().chatsState.chats, chatId);
             if (chatFunctions.isDirectChat(chat)) {
                 const p2pMessage = {
                     kind: MARK_MESSAGES_AS_READ_REMOTELY,
@@ -38,7 +38,7 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
 
         case MARK_MESSAGES_AS_READ_BY_CLIENT_ID: {
             const { chatId, clientMessageIds } = (event as MarkMessagesAsReadByClientIdEvent).payload;
-            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            const [chat] = chatFunctions.getChat(store.getState().chatsState.chats, chatId);
             if (chatFunctions.isDirectChat(chat)) {
                 const p2pMessage = {
                     kind: MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
@@ -65,7 +65,7 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
 
         case CURRENT_USER_TYPING: {
             const chatId = (event as CurrentUserTypingEvent).payload;
-            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            const [chat] = chatFunctions.getChat(store.getState().chatsState.chats, chatId);
             const p2pMessage = {
                 kind: REMOTE_USER_TYPING,
                 chatId: chat.chatId
@@ -76,7 +76,7 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
 
         case CURRENT_USER_STOPPED_TYPING: {
             const chatId = (event as CurrentUserStoppedTypingEvent).payload;
-            const [chat] = chatFunctions.getChatById(store.getState().chatsState.chats, chatId);
+            const [chat] = chatFunctions.getChat(store.getState().chatsState.chats, chatId);
             const p2pMessage = {
                 kind: REMOTE_USER_STOPPED_TYPING,
                 chatId: chat.chatId

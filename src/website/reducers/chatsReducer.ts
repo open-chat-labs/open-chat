@@ -2,7 +2,7 @@ import produce from "immer";
 import { dataToBlobUrl } from "../utils/blobFunctions";
 
 import * as chatFunctions from "../domain/model/chats";
-import { Chat, ChatFilter, ChatId, UnconfirmedGroupChat } from "../domain/model/chats";
+import { Chat, UnconfirmedGroupChat } from "../domain/model/chats";
 import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
 import {
@@ -174,16 +174,16 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case CREATE_GROUP_CHAT_REQUESTED: {
-            const { tempId, subject, users } = event.payload;
-            const newChat = chatFunctions.newUnconfirmedGroupChat(tempId, subject, users);
+            const { chatId, subject, users } = event.payload;
+            const newChat = chatFunctions.newUnconfirmedGroupChat(chatId, subject, users);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
             break;
         }
 
         case CREATE_GROUP_CHAT_SUCCEEDED: {
-            const { tempId, chat } = event.payload;
-            const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id === tempId);
+            const { chat } = event.payload;
+            const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.chatId === chat.chatId);
 
             state.chats[chatIndex] = chat;
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
@@ -202,7 +202,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_REQUESTED: {
             const { chatId, fromId, count } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             const messageIds = [];
             for (let i = fromId; i < fromId + count; i++) {
                 messageIds.push(i);
@@ -213,7 +213,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_SUCCEEDED: {
             const { request, result } = event.payload;
-            const [chat, index] = chatFunctions.getChatById(state.chats, request.chatId);
+            const [chat, index] = chatFunctions.getConfirmedChat(state.chats, request.chatId);
             const messageIds = [];
             for (let i = request.fromId; i < request.fromId + request.count; i++) {
                 messageIds.push(i);
@@ -226,7 +226,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_FAILED: {
             const { chatId, fromId, count } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             const messageIds = [];
             for (let i = fromId; i < fromId + count; i++) {
                 messageIds.push(i);
@@ -237,14 +237,14 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_BY_ID_REQUESTED: {
             const { chatId, messageIds } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             setFunctions.unionWith(chat.messagesDownloading, messageIds);
             break;
         }
 
         case GET_MESSAGES_BY_ID_SUCCEEDED: {
             const { request, result } = event.payload;
-            const [chat, index] = chatFunctions.getChatById(state.chats, request.chatId);
+            const [chat, index] = chatFunctions.getConfirmedChat(state.chats, request.chatId);
             setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
             chatFunctions.addMessages(chat, result.messages, index === state.selectedChatIndex);
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
@@ -253,7 +253,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MESSAGES_BY_ID_FAILED: {
             const { chatId, messageIds } = event.payload;
-            const chat = chatFunctions.getChatById(state.chats, chatId)[0];
+            const chat = chatFunctions.getConfirmedChat(state.chats, chatId)[0];
             setFunctions.exceptWith(chat.messagesDownloading, messageIds);
             break;
         }
@@ -288,14 +288,14 @@ export default produce((state: ChatsState, event: Event) => {
 
         case MARK_MESSAGES_AS_READ: {
             const { chatId, messageIds } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             chatFunctions.markMessagesAsReadLocally(chat, messageIds);
             break;
         }
 
         case MARK_MESSAGES_AS_READ_BY_CLIENT_ID: {
             const { chatId, clientMessageIds } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             chatFunctions.markMessagesAsReadByClientIdLocally(chat, clientMessageIds);
             break;
         }
@@ -320,14 +320,14 @@ export default produce((state: ChatsState, event: Event) => {
 
         case MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED: {
             const { chatId, fromId, toId } = event.payload.request;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             chatFunctions.markMessagesAsReadOnServer(chat, fromId, toId);
             break;
         }
 
         case RECEIVE_P2P_MESSAGE: {
             const { chatId, message } = event.payload;
-            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+            const [chat] = chatFunctions.tryGetChat(state.chats, chatId);
 
             // Chat may not exist locally yet
             if (chat) {
@@ -339,7 +339,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case REMOTE_USER_TYPING: {
             const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+            const [chat] = chatFunctions.tryGetChat(state.chats, chatId);
 
             // Chat may not exist locally yet
             if (chat) {
@@ -354,7 +354,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case REMOTE_USER_STOPPED_TYPING: {
             const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.tryGetChatById(state.chats, chatId);
+            const [chat] = chatFunctions.tryGetChat(state.chats, chatId);
 
             // Chat may not exist locally yet
             if (chat) {
@@ -369,7 +369,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
-            const [chat, index] = chatFunctions.getChat(state.chats, payload.chat);
+            const [chat, index] = chatFunctions.getChat(state.chats, payload.chat.chatId);
             chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);
 
             state.chats.splice(index, 1);
@@ -380,14 +380,9 @@ export default produce((state: ChatsState, event: Event) => {
 
         case SEND_MESSAGE_SUCCEEDED: {
             const updatedChat = event.payload.chat;
-            const filter = {
-                chatId: updatedChat.chatId,
-                userId: chatFunctions.isDirectChat(updatedChat) ? updatedChat.them : undefined
-            } as ChatFilter;
-
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = chatFunctions.findChat(state.chats, filter) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            let [chat, index] = chatFunctions.getChat(state.chats, event.payload.chat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
 
             state.chats[index] = chatFunctions.mergeUpdates(chat, updatedChat, index === state.selectedChatIndex);
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
@@ -395,8 +390,8 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
-            const { userId } = event.payload;
-            const newChat = chatFunctions.newUnconfirmedDirectChat(userId);
+            const { userId, chatId } = event.payload;
+            const newChat = chatFunctions.newUnconfirmedDirectChat(userId, chatId);
             state.chats.unshift(newChat);
             state.selectedChatIndex = 0;
             break;
@@ -404,11 +399,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case ADD_PARTICIPANTS_REQUESTED: {
             const { chatId, users } = event.payload;
-            const filter = {
-                chatId: chatId as ChatId,
-                unconfirmedChatId: chatId as Symbol                
-            };
-            const [chat] = chatFunctions.findChat(state.chats, filter);
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
 
             if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
                 // We can't add the participants until the chat is confirmed
@@ -423,7 +414,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case ADD_PARTICIPANTS_FAILED: {
             const { chatId, users } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
 
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Adding the participants failed so remove them from the chat
@@ -434,7 +425,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case REMOVE_PARTICIPANT_REQUESTED: {
             const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Remove the participant immediately but add them back if the call fails
                 setFunctions.remove(chat.participants, userId);
@@ -444,7 +435,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case REMOVE_PARTICIPANT_FAILED: {
             const { chatId, userId } = event.payload;
-            const [chat] = chatFunctions.getChatById(state.chats, chatId);
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Removing the participant failed so add them back to the chat
                 setFunctions.add(chat.participants, userId);
@@ -454,7 +445,7 @@ export default produce((state: ChatsState, event: Event) => {
 
         case GET_MEDIA_SUCCEEDED: {
             const { chatId, messageId, data } = event.payload;
-            const [chat, index] = chatFunctions.getChatById(state.chats, chatId);            
+            const [chat, index] = chatFunctions.getChat(state.chats, chatId);
             // Only set the media data against the message if the chat is the selected chat
             const message = chatFunctions.tryFindMessge(chat.messages, messageId);
             if (message && 

@@ -1,7 +1,8 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::chat_id::ChatId;
 use crate::domain::chat_list::ChatList;
-use crate::domain::chat::{Chat, ChatId, Message};
+use crate::domain::chat::{Chat, Message};
 use self::Response::*;
 
 pub fn query(search_term: &str, max_results: u8) -> Response {

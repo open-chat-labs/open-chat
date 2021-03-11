@@ -1,7 +1,8 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::chat_id::ChatId;
 use crate::domain::chat_list::ChatList;
-use crate::domain::chat::{Chat, ChatId};
+use crate::domain::chat::Chat;
 use crate::queries::get_messages::Result;
 use self::Response::*;
 

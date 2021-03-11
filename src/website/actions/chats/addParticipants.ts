@@ -31,14 +31,10 @@ export function addParticipantsByUserId(chat: GroupChat, userIds: UserId[]) {
         const timer = Stopwatch.startNew();
 
         {
-            const chatId: ChatId | Symbol = chat.kind === CONFIRMED_GROUP_CHAT 
-                ? chat.chatId 
-                : chat.id;
-
             const requestEvent: AddParticipantsRequestedEvent = {
                 type: ADD_PARTICIPANTS_REQUESTED,
                 payload: {
-                    chatId,
+                    chatId: chat.chatId,
                     users: userIds
                 }
             };
@@ -76,7 +72,7 @@ export function addParticipantsByUserId(chat: GroupChat, userIds: UserId[]) {
 export type AddParticipantsRequestedEvent = {
     type: typeof ADD_PARTICIPANTS_REQUESTED,
     payload: {
-        chatId: ChatId | Symbol,
+        chatId: ChatId,
         users: UserId[]
     }
 }

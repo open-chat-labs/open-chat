@@ -2,6 +2,7 @@ use std::ops::{RangeInclusive};
 use ic_cdk::export::candid::CandidType;
 use range_set::RangeSet;
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 use crate::utils;
@@ -32,17 +33,6 @@ pub struct DirectChatSummary {
 #[derive(CandidType, Deserialize)]
 pub struct DirectChatStableState {
     id: ChatId,
-    user1: UserId,
-    user2: UserId,
-    user1_unread_message_id_ranges: Vec<[u32; 2]>,
-    user2_unread_message_id_ranges: Vec<[u32; 2]>,
-    messages: Vec<Message>,
-    last_updated: Timestamp
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct DirectChatStableStatePrevious {
-    id: ChatIdPrevious,
     user1: UserId,
     user2: UserId,
     user1_unread_message_id_ranges: Vec<[u32; 2]>,
@@ -210,20 +200,6 @@ impl From<DirectChatStableState> for DirectChat {
             user2: chat.user2,
             user1_unread_message_ids: utils::vec_to_range_set(chat.user1_unread_message_id_ranges),
             user2_unread_message_ids: utils::vec_to_range_set(chat.user2_unread_message_id_ranges),
-            messages: chat.messages,
-            last_updated: chat.last_updated
-        }
-    }
-}
-
-impl From<DirectChatStableStatePrevious> for DirectChatStableState {
-    fn from(chat: DirectChatStableStatePrevious) -> Self {
-        DirectChatStableState {
-            id: ChatId(chat.id.0.into()),
-            user1: chat.user1,
-            user2: chat.user2,
-            user1_unread_message_id_ranges: chat.user1_unread_message_id_ranges,
-            user2_unread_message_id_ranges: chat.user2_unread_message_id_ranges,
             messages: chat.messages,
             last_updated: chat.last_updated
         }

@@ -1,8 +1,9 @@
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
+use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::storage::StableState;
 use shared::user_id::UserId;
-use super::chat::{Chat, ChatEnum, ChatId, ChatSummary, MessageContent};
+use super::chat::{Chat, ChatEnum, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 use crate::domain::chat::{ChatStableState, ReplyContext};
@@ -32,8 +33,7 @@ impl ChatList {
         chat_summary
     }
 
-    pub fn create_group_chat(&mut self, creator: UserId, participants: Vec<UserId>, subject: String, now: Timestamp) -> Option<GroupChatSummary> {
-        let chat_id = ChatId::for_group_chat(&creator, now);
+    pub fn create_group_chat(&mut self, creator: UserId, chat_id: ChatId, subject: String, participants: Vec<UserId>, now: Timestamp) -> Option<GroupChatSummary> {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {

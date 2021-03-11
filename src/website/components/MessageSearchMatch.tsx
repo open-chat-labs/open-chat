@@ -51,7 +51,7 @@ function MessageSearchMatch(props: Props) {
     const classes = useStyles();
 
     const [chat, index] = useSelector((state: RootState) =>
-        chatFunctions.getChatById(state.chatsState.chats, props.chatId));
+        chatFunctions.getChat(state.chatsState.chats, props.chatId));
 
     const userDictionary = useSelector((state: RootState) => state.usersState.userDictionary);
 

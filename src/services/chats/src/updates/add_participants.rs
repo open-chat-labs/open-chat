@@ -1,8 +1,9 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::chat_id::ChatId;
 use shared::user_id::UserId;
 use shared::timestamp;
-use crate::domain::chat::{ChatId, ChatEnum};
+use crate::domain::chat::ChatEnum;
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
 

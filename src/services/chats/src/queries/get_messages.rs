@@ -1,7 +1,8 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::chat_id::ChatId;
 use crate::domain::chat_list::ChatList;
-use crate::domain::chat::{Chat, ChatId, Message};
+use crate::domain::chat::{Chat, Message};
 use self::Response::*;
 
 pub fn query(chat_id: ChatId, from_id: u32, page_size: u32) -> Response {

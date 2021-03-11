@@ -1,3 +1,4 @@
+import { ChatId } from "./chats";
 import { Option } from "./common";
 
 export type UserId = string;
@@ -17,6 +18,7 @@ export type UserSummary = {
     lastOnline: Date,
     minutesSinceLastOnline: number,
     imageId: Option<string>,
+    chatId: ChatId,
     version: number
 }
 
@@ -24,7 +26,8 @@ export type UserItem = {
     userId: UserId,
     username: string,
     imageId: Option<string>,
-    isOnline: boolean
+    isOnline: boolean,
+    chatId: Option<ChatId>
 }
 
 export function fromMyProfile(myProfile: MyProfile): UserItem {
@@ -32,7 +35,8 @@ export function fromMyProfile(myProfile: MyProfile): UserItem {
         userId: myProfile.userId,
         username: "You",
         isOnline: true,
-        imageId: myProfile.imageId
+        imageId: myProfile.imageId,
+        chatId: null
     };
 }
 export function fromUserSummary(user: UserSummary): UserItem {
@@ -40,6 +44,7 @@ export function fromUserSummary(user: UserSummary): UserItem {
         userId: user.userId,
         username: user.username,
         isOnline: user.minutesSinceLastOnline < 2,
-        imageId: user.imageId
+        imageId: user.imageId,
+        chatId: user.chatId
     };
 }
