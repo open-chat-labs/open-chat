@@ -46,9 +46,8 @@ function ParticipantsPanel() {
 
     const handleSelectUser = (user: UserItem) => () => {
         if (user.userId != me.userId && user.chatId) {
-            const chatId = user.chatId;
             closePanel();
-            dispatch(gotoUser({ ...user, chatId }));
+            dispatch(gotoUser(user.userId, user.chatId));
         }
     }
 

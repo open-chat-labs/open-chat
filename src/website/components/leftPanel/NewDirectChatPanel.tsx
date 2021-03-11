@@ -58,7 +58,7 @@ function NewDirectChatPanel() {
 
     function handleSelectUser(user: UserSummary) {
         closePanel();
-        dispatch(gotoUser(user));
+        dispatch(gotoUser(user.userId, user.chatId));
     }
 
     useLayoutEffect(() => {

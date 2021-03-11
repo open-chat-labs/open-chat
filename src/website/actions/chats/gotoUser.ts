@@ -6,15 +6,10 @@ import selectChat from "./selectChat";
 
 export const SETUP_NEW_DIRECT_CHAT_SUCCEEDED = "SETUP_NEW_DIRECT_CHAT_SUCCEEDED";
 
-export interface UserIdAndChatId {
-    userId: UserId,
-    chatId: ChatId
-}
-
-export default function(user: UserIdAndChatId) {
+export default function(userId: UserId, chatId: ChatId) {
     return (dispatch: Dispatch<any>, getState: () => RootState) => {
 
-        const directChatIndex = findDirectChatIndex(getState().chatsState.chats, user.userId);
+        const directChatIndex = findDirectChatIndex(getState().chatsState.chats, userId);
 
         // If I already have a direct chat with this user then select it otherwise setup a new direct chat
         if (directChatIndex >= 0) {
@@ -22,7 +17,10 @@ export default function(user: UserIdAndChatId) {
         } else {
             dispatch({
                 type: SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
-                payload: user
+                payload: {
+                    userId,
+                    chatId
+                }
             } as SetupNewDirectChatSucceededEvent);
         }
     };
@@ -30,5 +28,8 @@ export default function(user: UserIdAndChatId) {
 
 export type SetupNewDirectChatSucceededEvent = {
     type: typeof SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
-    payload: UserIdAndChatId
+    payload: {
+        userId: UserId,
+        chatId: ChatId
+    }
 }

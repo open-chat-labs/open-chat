@@ -177,7 +177,7 @@ function Message(props : Props) {
             href="#" 
             role="button" 
             title={`Select chat with "${sender.username}"`}
-            onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+            onClick={_ => dispatch(gotoUser(sender.userId, sender.chatId))}>{sender.username}</a>;
     }
 
     if (!props.readByMe) {
