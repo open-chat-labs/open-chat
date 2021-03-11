@@ -1,5 +1,5 @@
 type UserId = principal;
-type ChatId = nat64;
+type ChatId = nat;
 type Timestamp = nat64;
 
 type CreateGroupChatResponse =
