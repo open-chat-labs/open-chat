@@ -13,6 +13,10 @@ import {
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
+import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
+import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
+import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,
@@ -47,8 +51,6 @@ import {
     GetMessagesByIdSucceededEvent
 } from "../actions/chats/getMessagesById";
 
-import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
-
 import {
     SEND_MESSAGE_REQUESTED,
     SEND_MESSAGE_SUCCEEDED,
@@ -81,11 +83,12 @@ import {
     MarkMessagesAsReadEvent,
     MarkMessagesAsReadRemotelyEvent
 } from "../actions/chats/markMessagesAsRead";
+
 import {
     MARK_MESSAGES_AS_READ_SERVER_SYNC_SUCCEEDED,
     MarkMessagesAsReadServerSyncSucceededEvent
 } from "../actions/chats/markMessagesAsReadServerSync";
-import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
+
 import {
     CurrentUserStoppedTypingEvent,
     CurrentUserTypingEvent,
@@ -94,8 +97,6 @@ import {
     RemoteUserStoppedTypingEvent,
     RemoteUserTypingEvent
 } from "../actions/chats/userTyping";
-
-import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 
 export type ChatsState = {
     chats: Chat[],
@@ -144,7 +145,8 @@ type Event =
     RemoteUserStoppedTypingEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
-    SendMessageFailedEvent;
+    SendMessageFailedEvent |
+    UserLoggedOutEvent;
 
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
@@ -456,6 +458,10 @@ export default produce((state: ChatsState, event: Event) => {
                 message.content.blobUrl = dataToBlobUrl(data, message.content.mimeType);
             }
             break;
+        }
+
+        case USER_LOGGED_OUT: {
+            return initialState;
         }
     }
 }, initialState);

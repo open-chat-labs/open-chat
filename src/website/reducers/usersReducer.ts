@@ -10,6 +10,7 @@ import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/go
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { MARK_REMOTE_USER_ONLINE, MarkRemoteUserOnlineEvent } from "../actions/users/markRemoteUserOnline";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -68,7 +69,8 @@ export type Event =
     SetProfileImageRequestedEvent |
     SetProfileImageFailedEvent |
     SetProfileImageDataUploadFailedEvent |
-    UpdateMinutesSinceLastOnline;
+    UpdateMinutesSinceLastOnline |
+    UserLoggedOutEvent;
 
 export type UsersState = {
     userRegistrationStatus: UserRegistrationStatus,
@@ -215,6 +217,10 @@ export default produce((state: UsersState, event: Event) => {
             user.imageBlobUrl = null;
             user.imageId = null;
             break;
+        }
+
+        case USER_LOGGED_OUT: {
+            return initialState;
         }
     }
 }, initialState);

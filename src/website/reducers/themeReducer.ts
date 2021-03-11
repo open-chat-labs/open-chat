@@ -1,4 +1,5 @@
 import produce from "immer";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
 import { THEME_SELECTED, ThemeSelectedEvent } from "../actions/selectTheme";
 import SelectedThemeCache from "../domain/SelectedThemeCache";
 
@@ -17,7 +18,7 @@ const initialState: ThemeState = {
 }
 
 type Event =
-    ThemeSelectedEvent;
+    ThemeSelectedEvent | UserLoggedOutEvent;
 
 export default produce((state: ThemeState, event: Event) => {
     switch (event.type) {
@@ -26,6 +27,10 @@ export default produce((state: ThemeState, event: Event) => {
             state.selectedTheme = selectedTheme;
             SelectedThemeCache.set(selectedTheme);
             break;
+        }
+
+        case USER_LOGGED_OUT: {
+            return initialState;
         }
     }
 }, initialState);
