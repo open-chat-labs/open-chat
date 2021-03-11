@@ -129,7 +129,7 @@ class AuthenticationClient {
     }
   }
 
-  async logout(options: { returnTo?: string; } = {}) {
+  logout(options: { returnTo?: string; } = {}) {
     localStorage.removeItem(KEY_LOCALSTORAGE_KEY);
     localStorage.removeItem(KEY_LOCALSTORAGE_DELEGATION);
     // Reset this auth client to a non-authenticated state.

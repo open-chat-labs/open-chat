@@ -7,6 +7,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../PopOverMenu";
 import ThemeSelector from "../ThemeSelector";
+import logout from "../../actions/logout";
 
 export default React.memo(UserMenu);
 
@@ -26,7 +27,7 @@ function UserMenu() {
     menuItems.push({ text: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
     menuItems.push({ text: "Profile", action: () => {} });
     menuItems.push({ text: "Theme", action: () => setThemeSelectorOpen(true) });
-    menuItems.push({ text: "Logout", action: () => {} });
+    menuItems.push({ text: "Logout", action: () => dispatch(logout()) });
 
     return (
         <>

@@ -1,17 +1,18 @@
 import produce from "immer";
 
 import {
-    LeftPanelType,
-    RightPanelType,
     LEFT_PANEL_CHANGED,
-    RIGHT_PANEL_CHANGED,
     LeftPanelChangedEvent,
+    LeftPanelType,
+    RIGHT_PANEL_CHANGED,
     RightPanelChangedEvent,
+    RightPanelType,
 } from "../actions/changeSidePanel";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
-import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/gotoUser";
+import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
 
 export type SidePanelState = {
     leftPanel: LeftPanelType,
@@ -28,7 +29,8 @@ type Event =
     RightPanelChangedEvent | 
     ChatSelectedEvent | 
     CreateGroupChatRequestedEvent | 
-    SetupNewDirectChatSucceededEvent;
+    DirectChatCreatedEvent |
+    UserLoggedOutEvent;
 
 export default produce((state: SidePanelState, event: Event) => {
     switch (event.type) {
@@ -42,9 +44,13 @@ export default produce((state: SidePanelState, event: Event) => {
         }
         case CHAT_SELECTED:
         case CREATE_GROUP_CHAT_REQUESTED:
-        case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
+        case DIRECT_CHAT_CREATED: {
             state.rightPanel = RightPanelType.None;
             break;
+        }
+
+        case USER_LOGGED_OUT: {
+            return initialState;
         }
     }
 }, initialState);
