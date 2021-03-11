@@ -12,7 +12,7 @@ import {
 } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
-import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
+import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/gotoUser";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,

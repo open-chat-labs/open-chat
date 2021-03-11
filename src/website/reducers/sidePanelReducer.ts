@@ -11,7 +11,7 @@ import {
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
-import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
+import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/gotoUser";
 
 export type SidePanelState = {
     leftPanel: LeftPanelType,

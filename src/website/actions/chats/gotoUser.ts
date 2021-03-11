@@ -3,7 +3,8 @@ import { RootState } from "../../reducers";
 import { ChatId, findDirectChatIndex } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 import selectChat from "./selectChat";
-import { SetupNewDirectChatSucceededEvent, SETUP_NEW_DIRECT_CHAT_SUCCEEDED } from "./setupNewDirectChat";
+
+export const SETUP_NEW_DIRECT_CHAT_SUCCEEDED = "SETUP_NEW_DIRECT_CHAT_SUCCEEDED";
 
 export interface UserIdAndChatId {
     userId: UserId,
@@ -25,4 +26,9 @@ export default function(user: UserIdAndChatId) {
             } as SetupNewDirectChatSucceededEvent);
         }
     };
+}
+
+export type SetupNewDirectChatSucceededEvent = {
+    type: typeof SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
+    payload: UserIdAndChatId
 }
