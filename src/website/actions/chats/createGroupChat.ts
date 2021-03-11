@@ -2,7 +2,7 @@ import { Dispatch } from "react";
 
 import chatsService from "../../services/chats/service";
 import * as chatFunctions from "../../domain/model/chats";
-import { ChatId, ConfirmedGroupChat, generateChatId, UnconfirmedGroupChat } from "../../domain/model/chats";
+import { ChatId, ConfirmedGroupChat, UnconfirmedGroupChat } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 import { RootState } from "../../reducers";
 
@@ -18,7 +18,7 @@ export const CREATE_GROUP_CHAT_FAILED = "CREATE_GROUP_CHAT_FAILED";
 export default function(subject: string, users: UserId[]) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const timer = Stopwatch.startNew();
-        const chatId = generateChatId();
+        const chatId = chatFunctions.generateChatId();
 
         const requestEvent: CreateGroupChatRequestedEvent = {
             type: CREATE_GROUP_CHAT_REQUESTED,
