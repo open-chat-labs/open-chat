@@ -4,7 +4,7 @@ import { ChatId, findDirectChatIndex } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 import selectChat from "./selectChat";
 
-export const SETUP_NEW_DIRECT_CHAT_SUCCEEDED = "SETUP_NEW_DIRECT_CHAT_SUCCEEDED";
+export const DIRECT_CHAT_CREATED = "DIRECT_CHAT_CREATED";
 
 export default function(userId: UserId, chatId: ChatId) {
     return (dispatch: Dispatch<any>, getState: () => RootState) => {
@@ -16,18 +16,18 @@ export default function(userId: UserId, chatId: ChatId) {
             dispatch(selectChat(directChatIndex));
         } else {
             dispatch({
-                type: SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
+                type: DIRECT_CHAT_CREATED,
                 payload: {
                     userId,
                     chatId
                 }
-            } as SetupNewDirectChatSucceededEvent);
+            } as DirectChatCreatedEvent);
         }
     };
 }
 
-export type SetupNewDirectChatSucceededEvent = {
-    type: typeof SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
+export type DirectChatCreatedEvent = {
+    type: typeof DIRECT_CHAT_CREATED,
     payload: {
         userId: UserId,
         chatId: ChatId

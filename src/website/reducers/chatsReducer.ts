@@ -12,7 +12,7 @@ import {
 } from "../constants";
 
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
-import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/gotoUser";
+import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,
@@ -120,6 +120,7 @@ type Event =
     CreateGroupChatFailedEvent |
     CurrentUserTypingEvent |
     CurrentUserStoppedTypingEvent |
+    DirectChatCreatedEvent |
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
@@ -143,8 +144,7 @@ type Event =
     RemoteUserStoppedTypingEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
-    SendMessageFailedEvent |
-    SetupNewDirectChatSucceededEvent;
+    SendMessageFailedEvent;
 
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
@@ -187,6 +187,14 @@ export default produce((state: ChatsState, event: Event) => {
 
             state.chats[chatIndex] = chat;
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            break;
+        }
+
+        case DIRECT_CHAT_CREATED: {
+            const { userId, chatId } = event.payload;
+            const newChat = chatFunctions.newUnconfirmedDirectChat(userId, chatId);
+            state.chats.unshift(newChat);
+            state.selectedChatIndex = 0;
             break;
         }
 
@@ -386,14 +394,6 @@ export default produce((state: ChatsState, event: Event) => {
 
             state.chats[index] = chatFunctions.mergeUpdates(chat, updatedChat, index === state.selectedChatIndex);
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
-            break;
-        }
-
-        case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
-            const { userId, chatId } = event.payload;
-            const newChat = chatFunctions.newUnconfirmedDirectChat(userId, chatId);
-            state.chats.unshift(newChat);
-            state.selectedChatIndex = 0;
             break;
         }
 
