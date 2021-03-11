@@ -425,7 +425,7 @@ export const sortChatsAndReturnSelectedIndex = (chats: Chat[], selectedIndex: Op
 }
 
 export const findChatIndex = (chats: Chat[], chatId: ChatId) : number => {
-    return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
+    return chats.findIndex(c => chatId === c.chatId);
 }
 
 export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {
