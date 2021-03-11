@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 ic-cdk = "0.2.2"
 ic-types = "0.1.2"
+highway = "0.6.3"
 serde = "1.0.111"

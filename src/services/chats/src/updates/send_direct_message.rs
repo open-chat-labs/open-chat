@@ -1,9 +1,10 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::timestamp::{self, Timestamp};
 use shared::user_id::UserId;
-use crate::domain::chat::{Chat, ChatEnum, ChatId, MessageContent, ReplyContext};
+use crate::domain::chat::{Chat, ChatEnum, MessageContent, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::user_mgmt::*;

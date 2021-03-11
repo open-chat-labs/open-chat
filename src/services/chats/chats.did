@@ -2,6 +2,13 @@ type UserId = principal;
 type ChatId = nat;
 type Timestamp = nat64;
 
+type CreateGroupChatRequest =
+    record {
+        chat_id: ChatId;
+        subject: text;
+        participants: vec UserId;
+    };
+
 type CreateGroupChatResponse =
     variant {
         Success: GroupChatSummary;
@@ -216,7 +223,7 @@ type SearchMessagesMatch =
     };
 
 service : {
-    create_group_chat: (vec UserId, text) -> (CreateGroupChatResponse);
+    create_group_chat: (CreateGroupChatRequest) -> (CreateGroupChatResponse);
     send_direct_message: (SendDirectMessageRequest) -> (SendDirectMessageResponse);
     send_message: (SendMessageRequest) -> (SendMessageResponse);
     mark_read: (ChatId, nat32, nat32) -> (MarkReadResponse);

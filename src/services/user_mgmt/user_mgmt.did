@@ -1,3 +1,4 @@
+type ChatId = nat;
 type UserId = principal;
 type Timestamp = nat64;
 
@@ -7,6 +8,7 @@ type UserSummary =
         username: text;
         seconds_since_last_online: nat32;
         image_id: opt text;
+        chat_id: ChatId;
         version: nat32;
     };
 

@@ -6,10 +6,10 @@ import * as dateFunctions from "../utils/dateFunctions";
 import * as setFunctions from "../utils/setFunctions";
 
 import { CONFIRMED_DIRECT_CHAT, CONFIRMED_GROUP_CHAT } from "../constants";
+import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { MARK_REMOTE_USER_ONLINE, MarkRemoteUserOnlineEvent } from "../actions/users/markRemoteUserOnline";
-import { SETUP_NEW_DIRECT_CHAT_SUCCEEDED, SetupNewDirectChatSucceededEvent } from "../actions/chats/setupNewDirectChat";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -51,6 +51,7 @@ import {
 } from "../actions/users/setProfileImage";
 
 export type Event =
+    DirectChatCreatedEvent |
     GetAllChatsSucceededEvent |
     GetCurrentUserRequestedEvent |
     GetCurrentUserSucceededEvent |
@@ -67,7 +68,6 @@ export type Event =
     SetProfileImageRequestedEvent |
     SetProfileImageFailedEvent |
     SetProfileImageDataUploadFailedEvent |
-    SetupNewDirectChatSucceededEvent |
     UpdateMinutesSinceLastOnline;
 
 export type UsersState = {
@@ -94,6 +94,16 @@ const initialState: UsersState = {
 
 export default produce((state: UsersState, event: Event) => {
     switch (event.type) {
+        case DIRECT_CHAT_CREATED: {
+            const user = event.payload;
+            const unknownUserIds = state.unknownUserIds;
+            const userDictionary: any = state.userDictionary;
+
+            setFunctions.remove(unknownUserIds, user.userId);
+            userDictionary[user.userId] = user;
+            break;
+        }
+
         case GET_ALL_CHATS_SUCCEEDED:
         case GET_UPDATED_CHATS_SUCCEEDED: {
             const { chats } = event.payload;
@@ -171,16 +181,6 @@ export default produce((state: UsersState, event: Event) => {
 
         case REGISTER_USER_FAILED_USERNAME_EXISTS: {
             state.userRegistrationStatus = UserRegistrationStatus.NotRegistered;
-            break;
-        }
-
-        case SETUP_NEW_DIRECT_CHAT_SUCCEEDED: {
-            const user = event.payload;
-            const unknownUserIds = state.unknownUserIds;
-            const userDictionary: any = state.userDictionary;
-
-            setFunctions.remove(unknownUserIds, user.userId);
-            userDictionary[user.userId] = user;
             break;
         }
 

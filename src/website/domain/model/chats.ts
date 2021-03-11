@@ -27,14 +27,27 @@ export type UnconfirmedChat = UnconfirmedDirectChat | UnconfirmedGroupChat;
 
 export type ChatId = bigint;
 
+export function generateChatId() : ChatId {
+    const array = new Uint32Array(4);
+
+    window.crypto.getRandomValues(array);
+
+    let chatId = BigInt(array[0]);
+    chatId += BigInt(array[1]) << BigInt(32);
+    chatId += BigInt(array[2]) << BigInt(64);
+    chatId += BigInt(array[3]) << BigInt(96);
+
+    return chatId;
+}
+
 type ChatCommon = {
+    chatId: ChatId,
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
     draftMessage: string
 }
 
 type ConfirmedChatCommon = ChatCommon & {
-    chatId: ChatId,
     displayDate: Date,
     lastUpdated: Date,
     messages: Message[],
@@ -82,7 +95,6 @@ export type UnconfirmedDirectChat = UnconfirmedChatCommon & {
 
 export type UnconfirmedGroupChat = UnconfirmedChatCommon & {
     kind: typeof UNCONFIRMED_GROUP_CHAT,
-    id: Symbol,
     subject: string,
     initialParticipants: UserId[],
     pendingParticipants: UserId[]
@@ -182,9 +194,10 @@ export const newConfirmedGroupChat = (
     };
 }
 
-export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat => {
+export const newUnconfirmedDirectChat = (userId: UserId, chatId: ChatId) : UnconfirmedDirectChat => {
     return {
         kind: UNCONFIRMED_DIRECT_CHAT,
+        chatId,
         them: userId,
         messages: [],
         scrollTop: null,
@@ -193,10 +206,10 @@ export const newUnconfirmedDirectChat = (userId: UserId) : UnconfirmedDirectChat
     };
 }
 
-export const newUnconfirmedGroupChat = (tempId: Symbol, subject: string, users: UserId[]) : UnconfirmedGroupChat => {
+export const newUnconfirmedGroupChat = (chatId: ChatId, subject: string, users: UserId[]) : UnconfirmedGroupChat => {
     return {
         kind: UNCONFIRMED_GROUP_CHAT,
-        id: tempId,
+        chatId,
         subject,
         initialParticipants: users,
         pendingParticipants: [],
@@ -352,24 +365,16 @@ export const extendMessagesRangeUpTo = (chat: ConfirmedChat, messageId: number, 
     chat.maxLocalMessageId = messageId;
 }
 
-export const getChat = (chats: Chat[], old_chat: Chat): [Chat, number] => {
-    const filter = {
-        chatId: ("chatId" in old_chat && old_chat.chatId) ? old_chat.chatId : undefined,
-        userId: "them" in old_chat ? old_chat.them : undefined,
-        unconfirmedChatId: old_chat.kind === UNCONFIRMED_GROUP_CHAT ? old_chat.id : undefined
-    };
-    return tryFindChat(chats, filter) as [Chat, number];
+export const getChat = (chats: Chat[], chatId: ChatId) : [Chat, number] => {
+    return tryFindChat(chats, { chatId }) as [Chat, number];
 }
 
-export const findChat = (chats: Chat[], filter: ChatFilter) : [Chat, number] => {
-    return tryFindChat(chats, filter) as [Chat, number];
-}
-
-export const getChatById = (chats: Chat[], chatId: ChatId) : [ConfirmedChat, number] => {
+// Only call this if you know that the chat is already a confirmed chat
+export const getConfirmedChat = (chats: Chat[], chatId: ChatId) : [ConfirmedChat, number] => {
     return tryFindChat(chats, { chatId }) as [ConfirmedChat, number];
 }
 
-export const tryGetChatById = (chats: Chat[], chatId: ChatId) : [Option<ConfirmedChat>, number] => {
+export const tryGetChat = (chats: Chat[], chatId: ChatId) : [Option<ConfirmedChat>, number] => {
     return tryFindChat(chats, { chatId }) as [Option<ConfirmedChat>, number];
 }
 
@@ -382,9 +387,6 @@ export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, 
     if (index === -1 && filter.chatId) {
         index = findChatIndex(chats, filter.chatId);
     }
-    if (index === -1 && filter.unconfirmedChatId) {
-        index = findChatIndexBySymbol(chats, filter.unconfirmedChatId);
-    }
     if (index === -1 && filter.userId) {
         index = findDirectChatIndex(chats, filter.userId);
     }
@@ -396,7 +398,6 @@ export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, 
 
 export type ChatFilter = {
     chatId?: ChatId,
-    unconfirmedChatId?: Symbol,
     userId?: UserId
 }
 
@@ -424,11 +425,7 @@ export const sortChatsAndReturnSelectedIndex = (chats: Chat[], selectedIndex: Op
 }
 
 export const findChatIndex = (chats: Chat[], chatId: ChatId) : number => {
-    return chats.findIndex(c => "chatId" in c && c.chatId && chatId === c.chatId);
-}
-
-export const findChatIndexBySymbol = (chats: Chat[], unconfirmedChatId: Symbol) : number => {
-    return chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.id && unconfirmedChatId == c.id);
+    return chats.findIndex(c => chatId === c.chatId);
 }
 
 export const findDirectChatIndex = (chats: Chat[], userId: UserId) : number => {

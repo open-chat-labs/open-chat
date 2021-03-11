@@ -3,6 +3,7 @@ use std::ops::RangeInclusive;
 use ic_cdk::export::candid::CandidType;
 use range_set::RangeSet;
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 use crate::utils;
@@ -42,16 +43,6 @@ pub struct GroupChatSummary {
 #[derive(CandidType, Deserialize)]
 pub struct GroupChatStableState {
     id: ChatId,
-    subject: String,
-    description: Option<String>,
-    participants: Vec<ParticipantStableState>,
-    messages: Vec<Message>,
-    last_updated: Timestamp
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct GroupChatStableStatePrevious {
-    id: ChatIdPrevious,
     subject: String,
     description: Option<String>,
     participants: Vec<ParticipantStableState>,
@@ -349,19 +340,6 @@ impl From<ParticipantStableState> for Participant {
             date_added: participant.date_added,
             min_visible_message_id: participant.min_visible_message_id,
             unread_message_ids: utils::vec_to_range_set(participant.unread_message_ids)
-        }
-    }
-}
-
-impl From<GroupChatStableStatePrevious> for GroupChatStableState {
-    fn from(chat: GroupChatStableStatePrevious) -> Self {
-        GroupChatStableState {
-            id: ChatId(chat.id.0.into()),
-            subject: chat.subject,
-            description: chat.description,
-            participants: chat.participants.into_iter().map(|p| p.into()).collect(),
-            messages: chat.messages,
-            last_updated: chat.last_updated
         }
     }
 }

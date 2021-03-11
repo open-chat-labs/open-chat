@@ -1,7 +1,7 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
-use shared::{timestamp };
+use shared::timestamp;
 use crate::domain::user_store::{UserStore, UserSummary};
 use self::Response::*;
 

@@ -13,8 +13,8 @@ import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages
 import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessages";
 
 export default class service {
-    public static createGroupChat(subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
-        return createGroupChat(subject, users);
+    public static createGroupChat(chatId: ChatId, subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
+        return createGroupChat(chatId, subject, users);
     }
 
     public static sendDirectMessage(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {

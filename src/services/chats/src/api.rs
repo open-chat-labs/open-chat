@@ -1,12 +1,12 @@
 use ic_cdk_macros::*;
+use shared::chat_id::ChatId;
 use shared::user_id::UserId;
-use crate::domain::chat::ChatId;
 use crate::queries::*;
 use crate::updates::*;
 
 #[update]
-fn create_group_chat(participants: Vec<UserId>, subject: String) -> create_group_chat::Response {
-    create_group_chat::update(participants, subject)
+fn create_group_chat(request: create_group_chat::Request) -> create_group_chat::Response {
+    create_group_chat::update(request)
 }
 
 #[update]

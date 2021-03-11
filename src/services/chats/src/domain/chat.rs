@@ -1,12 +1,11 @@
-use std::ops::Shl;
 use ic_cdk::export::candid::CandidType;
 use enum_dispatch::enum_dispatch;
-use highway::{HighwayHasher, HighwayHash};
 use serde::Deserialize;
+use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
-use crate::domain::direct_chat::{DirectChat, DirectChatSummary, DirectChatStableState, DirectChatStableStatePrevious};
-use crate::domain::group_chat::{GroupChat, GroupChatSummary, GroupChatStableState, GroupChatStableStatePrevious};
+use crate::domain::direct_chat::{DirectChat, DirectChatSummary, DirectChatStableState};
+use crate::domain::group_chat::{GroupChat, GroupChatSummary, GroupChatStableState};
 
 #[enum_dispatch(Chat)]
 pub enum ChatEnum {
@@ -29,12 +28,6 @@ pub trait Chat {
     fn get_updated_date(&self) -> Timestamp;
     fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary;
 }
-
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
-pub struct ChatId(pub u128);
-
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
-pub struct ChatIdPrevious(pub u64);
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TextContent {
@@ -112,47 +105,6 @@ pub enum ChatStableState {
     Group(GroupChatStableState)
 }
 
-impl ChatId {
-    pub fn for_group_chat(creator: &UserId, timestamp: Timestamp) -> ChatId {
-        let mut hasher = HighwayHasher::default();
-
-        hasher.append(creator.as_slice());
-        hasher.append(&timestamp.to_be_bytes());
-
-        let hash_parts = hasher.finalize128();
-        let hash1: u128 = hash_parts[0].into();
-        let hash2: u128 = hash_parts[1].into();
-        let hash: u128 = hash1.shl(64) + hash2;
-
-        ChatId(hash)
-    }
-
-    pub fn for_direct_chat(user1: &UserId, user2: &UserId) -> ChatId {
-        let mut hasher = HighwayHasher::default();
-
-        if user1 < user2 {
-            hasher.append(user1.as_slice());
-            hasher.append(user2.as_slice());
-        } else {
-            hasher.append(user2.as_slice());
-            hasher.append(user1.as_slice());
-        }
-
-        let hash_parts = hasher.finalize128();
-        let hash1: u128 = hash_parts[0].into();
-        let hash2: u128 = hash_parts[1].into();
-        let hash: u128 = hash1.shl(64) + hash2;
-
-        ChatId(hash)
-    }
-}
-
-#[derive(CandidType, Deserialize)]
-pub enum ChatStableStatePrevious {
-    Direct(DirectChatStableStatePrevious),
-    Group(GroupChatStableStatePrevious)
-}
-
 impl Message {
     pub fn new(id: u32, client_message_id: String, now: Timestamp, sender: UserId, content: MessageContent, replies_to: Option<ReplyContext>) -> Message {
         Message {
@@ -220,15 +172,6 @@ impl From<ChatEnum> for ChatStableState {
         match chat {
             ChatEnum::Direct(c) => ChatStableState::Direct(c.into()),
             ChatEnum::Group(c) => ChatStableState::Group(c.into())
-        }
-    }
-}
-
-impl From<ChatStableStatePrevious> for ChatStableState {
-    fn from(chat: ChatStableStatePrevious) -> Self {
-        match chat {
-            ChatStableStatePrevious::Direct(c) => ChatStableState::Direct(c.into()),
-            ChatStableStatePrevious::Group(c) => ChatStableState::Group(c.into())
         }
     }
 }

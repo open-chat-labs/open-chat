@@ -1,11 +1,12 @@
 import { Dispatch } from "react";
 import { RootState } from "../../reducers";
+import { ChatId, findDirectChatIndex } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
-import { findDirectChatIndex } from "../../domain/model/chats";
 import selectChat from "./selectChat";
-import { SetupNewDirectChatSucceededEvent, SETUP_NEW_DIRECT_CHAT_SUCCEEDED } from "./setupNewDirectChat";
 
-export default function(userId: UserId, username: string) {
+export const DIRECT_CHAT_CREATED = "DIRECT_CHAT_CREATED";
+
+export default function(userId: UserId, chatId: ChatId) {
     return (dispatch: Dispatch<any>, getState: () => RootState) => {
 
         const directChatIndex = findDirectChatIndex(getState().chatsState.chats, userId);
@@ -15,13 +16,20 @@ export default function(userId: UserId, username: string) {
             dispatch(selectChat(directChatIndex));
         } else {
             dispatch({
-                type: SETUP_NEW_DIRECT_CHAT_SUCCEEDED,
+                type: DIRECT_CHAT_CREATED,
                 payload: {
-                    userId: userId,
-                    username: username,
-                    version: 0
+                    userId,
+                    chatId
                 }
-            } as SetupNewDirectChatSucceededEvent);
+            } as DirectChatCreatedEvent);
         }
     };
+}
+
+export type DirectChatCreatedEvent = {
+    type: typeof DIRECT_CHAT_CREATED,
+    payload: {
+        userId: UserId,
+        chatId: ChatId
+    }
 }

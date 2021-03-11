@@ -1,10 +1,11 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::chat_id::ChatId;
+use shared::timestamp;
 use shared::user_id::UserId;
-use crate::domain::chat::{ChatId, ChatEnum};
+use crate::domain::chat::ChatEnum;
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
-use shared::timestamp;
 
 pub fn update(chat_id: ChatId, user: UserId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
