@@ -1,4 +1,4 @@
-import React, { useRef, useState} from "react";
+import React, { useEffect, useRef, useState} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import IconButton from "@material-ui/core/IconButton";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -7,6 +7,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
+import { ChatId } from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
@@ -82,6 +83,9 @@ enum MessagePanelState {
 function Footer() {
     const dispatch = useDispatch();
     const [messagePanelState, setMessagePanel] = useState(MessagePanelState.Closed);
+    const [textBoxText, setTextBoxText] = useState("");
+    const sendCyclesRef = useRef<ISendCyclesRef>(null);
+    const textBoxRef = useRef<IMessageTextInputRef>(null);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
 
     const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
@@ -92,9 +96,11 @@ function Footer() {
         return <div></div>;
     }
 
-    const sendCyclesRef = useRef<ISendCyclesRef>(null);
-    const textBoxRef = useRef<IMessageTextInputRef>(null);
-    const [textBoxText, setTextBoxText] = useState("");
+    useEffect(() => {
+        if (messagePanelState !== MessagePanelState.Closed) {
+            changeMessagePanel(MessagePanelState.Closed)
+        }
+    }, [chat.chatId]);
 
     // Hold draft (media) message
     const draftMessageContentRef = useRef<Option<DraftMessageContent>>(null);
