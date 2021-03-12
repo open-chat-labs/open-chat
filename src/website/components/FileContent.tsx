@@ -18,7 +18,6 @@ export default React.memo(FileContent);
 
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     link: {
-        minWidth: 300,
         padding: "10px 9px",
         maxWidth: 494,
         backgroundColor: props => props.sentByMe

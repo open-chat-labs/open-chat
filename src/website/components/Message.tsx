@@ -77,12 +77,13 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     file: {
+        minWidth: 330,
         padding: 3,
         "& $participant": {
             marginLeft: 8
         },
         "& $timeAndTicks": {
-            marginRight: 7
+            marginRight: 8
         }
     },
     media: {
@@ -175,7 +176,8 @@ function Message(props : Props) {
         contentElement = <FileContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} />;
         className += " " + classes.file;
     } else if (props.content.kind === "cycles") {
-        contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />;
+        contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} theirUsername={props.theirUsername} />;
+        className += " " + classes.file;
     } else {
         contentElement = <TextContent text={props.content.text} variant="body1" />;
     }
