@@ -102,7 +102,9 @@ export default produce((state: UsersState, event: Event) => {
             const userDictionary: any = state.userDictionary;
 
             setFunctions.remove(unknownUserIds, user.userId);
-            userDictionary[user.userId] = user;
+            if (!userDictionary.hasOwnProperty(user.userId)) {
+                userDictionary[user.userId] = user;
+            }
             break;
         }
 
