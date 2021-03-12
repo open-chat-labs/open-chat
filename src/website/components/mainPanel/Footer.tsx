@@ -7,7 +7,6 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
-import { ChatId } from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
@@ -87,6 +86,8 @@ function Footer() {
     const sendCyclesRef = useRef<ISendCyclesRef>(null);
     const textBoxRef = useRef<IMessageTextInputRef>(null);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+    // Hold draft (media) message
+    const draftMessageContentRef = useRef<Option<DraftMessageContent>>(null);
 
     const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
         ? getUserSummary(chat.them, state.usersState.userDictionary)
@@ -101,9 +102,6 @@ function Footer() {
             changeMessagePanel(MessagePanelState.Closed)
         }
     }, [chat.chatId]);
-
-    // Hold draft (media) message
-    const draftMessageContentRef = useRef<Option<DraftMessageContent>>(null);
 
     function changeMessagePanel(state: MessagePanelState) {
         if (state !== MessagePanelState.SendFile && draftMessageContentRef.current) {
