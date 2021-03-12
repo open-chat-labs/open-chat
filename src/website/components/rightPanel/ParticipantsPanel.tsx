@@ -13,7 +13,7 @@ import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel"
 import UserListItem from "../UserListItem";
 import { fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
-import gotoUser from "../../actions/chats/gotoUser";
+import { gotoKnownUser } from "../../actions/chats/gotoUser";
 import removeParticipant from "../../actions/chats/removeParticipant";
 import Header from "./Header";
 import { MenuItem } from "../PopOverMenu";
@@ -47,7 +47,7 @@ function ParticipantsPanel() {
     const handleSelectUser = (user: UserItem) => () => {
         if (user.userId != me.userId && user.chatId) {
             closePanel();
-            dispatch(gotoUser(user.userId, user.chatId));
+            dispatch(gotoKnownUser(user.userId));
         }
     }
 
