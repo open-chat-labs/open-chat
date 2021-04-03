@@ -10,7 +10,7 @@ export default async function(updatedSince: Option<Timestamp>) : Promise<GetConn
     const candidRequest = optionToCandid(updatedSince ? timestampToCandid(updatedSince) : null);
     const response = await client.get_connection_details(candidRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         const connections = response.Success.connections.map(connectionDetailsFromCandid);
         return {
             kind: "success",

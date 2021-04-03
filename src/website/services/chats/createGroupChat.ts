@@ -17,13 +17,13 @@ export default async function(chatId: ChatId, subject: string, users: UserId[]) 
 
     const response = await client.create_group_chat(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
             result: groupChatFromCandid(success)
         };
-    } else if (response.hasOwnProperty("ChatAlreadyExists")) {
+    } else if ("ChatAlreadyExists" in response) {
         return {
             kind: "chatAlreadyExists"
         };

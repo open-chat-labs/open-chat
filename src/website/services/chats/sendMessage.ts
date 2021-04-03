@@ -18,7 +18,7 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
     }
     const response = await client.send_message(candidRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
@@ -28,7 +28,7 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
                 date: timestampToDate(success.timestamp)
             }
         };
-    } else if (response.hasOwnProperty("ChatNotFound")) {
+    } else if ("ChatNotFound" in response) {
         return {
             kind: "chatNotFound"
         };

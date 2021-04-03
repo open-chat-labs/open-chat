@@ -17,7 +17,7 @@ export async function getMessagesById(chatId: ChatId, ids: number[]) : Promise<G
 }
 
 function handleResponse(response: any) : GetMessagesResponse {
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
@@ -26,7 +26,7 @@ function handleResponse(response: any) : GetMessagesResponse {
                 latestMessageId: success.latest_message_id
             }
         };
-    } else if (response.hasOwnProperty("ChatNotFound")) {
+    } else if ("ChatNotFound" in response) {
         return {
             kind: "chatNotFound"
         };

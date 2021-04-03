@@ -15,7 +15,7 @@ export default async function(request: AddOfferRequest) : Promise<AddOfferRespon
     };
     const response = await client.add_offer(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         const result = response.Success;
         const candidCounterOffer: any = optionFromCandid(result.existing_counter_offer);
         const counterOffer: Option<P2PConnectionOffer> = candidCounterOffer

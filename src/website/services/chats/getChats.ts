@@ -13,13 +13,13 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
     };
     const response = await client.get_chats(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         const success = response.Success;
         const chats = success.map(chatFromCandid);
         let latestUpdateTimestamp: Option<Timestamp> = null;
         if (success.length) {
             const latestChat = success[0];
-            latestUpdateTimestamp = timestampFromCandid(latestChat.hasOwnProperty("Direct")
+            latestUpdateTimestamp = timestampFromCandid("Direct" in latestChat
                 ? latestChat.Direct.last_updated
                 : latestChat.Group.last_updated);
         }

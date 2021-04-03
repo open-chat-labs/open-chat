@@ -10,7 +10,7 @@ export default async function(request: SearchUsersRequest) : Promise<SearchUsers
     };
     const response = await client.search_users(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success: any = response.Success;
         return {
             kind: "success",

@@ -10,20 +10,20 @@ export default async function(chatId: ChatId, users: UserId[]) : Promise<AddPart
     const candidUserIds = users.map(userIdToCandid);
     const response = await client.add_participants(candidChatId, candidUserIds);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         return {
             kind: "success",
             countAdded: response.Success
         };
-    } else if (response.hasOwnProperty("Unauthorized")) {
+    } else if ("Unauthorized" in response) {
         return {
             kind: "unauthorized"
         };
-    } else if (response.hasOwnProperty("ChatNotFound")) {
+    } else if ("ChatNotFound" in response) {
         return {
             kind: "chatNotFound"
         };
-    } else if (response.hasOwnProperty("NotGroupChat")) {
+    } else if ("NotGroupChat" in response) {
         return {
             kind: "notGroupChat"
         };

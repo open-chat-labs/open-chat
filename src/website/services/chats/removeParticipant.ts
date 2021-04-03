@@ -8,17 +8,17 @@ export default async function(chatId: ChatId, userId: UserId) : Promise<RemovePa
     const client = CanisterClientFactory.current!.chatsClient;
     const response = await client.remove_participant(chatIdToCandid(chatId), userIdToCandid(userId));
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         return RemoveParticipantResponse.Success;
-    } else if (response.hasOwnProperty("Unauthorized")) {
+    } else if ("Unauthorized" in response) {
         return RemoveParticipantResponse.Unauthorized;
-    } else if (response.hasOwnProperty("ParticipantNotFound")) {
+    } else if ("ParticipantNotFound" in response) {
         return RemoveParticipantResponse.ParticipantNotFound;
-    } else if (response.hasOwnProperty("CannotRemoveSelfFromChat")) {
+    } else if ("CannotRemoveSelfFromChat" in response) {
         return RemoveParticipantResponse.CannotRemoveSelfFromChat;
-    } else if (response.hasOwnProperty("ChatNotFound")) {
+    } else if ("ChatNotFound" in response) {
         return RemoveParticipantResponse.ChatNotFound;
-    } else if (response.hasOwnProperty("NotGroupChat")) {
+    } else if ("NotGroupChat" in response) {
         return RemoveParticipantResponse.NotGroupChat;
     } else {
         throw new Error("Unrecognised 'remove_participant' response");

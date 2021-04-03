@@ -14,7 +14,7 @@ export default async function(request: GetUsersRequest) : Promise<GetUsersRespon
     };
     const response = await client.get_users(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success: any = response.Success;
         return {
             kind: "success",
