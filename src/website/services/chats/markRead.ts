@@ -1,11 +1,10 @@
 import { ChatId } from "../../domain/model/chats";
-import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toArray as rangeSetToArray } from "../candidConverters/rangeSet";
 import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(chatId: ChatId, fromId: number, toId: number) : Promise<MarkReadResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
-    const response = await client.mark_read(chatIdToCandid(chatId), fromId, toId);
+    const response = await client.mark_read(chatId, fromId, toId);
 
     if ("Success" in response) {
         let success = response.Success;

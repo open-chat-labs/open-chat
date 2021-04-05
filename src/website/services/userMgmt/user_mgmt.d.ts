@@ -1,6 +1,5 @@
 import type { Principal } from '@dfinity/agent';
-import type BigNumber from 'bignumber.js';
-export type ChatId = BigNumber;
+export type ChatId = bigint;
 export type GetCurrentUserResponse = { 'Success' : MyProfile } |
   { 'UserNotFound' : null };
 export type GetUserIdResponse = { 'Success' : UserId } |
@@ -17,7 +16,7 @@ export interface MyProfile {
   'username' : string,
   'version' : number,
   'image_id' : [] | [string],
-  'account_balance' : BigNumber,
+  'account_balance' : bigint,
 };
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'Success' : MyProfile } |
@@ -31,14 +30,14 @@ export type SearchUsersResponse = {
   };
 export type SetProfileImageResponse = { 'Success' : null } |
   { 'UserNotFound' : null };
-export type Timestamp = BigNumber;
+export type Timestamp = bigint;
 export interface TransferCyclesRequest {
   'recipient' : UserId,
   'sender' : UserId,
-  'amount' : BigNumber,
+  'amount' : bigint,
 };
 export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
-  { 'Success' : { 'new_balance' : BigNumber } } |
+  { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
 export type UpdateUsernameResponse = { 'SuccessNoChange' : null } |

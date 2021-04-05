@@ -1,7 +1,6 @@
 import { ChatId, ConfirmedGroupChat } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 import { groupChatFromCandid } from "../candidConverters/chat";
-import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import CanisterClientFactory from "../CanisterClientFactory";
 
@@ -10,7 +9,7 @@ export default async function(chatId: ChatId, subject: string, users: UserId[]) 
     const candidUserIds = users.map(userIdToCandid);
 
     const canisterRequest = {
-        chat_id: chatIdToCandid(chatId),
+        chat_id: chatId,
         subject,
         participants: candidUserIds
     };

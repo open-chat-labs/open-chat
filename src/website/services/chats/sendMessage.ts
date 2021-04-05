@@ -2,7 +2,6 @@ import { ChatId, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { MessageContent, ReplyContext } from "../../domain/model/messages";
 import { chatFromCandid } from "../candidConverters/chat";
-import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as messagePayloadToCandid } from "../candidConverters/messageContent";
 import { toCandid as replyContextToCandid } from "../candidConverters/replyContext";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
@@ -11,7 +10,7 @@ import CanisterClientFactory from "../CanisterClientFactory";
 export default async function(chatId: ChatId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const candidRequest = {
-        chat_id: chatIdToCandid(chatId),
+        chat_id: chatId,
         client_message_id: clientMessageId,
         content: messagePayloadToCandid(content),
         replies_to: replyContextToCandid(repliesTo)

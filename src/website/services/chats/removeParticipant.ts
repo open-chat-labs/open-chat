@@ -1,12 +1,11 @@
 import { UserId } from "../../domain/model/users";
 import { ChatId } from "../../domain/model/chats";
-import { toCandid as chatIdToCandid } from "../candidConverters/chatId";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(chatId: ChatId, userId: UserId) : Promise<RemoveParticipantResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
-    const response = await client.remove_participant(chatIdToCandid(chatId), userIdToCandid(userId));
+    const response = await client.remove_participant(chatId, userIdToCandid(userId));
 
     if ("Success" in response) {
         return RemoveParticipantResponse.Success;

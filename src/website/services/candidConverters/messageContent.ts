@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import { MessageContent } from "../../domain/model/messages";
 import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "./option";
 
@@ -84,7 +83,7 @@ export function toCandid(content: MessageContent) : any {
         case "cycles":
             return {
                 Cycles: {
-                    amount: new BigNumber(content.amount.toString()),
+                    amount: content.amount,
                     caption: optionToCandid(content.caption)
                 }
             };

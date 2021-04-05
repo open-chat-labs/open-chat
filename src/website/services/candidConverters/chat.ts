@@ -1,6 +1,5 @@
 import { ConfirmedChat, ConfirmedDirectChat, ConfirmedGroupChat } from "../../domain/model/chats";
 import * as chatFunctions from "../../domain/model/chats";
-import { fromCandid as chatIdFromCandid } from "./chatId";
 import { fromCandid as localMessageFromCandid } from "./localMessage";
 import { toArray as rangeSetToArray } from "./rangeSet";
 import { toDate as timestampToDate } from "./timestamp";
@@ -18,7 +17,7 @@ export function chatFromCandid(value: any) : ConfirmedChat {
 
 export function directChatFromCandid(value: any) : ConfirmedDirectChat {
     return chatFunctions.newConfirmedDirectChat(
-        chatIdFromCandid(value.id),
+        value.id,
         userIdFromCandid(value.them),
         timestampToDate(value.display_date),
         timestampToDate(value.last_updated),
@@ -29,7 +28,7 @@ export function directChatFromCandid(value: any) : ConfirmedDirectChat {
 
 export function groupChatFromCandid(value: any) : ConfirmedGroupChat {
     return chatFunctions.newConfirmedGroupChat(
-        chatIdFromCandid(value.id),
+        value.id,
         value.subject,
         value.participants.map(userIdFromCandid),
         timestampToDate(value.display_date),

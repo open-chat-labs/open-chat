@@ -4,28 +4,19 @@
       "type": "custom",
       "candid": "src/services/chats/chats.did",
       "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
-      "build": "./generate-wasm.sh chats",
-      "initialization_values": {
-        "memory_allocation": "1GB"
-      }
+      "build": "./generate-wasm.sh chats"
     },
     "p2p": {
       "type": "custom",
       "candid": "src/services/p2p/p2p.did",
       "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
-      "build": "./generate-wasm.sh p2p",
-      "initialization_values": {
-        "memory_allocation": "1GB"
-      }
+      "build": "./generate-wasm.sh p2p"
     },
     "user_mgmt": {
       "type": "custom",
       "candid": "src/services/user_mgmt/user_mgmt.did",
       "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
-      "build": "./generate-wasm.sh user_mgmt",
-      "initialization_values": {
-        "memory_allocation": "1GB"
-      }
+      "build": "./generate-wasm.sh user_mgmt"
     },
     "website": {
       "frontend": {
@@ -33,6 +24,7 @@
         "entrypoint": "src/website/index.tsx"
       },
       "source": [
+        "src/website/assets",
         "dist/website/"
       ],
       "type": "assets"
@@ -43,8 +35,13 @@
       "packtool": ""
     }
   },
-  "dfx": "0.6.23",
   "networks": {
+    "alpha": {
+      "providers": [
+        "https://mercury.dfinity.network"
+      ],
+      "type": "persistent"
+    },
     "ic": {
       "providers": [
         "https://gw.dfinity.network"

@@ -1,6 +1,5 @@
 import { ChatId } from "../../domain/model/chats";
 import { LocalMessage } from "../../domain/model/messages";
-import { fromCandid as chatIdFromCandid } from "../candidConverters/chatId";
 import { fromCandid as messageFromCandid } from "../candidConverters/localMessage";
 import CanisterClientFactory from "../CanisterClientFactory";
 
@@ -14,7 +13,7 @@ export default async function(searchTerm: string, maxResults: number) : Promise<
             kind: "success",
             result: {
                 matches: success.matches.map((m: any) => ({
-                    chatId: chatIdFromCandid(m.chat_id),
+                    chatId: m.chat_id,
                     message: messageFromCandid(m.message)
                 }))
             }
