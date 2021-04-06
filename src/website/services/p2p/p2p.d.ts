@@ -1,5 +1,4 @@
 import type { Principal } from '@dfinity/agent';
-import type BigNumber from 'bignumber.js';
 export interface AddAnswerRequest {
     'id' : string,
     'connection_string' : string,
@@ -55,7 +54,7 @@ export interface RemoveSingleConnectionRequest {
     'id' : string,
     'user_id' : UserId,
 };
-export type Timestamp = BigNumber;
+export type Timestamp = bigint;
 export type UserId = Principal;
 export default interface _SERVICE {
     'add_answer' : (arg_0: AddAnswerRequest) => Promise<undefined>,

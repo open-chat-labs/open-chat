@@ -1,14 +1,18 @@
 {
   "chats": {
+    "alpha": "7td5r-biaaa-aaaaa-qaana-cai",
     "ic": "xo6et-siaaa-aaaab-qaitq-cai"
   },
   "p2p": {
+    "alpha": "7uc3f-mqaaa-aaaaa-qaanq-cai",
     "ic": "wdqa5-5aaaa-aaaab-qaiua-cai"
   },
   "user_mgmt": {
+    "alpha": "7bfki-nyaaa-aaaaa-qaaoa-cai",
     "ic": "2zip3-tqaaa-aaaaa-qahma-cai"
   },
   "website": {
+    "alpha": "7gem4-aaaaa-aaaaa-qaaoq-cai",
     "ic": "26jjp-6iaaa-aaaaa-qahmq-cai"
   }
 }

@@ -1,6 +1,5 @@
 import { Option } from "../../domain/model/common";
 import { ReplyContext } from "../../domain/model/messages";
-import { fromCandid as chatIdFromCandid, toCandid as chatIdToCandid } from "./chatId";
 import { fromCandid as messageContentFromCandid, toCandid as messageContentToCandid } from "./messageContent";
 import { fromCandid as optionFromCandid, toCandid as optionToCandid } from "./option";
 import { fromCandid as userIdFromCandid, toCandid as userIdToCandid } from "./userId";
@@ -9,7 +8,7 @@ export function fromCandid(value: any) : Option<ReplyContext> {
     const option = optionFromCandid<any>(value);
     return option
         ? {
-            chatId: chatIdFromCandid(option.chat_id),
+            chatId: option.chat_id,
             userId: userIdFromCandid(option.user_id),
             messageId: option.message_id,
             content: messageContentFromCandid(option.content)
@@ -20,7 +19,7 @@ export function fromCandid(value: any) : Option<ReplyContext> {
 export function toCandid(repliesTo: Option<ReplyContext>) : any {
     const option = repliesTo
         ? {
-            chat_id: chatIdToCandid(repliesTo.chatId),
+            chat_id: repliesTo.chatId,
             user_id: userIdToCandid(repliesTo.userId),
             message_id: repliesTo.messageId,
             content: messageContentToCandid(repliesTo.content)

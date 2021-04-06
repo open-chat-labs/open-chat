@@ -1,20 +1,18 @@
 import { Principal } from "@dfinity/agent";
-import * as urlFunctions from "./urlFunctions";
+import { canisterId as chats_id } from "dfx-generated/chats";
+import { canisterId as p2p_id } from "dfx-generated/p2p";
+import { canisterId as user_mgmt_id } from "dfx-generated/user_mgmt";
 
-export function extractCanisterIds() {
-    const query = urlFunctions.extractQueryStringAsObject();
+export type CanisterIds = {
+    chats: Principal,
+    p2p: Principal,
+    userMgmt: Principal
+};
 
-    return query["canisterId"] 
-        ? {
-            // Local canister ids
-            chats: Principal.fromText("rwlgt-iiaaa-aaaaa-aaaaa-cai"),
-            p2p: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
-            userMgmt: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai")
-        }
-        : {
-            // IC canister ids
-            chats: Principal.fromText("xo6et-siaaa-aaaab-qaitq-cai"),
-            p2p: Principal.fromText("wdqa5-5aaaa-aaaab-qaiua-cai"),
-            userMgmt: Principal.fromText("2zip3-tqaaa-aaaaa-qahma-cai")
-        };    
+export function getCanisterIds() : CanisterIds {
+    return {
+        chats: Principal.fromText(chats_id),
+        p2p: Principal.fromText(p2p_id),
+        userMgmt: Principal.fromText(user_mgmt_id)
+    };
 }

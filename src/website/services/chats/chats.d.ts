@@ -1,12 +1,11 @@
 import type { Principal } from '@dfinity/agent';
-import type BigNumber from 'bignumber.js';
 export type AddParticipantsResponse = {
     'ChatNotFound' : null
 } |
     { 'NotGroupChat' : null } |
     { 'Success' : number } |
     { 'Unauthorized' : null };
-export type ChatId = BigNumber;
+export type ChatId = bigint;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
     { 'Direct' : DirectChatSummary };
 export interface CreateGroupChatRequest {
@@ -18,7 +17,7 @@ export type CreateGroupChatResponse = { 'ChatAlreadyExists' : null } |
     { 'Success' : GroupChatSummary };
 export interface CyclesContent {
     'caption' : [] | [string],
-    'amount' : BigNumber,
+    'amount' : bigint,
 };
 export interface DirectChatSummary {
     'id' : ChatId,
@@ -137,7 +136,7 @@ export interface SendMessageResult {
     'chat_summary' : ChatSummary,
 };
 export interface TextContent { 'text' : string };
-export type Timestamp = BigNumber;
+export type Timestamp = bigint;
 export type UserId = Principal;
 export default interface _SERVICE {
     'add_participants' : (arg_0: ChatId, arg_1: Array<UserId>) => Promise<

@@ -1,20 +1,12 @@
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import authClient from "../utils/authClient";
-import { Principal } from "@dfinity/agent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import React from "react";
 import ChatIcon from '@material-ui/icons/Chat';
 import Typography from "@material-ui/core/Typography";
-
-type Props = {
-    canisterIds: {
-        chats: Principal,
-        p2p: Principal,
-        userMgmt: Principal
-    }
-}
+import { getCanisterIds } from "../utils/canisterFunctions";
 
 const useStyles = makeStyles((theme: Theme) => ({
     paper: {
@@ -36,14 +28,17 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-export default function Login(props: Props) {
+export default function Login() {
     const classes = useStyles();
 
     async function login() {
         const redirectUri = `${location.origin}/${location.search}`;
+        const canisterIds = getCanisterIds();
+
         await authClient.loginWithRedirect({
             redirectUri,
-            scope: Object.values(props.canisterIds)});
+            scope: Object.values(canisterIds)
+        });
     }
 
     return (

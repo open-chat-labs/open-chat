@@ -13,7 +13,6 @@ import CanisterClientFactory from "./services/CanisterClientFactory";
 import authClient from "./utils/authClient";
 import Login from "./components/Login";
 import ThemeProvider from "./components/ThemeProvider";
-import * as canisterFunctions from "./utils/canisterFunctions";
 import { UserRegistrationStatus } from "./reducers/usersReducer";
 import RegisterUser from "./components/RegisterUser";
 import getCurrentUser from "./actions/users/getCurrentUser";
@@ -73,8 +72,7 @@ function AppContainer() {
 
     const identity = authClient.getIdentity();
     const isAnonymous = identity.getPrincipal().isAnonymous();
-    const canisterIds = canisterFunctions.extractCanisterIds();
-    CanisterClientFactory.current = new CanisterClientFactory(identity, canisterIds);
+    CanisterClientFactory.current = new CanisterClientFactory(identity);
 
     const dispatch = useDispatch();
     const userRegistrationStatus = useSelector((state: RootState) => state.usersState.userRegistrationStatus);
@@ -92,7 +90,7 @@ function AppContainer() {
     let large = false;
 
     if (isAnonymous) {
-        component = <Login canisterIds={canisterIds} />;
+        component = <Login />;
     } else {
         switch (userRegistrationStatus) {
             case UserRegistrationStatus.Unknown:
