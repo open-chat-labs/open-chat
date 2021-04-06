@@ -19,7 +19,7 @@ export default async function(userId: UserId, clientMessageId: string, content: 
     }
     const response = await client.send_direct_message(canisterRequest);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
@@ -29,11 +29,11 @@ export default async function(userId: UserId, clientMessageId: string, content: 
                 date: timestampToDate(success.timestamp)
             }
         };
-    } else if (response.hasOwnProperty("UserNotFound")) {
+    } else if ("UserNotFound" in response) {
         return { kind: "userNotFound" };
-    } else if (response.hasOwnProperty("RecipientNotFound")) {
+    } else if ("RecipientNotFound" in response) {
         return { kind: "recipientNotFound" };
-    } else if (response.hasOwnProperty("BalanceExceeded")) {
+    } else if ("BalanceExceeded" in response) {
         return { kind: "balanceExceeded" };
     } else {
         throw new Error("Unrecognised 'send_direct_message' response");

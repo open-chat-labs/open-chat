@@ -5,6 +5,9 @@ import UserMgmtCanisterInterface from "ic:idl/user_mgmt";
 import { InterfaceFactory } from "@dfinity/agent/src/idl";
 import { ActorSubclass } from "@dfinity/agent/src/actor";
 import { Option } from "../domain/model/common";
+import ChatsService from "./chats/chats";
+import P2pService from "./p2p/p2p";
+import UserMgmtService from "./userMgmt/user_mgmt";
 
 type CanisterIds = {
     chats: Principal,
@@ -13,9 +16,9 @@ type CanisterIds = {
 }
 
 export default class CanisterClientFactory {
-    private readonly _chatsActor: ActorSubclass
-    private readonly _p2pActor: ActorSubclass
-    private readonly _userMgmtActor: ActorSubclass
+    private readonly _chatsActor: ChatsService
+    private readonly _p2pActor: P2pService
+    private readonly _userMgmtActor: UserMgmtService
 
     constructor(userId: Identity, canisterIds: CanisterIds) {
         const host = location.href.indexOf(".ic0.app") > 0
@@ -27,20 +30,20 @@ export default class CanisterClientFactory {
             identity: userId,
         });
 
-        this._chatsActor = this.createActor(agent, canisterIds.chats, ChatsCanisterInterface);
-        this._p2pActor = this.createActor(agent, canisterIds.p2p, P2PCanisterInterface);
-        this._userMgmtActor = this.createActor(agent, canisterIds.userMgmt, UserMgmtCanisterInterface);
+        this._chatsActor = this.createActor<ChatsService>(agent, canisterIds.chats, ChatsCanisterInterface);
+        this._p2pActor = this.createActor<P2pService>(agent, canisterIds.p2p, P2PCanisterInterface);
+        this._userMgmtActor = this.createActor<UserMgmtService>(agent, canisterIds.userMgmt, UserMgmtCanisterInterface);
     }
 
-    public get chatsClient() : any {
+    public get chatsClient() : ChatsService {
         return this._chatsActor;
     }
 
-    public get p2pClient() : any {
+    public get p2pClient() : P2pService {
         return this._p2pActor;
     }
 
-    public get userMgmtClient() : any {
+    public get userMgmtClient() : UserMgmtService {
         return this._userMgmtActor;
     }
 
@@ -52,10 +55,10 @@ export default class CanisterClientFactory {
         (window as any).canisterClientFactory = value;
     }
 
-    private createActor(agent: Agent, canisterId: Principal, factory: InterfaceFactory) {
-        return Actor.createActor(factory, {
+    private createActor<T>(agent: Agent, canisterId: Principal, factory: InterfaceFactory) : T {
+        return Actor.createActor<T>(factory, {
             agent,
             canisterId
-        }) as ActorSubclass;
+        });
     }
 }

@@ -6,17 +6,17 @@ export default async function(username: string) : Promise<RegisterUserResponse> 
     const client = CanisterClientFactory.current!.userMgmtClient;
     const response = await client.register_user(username);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
             myProfile: myProfileFromCandid(success)
         };
-    } else if (response.hasOwnProperty("UserExists")) {
+    } else if ("UserExists" in response) {
         return {
             kind: "userExists"
         };
-    } else if (response.hasOwnProperty("UsernameTaken")) {
+    } else if ("UsernameTaken" in response) {
         return {
             kind: "usernameTaken"
         };

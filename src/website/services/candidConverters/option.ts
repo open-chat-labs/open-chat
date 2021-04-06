@@ -6,6 +6,6 @@ export function fromCandid<T>(value: T[]) : Option<T> {
         : null;
 }
 
-export function toCandid<T>(value: Option<T>) : T[] {
+export function toCandid<T>(value: Option<T>) : [] | [T] {
     return value ? [value] : [];
 }

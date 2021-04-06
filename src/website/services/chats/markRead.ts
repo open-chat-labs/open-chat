@@ -7,7 +7,7 @@ export default async function(chatId: ChatId, fromId: number, toId: number) : Pr
     const client = CanisterClientFactory.current!.chatsClient;
     const response = await client.mark_read(chatIdToCandid(chatId), fromId, toId);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         let success = response.Success;
         return {
             kind: "success",
@@ -15,7 +15,7 @@ export default async function(chatId: ChatId, fromId: number, toId: number) : Pr
                 unreadMessageIds: rangeSetToArray(success.unread_message_id_ranges)
             }
         };
-    } else if (response.hasOwnProperty("ChatNotFound")) {
+    } else if ("ChatNotFound" in response) {
         return {
             kind: "chatNotFound"
         };

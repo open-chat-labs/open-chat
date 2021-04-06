@@ -6,13 +6,13 @@ export default async function() : Promise<GetCurrentUserResponse> {
     const client = CanisterClientFactory.current!.userMgmtClient;
     const response = await client.get_current_user();
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         const success = response.Success;        
         return {
             kind: "success",
             myProfile: myProfileFromCandid(success)
         };
-    } else if (response.hasOwnProperty("UserNotFound")) {
+    } else if ("UserNotFound" in response) {
         return {
             kind: "userNotFound"
         };

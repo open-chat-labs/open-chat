@@ -8,7 +8,7 @@ export default async function(searchTerm: string, maxResults: number) : Promise<
     const client = CanisterClientFactory.current!.chatsClient;
     const response = await client.search_all_messages(searchTerm, maxResults);
 
-    if (response.hasOwnProperty("Success")) {
+    if ("Success" in response) {
         const success = response.Success;
         return {
             kind: "success",
