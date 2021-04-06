@@ -11,8 +11,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-ic-cdk = "0.2.2"
-ic-cdk-macros = "0.2.2"
+ic-cdk = "0.2.4"
+ic-cdk-macros = "0.2.4"
 itertools = "0.10.0"
 enum_dispatch = "0.3.4"
 range-set = "0.0.5"
