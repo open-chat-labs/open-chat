@@ -106,7 +106,7 @@ class AuthenticationClient {
     }
     const key = this._key;
     if (!key) {
-      throw new Error('Cannot ');
+      throw new Error('Key is null');
     }
 
     // Parse the token which is a JSON object serialized in Hex form.

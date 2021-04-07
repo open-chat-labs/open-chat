@@ -16,7 +16,7 @@ import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/go
 import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
-import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,

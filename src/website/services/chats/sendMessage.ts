@@ -6,6 +6,7 @@ import { toCandid as messagePayloadToCandid } from "../candidConverters/messageC
 import { toCandid as replyContextToCandid } from "../candidConverters/replyContext";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { toHttpError, HttpError } from "../../errors/httpError";
 
 export default async function(chatId: ChatId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
@@ -15,7 +16,13 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
         content: messagePayloadToCandid(content),
         replies_to: replyContextToCandid(repliesTo)
     }
-    const response = await client.send_message(candidRequest);
+
+    let response = null;    
+    try {
+        response = await client.send_message(candidRequest);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }
 
     if ("Success" in response) {
         let success = response.Success;
@@ -38,7 +45,8 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
 
 export type SendMessageResponse =
     Success |
-    ChatNotFound;
+    ChatNotFound | 
+    HttpError;
 
 export type Success = {
     kind: "success",

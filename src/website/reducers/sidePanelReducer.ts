@@ -12,7 +12,7 @@ import {
 import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
-import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 
 export type SidePanelState = {
     leftPanel: LeftPanelType,
