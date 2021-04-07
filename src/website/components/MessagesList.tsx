@@ -1,4 +1,4 @@
-import React, { Dispatch, useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
@@ -15,6 +15,7 @@ import MessagesFromSingleDay from "./MessagesFromSingleDay";
 import UnreadMessageDetector from "../domain/UnreadMessageDetector";
 import UnreadMessagesHandler from "../domain/UnreadMessagesHandler";
 import { UserId } from "../domain/model/users";
+import ScrollToBottomButton from "./ScrollToBottomButton";
 
 export default React.memo(MessagesList);
 
@@ -26,6 +27,17 @@ const useStyles = makeStyles((theme: Theme) => ({
         overflowX: "hidden",
         display: "flex",
         flexDirection: "column"
+    },
+    scrollToBottomButton: {
+        position: "absolute",
+        bottom: 68,
+        right: 24,
+        zIndex: 100,
+        color: theme.colors.iconAlt.color,
+        backgroundColor: theme.colors.iconAlt.backgroundColor,
+        "&:hover,:focus": {
+            backgroundColor: theme.colors.iconAlt.hover
+        }
     }
 }));
 
@@ -80,6 +92,7 @@ function MessagesList() {
     const dispatch = useDispatch();
     const messagesRef = useRef<HTMLDivElement>(null);
 
+    // Start scroll listener to download more messages when scroll reaches near the top
     useLayoutEffect(() => {
         const messagesDiv = messagesRef.current;
         if (!messagesDiv || !chatFunctions.isConfirmedChat(chat)) {
@@ -93,13 +106,13 @@ function MessagesList() {
             messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - chat.scrollBottom;
         }
 
-        const onScroll = (e: Event) => onMessagesScroll(chat, e.target as HTMLElement, dispatch);
+        const onScroll = (e: Event) => onScroll_downloadMoreMessages(chat, e.target as HTMLElement);
         messagesDiv.addEventListener("scroll", onScroll);
 
-        onMessagesScroll(chat, messagesDiv, dispatch);
+        onScroll_downloadMoreMessages(chat, messagesDiv);
 
         return () => messagesDiv.removeEventListener("scroll", onScroll);
-    }, [chat, messagesRef.current])
+    }, [chat, messagesRef.current]);
 
     const hasUnreadMessages = chatId 
         ? chatFunctions.getUnreadMessageCount(chat) > 0 
@@ -116,26 +129,29 @@ function MessagesList() {
         return () => unreadMessagesHandler.stop();
     }, [chatId, hasUnreadMessages]);
 
-    return (
-        <div id="messages" ref={messagesRef} className={classes.messagesList}>
-            {children}
-        </div>
-    );
-}
+    // Listen to scroll events and load more messages if the user scrolls near the top of the currently loaded messages
+    function onScroll_downloadMoreMessages(chat: ConfirmedChat, messagesDiv: HTMLElement) {
+        const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
 
-// Listen to scroll events and load more messages if the user scrolls near the top of the currently loaded messages
-function onMessagesScroll(chat: ConfirmedChat, messagesDiv: HTMLElement, dispatch: Dispatch<any>) {
-    const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
+        const downloadMoreMessages =
+            !chat.messagesDownloading.length &&
+            chat.minLocalMessageId !== null &&
+            chat.minLocalMessageId > minMessageIdOnServer &&
+            messagesDiv.scrollTop < 200;
 
-    const downloadMoreMessages =
-        !chat.messagesDownloading.length &&
-        chat.minLocalMessageId !== null &&
-        chat.minLocalMessageId > minMessageIdOnServer &&
-        messagesDiv.scrollTop < 200;
-
-    if (downloadMoreMessages) {
-        const fromId = Math.max(chat.minLocalMessageId! - PAGE_SIZE, minMessageIdOnServer);
-        const count = chat.minLocalMessageId! - fromId;
-        dispatch(getMessages(chat.chatId, fromId, count));
+        if (downloadMoreMessages) {
+            const fromId = Math.max(chat.minLocalMessageId! - PAGE_SIZE, minMessageIdOnServer);
+            const count = chat.minLocalMessageId! - fromId;
+            dispatch(getMessages(chat.chatId, fromId, count));
+        }
     }
+
+    return (
+        <>
+            <div id="messages" ref={messagesRef} className={classes.messagesList}>
+                {children}
+            </div>
+            <ScrollToBottomButton parentElem={messagesRef} className={classes.scrollToBottomButton} />
+        </>
+    );
 }

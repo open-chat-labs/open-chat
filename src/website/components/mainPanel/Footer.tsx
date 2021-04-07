@@ -7,7 +7,6 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
-import { ChatId } from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
 import AttachFile from "../AttachFile";
