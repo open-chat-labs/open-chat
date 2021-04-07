@@ -10,7 +10,7 @@ import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/go
 import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/chats/getAllChats";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { MARK_REMOTE_USER_ONLINE, MarkRemoteUserOnlineEvent } from "../actions/users/markRemoteUserOnline";
-import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -51,6 +51,11 @@ import {
     SetProfileImageDataUploadFailedEvent
 } from "../actions/users/setProfileImage";
 
+import {
+    SESSION_EXPIRED,
+    SessionExpiredEvent
+} from "../actions/signin/notifySessionExpired";
+
 export type Event =
     DirectChatCreatedEvent |
     GetAllChatsSucceededEvent |
@@ -66,6 +71,7 @@ export type Event =
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
+    SessionExpiredEvent |
     SetProfileImageRequestedEvent |
     SetProfileImageFailedEvent |
     SetProfileImageDataUploadFailedEvent |
@@ -73,6 +79,7 @@ export type Event =
     UserLoggedOutEvent;
 
 export type UsersState = {
+    sessionExpired: boolean,
     userRegistrationStatus: UserRegistrationStatus,
     me: Option<MyProfile>,
     unknownUserIds: UserId[],
@@ -87,6 +94,7 @@ export enum UserRegistrationStatus {
 }
 
 const initialState: UsersState = {
+    sessionExpired: false,
     userRegistrationStatus: UserRegistrationStatus.Unknown,
     me: null,
     unknownUserIds: [],
@@ -223,6 +231,11 @@ export default produce((state: UsersState, event: Event) => {
 
         case USER_LOGGED_OUT: {
             return initialState;
+        }
+
+        case SESSION_EXPIRED: {
+            state.sessionExpired = true;
+            break;
         }
     }
 }, initialState);

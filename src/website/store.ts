@@ -1,14 +1,15 @@
 import { createStore, applyMiddleware, compose } from "redux";
-import { composeWithDevTools } from "redux-devtools-extension/developmentOnly";
+import { composeWithDevTools } from "redux-devtools-extension";
 import thunk from "redux-thunk";
 
 import rootReducer from "./reducers";
 import analyticsMiddleware from "./analytics/analyticsMiddleware";
 import webRtcMiddleware from "./domain/webRtc/webRtcMiddleware";
+import errorMiddleware from "./errors/errorMiddleware";
 
 const initialState = {};
 
-const middleware = [thunk, webRtcMiddleware, analyticsMiddleware];
+const middleware = [thunk, webRtcMiddleware, analyticsMiddleware, errorMiddleware];
 
 const store = createStore(
     rootReducer,

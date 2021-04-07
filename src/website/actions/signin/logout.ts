@@ -1,4 +1,4 @@
-import authClient from "../utils/authClient";
+import authClient from "../../utils/authClient";
 
 export const USER_LOGGED_OUT = "USER_LOGGED_OUT";
 

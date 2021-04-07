@@ -4,6 +4,7 @@ import { chatFromCandid } from "../candidConverters/chat";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { toHttpError, HttpError } from "../../errors/httpError";
 
 export default async function(request: GetChatsRequest) : Promise<GetChatsResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
@@ -11,7 +12,13 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
         updated_since: optionToCandid(request.updatedSince ? timestampToCandid(request.updatedSince) : null),
         message_count_for_top_chat: optionToCandid(request.messageCountForTopChat)
     };
-    const response = await client.get_chats(canisterRequest);
+
+    let response = null;    
+    try {
+        response = await client.get_chats(canisterRequest);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }
 
     if ("Success" in response) {
         const success = response.Success;
@@ -40,7 +47,7 @@ export type GetChatsRequest = {
 };
 
 export type GetChatsResponse =
-    Success;
+    Success | HttpError;
 
 export type Success = {
     kind: "success",

@@ -8,6 +8,7 @@ import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import { directChatFromCandid } from "../candidConverters/chat";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { HttpError, toHttpError } from "../../errors/httpError";
 
 export default async function(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
@@ -17,7 +18,13 @@ export default async function(userId: UserId, clientMessageId: string, content: 
         content: messagePayloadToCandid(content),
         replies_to: replyContextToCandid(repliesTo)
     }
-    const response = await client.send_direct_message(canisterRequest);
+
+    let response = null;    
+    try {
+        response = await client.send_direct_message(canisterRequest);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }
 
     if ("Success" in response) {
         let success = response.Success;
@@ -44,7 +51,8 @@ export type SendDirectMessageResponse =
     Success |
     UserNotFound |
     RecipientNotFound |
-    BalanceExceeded;
+    BalanceExceeded | 
+    HttpError;
 
 export type Success = {
     kind: "success",

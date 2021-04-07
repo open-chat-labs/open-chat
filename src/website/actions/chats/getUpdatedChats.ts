@@ -3,6 +3,7 @@ import { Dispatch } from "react";
 import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../domain/model/chats";
 import { Option, Timestamp } from "../../domain/model/common";
+import { HttpError } from "../../errors/httpError";
 
 export const GET_UPDATED_CHATS_REQUESTED = "GET_UPDATED_CHATS_REQUESTED";
 export const GET_UPDATED_CHATS_SUCCEEDED = "GET_UPDATED_CHATS_SUCCEEDED";
@@ -35,7 +36,8 @@ export default function(updatedSince: Option<Timestamp>) {
             } as GetUpdatedChatsSucceededEvent;
         } else {
             outcomeEvent = {
-                type: GET_UPDATED_CHATS_FAILED
+                type: GET_UPDATED_CHATS_FAILED,
+                httpError: response.kind === "httpError" ? response : undefined
             } as GetUpdatedChatsFailedEvent;
         }
 
@@ -60,5 +62,6 @@ export type GetUpdatedChatsSucceededEvent = {
 }
 
 export type GetUpdatedChatsFailedEvent = {
-    type: typeof GET_UPDATED_CHATS_FAILED
+    type: typeof GET_UPDATED_CHATS_FAILED,
+    httpError?: HttpError
 }

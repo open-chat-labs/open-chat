@@ -5,6 +5,7 @@ import { Chat, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { LocalMessage, MessageContent, ReplyContext, DraftMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
+import { HttpError } from "../../errors/httpError";
 import dataService, { DataSource } from "../../services/data/CachingDataService";
 import {
     CHUNK_SIZE_BYTES,
@@ -70,7 +71,11 @@ export default function(chat: Chat, sendMessageContent: DraftMessageContent, rep
 
         if (response.kind !== "success") {
             // Dispatch a failed event
-            dispatch ({ type: SEND_MESSAGE_FAILED,  payload: { content } } as SendMessageFailedEvent);
+            dispatch ({ 
+                type: SEND_MESSAGE_FAILED,  
+                payload: { content },
+                httpError: response.kind === "httpError" ? response : undefined
+            } as SendMessageFailedEvent);
             return;
         }
 
@@ -150,7 +155,8 @@ export type SendMessageSucceededEvent = {
 
 export type SendMessageFailedEvent = {
     type: typeof SEND_MESSAGE_FAILED,
-    payload: SendMessageFailed
+    payload: SendMessageFailed,
+    httpError?: HttpError
 }
 
 export type SendMessageFailedToUploadContentEvent = {

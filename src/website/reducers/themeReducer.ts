@@ -1,5 +1,5 @@
 import produce from "immer";
-import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/logout";
+import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 import { THEME_SELECTED, ThemeSelectedEvent } from "../actions/selectTheme";
 import SelectedThemeCache from "../domain/SelectedThemeCache";
 

@@ -7,7 +7,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../PopOverMenu";
 import ThemeSelector from "../ThemeSelector";
-import logout from "../../actions/logout";
+import logout from "../../actions/signin/logout";
 
 export default React.memo(UserMenu);
 
