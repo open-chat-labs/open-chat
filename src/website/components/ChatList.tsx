@@ -8,7 +8,7 @@ import * as chatListItemBuilder from "./ChatListItemBuilder";
 
 export default React.memo(ChatList);
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles((_theme: Theme) => ({
     list: {
         overflowX: "hidden",
         overflowY: "auto"

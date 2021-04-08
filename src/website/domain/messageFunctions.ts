@@ -32,8 +32,5 @@ function buildTextForMediaContent(content: MediaContent) : string {
 }
 
 function buildTextForCyclesContent(content: CyclesContent) : string {
-    if (content.caption)
-        return content.caption;
-
-    return formatCycles(content.amount);
+    return "💸  " + content.caption ?? formatCycles(content.amount);
 }
