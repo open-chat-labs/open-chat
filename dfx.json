@@ -29,7 +29,6 @@
         "entrypoint": "src/website/index.tsx"
       },
       "source": [
-        "src/website/assets",
         "dist/website/"
       ],
       "type": "assets"

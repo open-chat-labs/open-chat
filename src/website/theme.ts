@@ -1,5 +1,5 @@
-import createMuiTheme, { Theme, ThemeOptions } from "@material-ui/core/styles/createMuiTheme";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
+import createMuiTheme, { ThemeOptions } from "@material-ui/core/styles/createMuiTheme";
+import { darken, lighten } from "@material-ui/core/styles/colorManipulator";
 
 interface CustomColors {
     outerBackgroundColor: string,
@@ -45,6 +45,11 @@ interface CustomColors {
     linkColor: string,
     buttonColor: string,
     icon: {
+        color: string,
+        hover: string,
+        backgroundColor: string
+    },
+    iconAlt: {
         color: string,
         hover: string,
         backgroundColor: string
@@ -138,6 +143,11 @@ const defaultColours: CustomColors = {
         hover: "rgba(0, 0, 0, 0.08)",
         backgroundColor: "#d8d8d8"
     },
+    iconAlt: {
+        color: "#333333",
+        hover: darken("#d8d8d8", 0.1),
+        backgroundColor: "#d8d8d8"
+    },
     green: {
         main: "#32cd32",
         contrastText: "#ffffff"
@@ -196,6 +206,11 @@ const darkThemeColors: CustomColors = {
     icon: {
         color: "#777777",
         hover: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#222222"
+    },
+    iconAlt: {
+        color: "#777777",
+        hover: lighten("#222222", 0.1),
         backgroundColor: "#222222"
     },
     green: {
