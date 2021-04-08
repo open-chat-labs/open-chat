@@ -201,7 +201,7 @@ function Message(props : Props) {
         };
     
         bottom = <div className={classes.caption} style={mediaCaptionStyle}>
-            <TextContent text={caption} variant="body1" />
+            <TextContent text={caption} variant="body2" />
             {messageTimeAndTicks}
         </div>;
     } else {
