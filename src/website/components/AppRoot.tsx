@@ -16,6 +16,7 @@ import ThemeProvider from "./ThemeProvider";
 import { UserRegistrationStatus } from "../reducers/usersReducer";
 import RegisterUser from "./RegisterUser";
 import getCurrentUser from "../actions/users/getCurrentUser";
+import SessionExpiredDialog from "./SessionExpiredDialog";
 
 export default AppRoot;
 
@@ -109,6 +110,7 @@ function AppContainer() {
 
     return (
         <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
+            <SessionExpiredDialog />
             {component}
         </Container>
     );
