@@ -7,8 +7,8 @@ import PersonIcon from '@material-ui/icons/Person';
 import Typography from "@material-ui/core/Typography";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import NameInput from "./NameInput";
 import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_EXISTS, REGISTER_USER_FAILED_USER_EXISTS, REGISTER_USER_SUCCEEDED } from "../actions/users/registerUser";
+import NameInput from "./shared/NameInput";
 
 const useStyles = makeStyles((theme: Theme) => ({
     paper: {

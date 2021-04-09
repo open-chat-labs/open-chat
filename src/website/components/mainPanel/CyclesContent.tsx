@@ -3,9 +3,9 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import Typography from "@material-ui/core/Typography";
-import { formatCycles } from "../formatters/cycles";
-import { Option } from "../domain/model/common";
-import { CyclesContent as Cycles } from "../domain/model/messages";
+import { formatCycles } from "../../formatters/cycles";
+import { Option } from "../../domain/model/common";
+import { CyclesContent as Cycles } from "../../domain/model/messages";
 
 export default React.memo(CyclesContent);
 

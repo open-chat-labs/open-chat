@@ -3,13 +3,13 @@ import * as CSS from 'csstype';
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { Option } from "../domain/model/common";
-import { ChatId } from "../domain/model/chats";
-import { scaleMediaContent } from "./mediaComponentFunctions";
-import getMedia from "../actions/chats/getMessageMedia";
-import { MediaContent as Media } from "../domain/model/messages";
-import Image from "./Image";
-import Video from "./Video";
+import { Option } from "../../domain/model/common";
+import { ChatId } from "../../domain/model/chats";
+import { scaleMediaContent } from "../shared/mediaComponentFunctions";
+import getMedia from "../../actions/chats/getMessageMedia";
+import { MediaContent as Media } from "../../domain/model/messages";
+import Image from "../shared/Image";
+import Video from "../shared/Video";
 
 export interface Props {
     chatId: Option<ChatId>,

@@ -2,9 +2,9 @@ import React from "react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { RootState } from "../reducers";
-import UserAvatar from "./UserAvatar";
-import setProfileImage from "../actions/users/setProfileImage";
+import { RootState } from "../../reducers";
+import UserAvatar from "../shared/UserAvatar";
+import setProfileImage from "../../actions/users/setProfileImage";
 
 export default React.memo(MyAvatar);
 

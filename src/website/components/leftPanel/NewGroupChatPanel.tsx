@@ -2,14 +2,13 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import useTheme from "@material-ui/core/styles/useTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import createGroupChat from "../../actions/chats/createGroupChat";
-import NameInput from "../NameInput";
 import Header from "./Header";
-import CancelButton from "../CloseButton";
-import CreateGroupChatIcon from "../CreateGroupChatIcon";
+import CancelButton from "../shared/CloseButton";
+import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
+import NameInput from "../shared/NameInput";
 
 const PLACEHOLDER_TEXT = "Group Name";
 

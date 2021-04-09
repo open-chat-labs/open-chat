@@ -9,11 +9,13 @@ type Props = {
     type: Exclude<RightPanelType, RightPanelType.None>
 }
 
-function RightPanel(props: Props) {
+function RightPanel(props: Props): JSX.Element {
     switch (props.type) {
         case RightPanelType.AddParticipants:
             return <AddParticipantsSidePanel />;
         case RightPanelType.Particpants:
             return <ParticipantsSidePanel/>;
+        default:
+            return <></>;
     }
 }

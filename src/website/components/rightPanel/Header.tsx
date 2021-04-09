@@ -4,8 +4,8 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import Typography from "@material-ui/core/Typography";
 import makeStyles from "@material-ui/styles/makeStyles";
-import CloseButton from "../CloseButton";
-import BackButton from "../BackButton";
+import CloseButton from "../shared/CloseButton";
+import BackButton from "../shared/BackButton";
 import { Option } from "../../domain/model/common";
 
 export default React.memo(Header);

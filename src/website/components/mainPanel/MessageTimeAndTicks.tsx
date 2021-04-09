@@ -3,10 +3,10 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
-import { Option } from "../domain/model/common";
-import Tick from "../assets/icons/tick.svg";
-import DoubleTick from "../assets/icons/doubleTick.svg";
-import { toShortTimeString } from "../formatters/date";
+import { Option } from "../../domain/model/common";
+import Tick from "../../assets/icons/tick.svg";
+import DoubleTick from "../../assets/icons/doubleTick.svg";
+import { toShortTimeString } from "../../formatters/date";
 
 export type Props = {
     sentByMe: boolean,

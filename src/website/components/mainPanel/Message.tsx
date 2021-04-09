@@ -2,16 +2,16 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import gotoUser from "../actions/chats/gotoUser";
-import { Option } from "../domain/model/common";
-import { UserSummary } from "../domain/model/users";
-import { MessageContent } from "../domain/model/messages";
-import { scaleMediaContent } from "./mediaComponentFunctions";
+import gotoUser from "../../actions/chats/gotoUser";
+import { Option } from "../../domain/model/common";
+import { UserSummary } from "../../domain/model/users";
+import { MessageContent } from "../../domain/model/messages";
+import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 import CyclesContent from "./CyclesContent";
 import FileContent from "./FileContent";
 import MediaContent from "./MediaContent";
-import TextContent from "./TextContent";
-import { ChatId } from "../domain/model/chats";
+import TextContent from "../shared/TextContent";
+import { ChatId } from "../../domain/model/chats";
 import MessageTimeAndTicks from "./MessageTimeAndTicks";
 
 export type Props = {

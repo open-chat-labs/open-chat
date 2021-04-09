@@ -6,20 +6,20 @@ import Grid from "@material-ui/core/Grid";
 import List from "@material-ui/core/List";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { RootState } from "../reducers";
-import * as stateFunctions from "../domain/stateFunctions";
-import { Chat, ChatId } from "../domain/model/chats";
-import * as chatFunctions from "../domain/model/chats";
-import { Option } from "../domain/model/common";
-import { LocalMessage } from "../domain/model/messages";
-import { fromUserSummary, UserId, UserSummary } from "../domain/model/users";
-import { changeLeftPanel, LeftPanelType } from "../actions/changeSidePanel";
-import gotoUser from "../actions/chats/gotoUser";
+import { RootState } from "../../reducers";
+import * as stateFunctions from "../../domain/stateFunctions";
+import { Chat, ChatId } from "../../domain/model/chats";
+import * as chatFunctions from "../../domain/model/chats";
+import { Option } from "../../domain/model/common";
+import { LocalMessage } from "../../domain/model/messages";
+import { fromUserSummary, UserId, UserSummary } from "../../domain/model/users";
+import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
+import gotoUser from "../../actions/chats/gotoUser";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
 import MessageSearchMatch from "./MessageSearchMatch";
-import UserListItem from "./UserListItem";
-import chatsService from "../services/chats/service";
-import { SearchAllMessagesResponse } from "../services/chats/searchAllMessages";
+import UserListItem from "../shared/UserListItem";
+import chatsService from "../../services/chats/service";
+import { SearchAllMessagesResponse } from "../../services/chats/searchAllMessages";
 
 type Props = {
     searchTerm: string,

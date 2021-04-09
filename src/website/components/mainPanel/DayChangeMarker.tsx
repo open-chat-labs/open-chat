@@ -1,10 +1,9 @@
 import React from "react";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { toDayOfWeekString, toLongDateString } from "../formatters/date";
-import * as dateFunctions from "../utils/dateFunctions";
+import { toDayOfWeekString, toLongDateString } from "../../formatters/date";
+import * as dateFunctions from "../../utils/dateFunctions";
 
 type Props = {
     date: Date

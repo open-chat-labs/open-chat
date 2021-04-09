@@ -1,6 +1,6 @@
 import React from "react";
 import makeStyles from "@material-ui/styles/makeStyles";
-import formatFileSize from "../formatters/fileSize";
+import formatFileSize from "../../formatters/fileSize";
 
 type Props = {
     mimeType: string,

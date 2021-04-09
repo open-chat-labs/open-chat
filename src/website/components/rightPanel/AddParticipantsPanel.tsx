@@ -1,19 +1,18 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import List from "@material-ui/core/List";
-
 import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
-import SearchBox from "../SearchBox";
-import UserListItem from "../UserListItem";
+import SearchBox from "../shared/SearchBox";
+import UserListItem from "../shared/UserListItem";
 import { fromUserSummary, UserSummary } from "../../domain/model/users";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
 import { GroupChat } from "../../domain/model/chats";
 import Header from "./Header";
-import CreateGroupChatIcon from "../CreateGroupChatIcon";
+import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Type a username";
 
