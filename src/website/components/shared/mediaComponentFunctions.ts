@@ -1,4 +1,4 @@
-import Dimensions from "../utils/Dimensions";
+import Dimensions from "../../utils/Dimensions";
 
 const MIN_MEDIA_WIDTH: number = 330;
 const MAX_MEDIA_DIMENSION: number = 500;

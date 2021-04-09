@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import ChatList from "../ChatList";
+import ChatList from "./ChatList";
 import Header from "./Header";
-import SearchResults from "../SearchResults";
-import SearchBox from "../SearchBox";
-import MyAvatar from "../MyAvatar";
+import SearchResults from "./SearchResults";
+import SearchBox from "../shared/SearchBox";
+import MyAvatar from "./MyAvatar";
 import { RootState } from "../../reducers";
 import UserMenu from "./UserMenu";
 

@@ -10,14 +10,14 @@ import { RootState } from "../../reducers";
 import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
-import UserListItem from "../UserListItem";
+import UserListItem from "../shared/UserListItem";
 import { fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
 import { gotoKnownUser } from "../../actions/chats/gotoUser";
 import removeParticipant from "../../actions/chats/removeParticipant";
 import Header from "./Header";
-import { MenuItem } from "../PopOverMenu";
-import CreateGroupChatIcon from "../CreateGroupChatIcon";
+import { MenuItem } from "../shared/PopOverMenu";
+import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 
 export default React.memo(ParticipantsPanel);
 

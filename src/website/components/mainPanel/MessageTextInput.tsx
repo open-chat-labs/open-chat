@@ -1,7 +1,7 @@
 import React, {forwardRef, Ref, useImperativeHandle, useRef } from "react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { Option } from "../domain/model/common";
+import { Option } from "../../domain/model/common";
 
 type Props = {
     placeholder: string,

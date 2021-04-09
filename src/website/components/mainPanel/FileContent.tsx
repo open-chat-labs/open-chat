@@ -2,10 +2,10 @@ import React from "react";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { FileContent as File } from "../domain/model/messages";
-import dataService, { DataSource } from "../services/data/CachingDataService";
-import formatFileSize from "../formatters/fileSize";
-import { dataToBlobUrl } from "../utils/blobFunctions";
+import { FileContent as File } from "../../domain/model/messages";
+import dataService, { DataSource } from "../../services/data/CachingDataService";
+import formatFileSize from "../../formatters/fileSize";
+import { dataToBlobUrl } from "../../utils/blobFunctions";
 
 export interface Props {
     content: File,

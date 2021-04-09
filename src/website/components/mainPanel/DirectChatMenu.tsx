@@ -3,7 +3,7 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
-import PopOverMenu, { MenuItem } from "../PopOverMenu";
+import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 
 export default React.memo(DirectChatMenu);
 

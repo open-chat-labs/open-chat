@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOMServer from 'react-dom/server';
 import Typography from "@material-ui/core/Typography";
 import { Variant as TypographyVariant } from "@material-ui/core/styles/createTypography";
-import { containsEmoji } from "../utils/emojiFunctions";
+import { containsEmoji } from "../../utils/emojiFunctions";
 import Emoji from "./Emoji";
 
 export default React.memo(TextContent);

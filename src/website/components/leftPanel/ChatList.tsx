@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import List from "@material-ui/core/List";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { RootState } from "../reducers";
+import { RootState } from "../../reducers";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
 
 export default React.memo(ChatList);

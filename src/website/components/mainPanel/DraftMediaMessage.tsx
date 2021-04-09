@@ -1,9 +1,9 @@
 import React from "react";
 import makeStyles from "@material-ui/styles/makeStyles";
 import Box from "@material-ui/core/Box";
-import { scaleMediaContent } from "./mediaComponentFunctions";
-import Image from "./Image";
-import Video from "./Video";
+import { scaleMediaContent } from "../shared/mediaComponentFunctions";
+import Image from "../shared/Image";
+import Video from "../shared/Video";
 
 type Props = {
     width: number,

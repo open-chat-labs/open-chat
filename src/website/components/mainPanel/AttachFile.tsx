@@ -1,9 +1,9 @@
 import React from "react";
-import Paperclip from "../assets/icons/paperclip.svg";
-import { DraftMessageContent } from "../domain/model/messages";
-import { dataToBlobUrl } from "../utils/blobFunctions";
-import Dimensions from "../utils/Dimensions";
 import IconButton from "@material-ui/core/IconButton";
+import Paperclip from "../../assets/icons/paperclip.svg";
+import { DraftMessageContent } from "../../domain/model/messages";
+import { dataToBlobUrl } from "../../utils/blobFunctions";
+import Dimensions from "../../utils/Dimensions";
 
 export interface Props {
     className: string,

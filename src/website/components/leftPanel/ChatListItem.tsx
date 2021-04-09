@@ -6,16 +6,15 @@ import Typography from "@material-ui/core/Typography";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-
-import selectChat from "../actions/chats/selectChat";
-import { Option } from "../domain/model/common";
-import { UserId } from "../domain/model/users";
-import { formatMessageDate } from "../formatters/date";
-import ParticipantsTyping from "./ParticipantsTyping";
-import TextContent from "./TextContent";
-import ThemTyping from "./ThemTyping";
-import DefaultGroupChatIcon from "./DefaultGroupChatIcon";
-import UserAvatar from "./UserAvatar";
+import selectChat from "../../actions/chats/selectChat";
+import { Option } from "../../domain/model/common";
+import { UserId } from "../../domain/model/users";
+import { formatMessageDate } from "../../formatters/date";
+import ParticipantsTyping from "../shared/ParticipantsTyping";
+import TextContent from "../shared/TextContent";
+import ThemTyping from "../shared/ThemTyping";
+import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
+import UserAvatar from "../shared/UserAvatar";
 
 type Props = {
     name: string,

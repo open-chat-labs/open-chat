@@ -1,21 +1,21 @@
 import React from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import { RootState } from "./reducers";
+import { RootState } from "../reducers";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 import Container from "@material-ui/core/Container";
-import App from "./components/App";
-import store from "./store";
-import CanisterClientFactory from "./services/CanisterClientFactory";
-import authClient from "./utils/authClient";
-import Login from "./components/Login";
-import ThemeProvider from "./components/ThemeProvider";
-import { UserRegistrationStatus } from "./reducers/usersReducer";
-import RegisterUser from "./components/RegisterUser";
-import getCurrentUser from "./actions/users/getCurrentUser";
+import App from "./App";
+import store from "../store";
+import CanisterClientFactory from "../services/CanisterClientFactory";
+import authClient from "../utils/authClient";
+import Login from "./Login";
+import ThemeProvider from "./ThemeProvider";
+import { UserRegistrationStatus } from "../reducers/usersReducer";
+import RegisterUser from "./RegisterUser";
+import getCurrentUser from "../actions/users/getCurrentUser";
 
 export default AppRoot;
 

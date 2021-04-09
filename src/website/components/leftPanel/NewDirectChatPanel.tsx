@@ -9,11 +9,11 @@ import userMgmtService from "../../services/userMgmt/service";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
 import { fromUserSummary, UserSummary } from "../../domain/model/users";
 import gotoUser from "../../actions/chats/gotoUser";
-import SearchBox from "../SearchBox";
-import UserListItem from "../UserListItem";
+import SearchBox from "../shared/SearchBox";
+import UserListItem from "../shared/UserListItem";
 import Header from "./Header";
-import CloseButton from "../CloseButton";
-import CreateGroupChatIcon from "../CreateGroupChatIcon";
+import CloseButton from "../shared/CloseButton";
+import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 
 const PLACEHOLDER_TEXT = "Type a username";
 

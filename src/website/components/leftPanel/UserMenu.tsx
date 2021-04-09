@@ -5,8 +5,8 @@ import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
-import PopOverMenu, { MenuItem } from "../PopOverMenu";
-import ThemeSelector from "../ThemeSelector";
+import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
+import ThemeSelector from "./ThemeSelector";
 import logout from "../../actions/signin/logout";
 
 export default React.memo(UserMenu);

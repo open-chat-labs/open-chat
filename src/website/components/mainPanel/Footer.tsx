@@ -9,17 +9,17 @@ import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
-import AttachFile from "../AttachFile";
+import AttachFile from "./AttachFile";
 import { RootState } from "../../reducers";
-import SendCycles, { ISendCyclesRef } from "../SendCycles";
-import MessageTextInput, { IMessageTextInputRef } from "../MessageTextInput";
+import SendCycles, { ISendCyclesRef } from "./SendCycles";
+import MessageTextInput, { IMessageTextInputRef } from "./MessageTextInput";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 import Smiley from "../../assets/icons/smiley.svg";
 import Dollar from "../../assets/icons/dollar.svg";
-import EmojiPicker from "../EmojiPicker"
-import CloseButton from "../CloseButton";
-import DraftMediaMessage from "../DraftMediaMessage";
-import DraftFileMessage from "../DraftFileMessage";
+import EmojiPicker from "./EmojiPicker"
+import CloseButton from "../shared/CloseButton";
+import DraftMediaMessage from "./DraftMediaMessage";
+import DraftFileMessage from "./DraftFileMessage";
 import { DraftMessageContent } from "../../domain/model/messages";
 
 export default React.memo(Footer);

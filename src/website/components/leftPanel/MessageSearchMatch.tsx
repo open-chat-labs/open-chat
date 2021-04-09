@@ -5,15 +5,15 @@ import Typography from "@material-ui/core/Typography";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { ChatId } from "../domain/model/chats";
-import * as chatFunctions from "../domain/model/chats";
-import * as stateFunctions from "../domain/stateFunctions";
-import { LocalMessage } from "../domain/model/messages";
-import { RootState } from "../reducers";
-import selectChat from "../actions/chats/selectChat";
-import { formatMessageDate } from "../formatters/date";
-import TextContent from "./TextContent";
-import { getContentAsText } from "../domain/messageFunctions";
+import { ChatId } from "../../domain/model/chats";
+import * as chatFunctions from "../../domain/model/chats";
+import * as stateFunctions from "../../domain/stateFunctions";
+import { LocalMessage } from "../../domain/model/messages";
+import { RootState } from "../../reducers";
+import selectChat from "../../actions/chats/selectChat";
+import { formatMessageDate } from "../../formatters/date";
+import TextContent from "../shared/TextContent";
+import { getContentAsText } from "../../domain/messageFunctions";
 
 export default React.memo(MessageSearchMatch);
 

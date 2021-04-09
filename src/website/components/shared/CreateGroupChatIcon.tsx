@@ -1,5 +1,5 @@
 import React from "react";
-import CreateGroupChatIconSvg from "../assets/icons/createGroupChat.svg"
+import CreateGroupChatIconSvg from "../../assets/icons/createGroupChat.svg"
 import CircularIcon from "./CircularIcon";
 
 export default CreateGroupChatIcon;

@@ -5,19 +5,19 @@ import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
-import UserAvatar from "../UserAvatar";
+import UserAvatar from "../shared/UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import * as setFunctions from "../../utils/setFunctions";
 import * as stateFunctions from "../../domain/stateFunctions";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { MyProfile, UserSummary } from "../../domain/model/users";
-import ParticipantsTyping from "../ParticipantsTyping";
-import ThemTyping from "../ThemTyping";
+import ParticipantsTyping from "../shared/ParticipantsTyping";
+import ThemTyping from "../shared/ThemTyping";
 import DirectChatMenu from "./DirectChatMenu";
 import GroupChatMenu from "./GroupChatMenu";
-import DefaultGroupChatIcon from "../DefaultGroupChatIcon";
-import LastOnline from "../LastOnline";
+import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
+import LastOnline from "./LastOnline";
 
 export default React.memo(Header);
 

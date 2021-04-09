@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import AppRoot from "./AppRoot";
+import AppRoot from "./components/AppRoot";
 import "./css/index.css";
 import "./css/emoji-mart.css";
 import { APP_TITLE } from "./constants";
