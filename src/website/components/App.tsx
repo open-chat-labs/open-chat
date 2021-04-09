@@ -35,8 +35,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: "60%",
         "&.rightPanelActive": {
             width: "40%"
-        },
-        position: "relative"
+        }
     },
     right: {
         height: "100%",
