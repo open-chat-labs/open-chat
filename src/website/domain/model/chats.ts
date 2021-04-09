@@ -552,6 +552,14 @@ export const freeMediaData = (chat: Chat) => {
     }, 100);
 }
 
+export const getScrollTopAndBottom = () : Option<[number, number]> => {
+    const messagesDiv = document.getElementById("messages");
+    if (!messagesDiv) {
+        return null;
+    }
+    return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage | P2PMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
@@ -584,12 +592,4 @@ const getClientMessageId = (messages: Message[], messageId: number) : string => 
 const isScrolledToBottom = () : boolean => {
     const scrollValues = getScrollTopAndBottom();
     return !scrollValues || scrollValues[1] <= 20;
-}
-
-const getScrollTopAndBottom = () : Option<[number, number]> => {
-    const messagesDiv = document.getElementById("messages");
-    if (!messagesDiv) {
-        return null;
-    }
-    return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
 }

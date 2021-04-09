@@ -23,12 +23,11 @@ export default React.memo(MessagesList);
 const useStyles = makeStyles((theme: Theme) => ({
     container: {
         position: "relative",
-        overflowY: "hidden"
+        overflowX: "hidden",
+        overflowY: "auto"
     },
     messagesList: {
-        padding: "14px 14px 0 14px",
-        overflowX: "hidden",
-        width: "100%"
+        padding: "14px 14px 0 14px"
     },
     scrollToBottomButton: {
         position: "absolute",
@@ -149,8 +148,8 @@ function MessagesList() {
     }
 
     return (
-        <Grid container flex="1 1" wrap="nowrap" className={classes.container}>
-            <div id="messages" ref={messagesRef} className={classes.messagesList}>
+        <Grid id="messages" ref={messagesRef} item flex="1 1" wrap="nowrap" className={classes.container}>
+            <div className={classes.messagesList}>
                 {children}
             </div>
             <ScrollToBottomButton parentElem={messagesRef} className={classes.scrollToBottomButton} />
