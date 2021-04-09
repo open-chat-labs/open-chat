@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState} from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import IconButton from "@material-ui/core/IconButton";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -88,6 +88,7 @@ function Footer() {
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
     // Hold draft (media) message
     const draftMessageContentRef = useRef<Option<DraftMessageContent>>(null);
+    const scrollBottomOverride = useRef<number>();
 
     const them = useSelector((state: RootState) => chat != null && chatFunctions.isDirectChat(chat) 
         ? getUserSummary(chat.them, state.usersState.userDictionary)
@@ -99,11 +100,11 @@ function Footer() {
 
     useEffect(() => {
         if (messagePanelState !== MessagePanelState.Closed) {
-            changeMessagePanel(MessagePanelState.Closed)
+            changeMessagePanel(MessagePanelState.Closed, true)
         }
     }, [chat.chatId]);
 
-    function changeMessagePanel(state: MessagePanelState) {
+    function changeMessagePanel(state: MessagePanelState, retainScrollBottom: boolean) {
         if (state !== MessagePanelState.SendFile && draftMessageContentRef.current) {
             if (draftMessageContentRef.current.kind === "media") {
                 const blobUrl = draftMessageContentRef.current.blobUrl;
@@ -119,8 +120,20 @@ function Footer() {
             textBoxRef.current!.onFocusBack();
         }
 
+        if (retainScrollBottom) {
+            const [_, scrollBottom] = chatFunctions.getScrollTopAndBottom()!;
+            scrollBottomOverride.current = scrollBottom;
+        }
         setMessagePanel(state);
     }
+
+    useLayoutEffect(() => {
+        if (scrollBottomOverride.current != null) {
+            const messagesDiv = document.getElementById("messages")!;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight - messagesDiv.clientHeight - scrollBottomOverride.current;
+            scrollBottomOverride.current = undefined;
+        }
+    });
 
     function onSendMessage() {
         let draftMessage: Option<DraftMessageContent> = null;
@@ -150,7 +163,7 @@ function Footer() {
 
         if (draftMessage) {
             dispatch(sendMessage(chat!, draftMessage, null));
-            changeMessagePanel(MessagePanelState.Closed);
+            changeMessagePanel(MessagePanelState.Closed, false);
             textBoxRef.current!.clearText();
         }
     }
@@ -161,7 +174,7 @@ function Footer() {
             textBoxRef.current!.clearText();    
         } else {
             draftMessageContentRef.current = content;
-            changeMessagePanel(MessagePanelState.SendFile);
+            changeMessagePanel(MessagePanelState.SendFile, true);
         }
     }
 
@@ -207,7 +220,7 @@ function Footer() {
     }
 
     const closeButton = <CloseButton
-        onClick={() => changeMessagePanel(MessagePanelState.Closed)}
+        onClick={() => changeMessagePanel(MessagePanelState.Closed, true)}
         className={classes.button} />;
 
     return (
@@ -218,7 +231,7 @@ function Footer() {
                     <div className={classes.buttons}>
                         {messagePanelState !== MessagePanelState.EmojiPicker ?
                         <IconButton
-                            onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker)}
+                            onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker, true)}
                             className={classes.button}>
                             <Smiley />
                         </IconButton> : closeButton}
@@ -229,7 +242,7 @@ function Footer() {
                         {them && messagePanelState !== MessagePanelState.SendCycles ?
                         <IconButton
                             className={classes.button}
-                            onClick={_ => changeMessagePanel(MessagePanelState.SendCycles)}>
+                            onClick={_ => changeMessagePanel(MessagePanelState.SendCycles, true)}>
                             <Dollar />
                         </IconButton> : (them ? closeButton : null)}
                     </div>
