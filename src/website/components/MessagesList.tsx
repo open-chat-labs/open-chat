@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Grid from "@material-ui/core/Grid";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../reducers";
@@ -20,17 +21,18 @@ import ScrollToBottomButton from "./ScrollToBottomButton";
 export default React.memo(MessagesList);
 
 const useStyles = makeStyles((theme: Theme) => ({
+    container: {
+        position: "relative",
+        overflowY: "hidden"
+    },
     messagesList: {
         padding: "14px 14px 0 14px",
-        flex: "1 1",
-        overflowY: "auto",
         overflowX: "hidden",
-        display: "flex",
-        flexDirection: "column"
+        width: "100%"
     },
     scrollToBottomButton: {
         position: "absolute",
-        bottom: 68,
+        bottom: 8,
         right: 24,
         zIndex: 100,
         color: theme.colors.iconAlt.color,
@@ -147,11 +149,11 @@ function MessagesList() {
     }
 
     return (
-        <>
+        <Grid container flex="1 1" wrap="nowrap" className={classes.container}>
             <div id="messages" ref={messagesRef} className={classes.messagesList}>
                 {children}
             </div>
             <ScrollToBottomButton parentElem={messagesRef} className={classes.scrollToBottomButton} />
-        </>
+        </Grid>
     );
 }
