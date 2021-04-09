@@ -46,6 +46,9 @@ function generateWebpackConfigForCanister(name, info) {
     optimization: {
       minimize: true,
       minimizer: [new TerserPlugin()],
+      splitChunks: {
+        chunks: "all"
+      }
     },
     resolve: {
       alias: aliases,
