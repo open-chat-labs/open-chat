@@ -4,6 +4,7 @@ import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../domain/model/chats";
 import { PAGE_SIZE } from "../../constants";
 import { Option, Timestamp } from "../../domain/model/common";
+import { HttpError } from "../../errors/httpError";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
@@ -33,7 +34,8 @@ export default function() {
             } as GetAllChatsSucceededEvent;
         } else {
             outcomeEvent = {
-                type: GET_ALL_CHATS_FAILED
+                type: GET_ALL_CHATS_FAILED,
+                httpError: response.kind === "httpError" ? response : undefined
             } as GetAllChatsFailedEvent;
         }
 
@@ -54,5 +56,6 @@ export type GetAllChatsSucceededEvent = {
 }
 
 export type GetAllChatsFailedEvent = {
-    type: typeof GET_ALL_CHATS_FAILED
+    type: typeof GET_ALL_CHATS_FAILED,
+    httpError?: HttpError
 }

@@ -39,57 +39,60 @@ export function setupBackgroundTasks() {
         .map(u => u.userId);
 
     const selectedChatUsersOnline = setFunctions.intersect(selectedChatUsers, usersOnline);
+    const sessionExpired = usersState.sessionExpired;
 
     useEffect(() => {
-        const count = chatFunctions.getUnreadChatCount(chatsState.chats);
+        const count = sessionExpired ? 0 : chatFunctions.getUnreadChatCount(chatsState.chats);
         document.title = (count > 0 ? `(${count}) ` : "") + APP_TITLE;
-    }, [chatsState.chats]);
+    }, [chatsState.chats, sessionExpired]);
 
     // Each time 'usersState.me' changes and is not null, get the full list of chats
     useEffect(() => {
-        if (usersState.me?.userId) {
+        if (usersState.me?.userId && !sessionExpired) {
             dispatch(getAllChats());
         }
-    }, [usersState.me?.userId]);
+    }, [usersState.me?.userId, sessionExpired]);
 
     // As new userIds are seen, fetch their usernames
     useEffect(() => {
-        if (usersState.unknownUserIds.length) {
+        if (usersState.unknownUserIds.length && !sessionExpired) {
             dispatch(getUsers(usersState.unknownUserIds));
         }
-    }, [usersState.unknownUserIds]);
+    }, [usersState.unknownUserIds, sessionExpired]);
 
     // Whenever a chat has messages to download, call off to get those messages
     useEffect(() => {
-        chatsState.chats.forEach(c => {
-            if (chatFunctions.isConfirmedChat(c) && c.messagesToDownload.length && !c.messagesDownloading.length) {
-                dispatch(getMessagesById(c.chatId, c.messagesToDownload.slice(0, PAGE_SIZE)));
-            }
-        })
-    }, [chatsState.chats]);
+        if (!sessionExpired) {
+            chatsState.chats.forEach(c => {
+                if (chatFunctions.isConfirmedChat(c) && c.messagesToDownload.length && !c.messagesDownloading.length) {
+                    dispatch(getMessagesById(c.chatId, c.messagesToDownload.slice(0, PAGE_SIZE)));
+                }
+            })
+        }
+    }, [chatsState.chats, sessionExpired]);
 
     // Check for new messages at regular intervals
     useEffect(() => {
-        if (chatsState.runUpdateChatsTask) {
+        if (chatsState.runUpdateChatsTask && !sessionExpired) {
             const getUpdates: () => Promise<void> = () => dispatch(getUpdatedChats(chatsState.chatsSyncedUpTo)) as any;
             const taskRunner = RecurringTaskRunner.startNew(getUpdates, REFRESH_CHATS_INTERVAL_MS, true);
             return () => taskRunner.stop();
         }
-    }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo]);
+    }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo, sessionExpired]);
 
     // Mark current user as online at regular intervals
     useEffect(() => {
-        if (usersState.me?.userId) {
+        if (usersState.me?.userId && !sessionExpired) {
             const markAsOnline: () => Promise<void> = () => userMgmtService.markAsOnline();
             const taskRunner = RecurringTaskRunner.startNew(markAsOnline, MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS, false);
             return () => taskRunner.stop();
         }
-    }, [usersState.me?.userId]);
+    }, [usersState.me?.userId, sessionExpired]);
 
     // Update user details at regular intervals
     const userIdsCount = usersState.userDictionary ? Object.keys(usersState.userDictionary).length : 0;
     useEffect(() => {
-        if (usersState.userDictionary) {
+        if (usersState.userDictionary && !sessionExpired) {
             const updateUsers: () => Promise<void> = () => {
                 const updateUsersTask: Promise<void> = dispatch(getUsers(Object.keys(usersState.userDictionary), usersState.usersSyncedUpTo)) as any;
                 return updateUsersTask.finally(() => dispatch(updateMinutesSinceLastOnline()));
@@ -97,25 +100,23 @@ export function setupBackgroundTasks() {
             const taskRunner = RecurringTaskRunner.startNew(updateUsers, UPDATE_USERS_INTERVAL_MS, true);
             return () => taskRunner.stop();
         }
-    }, [userIdsCount, usersState.usersSyncedUpTo]);
+    }, [userIdsCount, usersState.usersSyncedUpTo, sessionExpired]);
 
     // Each time the users in the selected chat change, attempt to make p2p connections to each user
     useEffect(() => {
-        if (!selectedChat || !selectedChatUsersOnline.length) {
-            return;
+        if (selectedChat && selectedChatUsersOnline.length && !sessionExpired) {
+            RtcConnectionsHandler.setupMissingConnections(selectedChatUsersOnline);
         }
-        RtcConnectionsHandler.setupMissingConnections(selectedChatUsersOnline);
-    }, [selectedChatUsersOnline.join()]);
+    }, [selectedChatUsersOnline.join(), sessionExpired]);
 
     // Poll for new p2p connection details at regular intervals, this could be responses to our connection offers or new
     // offers from other users trying to establish a p2p connection with us
     useEffect(() => {
-        if (!usersState.me?.userId) {
-            return;
+        if (usersState.me?.userId && !sessionExpired) {
+            const taskRunner = RecurringTaskRunner.startNew(RtcConnectionsHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
+            return () => taskRunner.stop();
         }
-        const taskRunner = RecurringTaskRunner.startNew(RtcConnectionsHandler.getConnections, REFRESH_P2P_CONNECTIONS_MS, false);
-        return () => taskRunner.stop();
-    }, [usersState.me?.userId]);
+    }, [usersState.me?.userId, sessionExpired]);
 
     useEffect(() => {
         const scavengeCache: () => Promise<void> = async () => {
