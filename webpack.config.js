@@ -64,6 +64,7 @@ function generateWebpackConfigForCanister(name, info) {
     output: {
       filename: "[name].js",
       path: path.join(__dirname, "dist", name),
+      clean: true
     },
     module: {
       rules: [
