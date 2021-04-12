@@ -47,11 +47,11 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     date: {
         color: alpha(theme.colors.messageSentByMe.textColor, 0.6),
-        margin: "9px 12px 0 10px"
+        margin: "9px 15px 0 10px"
     },
     tick: {
         position: "absolute",
-        right: -6,
+        right: -3,
         bottom: 0,
         color: alpha(theme.colors.messageSentByMe.textColor, 0.8),
         height: 15,

@@ -4,7 +4,7 @@ import { RootState } from "../reducers";
 import { HttpError } from "./httpError";
 
 const errorHandlingMiddleware : Middleware<{}, RootState> = store => next => event => {
-    if ("httpError" in event) {
+    if ("httpError" in event && event.httpError) {
         const httpError = event.httpError as HttpError;
         if (httpError.code === 401 || httpError.code === 403) {
             return store.dispatch(notifySessionExpired());

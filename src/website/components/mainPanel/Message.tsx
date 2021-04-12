@@ -1,18 +1,19 @@
 import React from "react";
+import  { Properties } from 'csstype';
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import gotoUser from "../../actions/chats/gotoUser";
 import { Option } from "../../domain/model/common";
 import { UserSummary } from "../../domain/model/users";
 import { MessageContent } from "../../domain/model/messages";
-import { scaleMediaContent } from "../shared/mediaComponentFunctions";
-import CyclesContent from "./CyclesContent";
-import FileContent from "./FileContent";
-import MediaContent from "./MediaContent";
 import TextContent from "../shared/TextContent";
 import { ChatId } from "../../domain/model/chats";
 import MessageTimeAndTicks from "./MessageTimeAndTicks";
+import formatFileSize from "../../formatters/fileSize";
+import MessageContentComponent from "./MessageContent";
+import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 
 export type Props = {
     chatId: Option<ChatId>,
@@ -32,10 +33,10 @@ export type Props = {
 
 export default React.memo(Message);
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     message: {
         maxWidth: 500,
-        padding: "6px 11px 4px 11px",
+        padding: 3,
         borderRadius: 16,
         margin: 0,
         marginTop: 14,
@@ -76,19 +77,7 @@ const useStyles = makeStyles((theme: Theme) => ({
             borderTopLeftRadius: 4
         }
     },
-    file: {
-        minWidth: 330,
-        padding: 3,
-        "& $participant": {
-            marginLeft: 8
-        },
-        "& $timeAndTicks": {
-            marginRight: 8
-        }
-    },
     media: {
-        padding: 0,
-        backgroundColor: "transparent",
         "& $participant": {
             position: "absolute",
             display: "block",
@@ -96,6 +85,7 @@ const useStyles = makeStyles((theme: Theme) => ({
             top: 0,
             left: 0,
             zIndex: 50,
+            marginLeft: 0,
             backgroundColor: "white",
             textAlign: "center",
             borderRadius: "16px 0 2px 0",
@@ -104,17 +94,19 @@ const useStyles = makeStyles((theme: Theme) => ({
         }
     },
     mediaUncaptioned: {
+        backgroundColor: "transparent",
+        padding: 0,
+        maxWidth: 494,
         "& $timeAndTicks": {
             position: "absolute",
             right: 10,
             bottom: 2    
         }
     },
-    timeAndTicks: {
-
-    },
+    timeAndTicks: {},
     participant: {
         fontSize: 13,
+        marginLeft: 6,
         fontWeight: "bolder",
         display: "block",
         textDecoration: "none",
@@ -124,17 +116,25 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     caption: {
         overflow: "auto",
-        padding: "6px 11px 4px 11px",
+        padding: "6px 11px 4px 10px",
         color: theme.colors.messageSentByMe.textColor,
         backgroundColor: theme.colors.messageSentByMe.backgroundColor,
         borderBottomLeftRadius: "inherit",
         borderBottomRightRadius: "inherit"
-    }
+    },
+    textContainer: {
+        padding: "3px 6px 0px 6px",
+    },
+    fileSize: {
+        fontSize: 11,
+        color: props => alpha(props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor, 0.6)
+    }   
 }));
 
 function Message(props : Props) {
     const dispatch = useDispatch();
-    const classes = useStyles();
+    const classes = useStyles(props);
+    const content = props.content;
 
     let className = `${classes.message} ${(props.sentByMe ? classes.sentByMe : classes.sentByElse)}`;
     let senderLink = null;
@@ -162,60 +162,70 @@ function Message(props : Props) {
         className += " " + classes.mergeWithPrevious;
     }
 
-    let contentElement;
-    let caption;
-    if (props.content.kind === "media") {
+    let text;
+    let fileText;
+    let containerStyle: Properties = {};
+    if (content.kind === "media") {
         className += " " + classes.media;
-        if (props.content.caption) {
-            caption = props.content.caption;
+        if (content.caption) {
+            const dimensions = scaleMediaContent(content.width, content.height, true);
+            containerStyle = {
+                width: (dimensions.width + 6) + "px"
+            };        
         } else {
             className += " " + classes.mediaUncaptioned;
         }
-        contentElement = <MediaContent chatId={props.chatId} messageId={props.messageId} content={props.content} />;
-    } else if (props.content.kind === "file") {
-        contentElement = <FileContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} />;
+        text = content.caption;
+    } else if (content.kind === "file") {
         className += " " + classes.file;
-    } else if (props.content.kind === "cycles") {
-        contentElement = <CyclesContent content={props.content} sentByMe={props.sentByMe} isGroupChat={props.isGroupChat} mergeWithPrevious={mergeWithPrevious} theirUsername={props.theirUsername} />;
+        fileText = content.mimeType.toUpperCase() + "-" + formatFileSize(content.size);
+    } else if (content.kind === "cycles") {
         className += " " + classes.file;
-    } else {
-        contentElement = <TextContent text={props.content.text} variant="body1" />;
+        text = content.caption;
+        fileText = content.caption ? null : "CYCLES TRANSFER";
+    } else  {
+        text = content.text;
     }
+
+    const isMediaNoCaption = content.kind === "media" && !content.caption;
 
     const messageTimeAndTicks = <MessageTimeAndTicks 
         sentByMe={props.sentByMe} 
         confirmed={props.confirmed} 
         read={props.readByThem} 
         date={props.date}
-        isOnMedia={props.content.kind === "media" && !caption}
+        isOnMedia={isMediaNoCaption}
         className={classes.timeAndTicks} />;
 
-    let bottom;
-    if (caption) {
-        let mediaCaptionStyle;
-        if (props.content.kind === "media") {
-            const dimensions = scaleMediaContent(props.content.width, props.content.height, true);
-            mediaCaptionStyle = {
-                width: dimensions.width + "px"
-            }
-        };
-    
-        bottom = <div className={classes.caption} style={mediaCaptionStyle}>
-            <TextContent text={caption} variant="body2" />
-            {messageTimeAndTicks}
-        </div>;
-    } else {
-        bottom = messageTimeAndTicks;
+    let textComponent = null;
+    if (text) {
+        textComponent = <TextContent text={text} variant="body1" />;
+    } else if (fileText) {
+        textComponent = <span className={classes.fileSize}>{fileText}</span>;
     }
-
+    
     return (
         <div 
             id={props.clientMessageId}
+            style={containerStyle}
             data-message-id={props.messageId}
             className={className}>
             {senderLink}
-            {contentElement}
-            {bottom}
+            <MessageContentComponent 
+                sentByMe={props.sentByMe} 
+                chatId={props.chatId} 
+                messageId={props.messageId}
+                isGroupChat={props.isGroupChat} 
+                mergeWithPrevious={mergeWithPrevious} 
+                theirUsername={props.theirUsername}
+                content={props.content}
+                />            
+            {isMediaNoCaption  ? 
+            messageTimeAndTicks : 
+            <div className={classes.textContainer}>
+                {textComponent}
+                {messageTimeAndTicks}
+            </div>}            
         </div>
     );
 }
