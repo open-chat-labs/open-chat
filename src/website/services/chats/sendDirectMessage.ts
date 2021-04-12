@@ -19,7 +19,7 @@ export default async function(userId: UserId, clientMessageId: string, content: 
         replies_to: replyContextToCandid(repliesTo)
     }
 
-    let response = null;    
+    let response;    
     try {
         response = await client.send_direct_message(canisterRequest);
     } catch (e) {

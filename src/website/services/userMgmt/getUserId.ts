@@ -1,10 +1,17 @@
 import { UserId } from "../../domain/model/users";
 import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { toHttpError, HttpError } from "../../errors/httpError";
 
 export default async function(username: string) : Promise<GetUserIdResponse> {
     const client = CanisterClientFactory.current!.userMgmtClient;
-    const response = await client.get_user_id(username);
+
+    let response;    
+    try {
+        response = await client.get_user_id(username);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }
 
     if ("Success" in response) {
         return {
@@ -22,7 +29,8 @@ export default async function(username: string) : Promise<GetUserIdResponse> {
 
 export type GetUserIdResponse =
     Success |
-    UserNotFound;
+    UserNotFound |
+    HttpError;
 
 export type Success = {
     kind: "success",

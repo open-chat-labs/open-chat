@@ -13,7 +13,7 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
         message_count_for_top_chat: optionToCandid(request.messageCountForTopChat)
     };
 
-    let response = null;    
+    let response;    
     try {
         response = await client.get_chats(canisterRequest);
     } catch (e) {
