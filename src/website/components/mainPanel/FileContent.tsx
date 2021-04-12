@@ -1,17 +1,13 @@
 import React from "react";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { FileContent as File } from "../../domain/model/messages";
 import dataService, { DataSource } from "../../services/data/CachingDataService";
-import formatFileSize from "../../formatters/fileSize";
 import { dataToBlobUrl } from "../../utils/blobFunctions";
 
 export interface Props {
     content: File,
-    sentByMe: boolean,
-    isGroupChat: boolean,
-    mergeWithPrevious: boolean
+    sentByMe: boolean
 }
 
 export default React.memo(FileContent);
@@ -19,18 +15,11 @@ export default React.memo(FileContent);
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     link: {
         padding: "10px 9px",
-        maxWidth: 494,
-        backgroundColor: props => props.sentByMe
-            ? theme.colors.messageSentByMe.highlightedContentBackgroundColor
-            : theme.colors.messageSentByElse.highlightedContentBackgroundColor,
         fontSize: 14,
         lineHeight: 1,
         textDecoration: "none",
         display: "flex",
-        alignItems: "center",
-        borderRadius: props => props.isGroupChat && !props.sentByMe
-            ? 6
-            : `${props.mergeWithPrevious && !props.sentByMe ? "2" : "13"}px ${props.mergeWithPrevious && props.sentByMe ? "2" : "13"}px 6px 6px`
+        alignItems: "center"
     },
     icon: {
         backgroundImage: "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAA8CAYAAADL94L/AAAByElEQVR4Ae3axdJTQRAFYFyegA3u8ALseCDcicsGhxt3x+G32BXc3X3NBnfXYTqp3sZlhuqpOlXZRL46He9ReJyJxGSTEreaPfEHZiX+1uSJvelVNu+Jvjd7Yk9zI8aSUe0eDpjCIYfNSuw5v/zF5In/6mU27478tXriLJvXjdSwPq1lCDTCmxjiCNav8GZYBVMwWKagX8kWjk9vCcMhYWhEFEw1+oV0wZjdPKY6Vn9EwmBDTYPwBoXCYPLGDQTJjkHQNQRJj0FQtmgs+C8wOHIIkh2DoDu5vD5Xfkz9hsTBWDyxhjDYUDqvLRYSY1JilSQGyyxXOt4QKJPX70NDQmI27gyxHcn9bH/5RFMNAUgoDI4afOAMHBiCdiDNj5woGAhgsCEYudSI1lBCRwoPL957slAoDDYEoPXb/ZVs3FE/y9072fDxsx4BMPVfGOpl1VY/y5++4EWM1Fm9LcCKpy8RpnchDGEIQxjCEIYwhCEMYQhDGMIQhjCEIQxhCEMYwhCGMIQhDGEIQxhYNlXiP+XHXLRDM5thQVpyzIfS2YtLceVEkRmzalsgMArPhp258bA6b/LEb8LqPM930VNdvY/fhMmCxw+Of+4BTcPInBo2AAAAAElFTkSuQmCC)",
@@ -42,15 +31,6 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         flex: "1 0 auto",
         marginLeft: 8,
         color: props => props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor
-    },
-    fileSize: {
-        margin: "6px 0 3px 9px",
-        float: "left",
-        textAlign: "left",
-        display: "block",
-        zIndex: 10,
-        fontSize: 11,
-        color: props => alpha(props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor, 0.6)
     }
 }));
 
@@ -62,18 +42,15 @@ function FileContent(props : Props): JSX.Element {
     let downloading = false;
 
     return (
-        <>
-            <a 
-                className={classes.link}
-                href="#"
-                role="button"
-                onClick={onClick}
-                title={'Download "' + content.name + '"'}>
-                <div className={classes.icon}></div>
-                <div className={classes.fileName}>{content.name}</div>
-            </a>
-            <span className={classes.fileSize}>{content.mimeType.toUpperCase()} - {formatFileSize(content.size)}</span>
-        </>
+        <a 
+            className={classes.link}
+            href="#"
+            role="button"
+            onClick={onClick}
+            title={'Download "' + content.name + '"'}>
+            <div className={classes.icon}></div>
+            <div className={classes.fileName}>{content.name}</div>
+        </a>
     );
 
     async function onClick(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
