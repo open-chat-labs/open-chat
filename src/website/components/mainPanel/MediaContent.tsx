@@ -22,8 +22,6 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     media: {
         borderRadius: "inherit"
     },
-    noCaption: {
-    },
     shadow: {
         position: "absolute",
         bottom: 0,

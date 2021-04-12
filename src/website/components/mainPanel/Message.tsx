@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import gotoUser from "../../actions/chats/gotoUser";
 import { Option } from "../../domain/model/common";
 import { UserSummary } from "../../domain/model/users";
@@ -14,6 +15,7 @@ import MessageTimeAndTicks from "./MessageTimeAndTicks";
 import formatFileSize from "../../formatters/fileSize";
 import MessageContentComponent from "./MessageContent";
 import { scaleMediaContent } from "../shared/mediaComponentFunctions";
+import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 
 export type Props = {
     chatId: Option<ChatId>,
@@ -41,20 +43,39 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         margin: 0,
         marginTop: 14,
         position: "relative",
-        overflowWrap: "anywhere"
+        overflowWrap: "anywhere",
+        overflow: "hidden",
+        "&:hover .pop-over-menu-icon": {
+            visibility: "visible"
+        },
+        "&:hover $menu": {
+            opacity: "0.8",
+            color: "white",
+            backgroundColor: "transparent"
+        }
     },    
     sentByMe: {
         alignSelf: "flex-end",
         color: theme.colors.messageSentByMe.textColor,
-        backgroundColor: theme.colors.messageSentByMe.backgroundColor
+        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
+        "&$text:hover $menu": {
+            color: theme.colors.messageSentByMe.textColor,
+            backgroundColor: theme.colors.messageSentByMe.backgroundColor,
+        },
+        "&$file:hover $menu": {
+            color: theme.colors.messageSentByMe.textColor
+        }
     },
     sentByElse: {
         alignSelf: "flex-start",
         color: theme.colors.messageSentByElse.textColor,
         backgroundColor: theme.colors.messageSentByElse.backgroundColor,
-        "& $caption": {
+        "& $caption, &$text:hover $menu": {
             color: theme.colors.messageSentByElse.textColor,
             backgroundColor: theme.colors.messageSentByElse.backgroundColor    
+        },
+        "&$file:hover $menu": {
+            color: theme.colors.messageSentByElse.textColor
         }
     },
     unread: {
@@ -77,6 +98,8 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
             borderTopLeftRadius: 4
         }
     },
+    text: {},
+    file: {},
     media: {
         "& $participant": {
             position: "absolute",
@@ -128,7 +151,15 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     fileSize: {
         fontSize: 11,
         color: props => alpha(props.sentByMe ? theme.colors.messageSentByMe.textColor : theme.colors.messageSentByElse.textColor, 0.6)
-    }   
+    },
+    menu: {
+        position: "absolute",
+        padding: 6,
+        top: -5,
+        right: 0,
+        visibility: "hidden",
+        zIndex: 3,
+    }
 }));
 
 function Message(props : Props) {
@@ -184,6 +215,7 @@ function Message(props : Props) {
         text = content.caption;
         fileText = content.caption ? null : "CYCLES TRANSFER";
     } else  {
+        className += " " + classes.text;
         text = content.text;
     }
 
@@ -203,13 +235,22 @@ function Message(props : Props) {
     } else if (fileText) {
         textComponent = <span className={classes.fileSize}>{fileText}</span>;
     }
+
+    const buttons: MenuItem[] = [];
+    buttons.push({ text: "Reply", action: () => {} });
+    buttons.push({ text: "Forward", action: () => {} });
+    buttons.push({ text: "Star", action: () => {} });
+    buttons.push({ text: "Delete", action: () => {} });
+    //buttons.push({ text: "Reply", action: () => dispatch(replyToMessage(chat.chatId, userId)) });
     
     return (
         <div 
             id={props.clientMessageId}
             style={containerStyle}
             data-message-id={props.messageId}
-            className={className}>
+            className={className}
+        >
+            <PopOverMenu icon={<ExpandMoreIcon />} menuItems={buttons} placement="bottom-end" className={classes.menu + " pop-over-menu-icon"} />
             {senderLink}
             <MessageContentComponent 
                 sentByMe={props.sentByMe} 
