@@ -12,6 +12,7 @@ import LeftPanel from "./leftPanel/LeftPanel";
 import MainPanel from "./mainPanel/MainPanel";
 import RightPanel from "./rightPanel/RightPanel";
 import { setupBackgroundTasks } from "../backgroundTasks";
+import SessionExpiredDialog from "./SessionExpiredDialog";
 
 export default App;
 
@@ -104,10 +105,13 @@ function App() {
     }
 
     return (
-        <Grid container wrap="nowrap" className={classes.grid}>
-            {buildLeftPanel(sidePanelState)}
-            {buildMainPanel(sidePanelState)}
-            {buildRightPanel(sidePanelState)}
-        </Grid>
+        <>
+            <Grid container wrap="nowrap" className={classes.grid}>
+                {buildLeftPanel(sidePanelState)}
+                {buildMainPanel(sidePanelState)}
+                {buildRightPanel(sidePanelState)}
+            </Grid>
+            <SessionExpiredDialog />
+        </>
     );
 }

@@ -1,10 +1,17 @@
 import { MyProfile } from "../../domain/model/users";
 import { fromCandid as myProfileFromCandid } from "../candidConverters/myProfile";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { toHttpError, HttpError } from "../../errors/httpError";
 
 export default async function(username: string) : Promise<RegisterUserResponse> {
     const client = CanisterClientFactory.current!.userMgmtClient;
-    const response = await client.register_user(username);
+
+    let response;    
+    try {
+        response = await client.register_user(username);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }    
 
     if ("Success" in response) {
         let success = response.Success;
@@ -28,7 +35,8 @@ export default async function(username: string) : Promise<RegisterUserResponse> 
 export type RegisterUserResponse =
     Success |
     UserExists |
-    UsernameTaken;
+    UsernameTaken |
+    HttpError;
 
 export type Success = {
     kind: "success",

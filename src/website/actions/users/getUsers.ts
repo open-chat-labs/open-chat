@@ -4,6 +4,7 @@ import { Option, Timestamp } from "../../domain/model/common";
 import { UserId, UserSummary } from "../../domain/model/users";
 import { GetUsersRequest } from "../../services/userMgmt/getUsers";
 import userMgmtService from "../../services/userMgmt/service";
+import { HttpError } from "../../errors/httpError";
 
 export const GET_USERS_REQUESTED = "GET_USERS_REQUESTED";
 export const GET_USERS_SUCCEEDED = "GET_USERS_SUCCEEDED";
@@ -40,7 +41,8 @@ export default function(users: UserId[], updatedSince: Option<Timestamp> = null)
         } else {
             outcomeEvent = {
                 type: GET_USERS_FAILED,
-                payload: request
+                payload: request,
+                httpError: result.kind === "httpError" ? result : undefined
             } as GetUsersFailedEvent;
         }
 
@@ -66,5 +68,6 @@ export type GetUsersSucceededEvent = {
 
 export type GetUsersFailedEvent = {
     type: typeof GET_USERS_FAILED,
-    payload: GetUsersRequest
+    payload: GetUsersRequest,
+    httpError?: HttpError
 }

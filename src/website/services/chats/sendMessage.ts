@@ -17,7 +17,7 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
         replies_to: replyContextToCandid(repliesTo)
     }
 
-    let response = null;    
+    let response;    
     try {
         response = await client.send_message(candidRequest);
     } catch (e) {

@@ -2,6 +2,7 @@ import { Dispatch } from "react";
 
 import { MyProfile } from "../../domain/model/users";
 import userMgmtService from "../../services/userMgmt/service";
+import { HttpError } from "../../errors/httpError";
 
 export const GET_CURRENT_USER_REQUESTED = "GET_CURRENT_USER_REQUESTED";
 export const GET_CURRENT_USER_SUCCEEDED = "GET_CURRENT_USER_SUCCEEDED";
@@ -25,7 +26,8 @@ export default function() {
             } as GetCurrentUserSucceededEvent;
         } else {
             outcomeEvent = {
-                type: GET_CURRENT_USER_FAILED
+                type: GET_CURRENT_USER_FAILED,
+                httpError: result.kind === "httpError" ? result : undefined
             } as GetCurrentUserFailedEvent;
         }
 
@@ -46,5 +48,6 @@ export type GetCurrentUserSucceededEvent = {
 }
 
 export type GetCurrentUserFailedEvent = {
-    type: typeof GET_CURRENT_USER_FAILED
+    type: typeof GET_CURRENT_USER_FAILED,
+    httpError?: HttpError
 }

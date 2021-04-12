@@ -16,7 +16,6 @@ import ThemeProvider from "./ThemeProvider";
 import { UserRegistrationStatus } from "../reducers/usersReducer";
 import RegisterUser from "./RegisterUser";
 import getCurrentUser from "../actions/users/getCurrentUser";
-import SessionExpiredDialog from "./SessionExpiredDialog";
 
 export default AppRoot;
 
@@ -76,6 +75,7 @@ function AppContainer() {
     CanisterClientFactory.current = new CanisterClientFactory(identity);
 
     const dispatch = useDispatch();
+    const sessionExpired = useSelector((state: RootState) => state.usersState.sessionExpired);
     const userRegistrationStatus = useSelector((state: RootState) => state.usersState.userRegistrationStatus);
 
     const classes = useStyles();
@@ -89,8 +89,8 @@ function AppContainer() {
 
     let component;
     let large = false;
-
-    if (isAnonymous) {
+    
+    if (isAnonymous || (sessionExpired && userRegistrationStatus !== UserRegistrationStatus.Registered)) {
         component = <Login />;
     } else {
         switch (userRegistrationStatus) {
@@ -110,7 +110,6 @@ function AppContainer() {
 
     return (
         <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
-            <SessionExpiredDialog />
             {component}
         </Container>
     );

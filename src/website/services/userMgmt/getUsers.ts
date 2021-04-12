@@ -5,6 +5,7 @@ import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import { fromCandid as userSummaryFromCandid } from "../candidConverters/userSummary";
 import CanisterClientFactory from "../CanisterClientFactory";
+import { toHttpError, HttpError } from "../../errors/httpError";
 
 export default async function(request: GetUsersRequest) : Promise<GetUsersResponse> {
     const client = CanisterClientFactory.current!.userMgmtClient;
@@ -12,7 +13,13 @@ export default async function(request: GetUsersRequest) : Promise<GetUsersRespon
         users: request.users.map(userIdToCandid),
         updated_since: optionToCandid(request.updatedSince ? timestampToCandid(request.updatedSince) : null)
     };
-    const response = await client.get_users(canisterRequest);
+    
+    let response;    
+    try {
+        response = await client.get_users(canisterRequest);
+    } catch (e) {
+        return toHttpError(e as Error);        
+    }    
 
     if ("Success" in response) {
         let success: any = response.Success;
@@ -32,7 +39,7 @@ export type GetUsersRequest = {
 }
 
 export type GetUsersResponse =
-    Success;
+    Success | HttpError;
 
 export type Success = {
     kind: "success",
