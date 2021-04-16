@@ -8,6 +8,7 @@ import Typography from "@material-ui/core/Typography";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_EXISTS, REGISTER_USER_FAILED_USER_EXISTS, REGISTER_USER_SUCCEEDED } from "../actions/users/registerUser";
+import authClient from "../utils/authClient";
 import NameInput from "./shared/NameInput";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -49,6 +50,7 @@ export default function RegisterUser() {
     const classes = useStyles();
     const [loading, setLoading] = React.useState(false);
     const [errorText, setErrorText] = React.useState("");
+    const principal = authClient.getIdentity().getPrincipal().toText();
 
     function handleSubmit(text: string) {
         if (text && text.length > 2) {
@@ -77,6 +79,7 @@ export default function RegisterUser() {
             <Paper className={classes.paper}>
                 <PersonIcon className={classes.icon} />
                 <Typography variant="h2">Register user</Typography>
+                <Typography variant="body1">User ID: {principal}</Typography>
                 <NameInput
                     onSubmit={handleSubmit}
                     placeholderText="Enter username"
