@@ -7,6 +7,7 @@ import SearchBox from "../shared/SearchBox";
 import MyAvatar from "./MyAvatar";
 import { RootState } from "../../reducers";
 import UserMenu from "./UserMenu";
+import authClient from "../../utils/authClient";
 
 const PLACEHOLDER_TEXT = "Search chats, users and messages";
 
@@ -16,6 +17,11 @@ function DefaultPanel() {
     const [inputText, setInputText] = useState("");
     const myUsername = useSelector((state: RootState) => state.usersState.me?.username)!;
 
+    const p = authClient.getIdentity().getPrincipal().toText();
+    const principal = p.substring(0, 3) + "..." + p.substring(p.length - 3, p.length);
+
+    const usernameAndPrincipal = myUsername + " (" + principal + ")";
+
     const contentPanel = inputText.length
         ? <SearchResults searchTerm={inputText} clearSearchTerm={() => setInputText("")} />
         : <ChatList />;
@@ -24,7 +30,7 @@ function DefaultPanel() {
 
     return (
         <>
-            <Header leftIcon={avatar} title={myUsername} rightIcon={<UserMenu />} />
+            <Header leftIcon={avatar} title={usernameAndPrincipal} rightIcon={<UserMenu />} />
             <SearchBox text={inputText} onChange={setInputText} placeholderText={PLACEHOLDER_TEXT} />
             {contentPanel}
         </>
