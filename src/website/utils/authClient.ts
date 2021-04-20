@@ -15,7 +15,7 @@ import * as urlFunctions from "./urlFunctions";
 // TODO: move this into @dfinity/authentication
 const KEY_LOCALSTORAGE_KEY = 'ic-identity';
 const KEY_LOCALSTORAGE_DELEGATION = 'ic-delegation';
-const DEFAULT_IDP_URL = 'http://localhost:8080/authorize.html';
+const DEFAULT_IDP_URL = 'http://localhost:8080/authorize';
 
 interface AuthenticationClientOptions {
   identityProvider?: string | URL;
