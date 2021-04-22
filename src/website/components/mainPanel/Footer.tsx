@@ -20,7 +20,9 @@ import EmojiPicker from "./EmojiPicker"
 import CloseButton from "../shared/CloseButton";
 import DraftMediaMessage from "./DraftMediaMessage";
 import DraftFileMessage from "./DraftFileMessage";
-import { DraftMessageContent } from "../../domain/model/messages";
+import { DraftMessageContent, ReplyContext } from "../../domain/model/messages";
+import ReplyToMessagePanel from "./ReplyToMessagePanel";
+import { Chat } from "../../domain/model/chats";
 
 export default React.memo(Footer);
 
@@ -162,7 +164,7 @@ function Footer() {
         }    
 
         if (draftMessage) {
-            dispatch(sendMessage(chat!, draftMessage, null));
+            dispatch(sendMessage(chat!, draftMessage, buildReplyContext(chat!)));
             changeMessagePanel(MessagePanelState.Closed, false);
             textBoxRef.current!.clearText();
         }
@@ -170,7 +172,7 @@ function Footer() {
 
     function onFileAttached(content: DraftMessageContent) {
         if (content.kind === "file") {
-            dispatch(sendMessage(chat!, content, null));
+            dispatch(sendMessage(chat!, content, buildReplyContext(chat!)));
             textBoxRef.current!.clearText();    
         } else {
             draftMessageContentRef.current = content;
@@ -184,6 +186,24 @@ function Footer() {
         if (chat && chatFunctions.isConfirmedChat(chat)) {
             CurrentUserTypingHandler.markTyping(chat.chatId);
         }
+    }
+
+    function buildReplyContext(chat: Chat): Option<ReplyContext> {
+        if (!chatFunctions.isConfirmedChat(chat) || !chat.replyToMessageId) {
+            return null;
+        }
+
+        const message = chatFunctions.tryFindMessge(chat.messages, chat.replyToMessageId);
+        if (!message || message.kind !== "local") {
+            return null;
+        }
+
+        return {
+            chatId: chat.chatId,
+            userId: message.sender,
+            messageId: message.id,
+            content: message.content                    
+        };
     }
 
     const classes = useStyles();
@@ -226,6 +246,7 @@ function Footer() {
     return (
         <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
             <footer className={classes.footer}>
+                <ReplyToMessagePanel />
                 {messagePanel}
                 <div className={classes.container}>
                     <div className={classes.buttons}>

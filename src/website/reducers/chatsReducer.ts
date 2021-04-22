@@ -11,7 +11,7 @@ import {
     UNCONFIRMED_GROUP_CHAT
 } from "../constants";
 
-import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
+import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
@@ -98,6 +98,13 @@ import {
     RemoteUserTypingEvent
 } from "../actions/chats/userTyping";
 
+import {
+    REPLY_TO_MESSAGE_SELECTED,
+    REPLY_TO_MESSAGE_CANCELLED,
+    ReplyToMessageSelectedEvent,
+    ReplyToMessageCancelledEvent
+} from "../actions/chats/replyToMessage";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -115,7 +122,6 @@ const initialState: ChatsState = {
 type Event =
     AddParticipantsRequestedEvent |
     AddParticipantsFailedEvent |
-    ChatSelectedEvent |
     CreateGroupChatRequestedEvent |
     CreateGroupChatSucceededEvent |
     CreateGroupChatFailedEvent |
@@ -133,6 +139,7 @@ type Event =
     GetMessagesByIdSucceededEvent |
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
+    GotoChatEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -143,6 +150,8 @@ type Event =
     RemoveParticipantRequestedEvent |
     RemoteUserTypingEvent |
     RemoteUserStoppedTypingEvent |
+    ReplyToMessageSelectedEvent |
+    ReplyToMessageCancelledEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -151,27 +160,29 @@ type Event =
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
     switch (event.type) {
-        case CHAT_SELECTED: {
-            if (state.selectedChatIndex != null) {
-                const prevChat = state.chats[state.selectedChatIndex];
-                chatFunctions.saveDraftMessage(prevChat);
-                chatFunctions.freeMediaData(prevChat);
-            }
-
-            state.selectedChatIndex = event.payload;
-            const chat = state.chats[state.selectedChatIndex];
-            if (chatFunctions.isConfirmedChat(chat) && chat.maxLocalMessageId) {
-                const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
-                const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
-                const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);
-
-                if (minLocalMessageId !== minLocalMessageIdRequired) {
-                    chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
-                    chatFunctions.queueMissingMessagesForDownload(chat);
+        case GOTO_CHAT: {
+            const chatIndex = event.payload.chatIndex;
+            if (chatIndex != null) {
+                if (state.selectedChatIndex != null) {
+                    const prevChat = state.chats[state.selectedChatIndex];
+                    chatFunctions.saveDraftMessage(prevChat);
+                    chatFunctions.freeMediaData(prevChat);
                 }
-            }
 
-            chatFunctions.restoreDraftMessage(chat);
+                state.selectedChatIndex = chatIndex;
+                const chat = state.chats[state.selectedChatIndex];
+                if (chatFunctions.isConfirmedChat(chat) && chat.maxLocalMessageId) {
+                    const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
+                    const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
+                    const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);            
+                    if (minLocalMessageId !== minLocalMessageIdRequired) {
+                        chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
+                        chatFunctions.queueMissingMessagesForDownload(chat);
+                    }
+                }
+
+                chatFunctions.restoreDraftMessage(chat);
+            }
             break;
         }
 
@@ -380,8 +391,10 @@ export default produce((state: ChatsState, event: Event) => {
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
             const [chat, index] = chatFunctions.getChat(state.chats, payload.chat.chatId);
-            chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);
-
+            chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);            
+            if (chatFunctions.isConfirmedChat(chat)) {
+                chat.replyToMessageId = null;            
+            }
             state.chats.splice(index, 1);
             state.chats.unshift(chat);
             state.selectedChatIndex = 0;
@@ -462,6 +475,24 @@ export default produce((state: ChatsState, event: Event) => {
 
         case USER_LOGGED_OUT: {
             return initialState;
+        }
+
+        case REPLY_TO_MESSAGE_SELECTED: {
+            const { chatId, messageId } = event.payload;
+            const [chat ] = chatFunctions.getChat(state.chats, chatId);
+            if (chatFunctions.isConfirmedChat(chat)) {
+                chat.replyToMessageId = messageId;
+            }
+            break;
+        }
+
+        case REPLY_TO_MESSAGE_CANCELLED: {
+            const { chatId } = event.payload;
+            const [chat ] = chatFunctions.getChat(state.chats, chatId);
+            if (chatFunctions.isConfirmedChat(chat)) {
+                chat.replyToMessageId = null;
+            }
+            break;
         }
     }
 }, initialState);

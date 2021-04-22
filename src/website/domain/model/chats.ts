@@ -63,7 +63,10 @@ type ConfirmedChatCommon = ChatCommon & {
 
     // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
     markAsReadPending: number[],
-    markAsReadByClientIdPending: string[]
+    markAsReadByClientIdPending: string[],
+
+    // If set then the user is replying to this message
+    replyToMessageId: Option<number>
 }
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
@@ -157,7 +160,8 @@ export const newConfirmedDirectChat = (
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        themTyping: false
+        themTyping: false,
+        replyToMessageId: null
     };
 }
 
@@ -190,7 +194,8 @@ export const newConfirmedGroupChat = (
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        participantsTyping: []
+        participantsTyping: [],
+        replyToMessageId: null
     };
 }
 

@@ -90,6 +90,14 @@ function MessagesFromSingleDay(props: Props) {
             ? props.usersDictionary[props.theirUserId].username
             : null;
 
+        const repliesToUserId = message.repliesTo?.userId;
+        const repliesToContent = message.repliesTo?.content ?? null;
+        const repliesToMyMessage = props.myUserId === repliesToUserId;
+
+        const repliesToUsername = repliesToUserId && !repliesToMyMessage && props.usersDictionary.hasOwnProperty(repliesToUserId)
+            ? props.usersDictionary[repliesToUserId].username
+            : null;
+
         // Determine whether the message should be grouped with others and if so whether it is
         // at the top, middle, or bottom of the group
         const groupWithPrevious = messagesToGroup[i];
@@ -117,7 +125,10 @@ function MessagesFromSingleDay(props: Props) {
             confirmed={message.kind !== "unconfirmed"}
             readByMe={readByMe}
             readByThem={readByThem}
-            groupPosition={groupPosition} />);
+            groupPosition={groupPosition}
+            repliesToContent={repliesToContent}
+            repliesToMyMessage={repliesToMyMessage}
+            repliesToUsername={repliesToUsername} />);
     }
 
     return (

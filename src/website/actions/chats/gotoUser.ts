@@ -2,7 +2,7 @@ import { Dispatch } from "react";
 import { RootState } from "../../reducers";
 import { findDirectChatIndex } from "../../domain/model/chats";
 import { UserId, UserSummary } from "../../domain/model/users";
-import selectChat from "./selectChat";
+import { gotoChatByIndex } from "./gotoChat";
 
 export const DIRECT_CHAT_CREATED = "DIRECT_CHAT_CREATED";
 
@@ -13,7 +13,7 @@ export default function(user: UserSummary) {
 
         // If I already have a direct chat with this user then select it otherwise setup a new direct chat
         if (directChatIndex >= 0) {
-            dispatch(selectChat(directChatIndex));
+            dispatch(gotoChatByIndex(directChatIndex));
         } else {
             dispatch({
                 type: DIRECT_CHAT_CREATED,
@@ -31,7 +31,7 @@ export function gotoKnownUser(userId: UserId) {
 
         // If I already have a direct chat with this user then select it otherwise setup a new direct chat
         if (directChatIndex >= 0) {
-            dispatch(selectChat(directChatIndex));
+            dispatch(gotoChatByIndex(directChatIndex));
         } else {
             const userDictionary = getState().usersState.userDictionary;
             const user = userDictionary[userId];
