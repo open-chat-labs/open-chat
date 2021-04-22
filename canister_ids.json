@@ -1,18 +1,22 @@
 {
   "chats": {
     "alpha": "7td5r-biaaa-aaaaa-qaana-cai",
-    "ic": "xo6et-siaaa-aaaab-qaitq-cai"
+    "ic": "xo6et-siaaa-aaaab-qaitq-cai",
+    "messaging": "5s2ji-faaaa-aaaaa-qaaaq-cai"
   },
   "p2p": {
     "alpha": "7uc3f-mqaaa-aaaaa-qaanq-cai",
-    "ic": "wdqa5-5aaaa-aaaab-qaiua-cai"
+    "ic": "wdqa5-5aaaa-aaaab-qaiua-cai",
+    "messaging": "53zcu-tiaaa-aaaaa-qaaba-cai"
   },
   "user_mgmt": {
     "alpha": "7bfki-nyaaa-aaaaa-qaaoa-cai",
-    "ic": "2zip3-tqaaa-aaaaa-qahma-cai"
+    "ic": "2zip3-tqaaa-aaaaa-qahma-cai",
+    "messaging": "54yea-6qaaa-aaaaa-qaabq-cai"
   },
   "website": {
     "alpha": "7gem4-aaaaa-aaaaa-qaaoq-cai",
-    "ic": "26jjp-6iaaa-aaaaa-qahmq-cai"
+    "ic": "26jjp-6iaaa-aaaaa-qahmq-cai",
+    "messaging": "5j7vn-7yaaa-aaaaa-qaaca-cai"
   }
 }

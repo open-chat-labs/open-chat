@@ -14,9 +14,7 @@ export default class CanisterClientFactory {
     private readonly _userMgmtActor: UserMgmtService
 
     constructor(userId: Identity) {
-        const host = location.href.indexOf(".ic0.app") > 0
-            ? "gw.dfinity.network"
-            : "";
+        const host = "";
 
         const agent = new HttpAgent({
             host,

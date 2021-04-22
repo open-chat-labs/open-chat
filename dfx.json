@@ -52,6 +52,12 @@
       ],
       "type": "persistent"
     },
+    "messaging": {
+      "providers": [
+        "http://dcs-messaging-1.dfinity.systems:8080"
+      ],
+      "type": "persistent"
+    },
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
