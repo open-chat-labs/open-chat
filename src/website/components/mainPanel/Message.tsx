@@ -6,9 +6,10 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import gotoUser from "../../actions/chats/gotoUser";
+import { gotoChatById } from "../../actions/chats/gotoChat";
 import { Option } from "../../domain/model/common";
-import { UserSummary } from "../../domain/model/users";
-import { MessageContent } from "../../domain/model/messages";
+import { UserId, UserSummary } from "../../domain/model/users";
+import { MessageContent, ReplyContext } from "../../domain/model/messages";
 import TextContent from "../shared/TextContent";
 import MediaContent from "./MediaContent";
 import { ChatId } from "../../domain/model/chats";
@@ -16,7 +17,7 @@ import MessageTimeAndTicks from "./MessageTimeAndTicks";
 import formatFileSize from "../../formatters/fileSize";
 import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
-import { selectReplyToMessage } from "../../actions/chats/replyToMessage";
+import { selectReplyPrivatelyToMessage, selectReplyToMessage } from "../../actions/chats/replyToMessage";
 import MessageReplyPanel from "./MessageReplyPanel";
 import FileContent from "./FileContent";
 import CyclesContent from "./CyclesContent";
@@ -24,6 +25,7 @@ import CyclesContent from "./CyclesContent";
 export type Props = {
     chatId: Option<ChatId>,
     messageId: Option<number>,
+    userId: UserId,
     clientMessageId: string,
     content: MessageContent,
     date: Date,
@@ -36,6 +38,7 @@ export type Props = {
     readByMe: boolean,
     readByThem: boolean,
     repliesToContent: Option<MessageContent>,
+    repliesToChatId: Option<ChatId>,
     repliesToMyMessage: boolean,
     repliesToUsername: Option<string>
 }
@@ -176,12 +179,18 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
         maxWidth: 494,
         backgroundColor: props => props.sentByMe 
             ? theme.colors.messageSentByMe.highlightedContentBackgroundColor 
-            : theme.colors.messageSentByElse.highlightedContentBackgroundColor,
-        borderRadius: props => props.contentBorderRadius
-    },
+            : theme.colors.messageSentByElse.highlightedContentBackgroundColor
+    },    
     mediaNoCaption: {
         position: "relative",
         borderRadius: "inherit"
+    },
+    topPanel: {
+        borderRadius: props => props.contentBorderRadius
+    },
+    secondPanel: {
+        borderRadius: 6,
+        marginTop: 3
     }
 }));
 
@@ -228,9 +237,22 @@ function Message(props : Props) {
     {
         // 1. Add the drop down menu
         const buttons: MenuItem[] = [];
-        buttons.push({ text: "Info", action: () => {} });
+        if (!props.sender) {
+            buttons.push({ text: "Info", action: () => {} });
+        }
         if (props.confirmed && props.chatId && props.messageId) {
-            buttons.push({ text: "Reply", action: () => dispatch(selectReplyToMessage(props.chatId!, props.messageId!)) });
+            const replyContext: ReplyContext = {
+                chatId: props.chatId,
+                messageId: props.messageId,
+                content: props.content,
+                userId: props.userId
+            };
+
+            buttons.push({ text: "Reply", action: () => dispatch(selectReplyToMessage(replyContext)) });
+            if (props.sender) {
+                const sender = props.sender;
+                buttons.push({ text: "Reply privately", action: () => dispatch(selectReplyPrivatelyToMessage(replyContext, sender)) });
+            }
             buttons.push({ text: "Forward", action: () => {} });
             buttons.push({ text: "Star", action: () => {} });    
         }
@@ -258,15 +280,18 @@ function Message(props : Props) {
 
         // 3. Conditionally add the reply to message panel
         if (props.repliesToContent) {
+            const className = classes.contentContainer + " " + classes.topPanel;
             children.push(
                 <MessageReplyPanel
-                    chatId={props.chatId!}
+                    chatId={props.repliesToChatId!}
                     messageId={props.messageId!}
                     content={props.repliesToContent}
-                    sentByMe={props.repliesToMyMessage}
+                    repliesToMyMessage={props.repliesToMyMessage}
+                    sentByMe={props.sentByMe}
                     isGroupChat={props.isGroupChat}
-                    mergeWithPrevious={mergeWithPrevious}
                     theirUsername={props.repliesToUsername}
+                    className={className}
+                    onClick={() => dispatch(gotoChatById(props.repliesToChatId!, props.messageId!))}
                 />            
             );
         }
@@ -280,8 +305,9 @@ function Message(props : Props) {
                 case "media": contentComponent = <MediaContent chatId={props.chatId} messageId={props.messageId} content={content} />; break;
             }
             if (contentComponent) {
+                const className = classes.contentContainer + " " + (props.repliesToContent ? classes.secondPanel : classes.topPanel);
                 children.push(
-                    <div className={isMediaNoCaption ? classes.mediaNoCaption : classes.contentContainer}>
+                    <div className={isMediaNoCaption ? classes.mediaNoCaption : className}>
                         {contentComponent}
                     </div>
                 );
@@ -304,10 +330,9 @@ function Message(props : Props) {
                 // 6. Build the text component
                 let text;
                 let fileText;
-
                 switch (content.kind) {
-                    case "media": text = 
-                        content.caption; 
+                    case "media": 
+                        text = content.caption; 
                         break;
                     case "file": 
                         fileText = content.mimeType.toUpperCase() + "-" + formatFileSize(content.size); 

@@ -92,7 +92,7 @@ function AttachFile(props: Props) {
     }
 
     function extractThumbnail(original: HTMLImageElement | HTMLVideoElement, dimensions: Dimensions): MediaExtract {
-        const thumbnailDimensions = dimensions.scaleToFit(new Dimensions(20, 20));
+        const thumbnailDimensions = dimensions.scaleToFit(new Dimensions(40, 40));
         const canvas = document.createElement("canvas");
         canvas.width = thumbnailDimensions.width;
         canvas.height = thumbnailDimensions.height;

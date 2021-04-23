@@ -44,7 +44,8 @@ type ChatCommon = {
     chatId: ChatId,
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
-    draftMessage: string
+    draftMessage: string,
+    replyContext: Option<ReplyContext>
 }
 
 type ConfirmedChatCommon = ChatCommon & {
@@ -64,9 +65,6 @@ type ConfirmedChatCommon = ChatCommon & {
     // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
     markAsReadPending: number[],
     markAsReadByClientIdPending: string[],
-
-    // If set then the user is replying to this message
-    replyToMessageId: Option<number>
 }
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
@@ -161,7 +159,7 @@ export const newConfirmedDirectChat = (
         scrollBottom: 0,
         draftMessage: "",
         themTyping: false,
-        replyToMessageId: null
+        replyContext: null
     };
 }
 
@@ -195,7 +193,7 @@ export const newConfirmedGroupChat = (
         scrollBottom: 0,
         draftMessage: "",
         participantsTyping: [],
-        replyToMessageId: null
+        replyContext: null
     };
 }
 
@@ -207,7 +205,8 @@ export const newUnconfirmedDirectChat = (userId: UserId, chatId: ChatId) : Uncon
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: ""
+        draftMessage: "",
+        replyContext: null
     };
 }
 
@@ -221,7 +220,8 @@ export const newUnconfirmedGroupChat = (chatId: ChatId, subject: string, users: 
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: ""
+        draftMessage: "",
+        replyContext: null
     };
 }
 

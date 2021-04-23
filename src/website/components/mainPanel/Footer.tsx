@@ -164,7 +164,7 @@ function Footer() {
         }    
 
         if (draftMessage) {
-            dispatch(sendMessage(chat!, draftMessage, buildReplyContext(chat!)));
+            dispatch(sendMessage(chat!, draftMessage, chat!.replyContext));
             changeMessagePanel(MessagePanelState.Closed, false);
             textBoxRef.current!.clearText();
         }
@@ -172,7 +172,7 @@ function Footer() {
 
     function onFileAttached(content: DraftMessageContent) {
         if (content.kind === "file") {
-            dispatch(sendMessage(chat!, content, buildReplyContext(chat!)));
+            dispatch(sendMessage(chat!, content, chat!.replyContext));
             textBoxRef.current!.clearText();    
         } else {
             draftMessageContentRef.current = content;
@@ -186,24 +186,6 @@ function Footer() {
         if (chat && chatFunctions.isConfirmedChat(chat)) {
             CurrentUserTypingHandler.markTyping(chat.chatId);
         }
-    }
-
-    function buildReplyContext(chat: Chat): Option<ReplyContext> {
-        if (!chatFunctions.isConfirmedChat(chat) || !chat.replyToMessageId) {
-            return null;
-        }
-
-        const message = chatFunctions.tryFindMessge(chat.messages, chat.replyToMessageId);
-        if (!message || message.kind !== "local") {
-            return null;
-        }
-
-        return {
-            chatId: chat.chatId,
-            userId: message.sender,
-            messageId: message.id,
-            content: message.content                    
-        };
     }
 
     const classes = useStyles();

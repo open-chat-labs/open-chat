@@ -204,9 +204,8 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case DIRECT_CHAT_CREATED: {
-            const { userId, chatId } = event.payload;
-            const newChat = chatFunctions.newUnconfirmedDirectChat(userId, chatId);
-            state.chats.unshift(newChat);
+            const { chat } = event.payload;
+            state.chats.unshift(chat);
             state.selectedChatIndex = 0;
             break;
         }
@@ -392,9 +391,7 @@ export default produce((state: ChatsState, event: Event) => {
             const payload = event.payload;
             const [chat, index] = chatFunctions.getChat(state.chats, payload.chat.chatId);
             chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);            
-            if (chatFunctions.isConfirmedChat(chat)) {
-                chat.replyToMessageId = null;            
-            }
+            chat.replyContext = null;            
             state.chats.splice(index, 1);
             state.chats.unshift(chat);
             state.selectedChatIndex = 0;
@@ -478,20 +475,17 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case REPLY_TO_MESSAGE_SELECTED: {
-            const { chatId, messageId } = event.payload;
-            const [chat ] = chatFunctions.getChat(state.chats, chatId);
-            if (chatFunctions.isConfirmedChat(chat)) {
-                chat.replyToMessageId = messageId;
-            }
+            const { replyContext, privateChatId } = event.payload;
+            const chatId = privateChatId ?? replyContext.chatId;
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
+            chat.replyContext = replyContext;
             break;
         }
 
         case REPLY_TO_MESSAGE_CANCELLED: {
             const { chatId } = event.payload;
-            const [chat ] = chatFunctions.getChat(state.chats, chatId);
-            if (chatFunctions.isConfirmedChat(chat)) {
-                chat.replyToMessageId = null;
-            }
+            const [ chat ] = chatFunctions.getChat(state.chats, chatId);
+            chat.replyContext = null;
             break;
         }
     }

@@ -115,6 +115,7 @@ function MessagesFromSingleDay(props: Props) {
             key={message.clientMessageId}
             chatId={props.chatId}
             messageId={"id" in message ? message.id : null}
+            userId={senderUserId}
             clientMessageId={message.clientMessageId}
             content={message.content}
             date={message.date}
@@ -127,6 +128,7 @@ function MessagesFromSingleDay(props: Props) {
             readByThem={readByThem}
             groupPosition={groupPosition}
             repliesToContent={repliesToContent}
+            repliesToChatId={message.repliesTo?.chatId ?? null}
             repliesToMyMessage={repliesToMyMessage}
             repliesToUsername={repliesToUsername} />);
     }

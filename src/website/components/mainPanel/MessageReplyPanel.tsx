@@ -1,43 +1,83 @@
 import React from "react";
-import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import { lighten } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { Option } from "../../domain/model/common";
 import { getContentAsText } from "../../domain/messageFunctions";
 import { MessageContent } from "../../domain/model/messages";
 import { ChatId } from "../../domain/model/chats";
-import { gotoChatById } from "../../actions/chats/gotoChat";
-import CyclesContent from "./CyclesContent";
-import FileContent from "./FileContent";
-import MediaContent from "./MediaContent";
 
 export interface Props {
     chatId: ChatId,
     messageId: number,
     content: MessageContent,
+    repliesToMyMessage: boolean,
     sentByMe: boolean,
     isGroupChat: boolean,
-    mergeWithPrevious: boolean,
-    theirUsername: Option<string>
+    theirUsername: Option<string>,
+    className: string,
+    onClick?: () => void
 }
-const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
+
+interface StyleProps {
+    sentByMe: boolean,
+    thumbnailSrc?: string    
+}
+
+const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     container: {
-        cursor: "pointer"
+        cursor: "pointer",
+        overflow: "hidden",
+        padding: "4px 8px",
+        borderLeftColor: props => lighten(theme.colors.green.main, props.sentByMe ? 0.4 : 0.0),
+        borderLeftWidth: 4,
+        borderLeftStyle: "solid",
+        fontSize: 14,
+        backgroundRepeat: "no-repeat",
+        backgroundPositionX: "right",
+        backgroundSize: "contain",
+        backgroundImage: props => props.thumbnailSrc
+    },
+    text: {
+        maxHeight: 63,
+        minWidth: 200,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        wordWrap: "break-word",
+        whiteSpace: "pre-wrap",
+        display: "-webkit-box",
+        "-webkit-line-clamp": 3,
+        "-webkit-box-orient": "vertical"
+    },
+    by: {
+        color: props => lighten(theme.colors.green.main, props.sentByMe ? 0.4 : 0.0)
     }
 }));
 
 export default React.memo(MessageReplyPanel);
 
 function MessageReplyPanel(props : Props): JSX.Element {
-    const dispatch = useDispatch();
-    const classes = useStyles(props);
-    const text = getContentAsText(props.content);
-    const by = props.sentByMe ? "You" : props.theirUsername;
+    let styleProps: StyleProps = {
+        sentByMe: props.sentByMe
+    };
 
+    if (props.content.kind === "media") {
+        console.log(props.content.thumbnailData);
+        styleProps.thumbnailSrc = `url(${props.content.thumbnailData})`;
+    }
+
+    const classes = useStyles(styleProps);
+    const text = getContentAsText(props.content);
+    let by = props.repliesToMyMessage ? "You" : props.theirUsername ?? "Unknown";
+    // if (props.chatName) {
+    //     by += " - " + props.chatName;
+    // }
+    const className = props.className + " " + classes.container;
+     
     return (
-        <div className={classes.container} onClick={() => dispatch(gotoChatById(props.chatId, props.messageId))}>
-            REPLY: {text}<br/>
-            BY: {by}
+        <div className={className} onClick={props.onClick}>
+            <div className={classes.by}>{by}</div>
+            <div className={classes.text}>{text}</div>                
         </div>
     );    
 }
