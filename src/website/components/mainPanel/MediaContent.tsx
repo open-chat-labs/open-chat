@@ -1,72 +1,80 @@
-import React, { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import makeStyles from "@material-ui/styles/makeStyles";
-import { Option } from "../../domain/model/common";
-import { ChatId } from "../../domain/model/chats";
-import { scaleMediaContent } from "../shared/mediaComponentFunctions";
-import getMedia from "../../actions/chats/getMessageMedia";
+import React, { useEffect, useLayoutEffect, useReducer, useRef } from "react";
+import dataService, { DataSource } from "../../services/data/CachingDataService";
+import { dataToBlobUrl } from "../../utils/blobFunctions";
 import { MediaContent as Media } from "../../domain/model/messages";
 import Image from "../shared/Image";
 import Video from "../shared/Video";
 
 export interface Props {
-    chatId: Option<ChatId>,
-    messageId: Option<number>,
-    content: Media
+    content: Media,
+    width?: number,
+    height?: number,
+    className: string,
+    ownsBlob: boolean
 }
 
 export default React.memo(MediaContent);
 
-const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
-    media: {
-        borderRadius: "inherit"
-    },
-    shadow: {
-        position: "absolute",
-        bottom: 0,
-        zIndex: 2,
-        width: "100%",
-        minWidth: 330,
-        height: 28,
-        background: "linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.3))",
-        borderBottomLeftRadius: "inherit",
-        borderBottomRightRadius: "inherit"
-    }    
-}));
-
-function MediaContent(props : Props): JSX.Element {
-    const dispatch = useDispatch();
-    const classes = useStyles(props);
+function MediaContent(props: Props): JSX.Element {
     const content = props.content;
+    const ownedBlobUrl = props.ownsBlob ? content.blobUrl : null;
+    const unmounted = useRef(false);
+    const loaded = useRef(false);
+    const src = useRef(ownedBlobUrl ?? content.thumbnailData);
+
+    // https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate
+    const [_, forceUpdate] = useReducer(x => x + 1, 0);
+
+    useLayoutEffect(() => {
+        return () => {
+            unmounted.current = true
+        };
+    }, []);
 
     useEffect(() => {
-        if (!content.blobUrl && props.chatId && props.messageId) {
-            dispatch(getMedia(
-                props.chatId, 
-                props.messageId, 
+        async function fetchMedia() {
+            const response = await dataService.getData(
+                DataSource.MediaMessage, 
                 content.id, 
                 content.size, 
-                content.chunkSize));
-        }            
-      }, []);  
-      
-    const src = content.blobUrl ? content.blobUrl : content.thumbnailData;
-    const dimensions = scaleMediaContent(props.content.width, props.content.height, true);
+                content.chunkSize);
+
+            if (response.kind !== "success") {
+                console.log(response);
+                return;
+            }
+            
+            if (!unmounted.current) {
+                src.current = dataToBlobUrl(response.data, content.mimeType);
+                loaded.current = true;
+                forceUpdate();
+            }
+        }
+
+        if (!ownedBlobUrl) {
+            fetchMedia();
+        }
+
+        return () => {
+            // Dispose of blob
+            if (loaded.current) {
+                setTimeout(() => {
+                    URL.revokeObjectURL(src.current);
+                }, 100);                
+            }
+        }
+    }, []);
 
     let contentElement;
-    if (content.mimeType.startsWith("image/") || !content.blobUrl) {
-        contentElement = <Image key={props.content.id} src={src} width={dimensions.width} height={dimensions.height} className={classes.media} />;
+    if (content.mimeType.startsWith("image/") || (!loaded.current && !ownedBlobUrl)) {
+        contentElement = <Image key={props.content.id} src={src.current} width={props.width} height={props.height} className={props.className} />;
     } else if (content.mimeType.startsWith("video/")) {
-        contentElement = <Video key={props.content.id} src={src} width={dimensions.width} height={dimensions.height} className={classes.media} />;
+        contentElement = <Video key={props.content.id} src={src.current} width={props.width} height={props.height} className={props.className} />;
     }
-
-    const shadow = content.caption ? null : <div className={classes.shadow}></div>;
 
     return (
         <>
             {contentElement}
-            {shadow}
         </>
     );
 }

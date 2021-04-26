@@ -53,9 +53,7 @@ function ReplyToMessagePanel() {
         panel = 
             <div className={classes.innerContainer}>
                 <MessageReplyPanel
-                    chatId={replyContext.chatId}
                     //chatName={props.chatName}
-                    messageId={replyContext.messageId}
                     content={replyContext.content}
                     repliesToMyMessage={repliesToMyMessage}
                     sentByMe={false}

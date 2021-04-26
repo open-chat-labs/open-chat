@@ -18,7 +18,6 @@ const useStyles = makeStyles(() => ({
     file: {
         minWidth: 300,
         padding: "10px 9px",
-        maxWidth: 494,
         backgroundColor: "#aaaaaa",
         fontSize: 14,
         lineHeight: 1,

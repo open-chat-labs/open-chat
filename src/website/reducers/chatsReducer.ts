@@ -13,7 +13,6 @@ import {
 
 import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
-import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
@@ -131,7 +130,6 @@ type Event =
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
-    GetMediaSucceededEvent |
     GetMessagesRequestedEvent |
     GetMessagesSucceededEvent |
     GetMessagesFailedEvent |
@@ -163,7 +161,7 @@ export default produce((state: ChatsState, event: Event) => {
         case GOTO_CHAT: {
             const chatIndex = event.payload.chatIndex;
             if (chatIndex != null) {
-                if (state.selectedChatIndex != null) {
+                if (chatIndex != state.selectedChatIndex && state.selectedChatIndex != null) {
                     const prevChat = state.chats[state.selectedChatIndex];
                     chatFunctions.saveDraftMessage(prevChat);
                     chatFunctions.freeMediaData(prevChat);
@@ -181,7 +179,9 @@ export default produce((state: ChatsState, event: Event) => {
                     }
                 }
 
-                chatFunctions.restoreDraftMessage(chat);
+                if (chatIndex != state.selectedChatIndex) {
+                    chatFunctions.restoreDraftMessage(chat);
+                }
             }
             break;
         }
@@ -451,21 +451,6 @@ export default produce((state: ChatsState, event: Event) => {
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Removing the participant failed so add them back to the chat
                 setFunctions.add(chat.participants, userId);
-            }
-            break;
-        }
-
-        case GET_MEDIA_SUCCEEDED: {
-            const { chatId, messageId, data } = event.payload;
-            const [chat, index] = chatFunctions.getChat(state.chats, chatId);
-            // Only set the media data against the message if the chat is the selected chat
-            const message = chatFunctions.tryFindMessge(chat.messages, messageId);
-            if (message && 
-                message.kind === "local" && 
-                message.content.kind === "media" && 
-                !message.content.blobUrl && 
-                index === state.selectedChatIndex) {
-                message.content.blobUrl = dataToBlobUrl(data, message.content.mimeType);
             }
             break;
         }

@@ -134,7 +134,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     mediaUncaptioned: {
         backgroundColor: "transparent",
         padding: 0,
-        maxWidth: 494,
         "& $timeAndTicks": {
             position: "absolute",
             right: 10,
@@ -176,7 +175,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
         zIndex: 3,
     },
     contentContainer: {
-        maxWidth: 494,
         backgroundColor: props => props.sentByMe 
             ? theme.colors.messageSentByMe.highlightedContentBackgroundColor 
             : theme.colors.messageSentByElse.highlightedContentBackgroundColor
@@ -191,7 +189,21 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     secondPanel: {
         borderRadius: 6,
         marginTop: 3
-    }
+    },
+    mediaContent: {
+        borderRadius: "inherit"
+    },
+    shadow: {
+        position: "absolute",
+        bottom: 0,
+        zIndex: 2,
+        width: "100%",
+        minWidth: 330,
+        height: 28,
+        background: "linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.3))",
+        borderBottomLeftRadius: "inherit",
+        borderBottomRightRadius: "inherit"
+    }    
 }));
 
 function Message(props : Props) {
@@ -232,12 +244,17 @@ function Message(props : Props) {
     // Is this message just standalone media
     const isMediaNoCaption = content.kind === "media" && !content.caption && !props.repliesToContent;
 
+    // Calculate the dimensions of any media
+    let mediaDimensions = content.kind === "media" 
+        ? scaleMediaContent(content.width, content.height, true) 
+        : null;
+
     // Dynamically build the child components that comprise the message
     const children: JSX.Element[] = [];
     {
         // 1. Add the drop down menu
         const buttons: MenuItem[] = [];
-        if (!props.sender) {
+        if (props.sentByMe) {
             buttons.push({ text: "Info", action: () => {} });
         }
         if (props.confirmed && props.chatId && props.messageId) {
@@ -283,8 +300,6 @@ function Message(props : Props) {
             const className = classes.contentContainer + " " + classes.topPanel;
             children.push(
                 <MessageReplyPanel
-                    chatId={props.repliesToChatId!}
-                    messageId={props.messageId!}
                     content={props.repliesToContent}
                     repliesToMyMessage={props.repliesToMyMessage}
                     sentByMe={props.sentByMe}
@@ -299,18 +314,49 @@ function Message(props : Props) {
         // 4. Add any message type specific content
         {            
             let contentComponent;
+            let shadow;
+            let containerStyle;
             switch (content.kind) {
-                case "file": contentComponent = <FileContent content={content} sentByMe={props.sentByMe} />; break;
-                case "cycles": contentComponent = <CyclesContent content={content} sentByMe={props.sentByMe} theirUsername={props.theirUsername} />; break;
-                case "media": contentComponent = <MediaContent chatId={props.chatId} messageId={props.messageId} content={content} />; break;
+                case "file": 
+                    contentComponent = <FileContent 
+                        content={content} 
+                        sentByMe={props.sentByMe} />; 
+                    break;
+                case "cycles": 
+                    contentComponent = <CyclesContent 
+                        content={content} 
+                        sentByMe={props.sentByMe} 
+                        theirUsername={props.theirUsername} />; 
+                    break;
+                case "media": 
+                    contentComponent = <MediaContent 
+                        content={content} 
+                        ownsBlob={true} 
+                        width={mediaDimensions!.width} 
+                        height={mediaDimensions!.height} 
+                        className={classes.mediaContent} />; 
+                    // For some reason we need to set the width and height of container div for <Video /> content otherwise there is a padding glitch
+                    containerStyle = {
+                        width: mediaDimensions!.width + "px",
+                        height: mediaDimensions!.height + "px"
+                    };        
+                    // Add a shadow effect to bottom of media so the "time and ticks" can be seen
+                    if (!content.caption) {
+                        shadow = <div className={classes.shadow}></div>;
+                    }
+                    break;
             }
             if (contentComponent) {
                 const className = classes.contentContainer + " " + (props.repliesToContent ? classes.secondPanel : classes.topPanel);
                 children.push(
-                    <div className={isMediaNoCaption ? classes.mediaNoCaption : className}>
+                    <div className={isMediaNoCaption ? classes.mediaNoCaption : className} style={containerStyle}>
                         {contentComponent}
                     </div>
                 );
+
+                if (shadow) {
+                    children.push(shadow);
+                }
             }
         }
 
@@ -369,9 +415,8 @@ function Message(props : Props) {
         case "media":
             className += " " + classes.media;
             if (content.caption) {
-                const dimensions = scaleMediaContent(content.width, content.height, true);
                 containerStyle = {
-                    width: (dimensions.width + 6) + "px"
+                    width: (mediaDimensions!.width + 6) + "px"
                 };        
             } else {
                 className += " " + classes.mediaUncaptioned;

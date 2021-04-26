@@ -2,8 +2,8 @@ import React from "react";
 
 export interface Props {
     src: string,
-    width: number,
-    height: number,
+    width?: number,
+    height?: number,
     className: string
 }
 
