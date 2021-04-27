@@ -160,8 +160,8 @@ export default produce((state: ChatsState, event: Event) => {
     switch (event.type) {
         case GOTO_CHAT: {
             const chatIndex = event.payload.chatIndex;
-            if (chatIndex != null) {
-                if (chatIndex != state.selectedChatIndex && state.selectedChatIndex != null) {
+            if (chatIndex != null) {    
+                if (state.selectedChatIndex != null) {
                     const prevChat = state.chats[state.selectedChatIndex];
                     chatFunctions.saveDraftMessage(prevChat);
                     chatFunctions.freeMediaData(prevChat);
@@ -179,9 +179,7 @@ export default produce((state: ChatsState, event: Event) => {
                     }
                 }
 
-                if (chatIndex != state.selectedChatIndex) {
-                    chatFunctions.restoreDraftMessage(chat);
-                }
+                chatFunctions.restoreDraftMessage(chat);
             }
             break;
         }
