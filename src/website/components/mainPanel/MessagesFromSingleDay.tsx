@@ -19,7 +19,8 @@ type Props = {
     theirUserId: Option<UserId>,
     usersDictionary: any,
     messages: (Exclude<Message, RemoteMessage>)[],
-    unreadMessageDetector: UnreadMessageDetector
+    unreadMessageDetector: UnreadMessageDetector,
+    messageIdToSelect: Option<number>
 }
 
 export default React.memo(MessagesFromSingleDay);
@@ -111,10 +112,13 @@ function MessagesFromSingleDay(props: Props) {
             groupPosition = MessageGroupPosition.Bottom;
         }
 
+        const messageId = "id" in message ? message.id : null;
+        const selectEffect = messageId != null && props.messageIdToSelect != null && messageId === props.messageIdToSelect;
+
         children.push(<MessageComponent
             key={message.clientMessageId}
             chatId={props.chatId}
-            messageId={"id" in message ? message.id : null}
+            messageId={messageId}
             userId={senderUserId}
             clientMessageId={message.clientMessageId}
             content={message.content}
@@ -129,8 +133,10 @@ function MessagesFromSingleDay(props: Props) {
             groupPosition={groupPosition}
             repliesToContent={repliesToContent}
             repliesToChatId={message.repliesTo?.chatId ?? null}
+            repliesToMessageId={message.repliesTo?.messageId ?? null}
             repliesToMyMessage={repliesToMyMessage}
-            repliesToUsername={repliesToUsername} />);
+            repliesToUsername={repliesToUsername}
+            selectEffect={selectEffect} />);
     }
 
     return (

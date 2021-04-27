@@ -47,6 +47,7 @@ function MessagesList() {
     const usersDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
     const classes = useStyles();
+    const messageIdToSelect = chat && chatFunctions.isConfirmedChat(chat) ? chat.messageToSelect : null;
 
     if (chat === null) {
         return <div></div>;
@@ -80,14 +81,15 @@ function MessagesList() {
 
     function addDay(date: Date, messages: Exclude<Message, RemoteMessage>[]) {
         children.push(<MessagesFromSingleDay
-            chatId = {chatId}
-            key = {date.toDateString()}
+            chatId={chatId}
+            key={date.toDateString()}
             isGroupChat={isGroupChat}
             myUserId={myUserId}
             theirUserId={theirUserId}
             usersDictionary={usersDictionary}
             messages={messages}
-            unreadMessageDetector={unreadMessageDetector} />);
+            unreadMessageDetector={unreadMessageDetector}
+            messageIdToSelect={messageIdToSelect} />);
     }
 
     const dispatch = useDispatch();
@@ -129,6 +131,17 @@ function MessagesList() {
         unreadMessagesHandler.start();
         return () => unreadMessagesHandler.stop();
     }, [chatId, hasUnreadMessages]);
+
+    // If there is a messageToSelect then set the scroll so that the message is in the middle of the screen
+    useLayoutEffect(() => {
+        if (messageIdToSelect != null) {
+            const messagesDiv = messagesRef.current;
+            const clientId = chatFunctions.getClientMessageId(messages, messageIdToSelect);
+            if (clientId != null && messagesDiv != null) {
+                chatFunctions.scrollToMessage(messagesDiv, clientId);
+            }
+        }
+    }, [messageIdToSelect]); 
 
     // Listen to scroll events and load more messages if the user scrolls near the top of the currently loaded messages
     function onScroll_downloadMoreMessages(chat: ConfirmedChat, messagesDiv: HTMLElement) {

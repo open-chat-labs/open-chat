@@ -104,6 +104,11 @@ import {
     ReplyToMessageCancelledEvent
 } from "../actions/chats/replyToMessage";
 
+import {
+    DESELECT_MESSAGE,
+    DeselectMessageEvent
+} from "../actions/chats/deselectMessage";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -126,6 +131,7 @@ type Event =
     CreateGroupChatFailedEvent |
     CurrentUserTypingEvent |
     CurrentUserStoppedTypingEvent |
+    DeselectMessageEvent |
     DirectChatCreatedEvent |
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
@@ -159,8 +165,13 @@ export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
     switch (event.type) {
         case GOTO_CHAT: {
-            const chatIndex = event.payload.chatIndex;
-            if (chatIndex != null) {    
+            const { chatIndex, messageId, missingMessages } = event.payload;
+            const hasChatChanged = chatIndex != null;
+            if (!hasChatChanged && (messageId == null || state.selectedChatIndex == null)) {
+                break;
+            }
+
+            if (hasChatChanged) {    
                 if (state.selectedChatIndex != null) {
                     const prevChat = state.chats[state.selectedChatIndex];
                     chatFunctions.saveDraftMessage(prevChat);
@@ -168,18 +179,30 @@ export default produce((state: ChatsState, event: Event) => {
                 }
 
                 state.selectedChatIndex = chatIndex;
-                const chat = state.chats[state.selectedChatIndex];
-                if (chatFunctions.isConfirmedChat(chat) && chat.maxLocalMessageId) {
-                    const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
-                    const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
-                    const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);            
-                    if (minLocalMessageId !== minLocalMessageIdRequired) {
-                        chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
-                        chatFunctions.queueMissingMessagesForDownload(chat);
-                    }
-                }
+            }
+            
+            const chat = state.chats[state.selectedChatIndex!];
 
-                chatFunctions.restoreDraftMessage(chat);
+            if (chatFunctions.isConfirmedChat(chat)) {
+                chat.messageToSelect = messageId;
+
+                if (missingMessages.length > 0) {
+                    chatFunctions.addMessages(chat, missingMessages, true);
+                }    
+
+                if (hasChatChanged) {
+                    if (chat.maxLocalMessageId) {
+                        const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
+                        const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
+                        const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);            
+                        if (minLocalMessageId !== minLocalMessageIdRequired) {
+                            chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
+                            chatFunctions.queueMissingMessagesForDownload(chat);
+                        }
+                    }
+
+                    chatFunctions.restoreDraftMessage(chat);
+                }
             }
             break;
         }
@@ -469,6 +492,15 @@ export default produce((state: ChatsState, event: Event) => {
             const { chatId } = event.payload;
             const [ chat ] = chatFunctions.getChat(state.chats, chatId);
             chat.replyContext = null;
+            break;
+        }
+
+        case DESELECT_MESSAGE: {
+            const { chatId } = event.payload;
+            const [ chat ] = chatFunctions.getConfirmedChat(state.chats, chatId);
+            if (chat) {
+                chat.messageToSelect = null;
+            }
             break;
         }
     }

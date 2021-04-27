@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import  { Properties } from 'csstype';
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { alpha, darken } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import gotoUser from "../../actions/chats/gotoUser";
 import { gotoChatById } from "../../actions/chats/gotoChat";
+import deselectMessage from "../../actions/chats/deselectMessage";
 import { Option } from "../../domain/model/common";
 import { UserId, UserSummary } from "../../domain/model/users";
 import { MessageContent, ReplyContext } from "../../domain/model/messages";
@@ -39,13 +40,16 @@ export type Props = {
     readByThem: boolean,
     repliesToContent: Option<MessageContent>,
     repliesToChatId: Option<ChatId>,
+    repliesToMessageId: Option<number>,
     repliesToMyMessage: boolean,
-    repliesToUsername: Option<string>
+    repliesToUsername: Option<string>,
+    selectEffect: boolean
 }
 
 type StyleProps = {
     sentByMe: boolean,
-    contentBorderRadius: string
+    contentBorderRadius: string,
+    selectEffect: boolean
 }
 
 export default React.memo(Message);
@@ -72,7 +76,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     sentByMe: {
         alignSelf: "flex-end",
         color: theme.colors.messageSentByMe.textColor,
-        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
+        backgroundColor: props => darken(theme.colors.messageSentByMe.backgroundColor, props.selectEffect ? 0.3 : 0),
         "&$text:hover $menu": {
             color: theme.colors.messageSentByMe.textColor,
             backgroundColor: theme.colors.messageSentByMe.backgroundColor,
@@ -84,7 +88,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     sentByElse: {
         alignSelf: "flex-start",
         color: theme.colors.messageSentByElse.textColor,
-        backgroundColor: theme.colors.messageSentByElse.backgroundColor,
+        backgroundColor: props => darken(theme.colors.messageSentByElse.backgroundColor, props.selectEffect ? 0.3 : 0),
         "& $caption, &$text:hover $menu": {
             color: theme.colors.messageSentByElse.textColor,
             backgroundColor: theme.colors.messageSentByElse.backgroundColor    
@@ -210,6 +214,15 @@ function Message(props : Props) {
     const dispatch = useDispatch();
     const content = props.content;
 
+    useEffect(() => {
+        if (props.selectEffect && props.chatId) {
+            const chatId = props.chatId;
+            setTimeout(() => {
+                dispatch(deselectMessage(chatId));
+            }, 1000);
+        }
+    }, [props.selectEffect]);
+
     // Based on the position of this message within a "group" of messages derive these properties to be used in styling
     const mergeWithNext = props.groupPosition === MessageGroupPosition.Top || props.groupPosition === MessageGroupPosition.Middle;
     const mergeWithPrevious = props.groupPosition === MessageGroupPosition.Middle || props.groupPosition === MessageGroupPosition.Bottom;
@@ -225,7 +238,8 @@ function Message(props : Props) {
     // Pass some props into useStyles to configure the JSS
     const styleProps = {
         sentByMe: props.sentByMe,
-        contentBorderRadius: borderRadiusStr
+        contentBorderRadius: borderRadiusStr,
+        selectEffect: props.selectEffect
     };
     const classes = useStyles(styleProps);
 
@@ -308,7 +322,7 @@ function Message(props : Props) {
                     isGroupChat={props.isGroupChat}
                     theirUsername={props.repliesToUsername}
                     className={className}
-                    onClick={() => dispatch(gotoChatById(props.repliesToChatId!, props.messageId!))}
+                    onClick={() => dispatch(gotoChatById(props.repliesToChatId!, props.repliesToMessageId!))}
                 />            
             );
         }

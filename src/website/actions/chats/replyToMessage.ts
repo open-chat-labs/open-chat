@@ -1,6 +1,6 @@
 import { Dispatch } from "react";
 import { UserSummary } from "../../domain/model/users";
-import { ChatId, DirectChat } from "../../domain/model/chats";
+import { ChatId } from "../../domain/model/chats";
 import { ReplyContext } from "../../domain/model/messages";
 import gotoUser from "./gotoUser";
 
@@ -8,8 +8,8 @@ export const REPLY_TO_MESSAGE_SELECTED = "REPLY_TO_MESSAGE_SELECTED";
 export const REPLY_TO_MESSAGE_CANCELLED = "REPLY_TO_MESSAGE_CANCELLED";
 
 export function selectReplyPrivatelyToMessage(replyContext: ReplyContext, user: UserSummary) {
-    return (dispatch: Dispatch<any> ) : ReplyToMessageSelectedEvent => {
-        dispatch(gotoUser(user)) as unknown as DirectChat;
+    return async (dispatch: Dispatch<any> ) : Promise<ReplyToMessageSelectedEvent> => {
+        await dispatch(gotoUser(user));
         const event: ReplyToMessageSelectedEvent = {
             type: REPLY_TO_MESSAGE_SELECTED,
             payload: { replyContext, privateChatId: user.chatId }
