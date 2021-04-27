@@ -28,7 +28,10 @@ const useStyles = makeStyles<Theme>((theme: Theme) => ({
     contentContainer: {
         maxWidth: 500,
         backgroundColor: darken(theme.colors.messageSentByElse.highlightedContentBackgroundColor, 0.05),
-        borderRadius: 6
+        borderRadius: 6,
+        "& svg": {
+            opacity: 0.7
+        }
     },
     closeButton: {
         marginLeft: 16
@@ -53,7 +56,8 @@ function ReplyToMessagePanel() {
         panel = 
             <div className={classes.innerContainer}>
                 <MessageReplyPanel
-                    //chatName={props.chatName}
+                    repliesToChatId={replyContext.chatId}
+                    isPrivateReply={chat.chatId !== replyContext.chatId}
                     content={replyContext.content}
                     repliesToMyMessage={repliesToMyMessage}
                     sentByMe={false}

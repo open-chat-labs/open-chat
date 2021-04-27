@@ -300,6 +300,8 @@ function Message(props : Props) {
             const className = classes.contentContainer + " " + classes.topPanel;
             children.push(
                 <MessageReplyPanel
+                    repliesToChatId={props.repliesToChatId!}
+                    isPrivateReply={props.chatId !== props.repliesToChatId}
                     content={props.repliesToContent}
                     repliesToMyMessage={props.repliesToMyMessage}
                     sentByMe={props.sentByMe}
