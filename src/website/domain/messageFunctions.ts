@@ -1,4 +1,4 @@
-import { CyclesContent, MediaContent, MessageContent } from "./model/messages";
+import { MediaContent, MessageContent } from "./model/messages";
 import { formatCycles } from "../formatters/cycles";
 
 export function getContentAsText(content: MessageContent) : string {
@@ -10,7 +10,7 @@ export function getContentAsText(content: MessageContent) : string {
     } else if (content.kind === "file") {
         text = content.name;
     } else if (content.kind === "cycles") {
-        text = buildTextForCyclesContent(content);
+        text = formatCycles(content.amount);
     } else {
         throw new Error("Unrecognised content type - " + (content as any).kind);
     }
@@ -31,8 +31,4 @@ function buildTextForMediaContent(content: MediaContent) : string {
     } else {
         return "file";
     }
-}
-
-function buildTextForCyclesContent(content: CyclesContent) : string {
-    return "💸  " + formatCycles(content.amount);
 }

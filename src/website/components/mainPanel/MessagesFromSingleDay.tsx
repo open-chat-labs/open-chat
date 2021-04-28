@@ -37,6 +37,10 @@ const useStyles = makeStyles((theme: Theme) => ({
 function MessagesFromSingleDay(props: Props) {
     const classes = useStyles();
 
+    const theirUsername = (props.theirUserId && props.usersDictionary.hasOwnProperty(props.theirUserId)) 
+        ? props.usersDictionary[props.theirUserId].username
+        : null;
+
     // Determine which messages should be grouped with the previous message
     const messagesToGroup: boolean[] = [];
     let prevMessageSender: Option<UserId> = null;
@@ -87,10 +91,6 @@ function MessagesFromSingleDay(props: Props) {
 
         const readByThem = !props.unreadMessageDetector.isUnreadByThem(message);
 
-        const theirUserName = props.theirUserId && props.usersDictionary.hasOwnProperty(props.theirUserId) 
-            ? props.usersDictionary[props.theirUserId].username
-            : null;
-
         const repliesToUserId = message.repliesTo?.userId;
         const repliesToContent = message.repliesTo?.content ?? null;
         const repliesToMyMessage = props.myUserId === repliesToUserId;
@@ -126,7 +126,7 @@ function MessagesFromSingleDay(props: Props) {
             isGroupChat={props.isGroupChat}
             sentByMe={sentByMe}
             sender={senderDetails}
-            theirUsername={theirUserName}
+            theirUsername={theirUsername}
             confirmed={message.kind !== "unconfirmed"}
             readByMe={readByMe}
             readByThem={readByThem}

@@ -18,11 +18,12 @@ const useStyles = makeStyles((_theme: Theme) => ({
 function ChatList() {
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
+    const me = useSelector((state: RootState) => state.usersState.me?.userId) ?? "";
     const classes = useStyles();
     const selectedChatIndex = chatsState.selectedChatIndex;
 
     const chats = chatsState.chats.map((c, index) => {
-        return chatListItemBuilder.build(c, userDictionary, index, selectedChatIndex);
+        return chatListItemBuilder.build(c, userDictionary, index, selectedChatIndex, me);
     });
 
     return (

@@ -16,14 +16,14 @@ type Props = {
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
+    container: {
+        padding: "10px 10px 0 10px"
+    },
     box: {
-        textAlign: "center",
-        padding: "10px 16px 6px 16px",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        backgroundColor: theme.colors.footer.backgroundColor,
+        padding: 10,
+        display: "inline-block",
+        backgroundColor: theme.colors.textBox.backgroundColor,
+        borderRadius: 6
     },
     inputContainer: {
         display: "flex",
@@ -42,6 +42,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     balanceContainer: {
         display: "flex",
+        justifyContent: "space-between",
         marginTop: 4,      
         marginBottom: 8,      
         "& a": {
@@ -107,34 +108,36 @@ const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
     }
 
     return (
-        <div className={classes.box}>
-            <Typography component="div" variant="h6">
-                Send cycles to {props.recipient.username}
-            </Typography> 
-            <div className={classes.balanceContainer}>
-                <Typography component="div" variant="caption">
-                    Current balance <strong>{balance}</strong>
+        <div className={classes.container}>
+            <div className={classes.box}>
+                <Typography component="div" variant="h6">
+                    Send cycles to {props.recipient.username}
                 </Typography> 
-                <Link href="#" variant="caption" underline="always">add funds</Link>
-            </div>
-            <div className={classes.inputContainer}>
-                <TextField
-                    id="cyclesInput" 
-                    label="Cycles (T)"
-                    type="number"
-                    value={cycles}
-                    className={classes.cyclesInput + " " + classes.input}   
-                    onChange={e => onCyclesChanged(e.target.value)}                         
-                />   
-                <SyncAltIcon />                     
-                <TextField
-                    id="poundsInput" 
-                    label="GBP"
-                    type="number"
-                    value={pounds}
-                    className={classes.poundsInput + " " + classes.input}   
-                    onChange={e => onPoundsChanged(e.target.value)} 
-                />                        
+                <div className={classes.balanceContainer}>
+                    <Typography component="div" variant="caption">
+                        Current balance <strong>{balance}</strong>
+                    </Typography> 
+                    <Link href="#" variant="caption" underline="always">add funds</Link>
+                </div>
+                <div className={classes.inputContainer}>
+                    <TextField
+                        id="cyclesInput" 
+                        label="Cycles (T)"
+                        type="number"
+                        value={cycles}
+                        className={classes.cyclesInput + " " + classes.input}   
+                        onChange={e => onCyclesChanged(e.target.value)}                         
+                    />   
+                    <SyncAltIcon />                     
+                    <TextField
+                        id="poundsInput" 
+                        label="GBP"
+                        type="number"
+                        value={pounds}
+                        className={classes.poundsInput + " " + classes.input}   
+                        onChange={e => onPoundsChanged(e.target.value)} 
+                    />                        
+                </div>
             </div>
         </div>
     );
