@@ -7,6 +7,7 @@ import ChatsService from "./chats/chats";
 import P2pService from "./p2p/p2p";
 import UserMgmtService from "./userMgmt/user_mgmt";
 import { getCanisterIds } from "../utils/canisterFunctions";
+import { polling } from "@dfinity/agent";
 
 export default class CanisterClientFactory {
     private readonly _chatsActor: ChatsService
@@ -51,9 +52,16 @@ export default class CanisterClientFactory {
     }
 
     private createActor<T>(agent: Agent, canisterId: Principal, factory: any) : T {
+        const pollingStrategy = this.buildPollingStrategy();
+
         return Actor.createActor<T>(factory, {
             agent,
-            canisterId
+            canisterId,
+            pollingStrategy
         });
+    }
+
+    private buildPollingStrategy = () : polling.PollStrategy => {
+        return polling.strategy.throttle(1000);
     }
 }
