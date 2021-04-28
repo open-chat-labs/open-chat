@@ -2,17 +2,19 @@ import { CyclesContent, MediaContent, MessageContent } from "./model/messages";
 import { formatCycles } from "../formatters/cycles";
 
 export function getContentAsText(content: MessageContent) : string {
+    let text;
     if (content.kind === "text") {
-        return content.text;
+        text = content.text;
     } else if (content.kind === "media") {
-        return buildTextForMediaContent(content);
+        text = buildTextForMediaContent(content);
     } else if (content.kind === "file") {
-        return content.name;
+        text = content.name;
     } else if (content.kind === "cycles") {
-        return buildTextForCyclesContent(content);
+        text = buildTextForCyclesContent(content);
     } else {
         throw new Error("Unrecognised content type - " + (content as any).kind);
     }
+    return text.trim();
 }
 
 function buildTextForMediaContent(content: MediaContent) : string {
@@ -32,5 +34,5 @@ function buildTextForMediaContent(content: MediaContent) : string {
 }
 
 function buildTextForCyclesContent(content: CyclesContent) : string {
-    return "💸  " + content.caption ?? formatCycles(content.amount);
+    return "💸  " + formatCycles(content.amount);
 }

@@ -4,12 +4,12 @@ import {
   Principal,
   SignIdentity,
 } from '@dfinity/agent';
+import { createAuthenticationRequestUrl } from "@dfinity/authentication";
 import {
-  Authenticator,
   DelegationChain,
   DelegationIdentity,
   Ed25519KeyIdentity,
-} from '@dfinity/authentication';
+} from '@dfinity/identity';
 import * as urlFunctions from "./urlFunctions";
 
 // TODO: move this into @dfinity/authentication
@@ -23,19 +23,13 @@ interface AuthenticationClientOptions {
 }
 
 class AuthenticationClient {
-  private _auth: Authenticator;
   private _identity: Identity;
+  private _idpUrl: URL;
   private _key: SignIdentity | null;
   private _chain: DelegationChain | null;
 
   constructor(options: AuthenticationClientOptions = {}) {
-    const idpUrl = new URL(options.identityProvider?.toString() || DEFAULT_IDP_URL);
-
-    this._auth = new Authenticator({
-      identityProvider: {
-        url: idpUrl,
-      }
-    });
+    this._idpUrl = new URL(options.identityProvider?.toString() || DEFAULT_IDP_URL);
 
     let key = null;
     if (options.identity) {
@@ -155,13 +149,14 @@ class AuthenticationClient {
       localStorage.setItem(KEY_LOCALSTORAGE_KEY, JSON.stringify(key));
     }
 
-    await this._auth.sendAuthenticationRequest({
-      session: {
-        identity: key,
-      },
-      redirectUri: new URL(options.redirectUri || window.location.href),
-      scope: options.scope?.map(x => ({ type: 'CanisterScope', principal: x })) ?? [],
+    const url = await createAuthenticationRequestUrl({
+      identityProvider: DEFAULT_IDP_URL,
+      publicKey: key.getPublicKey(),
+      redirectUri: options.redirectUri || window.location.href,
+      scope: options.scope ?? [],
     });
+
+    window.location.href = url.toString();
   }
 }
 

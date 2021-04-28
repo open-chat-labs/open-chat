@@ -44,7 +44,8 @@ type ChatCommon = {
     chatId: ChatId,
     scrollTop: Option<number>,
     scrollBottom: Option<number>,
-    draftMessage: string
+    draftMessage: string,
+    replyContext: Option<ReplyContext>
 }
 
 type ConfirmedChatCommon = ChatCommon & {
@@ -63,7 +64,9 @@ type ConfirmedChatCommon = ChatCommon & {
 
     // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
     markAsReadPending: number[],
-    markAsReadByClientIdPending: string[]
+    markAsReadByClientIdPending: string[],
+
+    messageToSelect: Option<number>
 }
 
 export type ConfirmedDirectChat = ConfirmedChatCommon & {
@@ -157,7 +160,9 @@ export const newConfirmedDirectChat = (
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        themTyping: false
+        themTyping: false,
+        replyContext: null,
+        messageToSelect: null
     };
 }
 
@@ -190,7 +195,9 @@ export const newConfirmedGroupChat = (
         scrollTop: null,
         scrollBottom: 0,
         draftMessage: "",
-        participantsTyping: []
+        participantsTyping: [],
+        replyContext: null,
+        messageToSelect: null
     };
 }
 
@@ -202,7 +209,8 @@ export const newUnconfirmedDirectChat = (userId: UserId, chatId: ChatId) : Uncon
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: ""
+        draftMessage: "",
+        replyContext: null
     };
 }
 
@@ -216,7 +224,8 @@ export const newUnconfirmedGroupChat = (chatId: ChatId, subject: string, users: 
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
-        draftMessage: ""
+        draftMessage: "",
+        replyContext: null
     };
 }
 
@@ -560,6 +569,21 @@ export const getScrollTopAndBottom = () : Option<[number, number]> => {
     return [messagesDiv.scrollTop, messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop];
 }
 
+export const scrollToMessage = (containerDiv: HTMLDivElement, clientMessageId: string) => {
+    const messageDiv = document.getElementById(clientMessageId);
+    if (!messageDiv) {
+        return;
+    }
+    const targetScroll = Math.max(0, messageDiv.offsetTop - (containerDiv.clientHeight - messageDiv.clientHeight) / 2);
+    containerDiv.scrollTo({ top: targetScroll });
+}
+
+export const getClientMessageId = (messages: Message[], messageId: number) : string => {
+    const index = getMessageIndex(messages, messageId);
+    const message = messages[index];
+    return message.kind === "remote" ? "" : message.clientMessageId;
+}
+
 const removeMatchingUnconfirmedMessage = (chat: ConfirmedChat, clientMessageId: string) : Option<UnconfirmedMessage | P2PMessage> => {
     let indexOfMatch: number = -1;
     for (let index = chat.minimumUnconfirmedMessageIndex; index < chat.messages.length; index++) {
@@ -581,12 +605,6 @@ const getMessageIndex = (messages: Message[], messageId: number) : number => {
         : messageId;
 
     return messageId - lowestMessageId;
-}
-
-const getClientMessageId = (messages: Message[], messageId: number) : string => {
-    const index = getMessageIndex(messages, messageId);
-    const message = messages[index];
-    return message.kind === "remote" ? "" : message.clientMessageId;
 }
 
 const isScrolledToBottom = () : boolean => {

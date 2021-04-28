@@ -6,7 +6,7 @@ import Typography from "@material-ui/core/Typography";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import selectChat from "../../actions/chats/selectChat";
+import { gotoChatByIndex } from "../../actions/chats/gotoChat";
 import { Option } from "../../domain/model/common";
 import { UserId } from "../../domain/model/users";
 import { formatMessageDate } from "../../formatters/date";
@@ -98,7 +98,7 @@ function ChatListItem(props: Props) {
     }
 
     return (
-        <ListItem selected={props.selected} onClick={() => dispatch(selectChat(props.index))} className={classes.listItem} divider>
+        <ListItem selected={props.selected} onClick={() => dispatch(gotoChatByIndex(props.index))} className={classes.listItem} divider>
             <ListItemIcon>
                 {icon}
             </ListItemIcon>

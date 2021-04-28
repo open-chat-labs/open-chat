@@ -1,25 +1,32 @@
-import React from "react";
+import React, { useEffect } from "react";
 import  { Properties } from 'csstype';
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { alpha, darken } from "@material-ui/core/styles/colorManipulator";
 import makeStyles from "@material-ui/styles/makeStyles";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import gotoUser from "../../actions/chats/gotoUser";
+import { gotoChatById } from "../../actions/chats/gotoChat";
+import deselectMessage from "../../actions/chats/deselectMessage";
 import { Option } from "../../domain/model/common";
-import { UserSummary } from "../../domain/model/users";
-import { MessageContent } from "../../domain/model/messages";
+import { UserId, UserSummary } from "../../domain/model/users";
+import { MessageContent, ReplyContext } from "../../domain/model/messages";
 import TextContent from "../shared/TextContent";
+import MediaContent from "./MediaContent";
 import { ChatId } from "../../domain/model/chats";
 import MessageTimeAndTicks from "./MessageTimeAndTicks";
 import formatFileSize from "../../formatters/fileSize";
-import MessageContentComponent from "./MessageContent";
 import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
+import { selectReplyPrivatelyToMessage, selectReplyToMessage } from "../../actions/chats/replyToMessage";
+import MessageReplyPanel from "./MessageReplyPanel";
+import FileContent from "./FileContent";
+import CyclesContent from "./CyclesContent";
 
 export type Props = {
     chatId: Option<ChatId>,
     messageId: Option<number>,
+    userId: UserId,
     clientMessageId: string,
     content: MessageContent,
     date: Date,
@@ -30,12 +37,24 @@ export type Props = {
     groupPosition: MessageGroupPosition,
     confirmed: boolean,
     readByMe: boolean,
-    readByThem: boolean
+    readByThem: boolean,
+    repliesToContent: Option<MessageContent>,
+    repliesToChatId: Option<ChatId>,
+    repliesToMessageId: Option<number>,
+    repliesToMyMessage: boolean,
+    repliesToUsername: Option<string>,
+    selectEffect: boolean
+}
+
+type StyleProps = {
+    sentByMe: boolean,
+    contentBorderRadius: string,
+    selectEffect: boolean
 }
 
 export default React.memo(Message);
 
-const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
+const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     message: {
         maxWidth: 500,
         padding: 3,
@@ -57,7 +76,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     sentByMe: {
         alignSelf: "flex-end",
         color: theme.colors.messageSentByMe.textColor,
-        backgroundColor: theme.colors.messageSentByMe.backgroundColor,
+        backgroundColor: props => darken(theme.colors.messageSentByMe.backgroundColor, props.selectEffect ? 0.3 : 0),
         "&$text:hover $menu": {
             color: theme.colors.messageSentByMe.textColor,
             backgroundColor: theme.colors.messageSentByMe.backgroundColor,
@@ -69,7 +88,7 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     sentByElse: {
         alignSelf: "flex-start",
         color: theme.colors.messageSentByElse.textColor,
-        backgroundColor: theme.colors.messageSentByElse.backgroundColor,
+        backgroundColor: props => darken(theme.colors.messageSentByElse.backgroundColor, props.selectEffect ? 0.3 : 0),
         "& $caption, &$text:hover $menu": {
             color: theme.colors.messageSentByElse.textColor,
             backgroundColor: theme.colors.messageSentByElse.backgroundColor    
@@ -119,7 +138,6 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     mediaUncaptioned: {
         backgroundColor: "transparent",
         padding: 0,
-        maxWidth: 494,
         "& $timeAndTicks": {
             position: "absolute",
             right: 10,
@@ -159,33 +177,77 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         right: 0,
         visibility: "hidden",
         zIndex: 3,
-    }
+    },
+    contentContainer: {
+        backgroundColor: props => props.sentByMe 
+            ? theme.colors.messageSentByMe.highlightedContentBackgroundColor 
+            : theme.colors.messageSentByElse.highlightedContentBackgroundColor
+    },    
+    mediaNoCaption: {
+        position: "relative",
+        borderRadius: "inherit"
+    },
+    topPanel: {
+        borderRadius: props => props.contentBorderRadius
+    },
+    secondPanel: {
+        borderRadius: 6,
+        marginTop: 3
+    },
+    mediaContent: {
+        borderRadius: "inherit"
+    },
+    shadow: {
+        position: "absolute",
+        bottom: 0,
+        zIndex: 2,
+        width: "100%",
+        minWidth: 330,
+        height: 28,
+        background: "linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0.3))",
+        borderBottomLeftRadius: "inherit",
+        borderBottomRightRadius: "inherit"
+    }    
 }));
 
 function Message(props : Props) {
     const dispatch = useDispatch();
-    const classes = useStyles(props);
     const content = props.content;
 
-    let className = `${classes.message} ${(props.sentByMe ? classes.sentByMe : classes.sentByElse)}`;
-    let senderLink = null;
+    useEffect(() => {
+        if (props.selectEffect && props.chatId) {
+            const chatId = props.chatId;
+            setTimeout(() => {
+                dispatch(deselectMessage(chatId));
+            }, 1000);
+        }
+    }, [props.selectEffect]);
 
-    if (props.sender && (props.groupPosition == MessageGroupPosition.None || props.groupPosition == MessageGroupPosition.Top)) {
-        const sender = props.sender;
-        senderLink = <a 
-            className={classes.participant}
-            href="#" 
-            role="button" 
-            title={`Select chat with "${sender.username}"`}
-            onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>;
+    // Based on the position of this message within a "group" of messages derive these properties to be used in styling
+    const mergeWithNext = props.groupPosition === MessageGroupPosition.Top || props.groupPosition === MessageGroupPosition.Middle;
+    const mergeWithPrevious = props.groupPosition === MessageGroupPosition.Middle || props.groupPosition === MessageGroupPosition.Bottom;
+
+    // Calculate the border radius of the top-most message panel
+    let borderRadius = [6, 6, 6, 6];
+    if (!props.isGroupChat || props.sentByMe || content.kind === "media") {
+        borderRadius[0] = mergeWithPrevious && !props.sentByMe ? 2 : 13;
+        borderRadius[1] = mergeWithPrevious && props.sentByMe ? 2 : 13;
     }
+    const borderRadiusStr = borderRadius.map(e => e + "px").join(" ");
 
+    // Pass some props into useStyles to configure the JSS
+    const styleProps = {
+        sentByMe: props.sentByMe,
+        contentBorderRadius: borderRadiusStr,
+        selectEffect: props.selectEffect
+    };
+    const classes = useStyles(styleProps);
+
+    // Build up the combination of css classes applied to the container based on various factors
+    let className = `${classes.message} ${(props.sentByMe ? classes.sentByMe : classes.sentByElse)}`;
     if (!props.readByMe) {
         className += " unread " + classes.unread;
     }
-
-    const mergeWithNext = props.groupPosition === MessageGroupPosition.Top || props.groupPosition === MessageGroupPosition.Middle;
-    const mergeWithPrevious = props.groupPosition === MessageGroupPosition.Middle || props.groupPosition === MessageGroupPosition.Bottom;
     if (mergeWithNext) {
         className += " " + classes.mergeWithNext;
     }
@@ -193,56 +255,198 @@ function Message(props : Props) {
         className += " " + classes.mergeWithPrevious;
     }
 
-    let text;
-    let fileText;
-    let containerStyle: Properties = {};
-    if (content.kind === "media") {
-        className += " " + classes.media;
-        if (content.caption) {
-            const dimensions = scaleMediaContent(content.width, content.height, true);
-            containerStyle = {
-                width: (dimensions.width + 6) + "px"
-            };        
-        } else {
-            className += " " + classes.mediaUncaptioned;
+    // Is this message just standalone media
+    const isMediaNoCaption = content.kind === "media" && !content.caption && !props.repliesToContent;
+
+    // Calculate the dimensions of any media
+    let mediaDimensions = content.kind === "media" 
+        ? scaleMediaContent(content.width, content.height, true) 
+        : null;
+
+    // Dynamically build the child components that comprise the message
+    const children: JSX.Element[] = [];
+    {
+        // 1. Add the drop down menu
+        const buttons: MenuItem[] = [];
+        if (props.sentByMe) {
+            buttons.push({ text: "Info", action: () => {} });
         }
-        text = content.caption;
-    } else if (content.kind === "file") {
-        className += " " + classes.file;
-        fileText = content.mimeType.toUpperCase() + "-" + formatFileSize(content.size);
-    } else if (content.kind === "cycles") {
-        className += " " + classes.file;
-        text = content.caption;
-        fileText = content.caption ? null : "CYCLES TRANSFER";
-    } else  {
-        className += " " + classes.text;
-        text = content.text;
-    }
+        if (props.confirmed && props.chatId && props.messageId) {
+            const replyContext: ReplyContext = {
+                chatId: props.chatId,
+                messageId: props.messageId,
+                content: props.content,
+                userId: props.userId
+            };
 
-    const isMediaNoCaption = content.kind === "media" && !content.caption;
+            buttons.push({ text: "Reply", action: () => dispatch(selectReplyToMessage(replyContext)) });
+            if (props.sender) {
+                const sender = props.sender;
+                buttons.push({ text: "Reply privately", action: () => dispatch(selectReplyPrivatelyToMessage(replyContext, sender)) });
+            }
+            buttons.push({ text: "Forward", action: () => {} });
+            buttons.push({ text: "Star", action: () => {} });    
+        }
+        buttons.push({ text: "Delete", action: () => {} });
+        children.push(
+            <PopOverMenu 
+                icon={<ExpandMoreIcon />} 
+                menuItems={buttons} 
+                placement="bottom-end" 
+                className={classes.menu + " pop-over-menu-icon"} />
+        );
 
-    const messageTimeAndTicks = <MessageTimeAndTicks 
-        sentByMe={props.sentByMe} 
-        confirmed={props.confirmed} 
-        read={props.readByThem} 
-        date={props.date}
-        isOnMedia={isMediaNoCaption}
-        className={classes.timeAndTicks} />;
+        // 2. Conditionally add the sender link 
+        if (props.sender && (props.groupPosition == MessageGroupPosition.None || props.groupPosition == MessageGroupPosition.Top)) {
+            const sender = props.sender;
+            children.push(
+                <a 
+                    className={classes.participant}
+                    href="#" 
+                    role="button" 
+                    title={`Select chat with "${sender.username}"`}
+                    onClick={_ => dispatch(gotoUser(sender))}>{sender.username}</a>
+            );
+        }
 
-    let textComponent = null;
-    if (text) {
-        textComponent = <TextContent text={text} variant="body1" />;
-    } else if (fileText) {
-        textComponent = <span className={classes.fileSize}>{fileText}</span>;
-    }
+        // 3. Conditionally add the reply to message panel
+        if (props.repliesToContent) {
+            const className = classes.contentContainer + " " + classes.topPanel;
+            children.push(
+                <MessageReplyPanel
+                    repliesToChatId={props.repliesToChatId!}
+                    isPrivateReply={props.chatId !== props.repliesToChatId}
+                    content={props.repliesToContent}
+                    repliesToMyMessage={props.repliesToMyMessage}
+                    sentByMe={props.sentByMe}
+                    isGroupChat={props.isGroupChat}
+                    theirUsername={props.repliesToUsername}
+                    className={className}
+                    onClick={() => dispatch(gotoChatById(props.repliesToChatId!, props.repliesToMessageId!))}
+                />            
+            );
+        }
 
-    const buttons: MenuItem[] = [];
-    buttons.push({ text: "Reply", action: () => {} });
-    buttons.push({ text: "Forward", action: () => {} });
-    buttons.push({ text: "Star", action: () => {} });
-    buttons.push({ text: "Delete", action: () => {} });
-    //buttons.push({ text: "Reply", action: () => dispatch(replyToMessage(chat.chatId, userId)) });
+        // 4. Add any message type specific content
+        {            
+            let contentComponent;
+            let shadow;
+            let containerStyle;
+            switch (content.kind) {
+                case "file": 
+                    contentComponent = <FileContent 
+                        content={content} 
+                        sentByMe={props.sentByMe} />; 
+                    break;
+                case "cycles": 
+                    contentComponent = <CyclesContent 
+                        content={content} 
+                        sentByMe={props.sentByMe} 
+                        theirUsername={props.theirUsername} />; 
+                    break;
+                case "media": 
+                    contentComponent = <MediaContent 
+                        content={content} 
+                        ownsBlob={true} 
+                        width={mediaDimensions!.width} 
+                        height={mediaDimensions!.height} 
+                        className={classes.mediaContent} />; 
+                    // For some reason we need to set the width and height of container div for <Video /> content otherwise there is a padding glitch
+                    containerStyle = {
+                        width: mediaDimensions!.width + "px",
+                        height: mediaDimensions!.height + "px"
+                    };        
+                    // Add a shadow effect to bottom of media so the "time and ticks" can be seen
+                    if (!content.caption) {
+                        shadow = <div className={classes.shadow}></div>;
+                    }
+                    break;
+            }
+            if (contentComponent) {
+                const className = classes.contentContainer + " " + (props.repliesToContent ? classes.secondPanel : classes.topPanel);
+                children.push(
+                    <div className={isMediaNoCaption ? classes.mediaNoCaption : className} style={containerStyle}>
+                        {contentComponent}
+                    </div>
+                );
+
+                if (shadow) {
+                    children.push(shadow);
+                }
+            }
+        }
+
+        // 5. If this message is standalone media then render "time and ticks" directly otherwise wrap the text + "time and ticks" together
+        {
+            const messageTimeAndTicks = <MessageTimeAndTicks 
+                sentByMe={props.sentByMe} 
+                confirmed={props.confirmed} 
+                read={props.readByThem} 
+                date={props.date}
+                isOnMedia={isMediaNoCaption}
+                className={classes.timeAndTicks} />;
     
+            if (isMediaNoCaption) {
+                children.push(messageTimeAndTicks);
+            } else {
+                // 6. Build the text component
+                let text;
+                let fileText;
+                switch (content.kind) {
+                    case "media": 
+                        text = content.caption; 
+                        break;
+                    case "file": 
+                        fileText = content.mimeType.toUpperCase() + "-" + formatFileSize(content.size); 
+                        break;
+                    case "cycles": 
+                        text = content.caption;
+                        fileText = content.caption ? null : "CYCLES TRANSFER";
+                        break;
+                    default:
+                        text = content.text;
+                        break;
+                }
+                        
+                let textComponent = null;
+                if (text) {
+                    textComponent = <TextContent text={text} variant="body1" />;
+                } else if (fileText) {
+                    textComponent = <span className={classes.fileSize}>{fileText}</span>;
+                }
+                            
+                children.push(
+                    <div className={classes.textContainer}>
+                        {textComponent}
+                        {messageTimeAndTicks}
+                    </div>
+                );
+            }
+        }
+    }
+
+    // Build the class and style of the container
+    let containerStyle: Properties = {};
+    switch (content.kind) {
+        case "media":
+            className += " " + classes.media;
+            if (content.caption) {
+                containerStyle = {
+                    width: (mediaDimensions!.width + 6) + "px"
+                };        
+            } else {
+                className += " " + classes.mediaUncaptioned;
+            }
+            break;
+        case "file":
+        case "cycles": 
+            className += " " + classes.file;
+            break;
+        default:
+            className += " " + classes.text;
+            break;
+    }
+
     return (
         <div 
             id={props.clientMessageId}
@@ -250,23 +454,7 @@ function Message(props : Props) {
             data-message-id={props.messageId}
             className={className}
         >
-            <PopOverMenu icon={<ExpandMoreIcon />} menuItems={buttons} placement="bottom-end" className={classes.menu + " pop-over-menu-icon"} />
-            {senderLink}
-            <MessageContentComponent 
-                sentByMe={props.sentByMe} 
-                chatId={props.chatId} 
-                messageId={props.messageId}
-                isGroupChat={props.isGroupChat} 
-                mergeWithPrevious={mergeWithPrevious} 
-                theirUsername={props.theirUsername}
-                content={props.content}
-                />            
-            {isMediaNoCaption  ? 
-            messageTimeAndTicks : 
-            <div className={classes.textContainer}>
-                {textComponent}
-                {messageTimeAndTicks}
-            </div>}            
+            {children}
         </div>
     );
 }

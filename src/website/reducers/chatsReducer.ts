@@ -11,9 +11,8 @@ import {
     UNCONFIRMED_GROUP_CHAT
 } from "../constants";
 
-import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
+import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
-import { GET_MEDIA_SUCCEEDED, GetMediaSucceededEvent } from "../actions/chats/getMessageMedia";
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
@@ -98,6 +97,18 @@ import {
     RemoteUserTypingEvent
 } from "../actions/chats/userTyping";
 
+import {
+    REPLY_TO_MESSAGE_SELECTED,
+    REPLY_TO_MESSAGE_CANCELLED,
+    ReplyToMessageSelectedEvent,
+    ReplyToMessageCancelledEvent
+} from "../actions/chats/replyToMessage";
+
+import {
+    DESELECT_MESSAGE,
+    DeselectMessageEvent
+} from "../actions/chats/deselectMessage";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -115,17 +126,16 @@ const initialState: ChatsState = {
 type Event =
     AddParticipantsRequestedEvent |
     AddParticipantsFailedEvent |
-    ChatSelectedEvent |
     CreateGroupChatRequestedEvent |
     CreateGroupChatSucceededEvent |
     CreateGroupChatFailedEvent |
     CurrentUserTypingEvent |
     CurrentUserStoppedTypingEvent |
+    DeselectMessageEvent |
     DirectChatCreatedEvent |
     GetAllChatsRequestedEvent |
     GetAllChatsSucceededEvent |
     GetAllChatsFailedEvent |
-    GetMediaSucceededEvent |
     GetMessagesRequestedEvent |
     GetMessagesSucceededEvent |
     GetMessagesFailedEvent |
@@ -133,6 +143,7 @@ type Event =
     GetMessagesByIdSucceededEvent |
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
+    GotoChatEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -143,6 +154,8 @@ type Event =
     RemoveParticipantRequestedEvent |
     RemoteUserTypingEvent |
     RemoteUserStoppedTypingEvent |
+    ReplyToMessageSelectedEvent |
+    ReplyToMessageCancelledEvent |
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
@@ -151,27 +164,46 @@ type Event =
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
     switch (event.type) {
-        case CHAT_SELECTED: {
-            if (state.selectedChatIndex != null) {
-                const prevChat = state.chats[state.selectedChatIndex];
-                chatFunctions.saveDraftMessage(prevChat);
-                chatFunctions.freeMediaData(prevChat);
+        case GOTO_CHAT: {
+            const { chatIndex, messageId, missingMessages } = event.payload;
+            const hasChatChanged = chatIndex != null;
+            if (!hasChatChanged && (messageId == null || state.selectedChatIndex == null)) {
+                break;
             }
 
-            state.selectedChatIndex = event.payload;
-            const chat = state.chats[state.selectedChatIndex];
-            if (chatFunctions.isConfirmedChat(chat) && chat.maxLocalMessageId) {
-                const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
-                const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
-                const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);
+            if (hasChatChanged) {    
+                if (state.selectedChatIndex != null) {
+                    const prevChat = state.chats[state.selectedChatIndex];
+                    chatFunctions.saveDraftMessage(prevChat);
+                    chatFunctions.freeMediaData(prevChat);
+                }
 
-                if (minLocalMessageId !== minLocalMessageIdRequired) {
-                    chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
-                    chatFunctions.queueMissingMessagesForDownload(chat);
+                state.selectedChatIndex = chatIndex;
+            }
+            
+            const chat = state.chats[state.selectedChatIndex!];
+
+            if (chatFunctions.isConfirmedChat(chat)) {
+                chat.messageToSelect = messageId;
+
+                if (missingMessages.length > 0) {
+                    chatFunctions.addMessages(chat, missingMessages, true);
+                }    
+
+                if (hasChatChanged) {
+                    if (chat.maxLocalMessageId) {
+                        const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
+                        const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
+                        const minLocalMessageIdRequired = Math.max((chat.maxLocalMessageId ?? 0) + 1 - PAGE_SIZE, minMessageIdOnServer);            
+                        if (minLocalMessageId !== minLocalMessageIdRequired) {
+                            chatFunctions.extendMessagesRangeDownTo(chat, minLocalMessageIdRequired, true);
+                            chatFunctions.queueMissingMessagesForDownload(chat);
+                        }
+                    }
+
+                    chatFunctions.restoreDraftMessage(chat);
                 }
             }
-
-            chatFunctions.restoreDraftMessage(chat);
             break;
         }
 
@@ -193,9 +225,8 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case DIRECT_CHAT_CREATED: {
-            const { userId, chatId } = event.payload;
-            const newChat = chatFunctions.newUnconfirmedDirectChat(userId, chatId);
-            state.chats.unshift(newChat);
+            const { chat } = event.payload;
+            state.chats.unshift(chat);
             state.selectedChatIndex = 0;
             break;
         }
@@ -380,8 +411,8 @@ export default produce((state: ChatsState, event: Event) => {
         case SEND_MESSAGE_REQUESTED: {
             const payload = event.payload;
             const [chat, index] = chatFunctions.getChat(state.chats, payload.chat.chatId);
-            chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);
-
+            chatFunctions.addUnconfirmedMessage(chat, payload.clientMessageId, payload.content, payload.repliesTo);            
+            chat.replyContext = null;            
             state.chats.splice(index, 1);
             state.chats.unshift(chat);
             state.selectedChatIndex = 0;
@@ -445,23 +476,32 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
-        case GET_MEDIA_SUCCEEDED: {
-            const { chatId, messageId, data } = event.payload;
-            const [chat, index] = chatFunctions.getChat(state.chats, chatId);
-            // Only set the media data against the message if the chat is the selected chat
-            const message = chatFunctions.tryFindMessge(chat.messages, messageId);
-            if (message && 
-                message.kind === "local" && 
-                message.content.kind === "media" && 
-                !message.content.blobUrl && 
-                index === state.selectedChatIndex) {
-                message.content.blobUrl = dataToBlobUrl(data, message.content.mimeType);
-            }
+        case USER_LOGGED_OUT: {
+            return initialState;
+        }
+
+        case REPLY_TO_MESSAGE_SELECTED: {
+            const { replyContext, privateChatId } = event.payload;
+            const chatId = privateChatId ?? replyContext.chatId;
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
+            chat.replyContext = replyContext;
             break;
         }
 
-        case USER_LOGGED_OUT: {
-            return initialState;
+        case REPLY_TO_MESSAGE_CANCELLED: {
+            const { chatId } = event.payload;
+            const [ chat ] = chatFunctions.getChat(state.chats, chatId);
+            chat.replyContext = null;
+            break;
+        }
+
+        case DESELECT_MESSAGE: {
+            const { chatId } = event.payload;
+            const [ chat ] = chatFunctions.getConfirmedChat(state.chats, chatId);
+            if (chat) {
+                chat.messageToSelect = null;
+            }
+            break;
         }
     }
 }, initialState);
