@@ -9,7 +9,7 @@ import {
     RightPanelType,
 } from "../actions/changeSidePanel";
 
-import { CHAT_SELECTED, ChatSelectedEvent } from "../actions/chats/selectChat";
+import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
@@ -27,9 +27,9 @@ const initialState: SidePanelState = {
 type Event = 
     LeftPanelChangedEvent | 
     RightPanelChangedEvent | 
-    ChatSelectedEvent | 
     CreateGroupChatRequestedEvent | 
     DirectChatCreatedEvent |
+    GotoChatEvent | 
     UserLoggedOutEvent;
 
 export default produce((state: SidePanelState, event: Event) => {
@@ -42,10 +42,12 @@ export default produce((state: SidePanelState, event: Event) => {
             state.rightPanel = event.payload;
             break;
         }
-        case CHAT_SELECTED:
+        case GOTO_CHAT:
         case CREATE_GROUP_CHAT_REQUESTED:
         case DIRECT_CHAT_CREATED: {
-            state.rightPanel = RightPanelType.None;
+            if (event.type !== GOTO_CHAT || event.payload.chatIndex != null) {
+                state.rightPanel = RightPanelType.None;
+            }
             break;
         }
 

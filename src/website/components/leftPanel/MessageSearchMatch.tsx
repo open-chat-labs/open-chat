@@ -10,7 +10,7 @@ import * as chatFunctions from "../../domain/model/chats";
 import * as stateFunctions from "../../domain/stateFunctions";
 import { LocalMessage } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
-import selectChat from "../../actions/chats/selectChat";
+import { gotoChatByIndex } from "../../actions/chats/gotoChat";
 import { formatMessageDate } from "../../formatters/date";
 import TextContent from "../shared/TextContent";
 import { getContentAsText } from "../../domain/messageFunctions";
@@ -63,7 +63,7 @@ function MessageSearchMatch(props: Props) {
     }
 
     return (
-        <ListItem onClick={() => dispatch(selectChat(index, props.message.id))} className={classes.listItem} divider>
+        <ListItem onClick={() => dispatch(gotoChatByIndex(index, props.message.id))} className={classes.listItem} divider>
             <div className={classes.messageSummary}>
                 <div>
                     <Typography variant="caption" className={classes.date}>{formatMessageDate(props.message.date)}</Typography>

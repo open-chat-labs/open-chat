@@ -3,7 +3,7 @@ import chatsService from "../../services/chats/service";
 import { UserId, UserSummary } from "../../domain/model/users";
 import { RootState } from "../../reducers";
 import { ChatId, GroupChat } from "../../domain/model/chats";
-import { CONFIRMED_GROUP_CHAT, UNCONFIRMED_GROUP_CHAT } from "../../constants";
+import { UNCONFIRMED_GROUP_CHAT } from "../../constants";
 import Stopwatch from "../../utils/Stopwatch";
 
 export const ADD_PARTICIPANTS_REQUESTED = "ADD_PARTICIPANTS_REQUESTED";

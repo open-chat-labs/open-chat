@@ -105,10 +105,9 @@ const initialState: UsersState = {
 export default produce((state: UsersState, event: Event) => {
     switch (event.type) {
         case DIRECT_CHAT_CREATED: {
-            const user = event.payload;
+            const { user } = event.payload;
             const unknownUserIds = state.unknownUserIds;
             const userDictionary: any = state.userDictionary;
-
             setFunctions.remove(unknownUserIds, user.userId);
             if (!userDictionary.hasOwnProperty(user.userId)) {
                 userDictionary[user.userId] = user;

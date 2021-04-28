@@ -1,7 +1,7 @@
 import Dimensions from "../../utils/Dimensions";
 
 const MIN_MEDIA_WIDTH: number = 330;
-const MAX_MEDIA_DIMENSION: number = 500;
+const MAX_MEDIA_DIMENSION: number = 494;
 
 export function scaleMediaContent(width: number, height: number, applyMinWidth: boolean = false) : Dimensions {
     if (applyMinWidth && width < MIN_MEDIA_WIDTH) {

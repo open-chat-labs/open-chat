@@ -22,7 +22,7 @@ function replyContextFromCandid(value: any) : Option<ReplyContext> {
     return option
         ? {
             chatId: option.chat_id,
-            userId: option.user_id,
+            userId: userIdFromCandid(option.user_id),
             messageId: option.message_id,
             content: messageContentFromCandid(option.content)
         }
