@@ -7,17 +7,20 @@ import Photo from "@material-ui/icons/Photo";
 import Attachment from "@material-ui/icons/Attachment";
 import { RootState } from "../../reducers";
 import { getChatSubject } from "../../domain/stateFunctions";
+import { formatCycles } from "../../formatters/cycles";
 import Dimensions from "../../utils/Dimensions";
 import { Option } from "../../domain/model/common";
 import { ChatId } from "../../domain/model/chats";
 import { getContentAsText } from "../../domain/messageFunctions";
 import { MessageContent } from "../../domain/model/messages";
 import MediaContent from "./MediaContent";
+import { formatCyclesText } from "./CyclesContent";
 
 export interface Props {
     content: MessageContent,
     repliesToMyMessage: boolean,
     repliesToChatId: ChatId,
+    repliesToUsername: Option<string>,
     isPrivateReply: boolean,
     sentByMe: boolean,
     isGroupChat: boolean,
@@ -48,7 +51,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     },
     text: {
         maxHeight: 71,
-        minWidth: 300,
+        minWidth: 180,
         overflow: "hidden",
         textOverflow: "ellipsis",
         wordWrap: "break-word",
@@ -95,7 +98,7 @@ function MessageReplyPanel(props : Props): JSX.Element {
 
     const classes = useStyles(styleProps);
     let text = getContentAsText(props.content);
-    let by = props.repliesToMyMessage ? "You" : props.theirUsername ?? "Unknown";
+    let by = props.repliesToMyMessage ? "You" : props.repliesToUsername ?? "Unknown";
     if (chatSubject) {
         by += " - " + chatSubject;
     }
@@ -115,8 +118,8 @@ function MessageReplyPanel(props : Props): JSX.Element {
         />;
         icon = <Photo className={classes.icon} />;
     } else if (props.content.kind === "cycles") {
-        rightContent = <div className={classes.cyclesIcon}>💸</div>;
-        text += props.sentByMe ? " sent" : " received";
+        rightContent = <div className={classes.cyclesIcon}>🎉</div>;
+        text = formatCyclesText(props.content.amount, props.repliesToMyMessage, props.theirUsername);
     } else if (props.content.kind === "file") {
         icon = <Attachment className={classes.icon} />;
     }

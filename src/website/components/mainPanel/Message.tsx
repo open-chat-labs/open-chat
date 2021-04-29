@@ -320,7 +320,8 @@ function Message(props : Props) {
                     repliesToMyMessage={props.repliesToMyMessage}
                     sentByMe={props.sentByMe}
                     isGroupChat={props.isGroupChat}
-                    theirUsername={props.repliesToUsername}
+                    theirUsername={props.theirUsername}
+                    repliesToUsername={props.repliesToUsername}
                     className={className}
                     onClick={() => dispatch(gotoChatById(props.repliesToChatId!, props.repliesToMessageId!))}
                 />            

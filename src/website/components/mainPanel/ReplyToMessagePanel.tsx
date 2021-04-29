@@ -5,7 +5,9 @@ import { darken } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import Container from "@material-ui/core/Container";
 import { RootState } from "../../reducers";
+import { Option } from "../../domain/model/common";
 import { getSelectedChat } from "../../domain/stateFunctions";
+import { UserId } from "../../domain/model/users";
 import * as chatFunctions from "../../domain/model/chats";
 import { cancelReplyToMessage } from "../../actions/chats/replyToMessage";
 import CloseButton from "../shared/CloseButton";
@@ -52,6 +54,12 @@ function ReplyToMessagePanel() {
         const repliesToUsername = !repliesToMyMessage && userMap.hasOwnProperty(replyContext.userId)
             ? userMap[replyContext.userId].username
             : null;
+        let theirUsername;
+        if (chatFunctions.isDirectChat(chat)) {
+            theirUsername = userMap.hasOwnProperty(chat.them)
+            ? userMap[chat.them].username
+            : null;
+        }
 
         panel = 
             <div className={classes.innerContainer}>
@@ -62,7 +70,8 @@ function ReplyToMessagePanel() {
                     repliesToMyMessage={repliesToMyMessage}
                     sentByMe={false}
                     isGroupChat={chatFunctions.isGroupChat(chat)}
-                    theirUsername={repliesToUsername}
+                    theirUsername={theirUsername}
+                    repliesToUsername={repliesToUsername}
                     className={classes.contentContainer}
                 />            
                 <CloseButton className={classes.closeButton} onClick={closePanel} />

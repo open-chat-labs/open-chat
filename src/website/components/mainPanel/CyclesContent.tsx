@@ -14,6 +14,10 @@ export interface Props {
     theirUsername: Option<string>
 }
 
+export function formatCyclesText(amount: bigint, sentTo: boolean, them: Option<string>) : string {
+    return formatCycles(amount) + (sentTo ? " sent to " : " received from ") + (them ?? "unknown");
+}
+
 const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     cycles: {
         padding: "0 12px",
@@ -30,8 +34,8 @@ function CyclesContent(props : Props): JSX.Element {
     const classes = useStyles(props);
     return (
         <div className={classes.cycles}>    
-            <Typography className={classes.icon}>💸</Typography>
-            <Typography variant="body1">{formatCycles(props.content.amount)} {props.sentByMe ? "sent to" : "received from"} {props.theirUsername ?? "unknown"}</Typography>
+            <Typography className={classes.icon}>🎉</Typography>
+            <Typography variant="body1">{formatCyclesText(props.content.amount, props.sentByMe, props.theirUsername)}</Typography>
         </div>
     );
 }
