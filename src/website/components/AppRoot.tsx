@@ -10,12 +10,12 @@ import Container from "@material-ui/core/Container";
 import App from "./App";
 import store from "../store";
 import CanisterClientFactory from "../services/CanisterClientFactory";
-import authClient from "../utils/authClient";
 import Login from "./Login";
 import ThemeProvider from "./ThemeProvider";
 import { UserRegistrationStatus } from "../reducers/usersReducer";
 import RegisterUser from "./RegisterUser";
 import getCurrentUser from "../actions/users/getCurrentUser";
+import getAuthClient from "../utils/authClient";
 
 export default AppRoot;
 
@@ -65,12 +65,7 @@ function AppRoot() {
 }
 
 function AppContainer() {
-    // If the url contains the authentication token then
-    // 1. extract it and store it locally
-    // 2. Remove the url fragment
-    authClient.handleRedirectCallback(location);
-
-    const identity = authClient.getIdentity();
+    const identity = getAuthClient().getIdentity();
     const isAnonymous = identity.getPrincipal().isAnonymous();
     CanisterClientFactory.current = new CanisterClientFactory(identity);
 

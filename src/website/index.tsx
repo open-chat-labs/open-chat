@@ -8,6 +8,4 @@ import startup from "./startup"
 
 document.title = APP_TITLE;
 
-startup();
-
-ReactDOM.render(<AppRoot />, document.getElementById("app"));
+startup().then(() => ReactDOM.render(<AppRoot />, document.getElementById("app")));
