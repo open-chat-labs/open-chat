@@ -11,7 +11,7 @@ export default function login() {
             identityProvider: IDP_URL,
             onSuccess: () => {
                 CanisterClientFactory.current = new CanisterClientFactory(authClient.getIdentity());
-                dispatch(getCurrentUser())
+                dispatch(getCurrentUser());
             }
         });
     }
