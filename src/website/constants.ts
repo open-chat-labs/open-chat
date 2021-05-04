@@ -1,6 +1,6 @@
 export const APP_TITLE = "Open Chat";
 
-export const IDP_URL = 'https://identity.messaging.ic0.app/authorize';
+export const IDP_URL = 'https://identity.messaging.dfinity.network/';
 
 export const PAGE_SIZE = 20;
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
