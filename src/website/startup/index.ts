@@ -1,7 +1,9 @@
 import tagManagerHeaderTag from "../analytics/ga/tagManagerHeaderScript.html";
 import tagManagerBodyTag from "../analytics/ga/tagManagerBodyScript.html";
+import * as authClient from "../utils/authClient";
 
-export default function() {
+export default async function() : Promise<void> {
+    await authClient.init();
     insertGoogleTagManagerScripts();
     setupBigIntSerialization();
 }

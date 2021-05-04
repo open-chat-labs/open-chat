@@ -5,9 +5,11 @@ import { Option } from "../../domain/model/common";
 import { UserId } from "../../domain/model/users";
 import * as chatFunctions from "../../domain/model/chats";
 import * as stateFunctions from "../../domain/stateFunctions";
+import { sentByMe } from "../../domain/model/messages";
 import { getContentAsText } from "../../domain/messageFunctions";
+import { formatCyclesText } from "../mainPanel/CyclesContent";
 
-export function build(chat: Chat, userDictionary: any, index: number, selectedChatIndex: Option<number>) : JSX.Element {
+export function build(chat: Chat, userDictionary: any, index: number, selectedChatIndex: Option<number>, me: UserId) : JSX.Element {
     let name: string;
     let key: string;
     let isGroup: boolean;
@@ -41,7 +43,11 @@ export function build(chat: Chat, userDictionary: any, index: number, selectedCh
     for (let i = chat.messages.length - 1; i >= 0; i--) {
         const message = chat.messages[i];
         if ("content" in message) {
-            latestMessageText = getContentAsText(message.content);
+            if (message.content.kind === "cycles") {
+                latestMessageText = formatCyclesText(message.content.amount, sentByMe(message, me), name);
+            } else {
+                latestMessageText = getContentAsText(message.content);
+            }
             break;
         }
     }

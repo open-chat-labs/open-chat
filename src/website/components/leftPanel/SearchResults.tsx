@@ -45,6 +45,7 @@ export default React.memo(SearchResults);
 function SearchResults(props: Props) {
     const dispatch = useDispatch();
     const chats = useSelector((state: RootState) => state.chatsState.chats);
+    const me = useSelector((state: RootState) => state.usersState.me?.userId) ?? "";
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const [messageMatches, setMessageMatches] = useState<MessageMatch[]>([]);
     const getUser = (userId: UserId) => stateFunctions.getUserSummary(userId, userDictionary);
@@ -88,7 +89,7 @@ function SearchResults(props: Props) {
     const groups: JSX.Element[] = [];
     if (chatMatches.length) {
         groups.push(createGroup("Chats", chatMatches.map(([chat, index]) =>
-            chatListItemBuilder.build(chat, userDictionary, index, null))));
+            chatListItemBuilder.build(chat, userDictionary, index, null, me))));
     }
 
     if (userMatches.length) {

@@ -7,11 +7,12 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@dfinity/authentication": "^0.8.4",
+    "@dfinity/auth-client": "^0.8.6",
+    "@dfinity/authentication": "^0.8.6",
     "@emotion/react": "^11.1.5",
     "@emotion/styled": "^11.1.5",
-    "@material-ui/core": "^5.0.0-alpha.26",
-    "@material-ui/icons": "^5.0.0-alpha.26",
+    "@material-ui/core": "5.0.0-alpha.26",
+    "@material-ui/icons": "5.0.0-alpha.26",
     "@reduxjs/toolkit": "1.5.0",
     "@types/async": "^3.2.5",
     "@types/emoji-mart": "^3.0.4",

@@ -98,3 +98,11 @@ export type ReplyContext = {
     messageId: number,
     content: MessageContent
 }
+
+export function sentByMe(message: Message, me: UserId): boolean {
+    if ("sender" in message) {
+        return message.sender === me;
+    }
+
+    return true;
+}

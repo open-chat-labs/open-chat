@@ -140,12 +140,14 @@ export default produce((state: UsersState, event: Event) => {
 
         case GET_CURRENT_USER_SUCCEEDED: {
             state.userRegistrationStatus = UserRegistrationStatus.Registered;
+            state.sessionExpired = false;
             state.me = {...event.payload, imageBlobUrl: state.me?.imageBlobUrl ?? null};
             break;
         }
 
         case GET_CURRENT_USER_FAILED: {
             state.userRegistrationStatus = UserRegistrationStatus.NotRegistered;
+            state.sessionExpired = false;
             state.me = null;
             break;
         }
