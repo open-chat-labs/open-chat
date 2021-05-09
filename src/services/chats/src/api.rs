@@ -35,6 +35,16 @@ fn remove_participant(chat_id: ChatId, user: UserId) -> remove_participant::Resp
 }
 
 #[update]
+fn leave_group(chat_id: ChatId) -> leave_group::Response {
+    leave_group::update(chat_id)
+}
+
+#[update]
+fn delete_group(chat_id: ChatId) -> delete_group::Response {
+    delete_group::update(chat_id)
+}
+
+#[update]
 fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
     put_chunk::update(blob_id, chunk_index, data);
     true
