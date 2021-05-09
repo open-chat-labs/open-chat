@@ -83,11 +83,7 @@ impl GroupChat {
         }
     }
 
-    pub fn add_participants(&mut self, requested_by: &UserId, users_to_add: Vec<UserId>, now: Timestamp) -> Option<u32> {
-        if !self.is_admin(requested_by) {
-            return None;
-        }
-
+    pub fn add_participants(&mut self, users_to_add: Vec<UserId>, now: Timestamp) -> Option<u32> {
         let mut count_added = 0;
         for user_to_add in users_to_add {
             if self.find_participant(&user_to_add).is_some() {
@@ -102,29 +98,27 @@ impl GroupChat {
         Some(count_added)
     }
 
-    pub fn remove_participant(&mut self, requested_by: &UserId, user_to_remove: &UserId, now: Timestamp) -> Option<bool> {
-        if !self.is_admin(requested_by) {
-            return None;
-        }
-
+    pub fn remove_participant(&mut self, user_to_remove: &UserId, now: Timestamp) -> bool {
         let original_count = self.participants.len();
         self.participants.retain(|p| p.user_id != *user_to_remove);
         let new_count = self.participants.len();
-
         self.last_updated = now;
-
-        Some(new_count < original_count)
+        new_count < original_count
     }
 
     pub fn get_min_visible_message_id(&self, user: &UserId) -> u32 {
         self.find_participant(user).unwrap().min_visible_message_id
     }
 
-    fn is_admin(&self, user: &UserId) -> bool {
+    pub fn is_admin(&self, user: &UserId) -> bool {
         match self.find_participant(user) {
             Some(p) => p.admin,
             None => false
         }
+    }
+
+    pub fn get_admin_count(&self) -> usize {
+        self.participants.iter().map(|p| p.admin).len()
     }
 
     fn find_participant(&self, user_id: &UserId) -> Option<&Participant> {
@@ -150,6 +144,21 @@ impl GroupChat {
         range_set.remove_range(0..=(min_visible_message_id - 1));
 
         utils::range_set_to_vec(range_set)
+    }
+
+    pub fn leave(&mut self, user_to_remove: &UserId, now: Timestamp) -> Option<bool> {
+        let original_count = self.participants.len();
+
+        if (self.is_admin(&user_to_remove) && self.get_admin_count() == 1) || original_count == 1 {
+            // Cannot leave the group if you are the last admin or the last participant (this should not happen)
+            return None;
+        }
+        
+        self.participants.retain(|p| p.user_id != *user_to_remove);
+        self.last_updated = now;
+        let new_count = self.participants.len();
+
+       Some(new_count < original_count)
     }
 }
 

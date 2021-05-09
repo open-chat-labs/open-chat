@@ -1,31 +1,24 @@
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
-use shared::timestamp;
-use shared::user_id::UserId;
 use crate::domain::chat::ChatEnum;
 use crate::domain::chat_list::ChatList;
 use self::Response::*;
 
-pub fn update(chat_id: ChatId, user: UserId) -> Response {
+pub fn update(chat_id: ChatId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
     let me = shared::user_id::get_current();
-    let now = timestamp::now();
-
     let chat = chat_list.get_mut(chat_id, &me);
-
     match chat {
         Some(ChatEnum::Group(group_chat)) => {
-            if me == user {
-                return CannotRemoveSelfFromChat;
-            }
-            if !group_chat.is_admin(&user) {
+            if !group_chat.is_admin(&me) {
                 return Unauthorized;
             }
-            match group_chat.remove_participant(&me, now) {
-                true => Success,
-                false => ParticipantNotFound
+            if group_chat.get_admin_count() == 1 {
+                return OnlyLastAdminCanDelete;
             }
+            chat_list.delete_chat(chat_id);
+            Success
         },
         Some(_) => NotGroupChat,
         None => ChatNotFound
@@ -36,8 +29,7 @@ pub fn update(chat_id: ChatId, user: UserId) -> Response {
 pub enum Response {
     Success,
     Unauthorized,
-    ParticipantNotFound,
-    CannotRemoveSelfFromChat,
+    OnlyLastAdminCanDelete,
     ChatNotFound,
     NotGroupChat
 }

@@ -16,7 +16,10 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
     match chat {
         Some(ChatEnum::Group(group_chat)) => {
             let now = timestamp::now();
-            match group_chat.add_participants(&me, users, now) {
+            if !group_chat.is_admin(&me) {
+                return Unauthorized;
+            }
+            match group_chat.add_participants(users, now) {
                 Some(count_added) => Success(count_added),
                 None => Unauthorized
             }

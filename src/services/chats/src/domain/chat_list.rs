@@ -102,6 +102,10 @@ impl ChatList {
             .map(|(i, chat)| chat.to_summary(user, if i == 0 {top_message_count} else {1}))
             .collect()
     }
+
+    pub fn delete_chat(&mut self, chat_id: ChatId) {
+        self.chats.remove(&chat_id);
+    }
 }
 
 impl StableState for ChatList {

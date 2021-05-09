@@ -129,6 +129,24 @@ type RemoveParticipantResponse =
         NotGroupChat;
     };
 
+type LeaveGroupResponse =
+    variant {
+        Success;
+        ParticipantNotFound;
+        CannotLeaveGroupEmpty;
+        ChatNotFound;
+        NotGroupChat;
+    };
+
+type DeleteGroupResponse =
+    variant {
+        Success;
+        Unauthorized;
+        OnlyLastAdminCanDelete;
+        ChatNotFound;
+        NotGroupChat;
+    };
+
 type GetChatsRequest =
     record {
         updated_since: opt Timestamp;
@@ -229,6 +247,8 @@ service : {
     mark_read: (ChatId, nat32, nat32) -> (MarkReadResponse);
     add_participants: (ChatId, vec UserId) -> (AddParticipantsResponse);
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
+    leave_group: (ChatId) -> (LeaveGroupResponse);
+    delete_group: (ChatId) -> (DeleteGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
