@@ -20,7 +20,8 @@ export interface MyProfile {
 };
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'Success' : MyProfile } |
-  { 'UserExists' : null };
+  { 'UserExists' : null } |
+  { 'UserLimitReached' : bigint };
 export interface SearchUsersRequest {
   'max_results' : number,
   'search_term' : string,

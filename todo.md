@@ -20,19 +20,19 @@
   - Status
   - QR code (principal)
 - <del>Emoticons</del>
-- Authentication
+- <del>Authentication</del>
 - <del>Read receipts</del>
 - Delete my account
 - Find contacts (phone number, email, ...)
 - Add contacts
 - <del>Send images</del>
 - <del>Send videos</del>
-- Captions on images and video
+- <del>Captions on images and video</del>
 - Audio message
 - Stream videos
 - Fully responsive to mobile devices
-- Dark-mode
-- Send cycles / tokens
+- <del>Dark-mode</del>
+- Send cycles
 - Block contact
 - Draft/notes area 
 - Browser push notifications
@@ -92,3 +92,14 @@
   - Star message
   - Reply to message
   - Forward message
+
+# Ahead of mainnet release
+* Limit users to 1000
+- Validation on all user input
+* Limit image size to 1Mb
+* Limit video size to 5Mb
+* Limit other file size to 1Mb
+X Limit number of chats per user to 100
+- While the canister memory remaining is within a threshold then delete file data oldest first and add a flag to the corresponding message
+- Add dialog on first start expaining this is a demo version + link to dialog from menu
+- Fix issue where refresh takes user to sign-in page
