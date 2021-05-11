@@ -4,10 +4,16 @@ import Paperclip from "../../assets/icons/paperclip.svg";
 import { DraftMessageContent } from "../../domain/model/messages";
 import { dataToBlobUrl } from "../../utils/blobFunctions";
 import Dimensions from "../../utils/Dimensions";
+import { MAX_FILE_SIZE, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from "../../constants";
 
 export interface Props {
     className: string,
-    onFileSelected: (content: DraftMessageContent) => void
+    onFileSelected: (content: DraftMessageContent) => void,
+    onFileValidationError: (error: FileValidationError, mimeType: string) => void
+}
+
+export enum FileValidationError {
+    FileTooBig
 }
 
 export default React.memo(AttachFile);
@@ -32,10 +38,18 @@ function AttachFile(props: Props) {
         const reader = new FileReader();
         reader.onload = async function(e: any) {
             const mimeType = file.type;
+            const data: ArrayBuffer = e.target.result;
             let content: DraftMessageContent;
-            if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {                
 
-                const blobUrl = dataToBlobUrl(e.target.result, mimeType);
+            if ((mimeType.startsWith("image/") && data.byteLength > MAX_IMAGE_SIZE) ||
+                (mimeType.startsWith("video/") && data.byteLength > MAX_VIDEO_SIZE) || 
+                (data.byteLength > MAX_FILE_SIZE) ) {
+                props.onFileValidationError(FileValidationError.FileTooBig, mimeType);
+                return;
+            }
+
+            if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {                
+                const blobUrl = dataToBlobUrl(data, mimeType);
 
                 const extract = mimeType.startsWith("image/")
                     ? await extractImageThumbnail(blobUrl)
