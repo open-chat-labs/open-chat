@@ -9,6 +9,7 @@ export const REGISTER_USER_SUCCEEDED = "REGISTER_USER_SUCCEEDED";
 export const REGISTER_USER_FAILED_USER_EXISTS = "REGISTER_USER_FAILED_USER_EXISTS";
 export const REGISTER_USER_FAILED_USERNAME_EXISTS = "REGISTER_USER_FAILED_USERNAME_EXISTS";
 export const REGISTER_USER_FAILED = "REGISTER_USER_FAILED";
+export const REGISTER_USER_LIMIT_REACHED = "REGISTER_USER_LIMIT_REACHED";
 
 export default function(username: string) {
     return async (dispatch: Dispatch<any>) => {
@@ -42,6 +43,12 @@ export default function(username: string) {
                     payload: username
                 } as RegisterUserFailedUsernameExistsEvent;
                 break;
+            case "userLimitReached":
+                outcomeEvent = {
+                    type: REGISTER_USER_LIMIT_REACHED,
+                    payload: result.userLimit
+                } as RegisterUserLimitReachedEvent;
+                break;
             case "httpError": 
                 outcomeEvent = {
                     type: REGISTER_USER_FAILED,
@@ -55,7 +62,7 @@ export default function(username: string) {
     }
 }
 
-export type RegisterUserOutcomeEvent = RegisterUserSucceededEvent | RegisterUserFailedUserExistsEvent | RegisterUserFailedUsernameExistsEvent | RegisterUserFailedEvent;
+export type RegisterUserOutcomeEvent = RegisterUserSucceededEvent | RegisterUserFailedUserExistsEvent | RegisterUserFailedUsernameExistsEvent | RegisterUserFailedEvent | RegisterUserLimitReachedEvent;
 
 export type RegisterUserRequestedEvent = {
     type: typeof REGISTER_USER_REQUESTED,
@@ -79,4 +86,9 @@ export type RegisterUserFailedUserExistsEvent = {
 export type RegisterUserFailedUsernameExistsEvent = {
     type: typeof REGISTER_USER_FAILED_USERNAME_EXISTS,
     payload: string
+}
+
+export type RegisterUserLimitReachedEvent = {
+    type: typeof REGISTER_USER_LIMIT_REACHED,
+    payload: bigint
 }

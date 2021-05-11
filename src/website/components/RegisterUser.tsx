@@ -7,7 +7,7 @@ import PersonIcon from '@material-ui/icons/Person';
 import Typography from "@material-ui/core/Typography";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_EXISTS, REGISTER_USER_FAILED_USER_EXISTS, REGISTER_USER_SUCCEEDED } from "../actions/users/registerUser";
+import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_EXISTS, REGISTER_USER_FAILED_USER_EXISTS, REGISTER_USER_LIMIT_REACHED, REGISTER_USER_SUCCEEDED } from "../actions/users/registerUser";
 import NameInput from "./shared/NameInput";
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -19,7 +19,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     icon: {
         width: 80,
-        height: 80
+        height: 80,
+        alignSelf: "center"
     },
     button: {
         color: theme.colors.loginRegister.buttonTextColor,
@@ -38,9 +39,15 @@ const useStyles = makeStyles((theme: Theme) => ({
         color: '#fff',
     },
     errorText: {
-        height: 20,
+        minHeight: 20,
+        maxWidth: 400,
         marginTop: 20,
-        color: "red"
+        color: "red",
+        alignSelf: "center"
+    },
+    errorContainer: {
+        display: "flex",
+        justifyContent: "center"
     }
 }));
 
@@ -66,6 +73,9 @@ export default function RegisterUser() {
                     case REGISTER_USER_FAILED_USERNAME_EXISTS:
                         setErrorText("A user already exists with this username - please try another username");
                         break;
+                    case REGISTER_USER_LIMIT_REACHED:
+                        setErrorText(`The number of users of this demo version of OpenChat has been limited to ${outcome.payload} and this limit has been reached. Check back soon for the full release!`);
+                        break;
                 }
                 setLoading(false);
             });
@@ -84,12 +94,14 @@ export default function RegisterUser() {
                     maxLength={25}
                     className={classes.nameInput}
                     disabled={loading} />
-                <Typography
-                    component="div"
-                    variant="body1"
-                    className={classes.errorText}>
-                    {errorText}
-                </Typography>
+                <div className={classes.errorContainer}>
+                    <Typography
+                        component="div"
+                        variant="body1"
+                        className={classes.errorText}>
+                        {errorText}
+                    </Typography>
+                </div>
             </Paper>
             <Backdrop className={classes.backdrop} open={loading}>
                 <CircularProgress color="inherit" />

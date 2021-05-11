@@ -27,6 +27,12 @@ export default async function(username: string) : Promise<RegisterUserResponse> 
         return {
             kind: "usernameTaken"
         };
+    } else if ("UserLimitReached" in response) {
+        const userLimit = response.UserLimitReached;
+        return {
+            kind: "userLimitReached",
+            userLimit
+        };
     } else {
         throw new Error("Unrecognised 'register_user' response");
     }
@@ -36,6 +42,7 @@ export type RegisterUserResponse =
     Success |
     UserExists |
     UsernameTaken |
+    UserLimitReached |
     HttpError;
 
 export type Success = {
@@ -49,4 +56,9 @@ export type UserExists = {
 
 export type UsernameTaken = {
     kind: "usernameTaken"
+}
+
+export type UserLimitReached = {
+    kind: "userLimitReached",
+    userLimit: bigint
 }

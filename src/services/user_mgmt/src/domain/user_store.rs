@@ -7,6 +7,8 @@ use shared::storage::StableState;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 
+const MAX_USERS: u64 = 1000;
+
 #[derive(Default)]
 pub struct UserStore {
     data: MultiMap<UserId, String, User>
@@ -47,7 +49,8 @@ pub struct UserSummary {
 pub enum RegisterUserResponse {
     Success(MyProfile),
     UserExists,
-    UsernameTaken
+    UsernameTaken,
+    UserLimitReached(u64)
 }
 
 #[derive(CandidType)]
@@ -73,6 +76,10 @@ pub struct TransferCyclesResult {
 
 impl UserStore {
     pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResponse {
+        if self.data.iter().count() >= (MAX_USERS as usize) {
+            return RegisterUserResponse::UserLimitReached(MAX_USERS);
+        }
+
         if self.data.contains_key(&user_id) { return RegisterUserResponse::UserExists; }
         if self.data.contains_key_alt(&username) { return RegisterUserResponse::UsernameTaken; }
 
