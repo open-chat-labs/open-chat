@@ -9,13 +9,12 @@ import UserMgmtService from "./userMgmt/user_mgmt";
 import { getCanisterIds } from "../utils/canisterFunctions";
 
 export default class CanisterClientFactory {
-    private readonly _chatsActor: ChatsService
-    private readonly _p2pActor: P2pService
-    private readonly _userMgmtActor: UserMgmtService
+    private readonly _chatsActor: ChatsService;
+    private readonly _p2pActor: P2pService;
+    private readonly _userMgmtActor: UserMgmtService;
 
     constructor(userId: Identity) {
         const agent = new HttpAgent({
-            host: "",
             identity: userId,
         });
 
