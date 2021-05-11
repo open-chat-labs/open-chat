@@ -1,4 +1,4 @@
-export const APP_TITLE = "Open Chat";
+export const APP_TITLE = "OpenChat";
 
 export const IDP_URL = 'https://identity.messaging.ic0.app/authorize';
 export const IDP_URL = 'http://identity.localhost/';
