@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import IconButton from "@material-ui/core/IconButton";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -9,7 +9,7 @@ import { Option } from "../../domain/model/common";
 import * as chatFunctions from "../../domain/model/chats";
 import sendMessage from "../../actions/chats/sendMessage";
 import { getSelectedChat, getUserSummary } from "../../domain/stateFunctions";
-import AttachFile from "./AttachFile";
+import AttachFile, { FileValidationError } from "./AttachFile";
 import { RootState } from "../../reducers";
 import SendCycles, { ISendCyclesRef } from "./SendCycles";
 import MessageTextInput, { IMessageTextInputRef } from "./MessageTextInput";
@@ -23,6 +23,7 @@ import DraftFileMessage from "./DraftFileMessage";
 import { DraftMessageContent, ReplyContext } from "../../domain/model/messages";
 import ReplyToMessagePanel from "./ReplyToMessagePanel";
 import { Chat } from "../../domain/model/chats";
+import AlertDialog, { AlertContent } from "../AlertDialog";
 
 export default React.memo(Footer);
 
@@ -85,6 +86,7 @@ function Footer() {
     const dispatch = useDispatch();
     const [messagePanelState, setMessagePanel] = useState(MessagePanelState.Closed);
     const [textBoxText, setTextBoxText] = useState("");
+    const [alertContent, setAlertContent] = useState<Option<AlertContent>>(null);
     const sendCyclesRef = useRef<ISendCyclesRef>(null);
     const textBoxRef = useRef<IMessageTextInputRef>(null);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
@@ -179,6 +181,28 @@ function Footer() {
             changeMessagePanel(MessagePanelState.SendFile, true);
         }
     }
+    
+    function onFileValidationError(error: FileValidationError, mimeType: string) {
+        let title;
+        let type;
+        let size;
+        // TODO: derive size text from constants
+        if (mimeType.startsWith("image/")) {
+            title = "Image too big";
+            type = "images";
+            size = "1 Mb";
+        } else if (mimeType.startsWith("video/")) {
+            title = "Video too big";
+            type = "videos";
+            size = "5 Mb";
+        } else {
+            title = "File too big";
+            type = "files";
+            size = "1 Mb";
+        }
+        let message = `You are limited to ${type} of size ${size}`;
+        setAlertContent({ title, message });
+    }
 
     function onTextChanged(text: string) {
         setTextBoxText(text);
@@ -226,40 +250,44 @@ function Footer() {
         className={classes.button} />;
 
     return (
-        <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
-            <footer className={classes.footer}>
-                <ReplyToMessagePanel />
-                {messagePanel}
-                <div className={classes.container}>
-                    <div className={classes.buttons}>
-                        {messagePanelState !== MessagePanelState.EmojiPicker ?
-                        <IconButton
-                            onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker, true)}
-                            className={classes.button}>
-                            <Smiley />
-                        </IconButton> : closeButton}
-                        {(messagePanelState != MessagePanelState.SendFile) ?
-                        <AttachFile
-                            onFileSelected={onFileAttached}
-                            className={classes.button} /> : closeButton}
-                        {them && messagePanelState !== MessagePanelState.SendCycles ?
-                        <IconButton
-                            className={classes.button}
-                            onClick={_ => changeMessagePanel(MessagePanelState.SendCycles, true)}>
-                            <Dollar />
-                        </IconButton> : (them ? closeButton : null)}
+        <>
+            <AlertDialog content={alertContent} onClose={() => setAlertContent(null)} />
+            <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
+                <footer className={classes.footer}>
+                    <ReplyToMessagePanel />
+                    {messagePanel}
+                    <div className={classes.container}>
+                        <div className={classes.buttons}>
+                            {messagePanelState !== MessagePanelState.EmojiPicker ?
+                            <IconButton
+                                onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker, true)}
+                                className={classes.button}>
+                                <Smiley />
+                            </IconButton> : closeButton}
+                            {(messagePanelState != MessagePanelState.SendFile) ?
+                            <AttachFile
+                                onFileSelected={onFileAttached}
+                                onFileValidationError={onFileValidationError}
+                                className={classes.button} /> : closeButton}
+                            {them && messagePanelState !== MessagePanelState.SendCycles ?
+                            <IconButton
+                                className={classes.button}
+                                onClick={_ => changeMessagePanel(MessagePanelState.SendCycles, true)}>
+                                <Dollar />
+                            </IconButton> : (them ? closeButton : null)}
+                        </div>
+                        <MessageTextInput 
+                            ref={textBoxRef}
+                            placeholder={messagePanelState === MessagePanelState.Closed || messagePanelState === MessagePanelState.EmojiPicker ? "Type a message" : "Type a caption"}
+                            onEnterPressed={onSendMessage}
+                            onChange={onTextChanged}
+                            />
+                        <button onClick={onSendMessage} className={classes.sendButton}>
+                            <SendButtonIcon />
+                        </button>
                     </div>
-                    <MessageTextInput 
-                        ref={textBoxRef}
-                        placeholder={messagePanelState === MessagePanelState.Closed || messagePanelState === MessagePanelState.EmojiPicker ? "Type a message" : "Type a caption"}
-                        onEnterPressed={onSendMessage}
-                        onChange={onTextChanged}
-                        />
-                    <button onClick={onSendMessage} className={classes.sendButton}>
-                        <SendButtonIcon />
-                    </button>
-                </div>
-            </footer>
-        </ClickAwayListener>
+                </footer>
+            </ClickAwayListener>
+        </>
     );
 }
