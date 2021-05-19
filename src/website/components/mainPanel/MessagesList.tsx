@@ -161,7 +161,7 @@ function MessagesList() {
     }
 
     return (
-        <Grid id="messages" ref={messagesRef} item flex="1 1" wrap="nowrap" className={classes.container}>
+        <Grid id="messages" ref={messagesRef} item flex="1 1" className={classes.container}>
             <div className={classes.messagesList}>
                 {children}
             </div>
