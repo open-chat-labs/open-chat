@@ -48,6 +48,7 @@ function NewGroupChatPanel() {
             <NameInput
                 onSubmit={handleSubmit}
                 placeholderText={PLACEHOLDER_TEXT}
+                minLength={2}
                 maxLength={25}
                 className={classes.nameInput} />
         </>

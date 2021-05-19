@@ -10,6 +10,7 @@ import sendMessage from "./sendMessage";
 import { addParticipantsByUserId } from "./addParticipants";
 import { TextContent } from "../../domain/model/messages";
 import Stopwatch from "../../utils/Stopwatch";
+import { CreateGroupChatResponse } from "../../services/chats/createGroupChat";
 
 export const CREATE_GROUP_CHAT_REQUESTED = "CREATE_GROUP_CHAT_REQUESTED";
 export const CREATE_GROUP_CHAT_SUCCEEDED = "CREATE_GROUP_CHAT_SUCCEEDED";
@@ -39,7 +40,8 @@ export default function(subject: string, users: UserId[]) {
                 payload: {
                     chatId,
                     subject,
-                    users
+                    users,
+                    response
                 }
             } as CreateGroupChatFailedEvent);
 
@@ -101,6 +103,7 @@ export type CreateGroupChatFailedEvent = {
     payload: {
         chatId: ChatId,
         subject: string,
-        users: UserId[]
+        users: UserId[],
+        response: CreateGroupChatResponse
     }
 }
