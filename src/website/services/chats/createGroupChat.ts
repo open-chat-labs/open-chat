@@ -26,6 +26,21 @@ export default async function(chatId: ChatId, subject: string, users: UserId[]) 
         return {
             kind: "chatAlreadyExists"
         };
+    } else if ("SubjectTooShort" in response) {
+        return {
+            kind: "subjectTooShort",
+            result: response.SubjectTooShort
+        };
+    } else if ("SubjectTooLong" in response) {
+        return {
+            kind: "subjectTooLong",
+            result: response.SubjectTooLong
+        };
+    } else if ("TooManyParticipants" in response) {
+        return {
+            kind: "tooManyParticipants",
+            result: response.TooManyParticipants
+        };
     } else {
         throw new Error("Unrecognised 'create_group_chat' response");
     }
@@ -33,7 +48,10 @@ export default async function(chatId: ChatId, subject: string, users: UserId[]) 
 
 export type CreateGroupChatResponse =
     Success |
-    ChatAlreadyExists;
+    ChatAlreadyExists |
+    SubjectTooShort |
+    SubjectTooLong |
+    TooManyParticipants;
 
 export type Success = {
     kind: "success",
@@ -42,4 +60,19 @@ export type Success = {
 
 export type ChatAlreadyExists = {
     kind: "chatAlreadyExists"
+}
+
+export type SubjectTooShort = {
+    kind: "subjectTooShort",
+    result: number
+}
+
+export type SubjectTooLong = {
+    kind: "subjectTooLong",
+    result: number
+}
+
+export type TooManyParticipants = {
+    kind: "tooManyParticipants",
+    result: number
 }

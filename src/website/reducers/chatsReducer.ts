@@ -19,6 +19,7 @@ import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 import {
     CREATE_GROUP_CHAT_REQUESTED,
     CREATE_GROUP_CHAT_SUCCEEDED,
+    CREATE_GROUP_CHAT_FAILED,
     CreateGroupChatFailedEvent,
     CreateGroupChatRequestedEvent,
     CreateGroupChatSucceededEvent
@@ -223,9 +224,16 @@ export default produce((state: ChatsState, event: Event) => {
         case CREATE_GROUP_CHAT_SUCCEEDED: {
             const { chat } = event.payload;
             const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.chatId === chat.chatId);
-
             state.chats[chatIndex] = chat;
             state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            break;
+        }
+
+        case CREATE_GROUP_CHAT_FAILED: {
+            const { chatId } = event.payload;
+            const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.chatId === chatId);
+            state.chats.splice(chatIndex, 1);
+            state.selectedChatIndex = 0;
             break;
         }
 

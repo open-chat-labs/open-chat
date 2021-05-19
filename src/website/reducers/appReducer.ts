@@ -24,6 +24,11 @@ import {
 } from "../actions/signin/notifySessionExpired";
 
 import {
+    CREATE_GROUP_CHAT_FAILED,
+    CreateGroupChatFailedEvent
+} from "../actions/chats/createGroupChat";
+
+import {
     GET_CURRENT_USER_FAILED,
     GET_CURRENT_USER_SUCCEEDED,
     GetCurrentUserFailedEvent,
@@ -50,6 +55,7 @@ const initialState: AppState = {
 
 type Event =
     CloseAlertDialogRequestedEvent |
+    CreateGroupChatFailedEvent |
     ShowAlertDialogRequestedEvent |
     GetCurrentUserFailedEvent |
     GetCurrentUserSucceededEvent |
@@ -75,8 +81,6 @@ export default produce((state: AppState, event: Event) => {
             let alert = {
                 title: "Failed to leave group",                
             };
-
-            console.log(event.payload.result);
 
             if (event.payload.result === LeaveGroupResult.LastAdminCannotLeave) {
                 state.alert = { 
@@ -106,8 +110,33 @@ export default produce((state: AppState, event: Event) => {
             state.sessionExpired = false;
             state.alert = {
                 title: "Session Expired",
-                message: "Your session has expired. You now need to sign-in again."
+                message: "Your session has expired - please sign-in again"
             };
+            break;
+        }
+
+        case CREATE_GROUP_CHAT_FAILED: {
+            let message;
+            switch (event.payload.response.kind) {
+                case "subjectTooLong":
+                    message = `The group name must be at most ${event.payload.response.result} characters long`;
+                    break;
+                case "subjectTooShort":
+                    message = `The group name must be at least ${event.payload.response.result} characters long`;
+                    break;
+                case "tooManyParticipants":
+                    message = `You can only have ${event.payload.response.result} participants in a group`;
+                    break;
+                default:
+                    message = "Unexpected error - please refresh the page";
+                    break;
+            }
+
+            state.alert = {
+                title: "Create group chat failed",
+                message
+            };
+            break;
         }
 
         case GET_CURRENT_USER_FAILED:
