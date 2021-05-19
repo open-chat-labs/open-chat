@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Divider from "@material-ui/core/Divider";
 import Grid from "@material-ui/core/Grid";
@@ -14,6 +14,8 @@ import RightPanel from "./rightPanel/RightPanel";
 import { setupBackgroundTasks } from "../backgroundTasks";
 import AlertDialog from "./AlertDialog";
 import logout from "../actions/signin/logout";
+import { closeAlertDialog } from "../actions/showAlertDialog";
+import aboutUs from "../actions/aboutUs";
 
 export default App;
 
@@ -48,10 +50,18 @@ function App() {
     const dispatch = useDispatch();
     const classes = useStyles();
     const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
-    const sessionExpired = useSelector((state: RootState) => state.usersState.sessionExpired);
+    const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
+    const alert = useSelector((state: RootState) => state.appState.alert);
 
-    const onSessionExpiredAlertClosed = () => {
-        dispatch(logout());
+    useEffect(() => {
+        dispatch(aboutUs());
+    }, []);    
+
+    const onCloseAlert = () => {
+        dispatch(closeAlertDialog());
+        if (sessionExpired) {
+            dispatch(logout());
+        }
     };
 
     setupBackgroundTasks();
@@ -118,13 +128,10 @@ function App() {
                 {buildMainPanel(sidePanelState)}
                 {buildRightPanel(sidePanelState)}
             </Grid>
-            {sessionExpired ? 
+            {alert ? 
             <AlertDialog
-                content={{
-                    title: "Session Expired",
-                    message: "Your session has expired. You now need to sign-in again."
-                }}
-                onClose={onSessionExpiredAlertClosed}
+                content={alert}
+                onClose={onCloseAlert}
                  /> : null}
         </>
     );

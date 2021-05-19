@@ -9,7 +9,7 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
 import Radio from '@material-ui/core/Radio';
 import useTheme from "@material-ui/core/styles/useTheme";
-import { SelectedTheme } from "../../reducers/themeReducer";
+import { SelectedTheme } from "../../reducers/appReducer";
 import selectTheme from "../../actions/selectTheme";
 import { RootState } from "../../reducers";
 
@@ -39,7 +39,7 @@ type ThemeOption = {
 
 function ThemeSelector(props: Props) {
     const dispatch = useDispatch();
-    const currentTheme = useSelector((state: RootState) => state.themeState.selectedTheme);
+    const currentTheme = useSelector((state: RootState) => state.appState.selectedTheme);
     const [value, setValue] = useState(currentTheme);
     const theme = useTheme();
 

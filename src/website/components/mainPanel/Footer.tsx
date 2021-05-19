@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import IconButton from "@material-ui/core/IconButton";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -20,10 +20,9 @@ import EmojiPicker from "./EmojiPicker"
 import CloseButton from "../shared/CloseButton";
 import DraftMediaMessage from "./DraftMediaMessage";
 import DraftFileMessage from "./DraftFileMessage";
-import { DraftMessageContent, ReplyContext } from "../../domain/model/messages";
+import { DraftMessageContent } from "../../domain/model/messages";
 import ReplyToMessagePanel from "./ReplyToMessagePanel";
-import { Chat } from "../../domain/model/chats";
-import AlertDialog, { AlertContent } from "../AlertDialog";
+import { showAlertDialog } from "../../actions/showAlertDialog";
 
 export default React.memo(Footer);
 
@@ -86,7 +85,6 @@ function Footer() {
     const dispatch = useDispatch();
     const [messagePanelState, setMessagePanel] = useState(MessagePanelState.Closed);
     const [textBoxText, setTextBoxText] = useState("");
-    const [alertContent, setAlertContent] = useState<Option<AlertContent>>(null);
     const sendCyclesRef = useRef<ISendCyclesRef>(null);
     const textBoxRef = useRef<IMessageTextInputRef>(null);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
@@ -201,7 +199,8 @@ function Footer() {
             size = "1 Mb";
         }
         let message = `You are limited to ${type} of size ${size}`;
-        setAlertContent({ title, message });
+
+        dispatch(showAlertDialog({ title, message }));
     }
 
     function onTextChanged(text: string) {
@@ -250,44 +249,41 @@ function Footer() {
         className={classes.button} />;
 
     return (
-        <>
-            <AlertDialog content={alertContent} onClose={() => setAlertContent(null)} />
-            <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
-                <footer className={classes.footer}>
-                    <ReplyToMessagePanel />
-                    {messagePanel}
-                    <div className={classes.container}>
-                        <div className={classes.buttons}>
-                            {messagePanelState !== MessagePanelState.EmojiPicker ?
-                            <IconButton
-                                onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker, true)}
-                                className={classes.button}>
-                                <Smiley />
-                            </IconButton> : closeButton}
-                            {(messagePanelState != MessagePanelState.SendFile) ?
-                            <AttachFile
-                                onFileSelected={onFileAttached}
-                                onFileValidationError={onFileValidationError}
-                                className={classes.button} /> : closeButton}
-                            {them && messagePanelState !== MessagePanelState.SendCycles ?
-                            <IconButton
-                                className={classes.button}
-                                onClick={_ => changeMessagePanel(MessagePanelState.SendCycles, true)}>
-                                <Dollar />
-                            </IconButton> : (them ? closeButton : null)}
-                        </div>
-                        <MessageTextInput 
-                            ref={textBoxRef}
-                            placeholder={messagePanelState === MessagePanelState.Closed || messagePanelState === MessagePanelState.EmojiPicker ? "Type a message" : "Type a caption"}
-                            onEnterPressed={onSendMessage}
-                            onChange={onTextChanged}
-                            />
-                        <button onClick={onSendMessage} className={classes.sendButton}>
-                            <SendButtonIcon />
-                        </button>
+        <ClickAwayListener onClickAway={() => textBoxRef.current?.onFocusAway()}>
+            <footer className={classes.footer}>
+                <ReplyToMessagePanel />
+                {messagePanel}
+                <div className={classes.container}>
+                    <div className={classes.buttons}>
+                        {messagePanelState !== MessagePanelState.EmojiPicker ?
+                        <IconButton
+                            onClick={_ => changeMessagePanel(MessagePanelState.EmojiPicker, true)}
+                            className={classes.button}>
+                            <Smiley />
+                        </IconButton> : closeButton}
+                        {(messagePanelState != MessagePanelState.SendFile) ?
+                        <AttachFile
+                            onFileSelected={onFileAttached}
+                            onFileValidationError={onFileValidationError}
+                            className={classes.button} /> : closeButton}
+                        {them && messagePanelState !== MessagePanelState.SendCycles ?
+                        <IconButton
+                            className={classes.button}
+                            onClick={_ => changeMessagePanel(MessagePanelState.SendCycles, true)}>
+                            <Dollar />
+                        </IconButton> : (them ? closeButton : null)}
                     </div>
-                </footer>
-            </ClickAwayListener>
-        </>
+                    <MessageTextInput 
+                        ref={textBoxRef}
+                        placeholder={messagePanelState === MessagePanelState.Closed || messagePanelState === MessagePanelState.EmojiPicker ? "Type a message" : "Type a caption"}
+                        onEnterPressed={onSendMessage}
+                        onChange={onTextChanged}
+                        />
+                    <button onClick={onSendMessage} className={classes.sendButton}>
+                        <SendButtonIcon />
+                    </button>
+                </div>
+            </footer>
+        </ClickAwayListener>
     );
 }

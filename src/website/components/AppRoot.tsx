@@ -70,7 +70,7 @@ function AppContainer() {
     CanisterClientFactory.current = new CanisterClientFactory(identity);
 
     const dispatch = useDispatch();
-    const sessionExpired = useSelector((state: RootState) => state.usersState.sessionExpired);
+    const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
     const userRegistrationStatus = useSelector((state: RootState) => state.usersState.userRegistrationStatus);
 
     const classes = useStyles();

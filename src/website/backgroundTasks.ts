@@ -32,6 +32,7 @@ export function setupBackgroundTasks() {
 
     const chatsState = useSelector((state: RootState) => state.chatsState);
     const usersState = useSelector((state: RootState) => state.usersState);
+    const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
     const selectedChat = stateFunctions.getSelectedChat(chatsState);
     const selectedChatUsers = selectedChat ? chatFunctions.getUsers(selectedChat) : [];
     const usersOnline = (Object.values(usersState.userDictionary) as UserSummary[])
@@ -39,7 +40,6 @@ export function setupBackgroundTasks() {
         .map(u => u.userId);
 
     const selectedChatUsersOnline = setFunctions.intersect(selectedChatUsers, usersOnline);
-    const sessionExpired = usersState.sessionExpired;
 
     useEffect(() => {
         const count = sessionExpired ? 0 : chatFunctions.getUnreadChatCount(chatsState.chats);
