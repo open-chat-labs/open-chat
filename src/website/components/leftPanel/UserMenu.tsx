@@ -4,10 +4,12 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
+import { IDP_URL } from "../../constants";
 import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import ThemeSelector from "./ThemeSelector";
 import logout from "../../actions/signin/logout";
+import aboutUs from "../../actions/aboutUs";
 
 export default React.memo(UserMenu);
 
@@ -27,7 +29,9 @@ function UserMenu() {
     menuItems.push({ text: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
     menuItems.push({ text: "Profile", action: () => {} });
     menuItems.push({ text: "Theme", action: () => setThemeSelectorOpen(true) });
+    menuItems.push({ text: "Internet Identity", action: () => window.open(IDP_URL, "_blank") });
     menuItems.push({ text: "Logout", action: () => dispatch(logout()) });
+    menuItems.push({ text: "Test mode", action: () => dispatch(aboutUs()) });
 
     return (
         <>

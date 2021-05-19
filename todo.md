@@ -94,12 +94,19 @@
   - Forward message
 
 # Ahead of mainnet release
-* Limit users to 1000
+* Limit users to 10000
 - Validation on all user input
 * Limit image size to 1Mb
 * Limit video size to 5Mb
 * Limit other file size to 1Mb
-X Limit number of chats per user to 100
+- Limit number of chats per user to 100
 - While the canister memory remaining is within a threshold then delete file data oldest first and add a flag to the corresponding message
-- Add dialog on first start expaining this is a demo version + link to dialog from menu
+* Add dialog on first start expaining this is a demo version + link to dialog from menu
 - Fix issue where refresh takes user to sign-in page
+- Handle sign-out like we do in NNS app
+
+- Finish leave/delete group
+- Show modal spinner when calling leave/delete group
+- Fix dev mode errors seen in console
+- Disable "reply privately" if user no longer a member of the group
+- If you leave a group the group membership in other user sessions is not updated

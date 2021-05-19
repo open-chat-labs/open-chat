@@ -16,7 +16,6 @@ import {
     GET_CURRENT_USER_FAILED,
     GET_CURRENT_USER_SUCCEEDED,
     GetCurrentUserFailedEvent,
-    GetCurrentUserRequestedEvent,
     GetCurrentUserSucceededEvent
 } from "../actions/users/getCurrentUser";
 
@@ -51,15 +50,9 @@ import {
     SetProfileImageDataUploadFailedEvent
 } from "../actions/users/setProfileImage";
 
-import {
-    SESSION_EXPIRED,
-    SessionExpiredEvent
-} from "../actions/signin/notifySessionExpired";
-
 export type Event =
     DirectChatCreatedEvent |
     GetAllChatsSucceededEvent |
-    GetCurrentUserRequestedEvent |
     GetCurrentUserSucceededEvent |
     GetCurrentUserFailedEvent |
     GetUpdatedChatsSucceededEvent |
@@ -71,7 +64,6 @@ export type Event =
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
-    SessionExpiredEvent |
     SetProfileImageRequestedEvent |
     SetProfileImageFailedEvent |
     SetProfileImageDataUploadFailedEvent |
@@ -79,7 +71,6 @@ export type Event =
     UserLoggedOutEvent;
 
 export type UsersState = {
-    sessionExpired: boolean,
     userRegistrationStatus: UserRegistrationStatus,
     me: Option<MyProfile>,
     unknownUserIds: UserId[],
@@ -94,7 +85,6 @@ export enum UserRegistrationStatus {
 }
 
 const initialState: UsersState = {
-    sessionExpired: false,
     userRegistrationStatus: UserRegistrationStatus.Unknown,
     me: null,
     unknownUserIds: [],
@@ -140,14 +130,12 @@ export default produce((state: UsersState, event: Event) => {
 
         case GET_CURRENT_USER_SUCCEEDED: {
             state.userRegistrationStatus = UserRegistrationStatus.Registered;
-            state.sessionExpired = false;
             state.me = {...event.payload, imageBlobUrl: state.me?.imageBlobUrl ?? null};
             break;
         }
 
         case GET_CURRENT_USER_FAILED: {
             state.userRegistrationStatus = UserRegistrationStatus.NotRegistered;
-            state.sessionExpired = false;
             state.me = null;
             break;
         }
@@ -232,11 +220,6 @@ export default produce((state: UsersState, event: Event) => {
 
         case USER_LOGGED_OUT: {
             return initialState;
-        }
-
-        case SESSION_EXPIRED: {
-            state.sessionExpired = true;
-            break;
         }
     }
 }, initialState);

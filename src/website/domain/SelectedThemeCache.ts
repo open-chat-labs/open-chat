@@ -1,5 +1,5 @@
 import { Option } from "./model/common";
-import { SelectedTheme } from "../reducers/themeReducer";
+import { SelectedTheme } from "../reducers/appReducer";
 
 const KEY = "SELECTED_THEME";
 

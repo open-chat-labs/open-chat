@@ -3,14 +3,14 @@ import { useSelector } from "react-redux";
 import MuiThemeProvider from "@material-ui/core/styles/ThemeProvider";
 import { darkTheme, lightTheme } from "../theme";
 import { RootState } from "../reducers";
-import { SelectedTheme } from "../reducers/themeReducer";
+import { SelectedTheme } from "../reducers/appReducer";
 
 export interface Props {
     children: React.ReactNode
 }
 
 export default function ThemeProvider(props: Props) {
-    const selectedTheme = useSelector((state: RootState) => state.themeState.selectedTheme);
+    const selectedTheme = useSelector((state: RootState) => state.appState.selectedTheme);
     const useSystemTheme = selectedTheme === SelectedTheme.SystemDefault;
     const isSystemDarkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
