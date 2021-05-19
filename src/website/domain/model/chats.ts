@@ -405,6 +405,13 @@ export const tryFindChat = (chats: Chat[], filter: ChatFilter) : [Option<Chat>, 
     return [chats[index], index];
 }
 
+export const removeChat = (chats: Chat[], chatId: ChatId) => {
+    const index = chats.findIndex(c => chatId === c.chatId);
+    if (index >= 0) {
+        chats.splice(index, 1);
+    }
+}
+
 export type ChatFilter = {
     chatId?: ChatId,
     userId?: UserId

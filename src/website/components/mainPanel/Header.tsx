@@ -69,7 +69,7 @@ function Header() {
         chatName = chat.subject;
 
         if (chatFunctions.isConfirmedChat(chat) && me) {
-            chatMenu = <GroupChatMenu />;
+            chatMenu = <GroupChatMenu chatId={chat.chatId} />;
             if (chat.participantsTyping.length) {
                 const usernames = stateFunctions
                     .getUsers(chat.participantsTyping, userDictionary)
