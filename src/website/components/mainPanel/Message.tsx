@@ -290,6 +290,7 @@ function Message(props : Props) {
         buttons.push({ text: "Delete", action: () => {} });
         children.push(
             <PopOverMenu 
+                key="menu"
                 icon={<ExpandMoreIcon />} 
                 menuItems={buttons} 
                 placement="bottom-end" 
@@ -301,6 +302,7 @@ function Message(props : Props) {
             const sender = props.sender;
             children.push(
                 <a 
+                    key="sender"
                     className={classes.participant}
                     href="#" 
                     role="button" 
@@ -314,6 +316,7 @@ function Message(props : Props) {
             const className = classes.contentContainer + " " + classes.topPanel;
             children.push(
                 <MessageReplyPanel
+                    key="replyPanel"
                     repliesToChatId={props.repliesToChatId!}
                     isPrivateReply={props.chatId !== props.repliesToChatId}
                     content={props.repliesToContent}
@@ -359,14 +362,14 @@ function Message(props : Props) {
                     };        
                     // Add a shadow effect to bottom of media so the "time and ticks" can be seen
                     if (!content.caption) {
-                        shadow = <div className={classes.shadow}></div>;
+                        shadow = <div key="shadow" className={classes.shadow}></div>;
                     }
                     break;
             }
             if (contentComponent) {
                 const className = classes.contentContainer + " " + (props.repliesToContent ? classes.secondPanel : classes.topPanel);
                 children.push(
-                    <div className={isMediaNoCaption ? classes.mediaNoCaption : className} style={containerStyle}>
+                    <div key="content" className={isMediaNoCaption ? classes.mediaNoCaption : className} style={containerStyle}>
                         {contentComponent}
                     </div>
                 );
@@ -380,6 +383,7 @@ function Message(props : Props) {
         // 5. If this message is standalone media then render "time and ticks" directly otherwise wrap the text + "time and ticks" together
         {
             const messageTimeAndTicks = <MessageTimeAndTicks 
+                key="timeAndTicks"
                 sentByMe={props.sentByMe} 
                 confirmed={props.confirmed} 
                 read={props.readByThem} 
@@ -417,7 +421,7 @@ function Message(props : Props) {
                 }
                             
                 children.push(
-                    <div className={classes.textContainer}>
+                    <div key="text" className={classes.textContainer}>
                         {textComponent}
                         {messageTimeAndTicks}
                     </div>

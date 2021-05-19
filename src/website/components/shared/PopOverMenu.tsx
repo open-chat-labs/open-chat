@@ -59,10 +59,10 @@ function PopOverMenu(props: Props) {
 
     function buildMenuItemElement(text: string, action: () => void) : JSX.Element {
         return (
-            <MenuItem onClick={_ => {
-                action();
-                handleClose();
-            }}>
+            <MenuItem key={text} onClick={_ => {
+                    action();
+                    handleClose();
+                }}>
                 <Typography variant="body2">{text}</Typography>
             </MenuItem>
         );
