@@ -4,10 +4,16 @@ import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
+import { ChatId } from "../../domain/model/chats";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import leaveGroup from "../../actions/chats/leaveGroup";
 
 export default React.memo(DirectChatMenu);
+
+export interface Props {
+    chatId: ChatId
+}
 
 const useStyles = makeStyles((theme: Theme) => ({
     menuIcon: {
@@ -15,14 +21,14 @@ const useStyles = makeStyles((theme: Theme) => ({
     }
 }));
 
-function DirectChatMenu() {
+function DirectChatMenu(props: Props) {
     const dispatch = useDispatch();
     const classes = useStyles();
 
     const menuItems: MenuItem[] = [];
     menuItems.push({ text: "Participants", action: () => dispatch(changeRightPanel(RightPanelType.Particpants)) });
     menuItems.push({ text: "Mute notifications", action: () => {} });
-    menuItems.push({ text: "Leave group", action: () => {} });
+    menuItems.push({ text: "Leave group", action: () => dispatch(leaveGroup(props.chatId))});
 
     return <PopOverMenu icon={<MoreVertIcon className={classes.menuIcon} />} menuItems={menuItems} placement="bottom-end" />;
 }

@@ -1,5 +1,4 @@
 import produce from "immer";
-import { dataToBlobUrl } from "../utils/blobFunctions";
 
 import * as chatFunctions from "../domain/model/chats";
 import { Chat, UnconfirmedGroupChat } from "../domain/model/chats";
@@ -105,6 +104,11 @@ import {
 } from "../actions/chats/replyToMessage";
 
 import {
+    LEAVE_GROUP_SUCCEEDED,
+    LeaveGroupSucceededEvent
+} from "../actions/chats/leaveGroup";
+
+import {
     DESELECT_MESSAGE,
     DeselectMessageEvent
 } from "../actions/chats/deselectMessage";
@@ -144,6 +148,7 @@ type Event =
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
     GotoChatEvent |
+    LeaveGroupSucceededEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -500,6 +505,15 @@ export default produce((state: ChatsState, event: Event) => {
             const [ chat ] = chatFunctions.getConfirmedChat(state.chats, chatId);
             if (chat) {
                 chat.messageToSelect = null;
+            }
+            break;
+        }
+
+        case LEAVE_GROUP_SUCCEEDED: {
+            const { chatId } = event.payload;
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
+            if (chat.kind === CONFIRMED_GROUP_CHAT) {
+                chatFunctions.removeChat(state.chats, chatId);
             }
             break;
         }

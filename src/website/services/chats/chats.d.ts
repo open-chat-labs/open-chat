@@ -60,6 +60,12 @@ export interface GroupChatSummary {
     'unread_by_me_message_id_ranges' : Array<Array<number>>,
     'unread_by_any_message_id_ranges' : Array<Array<number>>,
 };
+export type LeaveGroupResponse = { 'CannotLeaveGroupEmpty' : null } |
+    { 'ParticipantNotFound' : null } |
+    { 'ChatNotFound' : null } |
+    { 'NotGroupChat' : null } |
+    { 'Success' : null };
+
 export type MarkReadResponse = { 'ChatNotFound' : null } |
     { 'Success' : MarkReadResult };
 export interface MarkReadResult {
@@ -152,6 +158,9 @@ export default interface _SERVICE {
         >,
     'get_messages_by_id' : (arg_0: ChatId, arg_1: Array<number>) => Promise<
         GetMessagesByIdResponse
+        >,
+    'leave_group' : (arg_0: ChatId) => Promise<
+        LeaveGroupResponse
         >,
     'mark_read' : (arg_0: ChatId, arg_1: number, arg_2: number) => Promise<
         MarkReadResponse

@@ -11,6 +11,7 @@ import removeParticipant, { RemoveParticipantResponse } from "./removeParticipan
 import getChats, { GetChatsRequest, GetChatsResponse } from "./getChats";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
 import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessages";
+import leaveGroup, { LeaveGroupResult } from "./leaveGroup";
 
 export default class service {
     public static createGroupChat(chatId: ChatId, subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
@@ -35,6 +36,10 @@ export default class service {
 
     public static removeParticipant(chatId: ChatId, userId: UserId) : Promise<RemoveParticipantResponse> {
         return removeParticipant(chatId, userId);
+    }
+
+    public static leaveGroup(chatId: ChatId) : Promise<LeaveGroupResult> {
+        return leaveGroup(chatId);
     }
 
     public static getChats(request: GetChatsRequest) : Promise<GetChatsResponse> {
