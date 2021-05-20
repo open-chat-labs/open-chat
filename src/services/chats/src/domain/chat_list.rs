@@ -6,6 +6,7 @@ use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::storage::StableState;
 use shared::user_id::UserId;
+use crate::utils::get_memory_usage;
 use super::chat::{Chat, ChatEnum, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
@@ -18,6 +19,11 @@ use crate::domain::group_chat::GroupChatSummary;
 pub struct ChatList {
     chats: HashMap<ChatId, ChatEnum>,
     messages_to_prune: VecDeque<(ChatId, u32)>
+}
+
+pub struct Stats {
+    pub chat_count: u32,
+    pub pruneable_message_count: u32,
 }
 
 impl ChatList {
@@ -119,7 +125,8 @@ impl ChatList {
     }
 
     pub fn prune_messages(&mut self, blob_storage: &mut BlobStorage) {
-        if !ChatList::should_prune_messages() {
+        const MEMORY_LIMIT_BYTES: u32 = 1024 * 1024 * 2000; // A bit less than 2GB
+        if get_memory_usage() <= MEMORY_LIMIT_BYTES {
             return;
         }
 
@@ -141,17 +148,10 @@ impl ChatList {
         }
     }
 
-    fn should_prune_messages() -> bool {
-        #[cfg(target_arch = "wasm32")]
-        {
-            const MEMORY_LIMIT_BYTES: u32 = 1024 * 1024 * 2000; // A bit less than 2GB
-            let memory_usage_bytes = (core::arch::wasm32::memory_size(0) * 65536) as u32;
-            memory_usage_bytes > MEMORY_LIMIT_BYTES
-        }
-    
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            false
+    pub fn get_stats(&self) -> Stats {
+        Stats {
+            chat_count: self.chats.len() as u32,
+            pruneable_message_count: self.messages_to_prune.len() as u32,
         }
     }
 }

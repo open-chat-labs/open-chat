@@ -22,6 +22,10 @@ impl BlobStorage {
         }
     }
 
+    pub fn chunk_count(&self) -> u32 {
+        self.chunks.len() as u32
+    }
+
     fn delete_chunk(&mut self, blob_id: &String, chunk_index: u32) {
         self.chunks.remove(&(blob_id.clone(), chunk_index));
     }

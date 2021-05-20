@@ -74,3 +74,9 @@ fn get_chunk(blob_id: String, chunk_index: u32) -> Option<Vec<u8>> {
 fn search_all_messages(search_term: String, max_results: u8) -> search_all_messages::Response {
     search_all_messages::query(&search_term, max_results)
 }
+
+#[query]
+fn get_stats() -> get_stats::Stats {
+    get_stats::query()
+}
+
