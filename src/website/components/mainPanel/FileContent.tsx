@@ -36,10 +36,10 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
 
 function FileContent(props : Props): JSX.Element {
     const classes = useStyles(props);
-
     const content = props.content;
 
     let downloading = false;
+    let title = content.blobDeleted ? `"${content.name}" no longer available` : `Download "${content.name}"`;
 
     return (
         <a 
@@ -47,13 +47,18 @@ function FileContent(props : Props): JSX.Element {
             href="#"
             role="button"
             onClick={onClick}
-            title={'Download "' + content.name + '"'}>
+            title={title}>
             <div className={classes.icon}></div>
             <div className={classes.fileName}>{content.name}</div>
         </a>
     );
 
     async function onClick(e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) {
+
+        if (content.blobDeleted) {
+            return;
+        }
+
         const anchor = findAnchor(e.target);
         const href = anchor.getAttribute("href");
 

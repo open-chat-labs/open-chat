@@ -21,7 +21,8 @@ export function fromCandid(content: any) : MessageContent {
             size: inner.blob_size,
             chunkSize: inner.chunk_size,
             thumbnailData: inner.thumbnail_data,
-            blobUrl: null
+            blobUrl: null,
+            blobDeleted: inner.blob_deleted
         };
     }
     if (content.hasOwnProperty("File")) {
@@ -33,7 +34,8 @@ export function fromCandid(content: any) : MessageContent {
             mimeType: inner.mime_type,
             id: inner.blob_id,
             size: inner.blob_size,
-            chunkSize: inner.chunk_size
+            chunkSize: inner.chunk_size,
+            blobDeleted: inner.blob_deleted
         };
     }
     if (content.hasOwnProperty("Cycles")) {
@@ -66,7 +68,8 @@ export function toCandid(content: MessageContent) : any {
                     blob_id: content.id,
                     blob_size: content.size,
                     chunk_size: content.chunkSize,
-                    thumbnail_data: content.thumbnailData
+                    thumbnail_data: content.thumbnailData,
+                    blob_deleted: content.blobDeleted
                 }
             };
         case "file":
@@ -77,7 +80,8 @@ export function toCandid(content: MessageContent) : any {
                     mime_type: content.mimeType,
                     blob_id: content.id,
                     blob_size: content.size,
-                    chunk_size: content.chunkSize
+                    chunk_size: content.chunkSize,
+                    blob_deleted: content.blobDeleted
                 }
             };
         case "cycles":

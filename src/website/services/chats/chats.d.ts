@@ -40,6 +40,7 @@ export interface FileContent {
   'mime_type' : string,
   'caption' : [] | [string],
   'chunk_size' : number,
+  'blob_deleted' : boolean,
 };
 export interface GetChatsRequest {
   'message_count_for_top_chat' : [] | [number],
@@ -84,6 +85,7 @@ export interface MediaContent {
   'caption' : [] | [string],
   'width' : number,
   'chunk_size' : number,
+  'blob_deleted' : boolean,
 };
 export interface Message {
   'id' : number,
