@@ -245,6 +245,17 @@ type SearchMessagesMatch =
         message: Message;
     };
 
+type Stats =
+    record {
+        memory_used: nat32;
+        chunk_count: nat32;
+        chat_count: nat32;
+        pruneable_message_count: nat32;
+        timestamp: nat64;
+        user_id: UserId;
+        cycles_balance: int64;
+    };
+
 service : {
     create_group_chat: (CreateGroupChatRequest) -> (CreateGroupChatResponse);
     send_direct_message: (SendDirectMessageRequest) -> (SendDirectMessageResponse);
@@ -261,4 +272,5 @@ service : {
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
     get_chunk: (text, nat32) -> (opt vec nat8) query;
     search_all_messages: (text, nat8) -> (SearchAllMessagesResponse) query;
+    get_stats: () -> (Stats) query;
 }
