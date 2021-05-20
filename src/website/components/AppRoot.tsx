@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -16,6 +16,9 @@ import { UserRegistrationStatus } from "../reducers/usersReducer";
 import RegisterUser from "./RegisterUser";
 import getCurrentUser from "../actions/users/getCurrentUser";
 import getAuthClient from "../utils/authClient";
+import AlertDialog, {AlertContent} from "./AlertDialog";
+import { Option } from "../domain/model/common";
+import { sessionExpiryAcknowledged } from "../actions/signin/notifySessionExpired";
 
 export default AppRoot;
 
@@ -67,7 +70,13 @@ function AppRoot() {
 function AppContainer() {
     const identity = getAuthClient().getIdentity();
     const isAnonymous = identity.getPrincipal().isAnonymous();
-    CanisterClientFactory.current = new CanisterClientFactory(identity);
+
+    const [canisterClientFactory, setCanisterClientFactory] = useState<CanisterClientFactory>();
+
+    CanisterClientFactory.current = canisterClientFactory ?? null;
+    if (!CanisterClientFactory.current) {
+        CanisterClientFactory.create(identity).then(setCanisterClientFactory);
+    }
 
     const dispatch = useDispatch();
     const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
@@ -84,8 +93,10 @@ function AppContainer() {
 
     let component;
     let large = false;
-    
-    if (isAnonymous || (sessionExpired && userRegistrationStatus !== UserRegistrationStatus.Registered)) {
+
+    if (!CanisterClientFactory.current) {
+        component = <div />;
+    } else if (isAnonymous || (sessionExpired && userRegistrationStatus !== UserRegistrationStatus.Registered)) {
         component = <Login />;
     } else {
         switch (userRegistrationStatus) {
@@ -103,9 +114,21 @@ function AppContainer() {
         }    
     }
 
+    const sessionExpiredAlert: Option<AlertContent> = sessionExpired
+        ? {
+            title: "Session Expired",
+            message: "Your session has expired - please login again"
+        }
+        : null;
+
     return (
         <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
             {component}
+            {sessionExpiredAlert ?
+                <AlertDialog
+                    content={sessionExpiredAlert}
+                    onClose={() => dispatch(sessionExpiryAcknowledged())}
+                /> : null}
         </Container>
     );
 }

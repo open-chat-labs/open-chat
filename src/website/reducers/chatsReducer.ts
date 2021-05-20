@@ -15,6 +15,7 @@ import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/go
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
+import { SESSION_EXPIRED, SessionExpiredEvent } from "../actions/signin/notifySessionExpired";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,
@@ -165,6 +166,7 @@ type Event =
     SendMessageRequestedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
+    SessionExpiredEvent |
     UserLoggedOutEvent;
 
 export default produce((state: ChatsState, event: Event) => {
@@ -489,6 +491,7 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
+        case SESSION_EXPIRED:
         case USER_LOGGED_OUT: {
             return initialState;
         }

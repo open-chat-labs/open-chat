@@ -11,6 +11,7 @@ import { GET_ALL_CHATS_SUCCEEDED, GetAllChatsSucceededEvent } from "../actions/c
 import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../actions/chats/getUpdatedChats";
 import { MARK_REMOTE_USER_ONLINE, MarkRemoteUserOnlineEvent } from "../actions/users/markRemoteUserOnline";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
+import { SESSION_EXPIRED, SessionExpiredEvent } from "../actions/signin/notifySessionExpired";
 
 import {
     GET_CURRENT_USER_FAILED,
@@ -64,6 +65,7 @@ export type Event =
     RegisterUserSucceededEvent |
     RegisterUserFailedUserExistsEvent |
     RegisterUserFailedUsernameExistsEvent |
+    SessionExpiredEvent |
     SetProfileImageRequestedEvent |
     SetProfileImageFailedEvent |
     SetProfileImageDataUploadFailedEvent |
@@ -218,6 +220,7 @@ export default produce((state: UsersState, event: Event) => {
             break;
         }
 
+        case SESSION_EXPIRED:
         case USER_LOGGED_OUT: {
             return initialState;
         }

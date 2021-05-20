@@ -7,7 +7,7 @@ const errorHandlingMiddleware : Middleware<{}, RootState> = store => next => eve
     if ("httpError" in event && event.httpError) {
         const httpError = event.httpError as HttpError;
         if (httpError.code === 401 || httpError.code === 403) {
-            return store.dispatch(notifySessionExpired());
+            return store.dispatch(notifySessionExpired() as any);
         }
     }
     

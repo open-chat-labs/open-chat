@@ -19,8 +19,8 @@ import {
 } from "../actions/showAlertDialog";
 
 import {
-    SESSION_EXPIRED,
-    SessionExpiredEvent
+    SESSION_EXPIRED, SESSION_EXPIRY_ACKNOWLEDGED,
+    SessionExpiredEvent, SessionExpiryAcknowledgedEvent
 } from "../actions/signin/notifySessionExpired";
 
 import {
@@ -61,6 +61,7 @@ type Event =
     GetCurrentUserSucceededEvent |
     LeaveGroupFailedEvent |
     SessionExpiredEvent |
+    SessionExpiryAcknowledgedEvent |
     ThemeSelectedEvent | 
     UserLoggedOutEvent;
 
@@ -107,11 +108,11 @@ export default produce((state: AppState, event: Event) => {
         }
 
         case SESSION_EXPIRED: {
+            return { ...initialState, sessionExpired: true };
+        }
+
+        case SESSION_EXPIRY_ACKNOWLEDGED: {
             state.sessionExpired = false;
-            state.alert = {
-                title: "Session Expired",
-                message: "Your session has expired - please sign-in again"
-            };
             break;
         }
 

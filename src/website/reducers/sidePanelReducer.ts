@@ -13,6 +13,7 @@ import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
+import { SESSION_EXPIRED, SessionExpiredEvent } from "../actions/signin/notifySessionExpired";
 
 export type SidePanelState = {
     leftPanel: LeftPanelType,
@@ -29,7 +30,8 @@ type Event =
     RightPanelChangedEvent | 
     CreateGroupChatRequestedEvent | 
     DirectChatCreatedEvent |
-    GotoChatEvent | 
+    GotoChatEvent |
+    SessionExpiredEvent |
     UserLoggedOutEvent;
 
 export default produce((state: SidePanelState, event: Event) => {
@@ -51,6 +53,7 @@ export default produce((state: SidePanelState, event: Event) => {
             break;
         }
 
+        case SESSION_EXPIRED:
         case USER_LOGGED_OUT: {
             return initialState;
         }
