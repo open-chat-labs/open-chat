@@ -5,7 +5,6 @@ import { Dispatch } from "react";
 import getCurrentUser from "../users/getCurrentUser";
 import CanisterClientFactory from "../../services/CanisterClientFactory";
 import SessionExpirationHandler from "../../domain/SessionExpirationHandler";
-import notifySessionExpired from "./notifySessionExpired";
 
 const SESSION_TIMEOUT_NANOS = BigInt(6 * 60 * 60 * 1000 * 1000 * 1000) // 6 hours
 
@@ -19,10 +18,7 @@ export default function login() {
                 const identity = authClient.getIdentity();
                 CanisterClientFactory.current = await CanisterClientFactory.create(identity);
                 dispatch(getCurrentUser());
-                SessionExpirationHandler.startSession(identity as DelegationIdentity, () => {
-                    dispatch(notifySessionExpired());
-                    authClient.logout();
-                })
+                SessionExpirationHandler.startSession(identity as DelegationIdentity);
             }
         });
     }

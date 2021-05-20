@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { RootState } from "../reducers";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -19,6 +19,8 @@ import getAuthClient from "../utils/authClient";
 import AlertDialog, {AlertContent} from "./AlertDialog";
 import { Option } from "../domain/model/common";
 import { sessionExpiryAcknowledged } from "../actions/signin/notifySessionExpired";
+import SessionExpirationHandler from "../domain/SessionExpirationHandler";
+import { DelegationIdentity } from "@dfinity/identity";
 
 export default AppRoot;
 
@@ -120,6 +122,12 @@ function AppContainer() {
             message: "Your session has expired - please login again"
         }
         : null;
+
+    useEffect(() => {
+        if (!isAnonymous) {
+            SessionExpirationHandler.startSession(identity as DelegationIdentity);
+        }
+    }, [identity]);
 
     return (
         <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
