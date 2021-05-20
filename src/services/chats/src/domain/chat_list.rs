@@ -1,3 +1,6 @@
+use core::ops::RangeTo;
+use core::cmp::min;
+use std::collections::VecDeque;
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
@@ -6,6 +9,7 @@ use shared::user_id::UserId;
 use super::chat::{Chat, ChatEnum, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
+use crate::domain::blob_storage::BlobStorage;
 use crate::domain::chat::{ChatStableState, ReplyContext};
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::domain::group_chat::GroupChatSummary;
@@ -13,6 +17,7 @@ use crate::domain::group_chat::GroupChatSummary;
 #[derive(Default)]
 pub struct ChatList {
     chats: HashMap<ChatId, ChatEnum>,
+    messages_to_prune: VecDeque<(ChatId, u32)>
 }
 
 impl ChatList {
@@ -106,26 +111,77 @@ impl ChatList {
     pub fn delete_chat(&mut self, chat_id: ChatId) {
         self.chats.remove(&chat_id);
     }
+
+    pub fn push_message(&mut self, chat_id: ChatId, message_id: u32, is_blob: bool) {
+        if is_blob {
+            self.messages_to_prune.push_back((chat_id, message_id));
+        }
+    }
+
+    pub fn prune_messages(&mut self, blob_storage: &mut BlobStorage) {
+        if !ChatList::should_prune_messages() {
+            return;
+        }
+
+        const PRUNE_MESSAGES_COUNT: u32 = 20;
+        let count_to_prune = min(PRUNE_MESSAGES_COUNT, self.messages_to_prune.len() as u32);
+
+        if count_to_prune > 0 {
+            let messages: Vec<_> = self.messages_to_prune
+                .drain(RangeTo { end: count_to_prune as usize })
+                .collect();
+
+            for (chat_id, message_id) in messages {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    if let Some(message) = chat.get_message_mut(message_id) {
+                        message.delete_blob_content(blob_storage);
+                    }
+                }
+            }
+        }
+    }
+
+    fn should_prune_messages() -> bool {
+        #[cfg(target_arch = "wasm32")]
+        {
+            const MEMORY_LIMIT_BYTES: u32 = 1024 * 1024 * 2000; // A bit less than 2GB
+            let memory_usage_bytes = (core::arch::wasm32::memory_size(0) * 65536) as u32;
+            memory_usage_bytes > MEMORY_LIMIT_BYTES
+        }
+    
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            false
+        }
+    }
 }
 
 impl StableState for ChatList {
-    type State = Vec<ChatStableState>;
+    type State = (Vec<ChatStableState>, Vec<(ChatId, u32)>);
 
-    fn drain(self) -> Vec<ChatStableState> {
-        self.chats
+    fn drain(self) -> (Vec<ChatStableState>, Vec<(ChatId, u32)>) {
+        let chats: Vec<ChatStableState> = self.chats
             .into_iter()
             .map(|(_, c)| c.into())
-            .collect()
+            .collect();
+        let messages_to_prune: Vec<(ChatId, u32)> = self.messages_to_prune
+            .into_iter()
+            .collect();
+        (chats, messages_to_prune)
     }
 
-    fn fill(chats: Vec<ChatStableState>) -> ChatList {
-        let map: HashMap<ChatId, ChatEnum> = chats
+    fn fill(state: (Vec<ChatStableState>, Vec<(ChatId, u32)>)) -> ChatList {
+        let (chats, messages_to_prune) = state;
+        let chats_map: HashMap<ChatId, ChatEnum> = chats
             .into_iter()
             .map(|c| (c.get_id(), c.into()))
             .collect();
-
+        let messages_to_prune_deque: VecDeque<(ChatId, u32)> = messages_to_prune
+            .into_iter()
+            .collect();
         ChatList {
-            chats: map
+            chats: chats_map,
+            messages_to_prune: messages_to_prune_deque
         }
     }
 }

@@ -32,7 +32,8 @@ type MediaContent =
         blob_id: text;
         blob_size: nat32;
         chunk_size: nat32;
-        thumbnail_data: text
+        thumbnail_data: text;
+        blob_deleted: bool;
     };
 
 type FileContent =
@@ -43,6 +44,7 @@ type FileContent =
         blob_id: text;
         blob_size: nat32;
         chunk_size: nat32;
+        blob_deleted: bool;
     };
 
 type CyclesContent =

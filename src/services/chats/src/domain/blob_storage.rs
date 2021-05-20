@@ -14,6 +14,17 @@ impl BlobStorage {
     pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {
         self.chunks.get(&(blob_id, chunk_index))
     }
+
+    pub fn delete_blob(&mut self, blob_id: &String, blob_size: u32, chunk_size: u32) {
+        let num_indexes = ((blob_size - 1) / chunk_size) + 1;
+        for i in 0..num_indexes {
+            self.delete_chunk(blob_id, i);
+        }
+    }
+
+    fn delete_chunk(&mut self, blob_id: &String, chunk_index: u32) {
+        self.chunks.remove(&(blob_id.clone(), chunk_index));
+    }
 }
 
 impl StableState for BlobStorage {

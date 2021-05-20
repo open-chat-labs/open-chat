@@ -3,6 +3,7 @@ use ic_cdk_macros::*;
 use serde::Deserialize;
 use shared::storage::StableState;
 use shared::storage;
+use shared::chat_id::ChatId;
 use crate::domain::blob_storage::BlobStorage;
 use crate::domain::chat_list::ChatList;
 use crate::domain::chat::ChatStableState;
@@ -32,7 +33,7 @@ struct StableStateOuter {
 
 #[derive(CandidType, Deserialize)]
 struct StableStateInner {
-    chats: Vec<ChatStableState>,
+    chats: (Vec<ChatStableState>, Vec<(ChatId, u32)>),
     blobs: Vec<(String, u32, Vec<u8>)>
 }
 
