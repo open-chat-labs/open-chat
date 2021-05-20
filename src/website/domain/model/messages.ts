@@ -54,7 +54,8 @@ export type MediaContent = {
     height: number,
     chunkSize: number,
     blobUrl: Option<string>,
-    thumbnailData: string
+    thumbnailData: string,
+    blobDeleted: boolean
 }
 
 export type FileContent = {
@@ -65,6 +66,7 @@ export type FileContent = {
     caption: Option<string>,
     mimeType: string,
     chunkSize: number,
+    blobDeleted: boolean
 }
 
 export type CyclesContent = {

@@ -51,7 +51,7 @@ function MediaContent(props: Props): JSX.Element {
             }
         }
 
-        if (!ownedBlobUrl) {
+        if (!ownedBlobUrl && !props.content.blobDeleted) {
             fetchMedia();
         }
 
