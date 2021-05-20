@@ -1,7 +1,6 @@
 import { DelegationIdentity } from "@dfinity/identity";
 import notifySessionExpired from "../actions/signin/notifySessionExpired";
 import store from "../store";
-import getAuthClient from "../utils/authClient";
 
 const ONE_MINUTE_MILLIS = 60 * 1000;
 
@@ -43,7 +42,6 @@ class SessionExpirationHandler {
 
     private logoutAndReset = async () : Promise<void> => {
         await (store.dispatch(notifySessionExpired() as any) as Promise<void>);
-        await getAuthClient().logout();
         this.reset();
     }
 
