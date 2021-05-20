@@ -101,6 +101,10 @@ impl Chat for DirectChat {
         get_messages_by_id(&self.messages, ids, 1)
     }
 
+    fn get_message_mut(&mut self, id: u32) -> Option<&mut Message> {
+        self.messages.get_mut(id as usize)
+    }
+
     fn get_latest_message_id(&self) -> u32 {
         get_latest_message_id(&self.messages)
     }

@@ -10,15 +10,22 @@ use self::Response::*;
 pub fn update(request: Request) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
     let me = shared::user_id::get_current();
-    match chat_list.get_mut(request.chat_id, &me) {
-        None => ChatNotFound,
-        Some(chat) => {
-            let now = timestamp::now();
-            let message_id = chat.push_message(&me, request.client_message_id, request.content, request.replies_to, now);
-            let chat_summary = chat.to_summary(&me, 0);
-            Success(Result::new(chat_summary, message_id, now))
-        }
+    let is_blob = request.content.is_blob();
+    let message_id;
+    let response;
+    
+    if let Some(chat) = chat_list.get_mut(request.chat_id, &me) {
+        let now = timestamp::now();
+        message_id = chat.push_message(&me, request.client_message_id, request.content, request.replies_to, now);
+        let chat_summary = chat.to_summary(&me, 0);
+        response = Success(Result::new(chat_summary, message_id, now));
+    } else {
+        return ChatNotFound;
     }
+
+    chat_list.push_message(request.chat_id, message_id, is_blob);
+
+    response
 }
 
 #[derive(Deserialize)]

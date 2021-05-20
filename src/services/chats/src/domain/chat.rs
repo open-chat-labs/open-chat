@@ -6,6 +6,7 @@ use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 use crate::domain::direct_chat::{DirectChat, DirectChatSummary, DirectChatStableState};
 use crate::domain::group_chat::{GroupChat, GroupChatSummary, GroupChatStableState};
+use crate::domain::blob_storage::BlobStorage;
 
 #[enum_dispatch(Chat)]
 pub enum ChatEnum {
@@ -20,6 +21,7 @@ pub trait Chat {
     fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32;
     fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
+    fn get_message_mut(&mut self, id: u32) -> Option<&mut Message>;
     fn get_latest_message_id(&self) -> u32;
     fn search_messages(&self, search_term: &str) -> Vec<Message>;
     fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
@@ -43,7 +45,8 @@ pub struct MediaContent {
     blob_id: String,
     blob_size: u32,
     chunk_size: u32,
-    thumbnail_data: String
+    thumbnail_data: String,
+    blob_deleted: bool
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -53,7 +56,8 @@ pub struct FileContent {
     mime_type: String,
     blob_id: String,
     blob_size: u32,
-    chunk_size: u32
+    chunk_size: u32,
+    blob_deleted: bool
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -138,6 +142,36 @@ impl Message {
             MessageContent::File(f) => text_matches(&f.caption, search_term) || f.name.to_lowercase().contains(search_term),
             MessageContent::Cycles(c) => text_matches(&c.caption, search_term)
         }
+    }
+
+    pub fn delete_blob_content(&mut self, blob_storage: &mut BlobStorage) {
+        match &mut self.content {
+            MessageContent::File(file) => {
+                blob_storage.delete_blob(
+                    &file.blob_id, 
+                    file.blob_size, 
+                    file.chunk_size);
+                file.blob_deleted = true;
+            },
+            MessageContent::Media(media) => {
+                blob_storage.delete_blob(
+                    &media.blob_id, 
+                    media.blob_size, 
+                    media.chunk_size);
+                media.blob_deleted = true;                
+            },
+            _ => ()
+        }        
+    }
+}
+
+impl MessageContent {
+    pub fn is_blob(&self) -> bool {
+        match self {
+            MessageContent::File(_) => true,
+            MessageContent::Media(_) => true,
+            _ => false
+        }            
     }
 }
 

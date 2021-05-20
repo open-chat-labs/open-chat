@@ -37,6 +37,7 @@ pub async fn update(request: Request) -> Response {
 
     let chat_summary: DirectChatSummary;
     let message_id: u32;
+    let is_blob = request.content.is_blob();
     match chat {
         Some(ChatEnum::Direct(c)) => {
             message_id = c.push_message(
@@ -60,6 +61,8 @@ pub async fn update(request: Request) -> Response {
                 now);
         }
     };
+
+    chat_list.push_message(chat_id, message_id, is_blob);
 
     Success(Result {
         chat_summary,
