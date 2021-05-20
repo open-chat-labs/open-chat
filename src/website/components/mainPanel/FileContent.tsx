@@ -40,6 +40,7 @@ function FileContent(props : Props): JSX.Element {
 
     let downloading = false;
     let title = content.blobDeleted ? `"${content.name}" no longer available` : `Download "${content.name}"`;
+    let name = content.blobDeleted ? `${content.name} no longer available` : content.name;
 
     return (
         <a 
@@ -49,7 +50,7 @@ function FileContent(props : Props): JSX.Element {
             onClick={onClick}
             title={title}>
             <div className={classes.icon}></div>
-            <div className={classes.fileName}>{content.name}</div>
+            <div className={classes.fileName}>{name}</div>
         </a>
     );
 

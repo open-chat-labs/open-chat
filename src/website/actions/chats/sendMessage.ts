@@ -119,7 +119,8 @@ function convertContent(sendMessageContent: DraftMessageContent): MessageContent
                 size: sendMessageContent.data.length,
                 chunkSize: CHUNK_SIZE_BYTES,
                 blobUrl: sendMessageContent.blobUrl,
-                thumbnailData: sendMessageContent.thumbnailData
+                thumbnailData: sendMessageContent.thumbnailData,
+                blobDeleted: false
             };
         case "file":
             return {
@@ -129,7 +130,8 @@ function convertContent(sendMessageContent: DraftMessageContent): MessageContent
                 mimeType: sendMessageContent.mimeType,
                 id: uuidv1().toString(),
                 size: sendMessageContent.data.length,
-                chunkSize: CHUNK_SIZE_BYTES
+                chunkSize: CHUNK_SIZE_BYTES,
+                blobDeleted: false
             };
         case "text":
         case "cycles":

@@ -6,7 +6,6 @@ use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::storage::StableState;
 use shared::user_id::UserId;
-use crate::utils::get_memory_usage;
 use super::chat::{Chat, ChatEnum, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
@@ -125,8 +124,8 @@ impl ChatList {
     }
 
     pub fn prune_messages(&mut self, blob_storage: &mut BlobStorage) {
-        const MEMORY_LIMIT_BYTES: u32 = 1024 * 1024 * 2000; // A bit less than 2GB
-        if get_memory_usage() <= MEMORY_LIMIT_BYTES {
+        const MEMORY_LIMIT_BYTES: u64 = 1024 * 1024 * 1024; // 1GB
+        if blob_storage.get_total_bytes() <= MEMORY_LIMIT_BYTES {
             return;
         }
 
