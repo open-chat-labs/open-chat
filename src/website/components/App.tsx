@@ -50,19 +50,11 @@ function App() {
     const dispatch = useDispatch();
     const classes = useStyles();
     const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
-    const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
     const alert = useSelector((state: RootState) => state.appState.alert);
 
     useEffect(() => {
         dispatch(aboutUs());
-    }, []);    
-
-    const onCloseAlert = () => {
-        dispatch(closeAlertDialog());
-        if (sessionExpired) {
-            dispatch(logout());
-        }
-    };
+    }, []);
 
     setupBackgroundTasks();
 
@@ -128,10 +120,10 @@ function App() {
                 {buildMainPanel(sidePanelState)}
                 {buildRightPanel(sidePanelState)}
             </Grid>
-            {alert ? 
+            {alert ?
             <AlertDialog
                 content={alert}
-                onClose={onCloseAlert}
+                onClose={() => dispatch(closeAlertDialog())}
                  /> : null}
         </>
     );
