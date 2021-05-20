@@ -207,7 +207,7 @@ impl Chat for GroupChat {
     }
 
     fn get_message_mut(&mut self, id: u32) -> Option<&mut Message> {
-        self.messages.get_mut(id as usize)
+        self.messages.get_mut((id - 1) as usize)
     }
 
     fn get_latest_message_id(&self) -> u32 {

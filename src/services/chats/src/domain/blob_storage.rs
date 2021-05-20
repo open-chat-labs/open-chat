@@ -1,14 +1,19 @@
+use ic_cdk::export::candid::CandidType;
+use serde::Deserialize;
 use std::collections::HashMap;
 use shared::storage::StableState;
 
 #[derive(Default)]
 pub struct BlobStorage {
-    chunks: HashMap<(String, u32), Vec<u8>>
+    chunks: HashMap<(String, u32), Vec<u8>>,
+    total_bytes: u64
 }
 
 impl BlobStorage {
     pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) {
+        let byte_count = data.len() as u64;
         self.chunks.insert((blob_id, chunk_index), data);
+        self.total_bytes = self.total_bytes + byte_count;
     }
 
     pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {
@@ -22,33 +27,52 @@ impl BlobStorage {
         }
     }
 
-    pub fn chunk_count(&self) -> u32 {
+    pub fn get_chunk_count(&self) -> u32 {
         self.chunks.len() as u32
     }
 
+    pub fn get_total_bytes(&self) -> u64 {
+        self.total_bytes
+    }
+
     fn delete_chunk(&mut self, blob_id: &String, chunk_index: u32) {
-        self.chunks.remove(&(blob_id.clone(), chunk_index));
+        if let Some(chunk) = self.chunks.remove(&(blob_id.clone(), chunk_index)) {
+            self.total_bytes = self.total_bytes - (chunk.len() as u64);
+        }        
     }
 }
 
-impl StableState for BlobStorage {
-    type State = Vec<(String, u32, Vec<u8>)>;
+#[derive(CandidType, Deserialize)]
+pub struct BlobState {
+    chunks: Vec<(String, u32, Vec<u8>)>,
+    total_bytes: u64
+}
 
-    fn drain(self) -> Vec<(String, u32, Vec<u8>)> {
-        self.chunks
+impl StableState for BlobStorage {
+    type State = BlobState;
+
+    fn drain(self) -> BlobState {
+        let chunks = self.chunks
             .into_iter()
             .map(|((id, idx), v)| (id, idx, v))
-            .collect()
+            .collect();
+
+        BlobState {
+            chunks,
+            total_bytes: self.total_bytes
+        }
     }
 
-    fn fill(chunks: Vec<(String, u32, Vec<u8>)>) -> BlobStorage {
-        let map: HashMap<(String, u32), Vec<u8>> = chunks
+    fn fill(state: BlobState) -> BlobStorage {
+        let map: HashMap<(String, u32), Vec<u8>> = state
+            .chunks
             .into_iter()
             .map(|(id, idx, v)| ((id, idx), v))
             .collect();
 
         BlobStorage {
-            chunks: map
+            chunks: map,
+            total_bytes: state.total_bytes
         }
     }
 }

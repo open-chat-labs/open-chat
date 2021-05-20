@@ -13,7 +13,8 @@ pub fn query() -> Stats {
     
     Stats {
         memory_used: get_memory_usage(),
-        chunk_count: blob_storage.chunk_count(),
+        chunk_count: blob_storage.get_chunk_count(),
+        chunk_bytes: blob_storage.get_total_bytes(),
         chat_count: chat_stats.chat_count,
         pruneable_message_count: chat_stats.pruneable_message_count,
         timestamp: timestamp::now(),
@@ -24,8 +25,9 @@ pub fn query() -> Stats {
 
 #[derive(CandidType)]
 pub struct Stats {
-    memory_used: u32,
+    memory_used: u64,
     chunk_count: u32,
+    chunk_bytes: u64,
     chat_count: u32,
     pruneable_message_count: u32,
     timestamp: u64,

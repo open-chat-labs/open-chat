@@ -247,8 +247,9 @@ type SearchMessagesMatch =
 
 type Stats =
     record {
-        memory_used: nat32;
+        memory_used: nat64;
         chunk_count: nat32;
+        chunk_bytes: nat64;
         chat_count: nat32;
         pruneable_message_count: nat32;
         timestamp: nat64;

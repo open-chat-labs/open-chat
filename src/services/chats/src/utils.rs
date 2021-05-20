@@ -17,10 +17,10 @@ pub fn vec_to_range_set(vec: Vec<[u32; 2]>) -> RangeSet<[RangeInclusive<u32>; 2]
     RangeSet::from_ranges(small_vec).unwrap()
 }
 
-pub fn get_memory_usage() -> u32 {
+pub fn get_memory_usage() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {
-        (core::arch::wasm32::memory_size(0) * 65536) as u32
+        (core::arch::wasm32::memory_size(0) * 65536) as u64
     }
 
     #[cfg(not(target_arch = "wasm32"))]
