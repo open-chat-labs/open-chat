@@ -47,7 +47,7 @@ function Header() {
     let chatMenu: Option<JSX.Element> = null;
 
     if (chatFunctions.isDirectChat(chat)) {
-        chatMenu = <DirectChatMenu />;
+        //chatMenu = <DirectChatMenu />;
         let imageId = null;
         let isOnline = false;
         if (userDictionary.hasOwnProperty(chat.them)) {
