@@ -73,7 +73,7 @@ function AppContainer() {
     const identity = getAuthClient().getIdentity();
     const isAnonymous = identity.getPrincipal().isAnonymous();
 
-    const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [canisterClientFactoryRequiresInit, setCanisterClientFactoryRequiresInit] = useState(!isAnonymous && CanisterClientFactory.current == null);
 
     const dispatch = useDispatch();
     const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
@@ -92,7 +92,7 @@ function AppContainer() {
     let component;
     let large = false;
 
-    if (isFirstLoad) {
+    if (canisterClientFactoryRequiresInit) {
         component = <div />;
     } else if (isAnonymous || (sessionExpired && userRegistrationStatus !== UserRegistrationStatus.Registered)) {
         component = <Login />;
@@ -120,7 +120,9 @@ function AppContainer() {
         : null;
 
     useEffect(() => {
-        CanisterClientFactory.init(identity).then(_ => setIsFirstLoad(false));
+        if (canisterClientFactoryRequiresInit) {
+            CanisterClientFactory.init(identity).then(_ => setCanisterClientFactoryRequiresInit(false));
+        }
     }, []);
 
     useEffect(() => {

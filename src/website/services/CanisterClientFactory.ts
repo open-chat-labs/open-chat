@@ -14,6 +14,10 @@ export default class CanisterClientFactory {
     private readonly _userMgmtActor: UserMgmtService;
 
     public static init = async (identity: Identity) : Promise<void> => {
+        if (identity.getPrincipal().isAnonymous()) {
+            throw new Error("Cannot use the anonymous identity");
+        }
+
         const agent = new HttpAgent({
             identity,
         });
