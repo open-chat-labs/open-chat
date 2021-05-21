@@ -164,6 +164,26 @@ function Footer() {
         }    
 
         if (draftMessage) {
+            switch (draftMessage.kind) {
+                case "text":
+                    if (draftMessage.text.length > 5000) {
+                        dispatch(showAlertDialog({
+                            title: "Text too long",
+                            message: "Messages are limited to 5000 characters"
+                        }));
+                        return;
+                    }
+                    break;
+                default:
+                    if (draftMessage.caption && draftMessage.caption.length > 500) {
+                        dispatch(showAlertDialog({
+                            title: "Text too long",
+                            message: "Captions are limited ot 500 characters"
+                        }));
+                        return;
+                    }                    
+                    break;
+            }
             dispatch(sendMessage(chat!, draftMessage, chat!.replyContext));
             changeMessagePanel(MessagePanelState.Closed, false);
             textBoxRef.current!.clearText();
