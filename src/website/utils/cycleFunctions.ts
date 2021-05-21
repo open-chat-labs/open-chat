@@ -1,23 +1,18 @@
 import { Currency } from "../domain/model/common";
 
 const GBP_TO_MILLION_CYCLES = 1_260_000;
+const USD_TO_MILLION_CYCLES = 1_440_000;
 const MILLION = 1_000_000;
 const MILLION_BIGINT = BigInt(MILLION);
 
 export function toCurrency(amount: bigint, currency: Currency) : number {
-    if (currency != "GBP") {
-        throw Error("Unsupported currency");
-    }
-
-    return Number(amount / MILLION_BIGINT) / GBP_TO_MILLION_CYCLES;
+    let rate = exchangeRate(currency);
+    return Number(amount / MILLION_BIGINT) / rate;
 }
 
 export function fromCurrency(amount: number, currency: Currency) : bigint {    
-    if (currency != "GBP") {
-        throw Error("Unsupported currency");
-    }
-
-    return BigInt(amount * GBP_TO_MILLION_CYCLES) * MILLION_BIGINT;
+    let rate = exchangeRate(currency);
+    return BigInt(amount * rate) * MILLION_BIGINT;
 }
 
 export function toT(val: bigint) : number {
@@ -32,4 +27,19 @@ export function fromT(val: number) : bigint {
 // https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
 export function round(num: number) {
     return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+
+function exchangeRate(currency: Currency) : number {
+    let rate;
+    switch (currency) {
+        case "GBP":
+            rate = GBP_TO_MILLION_CYCLES;
+            break;
+        case "USD":
+            rate = USD_TO_MILLION_CYCLES;
+            break;
+        default:
+            throw Error("Unsupported currency");
+    }
+    return rate;
 }

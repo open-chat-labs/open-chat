@@ -58,7 +58,7 @@ export interface ISendCyclesRef {
 const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
     const dispatch = useDispatch();
     const [cycles, setCycles] = useState("");
-    const [pounds, setPounds] = useState("");
+    const [dollars, setDollars] = useState("");
     const [balance, setBalance] = useState("...");
     const classes = useStyles();
 
@@ -75,24 +75,24 @@ const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
     function onCyclesChanged(text: string) {
         setCycles(text);
 
-        const pounds = text.length > 0 
+        const dollars = text.length > 0 
             ? cycleFunctions.round(
                 cycleFunctions.toCurrency(
                     cycleFunctions.fromT(
-                        parseFloat(text)), "GBP")).toString()
+                        parseFloat(text)), "USD")).toString()
             : "";
 
-        setPounds(pounds);
+        setDollars(dollars);
     }
     
-    function onPoundsChanged(text: string) {
-        setPounds(text);
+    function onDollarsChanged(text: string) {
+        setDollars(text);
 
         const cycles = text.length > 0 
             ? cycleFunctions.round(
                 cycleFunctions.toT(
                     cycleFunctions.fromCurrency(
-                        parseFloat(text), "GBP"))).toString()
+                        parseFloat(text), "USD"))).toString()
             : "";
 
         setCycles(cycles);
@@ -117,7 +117,7 @@ const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
                     <Typography component="div" variant="caption">
                         Current balance <strong>{balance}</strong>
                     </Typography> 
-                    <Link href="#" variant="caption" underline="always">add funds</Link>
+                    {/* <Link href="#" variant="caption" underline="always">add funds</Link> */}
                 </div>
                 <div className={classes.inputContainer}>
                     <TextField
@@ -131,11 +131,11 @@ const SendCycles = forwardRef((props: Props, ref: Ref<ISendCyclesRef>) => {
                     <SyncAltIcon />                     
                     <TextField
                         id="poundsInput" 
-                        label="GBP"
+                        label="USD"
                         type="number"
-                        value={pounds}
+                        value={dollars}
                         className={classes.poundsInput + " " + classes.input}   
-                        onChange={e => onPoundsChanged(e.target.value)} 
+                        onChange={e => onDollarsChanged(e.target.value)} 
                     />                        
                 </div>
             </div>

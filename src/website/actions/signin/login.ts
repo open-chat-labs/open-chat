@@ -14,7 +14,6 @@ export default function login() {
             identityProvider: IDP_URL,
             maxTimeToLive: SESSION_TIMEOUT_NANOS,
             onSuccess: async () => {
-                console.log(getTimeUntilSessionExpiryMs());
                 const identity = authClient.getIdentity();
                 await CanisterClientFactory.init(identity);
                 dispatch(getCurrentUser());
