@@ -178,7 +178,7 @@ function Footer() {
                     if (draftMessage.caption && draftMessage.caption.length > 500) {
                         dispatch(showAlertDialog({
                             title: "Text too long",
-                            message: "Captions are limited ot 500 characters"
+                            message: "Captions are limited to 500 characters"
                         }));
                         return;
                     }                    
