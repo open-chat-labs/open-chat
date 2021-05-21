@@ -10,10 +10,12 @@ export const PAGE_SIZE = 20;
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 export const DEFAULT_UPDATED_DATE = new Date(2000, 1, 1);
 
-export const MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS = 30000; // 30 seconds
-export const REFRESH_CHATS_INTERVAL_MS = 1000; // 1 second
-export const REFRESH_P2P_CONNECTIONS_MS = 1000; // 1 second
-export const UPDATE_USERS_INTERVAL_MS = 30000; // 30 seconds
+export const MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS = 61000; // 61 seconds
+export const REFRESH_CHATS_MIN_INTERVAL_MS = 3000; // 3 seconds
+export const REFRESH_CHATS_MAX_INTERVAL_MS = 19000; // 19 seconds
+export const REFRESH_P2P_CONNECTIONS_MIN_INTERVAL_MS = 3000; // 3 seconds
+export const REFRESH_P2P_CONNECTIONS_MAX_INTERVAL_MS = 17000; // 17 seconds
+export const UPDATE_USERS_INTERVAL_MS = 37000; // 37 seconds
 export const SCAVENGE_CACHE_INTERVAL_MS = 60000; // 1 minute
 
 export const CONFIRMED_DIRECT_CHAT = "cd";
