@@ -21,7 +21,7 @@ export default class CanisterClientFactory {
         const agent = new HttpAgent({
             identity,
         });
-        await agent.fetchRootKey();
+        // await agent.fetchRootKey();
 
         CanisterClientFactory.current = new CanisterClientFactory(agent);
     }
