@@ -1,6 +1,7 @@
 export const APP_TITLE = "OpenChat";
 
 export const MAX_IMAGE_SIZE = 1024 * 1024;
+export const MAX_AVATAR_SIZE = 1024 * 256;
 export const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
 export const MAX_FILE_SIZE = 1024 * 1024;
 

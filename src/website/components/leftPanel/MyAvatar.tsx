@@ -5,6 +5,8 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import UserAvatar from "../shared/UserAvatar";
 import setProfileImage from "../../actions/users/setProfileImage";
+import { showAlertDialog } from "../../actions/showAlertDialog";
+import { MAX_AVATAR_SIZE } from "../../constants";
 
 export default React.memo(MyAvatar);
 
@@ -43,8 +45,26 @@ function MyAvatar(props: Props) {
         const file: File = files[0];
         const reader = new FileReader();
         reader.onload = function(e: any) {
-            // TODO: Check and scale image
-            dispatch(setProfileImage(userImage.userId, new Uint8Array(e.target.result)));
+            const mimeType = file.type;
+            const data: ArrayBuffer = e.target.result;
+            
+            if (!mimeType.startsWith("image/")) {
+                dispatch(showAlertDialog({
+                    title: "Invalid avatar image",
+                    message: "You must choose an image"
+                }));
+                return;
+            }
+
+            if (data.byteLength > MAX_AVATAR_SIZE) {
+                dispatch(showAlertDialog({
+                    title: "Invalid avatar image",
+                    message: "Your image file must be less than 256 Kb in size"
+                }));
+                return;
+            }
+
+            dispatch(setProfileImage(userImage.userId, new Uint8Array(data)));
         }
         reader.readAsArrayBuffer(file);
     }
