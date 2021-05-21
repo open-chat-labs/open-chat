@@ -24,7 +24,7 @@ pub struct Result {
 }
 
 pub async fn update(request: Request) -> Response {
-    let user_mgmt_id = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
+    let user_mgmt_id = Principal::from_text("7n5dj-xaaaa-aaaaf-aaacq-cai").unwrap();
 
     let (response, ): (Response, ) = ic_cdk::call(
         user_mgmt_id, 
