@@ -17,6 +17,8 @@ pub async fn update(request: Request) -> Response {
     }
 
     let chat_list: &mut ChatList = storage::get_mut();
+    chat_list.add_message_to_stats(&request.content);
+
     let now = timestamp::now();
     let me = shared::user_id::get_current();
     let chat_id = ChatId::for_direct_chat(&me, &request.recipient);

@@ -75,7 +75,7 @@ fn search_all_messages(search_term: String, max_results: u8) -> search_all_messa
 }
 
 #[query]
-fn get_stats() -> get_stats::Stats {
-    get_stats::query()
+fn stats() -> stats::Stats {
+    stats::query()
 }
 

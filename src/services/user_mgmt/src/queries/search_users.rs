@@ -9,9 +9,7 @@ const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
 pub fn query(request: Request) -> Response {
     let mut search_term = request.search_term;
-    if search_term.len() > MAX_SEARCH_TERM_LENGTH {
-        search_term.truncate(MAX_SEARCH_TERM_LENGTH);
-    }
+    search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     let me = shared::user_id::get_current();
     let user_store: &UserStore = storage::get();
