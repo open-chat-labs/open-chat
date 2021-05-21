@@ -268,9 +268,9 @@ function Message(props : Props) {
     {
         // 1. Add the drop down menu
         const buttons: MenuItem[] = [];
-        if (props.sentByMe) {
-            buttons.push({ text: "Info", action: () => {} });
-        }
+        // if (props.sentByMe) {
+        //     buttons.push({ text: "Info", action: () => {} });
+        // }
         if (props.confirmed && props.chatId && props.messageId) {
             const replyContext: ReplyContext = {
                 chatId: props.chatId,
@@ -284,10 +284,10 @@ function Message(props : Props) {
                 const sender = props.sender;
                 buttons.push({ text: "Reply privately", action: () => dispatch(selectReplyPrivatelyToMessage(replyContext, sender)) });
             }
-            buttons.push({ text: "Forward", action: () => {} });
-            buttons.push({ text: "Star", action: () => {} });    
+            // buttons.push({ text: "Forward", action: () => {} });
+            // buttons.push({ text: "Star", action: () => {} });
         }
-        buttons.push({ text: "Delete", action: () => {} });
+        // buttons.push({ text: "Delete", action: () => {} });
         children.push(
             <PopOverMenu 
                 key="menu"
