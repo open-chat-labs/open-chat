@@ -1,4 +1,5 @@
 import React from "react";
+import he from "he";
 import ReactDOMServer from 'react-dom/server';
 import Typography from "@material-ui/core/Typography";
 import { Variant as TypographyVariant } from "@material-ui/core/styles/createTypography";
@@ -15,6 +16,9 @@ export interface Props {
 
 function TextContent(props : Props): JSX.Element {
     function markupText(text: string, linebreaks: boolean): string {
+        // First HTML encode the text
+        text = he.encode(text);
+
         // Wrap contiguous emoji chars in an "emoji span"
         let markup = "";
         let emojis = "";
