@@ -27,7 +27,6 @@ function DirectChatMenu(props: Props) {
 
     const menuItems: MenuItem[] = [];
     menuItems.push({ text: "Participants", action: () => dispatch(changeRightPanel(RightPanelType.Particpants)) });
-    menuItems.push({ text: "Mute notifications", action: () => {} });
     menuItems.push({ text: "Leave group", action: () => dispatch(leaveGroup(props.chatId))});
 
     return <PopOverMenu icon={<MoreVertIcon className={classes.menuIcon} />} menuItems={menuItems} placement="bottom-end" />;
