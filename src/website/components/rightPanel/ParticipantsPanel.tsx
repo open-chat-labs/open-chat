@@ -22,6 +22,10 @@ import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 export default React.memo(ParticipantsPanel);
 
 const useStyles = makeStyles((theme: Theme) => ({
+    list: {
+        overflowX: "hidden",
+        overflowY: "auto"
+    },
     listItem: {
         "&:hover": {
             backgroundColor: theme.colors.sidePanel.listItemHoverBackgroundColor,
@@ -71,7 +75,7 @@ function ParticipantsPanel() {
     return (
         <>
             <Header title="Participants" onCloseButtonClick={closePanel} />
-            <List disablePadding={true}>
+            <List disablePadding={true} className={classes.list}>
                 <ListItem onClick={_ => dispatch(changeRightPanel(RightPanelType.AddParticipants))} className={classes.listItem} divider>
                     <ListItemIcon>
                         <CreateGroupChatIcon size="sm" />

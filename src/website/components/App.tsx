@@ -106,7 +106,12 @@ function App() {
         return (
             <>
                 <Divider orientation="vertical" flexItem />
-                <Grid item className={classes.right}>
+                <Grid
+                    item
+                    container
+                    direction="column"
+                    wrap="nowrap"
+                    className={classes.right}>
                     <RightPanel type={sidePanelState.rightPanel} />
                 </Grid>
             </>
