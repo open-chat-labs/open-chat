@@ -82,6 +82,8 @@ type SendDirectMessageResponse =
         UserNotFound;
         RecipientNotFound;
         BalanceExceeded;
+        MessageTooLong: nat32;
+        InvalidRequest;
     };
 
 type SendMessageRequest =
@@ -103,6 +105,8 @@ type SendMessageResponse =
     variant {
         Success: SendMessageResult;
         ChatNotFound;
+        MessageTooLong: nat32;
+        InvalidRequest;
     };
 
 type MarkReadResult =

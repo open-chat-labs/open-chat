@@ -27,6 +27,8 @@ type RegisterUserResponse =
         UserExists;
         UsernameTaken;
         UserLimitReached: nat64;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
     };
 
 type UpdateUsernameResponse =
@@ -35,6 +37,8 @@ type UpdateUsernameResponse =
         SuccessNoChange;
         UsernameTaken;
         UserNotFound;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
     };
 
 type SetProfileImageResponse =

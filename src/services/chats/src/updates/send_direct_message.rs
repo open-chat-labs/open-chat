@@ -4,13 +4,18 @@ use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::timestamp::{self, Timestamp};
 use shared::user_id::UserId;
-use crate::domain::chat::{Chat, ChatEnum, MessageContent, ReplyContext};
+use crate::domain::chat::{Chat, ChatEnum, MessageContent, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::user_mgmt::*;
 use self::Response::*;
 
 pub async fn update(request: Request) -> Response {
+    // Validation
+    if let Some(response) = validate(&request) {
+        return response;
+    }
+
     let chat_list: &mut ChatList = storage::get_mut();
     let now = timestamp::now();
     let me = shared::user_id::get_current();
@@ -71,6 +76,24 @@ pub async fn update(request: Request) -> Response {
     })
 }
 
+fn validate(request: &Request) -> Option<Response> {
+    if request.client_message_id.len() > 100 {
+        return Some(Response::InvalidRequest);
+    }
+    match request.content.validate() {
+        MessageContentValidationResponse::MessageTooLong(max) => return Some(MessageTooLong(max)),
+        MessageContentValidationResponse::Invalid => return Some(InvalidRequest),
+        MessageContentValidationResponse::Valid => ()
+    }
+    if let Some(reply) = &request.replies_to {
+        match reply.get_content().validate() {
+            MessageContentValidationResponse::Valid => (),
+            _ => return Some(InvalidRequest)
+        }
+    }
+    None
+}
+
 #[derive(Deserialize)]
 pub struct Request {
     recipient: UserId,
@@ -84,7 +107,9 @@ pub enum Response {
     Success(Result),
     UserNotFound,
     RecipientNotFound,
-    BalanceExceeded
+    BalanceExceeded,
+    MessageTooLong(u32),
+    InvalidRequest
 }
 
 #[derive(CandidType)]
