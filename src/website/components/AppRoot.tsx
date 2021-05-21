@@ -127,7 +127,7 @@ function AppContainer() {
 
     useEffect(() => {
         if (currentUser && !isAnonymous && identity instanceof DelegationIdentity) {
-            SessionExpirationHandler.startSession(identity as DelegationIdentity);
+            SessionExpirationHandler.startSession();
         }
     }, [currentUser?.userId]);
 
