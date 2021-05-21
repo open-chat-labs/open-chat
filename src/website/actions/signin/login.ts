@@ -1,4 +1,3 @@
-import { DelegationIdentity } from "@dfinity/identity";
 import getAuthClient from "../../utils/authClient";
 import { IDP_URL } from "../../constants";
 import { Dispatch } from "react";
@@ -18,7 +17,7 @@ export default function login() {
                 const identity = authClient.getIdentity();
                 await CanisterClientFactory.init(identity);
                 dispatch(getCurrentUser());
-                SessionExpirationHandler.startSession(identity as DelegationIdentity);
+                SessionExpirationHandler.startSession();
             }
         });
     }

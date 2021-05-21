@@ -1,22 +1,19 @@
-import { DelegationIdentity } from "@dfinity/identity";
 import notifySessionExpired from "../actions/signin/notifySessionExpired";
 import store from "../store";
+import { getTimeUntilSessionExpiryMs } from "../utils/authClient";
 
 const ONE_MINUTE_MILLIS = 60 * 1000;
 
 class SessionExpirationHandler {
-    private identity?: DelegationIdentity;
     private timeout?: NodeJS.Timeout;
 
-    public startSession = (identity: DelegationIdentity) => {
+    public startSession = () => {
         this.reset()
-        this.identity = identity;
-
-        this.handleSessionExpiry(identity);
+        this.handleSessionExpiry();
     }
 
-    private handleSessionExpiry = (identity: DelegationIdentity) => {
-        const durationUntilSessionExpiresMs = this.getTimeUntilSessionExpiryMs(identity);
+    private handleSessionExpiry = () => {
+        const durationUntilSessionExpiresMs = getTimeUntilSessionExpiryMs();
 
         if (durationUntilSessionExpiresMs) {
             const durationUntilLogoutMs = durationUntilSessionExpiresMs - ONE_MINUTE_MILLIS;
@@ -32,14 +29,6 @@ class SessionExpirationHandler {
         }
     }
 
-    private getTimeUntilSessionExpiryMs = (identity: DelegationIdentity) : number => {
-        const expiryDateTimestampMs = Number(identity.getDelegation().delegations
-            .map(d => d.delegation.expiration)
-            .reduce((current, next) => next < current ? next : current) / BigInt(1_000_000));
-
-        return expiryDateTimestampMs - Date.now();
-    }
-
     private logoutAndReset = async () : Promise<void> => {
         await (store.dispatch(notifySessionExpired() as any) as Promise<void>);
         this.reset();
@@ -50,7 +39,6 @@ class SessionExpirationHandler {
             clearTimeout(this.timeout);
             this.timeout = undefined;
         }
-        this.identity = undefined;
     }
 }
 
