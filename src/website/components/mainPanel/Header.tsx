@@ -14,7 +14,6 @@ import { getSelectedChat } from "../../domain/stateFunctions";
 import { MyProfile, UserSummary } from "../../domain/model/users";
 import ParticipantsTyping from "../shared/ParticipantsTyping";
 import ThemTyping from "../shared/ThemTyping";
-import DirectChatMenu from "./DirectChatMenu";
 import GroupChatMenu from "./GroupChatMenu";
 import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
 import LastOnline from "./LastOnline";
@@ -92,21 +91,17 @@ function Header() {
     const classes = useStyles();
 
     return (
-        <Grid component="header" container justifyContent="space-between" alignItems="center">
+        <Grid component="header" flexWrap="nowrap" container alignItems="center">
             <Grid item>
-                <Grid container alignItems="center">
+                {icon}
+            </Grid>
+            <Grid item flexGrow={1} overflow="hidden">
+                <Grid container direction="column" className={"header-titles " + classes.titles}>
                     <Grid item>
-                        {icon}
+                        <Typography variant="body1">{chatName}</Typography>
                     </Grid>
-                    <Grid item>
-                        <Grid container direction="column" className={"header-titles " + classes.titles}>
-                            <Grid item>
-                                <Typography variant="body1">{chatName}</Typography>
-                            </Grid>
-                            <Grid item className={classes.subtitle}>
-                                {subTitle}
-                            </Grid>
-                        </Grid>
+                    <Grid item className={classes.subtitle} whiteSpace="nowrap">
+                        {subTitle}
                     </Grid>
                 </Grid>
             </Grid>
