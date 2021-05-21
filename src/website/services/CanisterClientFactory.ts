@@ -13,13 +13,13 @@ export default class CanisterClientFactory {
     private readonly _p2pActor: P2pService;
     private readonly _userMgmtActor: UserMgmtService;
 
-    public static create = async (identity: Identity) : Promise<CanisterClientFactory> => {
+    public static init = async (identity: Identity) : Promise<void> => {
         const agent = new HttpAgent({
             identity,
         });
         await agent.fetchRootKey();
 
-        return new CanisterClientFactory(agent);
+        CanisterClientFactory.current = new CanisterClientFactory(agent);
     }
 
     private constructor(agent: HttpAgent) {
