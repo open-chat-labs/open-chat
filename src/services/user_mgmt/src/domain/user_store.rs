@@ -16,6 +16,10 @@ pub struct UserStore {
     data: MultiMap<UserId, String, User>
 }
 
+pub struct Stats {
+    pub user_count: u64,
+}
+
 #[derive(CandidType, Deserialize, Debug)]
 pub struct User {
     id: UserId,
@@ -237,6 +241,12 @@ impl UserStore {
         }
 
         TransferCyclesResponse::Success(TransferCyclesResult { new_balance })
+    }
+
+    pub fn get_stats(&self) -> Stats {
+        Stats {
+            user_count: self.data.iter().count() as u64,
+        }
     }
 
     fn username_matches(search_term_lower: &str, username: &str) -> bool {

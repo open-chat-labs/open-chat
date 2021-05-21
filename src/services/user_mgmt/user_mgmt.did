@@ -103,6 +103,15 @@ type SearchUsersResponse =
         }
     };
 
+type Stats =
+    record {
+        memory_used: nat64;
+        timestamp: nat64;
+        user_id: UserId;
+        cycles_balance: int64;
+        user_count: nat64;
+    };
+
 service : {
     register_user: (text) -> (RegisterUserResponse);
     update_username: (text) -> (UpdateUsernameResponse);
@@ -114,4 +123,5 @@ service : {
     get_user_id: (text) -> (GetUserIdResponse) query;
     get_users: (GetUsersRequest) -> (GetUsersResponse) query;
     search_users: (SearchUsersRequest) -> (SearchUsersResponse) query;
+    stats: () -> (Stats) query;
 }

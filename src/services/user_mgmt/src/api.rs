@@ -47,3 +47,8 @@ pub fn get_users(request: get_users::Request) -> get_users::Response {
 pub fn search_users(request: search_users::Request) -> search_users::Response {
     search_users::query(request)
 }
+
+#[query]
+fn stats() -> get_stats::Stats {
+    get_stats::query()
+}

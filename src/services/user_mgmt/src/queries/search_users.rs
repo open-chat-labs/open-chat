@@ -9,7 +9,7 @@ const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
 pub fn query(request: Request) -> Response {
     let mut search_term = request.search_term;
-    if request.search_term.len() > MAX_SEARCH_TERM_LENGTH {
+    if search_term.len() > MAX_SEARCH_TERM_LENGTH {
         search_term.truncate(MAX_SEARCH_TERM_LENGTH);
     }
 
