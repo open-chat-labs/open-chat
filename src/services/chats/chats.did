@@ -252,13 +252,20 @@ type SearchMessagesMatch =
 type Stats =
     record {
         memory_used: nat64;
+        timestamp: nat64;
+        user_id: principal;
+        cycles_balance: int64;
         chunk_count: nat32;
         chunk_bytes: nat64;
-        chat_count: nat32;
+        direct_chat_count: nat32;
+        group_chat_count: nat32;
+        text_message_count: nat64;
+        image_message_count: nat64;
+        video_message_count: nat64;
+        file_message_count: nat64;
+        cycles_message_count: nat64;
+        cycles_transferred: nat;
         pruneable_message_count: nat32;
-        timestamp: nat64;
-        user_id: UserId;
-        cycles_balance: int64;
     };
 
 service : {
@@ -277,5 +284,5 @@ service : {
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
     get_chunk: (text, nat32) -> (opt vec nat8) query;
     search_all_messages: (text, nat8) -> (SearchAllMessagesResponse) query;
-    get_stats: () -> (Stats) query;
+    stats: () -> (Stats) query;
 }

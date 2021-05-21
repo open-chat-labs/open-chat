@@ -76,6 +76,15 @@ pub enum MessageContent {
 }
 
 #[derive(CandidType, Deserialize, Clone)]
+pub enum MessageContentType {
+    Text,
+    Image,
+    Video,
+    File,
+    Cycles
+}
+
+#[derive(CandidType, Deserialize, Clone)]
 pub struct Message {
     id: u32,
     client_message_id: String,
@@ -221,6 +230,21 @@ impl MessageContent {
         };
         
         Valid
+    }
+
+    pub fn get_type(&self) -> MessageContentType {
+        match self {
+            MessageContent::Text(_) => MessageContentType::Text,
+            MessageContent::Media(m) => {
+                if m.mime_type.to_lowercase().starts_with("video/") {
+                    MessageContentType::Video
+                } else {
+                    MessageContentType::Image
+                }
+            },
+            MessageContent::File(_) => MessageContentType::File,
+            MessageContent::Cycles(_) => MessageContentType::Cycles
+        }
     }
 }
 

@@ -1,5 +1,7 @@
 use core::ops::RangeTo;
 use core::cmp::min;
+use ic_cdk::export::candid::CandidType;
+use serde::Deserialize;
 use std::collections::VecDeque;
 use std::collections::{HashMap, hash_map::Entry::{Occupied, Vacant}};
 use shared::chat_id::ChatId;
@@ -10,18 +12,34 @@ use super::chat::{Chat, ChatEnum, ChatSummary, MessageContent};
 use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 use crate::domain::blob_storage::BlobStorage;
-use crate::domain::chat::{ChatStableState, ReplyContext};
+use crate::domain::chat::{ChatStableState, MessageContentType, ReplyContext};
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::domain::group_chat::GroupChatSummary;
 
 #[derive(Default)]
 pub struct ChatList {
     chats: HashMap<ChatId, ChatEnum>,
-    messages_to_prune: VecDeque<(ChatId, u32)>
+    messages_to_prune: VecDeque<(ChatId, u32)>,
+    stats: Stats,
 }
 
+#[derive(CandidType, Deserialize)]
+pub struct ChatListState {
+    chats: Vec<ChatStableState>,
+    messages_to_prune: Vec<(ChatId, u32)>,
+    stats: Stats,
+}
+
+#[derive(Clone, Default, CandidType, Deserialize)]
 pub struct Stats {
-    pub chat_count: u32,
+    pub direct_chat_count: u32,
+    pub group_chat_count: u32,
+    pub text_message_count: u64,
+    pub image_message_count: u64,
+    pub video_message_count: u64,
+    pub file_message_count: u64,
+    pub cycles_message_count: u64,
+    pub cycles_transferred: u128,
     pub pruneable_message_count: u32,
 }
 
@@ -36,10 +54,12 @@ impl ChatList {
         replies_to: Option<ReplyContext>,
         now: Timestamp) -> DirectChatSummary {
 
+        self.add_message_to_stats(&content);
         let chat = DirectChat::new(chat_id, sender.clone(), recipient, client_message_id, content, replies_to, now);
         let chat_summary = DirectChatSummary::new(&chat, &sender, 0);
 
         self.chats.insert(chat_id, ChatEnum::Direct(chat));
+        self.stats.direct_chat_count = self.stats.direct_chat_count + 1;
         chat_summary
     }
 
@@ -51,6 +71,7 @@ impl ChatList {
                 let chat_summary = GroupChatSummary::new(&chat, &creator, 0);
 
                 e.insert(ChatEnum::Group(chat));
+                self.stats.group_chat_count = self.stats.group_chat_count + 1;
                 Some(chat_summary)
             }
         }
@@ -114,12 +135,18 @@ impl ChatList {
     }
 
     pub fn delete_chat(&mut self, chat_id: ChatId) {
-        self.chats.remove(&chat_id);
+        if let Some(chat) = self.chats.remove(&chat_id) {
+            match chat {
+                ChatEnum::Direct(_) => self.stats.direct_chat_count = self.stats.direct_chat_count - 1,
+                ChatEnum::Group(_) => self.stats.group_chat_count = self.stats.group_chat_count - 1,
+            }
+        }
     }
 
     pub fn push_message(&mut self, chat_id: ChatId, message_id: u32, is_blob: bool) {
         if is_blob {
             self.messages_to_prune.push_back((chat_id, message_id));
+            self.stats.pruneable_message_count = self.stats.pruneable_message_count + 1;
         }
     }
 
@@ -144,21 +171,35 @@ impl ChatList {
                     }
                 }
             }
+
+            self.stats.pruneable_message_count = self.stats.pruneable_message_count - count_to_prune;
         }
     }
 
     pub fn get_stats(&self) -> Stats {
-        Stats {
-            chat_count: self.chats.len() as u32,
-            pruneable_message_count: self.messages_to_prune.len() as u32,
+        self.stats.clone()
+    }
+
+    pub fn add_message_to_stats(&mut self, content: &MessageContent) {
+        match content.get_type() {
+            MessageContentType::Text => self.stats.text_message_count = self.stats.text_message_count + 1,
+            MessageContentType::Image => self.stats.image_message_count = self.stats.image_message_count + 1,
+            MessageContentType::Video => self.stats.video_message_count = self.stats.video_message_count + 1,
+            MessageContentType::File => self.stats.file_message_count = self.stats.file_message_count + 1,
+            MessageContentType::Cycles => {
+                self.stats.cycles_message_count = self.stats.cycles_message_count + 1;
+                if let MessageContent::Cycles(c) = content {
+                    self.stats.cycles_transferred = self.stats.cycles_transferred + c.get_amount();
+                }
+            },
         }
     }
 }
 
 impl StableState for ChatList {
-    type State = (Vec<ChatStableState>, Vec<(ChatId, u32)>);
+    type State = ChatListState;
 
-    fn drain(self) -> (Vec<ChatStableState>, Vec<(ChatId, u32)>) {
+    fn drain(self) -> ChatListState {
         let chats: Vec<ChatStableState> = self.chats
             .into_iter()
             .map(|(_, c)| c.into())
@@ -166,21 +207,25 @@ impl StableState for ChatList {
         let messages_to_prune: Vec<(ChatId, u32)> = self.messages_to_prune
             .into_iter()
             .collect();
-        (chats, messages_to_prune)
+        ChatListState {
+            chats,
+            messages_to_prune,
+            stats: self.stats
+        }
     }
 
-    fn fill(state: (Vec<ChatStableState>, Vec<(ChatId, u32)>)) -> ChatList {
-        let (chats, messages_to_prune) = state;
-        let chats_map: HashMap<ChatId, ChatEnum> = chats
+    fn fill(state: ChatListState) -> ChatList {
+        let chats_map: HashMap<ChatId, ChatEnum> = state.chats
             .into_iter()
             .map(|c| (c.get_id(), c.into()))
             .collect();
-        let messages_to_prune_deque: VecDeque<(ChatId, u32)> = messages_to_prune
+        let messages_to_prune_deque: VecDeque<(ChatId, u32)> = state.messages_to_prune
             .into_iter()
             .collect();
         ChatList {
             chats: chats_map,
-            messages_to_prune: messages_to_prune_deque
+            messages_to_prune: messages_to_prune_deque,
+            stats: state.stats
         }
     }
 }
