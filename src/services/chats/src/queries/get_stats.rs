@@ -2,7 +2,7 @@ use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::timestamp;
 use shared::user_id::UserId;
-use crate::utils::get_memory_usage;
+use shared::memory::get_memory_usage;
 use crate::domain::chat_list::ChatList;
 use crate::domain::blob_storage::BlobStorage;
 
