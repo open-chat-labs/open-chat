@@ -3,6 +3,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use shared::storage::StableState;
 
+const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
+
 #[derive(Default)]
 pub struct BlobStorage {
     chunks: HashMap<(String, u32), Vec<u8>>,
@@ -10,10 +12,14 @@ pub struct BlobStorage {
 }
 
 impl BlobStorage {
-    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) {
+    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
+        if data.len() > MAX_CHUNK_SIZE as usize {
+            return false;
+        }
         let byte_count = data.len() as u64;
         self.chunks.insert((blob_id, chunk_index), data);
         self.total_bytes = self.total_bytes + byte_count;
+        true
     }
 
     pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {

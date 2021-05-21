@@ -8,6 +8,8 @@ use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 
 const MAX_USERS: u64 = 10000;
+const MAX_USERNAME_LENGTH: u16 = 25;
+const MIN_USERNAME_LENGTH: u16 = 2;
 
 #[derive(Default)]
 pub struct UserStore {
@@ -50,6 +52,8 @@ pub enum RegisterUserResponse {
     Success(MyProfile),
     UserExists,
     UsernameTaken,
+    UsernameTooShort(u16),
+    UsernameTooLong(u16),
     UserLimitReached(u64)
 }
 
@@ -58,7 +62,9 @@ pub enum UpdateUsernameResponse {
     Success,
     SuccessNoChange,
     UsernameTaken,
-    UserNotFound
+    UserNotFound,
+    UsernameTooShort(u16),
+    UsernameTooLong(u16),
 }
 
 #[derive(CandidType)]
@@ -76,6 +82,14 @@ pub struct TransferCyclesResult {
 
 impl UserStore {
     pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResponse {
+        // Validation
+        if username.len() > MAX_USERNAME_LENGTH as usize {
+            return RegisterUserResponse::UsernameTooLong(MAX_USERNAME_LENGTH);
+        }
+        if username.len() < MIN_USERNAME_LENGTH as usize {
+            return RegisterUserResponse::UsernameTooShort(MIN_USERNAME_LENGTH);
+        }
+
         if self.data.iter().count() >= (MAX_USERS as usize) {
             return RegisterUserResponse::UserLimitReached(MAX_USERS);
         }
@@ -102,6 +116,14 @@ impl UserStore {
     }
 
     pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResponse {
+        // Validation
+        if username.len() > MAX_USERNAME_LENGTH as usize {
+            return UpdateUsernameResponse::UsernameTooLong(MAX_USERNAME_LENGTH);
+        }
+        if username.len() < MIN_USERNAME_LENGTH as usize {
+            return UpdateUsernameResponse::UsernameTooShort(MIN_USERNAME_LENGTH);
+        }
+
         if let Some(match_by_username) = self.data.get_alt(&username) {
             return if match_by_username.id == user_id {
                 UpdateUsernameResponse::SuccessNoChange

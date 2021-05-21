@@ -7,6 +7,7 @@ use shared::user_id::UserId;
 use crate::domain::direct_chat::{DirectChat, DirectChatSummary, DirectChatStableState};
 use crate::domain::group_chat::{GroupChat, GroupChatSummary, GroupChatStableState};
 use crate::domain::blob_storage::BlobStorage;
+use self::MessageContentValidationResponse::*;
 
 #[enum_dispatch(Chat)]
 pub enum ChatEnum {
@@ -173,6 +174,60 @@ impl MessageContent {
             _ => false
         }            
     }
+
+    pub fn validate(&self) -> MessageContentValidationResponse {
+        const MAX_MESSAGE_LEN: u32 = 5000;
+        const MAX_CAPTION_LEN: u32 = 500;
+        const MAX_MIME_TYPE_LEN: u16 = 255;
+        const MAX_BLOB_ID_LEN: u16 = 100;
+        const MAX_THUMBNAIL_LEN: u16 = 5000;
+
+        match self {
+            MessageContent::Text(text) => {
+                if text.text.len() > MAX_MESSAGE_LEN as usize { 
+                    return MessageTooLong(MAX_MESSAGE_LEN);
+                }
+            },
+            MessageContent::Media(media) => {
+                if media.mime_type.len() > MAX_MIME_TYPE_LEN as usize
+                    || media.blob_id.len() > MAX_BLOB_ID_LEN as usize 
+                    || media.thumbnail_data.len() > MAX_THUMBNAIL_LEN as usize {
+                    return Invalid;
+                }
+                if let Some(caption) = &media.caption {
+                    if caption.len() > MAX_CAPTION_LEN as usize {
+                        return MessageTooLong(MAX_CAPTION_LEN);
+                    }
+                }                
+            },
+            MessageContent::File(file) => {
+                if file.mime_type.len() > MAX_MIME_TYPE_LEN as usize
+                    || file.blob_id.len() > MAX_BLOB_ID_LEN as usize {
+                    return Invalid;
+                }
+                if let Some(caption) = &file.caption {
+                    if caption.len() > MAX_CAPTION_LEN as usize {
+                        return MessageTooLong(MAX_CAPTION_LEN);
+                    }
+                }                                
+            },
+            MessageContent::Cycles(cycles) => {
+                if let Some(caption) = &cycles.caption {
+                    if caption.len() > MAX_CAPTION_LEN as usize {
+                        return MessageTooLong(MAX_CAPTION_LEN);
+                    }
+                }                                
+            }
+        };
+        
+        Valid
+    }
+}
+
+pub enum MessageContentValidationResponse {
+    Valid,
+    MessageTooLong(u32),
+    Invalid
 }
 
 impl MarkReadResult {
@@ -213,5 +268,11 @@ impl From<ChatEnum> for ChatStableState {
 impl CycleContent {
     pub fn get_amount(&self) -> u128 {
         self.amount
+    }
+}
+
+impl ReplyContext {
+    pub fn get_content(&self) -> &MessageContent {
+        &self.content
     }
 }
