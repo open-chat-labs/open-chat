@@ -73,15 +73,11 @@ function AppContainer() {
     const identity = getAuthClient().getIdentity();
     const isAnonymous = identity.getPrincipal().isAnonymous();
 
-    const [canisterClientFactory, setCanisterClientFactory] = useState<CanisterClientFactory>();
-
-    CanisterClientFactory.current = canisterClientFactory ?? null;
-    if (!CanisterClientFactory.current) {
-        CanisterClientFactory.create(identity).then(setCanisterClientFactory);
-    }
+    const [canisterClientFactoryRequiresInit, setCanisterClientFactoryRequiresInit] = useState(!isAnonymous && CanisterClientFactory.current == null);
 
     const dispatch = useDispatch();
     const sessionExpired = useSelector((state: RootState) => state.appState.sessionExpired);
+    const currentUser = useSelector((state: RootState) => state.usersState.me);
     const userRegistrationStatus = useSelector((state: RootState) => state.usersState.userRegistrationStatus);
 
     const classes = useStyles();
@@ -96,7 +92,7 @@ function AppContainer() {
     let component;
     let large = false;
 
-    if (!CanisterClientFactory.current) {
+    if (canisterClientFactoryRequiresInit) {
         component = <div />;
     } else if (isAnonymous || (sessionExpired && userRegistrationStatus !== UserRegistrationStatus.Registered)) {
         component = <Login />;
@@ -124,10 +120,16 @@ function AppContainer() {
         : null;
 
     useEffect(() => {
-        if (!isAnonymous) {
+        if (canisterClientFactoryRequiresInit) {
+            CanisterClientFactory.init(identity).then(_ => setCanisterClientFactoryRequiresInit(false));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (currentUser && !isAnonymous && identity instanceof DelegationIdentity) {
             SessionExpirationHandler.startSession(identity as DelegationIdentity);
         }
-    }, [identity]);
+    }, [currentUser?.userId]);
 
     return (
         <Container maxWidth={large ? "lg" : "md"} className={containerClass}>

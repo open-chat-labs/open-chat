@@ -16,7 +16,7 @@ export default function login() {
             maxTimeToLive: SESSION_TIMEOUT_NANOS,
             onSuccess: async () => {
                 const identity = authClient.getIdentity();
-                CanisterClientFactory.current = await CanisterClientFactory.create(identity);
+                await CanisterClientFactory.init(identity);
                 dispatch(getCurrentUser());
                 SessionExpirationHandler.startSession(identity as DelegationIdentity);
             }
