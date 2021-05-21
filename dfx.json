@@ -48,7 +48,7 @@
     },
     "ic": {
       "providers": [
-        "https://gw.dfinity.network"
+        "https://ic0.app"
       ],
       "type": "persistent"
     },
