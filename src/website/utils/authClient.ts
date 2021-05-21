@@ -15,8 +15,8 @@ const getAuthClient = () : AuthClient => authClient!;
 export default getAuthClient;
 
 export function getTimeUntilSessionExpiryMs() : number {
-    const identity = authClient?.getIdentity() as DelegationIdentity;
-    if (!identity) {
+    const identity = authClient?.getIdentity();
+    if (!(identity instanceof DelegationIdentity)) {
         return 0;
     }
 
