@@ -47,6 +47,7 @@ function SearchBox(props: Props) {
             <input
                 className={classes.textBox}
                 ref={props.ref}
+                maxLength={25}
                 value={props.text}
                 onChange={e => props.onChange(e.target.value)}
                 placeholder={props.placeholderText} />
