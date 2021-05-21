@@ -5,7 +5,8 @@ export const MAX_AVATAR_SIZE = 1024 * 256;
 export const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
 export const MAX_FILE_SIZE = 1024 * 1024;
 
-export const IDP_URL = 'http://identity.localhost/';
+export const IDP_URL = 'https://identity.ic0.app/';
+// export const IDP_URL = 'http://identity.localhost/';
 
 export const PAGE_SIZE = 20;
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
