@@ -10,7 +10,7 @@ export const GET_UPDATED_CHATS_SUCCEEDED = "GET_UPDATED_CHATS_SUCCEEDED";
 export const GET_UPDATED_CHATS_FAILED = "GET_UPDATED_CHATS_FAILED";
 
 export default function(updatedSince: Option<Timestamp>) {
-    return async (dispatch: Dispatch<any>) => {
+    return async (dispatch: Dispatch<any>) : Promise<GetUpdatedChatsSucceededEvent | GetUpdatedChatsFailedEvent> => {
         // This function is called every second and we do not currently listen for GET_UPDATED_CHATS_REQUESTED event so
         // in order to remove noise and aid debugging these events are not being dispatched for now.
         //
@@ -25,7 +25,7 @@ export default function(updatedSince: Option<Timestamp>) {
             messageCountForTopChat: null
         });
 
-        let outcomeEvent;
+        let outcomeEvent : GetUpdatedChatsSucceededEvent | GetUpdatedChatsFailedEvent;
         if (response.kind === "success") {
             outcomeEvent = {
                 type: GET_UPDATED_CHATS_SUCCEEDED,
@@ -46,6 +46,8 @@ export default function(updatedSince: Option<Timestamp>) {
         if (outcomeEvent.type !== GET_UPDATED_CHATS_SUCCEEDED || outcomeEvent.payload.chats.length) {
             dispatch(outcomeEvent);
         }
+
+        return outcomeEvent;
     }
 }
 

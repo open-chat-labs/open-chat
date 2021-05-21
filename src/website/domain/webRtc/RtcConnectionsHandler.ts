@@ -18,15 +18,18 @@ class RtcConnectionsHandler {
         await Promise.all(promises);
     }
 
-    public getConnections = async () : Promise<void> => {
+    public getConnections = async () : Promise<number> => {
         const response = await p2pService.getConnectionDetails(this.lastUpdated);
-        if (response.kind === "success") {
-            if (response.connections.length) {
-                const promises: Promise<void>[] = response.connections.map(this.handleRemoteConnectionDetails);
-                await Promise.all(promises);
-            }
-            this.lastUpdated = response.timestamp;
+        if (response.kind !== "success") {
+            return 0;
         }
+
+        if (response.connections.length) {
+            const promises: Promise<void>[] = response.connections.map(this.handleRemoteConnectionDetails);
+            await Promise.all(promises);
+        }
+        this.lastUpdated = response.timestamp;
+        return response.connections.length;
     }
 
     public sendMessage = (users: UserId[], data: string) : void => {
