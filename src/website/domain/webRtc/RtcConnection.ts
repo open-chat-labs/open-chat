@@ -114,7 +114,10 @@ export default class RtcConnection {
     }
 
     public sendMessage = (message: string) : void => {
-        this.dataChannel?.send(message);
+        try {
+            this.dataChannel?.send(message);
+        } catch
+        {}
     }
 
     public close = () : void => {
