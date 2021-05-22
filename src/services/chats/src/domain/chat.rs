@@ -24,12 +24,12 @@ pub trait Chat {
     fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
     fn get_message_mut(&mut self, id: u32) -> Option<&mut Message>;
     fn get_latest_message_id(&self) -> u32;
-    fn search_messages(&self, search_term: &str) -> Vec<Message>;
-    fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
+    fn search_messages(&self, search_term: &str, user: &UserId) -> Vec<Message>;
+    fn mark_read(&mut self, user: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult;
     fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
     fn get_display_date(&self, user_id: &UserId) -> Timestamp;
     fn get_updated_date(&self) -> Timestamp;
-    fn to_summary(&self, me: &UserId, message_count: u32) -> ChatSummary;
+    fn to_summary(&self, user: &UserId, message_count: u32) -> ChatSummary;
 }
 
 #[derive(CandidType, Deserialize, Clone)]
