@@ -1,16 +1,16 @@
 import { Option, Timestamp } from "../../domain/model/common";
-import addAnswer, { AddAnswerRequest, AddAnswerResponse } from "./addAnswer";
-import addOffer, { AddOfferRequest, AddOfferResponse } from "./addOffer";
+import addAnswers, { AddAnswersRequest } from "./addAnswers";
+import addOffers, { AddOffersRequest, AddOffersResponse } from "./addOffers";
 import getConnectionDetails, { GetConnectionDetailsResponse } from "./getConnectionDetails";
 import removeConnectionDetails, { RemoveConnectionDetailsRequest } from "./removeConnectionDetails";
 
 export default class service {
-    public static addOffer(request: AddOfferRequest) : Promise<AddOfferResponse> {
-        return addOffer(request);
+    public static addOffers(request: AddOffersRequest) : Promise<AddOffersResponse> {
+        return addOffers(request);
     }
 
-    public static addAnswer(request: AddAnswerRequest) : Promise<AddAnswerResponse> {
-        return addAnswer(request);
+    public static addAnswers(request: AddAnswersRequest) : Promise<void> {
+        return addAnswers(request);
     }
 
     public static async getConnectionDetails(updatedSince: Option<Timestamp>, deleteAfterRetrieval: boolean = true) : Promise<GetConnectionDetailsResponse> {

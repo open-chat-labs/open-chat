@@ -3,19 +3,22 @@ import { P2PConnectionAnswer, P2PConnectionDetails, P2PConnectionOffer } from ".
 import { UserId } from "../model/users";
 import RtcConnectionsStore from "./RtcConnectionsStore";
 import p2pService from "../../services/p2p/service";
-import RtcConnection from "./RtcConnection";
 
 class RtcConnectionsHandler {
     lastUpdated: Option<Timestamp> = null;
 
     public setupMissingConnections = async (users: UserId[]) : Promise<void> => {
-        const promises: Promise<void>[] = [];
-        for (const user of users) {
-            if (!RtcConnectionsStore.exists(user)) {
-                promises.push(new Promise<void>(() => this.createConnection(user)));
-            }
+        const createOfferPromises = users
+            .filter(u => !RtcConnectionsStore.exists(u))
+            .map(this.createOffer);
+
+        if (createOfferPromises.length) {
+            const offers = await Promise.all(createOfferPromises);
+
+            await p2pService.addOffers({
+                offers
+            });
         }
-        await Promise.all(promises);
     }
 
     public getConnections = async () : Promise<number> => {
@@ -25,8 +28,7 @@ class RtcConnectionsHandler {
         }
 
         if (response.connections.length) {
-            const promises: Promise<void>[] = response.connections.map(this.handleRemoteConnectionDetails);
-            await Promise.all(promises);
+            await this.handleRemoteConnectionDetails(response.connections);
         }
         this.lastUpdated = response.timestamp;
         return response.connections.length;
@@ -41,56 +43,44 @@ class RtcConnectionsHandler {
         }
     }
 
-    createConnection = async (user: UserId, onlyIfNotExists: boolean = true) : Promise<RtcConnection> => {
-        const oldConnection = RtcConnectionsStore.get(user);
-        if (oldConnection) {
-            if (onlyIfNotExists) {
-                return oldConnection;
-            }
-            RtcConnectionsStore.remove(user);
-        }
+    createOffer = async (user: UserId) : Promise<P2PConnectionOffer> => {
         const connection = RtcConnectionsStore.create(user);
 
-        const offer = await connection.createOffer();
-        const addOfferResponse = await p2pService.addOffer({
-            id: offer.id,
-            userId: offer.userId,
-            connectionString: offer.connectionString,
-            iceCandidates: offer.iceCandidates
-        });
-
-        if (addOfferResponse.existingCounterOffer) {
-            await this.handleRemoteOffer(addOfferResponse.existingCounterOffer);
-        }
-
-        return connection;
+        return await connection.createOffer();
     }
 
-    handleRemoteConnectionDetails = async (connectionDetails: P2PConnectionDetails) : Promise<void> => {
-        if (connectionDetails.kind === "offer") {
-            await this.handleRemoteOffer(connectionDetails);
-        } else {
-            await this.handleRemoteAnswer(connectionDetails);
+    handleRemoteConnectionDetails = async (connectionDetails: P2PConnectionDetails[]) : Promise<void> => {
+        const offers: P2PConnectionOffer[] = [];
+        const handleRemoteAnswerPromises: Promise<void>[] = [];
+        for (const cd of connectionDetails) {
+            if (cd.kind === "offer") {
+                offers.push(cd);
+            } else {
+                handleRemoteAnswerPromises.push(this.handleRemoteAnswer(cd));
+            }
         }
+
+        if (offers.length) {
+            const createAnswerPromises = offers.map(this.createAnswer);
+
+            const answers = await Promise.all(createAnswerPromises);
+
+            await p2pService.addAnswers({
+                answers
+            });
+        }
+
+        await Promise.all(handleRemoteAnswerPromises);
     }
 
-    handleRemoteOffer = async (offer: P2PConnectionOffer) : Promise<void> => {
+    createAnswer = async (offer: P2PConnectionOffer) : Promise<P2PConnectionAnswer> => {
         let rtcConnection = RtcConnectionsStore.get(offer.userId);
         if (rtcConnection) {
-            if (rtcConnection.offerId === offer.id) {
-                return;
-            }
             RtcConnectionsStore.remove(offer.userId);
         }
         rtcConnection = RtcConnectionsStore.create(offer.userId);
-        const answer = await rtcConnection.answerRemoteOffer(offer);
-        await p2pService.addAnswer({
-            id: answer.id,
-            offerId: answer.offerId,
-            userId: answer.userId,
-            connectionString: answer.connectionString,
-            iceCandidates: answer.iceCandidates
-        });
+
+        return await rtcConnection.answerRemoteOffer(offer);
     }
 
     handleRemoteAnswer = async (answer: P2PConnectionAnswer) : Promise<void> => {

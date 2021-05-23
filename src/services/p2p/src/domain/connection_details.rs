@@ -61,14 +61,6 @@ pub struct AnswerSummary {
     age_seconds: u32
 }
 
-#[derive(CandidType)]
-pub struct CounterOffer {
-    id: String,
-    connection_string: String,
-    ice_candidates: Vec<String>,
-    age_seconds: u32
-}
-
 impl AllConnectionDetails {
     pub fn add_offer(
         &mut self,
@@ -77,7 +69,7 @@ impl AllConnectionDetails {
         them: UserId,
         connection_string: String,
         ice_candidates: Vec<String>,
-        now: Timestamp) -> Option<CounterOffer> {
+        now: Timestamp) -> Option<OfferSummary> {
 
         // If the reverse offer already exists, return that
         if let Occupied(e) = self.connection_details_per_user.entry(me.clone()) {
@@ -85,8 +77,9 @@ impl AllConnectionDetails {
                 ConnectionDetails::Offer(offer) => if &offer.from == &them { Some(offer) } else { None },
                 _ => None
             }) {
-                return Some(CounterOffer {
+                return Some(OfferSummary {
                     id: o.id.clone(),
+                    user_id: them,
                     connection_string: o.connection_string.clone(),
                     ice_candidates: o.ice_candidates.to_vec(),
                     age_seconds: ((now - o.timestamp) / 1000) as u32
@@ -102,7 +95,7 @@ impl AllConnectionDetails {
             ice_candidates,
             now);
 
-        self.add_connection_details(me, them, offer);
+        self.add_connection_details(&me, them, offer);
 
         None
     }
@@ -119,7 +112,7 @@ impl AllConnectionDetails {
 
         let answer = ConnectionDetails::new_answer(id, offer_id, me.clone(), them.clone(), connection_string, ice_candidates, now);
 
-        self.add_connection_details(me, them, answer);
+        self.add_connection_details(&me, them, answer);
     }
 
     pub fn get_connection_details(&self, to: &UserId, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<ConnectionDetailsSummary> {
@@ -145,7 +138,7 @@ impl AllConnectionDetails {
 
     fn add_connection_details(
         &mut self,
-        me: UserId,
+        me: &UserId,
         them: UserId,
         connection_details: ConnectionDetails) {
 
@@ -155,7 +148,7 @@ impl AllConnectionDetails {
             },
             Occupied(e) => {
                 let connections = e.into_mut();
-                connections.retain(|c| c.get_from_user() != &me);
+                connections.retain(|c| c.get_from_user() != me);
                 connections.push(connection_details);
             }
         };
