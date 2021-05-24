@@ -9,6 +9,7 @@ import UserAvatar from "../shared/UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import * as setFunctions from "../../utils/setFunctions";
+import * as sortFunctions from "../../utils/sortFunctions";
 import * as stateFunctions from "../../domain/stateFunctions";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { MyProfile, UserSummary } from "../../domain/model/users";
@@ -24,10 +25,13 @@ const useStyles = makeStyles((theme: Theme) => ({
     titles: {
         color: theme.colors.header.primaryTextColor,
         lineHeight: "normal",
-        padding: "0 18px"
+        paddingLeft: 18
     },
     subtitle: {
-        color: theme.colors.header.secondaryTextColor
+        color: theme.colors.header.secondaryTextColor,
+        width: "100%",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
     }
 }));
 
@@ -77,13 +81,20 @@ function Header() {
                 subTitle = <ParticipantsTyping usernames={usernames} />;
             } else {
                 const allButMe = setFunctions.except(chat.participants, [me.userId]);
-                const participants = stateFunctions
-                    .getUsers(allButMe, userDictionary)
-                    .map(u => u.username)
-                    .concat(["You"])
-                    .join(", ");
+                const participants = stateFunctions.getUsers(allButMe, userDictionary);
+                let text = "";
+                if (participants.length > 5) {
+                    const totalOnline = participants.filter(p => p.minutesSinceLastOnline < 2).length;
+                    text = `${allButMe.length + 1} members (${totalOnline + 1} online)`;
+                } else {
+                    participants.sort(sortFunctions.compareBy("username", true));
+                    text = participants
+                        .map(u => u.username)
+                        .concat(["You"])
+                        .join(", ");
+                }
 
-                subTitle = <Typography variant="caption">{participants}</Typography>
+                subTitle = <Typography variant="caption">{text}</Typography>
             }
         }
     }
