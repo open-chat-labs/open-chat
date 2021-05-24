@@ -12,7 +12,7 @@ pub fn query(search_term: &str, max_results: u8) -> Response {
 
     let mut matches: Vec<Match> = Vec::new();
     for chat in chats {
-        for message in chat.search_messages(search_term) {
+        for message in chat.search_messages(search_term, &me) {
             matches.push(Match {
                 chat_id: chat.get_id(),
                 message
