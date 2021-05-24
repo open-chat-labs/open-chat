@@ -24,10 +24,13 @@ const useStyles = makeStyles((theme: Theme) => ({
     titles: {
         color: theme.colors.header.primaryTextColor,
         lineHeight: "normal",
-        padding: "0 18px"
+        paddingLeft: 18
     },
     subtitle: {
-        color: theme.colors.header.secondaryTextColor
+        color: theme.colors.header.secondaryTextColor,
+        width: "100%",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
     }
 }));
 
