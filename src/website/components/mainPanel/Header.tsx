@@ -80,13 +80,19 @@ function Header() {
                 subTitle = <ParticipantsTyping usernames={usernames} />;
             } else {
                 const allButMe = setFunctions.except(chat.participants, [me.userId]);
-                const participants = stateFunctions
-                    .getUsers(allButMe, userDictionary)
-                    .map(u => u.username)
-                    .concat(["You"])
-                    .join(", ");
+                const participants = stateFunctions.getUsers(allButMe, userDictionary);
+                let text = "";
+                if (participants.length > 5) {
+                    const totalOnline = participants.filter(p => p.minutesSinceLastOnline < 2).length;
+                    text = `${allButMe.length} members (${totalOnline} online)`;
+                } else {
+                    text = participants
+                        .map(u => u.username)
+                        .concat(["You"])
+                        .join(", ");
+                }
 
-                subTitle = <Typography variant="caption">{participants}</Typography>
+                subTitle = <Typography variant="caption">{text}</Typography>
             }
         }
     }
