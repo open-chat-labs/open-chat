@@ -9,6 +9,7 @@ import UserAvatar from "../shared/UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import * as setFunctions from "../../utils/setFunctions";
+import * as sortFunctions from "../../utils/sortFunctions";
 import * as stateFunctions from "../../domain/stateFunctions";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { MyProfile, UserSummary } from "../../domain/model/users";
@@ -84,8 +85,9 @@ function Header() {
                 let text = "";
                 if (participants.length > 5) {
                     const totalOnline = participants.filter(p => p.minutesSinceLastOnline < 2).length;
-                    text = `${allButMe.length} members (${totalOnline} online)`;
+                    text = `${allButMe.length + 1} members (${totalOnline + 1} online)`;
                 } else {
+                    participants.sort(sortFunctions.compareBy("username", true));
                     text = participants
                         .map(u => u.username)
                         .concat(["You"])
