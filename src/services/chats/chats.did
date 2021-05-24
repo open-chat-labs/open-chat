@@ -156,6 +156,15 @@ type DeleteGroupResponse =
         NotGroupChat;
     };
 
+type JoinGroupResponse =
+    variant {
+        Success;
+        AlreadyInGroup;
+        UserLimitReached;
+        ChatNotFound;
+        NotGroupChat;
+    };
+
 type GetChatsRequest =
     record {
         updated_since: opt Timestamp;
@@ -277,6 +286,7 @@ service : {
     remove_participant: (ChatId, UserId) -> (RemoveParticipantResponse);
     leave_group: (ChatId) -> (LeaveGroupResponse);
     delete_group: (ChatId) -> (DeleteGroupResponse);
+    join_group: (ChatId) -> (JoinGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;

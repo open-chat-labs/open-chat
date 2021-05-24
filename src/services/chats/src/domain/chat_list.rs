@@ -93,6 +93,10 @@ impl ChatList {
         Some(chat)
     }
 
+    pub fn get_unchecked_mut(&mut self, chat_id: ChatId) -> Option<&mut ChatEnum> {
+        self.chats.get_mut(&chat_id)
+    }
+
     pub fn get_all(&self, me: &UserId) -> Vec<&ChatEnum> {
         // For now this will iterate through every chat...
         self

@@ -27,6 +27,7 @@
     "assert": "2.0.0",
     "async": "^3.2.0",
     "buffer": "6.0.3",
+    "clipboard-polyfill": "^3.0.3",
     "css-loader": "5.0.1",
     "emoji-mart": "^3.0.0",
     "events": "3.3.0",

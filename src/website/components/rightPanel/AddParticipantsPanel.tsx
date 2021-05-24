@@ -1,6 +1,9 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
+import * as clipboard from "clipboard-polyfill/text";
 import { useDispatch, useSelector } from "react-redux";
+import Button from "@material-ui/core/Button";
 import List from "@material-ui/core/List";
+import Tooltip from "@material-ui/core/Tooltip";
 import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
@@ -25,6 +28,9 @@ function AddParticipantsPanel() {
     const emptyResults: UserSummary[] = [];
     const [text, setText] = useState("");
     const [results, setResults] = useState(emptyResults);
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+    const tooltipTimeout = useRef<NodeJS.Timeout>();
+
     const clearInput = () => setText("");
     const textBoxRef = useRef<HTMLInputElement>(null);
 
@@ -37,11 +43,26 @@ function AddParticipantsPanel() {
                 max_results: 20
             };                
             userMgmtService.searchUsers(request).then(response => {
-                setResults(response.users);
+                if (text.length > 0) {
+                    setResults(response.users);
+                }
             });
         } else {
             setResults(emptyResults);
         }
+    }
+
+    async function handleCopyCodeButtonClick() {
+        if (tooltipTimeout.current) {
+            clearTimeout(tooltipTimeout.current);
+        }
+
+        await clipboard.writeText(chat.chatId.toString(16).toUpperCase().padStart(32, "0"));
+        setTooltipOpen(true);
+        tooltipTimeout.current = setTimeout(() => {
+            setTooltipOpen(false);
+            tooltipTimeout.current = undefined;
+        }, 1000);
     }
 
     function closePanel() {
@@ -58,6 +79,24 @@ function AddParticipantsPanel() {
         textBoxRef.current?.focus();
     }, []);
 
+    let mainContent: JSX.Element;
+    if (results.length) {
+        mainContent = (
+            <List disablePadding={true}>
+                {results.map(user => <UserListItem
+                    key={user.userId}
+                    user={fromUserSummary(user)}
+                    handleSelectUser={() => handleSelectUser(user)} />)}
+            </List>
+        );
+    } else {
+        mainContent = (
+            <Tooltip title="copied!" placement="bottom" open={tooltipOpen}>
+                <Button onClick={handleCopyCodeButtonClick}>Copy Invite Code</Button>
+            </Tooltip>
+        )
+    }
+
     return (
         <>
             <Header
@@ -70,12 +109,7 @@ function AddParticipantsPanel() {
                 onChange={handleInputChange}
                 placeholderText={PLACEHOLDER_TEXT}
                 ref={textBoxRef} />
-            <List disablePadding={true}>
-                {results.map(user => <UserListItem
-                    key={user.userId}
-                    user={fromUserSummary(user)}
-                    handleSelectUser={() => handleSelectUser(user)} />)}
-            </List>
+            {mainContent}
         </>
     );
 }

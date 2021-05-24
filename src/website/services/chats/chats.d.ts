@@ -66,6 +66,11 @@ export interface GroupChatSummary {
   'unread_by_me_message_id_ranges' : Array<Array<number>>,
   'unread_by_any_message_id_ranges' : Array<Array<number>>,
 };
+export type JoinGroupResponse = { 'AlreadyInGroup' : null } |
+  { 'UserLimitReached' : null } |
+  { 'ChatNotFound' : null } |
+  { 'NotGroupChat' : null } |
+  { 'Success' : null };
 export type LeaveGroupResponse = { 'ParticipantNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'NotGroupChat' : null } |
@@ -127,6 +132,8 @@ export interface SendDirectMessageRequest {
 };
 export type SendDirectMessageResponse = { 'BalanceExceeded' : null } |
   { 'Success' : SendDirectMessageResult } |
+  { 'InvalidRequest' : null } |
+  { 'MessageTooLong' : number } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
 export interface SendDirectMessageResult {
@@ -141,11 +148,30 @@ export interface SendMessageRequest {
   'client_message_id' : string,
 };
 export type SendMessageResponse = { 'ChatNotFound' : null } |
-  { 'Success' : SendMessageResult };
+  { 'Success' : SendMessageResult } |
+  { 'InvalidRequest' : null } |
+  { 'MessageTooLong' : number };
 export interface SendMessageResult {
   'timestamp' : Timestamp,
   'message_id' : number,
   'chat_summary' : ChatSummary,
+};
+export interface Stats {
+  'cycles_balance' : bigint,
+  'chunk_bytes' : bigint,
+  'group_chat_count' : number,
+  'image_message_count' : bigint,
+  'memory_used' : bigint,
+  'user_id' : Principal,
+  'direct_chat_count' : number,
+  'chunk_count' : number,
+  'file_message_count' : bigint,
+  'cycles_message_count' : bigint,
+  'timestamp' : bigint,
+  'text_message_count' : bigint,
+  'cycles_transferred' : bigint,
+  'pruneable_message_count' : number,
+  'video_message_count' : bigint,
 };
 export interface TextContent { 'text' : string };
 export type Timestamp = bigint;
@@ -166,6 +192,7 @@ export default interface _SERVICE {
   'get_messages_by_id' : (arg_0: ChatId, arg_1: Array<number>) => Promise<
       GetMessagesByIdResponse
     >,
+  'join_group' : (arg_0: ChatId) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: ChatId) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: ChatId, arg_1: number, arg_2: number) => Promise<
       MarkReadResponse
@@ -183,4 +210,5 @@ export default interface _SERVICE {
       SendDirectMessageResponse
     >,
   'send_message' : (arg_0: SendMessageRequest) => Promise<SendMessageResponse>,
+  'stats' : () => Promise<Stats>,
 };

@@ -3,20 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
-import { UserSummary} from "./domain/model/users";
+import { UserSummary } from "./domain/model/users";
 import * as chatFunctions from "./domain/model/chats";
 import * as setFunctions from "./utils/setFunctions";
 import * as stateFunctions from "./domain/stateFunctions";
 import RecurringTaskRunner from "./domain/RecurringTaskRunner";
 import RtcConnectionsHandler from "./domain/webRtc/RtcConnectionsHandler";
-
+import ExponentialBackoffRecurringTaskRunner, { StartOptions } from "./domain/ExponentialBackoffRecurringTaskRunner";
+import ChatsUpdater from "./domain/ChatsUpdater";
 import getAllChats from "./actions/chats/getAllChats";
 import getMessagesById from "./actions/chats/getMessagesById";
-import getUpdatedChats, {
-    GET_UPDATED_CHATS_SUCCEEDED,
-    GetUpdatedChatsFailedEvent,
-    GetUpdatedChatsSucceededEvent
-} from "./actions/chats/getUpdatedChats";
 import getUsers from "./actions/users/getUsers";
 import updateMinutesSinceLastOnline from "./actions/users/updateMinutesSinceLastOnline";
 import dataService from "./services/data/CachingDataService";
@@ -25,14 +21,11 @@ import {
     APP_TITLE,
     MARK_CURRENT_USER_AS_ONLINE_INTERVAL_MS,
     PAGE_SIZE,
-    REFRESH_CHATS_MAX_INTERVAL_MS,
-    REFRESH_CHATS_MIN_INTERVAL_MS,
     REFRESH_P2P_CONNECTIONS_MAX_INTERVAL_MS,
     REFRESH_P2P_CONNECTIONS_MIN_INTERVAL_MS,
     SCAVENGE_CACHE_INTERVAL_MS,
     UPDATE_USERS_INTERVAL_MS
 } from "./constants";
-import ExponentialBackoffRecurringTaskRunner from "./domain/ExponentialBackoffRecurringTaskRunner";
 
 export function setupBackgroundTasks() {
     const dispatch = useDispatch();
@@ -81,12 +74,8 @@ export function setupBackgroundTasks() {
     // Check for new messages at regular intervals
     useEffect(() => {
         if (chatsState.runUpdateChatsTask && !sessionExpired) {
-            const getUpdates: () => Promise<boolean> = async () => {
-                const result = await (dispatch(getUpdatedChats(chatsState.chatsSyncedUpTo)) as any as Promise<GetUpdatedChatsSucceededEvent | GetUpdatedChatsFailedEvent>);
-                return result.type === GET_UPDATED_CHATS_SUCCEEDED && result.payload.chats.length > 0;
-            }
-            const taskRunner = ExponentialBackoffRecurringTaskRunner.startNew(getUpdates, REFRESH_CHATS_MIN_INTERVAL_MS, REFRESH_CHATS_MAX_INTERVAL_MS, 1.2, true);
-            return () => taskRunner.stop();
+            ChatsUpdater.startNew(chatsState.chatsSyncedUpTo);
+            return () => ChatsUpdater.stop();
         }
     }, [chatsState.runUpdateChatsTask, chatsState.chatsSyncedUpTo, sessionExpired]);
 
@@ -127,7 +116,7 @@ export function setupBackgroundTasks() {
                 async () => {
                     const newConnectionCount = await RtcConnectionsHandler.getConnections();
                     return newConnectionCount > 0;
-                }, REFRESH_P2P_CONNECTIONS_MIN_INTERVAL_MS, REFRESH_P2P_CONNECTIONS_MAX_INTERVAL_MS, 1.2, false);
+                }, REFRESH_P2P_CONNECTIONS_MIN_INTERVAL_MS, REFRESH_P2P_CONNECTIONS_MAX_INTERVAL_MS, 1.2, StartOptions.TriggerTaskAndReturn);
             return () => taskRunner.stop();
         }
     }, [usersState.me?.userId, sessionExpired]);

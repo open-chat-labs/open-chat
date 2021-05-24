@@ -27,6 +27,7 @@ export type RightPanelChangedEvent = {
 
 export enum LeftPanelType {
     Chats,
+    JoinGroupChat,
     NewDirectChat,
     NewGroupChat,
 }
