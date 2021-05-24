@@ -47,6 +47,10 @@ a {
     color: #111111;
 }
 
+a:hover {
+    text-decoration: underline
+}
+
 .message.file.them .down-arrow {
     background-color: #e9e9e9;
 }

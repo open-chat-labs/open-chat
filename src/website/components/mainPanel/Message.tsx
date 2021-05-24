@@ -415,7 +415,7 @@ function Message(props : Props) {
                         
                 let textComponent = null;
                 if (text) {
-                    textComponent = <TextContent text={text} variant="body1" />;
+                    textComponent = <TextContent text={text} variant="body1" plainText={false} sentByMe={props.sentByMe} />;
                 } else if (fileText) {
                     textComponent = <span className={classes.fileSize}>{fileText}</span>;
                 }
