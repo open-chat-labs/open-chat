@@ -43,7 +43,6 @@ const useStyles = makeStyles((theme: Theme) => ({
 export default React.memo(SearchResults);
 
 function SearchResults(props: Props) {
-    const dispatch = useDispatch();
     const chats = useSelector((state: RootState) => state.chatsState.chats);
     const me = useSelector((state: RootState) => state.usersState.me?.userId) ?? "";
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
@@ -51,8 +50,6 @@ function SearchResults(props: Props) {
     const getUser = (userId: UserId) => stateFunctions.getUserSummary(userId, userDictionary);
 
     const chatMatches = searchChats(chats, props.searchTerm, getUser);
-    const usersWithoutDirectChats = getUsersWithoutDirectChats(Object.values(userDictionary), chats);
-    const userMatches = searchUsers(usersWithoutDirectChats, props.searchTerm);
 
     useEffect(() => {
         // search messages
@@ -65,12 +62,6 @@ function SearchResults(props: Props) {
                 }
             })
     }, [props.searchTerm]);
-
-    function handleSelectUser(user: UserSummary) {
-        props.clearSearchTerm();
-        dispatch(changeLeftPanel(LeftPanelType.Chats));
-        dispatch(gotoUser(user));
-    }
 
     const classes = useStyles();
 
@@ -90,13 +81,6 @@ function SearchResults(props: Props) {
     if (chatMatches.length) {
         groups.push(createGroup("Chats", chatMatches.map(([chat, index]) =>
             chatListItemBuilder.build(chat, userDictionary, index, null, me))));
-    }
-
-    if (userMatches.length) {
-        groups.push(createGroup("Users", userMatches.map(u => <UserListItem
-            key={u.userId}
-            user={fromUserSummary(u)} 
-            handleSelectUser={() => handleSelectUser(u)} />)));
     }
 
     if (messageMatches.length) {
