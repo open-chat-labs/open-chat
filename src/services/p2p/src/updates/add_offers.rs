@@ -9,17 +9,19 @@ pub fn update(request: Request) -> Response {
     let now = shared::timestamp::now();
     let connection_details: &mut AllConnectionDetails = storage::get_mut();
 
-    let counter_offer = connection_details.add_offer(
-        request.id,
-        me,
-        request.user_id,
-        request.connection_string,
-        request.ice_candidates,
-        now);
+    let counter_offers: Vec<_> = request.offers
+        .into_iter()
+        .filter_map(|o| connection_details.add_offer(
+            o.id,
+            me.clone(),
+            o.user_id,
+            o.connection_string,
+            o.ice_candidates,
+            now))
+        .collect();
 
     let result = Result {
-        offer_added: counter_offer.is_none(),
-        existing_counter_offer: counter_offer
+        counter_offers
     };
 
     Response::Success(result)
@@ -27,6 +29,11 @@ pub fn update(request: Request) -> Response {
 
 #[derive(Deserialize)]
 pub struct Request {
+    offers: Vec<AddOfferRequest>
+}
+
+#[derive(Deserialize)]
+pub struct AddOfferRequest {
     id: String,
     user_id: UserId,
     connection_string: String,
@@ -40,6 +47,5 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct Result {
-    offer_added: bool,
-    existing_counter_offer: Option<OfferSummary>
+    counter_offers: Vec<OfferSummary>
 }

@@ -18,7 +18,7 @@ export default async function(updatedSince: Option<Timestamp>) : Promise<GetConn
             timestamp: timestampFromCandid(response.Success.timestamp)
         }
     } else {
-        throw new Error("Unrecognised 'add_offer' response");
+        throw new Error("Unrecognised 'get_connection_details' response");
     }
 }
 
