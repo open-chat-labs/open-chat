@@ -71,7 +71,7 @@ function MessageSearchMatch(props: Props) {
                 </div>
                 <div>
                     <div className={classes.messageSnippet}>
-                        <TextContent text={getContentAsText(props.message.content)} variant="body2" insertLineBreaks={false} />
+                        <TextContent text={getContentAsText(props.message.content)} variant="body2" plainText={true} />
                     </div>
                 </div>
             </div>

@@ -1,9 +1,12 @@
 import React from "react";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import makeStyles from "@material-ui/styles/makeStyles";
 import he from "he";
 import ReactDOMServer from 'react-dom/server';
 import Typography from "@material-ui/core/Typography";
 import { Variant as TypographyVariant } from "@material-ui/core/styles/createTypography";
 import { containsEmoji } from "../../utils/emojiFunctions";
+import { wrapURLs } from "../../utils/urlFunctions";
 import Emoji from "./Emoji";
 
 export default React.memo(TextContent);
@@ -11,11 +14,22 @@ export default React.memo(TextContent);
 export interface Props {
     text: string,
     variant: TypographyVariant,
-    insertLineBreaks?: boolean
+    plainText: boolean,
+    sentByMe?: boolean
 }
 
+const useStyles = makeStyles<Theme>((theme: Theme) => ({
+    sentByMe: {
+        "& a": {
+            color: "inherit"
+        }
+    }
+}))
+
 function TextContent(props : Props): JSX.Element {
-    function markupText(text: string, linebreaks: boolean): string {
+    const classes = useStyles();
+
+    function markupText(text: string, plainText: boolean): string {
         // First HTML encode the text
         text = he.encode(text);
 
@@ -41,19 +55,21 @@ function TextContent(props : Props): JSX.Element {
             markup += ReactDOMServer.renderToStaticMarkup(<Emoji text={emojis} />);
         }
 
-        if (linebreaks) {
+        if (!plainText) {
             // Replace newlines with <br> tags
             markup = markup.replace(/(?:\r\n|\r|\n)/g, '<br>');
+
+            // Try to wrap links in <a> tags
+            markup = wrapURLs(markup, true);
         }
 
         return markup
     }
 
-    const markup = markupText(
-        props.text, 
-        props.insertLineBreaks !== undefined ? props.insertLineBreaks : true);
+    const markup = markupText(props.text, props.plainText);
+    const className = props.sentByMe ? classes.sentByMe : undefined;
 
     return (
-        <Typography variant={props.variant} dangerouslySetInnerHTML={{ __html: markup }} />
+        <Typography className={className} variant={props.variant} dangerouslySetInnerHTML={{ __html: markup }} />
     );
 }

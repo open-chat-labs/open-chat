@@ -94,7 +94,7 @@ function ChatListItem(props: Props) {
     } else if (props.participantsTyping.length) {
         snippet = <ParticipantsTyping usernames={props.participantsTyping} />
     } else {
-        snippet = <TextContent text={props.latestMessage} insertLineBreaks={false} variant="body2" />;
+        snippet = <TextContent text={props.latestMessage} plainText={true} variant="body2" />;
     }
 
     return (
