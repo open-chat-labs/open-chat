@@ -44,7 +44,8 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
     },
     chatSummary: {
         paddingLeft: 10,
-        width: "100%"
+        width: "100%",
+        minWidth: 0
     },
     chatName: {
         visibility: props => props.name.length ? "visible" : "hidden"
@@ -54,7 +55,6 @@ const useStyles = makeStyles<Theme, Props>((theme: Theme) => ({
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        maxWidth: 450
     },
     date: {
         color: alpha(theme.colors.textColor, 0.6),
