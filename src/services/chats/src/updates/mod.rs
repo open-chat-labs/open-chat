@@ -1,9 +1,10 @@
 pub mod add_participants;
 pub mod create_group_chat;
-pub mod mark_read;
-pub mod remove_participant;
-pub mod leave_group;
 pub mod delete_group;
+pub mod join_group;
+pub mod leave_group;
+pub mod mark_read;
+pub mod put_chunk;
+pub mod remove_participant;
 pub mod send_direct_message;
 pub mod send_message;
-pub mod put_chunk;

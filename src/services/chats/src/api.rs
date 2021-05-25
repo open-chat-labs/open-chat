@@ -45,6 +45,11 @@ fn delete_group(chat_id: ChatId) -> delete_group::Response {
 }
 
 #[update]
+fn join_group(chat_id: ChatId) -> join_group::Response {
+    join_group::update(chat_id)
+}
+
+#[update]
 fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
     put_chunk::update(blob_id, chunk_index, data)
 }

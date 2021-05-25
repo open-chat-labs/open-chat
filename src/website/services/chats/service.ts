@@ -12,6 +12,7 @@ import getChats, { GetChatsRequest, GetChatsResponse } from "./getChats";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
 import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessages";
 import leaveGroup, { LeaveGroupResult } from "./leaveGroup";
+import joinGroup, { JoinGroupResult } from "./joinGroup";
 
 export default class service {
     public static createGroupChat(chatId: ChatId, subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
@@ -40,6 +41,10 @@ export default class service {
 
     public static leaveGroup(chatId: ChatId) : Promise<LeaveGroupResult> {
         return leaveGroup(chatId);
+    }
+
+    public static joinGroup(chatId: ChatId) : Promise<JoinGroupResult> {
+        return joinGroup(chatId);
     }
 
     public static getChats(request: GetChatsRequest) : Promise<GetChatsResponse> {
