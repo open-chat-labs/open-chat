@@ -8,7 +8,7 @@ import MyAvatar from "./MyAvatar";
 import { RootState } from "../../reducers";
 import UserMenu from "./UserMenu";
 
-const PLACEHOLDER_TEXT = "Search chats, users and messages";
+const PLACEHOLDER_TEXT = "Search chats and messages";
 
 export default React.memo(DefaultPanel);
 
