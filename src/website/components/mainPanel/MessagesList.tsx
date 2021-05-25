@@ -127,8 +127,7 @@ function MessagesList() {
             return;
         }
 
-        const unreadMessagesHandler = new UnreadMessagesHandler(chatId);
-        unreadMessagesHandler.start();
+        const unreadMessagesHandler = UnreadMessagesHandler.startNew(chatId);
         return () => unreadMessagesHandler.stop();
     }, [chatId, hasUnreadMessages]);
 
