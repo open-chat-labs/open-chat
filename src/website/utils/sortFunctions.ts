@@ -1,7 +1,7 @@
 
-export function compareBy(property: string, caseInsensitive: boolean) {
+export function compareBy(property: string) {
     var sortOrder = 1;
-    if(property[0] === "-") {
+    if (property[0] === "-") {
         sortOrder = -1;
         property = property.substr(1);
     }

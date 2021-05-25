@@ -42,7 +42,7 @@ function ParticipantsPanel() {
 
     // Sort participants alphabetically by username
     const users = _users.map(fromUserSummary);
-    users.sort(sortFunctions.compareBy("username", true));
+    users.sort(sortFunctions.compareBy("usernameLower"));
 
     function closePanel() {
         dispatch(changeRightPanel(RightPanelType.None));

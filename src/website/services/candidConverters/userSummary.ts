@@ -7,6 +7,7 @@ export function fromCandid(userSummary: any) : UserSummary {
     return {
         userId: userIdFromCandid(userSummary.id),
         username: userSummary.username,
+        usernameLower: userSummary.username.toLowerCase(),
         lastOnline: dateFunctions.addSeconds(new Date(), -userSummary.seconds_since_last_online),
         minutesSinceLastOnline: Math.floor(userSummary.seconds_since_last_online / 60),
         imageId: optionFromCandid(userSummary.image_id),
