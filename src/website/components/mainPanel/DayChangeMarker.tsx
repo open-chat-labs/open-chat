@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         backgroundColor: theme.colors.dayChangeMarker.backgroundColor,
         alignSelf: "center",
         position: "sticky",
-        top: 0,
+        top: 10,
         zIndex: 60
     }
 }));
