@@ -5,9 +5,7 @@ export default async function(chatId: ChatId) : Promise<JoinGroupResult> {
     const client = CanisterClientFactory.current!.chatsClient;
 
     const response = await client.join_group(chatId);
-
-    console.log(response);
-
+    
     if ("Success" in response) {
         return JoinGroupResult.Success;
     } else if ("AlreadyInGroup" in response) {
