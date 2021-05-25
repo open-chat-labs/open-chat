@@ -100,7 +100,7 @@ function AddParticipantsPanel() {
     return (
         <>
             <Header
-                title="Add participants"
+                title="Add participant"
                 onCloseButtonClick={closePanel}
                 rightIcon={<CreateGroupChatIcon size="sm" />}
                 back={true} />
