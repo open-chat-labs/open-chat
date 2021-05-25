@@ -5,7 +5,7 @@ import getCurrentUser from "../users/getCurrentUser";
 import CanisterClientFactory from "../../services/CanisterClientFactory";
 import SessionExpirationHandler from "../../domain/SessionExpirationHandler";
 
-const SESSION_TIMEOUT_NANOS = BigInt(6 * 60 * 60 * 1000 * 1000 * 1000) // 6 hours
+const SESSION_TIMEOUT_NANOS = BigInt(24 * 60 * 60 * 1000 * 1000 * 1000) // 24 hours
 
 export default function login() {
     return async (dispatch: Dispatch<any>) => {
