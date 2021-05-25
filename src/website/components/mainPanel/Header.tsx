@@ -81,20 +81,37 @@ function Header() {
                 subTitle = <ParticipantsTyping usernames={usernames} />;
             } else {
                 const allButMe = setFunctions.except(chat.participants, [me.userId]);
-                const participants = stateFunctions.getUsers(allButMe, userDictionary);
+                
+                const participants = stateFunctions
+                    .getUsers(allButMe, userDictionary)
+                    .sort(sortFunctions.compareBy("usernameLower"));
+                
+                const onlineParticipants = participants
+                    .filter(p => p.minutesSinceLastOnline < 2);
+
                 let text = "";
+
                 if (participants.length > 5) {
-                    const totalOnline = participants.filter(p => p.minutesSinceLastOnline < 2).length;
-                    text = `${allButMe.length + 1} members (${totalOnline + 1} online)`;
-                } else {
-                    participants.sort(sortFunctions.compareBy("username", true));
-                    text = participants
+                    text = `${allButMe.length + 1} members (${onlineParticipants.length + 1} online) `;
+                }
+                
+                text += onlineParticipants
+                    .map(u => u.username)
+                    .join(", ");
+
+                if (onlineParticipants.length < 20) {
+                    const offlinePartipants = participants.filter(p => p.minutesSinceLastOnline >= 2);
+                    if (onlineParticipants.length >= 1) {
+                        text += ", "
+                    }
+                    text += offlinePartipants
                         .map(u => u.username)
-                        .concat(["You"])
                         .join(", ");
                 }
 
-                subTitle = <Typography variant="caption">{text}</Typography>
+                text += ", You";
+
+                subTitle = <Typography variant="caption">{text}</Typography>;
             }
         }
     }
