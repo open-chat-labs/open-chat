@@ -16,21 +16,42 @@ export default class UnreadMessagesHandler {
     messageIdToAppearanceCountMap: Map<string, number> = new Map<string, number>();
     taskRunner: Option<RecurringTaskRunner> = null;
 
-    constructor(chatId: ChatId) {
+    private constructor(chatId: ChatId) {
         this.chatId = chatId;
+        document.onvisibilitychange = () => {
+            if (document.hidden) {
+                this.pause();
+            } else {
+                this.resume();
+            }
+        }
     }
 
-    public start = () => {
-        if (this.taskRunner) {
+    public static startNew = (chatId: ChatId) : UnreadMessagesHandler => {
+        const handler = new UnreadMessagesHandler(chatId);
+        if (!document.hidden) {
+            handler.resume();
+        }
+        return handler;
+    }
+
+    public stop = () => {
+        this.pause();
+        this.stopped = true;
+    }
+
+    private resume = () => {
+        if (this.stopped || this.taskRunner) {
             return;
         }
         this.taskRunner = RecurringTaskRunner.startNew(this.runSingleIteration, INTERVAL_MS, false);
     }
 
-    public stop = () => {
+    private pause = () => {
         if (this.taskRunner) {
             this.taskRunner.stop();
             this.taskRunner = null;
+            this.messageIdToAppearanceCountMap.clear();
         }
     }
 
