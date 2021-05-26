@@ -15,9 +15,14 @@ export function extractQueryStringAsObject(): any {
         : {};
 }
 
-export function wrapURLs(text: string, new_window: boolean) : string {
-    var url_pattern = /(ftp|http|https):\/\/[^\s"]+/g;
-    var target = (new_window === true || new_window == null) ? '_blank' : '';    
+// Blacklisted completely
+// " < \s
+//
+// Blacklisted from end
+// . , ( ) [ ] { } ! @ + : %
+export function wrapURLsInAnchorTags(text: string, new_window: boolean) : string {
+    const url_pattern = /(ftp|http|https):\/\/[^\"<\s]+[^\"<\s.,\(\)\[\]\{\}!@+:%]/g;
+    const target = (new_window === true || new_window == null) ? '_blank' : '';    
     return text.replace(url_pattern, function (url) {
         return '<a href="' + url + '" target="' + target + '">' + url + '</a>';
     });
