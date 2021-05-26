@@ -56,11 +56,11 @@ function TextContent(props : Props): JSX.Element {
         }
 
         if (!plainText) {
-            // Replace newlines with <br> tags
-            markup = markup.replace(/(?:\r\n|\r|\n)/g, '<br>');
-
             // Try to wrap links in <a> tags
             markup = wrapURLs(markup, true);
+
+            // Replace newlines with <br> tags
+            markup = markup.replace(/(?:\r\n|\r|\n)/g, '<br>');
         }
 
         return markup
