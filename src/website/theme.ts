@@ -130,7 +130,7 @@ const defaultColours: CustomColors = {
         textColor: "#000000",
         backgroundColor: "#ffffff",
         highlightedContentBackgroundColor: "#e9e9e9",
-        unreadMessageBrightness: 0.95
+        unreadMessageBrightness: 0.90
     },
     dayChangeMarker: {
         textColor: "#000000",

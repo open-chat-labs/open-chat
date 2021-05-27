@@ -5,7 +5,7 @@ import { markMessagesAsReadLocally, markMessagesAsReadByClientIdLocally } from "
 import RecurringTaskRunner from "./RecurringTaskRunner";
 
 const INTERVAL_MS = 200;
-const COUNT_REQUIRED = 10;
+const COUNT_REQUIRED = 6;
 
 // This class takes a snapshot of which unread messages are visible every 'INTERVAL_MS', once a message has been visible
 // in 'COUNT_REQUIRED' consecutive snapshots, it will be marked as read
