@@ -525,6 +525,9 @@ export default produce((state: ChatsState, event: Event) => {
             const [chat] = chatFunctions.getChat(state.chats, chatId);
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 chatFunctions.removeChat(state.chats, chatId);
+                state.selectedChatIndex = state.chats.length
+                    ? 0
+                    : null;
             }
             break;
         }
