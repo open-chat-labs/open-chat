@@ -16,7 +16,7 @@ export const CREATE_GROUP_CHAT_REQUESTED = "CREATE_GROUP_CHAT_REQUESTED";
 export const CREATE_GROUP_CHAT_SUCCEEDED = "CREATE_GROUP_CHAT_SUCCEEDED";
 export const CREATE_GROUP_CHAT_FAILED = "CREATE_GROUP_CHAT_FAILED";
 
-export default function(subject: string, users: UserId[]) {
+export default function(subject: string, users: UserId[], chatHistoryVisibleToNewJoiners: boolean) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const timer = Stopwatch.startNew();
         const chatId = chatFunctions.generateChatId();
@@ -32,7 +32,7 @@ export default function(subject: string, users: UserId[]) {
 
         dispatch(requestEvent);
 
-        const response = await chatsService.createGroupChat(chatId, subject, users);
+        const response = await chatsService.createGroupChat(chatId, subject, users, chatHistoryVisibleToNewJoiners);
 
         if (response.kind !== "success") {
             dispatch({

@@ -15,8 +15,8 @@ import leaveGroup, { LeaveGroupResult } from "./leaveGroup";
 import joinGroup, { JoinGroupResult } from "./joinGroup";
 
 export default class service {
-    public static createGroupChat(chatId: ChatId, subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
-        return createGroupChat(chatId, subject, users);
+    public static createGroupChat(chatId: ChatId, subject: string, users: UserId[], chatHistoryVisibleToNewJoiners: boolean) : Promise<CreateGroupChatResponse> {
+        return createGroupChat(chatId, subject, users, chatHistoryVisibleToNewJoiners);
     }
 
     public static sendDirectMessage(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {

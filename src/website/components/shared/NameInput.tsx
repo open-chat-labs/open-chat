@@ -10,10 +10,12 @@ export default React.memo(NameInput);
 
 type Props = {
     className?: string,
+    textBoxClassName?: string,
     onSubmit: (text: string) => void,
     placeholderText: string,
     minLength: number,
     maxLength: number,
+    children?: JSX.Element[],
     disabled: boolean
 }
 
@@ -102,7 +104,7 @@ function NameInput(props: Props) {
 
     return (
         <div className={className}>
-            <div className={classes.textBoxContainer}>
+            <div className={classes.textBoxContainer + " " + props.textBoxClassName}>
                 <input
                     className={classes.textBox}
                     ref={textBoxRef}
@@ -117,6 +119,7 @@ function NameInput(props: Props) {
 
                 <Typography variant="body2" className={classes.charsRemaining}>{remainingCharCount}</Typography>
             </div>
+            {props.children}
             <IconButton disabled={props.disabled || text.length < props.minLength} onClick={handleSubmit} className={classes.submitButton}>
                 <Tick className={classes.buttonSvg} />
             </IconButton>

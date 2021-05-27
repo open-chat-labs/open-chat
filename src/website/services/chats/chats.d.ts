@@ -11,6 +11,7 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
 export interface CreateGroupChatRequest {
   'participants' : Array<UserId>,
   'subject' : string,
+  'chat_history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
 };
 export type CreateGroupChatResponse = { 'SubjectTooLong' : number } |
