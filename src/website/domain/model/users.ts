@@ -52,3 +52,14 @@ export function fromUserSummary(user: UserSummary): UserItem {
         chatId: user.chatId
     };
 }
+
+export function isUserOnline(user: UserSummary) {
+    return user.minutesSinceLastOnline < 2;
+}
+
+export function compareUsersOnlineFirst(u1: UserItem, u2: UserItem) : number {
+    if (u1.isOnline != u2.isOnline) {
+        return u1.isOnline ? -1 : 1;
+    }
+    return (u1.usernameLower < u2.usernameLower) ? -1 : (u1.usernameLower > u2.usernameLower) ? 1 : 0;
+}
