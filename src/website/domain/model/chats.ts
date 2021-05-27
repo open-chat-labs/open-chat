@@ -437,7 +437,7 @@ export const sortChatsAndReturnSelectedIndex = (chats: Chat[], selectedIndex: Op
         // If neither are confirmed then treat them equally (this should be extremely rare)
         return 0;
     });
-    return selectedChat !== null ? chats.indexOf(selectedChat) : 0;
+    return selectedChat !== null ? chats.indexOf(selectedChat) : null;
 }
 
 export const findChatIndex = (chats: Chat[], chatId: ChatId) : number => {

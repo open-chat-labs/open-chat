@@ -9,7 +9,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
-import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import UserListItem from "../shared/UserListItem";
 import { compareUsersOnlineFirst, fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
@@ -18,6 +18,7 @@ import removeParticipant from "../../actions/chats/removeParticipant";
 import Header from "./Header";
 import { MenuItem } from "../shared/PopOverMenu";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
+import { RightPanelType } from "../../domain/model/panels";
 
 export default React.memo(ParticipantsPanel);
 

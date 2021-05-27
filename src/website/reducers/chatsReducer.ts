@@ -4,6 +4,9 @@ import * as chatFunctions from "../domain/model/chats";
 import { Chat, UnconfirmedGroupChat } from "../domain/model/chats";
 import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
+import { LeftPanelType } from "../domain/model/panels";
+import { ViewMode } from "../domain/model/viewMode";
+
 import {
     CONFIRMED_GROUP_CHAT,
     PAGE_SIZE,
@@ -16,6 +19,7 @@ import { GET_UPDATED_CHATS_SUCCEEDED, GetUpdatedChatsSucceededEvent } from "../a
 import { RECEIVE_P2P_MESSAGE, ReceiveP2PMessageEvent } from "../actions/chats/receiveP2PMessage";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 import { SESSION_EXPIRED, SessionExpiredEvent } from "../actions/signin/notifySessionExpired";
+import { SWITCH_VIEW_MODE_REQUESTED, SwitchViewModeRequestedEvent } from "../actions/app/switchViewMode";
 
 import {
     CREATE_GROUP_CHAT_REQUESTED,
@@ -115,6 +119,11 @@ import {
     DeselectMessageEvent
 } from "../actions/chats/deselectMessage";
 
+import {
+    LEFT_PANEL_CHANGED,
+    LeftPanelChangedEvent,
+} from "../actions/app/changeSidePanel";
+
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
@@ -151,6 +160,7 @@ type Event =
     GetUpdatedChatsSucceededEvent |
     GotoChatEvent |
     LeaveGroupSucceededEvent |
+    LeftPanelChangedEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -167,6 +177,7 @@ type Event =
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
     SessionExpiredEvent |
+    SwitchViewModeRequestedEvent |
     UserLoggedOutEvent;
 
 export default produce((state: ChatsState, event: Event) => {
@@ -247,10 +258,10 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
-            const { chats, latestUpdateTimestamp } = event.payload;
+            const { chats, latestUpdateTimestamp, viewMode } = event.payload;
             return {
                 chats,
-                selectedChatIndex: chats.length ? 0 : null,
+                selectedChatIndex: chats.length ? (viewMode === ViewMode.Mobile ? state.selectedChatIndex : 0) : null,
                 chatsSyncedUpTo: latestUpdateTimestamp,
                 runUpdateChatsTask: true
             };
@@ -528,6 +539,24 @@ export default produce((state: ChatsState, event: Event) => {
                 state.selectedChatIndex = state.chats.length
                     ? 0
                     : null;
+            }
+            break;
+        }
+
+        case LEFT_PANEL_CHANGED: {
+            const leftPanelType = event.payload;
+            if (leftPanelType === LeftPanelType.Chats) {
+                state.selectedChatIndex = null;
+            }
+            break;
+        }
+
+        case SWITCH_VIEW_MODE_REQUESTED: {
+            const { viewMode } = event.payload;
+            if (viewMode === ViewMode.Desktop) {
+                if (state.selectedChatIndex == null && state.chats.length > 0) {
+                    state.selectedChatIndex = 0;
+                }
             }
             break;
         }

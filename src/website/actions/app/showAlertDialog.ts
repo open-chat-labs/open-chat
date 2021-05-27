@@ -1,4 +1,4 @@
-import { AlertContent } from "../components/AlertDialog";
+import { AlertContent } from "../../components/AlertDialog";
 
 export const SHOW_ALERT_DIALOG_REQUESTED = "SHOW_ALERT_DIALOG_REQUESTED";
 export const CLOSE_ALERT_DIALOG_REQUESTED = "CLOSE_ALERT_DIALOG_REQUESTED";

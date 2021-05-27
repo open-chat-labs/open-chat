@@ -4,7 +4,7 @@ import List from "@material-ui/core/List";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
+import { changeLeftPanel } from "../../actions/app/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
 import { fromUserSummary, UserSummary } from "../../domain/model/users";
@@ -14,6 +14,7 @@ import UserListItem from "../shared/UserListItem";
 import Header from "./Header";
 import CloseButton from "../shared/CloseButton";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
+import { LeftPanelType } from "../../domain/model/panels";
 
 const PLACEHOLDER_TEXT = "Type a username";
 

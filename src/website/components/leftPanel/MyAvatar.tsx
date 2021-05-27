@@ -5,7 +5,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import UserAvatar from "../shared/UserAvatar";
 import setProfileImage from "../../actions/users/setProfileImage";
-import { showAlertDialog } from "../../actions/showAlertDialog";
+import { showAlertDialog } from "../../actions/app/showAlertDialog";
 import { MAX_AVATAR_SIZE } from "../../constants";
 
 export default React.memo(MyAvatar);

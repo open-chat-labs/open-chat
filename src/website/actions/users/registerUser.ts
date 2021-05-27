@@ -30,13 +30,11 @@ export default function(username: string) {
                     payload: result.myProfile
                 } as  RegisterUserSucceededEvent;
                 break;
-
             case "userExists":
                 outcomeEvent = {
                     type: REGISTER_USER_FAILED_USER_EXISTS
                 } as RegisterUserFailedUserExistsEvent;
                 break;
-
             case "usernameTaken":
                 outcomeEvent = {
                     type: REGISTER_USER_FAILED_USERNAME_EXISTS,

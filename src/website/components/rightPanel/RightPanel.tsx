@@ -1,7 +1,7 @@
 import React from "react";
-import { RightPanelType } from "../../actions/changeSidePanel";
 import AddParticipantsSidePanel from "./AddParticipantsPanel";
 import ParticipantsSidePanel from "./ParticipantsPanel";
+import { RightPanelType } from "../../domain/model/panels";
 
 export default RightPanel;
 

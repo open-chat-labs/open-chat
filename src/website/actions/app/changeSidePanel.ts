@@ -1,4 +1,7 @@
+import { LeftPanelType, RightPanelType } from "../../domain/model/panels";
+
 export const LEFT_PANEL_CHANGED = "LEFT_PANEL_CHANGED";
+export const MIDDLE_PANEL_CHANGED = "MIDDLE_PANEL_CHANGED";
 export const RIGHT_PANEL_CHANGED = "RIGHT_PANEL_CHANGED";
 
 export function changeLeftPanel(sidePanel: LeftPanelType) {
@@ -23,18 +26,5 @@ export type LeftPanelChangedEvent = {
 export type RightPanelChangedEvent = {
     type: typeof RIGHT_PANEL_CHANGED,
     payload: RightPanelType
-}
-
-export enum LeftPanelType {
-    Chats,
-    JoinGroupChat,
-    NewDirectChat,
-    NewGroupChat,
-}
-
-export enum RightPanelType {
-    None,
-    AddParticipants,
-    Particpants,
 }
 

@@ -1,17 +1,20 @@
 import { Dispatch } from "react";
 
+import { RootState } from "../../reducers";
 import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../domain/model/chats";
 import { PAGE_SIZE } from "../../constants";
 import { Option, Timestamp } from "../../domain/model/common";
 import { HttpError } from "../../errors/httpError";
+import { ViewMode } from "../../domain/model/viewMode";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
 export const GET_ALL_CHATS_FAILED = "GET_ALL_CHATS_FAILED";
 
 export default function() {
-    return async (dispatch: Dispatch<any>) => {
+    return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+
         const requestEvent: GetAllChatsRequestedEvent = {
             type: GET_ALL_CHATS_REQUESTED
         };
@@ -25,11 +28,13 @@ export default function() {
 
         let outcomeEvent;
         if (response.kind === "success") {
+            const viewMode = getState().appState.viewMode;
             outcomeEvent = {
                 type: GET_ALL_CHATS_SUCCEEDED,
                 payload: {
                     chats: response.chats,
-                    latestUpdateTimestamp: response.latestUpdateTimestamp
+                    latestUpdateTimestamp: response.latestUpdateTimestamp,
+                    viewMode
                 }
             } as GetAllChatsSucceededEvent;
         } else {
@@ -51,7 +56,8 @@ export type GetAllChatsSucceededEvent = {
     type: typeof GET_ALL_CHATS_SUCCEEDED,
     payload: {
         chats: ConfirmedChat[],
-        latestUpdateTimestamp: Option<Timestamp>
+        latestUpdateTimestamp: Option<Timestamp>,
+        viewMode: ViewMode
     }
 }
 
