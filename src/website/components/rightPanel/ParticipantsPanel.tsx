@@ -11,7 +11,7 @@ import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
 import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
 import UserListItem from "../shared/UserListItem";
-import { fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
+import { compareUsersOnlineFirst, fromMyProfile, fromUserSummary, UserItem, UserSummary } from "../../domain/model/users";
 import { ConfirmedGroupChat } from "../../domain/model/chats";
 import { gotoKnownUser } from "../../actions/chats/gotoUser";
 import removeParticipant from "../../actions/chats/removeParticipant";
@@ -42,7 +42,7 @@ function ParticipantsPanel() {
 
     // Sort participants alphabetically by username
     const users = _users.map(fromUserSummary);
-    users.sort(sortFunctions.compareBy("usernameLower"));
+    users.sort(compareUsersOnlineFirst);
 
     function closePanel() {
         dispatch(changeRightPanel(RightPanelType.None));

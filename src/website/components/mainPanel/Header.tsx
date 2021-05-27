@@ -1,5 +1,5 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -8,16 +8,16 @@ import { RootState } from "../../reducers";
 import UserAvatar from "../shared/UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
-import * as setFunctions from "../../utils/setFunctions";
-import * as sortFunctions from "../../utils/sortFunctions";
 import * as stateFunctions from "../../domain/stateFunctions";
 import { getSelectedChat } from "../../domain/stateFunctions";
-import { MyProfile, UserSummary } from "../../domain/model/users";
+import { compareUsersOnlineFirst, fromUserSummary, isUserOnline, MyProfile, UserSummary } from "../../domain/model/users";
 import ParticipantsTyping from "../shared/ParticipantsTyping";
 import ThemTyping from "../shared/ThemTyping";
 import GroupChatMenu from "./GroupChatMenu";
 import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
 import LastOnline from "./LastOnline";
+import Link from "@material-ui/core/Link";
+import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
 
 export default React.memo(Header);
 
@@ -36,6 +36,8 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 function Header() {
+    const dispatch = useDispatch();
+
     const me: Option<MyProfile> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
@@ -57,7 +59,7 @@ function Header() {
             const userSummary = userDictionary[chat.them] as UserSummary;
             imageId = userSummary.imageId;
             chatName = userSummary.username;
-            isOnline = userSummary.minutesSinceLastOnline < 2;
+            isOnline = isUserOnline(userSummary);
             subTitle = chatFunctions.isConfirmedChat(chat) && chat.themTyping
                 ? <ThemTyping variant="caption" />
                 : <LastOnline variant="caption" minutesSinceLastOnline={userSummary.minutesSinceLastOnline} />;
@@ -79,39 +81,30 @@ function Header() {
                     .map(u => u.username);
 
                 subTitle = <ParticipantsTyping usernames={usernames} />;
-            } else {
-                const allButMe = setFunctions.except(chat.participants, [me.userId]);
-                
-                const participants = stateFunctions
-                    .getUsers(allButMe, userDictionary)
-                    .sort(sortFunctions.compareBy("usernameLower"));
-                
-                const onlineParticipants = participants
-                    .filter(p => p.minutesSinceLastOnline < 2);
+            } else {                                
+                const participants = stateFunctions.getUsers(chat.participants, userDictionary);
 
                 let text = "";
-
                 if (participants.length > 5) {
-                    text = `${allButMe.length + 1} members (${onlineParticipants.length + 1} online) `;
-                }
-                
-                text += onlineParticipants
-                    .map(u => u.username)
-                    .join(", ");
+                    const onlineCount = participants.filter(p => isUserOnline(p)).length;
+                    text = `${chat.participants.length} members (${onlineCount + 1} online) `;
+                } else {                
+                    const sortedParticipants = participants
+                        .map(fromUserSummary)
+                        .sort(compareUsersOnlineFirst);
 
-                if (onlineParticipants.length < 20) {
-                    const offlinePartipants = participants.filter(p => p.minutesSinceLastOnline >= 2);
-                    if (onlineParticipants.length >= 1) {
-                        text += ", "
-                    }
-                    text += offlinePartipants
+                    text = sortedParticipants
                         .map(u => u.username)
+                        .concat(["You"])
                         .join(", ");
                 }
 
-                text += ", You";
-
-                subTitle = <Typography variant="caption">{text}</Typography>;
+                subTitle = 
+                    <Typography variant="caption">
+                        <Link href="#" onClick={() => (dispatch(changeRightPanel(RightPanelType.Particpants)))}>
+                            {text}
+                        </Link>
+                    </Typography>;
             }
         }
     }

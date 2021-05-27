@@ -6,7 +6,7 @@ import ReactDOMServer from 'react-dom/server';
 import Typography from "@material-ui/core/Typography";
 import { Variant as TypographyVariant } from "@material-ui/core/styles/createTypography";
 import { containsEmoji } from "../../utils/emojiFunctions";
-import { wrapURLs } from "../../utils/urlFunctions";
+import { wrapURLsInAnchorTags } from "../../utils/urlFunctions";
 import Emoji from "./Emoji";
 
 export default React.memo(TextContent);
@@ -57,7 +57,7 @@ function TextContent(props : Props): JSX.Element {
 
         if (!plainText) {
             // Try to wrap links in <a> tags
-            markup = wrapURLs(markup, true);
+            markup = wrapURLsInAnchorTags(markup, true);
 
             // Replace newlines with <br> tags
             markup = markup.replace(/(?:\r\n|\r|\n)/g, '<br>');
