@@ -82,13 +82,10 @@ function AppContainer() {
     const currentViewMode = useSelector((state: RootState) => state.appState.viewMode);
     const classes = useStyles();
     const theme = useTheme();
-    const targetViewMode = useMediaQuery('(min-width:768px)') ? ViewMode.Desktop : ViewMode.Mobile;
+    const targetViewMode = useMediaQuery('(max-width:768px)') ? ViewMode.Mobile : ViewMode.Desktop;
     const removePadding = useMediaQuery(theme.breakpoints.down("md"));
 
     let containerClass = classes.container;
-    if (removePadding) {
-        containerClass += " no-padding";
-    }
 
     let component;
     let large = false;
@@ -111,6 +108,10 @@ function AppContainer() {
                 component = <App />;
                 break;
         }    
+    }
+
+    if (removePadding && large) {
+        containerClass += " no-padding";
     }
 
     const sessionExpiredAlert: Option<AlertContent> = sessionExpired

@@ -25,6 +25,12 @@ body {
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
 
+h1 {
+    font-size: 6rem;
+    font-weight: 300;
+    margin: 0;
+}
+
 button, input, optgroup, select, textarea {
     margin: 0;
     font-family: inherit;
@@ -91,5 +97,11 @@ span.emoji {
     /* non-Retina-specific stuff here */
     span.emoji {
         margin-right: 3px;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    h1 {
+      font-size: 3rem;
     }
 }

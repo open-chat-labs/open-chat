@@ -35,7 +35,7 @@ export default function Login() {
     return (
         <Paper className={classes.paper}>
             <ChatIcon className={classes.icon} />
-            <Typography variant="h1">OpenChat</Typography>
+            <h1>OpenChat</h1>
             <p>Welcome to OpenChat!</p>
             <p>Before continuing you must sign-in to the Internet Computer.</p>
             <Button size="large" variant="contained" className={classes.button} onClick={_ => dispatch(login())}>Sign-in</Button>
