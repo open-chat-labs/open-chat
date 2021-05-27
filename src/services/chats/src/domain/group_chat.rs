@@ -16,6 +16,7 @@ pub struct GroupChat {
     description: Option<String>,
     participants: Vec<Participant>,
     messages: Vec<Message>,
+    chat_history_visible_to_new_joiners: bool,
     last_updated: Timestamp
 }
 
@@ -33,6 +34,7 @@ pub struct GroupChatSummary {
     subject: String,
     display_date: Timestamp,
     last_updated: Timestamp,
+    chat_history_visible_to_new_joiners: bool,
     min_visible_message_id: u32,
     participants: Vec<UserId>,
     unread_by_me_message_id_ranges: Vec<[u32; 2]>,
@@ -47,6 +49,7 @@ pub struct GroupChatStableState {
     description: Option<String>,
     participants: Vec<ParticipantStableState>,
     messages: Vec<Message>,
+    chat_history_visible_to_new_joiners: Option<bool>,
     last_updated: Timestamp
 }
 
@@ -65,6 +68,7 @@ impl GroupChat {
         subject: String,
         creator: UserId,
         participants: Vec<UserId>,
+        chat_history_visible_to_new_joiners: bool,
         now: Timestamp) -> GroupChat {
 
         let mut all_participants = Vec::with_capacity(participants.len() + 1);
@@ -79,6 +83,7 @@ impl GroupChat {
             description: None,
             participants: all_participants,
             messages: Vec::new(),
+            chat_history_visible_to_new_joiners,
             last_updated: now
         }
     }
@@ -102,7 +107,11 @@ impl GroupChat {
     }
 
     pub fn get_min_visible_message_id(&self, user: &UserId) -> u32 {
-        self.find_participant(user).unwrap().min_visible_message_id
+        if self.chat_history_visible_to_new_joiners {
+            1
+        } else {
+            self.find_participant(user).unwrap().min_visible_message_id
+        }
     }
 
     pub fn is_admin(&self, user: &UserId) -> bool {
@@ -302,6 +311,7 @@ impl GroupChatSummary {
             subject: chat.subject.clone(),
             display_date: chat.get_display_date(me),
             last_updated: chat.last_updated,
+            chat_history_visible_to_new_joiners: chat.chat_history_visible_to_new_joiners,
             min_visible_message_id: chat.get_min_visible_message_id(me),
             participants: chat.participants.iter().map(|p| p.user_id.clone()).collect(),
             unread_by_me_message_id_ranges,
@@ -329,6 +339,7 @@ impl From<GroupChat> for GroupChatStableState {
             description: chat.description,
             participants: chat.participants.into_iter().map(|p| p.into()).collect(),
             messages: chat.messages,
+            chat_history_visible_to_new_joiners: Some(chat.chat_history_visible_to_new_joiners),
             last_updated: chat.last_updated
         }
     }
@@ -342,6 +353,7 @@ impl From<GroupChatStableState> for GroupChat {
             description: chat.description,
             participants: chat.participants.into_iter().map(|p| p.into()).collect(),
             messages: chat.messages,
+            chat_history_visible_to_new_joiners: chat.chat_history_visible_to_new_joiners.unwrap_or(false),
             last_updated: chat.last_updated
         }
     }

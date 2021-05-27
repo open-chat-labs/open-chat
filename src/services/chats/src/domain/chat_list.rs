@@ -67,7 +67,14 @@ impl ChatList {
         chat_summary
     }
 
-    pub fn create_group_chat(&mut self, creator: UserId, chat_id: ChatId, subject: String, participants: Vec<UserId>, now: Timestamp) -> Option<GroupChatSummary> {
+    pub fn create_group_chat(
+        &mut self,
+        creator: UserId,
+        chat_id: ChatId,
+        subject: String,
+        participants: Vec<UserId>,
+        chat_history_visible_to_new_joiners: bool,
+        now: Timestamp) -> Option<GroupChatSummary> {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
@@ -76,7 +83,7 @@ impl ChatList {
                     self.user_to_chats_map.link_chat_to_user(chat_id, p.clone());
                 }
 
-                let chat = GroupChat::new(chat_id, subject, creator.clone(), participants, now);
+                let chat = GroupChat::new(chat_id, subject, creator.clone(), participants, chat_history_visible_to_new_joiners, now);
                 let chat_summary = GroupChatSummary::new(&chat, &creator, 0);
 
                 e.insert(ChatEnum::Group(chat));

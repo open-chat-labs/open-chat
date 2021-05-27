@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
+import Checkbox from "@material-ui/core/Checkbox";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
@@ -17,8 +19,13 @@ export default React.memo(NewGroupChatPanel);
 
 const useStyles = makeStyles((theme: Theme) => ({
     nameInput: {
-        marginTop: 60,
+        marginTop: 60
+    },
+    textBox: {
         marginLeft: 30
+    },
+    checkBox: {
+        margin: "20px auto 0"
     },
     cancelButton: {
         color: alpha(theme.colors.header.primaryTextColor, 0.6)
@@ -28,6 +35,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 function NewGroupChatPanel() {
     const dispatch = useDispatch();
     const classes = useStyles();
+    const [chatHistoryVisibleToNewJoiners, setChatHistoryVisibleToNewJoiners] = useState(false);
 
     function closePanel() {
         dispatch(changeLeftPanel(LeftPanelType.Chats));
@@ -35,10 +43,17 @@ function NewGroupChatPanel() {
 
     function handleSubmit(text: string) {
         closePanel();
-        dispatch(createGroupChat(text, []));
+        dispatch(createGroupChat(text, [], chatHistoryVisibleToNewJoiners));
     }
 
     const newChatIcon = <CreateGroupChatIcon size="sm" />;
+
+    const chatHistoryVisibleCheckBox = <FormControlLabel
+        control={<Checkbox color="default" />}
+        label="Chat history visible to new joiners"
+        className={classes.checkBox}
+        checked={chatHistoryVisibleToNewJoiners}
+        onChange={(_, checked) => setChatHistoryVisibleToNewJoiners(checked)} />;
 
     return (
         <>
@@ -51,7 +66,9 @@ function NewGroupChatPanel() {
                 placeholderText={PLACEHOLDER_TEXT}
                 minLength={2}
                 maxLength={25}
-                className={classes.nameInput} />
+                children={[chatHistoryVisibleCheckBox]}
+                className={classes.nameInput}
+                textBoxClassName={classes.textBox} />
         </>
     );
 }

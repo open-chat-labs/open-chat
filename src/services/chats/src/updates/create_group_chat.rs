@@ -24,7 +24,7 @@ pub fn update(request: Request) -> Response {
     let me = shared::user_id::get_current();
     let now = timestamp::now();
 
-    match chat_list.create_group_chat(me, request.chat_id, request.subject, request.participants, now) {
+    match chat_list.create_group_chat(me, request.chat_id, request.subject, request.participants, request.chat_history_visible_to_new_joiners, now) {
         Some(chat_summary) => Success(chat_summary),
         None => ChatAlreadyExists,
     }
@@ -34,7 +34,8 @@ pub fn update(request: Request) -> Response {
 pub struct Request {
     chat_id: ChatId,
     subject: String,
-    participants: Vec<UserId>
+    participants: Vec<UserId>,
+    chat_history_visible_to_new_joiners: bool
 }
 
 #[derive(CandidType)]

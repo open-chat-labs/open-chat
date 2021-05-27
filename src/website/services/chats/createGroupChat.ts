@@ -4,14 +4,15 @@ import { groupChatFromCandid } from "../candidConverters/chat";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
 import CanisterClientFactory from "../CanisterClientFactory";
 
-export default async function(chatId: ChatId, subject: string, users: UserId[]) : Promise<CreateGroupChatResponse> {
+export default async function(chatId: ChatId, subject: string, users: UserId[], chatHistoryVisibleToNewJoiners: boolean) : Promise<CreateGroupChatResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const candidUserIds = users.map(userIdToCandid);
 
     const canisterRequest = {
         chat_id: chatId,
         subject,
-        participants: candidUserIds
+        participants: candidUserIds,
+        chat_history_visible_to_new_joiners: chatHistoryVisibleToNewJoiners
     };
 
     const response = await client.create_group_chat(canisterRequest);
