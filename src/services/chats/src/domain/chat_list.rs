@@ -107,12 +107,11 @@ impl ChatList {
     }
 
     pub fn get_all(&self, me: &UserId) -> Vec<&ChatEnum> {
-        self.user_to_chats_map
-            .get_chats(me)
-            .unwrap()
-            .iter()
-            .map(|c| self.chats.get(c).unwrap())
-            .collect()
+        if let Some(chats) = self.user_to_chats_map.get_chats(me) {
+            chats.iter().filter_map(|c| self.chats.get(c)).collect()
+        } else {
+            Vec::new()
+        }
     }
 
     pub fn get_summaries(
