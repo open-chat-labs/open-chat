@@ -22,7 +22,7 @@ import DraftMediaMessage from "./DraftMediaMessage";
 import DraftFileMessage from "./DraftFileMessage";
 import { DraftMessageContent } from "../../domain/model/messages";
 import ReplyToMessagePanel from "./ReplyToMessagePanel";
-import { showAlertDialog } from "../../actions/showAlertDialog";
+import { showAlertDialog } from "../../actions/app/showAlertDialog";
 
 export default React.memo(Footer);
 

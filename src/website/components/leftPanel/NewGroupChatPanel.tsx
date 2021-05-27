@@ -3,12 +3,13 @@ import { useDispatch } from "react-redux";
 import { alpha } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
+import { changeLeftPanel } from "../../actions/app/changeSidePanel";
 import createGroupChat from "../../actions/chats/createGroupChat";
 import Header from "./Header";
 import CancelButton from "../shared/CloseButton";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 import NameInput from "../shared/NameInput";
+import { LeftPanelType } from "../../domain/model/panels";
 
 const PLACEHOLDER_TEXT = "Group Name";
 

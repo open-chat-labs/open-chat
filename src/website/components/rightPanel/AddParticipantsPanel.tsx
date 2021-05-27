@@ -6,7 +6,7 @@ import List from "@material-ui/core/List";
 import Tooltip from "@material-ui/core/Tooltip";
 import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
-import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
 import SearchBox from "../shared/SearchBox";
@@ -16,6 +16,7 @@ import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
 import { GroupChat } from "../../domain/model/chats";
 import Header from "./Header";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
+import { RightPanelType } from "../../domain/model/panels";
 
 const PLACEHOLDER_TEXT = "Type a username";
 

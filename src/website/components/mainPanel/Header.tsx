@@ -4,6 +4,8 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
+import { alpha } from "@material-ui/core/styles/colorManipulator";
+import { Link } from "@material-ui/core";
 import { RootState } from "../../reducers";
 import UserAvatar from "../shared/UserAvatar";
 import * as chatFunctions from "../../domain/model/chats";
@@ -13,11 +15,12 @@ import { getSelectedChat } from "../../domain/stateFunctions";
 import { compareUsersOnlineFirst, fromUserSummary, isUserOnline, MyProfile, UserSummary } from "../../domain/model/users";
 import ParticipantsTyping from "../shared/ParticipantsTyping";
 import ThemTyping from "../shared/ThemTyping";
+import BackButton from "../shared/BackButton";
 import GroupChatMenu from "./GroupChatMenu";
 import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
 import LastOnline from "./LastOnline";
-import Link from "@material-ui/core/Link";
-import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import { changeLeftPanel, changeRightPanel } from "../../actions/app/changeSidePanel";
+import { LeftPanelType, RightPanelType } from "../../domain/model/panels";
 
 export default React.memo(Header);
 
@@ -32,6 +35,11 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: "100%",
         overflow: "hidden",
         textOverflow: "ellipsis"
+    },
+    closeButton: {
+        color: alpha(theme.colors.header.primaryTextColor, 0.6),
+        marginLeft: -6,
+        marginRight: 6,
     }
 }));
 
@@ -41,6 +49,7 @@ function Header() {
     const me: Option<MyProfile> = useSelector((state: RootState) => state.usersState.me);
     const userDictionary: any = useSelector((state: RootState) => state.usersState.userDictionary);
     const chat = useSelector((state: RootState) => getSelectedChat(state.chatsState));
+    const leftPanelState = useSelector((state: RootState) => state.appState.panelState.leftPanel);
 
     if (chat === null) {
         return <div></div>;
@@ -113,6 +122,12 @@ function Header() {
 
     return (
         <Grid component="header" flexWrap="nowrap" container alignItems="center">
+            {
+                leftPanelState === LeftPanelType.None ? 
+                <Grid item>
+                    <BackButton onClick={() => dispatch(changeLeftPanel(LeftPanelType.Chats))} className={classes.closeButton} />
+                </Grid> : null
+            }
             <Grid item>
                 {icon}
             </Grid>

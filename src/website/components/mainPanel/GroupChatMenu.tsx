@@ -6,8 +6,9 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { ChatId } from "../../domain/model/chats";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
-import { changeRightPanel, RightPanelType } from "../../actions/changeSidePanel";
+import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import leaveGroup from "../../actions/chats/leaveGroup";
+import { RightPanelType } from "../../domain/model/panels";
 
 export default React.memo(DirectChatMenu);
 

@@ -5,11 +5,12 @@ import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { IDP_URL } from "../../constants";
-import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
+import { changeLeftPanel } from "../../actions/app/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import ThemeSelector from "./ThemeSelector";
 import logout from "../../actions/signin/logout";
-import aboutUs from "../../actions/aboutUs";
+import aboutUs from "../../actions/app/aboutUs";
+import { LeftPanelType } from "../../domain/model/panels";
 
 export default React.memo(UserMenu);
 
@@ -29,7 +30,7 @@ function UserMenu() {
     menuItems.push({ text: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
     menuItems.push({ text: "Join group", action: () => dispatch(changeLeftPanel(LeftPanelType.JoinGroupChat)) });
     menuItems.push({ text: "Theme", action: () => setThemeSelectorOpen(true) });
-    //menuItems.push({ text: "Internet Identity", action: () => window.open(IDP_URL, "_blank") });
+    menuItems.push({ text: "Internet Identity", action: () => window.open(IDP_URL, "_blank") });
     menuItems.push({ text: "TEST MODE", action: () => dispatch(aboutUs()) });
     menuItems.push({ text: "Logout", action: () => dispatch(logout()) });
 

@@ -1,10 +1,12 @@
 import produce from "immer";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
-import { THEME_SELECTED, ThemeSelectedEvent } from "../actions/selectTheme";
+import { THEME_SELECTED, ThemeSelectedEvent } from "../actions/app/selectTheme";
 import SelectedThemeCache from "../domain/SelectedThemeCache";
 import { Option } from "../domain/model/common";
 import { LeaveGroupResult } from "../services/chats/leaveGroup";
 import { AlertContent } from "../components/AlertDialog";
+import { SelectedTheme } from "../domain/model/theme";
+import { ViewMode } from "../domain/model/viewMode";
 
 import {
     LEAVE_GROUP_FAILED,
@@ -16,7 +18,7 @@ import {
     SHOW_ALERT_DIALOG_REQUESTED,
     CloseAlertDialogRequestedEvent,
     ShowAlertDialogRequestedEvent
-} from "../actions/showAlertDialog";
+} from "../actions/app/showAlertDialog";
 
 import {
     SESSION_EXPIRED, SESSION_EXPIRY_ACKNOWLEDGED,
@@ -35,33 +37,58 @@ import {
     GetCurrentUserSucceededEvent
 } from "../actions/users/getCurrentUser";
 
-export enum SelectedTheme {
-    SystemDefault,
-    Light,
-    Dark
-}
+import {
+    SWITCH_VIEW_MODE_REQUESTED,
+    SwitchViewModeRequestedEvent
+} from "../actions/app/switchViewMode";
+
+import {
+    LEFT_PANEL_CHANGED,
+    LeftPanelChangedEvent,
+    RIGHT_PANEL_CHANGED,
+    RightPanelChangedEvent,
+} from "../actions/app/changeSidePanel";
+
+import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
+import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
+import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
+import { LeftPanelType, MiddlePanelType, PanelState, RightPanelType } from "../domain/model/panels";
 
 export type AppState = {
     sessionExpired: boolean,
     selectedTheme: SelectedTheme,
-    alert: Option<AlertContent>
+    alert: Option<AlertContent>,
+    viewMode: ViewMode,
+    panelState: PanelState
 }
 
 const initialState: AppState = {
     sessionExpired: false,
     selectedTheme: SelectedThemeCache.tryGet() ?? SelectedTheme.SystemDefault,
-    alert: null
+    alert: null,
+    viewMode: ViewMode.Desktop,
+    panelState: {
+        leftPanel: LeftPanelType.Chats,
+        middlePanel: MiddlePanelType.Messages,
+        rightPanel: RightPanelType.None
+    } 
 }
 
 type Event =
     CloseAlertDialogRequestedEvent |
     CreateGroupChatFailedEvent |
-    ShowAlertDialogRequestedEvent |
+    CreateGroupChatRequestedEvent | 
+    DirectChatCreatedEvent |
     GetCurrentUserFailedEvent |
     GetCurrentUserSucceededEvent |
+    GotoChatEvent |
     LeaveGroupFailedEvent |
+    LeftPanelChangedEvent | 
+    RightPanelChangedEvent | 
     SessionExpiredEvent |
     SessionExpiryAcknowledgedEvent |
+    ShowAlertDialogRequestedEvent |
+    SwitchViewModeRequestedEvent |
     ThemeSelectedEvent | 
     UserLoggedOutEvent;
 
@@ -72,10 +99,6 @@ export default produce((state: AppState, event: Event) => {
             state.selectedTheme = selectedTheme;
             SelectedThemeCache.set(selectedTheme);
             break;
-        }
-
-        case USER_LOGGED_OUT: {
-            return initialState;
         }
 
         case LEAVE_GROUP_FAILED: {
@@ -107,12 +130,26 @@ export default produce((state: AppState, event: Event) => {
             break;
         }
 
+        case USER_LOGGED_OUT: {
+            return initialState;
+        }
+
         case SESSION_EXPIRED: {
             return { ...initialState, sessionExpired: true };
         }
 
         case SESSION_EXPIRY_ACKNOWLEDGED: {
             state.sessionExpired = false;
+            break;
+        }
+
+        case CREATE_GROUP_CHAT_REQUESTED:
+        case DIRECT_CHAT_CREATED: {
+            state.panelState.rightPanel = RightPanelType.None;
+            if (state.viewMode === ViewMode.Mobile) {
+                state.panelState.middlePanel = MiddlePanelType.Messages;
+                state.panelState.leftPanel = LeftPanelType.None;
+            }
             break;
         }
 
@@ -143,6 +180,62 @@ export default produce((state: AppState, event: Event) => {
         case GET_CURRENT_USER_FAILED:
         case GET_CURRENT_USER_SUCCEEDED: {
             state.sessionExpired = false;
+            break;
+        }
+
+        case SWITCH_VIEW_MODE_REQUESTED: {
+            const { viewMode, isChatSelected } = event.payload;
+            state.viewMode = viewMode;
+            if (viewMode === ViewMode.Desktop) {
+                state.panelState.middlePanel = MiddlePanelType.Messages;
+                state.panelState.leftPanel = LeftPanelType.Chats;
+            } else if (viewMode === ViewMode.Mobile) {
+                state.panelState.middlePanel = MiddlePanelType.None;
+                state.panelState.leftPanel = LeftPanelType.None;
+                if (state.panelState.rightPanel === RightPanelType.None) {
+                    if (isChatSelected) {
+                        state.panelState.middlePanel = MiddlePanelType.Messages;
+                    } else {
+                        state.panelState.leftPanel = LeftPanelType.Chats;
+                    }
+                } 
+            }
+            break;
+        }
+
+        case LEFT_PANEL_CHANGED: {
+            state.panelState.leftPanel = event.payload;
+            if (state.viewMode === ViewMode.Mobile) {
+                state.panelState.rightPanel = RightPanelType.None;
+                if (state.panelState.leftPanel === LeftPanelType.None) {
+                    state.panelState.middlePanel = MiddlePanelType.Messages;
+                } else {
+                    state.panelState.middlePanel = MiddlePanelType.None;
+                }
+            }
+            break;
+        }
+        
+        case RIGHT_PANEL_CHANGED: {
+            state.panelState.rightPanel = event.payload;
+            if (state.viewMode === ViewMode.Mobile) {
+                state.panelState.leftPanel = LeftPanelType.None;
+                if (state.panelState.rightPanel === RightPanelType.None) {
+                    state.panelState.middlePanel = MiddlePanelType.Messages;
+                } else {
+                    state.panelState.middlePanel = MiddlePanelType.None;
+                }     
+            }
+            break;
+        }
+
+        case GOTO_CHAT: {
+            const { chatIndex } = event.payload;
+            if (chatIndex != null && state.viewMode === ViewMode.Mobile) {
+                state.panelState.middlePanel = MiddlePanelType.Messages;
+                state.panelState.leftPanel = LeftPanelType.None;
+                state.panelState.rightPanel = RightPanelType.None;
+            }
             break;
         }
     }

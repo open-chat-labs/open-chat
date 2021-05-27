@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import MuiThemeProvider from "@material-ui/core/styles/ThemeProvider";
 import { darkTheme, lightTheme } from "../theme";
 import { RootState } from "../reducers";
-import { SelectedTheme } from "../reducers/appReducer";
+import { SelectedTheme } from "../domain/model/theme";
 
 export interface Props {
     children: React.ReactNode

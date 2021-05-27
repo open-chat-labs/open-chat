@@ -6,16 +6,15 @@ import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../reducers";
 import { Option } from "../domain/model/common";
-import { SidePanelState } from "../reducers/sidePanelReducer";
-import { RightPanelType } from "../actions/changeSidePanel";
 import LeftPanel from "./leftPanel/LeftPanel";
 import MainPanel from "./mainPanel/MainPanel";
 import RightPanel from "./rightPanel/RightPanel";
 import { setupBackgroundTasks } from "../backgroundTasks";
 import AlertDialog from "./AlertDialog";
-import logout from "../actions/signin/logout";
-import { closeAlertDialog } from "../actions/showAlertDialog";
-import aboutUs from "../actions/aboutUs";
+import { closeAlertDialog } from "../actions/app/showAlertDialog";
+import aboutUs from "../actions/app/aboutUs";
+import { LeftPanelType, MiddlePanelType, RightPanelType, PanelState } from "../domain/model/panels";
+import { ViewMode } from "../domain/model/viewMode";
 
 export default App;
 
@@ -30,6 +29,9 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: "40%",
         "&.rightPanelActive": {
             width: "30%"
+        },
+        "&.mobile": {
+            width: "100%"
         }
     },
     main: {
@@ -38,19 +40,26 @@ const useStyles = makeStyles((theme: Theme) => ({
         width: "60%",
         "&.rightPanelActive": {
             width: "40%"
+        },
+        "&.mobile": {
+            width: "100%"
         }
     },
     right: {
         height: "100%",
-        width: "30%"
+        width: "30%",
+        "&.mobile": {
+            width: "100%"
+        }
     }
 }));
 
 function App() {
     const dispatch = useDispatch();
     const classes = useStyles();
-    const sidePanelState = useSelector((state: RootState) => state.sidePanelState);
     const alert = useSelector((state: RootState) => state.appState.alert);
+    const panel = useSelector((state: RootState) => state.appState.panelState);
+    const viewMode = useSelector((state: RootState) => state.appState.viewMode);
 
     useEffect(() => {
         dispatch(aboutUs());
@@ -58,10 +67,15 @@ function App() {
 
     setupBackgroundTasks();
 
-    function buildLeftPanel(sidePanelState: SidePanelState): JSX.Element {
-        const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
+    function buildLeftPanel(): Option<JSX.Element> {
+        if (panel.leftPanel === LeftPanelType.None) {
+            return null;
+        }
+
         let className = classes.left;
-        if (rightPanelActive) {
+        if (viewMode === ViewMode.Mobile) {
+            className += " mobile";
+        } else if (panel.rightPanel !== RightPanelType.None) {
             className += " rightPanelActive";
         }
 
@@ -73,17 +87,22 @@ function App() {
                     direction="column"
                     wrap="nowrap"
                     className={className}>
-                    <LeftPanel type={sidePanelState.leftPanel} />
+                    <LeftPanel type={panel.leftPanel} />
                 </Grid>
                 <Divider orientation="vertical" flexItem />
             </>
         );
     }
 
-    function buildMainPanel(sidePanelState: SidePanelState): JSX.Element  {
-        const rightPanelActive = sidePanelState.rightPanel !== RightPanelType.None;
+    function buildMainPanel(): Option<JSX.Element>  {
+        if (panel.middlePanel === MiddlePanelType.None) {
+            return null;
+        }
+
         let className = "main-panel " + classes.main;
-        if (rightPanelActive) {
+        if (viewMode === ViewMode.Mobile) {
+            className += " mobile";
+        } else if (panel.rightPanel !== RightPanelType.None) {
             className += " rightPanelActive";
         }
 
@@ -98,9 +117,14 @@ function App() {
         );
     }
 
-    function buildRightPanel(sidePanelState: SidePanelState): Option<JSX.Element>  {
-        if (sidePanelState.rightPanel === RightPanelType.None) {
+    function buildRightPanel(): Option<JSX.Element>  {
+        if (panel.rightPanel === RightPanelType.None) {
             return null;
+        }
+
+        let className = classes.right;
+        if (viewMode === ViewMode.Mobile) {
+            className += " mobile";
         }
 
         return (
@@ -111,8 +135,8 @@ function App() {
                     container
                     direction="column"
                     wrap="nowrap"
-                    className={classes.right}>
-                    <RightPanel type={sidePanelState.rightPanel} />
+                    className={className}>
+                    <RightPanel type={panel.rightPanel} />
                 </Grid>
             </>
         );
@@ -121,9 +145,9 @@ function App() {
     return (
         <>
             <Grid container wrap="nowrap" className={classes.grid}>
-                {buildLeftPanel(sidePanelState)}
-                {buildMainPanel(sidePanelState)}
-                {buildRightPanel(sidePanelState)}
+                {buildLeftPanel()}
+                {buildMainPanel()}
+                {buildRightPanel()}
             </Grid>
             {alert ?
             <AlertDialog

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import Box from "@material-ui/core/Box";
 import Divider from "@material-ui/core/Divider";
 import Grid from "@material-ui/core/Grid";
@@ -12,12 +12,9 @@ import { Chat, ChatId } from "../../domain/model/chats";
 import * as chatFunctions from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { LocalMessage } from "../../domain/model/messages";
-import { fromUserSummary, UserId, UserSummary } from "../../domain/model/users";
-import { changeLeftPanel, LeftPanelType } from "../../actions/changeSidePanel";
-import gotoUser from "../../actions/chats/gotoUser";
+import { UserId, UserSummary } from "../../domain/model/users";
 import * as chatListItemBuilder from "./ChatListItemBuilder";
 import MessageSearchMatch from "./MessageSearchMatch";
-import UserListItem from "../shared/UserListItem";
 import chatsService from "../../services/chats/service";
 import { SearchAllMessagesResponse } from "../../services/chats/searchAllMessages";
 

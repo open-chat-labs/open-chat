@@ -1,4 +1,4 @@
-import { SelectedTheme } from "../reducers/appReducer";
+import { SelectedTheme } from "../../domain/model/theme";
 
 export const THEME_SELECTED = "THEME_SELECTED";
 
