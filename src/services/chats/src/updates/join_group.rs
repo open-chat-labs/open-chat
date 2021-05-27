@@ -17,8 +17,9 @@ pub fn update(chat_id: ChatId) -> Response {
             if group_chat.is_user_in_group(&me) {
                 AlreadyInGroup
             } else {
-                let added = group_chat.add_participants(vec!(me), now) > 0;
+                let added = group_chat.add_participant(me.clone(), now);
                 if added {
+                    chat_list.link_chat_to_user(chat_id, me);
                     Success
                 } else {
                     GroupSizeLimitReached

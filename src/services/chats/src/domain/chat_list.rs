@@ -15,10 +15,12 @@ use crate::domain::blob_storage::BlobStorage;
 use crate::domain::chat::{ChatStableState, MessageContentType, ReplyContext};
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::domain::group_chat::GroupChatSummary;
+use crate::domain::user_to_chats_map::UserToChatsMap;
 
 #[derive(Default)]
 pub struct ChatList {
     chats: HashMap<ChatId, ChatEnum>,
+    user_to_chats_map: UserToChatsMap,
     messages_to_prune: VecDeque<(ChatId, u32)>,
     stats: Stats,
 }
@@ -55,10 +57,12 @@ impl ChatList {
         now: Timestamp) -> DirectChatSummary {
 
         self.add_message_to_stats(&content);
-        let chat = DirectChat::new(chat_id, sender.clone(), recipient, client_message_id, content, replies_to, now);
+        let chat = DirectChat::new(chat_id, sender.clone(), recipient.clone(), client_message_id, content, replies_to, now);
         let chat_summary = DirectChatSummary::new(&chat, &sender, 0);
 
         self.chats.insert(chat_id, ChatEnum::Direct(chat));
+        self.user_to_chats_map.link_chat_to_user(chat_id, sender);
+        self.user_to_chats_map.link_chat_to_user(chat_id, recipient);
         self.stats.direct_chat_count = self.stats.direct_chat_count + 1;
         chat_summary
     }
@@ -67,6 +71,11 @@ impl ChatList {
         match self.chats.entry(chat_id) {
             Occupied(_) => None,
             Vacant(e) => {
+                self.user_to_chats_map.link_chat_to_user(chat_id, creator.clone());
+                for p in participants.iter() {
+                    self.user_to_chats_map.link_chat_to_user(chat_id, p.clone());
+                }
+
                 let chat = GroupChat::new(chat_id, subject, creator.clone(), participants, now);
                 let chat_summary = GroupChatSummary::new(&chat, &creator, 0);
 
@@ -98,11 +107,11 @@ impl ChatList {
     }
 
     pub fn get_all(&self, me: &UserId) -> Vec<&ChatEnum> {
-        // For now this will iterate through every chat...
-        self
-            .chats
-            .values()
-            .filter(|chat| chat.involves_user(me))
+        self.user_to_chats_map
+            .get_chats(me)
+            .unwrap()
+            .iter()
+            .map(|c| self.chats.get(c).unwrap())
             .collect()
     }
 
@@ -117,11 +126,9 @@ impl ChatList {
             None => 1
         };
 
-        // For now this will iterate through every chat...
         let mut list: Vec<_> = self
-            .chats
-            .values()
-            .filter(|chat| chat.involves_user(user))
+            .get_all(user)
+            .into_iter()
             .filter(|chat| updated_since.is_none() || chat.get_updated_date() > updated_since.unwrap())
             .collect();
 
@@ -141,8 +148,18 @@ impl ChatList {
     pub fn delete_chat(&mut self, chat_id: ChatId) {
         if let Some(chat) = self.chats.remove(&chat_id) {
             match chat {
-                ChatEnum::Direct(_) => self.stats.direct_chat_count = self.stats.direct_chat_count - 1,
-                ChatEnum::Group(_) => self.stats.group_chat_count = self.stats.group_chat_count - 1,
+                ChatEnum::Direct(c) => {
+                    let [user1, user2] = c.get_participants();
+                    self.user_to_chats_map.unlink_chat_from_user(&chat_id, user1);
+                    self.user_to_chats_map.unlink_chat_from_user(&chat_id, user2);
+                    self.stats.direct_chat_count = self.stats.direct_chat_count - 1;
+                },
+                ChatEnum::Group(c) => {
+                    for p in c.iter_participants() {
+                        self.user_to_chats_map.unlink_chat_from_user(&chat_id, p);
+                    }
+                    self.stats.group_chat_count = self.stats.group_chat_count - 1
+                },
             }
         }
     }
@@ -178,6 +195,14 @@ impl ChatList {
 
             self.stats.pruneable_message_count = self.stats.pruneable_message_count - count_to_prune;
         }
+    }
+
+    pub fn link_chat_to_user(&mut self, chat_id: ChatId, user_id: UserId) {
+        self.user_to_chats_map.link_chat_to_user(chat_id, user_id);
+    }
+
+    pub fn unlink_chat_from_user(&mut self, chat_id: &ChatId, user_id: &UserId) {
+        self.user_to_chats_map.unlink_chat_from_user(chat_id, user_id);
     }
 
     pub fn get_stats(&self) -> Stats {
@@ -219,15 +244,31 @@ impl StableState for ChatList {
     }
 
     fn fill(state: ChatListState) -> ChatList {
-        let chats_map: HashMap<ChatId, ChatEnum> = state.chats
-            .into_iter()
-            .map(|c| (c.get_id(), c.into()))
-            .collect();
+        let mut chats_map: HashMap<ChatId, ChatEnum> = HashMap::new();
+        let mut user_to_chats_map: UserToChatsMap = UserToChatsMap::default();
+        for c in state.chats.into_iter() {
+            let chat_id = c.get_id();
+            match &c {
+                ChatStableState::Direct(c) => {
+                    let [user1, user2] = c.get_participants();
+                    user_to_chats_map.link_chat_to_user(chat_id, user1.clone());
+                    user_to_chats_map.link_chat_to_user(chat_id, user2.clone());
+                },
+                ChatStableState::Group(c) => {
+                    for p in c.iter_participants() {
+                        user_to_chats_map.link_chat_to_user(chat_id, p.clone());
+                    }
+                }
+            }
+            chats_map.insert(chat_id, c.into());
+        }
         let messages_to_prune_deque: VecDeque<(ChatId, u32)> = state.messages_to_prune
             .into_iter()
             .collect();
+
         ChatList {
             chats: chats_map,
+            user_to_chats_map,
             messages_to_prune: messages_to_prune_deque,
             stats: state.stats
         }

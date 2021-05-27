@@ -10,7 +10,6 @@ use self::Response::*;
 
 const MIN_GROUP_SUBJECT_LENGTH: u8 = 2;
 const MAX_GROUP_SUBJECT_LENGTH: u8 = 25;
-const MAX_NUMBER_GROUP_PARTICPANTS: u8 = 100;
 
 pub fn update(request: Request) -> Response {
 
@@ -19,8 +18,6 @@ pub fn update(request: Request) -> Response {
         return SubjectTooShort(MIN_GROUP_SUBJECT_LENGTH);
     } else if request.subject.len() > MAX_GROUP_SUBJECT_LENGTH as usize {
         return SubjectTooLong(MAX_GROUP_SUBJECT_LENGTH);
-    } else if request.participants.len() > MAX_NUMBER_GROUP_PARTICPANTS as usize {
-        return TooManyParticipants(MAX_NUMBER_GROUP_PARTICPANTS);
     }
 
     let chat_list: &mut ChatList = storage::get_mut();

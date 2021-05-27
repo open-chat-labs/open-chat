@@ -18,7 +18,10 @@ pub fn update(chat_id: ChatId) -> Response {
                 return LastAdminCannotLeave;
             }
             match group_chat.leave(&me, now) {
-                Some(true) => Success,
+                Some(true) => {
+                    chat_list.unlink_chat_from_user(&chat_id, &me);
+                    Success
+                },
                 Some(false) => ParticipantNotFound,
                 None => LastAdminCannotLeave
             }

@@ -56,6 +56,10 @@ impl DirectChat {
             last_updated: now
         }
     }
+
+    pub fn get_participants(&self) -> [&UserId; 2] {
+        [&self.user1, &self.user2]
+    }
 }
 
 impl Chat for DirectChat {
@@ -179,6 +183,10 @@ impl DirectChatSummary {
 impl DirectChatStableState {
     pub fn get_id(&self) -> ChatId {
         self.id
+    }
+
+    pub fn get_participants(&self) -> [&UserId; 2] {
+        [&self.user1, &self.user2]
     }
 }
 
