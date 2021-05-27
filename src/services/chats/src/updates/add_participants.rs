@@ -19,7 +19,15 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
             if !group_chat.is_admin(&me) {
                 Unauthorized
             } else {
-                let count_added = group_chat.add_participants(users, now);
+                let added: Vec<_> = users
+                    .into_iter()
+                    .filter(|u| group_chat.add_participant(u.clone(), now))
+                    .collect();
+
+                let count_added = added.len() as u32;
+                for u in added.into_iter() {
+                    chat_list.link_chat_to_user(chat_id, u);
+                }
                 Success(count_added)
             }
         },

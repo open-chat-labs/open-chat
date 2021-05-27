@@ -83,19 +83,14 @@ impl GroupChat {
         }
     }
 
-    pub fn add_participants(&mut self, users_to_add: Vec<UserId>, now: Timestamp) -> u32 {
-        let mut count_added = 0;
-        for user_to_add in users_to_add {
-            if self.find_participant(&user_to_add).is_some() {
-                continue;
-            }
+    pub fn add_participant(&mut self, user_to_add: UserId, now: Timestamp) -> bool {
+        if self.find_participant(&user_to_add).is_some() {
+            false
+        } else {
             self.participants.push(Participant::new(user_to_add, true, self.get_latest_message_id() + 1, now));
-            count_added += 1;
+            self.last_updated = now;
+            true
         }
-
-        self.last_updated = now;
-
-        count_added
     }
 
     pub fn remove_participant(&mut self, user_to_remove: &UserId, now: Timestamp) -> bool {
@@ -138,6 +133,10 @@ impl GroupChat {
 
     pub fn is_user_in_group(&self, user_id: &UserId) -> bool {
         self.find_participant(user_id).is_some()
+    }
+
+    pub fn iter_participants(&self) -> impl Iterator<Item = &UserId> {
+        self.participants.iter().map(|p| &p.user_id)
     }
 
     fn find_participant(&self, user_id: &UserId) -> Option<&Participant> {
@@ -315,6 +314,10 @@ impl GroupChatSummary {
 impl GroupChatStableState {
     pub fn get_id(&self) -> ChatId {
         self.id
+    }
+
+    pub fn iter_participants(&self) -> impl Iterator<Item = &UserId> {
+        self.participants.iter().map(|p| &p.user_id)
     }
 }
 

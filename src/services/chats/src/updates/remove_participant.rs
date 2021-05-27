@@ -23,7 +23,10 @@ pub fn update(chat_id: ChatId, user: UserId) -> Response {
                 return Unauthorized;
             }
             match group_chat.remove_participant(&me, now) {
-                true => Success,
+                true => {
+                    chat_list.unlink_chat_from_user(&chat_id, &user);
+                    Success
+                },
                 false => ParticipantNotFound
             }
         },
