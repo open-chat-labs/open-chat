@@ -86,7 +86,7 @@ export default function RegisterUser() {
         <>    
             <Paper className={classes.paper}>
                 <PersonIcon className={classes.icon} />
-                <Typography variant="h2">Register user</Typography>
+                <h1>Register user</h1>
                 <NameInput
                     onSubmit={handleSubmit}
                     placeholderText="Enter username"
