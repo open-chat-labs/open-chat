@@ -72,7 +72,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
             color: "white",
             backgroundColor: "transparent"
         },
-        "@media screen and (max-width: 768px)": {
+        [theme.breakpoints.down('sm')]: {
             maxWidth: "87vw"
         }
     },    
