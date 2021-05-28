@@ -71,6 +71,9 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
             opacity: "0.8",
             color: "white",
             backgroundColor: "transparent"
+        },
+        "@media screen and (max-width: 768px)": {
+            maxWidth: "87vw"
         }
     },    
     sentByMe: {
