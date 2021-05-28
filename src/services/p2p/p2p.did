@@ -1,19 +1,6 @@
 type UserId = principal;
 type Timestamp = nat64;
 
-type AddOffersRequest =
-    record {
-        offers: vec AddOfferRequest;
-    };
-
-type AddOfferRequest =
-    record {
-        id: text;
-        user_id: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
-    };
-
 type AddOffersResponse =
     variant {
         Success: AddOffersResult;
@@ -27,26 +14,6 @@ type AddOffersResult =
 type AddAnswersRequest =
     record {
         answers: vec AddAnswerRequest;
-    };
-
-type AddOfferResponse =
-    variant {
-        Success: AddOfferResult;
-    };
-
-type AddOfferResult =
-    record {
-        offer_added: bool;
-        existing_counter_offer: opt Offer;
-    };
-
-type AddAnswerRequest =
-    record {
-        id: text;
-        offer_id: text;
-        user_id: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
     };
 
 type RemoveConnectionDetailsRequest =
@@ -100,8 +67,6 @@ service : {
     add_offers: (AddOffersRequest) -> (AddOffersResponse);
     add_answers: (AddAnswersRequest) -> ();
     remove_connection_details: (RemoveConnectionDetailsRequest) -> (nat32);
-    add_offer: (AddOfferRequest) -> (AddOfferResponse);
-    add_answer: (AddAnswerRequest) -> ();
 
     get_connection_details: (opt Timestamp) -> (GetConnectionDetailsResponse) query;
 }
