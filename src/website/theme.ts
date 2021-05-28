@@ -262,7 +262,7 @@ const buildOptions = (darkMode: boolean) : ThemeOptions => {
         breakpoints: {
             values: {
                 xs: 0,
-                sm: 600,
+                sm: 768,
                 md: 960,
                 lg: 1400,
                 xl: 1920

@@ -48,6 +48,14 @@ const useStyles = makeStyles((theme: Theme) => ({
         },
         "body, input": {
             color: theme.colors.textColor
+        },
+        "h1": {
+            fontSize: "6rem",
+            fontWeight: 300,
+            margin: 0,
+            [theme.breakpoints.down('sm')]: {
+                fontSize: "3rem"
+            }    
         }
     },
     container: {
@@ -84,7 +92,7 @@ function AppContainer() {
     const currentViewMode = useSelector((state: RootState) => state.appState.viewMode);
     const classes = useStyles();
     const theme = useTheme();
-    const targetViewMode = useMediaQuery('(max-width:768px)') ? ViewMode.Mobile : ViewMode.Desktop;
+    const targetViewMode = useMediaQuery(theme.breakpoints.down("sm")) ? ViewMode.Mobile : ViewMode.Desktop;
     const removePadding = useMediaQuery(theme.breakpoints.down("md"));
 
     let containerClass = classes.container;
