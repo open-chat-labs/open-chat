@@ -17,6 +17,7 @@ import { GroupChat } from "../../domain/model/chats";
 import Header from "./Header";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 import { RightPanelType } from "../../domain/model/panels";
+import { Option } from "../../domain/model/common";
 
 const PLACEHOLDER_TEXT = "Type a username";
 
@@ -80,7 +81,7 @@ function AddParticipantsPanel() {
         textBoxRef.current?.focus();
     }, []);
 
-    let mainContent: JSX.Element;
+    let mainContent: Option<JSX.Element>;
     if (results.length) {
         mainContent = (
             <List disablePadding={true}>
@@ -91,11 +92,12 @@ function AddParticipantsPanel() {
             </List>
         );
     } else {
-        mainContent = (
-            <Tooltip title="copied!" placement="bottom" open={tooltipOpen}>
-                <Button onClick={handleCopyCodeButtonClick}>Copy Invite Code</Button>
-            </Tooltip>
-        )
+        mainContent = null;
+        // mainContent = (
+        //     <Tooltip title="copied!" placement="bottom" open={tooltipOpen}>
+        //         <Button onClick={handleCopyCodeButtonClick}>Copy Invite Code</Button>
+        //     </Tooltip>
+        // )
     }
 
     return (
