@@ -22,16 +22,3 @@ pub fn remove_connection_details(request: remove_connection_details::Request) ->
 pub fn get_connection_details(updated_since: Option<Timestamp>) -> get_connection_details::Response {
     get_connection_details::query(updated_since)
 }
-
-#[deprecated]
-#[update]
-pub fn add_offer(request: add_offer::Request) -> add_offer::Response {
-    add_offer::update(request)
-}
-
-#[deprecated]
-#[update]
-pub fn add_answer(request: add_answer::Request) {
-    add_answer::update(request);
-}
-
