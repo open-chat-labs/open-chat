@@ -52,6 +52,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     container: {
         padding: 24,
+        position: "fixed",
+        top: 0,
         height: "100%",
         "&.no-padding": {
             padding: 0
