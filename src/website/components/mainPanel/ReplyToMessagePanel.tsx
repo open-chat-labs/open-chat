@@ -5,9 +5,7 @@ import { darken } from "@material-ui/core/styles/colorManipulator";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import Container from "@material-ui/core/Container";
 import { RootState } from "../../reducers";
-import { Option } from "../../domain/model/common";
 import { getSelectedChat } from "../../domain/stateFunctions";
-import { UserId } from "../../domain/model/users";
 import * as chatFunctions from "../../domain/model/chats";
 import { cancelReplyToMessage } from "../../actions/chats/replyToMessage";
 import CloseButton from "../shared/CloseButton";
@@ -29,6 +27,9 @@ const useStyles = makeStyles<Theme>((theme: Theme) => ({
     },
     contentContainer: {
         maxWidth: 500,
+        [theme.breakpoints.down('sm')]: {
+            maxWidth: "87vw"
+        },
         backgroundColor: darken(theme.colors.messageSentByElse.highlightedContentBackgroundColor, 0.05),
         borderRadius: 6,
         "& svg": {

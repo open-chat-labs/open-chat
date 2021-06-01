@@ -16,7 +16,6 @@ import MediaContent from "./MediaContent";
 import { ChatId } from "../../domain/model/chats";
 import MessageTimeAndTicks from "./MessageTimeAndTicks";
 import formatFileSize from "../../formatters/fileSize";
-import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import { selectReplyPrivatelyToMessage, selectReplyToMessage } from "../../actions/chats/replyToMessage";
 import MessageReplyPanel from "./MessageReplyPanel";
@@ -57,6 +56,9 @@ export default React.memo(Message);
 const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     message: {
         maxWidth: 500,
+        [theme.breakpoints.down('sm')]: {
+            maxWidth: "87vw"
+        },
         padding: 3,
         borderRadius: 16,
         margin: 0,
@@ -72,9 +74,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
             color: "white",
             backgroundColor: "transparent"
         },
-        [theme.breakpoints.down('sm')]: {
-            maxWidth: "87vw"
-        }
     },    
     sentByMe: {
         alignSelf: "flex-end",
@@ -123,6 +122,10 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     text: {},
     file: {},
     media: {
+        minWidth: 330,
+        [theme.breakpoints.down('sm')]: {
+            minWidth: "60vw"
+        },
         "& $participant": {
             position: "absolute",
             display: "block",
@@ -139,7 +142,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
         }
     },
     mediaUncaptioned: {
-        backgroundColor: "transparent",
+        backgroundColor: "transparent !important",
         padding: 0,
         "& $timeAndTicks": {
             position: "absolute",
@@ -261,11 +264,6 @@ function Message(props : Props) {
     // Is this message just standalone media
     const isMediaNoCaption = content.kind === "media" && !content.caption && !props.repliesToContent;
 
-    // Calculate the dimensions of any media
-    let mediaDimensions = content.kind === "media" 
-        ? scaleMediaContent(content.width, content.height, true) 
-        : null;
-
     // Dynamically build the child components that comprise the message
     const children: JSX.Element[] = [];
     {
@@ -355,14 +353,7 @@ function Message(props : Props) {
                     contentComponent = <MediaContent 
                         content={content} 
                         ownsBlob={true} 
-                        width={mediaDimensions!.width} 
-                        height={mediaDimensions!.height} 
                         className={classes.mediaContent} />; 
-                    // For some reason we need to set the width and height of container div for <Video /> content otherwise there is a padding glitch
-                    containerStyle = {
-                        width: mediaDimensions!.width + "px",
-                        height: mediaDimensions!.height + "px"
-                    };        
                     // Add a shadow effect to bottom of media so the "time and ticks" can be seen
                     if (!content.caption) {
                         shadow = <div key="shadow" className={classes.shadow}></div>;
@@ -438,11 +429,7 @@ function Message(props : Props) {
     switch (content.kind) {
         case "media":
             className += " " + classes.media;
-            if (content.caption) {
-                containerStyle = {
-                    width: (mediaDimensions!.width + 6) + "px"
-                };        
-            } else {
+            if (!content.caption) {
                 className += " " + classes.mediaUncaptioned;
             }
             break;

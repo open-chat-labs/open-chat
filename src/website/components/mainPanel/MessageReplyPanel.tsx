@@ -7,8 +7,6 @@ import Photo from "@material-ui/icons/Photo";
 import Attachment from "@material-ui/icons/Attachment";
 import { RootState } from "../../reducers";
 import { getChatSubject } from "../../domain/stateFunctions";
-import { formatCycles } from "../../formatters/cycles";
-import Dimensions from "../../utils/Dimensions";
 import { Option } from "../../domain/model/common";
 import { ChatId } from "../../domain/model/chats";
 import { getContentAsText } from "../../domain/messageFunctions";
@@ -47,11 +45,11 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
         justifyContent: "space-between"
     },
     textContainer: {
-        padding: "4px 8px"
+        padding: "4px 8px",
+        minWidth: 120
     },
     text: {
-        maxHeight: 71,
-        minWidth: 180,
+        maxHeight: 72,
         overflow: "hidden",
         textOverflow: "ellipsis",
         wordWrap: "break-word",
@@ -67,7 +65,11 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
         borderTopRightRadius: "inherit",
         borderBottomRightRadius: "inherit",
         borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0
+        borderBottomLeftRadius: 0,
+        maxWidth: 120,
+        maxHeight: 72,
+        height: "auto",
+        width: "auto"        
     },
     cyclesIcon: {
         marginLeft: 12,
@@ -107,12 +109,8 @@ function MessageReplyPanel(props : Props): JSX.Element {
     let rightContent;
     let icon;
     if (props.content.kind === "media") {
-        let dimensions = new Dimensions(props.content.width, props.content.height);
-        dimensions = dimensions.scaleToFit(new Dimensions(120, 71));
         rightContent = <MediaContent 
             content={props.content}
-            width={dimensions.width}
-            height={dimensions.height}
             className={classes.mediaContent}
             ownsBlob={false} 
         />;
