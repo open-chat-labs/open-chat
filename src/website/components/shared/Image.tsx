@@ -2,8 +2,6 @@ import React from "react";
 
 export interface Props {
     src: string,
-    width?: number,
-    height?: number,
     className: string
 }
 
@@ -17,6 +15,6 @@ function Image(props : Props): JSX.Element {
     return <img
         className={props.className}
         src={props.src}
-        width={props.width}
-        height={props.height} />;
+        width="100%"
+        height="100%" />;
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import makeStyles from "@material-ui/styles/makeStyles";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import Box from "@material-ui/core/Box";
-import { scaleMediaContent } from "../shared/mediaComponentFunctions";
 import Image from "../shared/Image";
 import Video from "../shared/Video";
 
@@ -14,8 +14,10 @@ type Props = {
 
 export default React.memo(DraftMediaMessage);
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles<Theme>((theme: Theme) => ({
     media: {
+        minWidth: 250,
+        maxWidth: 500,
         margin: 14,
         marginBottom: 4,
         borderRadius: 16,
@@ -27,13 +29,11 @@ const useStyles = makeStyles(() => ({
 
 function DraftMediaMessage(props: Props): JSX.Element {
     const classes = useStyles();
-    const dimensions = scaleMediaContent(props.width, props.height);
-
     return (
-        <Box className={classes.media} width={dimensions.width} height={dimensions.height}>
+        <Box className={classes.media}>
             {props.mimeType.startsWith("image/") 
-            ? <Image src={props.blobUrl} width={dimensions.width} height={dimensions.height} /> 
-            : <Video src={props.blobUrl} width={dimensions.width} height={dimensions.height} />}
+            ? <Image src={props.blobUrl} /> 
+            : <Video src={props.blobUrl} />}
         </Box>
     );
 }

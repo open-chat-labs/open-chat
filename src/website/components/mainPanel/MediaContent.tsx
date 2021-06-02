@@ -7,8 +7,6 @@ import Video from "../shared/Video";
 
 export interface Props {
     content: Media,
-    width?: number,
-    height?: number,
     className: string,
     ownsBlob: boolean
 }
@@ -67,9 +65,9 @@ function MediaContent(props: Props): JSX.Element {
 
     let contentElement;
     if (content.mimeType.startsWith("image/") || (!loaded.current && !ownedBlobUrl)) {
-        contentElement = <Image key={props.content.id} src={src.current} width={props.width} height={props.height} className={props.className} />;
+        contentElement = <Image key={props.content.id} src={src.current} className={props.className} />;
     } else if (content.mimeType.startsWith("video/")) {
-        contentElement = <Video key={props.content.id} src={src.current} width={props.width} height={props.height} className={props.className} />;
+        contentElement = <Video key={props.content.id} src={src.current} className={props.className} />;
     }
 
     return (
