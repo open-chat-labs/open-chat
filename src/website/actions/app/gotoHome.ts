@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { RootState } from "../../reducers";
 import { ViewMode } from "../../domain/model/viewMode";
-import * as chatFunctions from "../../domain/model/chats";
+import * as historyFunctions from "../../domain/historyFunctions";
 import { gotoChatByIndex } from "../chats/gotoChat";
 
 export const GOTO_HOME = "GOTO_HOME";
@@ -13,7 +13,7 @@ export default function() {
             if (selectedChatIndex != null) {
                 const chats = getState().chatsState.chats;
                 const selectedChat = chats[selectedChatIndex];
-                chatFunctions.pushChatToHistory(selectedChat.chatId, false);
+                historyFunctions.pushOrReplaceChat(selectedChat.chatId, false);
             } else {
                 dispatch(gotoChatByIndex(0));
             }
