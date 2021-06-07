@@ -19,7 +19,7 @@ import BackButton from "../shared/BackButton";
 import GroupChatMenu from "./GroupChatMenu";
 import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
 import LastOnline from "./LastOnline";
-import { changeLeftPanel, changeRightPanel } from "../../actions/app/changeSidePanel";
+import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import { LeftPanelType, RightPanelType } from "../../domain/model/panels";
 
 export default React.memo(Header);
@@ -125,7 +125,7 @@ function Header() {
             {
                 leftPanelState === LeftPanelType.None ? 
                 <Grid item>
-                    <BackButton onClick={() => dispatch(changeLeftPanel(LeftPanelType.Chats))} className={classes.closeButton} />
+                    <BackButton onClick={() => history.back()} className={classes.closeButton} />
                 </Grid> : null
             }
             <Grid item>

@@ -10,6 +10,7 @@ import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
 import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
 import SearchBox from "../shared/SearchBox";
+import * as u64 from "../../utils/u64Functions";
 import UserListItem from "../shared/UserListItem";
 import { fromUserSummary, UserSummary } from "../../domain/model/users";
 import { SearchUsersRequest } from "../../services/userMgmt/searchUsers";
@@ -59,7 +60,7 @@ function AddParticipantsPanel() {
             clearTimeout(tooltipTimeout.current);
         }
 
-        await clipboard.writeText(chat.chatId.toString(16).toUpperCase().padStart(32, "0"));
+        await clipboard.writeText(u64.toHex(chat.chatId));
         setTooltipOpen(true);
         tooltipTimeout.current = setTimeout(() => {
             setTooltipOpen(false);

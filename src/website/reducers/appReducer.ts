@@ -53,6 +53,8 @@ import { GOTO_CHAT, GotoChatEvent } from "../actions/chats/gotoChat";
 import { CREATE_GROUP_CHAT_REQUESTED, CreateGroupChatRequestedEvent } from "../actions/chats/createGroupChat";
 import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/gotoUser";
 import { LeftPanelType, MiddlePanelType, PanelState, RightPanelType } from "../domain/model/panels";
+import { GotoHomeEvent, GOTO_HOME } from "../actions/app/gotoHome";
+import { GetAllChatsSucceededEvent, GET_ALL_CHATS_SUCCEEDED } from "../actions/chats/getAllChats";
 
 export type AppState = {
     sessionExpired: boolean,
@@ -79,9 +81,11 @@ type Event =
     CreateGroupChatFailedEvent |
     CreateGroupChatRequestedEvent | 
     DirectChatCreatedEvent |
+    GetAllChatsSucceededEvent |
     GetCurrentUserFailedEvent |
     GetCurrentUserSucceededEvent |
     GotoChatEvent |
+    GotoHomeEvent |
     LeaveGroupFailedEvent |
     LeftPanelChangedEvent | 
     RightPanelChangedEvent | 
@@ -199,6 +203,26 @@ export default produce((state: AppState, event: Event) => {
                         state.panelState.leftPanel = LeftPanelType.Chats;
                     }
                 } 
+            }
+            break;
+        }
+
+        case GOTO_HOME: {
+            state.panelState.leftPanel = LeftPanelType.Chats;
+            state.panelState.rightPanel = RightPanelType.None;
+            if (state.viewMode === ViewMode.Mobile) {
+                state.panelState.middlePanel = MiddlePanelType.None;
+            }
+            break;
+        }
+
+        case GET_ALL_CHATS_SUCCEEDED: {
+            const { selectedChatIndex } = event.payload;
+            if (state.viewMode === ViewMode.Mobile) {
+                if (selectedChatIndex != null) {
+                    state.panelState.leftPanel = LeftPanelType.None;
+                    state.panelState.middlePanel = MiddlePanelType.Messages;    
+                }
             }
             break;
         }

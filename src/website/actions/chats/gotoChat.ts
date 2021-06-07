@@ -11,22 +11,25 @@ import { ChatId, ConfirmedChat } from "../../domain/model/chats";
 
 export const GOTO_CHAT = "GOTO_CHAT";
 
-export function gotoChatById(chatId: ChatId, messageId?: number) {
+export function gotoChatById(chatId: ChatId, messageId?: number, fromHistory?: boolean) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const chatsState = getState().chatsState;
-        const chatIndex = chatFunctions.findChatIndex(chatsState.chats, chatId);
-        return gotoChat(dispatch, chatsState, chatIndex, messageId);
+        let chatIndex = chatFunctions.findChatIndex(chatsState.chats, chatId);
+        if (chatIndex == -1) {
+            chatIndex = 0;
+        }
+        return gotoChat(dispatch, chatsState, chatIndex, messageId, fromHistory);
     }
 }
 
 export function gotoChatByIndex(chatIndex: number, messageId?: number) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
         const chatsState = getState().chatsState;
-        return gotoChat(dispatch, chatsState, chatIndex, messageId);
+        return gotoChat(dispatch, chatsState, chatIndex, messageId, false);
     }
 }
 
-async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatIndex: number, messageId?: number) : Promise<Option<GotoChatEvent>> {
+async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatIndex: number, messageId?: number, fromHistory?: boolean) : Promise<Option<GotoChatEvent>> {
 
     if (chatIndex === chatsState.selectedChatIndex && !messageId) {
         return null;
@@ -52,9 +55,10 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
     const event: GotoChatEvent = {
         type: GOTO_CHAT,
         payload: {
-            chatIndex: chatIndex !== chatsState.selectedChatIndex ? chatIndex : null,
+            chatIndex,
             messageId: messageId ?? null,
-            missingMessages
+            missingMessages,
+            fromHistory: fromHistory ?? false
         }
     };
 
@@ -86,8 +90,9 @@ async function loadMissingMessages(chat: ConfirmedChat, messageId: number) : Pro
 export type GotoChatEvent = {
     type: typeof GOTO_CHAT,
     payload: {
-        chatIndex: Option<number>,
+        chatIndex: number,
         messageId: Option<number>,
-        missingMessages: LocalMessage[]
+        missingMessages: LocalMessage[],
+        fromHistory: boolean
     }
 }

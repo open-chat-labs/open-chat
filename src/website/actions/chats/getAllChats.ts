@@ -2,7 +2,8 @@ import { Dispatch } from "react";
 
 import { RootState } from "../../reducers";
 import chatsService from "../../services/chats/service";
-import { ConfirmedChat } from "../../domain/model/chats";
+import { ConfirmedChat, extractChatIdFromLocation } from "../../domain/model/chats";
+import * as chatFunctions from "../../domain/model/chats";
 import { PAGE_SIZE } from "../../constants";
 import { Option, Timestamp } from "../../domain/model/common";
 import { HttpError } from "../../errors/httpError";
@@ -29,12 +30,23 @@ export default function() {
         let outcomeEvent;
         if (response.kind === "success") {
             const viewMode = getState().appState.viewMode;
+            const chats = response.chats;
+            let chatIndex = (chats.length > 0 && viewMode === ViewMode.Desktop) ? 0 : null;
+            const selectedChatId = extractChatIdFromLocation();
+            if (selectedChatId != null) {
+                const [ _, index ] = chatFunctions.tryGetChat(chats, selectedChatId);
+                if (index >= 0) {
+                    chatIndex = index;
+                }
+            }
+
             outcomeEvent = {
                 type: GET_ALL_CHATS_SUCCEEDED,
                 payload: {
                     chats: response.chats,
                     latestUpdateTimestamp: response.latestUpdateTimestamp,
-                    viewMode
+                    selectedChatIndex: chatIndex
+
                 }
             } as GetAllChatsSucceededEvent;
         } else {
@@ -57,7 +69,7 @@ export type GetAllChatsSucceededEvent = {
     payload: {
         chats: ConfirmedChat[],
         latestUpdateTimestamp: Option<Timestamp>,
-        viewMode: ViewMode
+        selectedChatIndex: Option<number>
     }
 }
 
