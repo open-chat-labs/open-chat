@@ -1,6 +1,7 @@
 import produce from "immer";
 
 import * as chatFunctions from "../domain/model/chats";
+import * as historyFunctions from "../domain/historyFunctions";
 import { Chat, UnconfirmedGroupChat } from "../domain/model/chats";
 import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
@@ -202,7 +203,7 @@ export default produce((state: ChatsState, event: Event) => {
             }
 
             if (!fromHistory) {
-                chatFunctions.pushChatToHistory(state.chats[chatIndex].chatId, history?.state?.chatId ?? false);
+                historyFunctions.pushOrReplaceChat(state.chats[chatIndex].chatId, history?.state?.chatId ?? false);
             }
 
             state.selectedChatIndex = chatIndex;
@@ -272,21 +273,21 @@ export default produce((state: ChatsState, event: Event) => {
             // If the path exists but it does not match a known chatId 
             // then replace the path with "/"
             if (document.location.pathname.length > 0 && selectedChatIndex == null) {
-                chatFunctions.replaceLatestHistoryWithHome();       
+                historyFunctions.replaceLatestWithHome();       
             }
             
             if (selectedChatIndex != null) {
                 if (historicalChatId == null) { 
                     // If there is a selected chat and there is no existing history (or it is already "/") 
                     // then replace the path with "/"
-                    chatFunctions.replaceLatestHistoryWithHome();       
+                    historyFunctions.replaceLatestWithHome();       
                 }     
 
                 const chatId = chats[selectedChatIndex].chatId;
                 if (historicalChatId != chatId) {
                     // If the selected chat is different to the current chat in the history 
                     // then push the chatId as a new path
-                    chatFunctions.pushChatToHistory(chatId, false);
+                    historyFunctions.pushOrReplaceChat(chatId, false);
                 }
             }
 
@@ -605,6 +606,6 @@ function maintainScrollOfSelectedChat(state: ChatsState) {
 function selectChatAndPushToHistory(state: ChatsState, index: number) {
     const replace = state.selectedChatIndex != null;
     const id = state.chats[index].chatId;
-    chatFunctions.pushChatToHistory(id, replace);
+    historyFunctions.pushOrReplaceChat(id, replace);
     state.selectedChatIndex = index;
 }
