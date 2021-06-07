@@ -13,7 +13,7 @@ import { setupBackgroundTasks } from "../backgroundTasks";
 import AlertDialog from "./AlertDialog";
 import { closeAlertDialog } from "../actions/app/showAlertDialog";
 import aboutUs from "../actions/app/aboutUs";
-import { LeftPanelType, MiddlePanelType, RightPanelType, PanelState } from "../domain/model/panels";
+import { LeftPanelType, MiddlePanelType, RightPanelType } from "../domain/model/panels";
 import { ViewMode } from "../domain/model/viewMode";
 
 export default App;

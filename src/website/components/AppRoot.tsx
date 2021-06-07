@@ -23,6 +23,8 @@ import { sessionExpiryAcknowledged } from "../actions/signin/notifySessionExpire
 import SessionExpirationHandler from "../domain/SessionExpirationHandler";
 import switchViewMode from "../actions/app/switchViewMode";
 import { ViewMode } from "../domain/model/viewMode";
+import { gotoChatById } from "../actions/chats/gotoChat";
+import gotoHome from "../actions/app/gotoHome";
 
 export default AppRoot;
 
@@ -142,6 +144,19 @@ function AppContainer() {
     useEffect(() => {
         if (canisterClientFactoryRequiresInit) {
             CanisterClientFactory.init(identity).then(_ => setCanisterClientFactoryRequiresInit(false));
+        }
+    }, []);
+
+    useEffect(() => {
+        window.onpopstate = function(event: PopStateEvent) {
+            if (event.state?.chatId) {
+                dispatch(gotoChatById(event.state.chatId, undefined, true));
+            } else {
+                dispatch(gotoHome());
+            }
+        };        
+        return () => {
+            window.onpopstate = () => null;
         }
     }, []);
 

@@ -4,7 +4,6 @@ import * as chatFunctions from "../domain/model/chats";
 import { Chat, UnconfirmedGroupChat } from "../domain/model/chats";
 import { Option, Timestamp } from "../domain/model/common";
 import * as setFunctions from "../utils/setFunctions";
-import { LeftPanelType } from "../domain/model/panels";
 import { ViewMode } from "../domain/model/viewMode";
 
 import {
@@ -119,10 +118,8 @@ import {
     DeselectMessageEvent
 } from "../actions/chats/deselectMessage";
 
-import {
-    LEFT_PANEL_CHANGED,
-    LeftPanelChangedEvent,
-} from "../actions/app/changeSidePanel";
+import { ChatId } from "../services/chats/chats";
+import { GOTO_HOME, GotoHomeEvent } from "../actions/app/gotoHome";
 
 export type ChatsState = {
     chats: Chat[],
@@ -159,8 +156,8 @@ type Event =
     GetMessagesByIdFailedEvent |
     GetUpdatedChatsSucceededEvent |
     GotoChatEvent |
+    GotoHomeEvent |
     LeaveGroupSucceededEvent |
-    LeftPanelChangedEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -183,22 +180,32 @@ type Event =
 export default produce((state: ChatsState, event: Event) => {
     maintainScrollOfSelectedChat(state);
     switch (event.type) {
+        case GOTO_HOME: {
+            if (state.selectedChatIndex != null) {
+                const prevChat = state.chats[state.selectedChatIndex];
+                chatFunctions.saveDraftMessage(prevChat);
+                chatFunctions.freeMediaData(prevChat);
+            }
+
+            state.selectedChatIndex = null;
+            break;
+        }
+
         case GOTO_CHAT: {
-            const { chatIndex, messageId, missingMessages } = event.payload;
-            const hasChatChanged = chatIndex != null;
-            if (!hasChatChanged && (messageId == null || state.selectedChatIndex == null)) {
-                break;
+            const { chatIndex, messageId, missingMessages, fromHistory } = event.payload;
+            const hasChanged = state.selectedChatIndex == chatIndex;
+
+            if (state.selectedChatIndex != null && hasChanged) {
+                const prevChat = state.chats[state.selectedChatIndex];
+                chatFunctions.saveDraftMessage(prevChat);
+                chatFunctions.freeMediaData(prevChat);
             }
 
-            if (hasChatChanged) {    
-                if (state.selectedChatIndex != null) {
-                    const prevChat = state.chats[state.selectedChatIndex];
-                    chatFunctions.saveDraftMessage(prevChat);
-                    chatFunctions.freeMediaData(prevChat);
-                }
-
-                state.selectedChatIndex = chatIndex;
+            if (!fromHistory) {
+                chatFunctions.pushChatToHistory(state.chats[chatIndex].chatId, history?.state?.chatId ?? false);
             }
+
+            state.selectedChatIndex = chatIndex;
             
             const chat = state.chats[state.selectedChatIndex!];
 
@@ -209,7 +216,7 @@ export default produce((state: ChatsState, event: Event) => {
                     chatFunctions.addMessages(chat, missingMessages, true);
                 }    
 
-                if (hasChatChanged) {
+                if (hasChanged) {
                     if (chat.maxLocalMessageId) {
                         const minMessageIdOnServer = chatFunctions.getMinMessageIdOnServer(chat);
                         const minLocalMessageId = chatFunctions.getMinMessageId(chat.messages);
@@ -230,7 +237,7 @@ export default produce((state: ChatsState, event: Event) => {
             const { chatId, subject, users } = event.payload;
             const newChat = chatFunctions.newUnconfirmedGroupChat(chatId, subject, users);
             state.chats.unshift(newChat);
-            state.selectedChatIndex = 0;
+            selectChatAndPushToHistory(state, 0);
             break;
         }
 
@@ -238,7 +245,8 @@ export default produce((state: ChatsState, event: Event) => {
             const { chat } = event.payload;
             const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.chatId === chat.chatId);
             state.chats[chatIndex] = chat;
-            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            selectChatAndPushToHistory(state, newChatIndex!);
             break;
         }
 
@@ -246,22 +254,47 @@ export default produce((state: ChatsState, event: Event) => {
             const { chatId } = event.payload;
             const chatIndex = state.chats.findIndex(c => c.kind === UNCONFIRMED_GROUP_CHAT && c.chatId === chatId);
             state.chats.splice(chatIndex, 1);
-            state.selectedChatIndex = 0;
+            selectChatAndPushToHistory(state, 0);
             break;
         }
 
         case DIRECT_CHAT_CREATED: {
             const { chat } = event.payload;
             state.chats.unshift(chat);
-            state.selectedChatIndex = 0;
+            selectChatAndPushToHistory(state, 0);
             break;
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
-            const { chats, latestUpdateTimestamp, viewMode } = event.payload;
+            const { chats, latestUpdateTimestamp, selectedChatIndex } = event.payload;
+            const historicalChatId = history?.state?.chatId ?? null;
+            console.log(`selectedChatIndex ${selectedChatIndex}`);
+            console.log(`historicalChatId ${historicalChatId}`);
+
+            // If the path exists but it does not match a known chatId 
+            // then replace the path with "/"
+            if (document.location.pathname.length > 0 && selectedChatIndex == null) {
+                chatFunctions.replaceLatestHistoryWithHome();       
+            }
+            
+            if (selectedChatIndex != null) {
+                if (historicalChatId == null) { 
+                    // If there is a selected chat and there is no existing history (or it is already "/") 
+                    // then replace the path with "/"
+                    chatFunctions.replaceLatestHistoryWithHome();       
+                }     
+
+                const chatId = chats[selectedChatIndex].chatId;
+                if (historicalChatId != chatId) {
+                    // If the selected chat is different to the current chat in the history 
+                    // then push the chatId as a new path
+                    chatFunctions.pushChatToHistory(chatId, false);
+                }
+            }
+
             return {
                 chats,
-                selectedChatIndex: chats.length ? (viewMode === ViewMode.Mobile ? state.selectedChatIndex : 0) : null,
+                selectedChatIndex,
                 chatsSyncedUpTo: latestUpdateTimestamp,
                 runUpdateChatsTask: true
             };
@@ -287,7 +320,8 @@ export default produce((state: ChatsState, event: Event) => {
             }
             setFunctions.exceptWith(chat.messagesDownloading, messageIds);
             chatFunctions.addMessages(chat, result.messages, index === state.selectedChatIndex);
-            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            state.selectedChatIndex = newChatIndex;
             break;
         }
 
@@ -314,7 +348,8 @@ export default produce((state: ChatsState, event: Event) => {
             const [chat, index] = chatFunctions.getConfirmedChat(state.chats, request.chatId);
             setFunctions.exceptWith(chat.messagesDownloading, request.messageIds);
             chatFunctions.addMessages(chat, result.messages, index === state.selectedChatIndex);
-            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            state.selectedChatIndex = newChatIndex;
             break;
         }
 
@@ -348,7 +383,8 @@ export default produce((state: ChatsState, event: Event) => {
                 }
             }
 
-            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
+            const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
+            selectChatAndPushToHistory(state, newChatIndex!);
             state.chatsSyncedUpTo = latestUpdateTimestamp;
             break;
         }
@@ -399,7 +435,8 @@ export default produce((state: ChatsState, event: Event) => {
             // Chat may not exist locally yet
             if (chat) {
                 chatFunctions.addP2PMessage(chat, message);
-                state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+                const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+                selectChatAndPushToHistory(state, newChatIndex!);
             }
             break;
         }
@@ -441,7 +478,7 @@ export default produce((state: ChatsState, event: Event) => {
             chat.replyContext = null;            
             state.chats.splice(index, 1);
             state.chats.unshift(chat);
-            state.selectedChatIndex = 0;
+            selectChatAndPushToHistory(state, 0);
             break;
         }
 
@@ -452,7 +489,8 @@ export default produce((state: ChatsState, event: Event) => {
             let [chat, index] = chatFunctions.getChat(state.chats, event.payload.chat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
 
             state.chats[index] = chatFunctions.mergeUpdates(chat, updatedChat, index === state.selectedChatIndex);
-            state.selectedChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
+            selectChatAndPushToHistory(state, newChatIndex!);
             break;
         }
 
@@ -536,17 +574,14 @@ export default produce((state: ChatsState, event: Event) => {
             const [chat] = chatFunctions.getChat(state.chats, chatId);
             if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 chatFunctions.removeChat(state.chats, chatId);
-                state.selectedChatIndex = state.chats.length
+                const newChatIndex = state.chats.length
                     ? 0
                     : null;
-            }
-            break;
-        }
-
-        case LEFT_PANEL_CHANGED: {
-            const leftPanelType = event.payload;
-            if (leftPanelType === LeftPanelType.Chats) {
-                state.selectedChatIndex = null;
+                if (newChatIndex) {
+                    selectChatAndPushToHistory(state, newChatIndex);
+                } else {
+                    history.back();
+                }
             }
             break;
         }
@@ -555,7 +590,7 @@ export default produce((state: ChatsState, event: Event) => {
             const { viewMode } = event.payload;
             if (viewMode === ViewMode.Desktop) {
                 if (state.selectedChatIndex == null && state.chats.length > 0) {
-                    state.selectedChatIndex = 0;
+                    selectChatAndPushToHistory(state, 0);
                 }
             }
             break;
@@ -563,8 +598,15 @@ export default produce((state: ChatsState, event: Event) => {
     }
 }, initialState);
 
-const maintainScrollOfSelectedChat = (state: ChatsState) => {
+function maintainScrollOfSelectedChat(state: ChatsState) {
     if (state.selectedChatIndex !== null) {
         chatFunctions.maintainScroll(state.chats[state.selectedChatIndex]);
     }
+}
+
+function selectChatAndPushToHistory(state: ChatsState, index: number) {
+    const replace = state.selectedChatIndex != null;
+    const id = state.chats[index].chatId;
+    chatFunctions.pushChatToHistory(id, replace);
+    state.selectedChatIndex = index;
 }
