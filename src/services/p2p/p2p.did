@@ -1,6 +1,19 @@
 type UserId = principal;
 type Timestamp = nat64;
 
+type AddOffersRequest =
+    record {
+        offers: vec AddOfferRequest;
+    };
+
+type AddOfferRequest =
+    record {
+        id: text;
+        user_id: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
+    };
+
 type AddOffersResponse =
     variant {
         Success: AddOffersResult;
@@ -14,6 +27,15 @@ type AddOffersResult =
 type AddAnswersRequest =
     record {
         answers: vec AddAnswerRequest;
+    };
+
+type AddAnswerRequest =
+    record {
+        id: text;
+        offer_id: text;
+        user_id: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
     };
 
 type RemoveConnectionDetailsRequest =
