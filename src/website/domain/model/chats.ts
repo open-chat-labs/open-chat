@@ -1,7 +1,7 @@
 import { Option } from "./common";
 import { UserId } from "./users";
 import * as setFunctions from "../../utils/setFunctions";
-import * as bigint from "../../utils/bigintFunctions";
+import * as u64 from "../../utils/u64Functions";
 import MarkAsReadHandler from "../MarkAsReadHandler";
 import {
     LocalMessage,
@@ -600,7 +600,7 @@ export const extractChatIdFromLocation = () : Option<ChatId> => {
     const parts = path.split('/');
     if (parts.length > 0 && parts[0].length > 0) {
         try {
-            return bigint.fromHex(parts[0]);
+            return u64.fromHex(parts[0]);
         } catch {
             return null;            
         }
@@ -615,7 +615,7 @@ export function replaceLatestHistoryWithHome() {
 
 export function pushChatToHistory(chatId: ChatId, replace: boolean) {
     if (!history) return;
-    const hexId = bigint.toHex(chatId);
+    const hexId = u64.toHex(chatId);
     const method = replace ? "replaceState" : "pushState";
     history[method]({ chatId }, "", `/${hexId}`);
 }

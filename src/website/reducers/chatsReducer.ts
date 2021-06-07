@@ -268,9 +268,7 @@ export default produce((state: ChatsState, event: Event) => {
         case GET_ALL_CHATS_SUCCEEDED: {
             const { chats, latestUpdateTimestamp, selectedChatIndex } = event.payload;
             const historicalChatId = history?.state?.chatId ?? null;
-            console.log(`selectedChatIndex ${selectedChatIndex}`);
-            console.log(`historicalChatId ${historicalChatId}`);
-
+            
             // If the path exists but it does not match a known chatId 
             // then replace the path with "/"
             if (document.location.pathname.length > 0 && selectedChatIndex == null) {
