@@ -2,7 +2,7 @@ import React from "react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
-import { EmojiData, Picker } from 'emoji-mart'
+import { EmojiData, Picker } from 'emoji-mart';
 
 export default React.memo(EmojiPicker);
 

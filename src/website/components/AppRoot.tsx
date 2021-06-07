@@ -7,6 +7,7 @@ import useMediaQuery from "@material-ui/core/useMediaQuery";
 import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 import Container from "@material-ui/core/Container";
 import { DelegationIdentity } from "@dfinity/identity";
+import debounce from "lodash.debounce";
 import { RootState } from "../reducers";
 import App from "./App";
 import store from "../store";
@@ -31,8 +32,6 @@ export default AppRoot;
 const useStyles = makeStyles((theme: Theme) => ({
     "@global": {
         body: {
-            height: "100vh",
-            width: "100vw",
             backgroundColor: theme.colors.outerBackgroundColor,
             lineHeight: 1.5
         },
@@ -158,6 +157,20 @@ function AppContainer() {
         return () => {
             window.onpopstate = () => null;
         }
+    }, []);
+
+    useEffect(() => {
+        // https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
+        function setDocVh() {
+            // First we get the viewport height and we multiple it by 1% to get a value for a vh unit
+            let vh = window.innerHeight * 0.01;
+            // Then we set the value in the --vh custom property to the root of the document
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        window.onresize = debounce(() => setDocVh(), 100);    
+
+        setDocVh();
     }, []);
 
     useEffect(() => {
