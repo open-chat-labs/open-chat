@@ -13,7 +13,11 @@ type Props = {
     onEmojiSelected: (text: string) => void
 }
 
-const useStyles = makeStyles((theme: Theme) => ({
+type StyleProps = {
+    showSearch: boolean
+}
+
+const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => ({
     "@global": {
         ".emoji-mart": {
             backgroundColor: theme.colors.footer.backgroundColor + " !important",
@@ -21,7 +25,8 @@ const useStyles = makeStyles((theme: Theme) => ({
             borderRadius: 0
         },
         ".emoji-mart-search": {
-            paddingBottom: 6
+            paddingBottom: 6,
+            display: props => props.showSearch ? "block" : "none"
         },
         ".emoji-mart-search input": {
             paddingTop: 7,
@@ -46,8 +51,11 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 
 function EmojiPicker(props: Props) {
-    useStyles();
     const currentViewMode = useSelector((state: RootState) => state.appState.viewMode);
+    const styleProps = {
+        showSearch: currentViewMode === ViewMode.Desktop
+    };
+    useStyles(styleProps);
     const theme = useTheme();
 
     return (
@@ -56,7 +64,7 @@ function EmojiPicker(props: Props) {
             theme={theme.palette.mode}
             color="#d62c7d"
             onSelect={onSelectEmoji}
-            autoFocus={currentViewMode === ViewMode.Desktop}
+            autoFocus={styleProps.showSearch}
             showPreview={false}
             showSkinTones={false}
             emojiTooltip={true}
