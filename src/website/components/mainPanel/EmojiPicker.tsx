@@ -1,8 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
 import { EmojiData, Picker } from 'emoji-mart';
+import { RootState } from "../../reducers";
+import { ViewMode } from "../../domain/model/viewMode";
 
 export default React.memo(EmojiPicker);
 
@@ -44,6 +47,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 function EmojiPicker(props: Props) {
     useStyles();
+    const currentViewMode = useSelector((state: RootState) => state.appState.viewMode);
     const theme = useTheme();
 
     return (
@@ -52,7 +56,7 @@ function EmojiPicker(props: Props) {
             theme={theme.palette.mode}
             color="#d62c7d"
             onSelect={onSelectEmoji}
-            autoFocus={true}
+            autoFocus={currentViewMode === ViewMode.Desktop}
             showPreview={false}
             showSkinTones={false}
             emojiTooltip={true}
