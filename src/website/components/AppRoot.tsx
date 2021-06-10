@@ -7,7 +7,6 @@ import useMediaQuery from "@material-ui/core/useMediaQuery";
 import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 import Container from "@material-ui/core/Container";
 import { DelegationIdentity } from "@dfinity/identity";
-import debounce from "lodash.debounce";
 import { RootState } from "../reducers";
 import App from "./App";
 import store from "../store";
@@ -96,7 +95,7 @@ function AppContainer() {
     const classes = useStyles();
     const theme = useTheme();
     const targetViewMode = useMediaQuery(theme.breakpoints.down("sm")) ? ViewMode.Mobile : ViewMode.Desktop;
-    const removePadding = useMediaQuery(theme.breakpoints.down("md"));
+    const removePadding = useMediaQuery(theme.breakpoints.down("lg"));
 
     let containerClass = classes.container;
 
@@ -168,7 +167,7 @@ function AppContainer() {
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         }
 
-        window.onresize = debounce(() => setDocVh(), 100);    
+        window.onresize = () => setDocVh()
 
         setDocVh();
     }, []);
