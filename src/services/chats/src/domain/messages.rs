@@ -7,19 +7,21 @@ pub fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32, min_v
         return Vec::new();
     }
 
+    // The to_id is exclusive
+    let to_id = from_id + page_size;
+
     let earliest_id = messages.first().unwrap().get_id();
     let latest_id = messages.last().unwrap().get_id();
 
     let from_id = max(from_id, earliest_id);
     let from_id = max(from_id, min_visible_message_id_for_user);
 
-    if from_id > latest_id {
+    if from_id > latest_id || from_id >= to_id {
         return Vec::new();
     }
 
-    let page_size = page_size as usize;
     let from_index = (from_id - earliest_id) as usize;
-    let to_index = min(from_index + page_size, messages.len());
+    let to_index = min((to_id - earliest_id) as usize, messages.len());
 
     messages[from_index..to_index]
         .iter()
