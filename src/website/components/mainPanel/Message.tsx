@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import  { Properties } from 'csstype';
 import { useDispatch } from "react-redux";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { alpha, darken } from "@material-ui/core/styles/colorManipulator";
@@ -336,7 +335,6 @@ function Message(props : Props) {
         {            
             let contentComponent;
             let shadow;
-            let containerStyle;
             switch (content.kind) {
                 case "file": 
                     contentComponent = <FileContent 
@@ -363,7 +361,7 @@ function Message(props : Props) {
             if (contentComponent) {
                 const className = classes.contentContainer + " " + (props.repliesToContent ? classes.secondPanel : classes.topPanel);
                 children.push(
-                    <div key="content" className={isMediaNoCaption ? classes.mediaNoCaption : className} style={containerStyle}>
+                    <div key="content" className={isMediaNoCaption ? classes.mediaNoCaption : className}>
                         {contentComponent}
                     </div>
                 );
@@ -425,7 +423,6 @@ function Message(props : Props) {
     }
 
     // Build the class and style of the container
-    let containerStyle: Properties = {};
     switch (content.kind) {
         case "media":
             className += " " + classes.media;
@@ -445,7 +442,6 @@ function Message(props : Props) {
     return (
         <div 
             id={props.clientMessageId}
-            style={containerStyle}
             data-message-id={props.messageId}
             className={className}
         >

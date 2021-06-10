@@ -1,7 +1,5 @@
 import React from "react";
 import makeStyles from "@material-ui/styles/makeStyles";
-import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import Box from "@material-ui/core/Box";
 import Image from "../shared/Image";
 import Video from "../shared/Video";
 
@@ -14,15 +12,24 @@ type Props = {
 
 export default React.memo(DraftMediaMessage);
 
-const useStyles = makeStyles<Theme>((theme: Theme) => ({
+const useStyles = makeStyles(() => ({
+    container: {    
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+    },
     media: {
-        minWidth: 250,
-        maxWidth: 500,
         margin: 14,
         marginBottom: 4,
         borderRadius: 16,
         "& *": {
             borderRadius: "inherit"
+        },
+        "& img": {
+            maxWidth: 400,
+            maxHeight: 300,
+            width: "auto",
+            height: "auto"
         }
     }
 }));
@@ -30,10 +37,12 @@ const useStyles = makeStyles<Theme>((theme: Theme) => ({
 function DraftMediaMessage(props: Props): JSX.Element {
     const classes = useStyles();
     return (
-        <Box className={classes.media}>
-            {props.mimeType.startsWith("image/") 
-            ? <Image src={props.blobUrl} /> 
-            : <Video src={props.blobUrl} />}
-        </Box>
+        <div className={classes.container}>
+            <div className={classes.media}>
+                {props.mimeType.startsWith("image/") 
+                ? <Image src={props.blobUrl} /> 
+                : <Video src={props.blobUrl} />}
+            </div>
+        </div>
     );
 }
