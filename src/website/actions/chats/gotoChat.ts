@@ -48,7 +48,14 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
     if (messageId) {
         const chat = chatsState.chats[chatIndex] as ConfirmedChat;
         if (chat) {
-            missingMessages = await loadMissingMessages(chat, messageId);
+            const messages = await loadMissingMessages(chat, messageId);
+            if (messages != null) {
+                missingMessages = messages;
+                // The message was missing - check that we now have it
+                if (messages.find(m => m.id === messageId) == undefined) {
+                    messageId = undefined;
+                }
+            }
         }
     }
 
@@ -67,24 +74,25 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
     return event;
 }
 
-async function loadMissingMessages(chat: ConfirmedChat, messageId: number) : Promise<LocalMessage[]> {
+async function loadMissingMessages(chat: ConfirmedChat, messageId: number) : Promise<Option<LocalMessage[]>> {
     const excessMessages = 20;
     const from = Math.max(1, messageId - excessMessages);
     const to = chat.minLocalMessageId ?? (messageId + excessMessages);
 
     let pageSize = to - from;
-    console.log(`load messages ${from} - ${to}`);
-    if (pageSize > 0) {
-        // Load missing messages
-        const result = await chatsService.getMessages(chat.chatId, from, pageSize);
-        if (result.kind !== "success") {
-            console.log(result);
-        } else {
-            return result.result.messages;
-        }
+    if (pageSize <= 0) {
+        return null;
     }
 
-    return [];
+    // Load missing messages
+    const result = await chatsService.getMessages(chat.chatId, from, pageSize);
+    
+    if (result.kind !== "success") {
+        console.log(result);
+        return [];
+    } 
+        
+    return result.result.messages;
 }
 
 export type GotoChatEvent = {
