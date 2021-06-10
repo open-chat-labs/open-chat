@@ -255,10 +255,10 @@ export default produce((state: AppState, event: Event) => {
 
         case GOTO_CHAT: {
             const { chatIndex } = event.payload;
+            state.panelState.rightPanel = RightPanelType.None;
             if (chatIndex != null && state.viewMode === ViewMode.Mobile) {
                 state.panelState.middlePanel = MiddlePanelType.Messages;
                 state.panelState.leftPanel = LeftPanelType.None;
-                state.panelState.rightPanel = RightPanelType.None;
             }
             break;
         }
