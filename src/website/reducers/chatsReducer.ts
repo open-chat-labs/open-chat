@@ -383,7 +383,9 @@ export default produce((state: ChatsState, event: Event) => {
             }
 
             const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex);
-            selectChatAndPushToHistory(state, newChatIndex!);
+            if (newChatIndex != null && newChatIndex >= 0) {
+                selectChatAndPushToHistory(state, newChatIndex!);        
+            }
             state.chatsSyncedUpTo = latestUpdateTimestamp;
             break;
         }
