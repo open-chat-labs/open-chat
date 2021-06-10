@@ -46,10 +46,15 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
     // Load missing messages if necessary
     let missingMessages: LocalMessage[] = [];
     if (messageId) {
+        let foundMessage = false;
         const chat = chatsState.chats[chatIndex] as ConfirmedChat;
         if (chat) {
             missingMessages = await loadMissingMessages(chat, messageId);
+            foundMessage = missingMessages.find(m => m.id === messageId) != undefined;
         }
+        if (!foundMessage) {
+            return null;
+        }            
     }
 
     const event: GotoChatEvent = {
@@ -73,7 +78,6 @@ async function loadMissingMessages(chat: ConfirmedChat, messageId: number) : Pro
     const to = chat.minLocalMessageId ?? (messageId + excessMessages);
 
     let pageSize = to - from;
-    console.log(`load messages ${from} - ${to}`);
     if (pageSize > 0) {
         // Load missing messages
         const result = await chatsService.getMessages(chat.chatId, from, pageSize);
