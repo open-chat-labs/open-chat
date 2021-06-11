@@ -31,8 +31,8 @@ const useStyles = makeStyles<Theme, StyleProps>(() => ({
             borderRadius: "inherit"
         },
         "& img": {
-            maxWidth: props => props.isLandscape ? "60vh" : "none",
-            maxHeight: props => props.isLandscape ? "none" : "50vh",
+            maxWidth: props => props.isLandscape ? "calc(var(--vh, 1vh) * 50)" : "none",
+            maxHeight: props => props.isLandscape ? "none" : "calc(var(--vh, 1vh) * 50)",
             width: props => props.isLandscape ? "100%" : "auto",
             height: props => props.isLandscape ? "auto" : "100%",
         }
