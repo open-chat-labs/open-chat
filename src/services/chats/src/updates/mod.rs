@@ -1,4 +1,5 @@
 pub mod add_participants;
+pub mod block_user;
 pub mod create_group_chat;
 pub mod delete_group;
 pub mod join_group;

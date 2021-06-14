@@ -5,7 +5,7 @@ use shared::storage::StableState;
 
 const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 
-#[derive(Default)]
+#[derive(Default, CandidType, Deserialize)]
 pub struct BlobStorage {
     chunks: HashMap<(String, u32), Vec<u8>>,
     total_bytes: u64

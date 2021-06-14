@@ -119,6 +119,24 @@ pub enum ChatStableState {
     Group(GroupChatStableState)
 }
 
+impl ChatSummary {
+    pub fn direct(self) -> Option<DirectChatSummary> {
+        if let ChatSummary::Direct(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+
+    pub fn group(self) -> Option<GroupChatSummary> {
+        if let ChatSummary::Group(g) = self {
+            Some(g)
+        } else {
+            None
+        }
+    }
+}
+
 impl Message {
     pub fn new(id: u32, client_message_id: String, now: Timestamp, sender: UserId, content: MessageContent, replies_to: Option<ReplyContext>) -> Message {
         Message {
