@@ -12,7 +12,7 @@ pub struct BlockedUsers {
 impl BlockedUsers {
     pub fn get(&self, user_id: &UserId) -> Vec<UserId> {
         match self.map.get(user_id) {
-            Some(hs) => hs.iter().map(|u| u.clone()).collect(),
+            Some(hs) => hs.iter().cloned().collect(),
             None => Vec::new()
         }
     }
@@ -54,10 +54,12 @@ impl BlockedUsers {
             None => false
         };
 
-        if recipient_blocked && sender_blocked { return BlockedStatus::Both; }
-        if recipient_blocked { return BlockedStatus::Recipient; }
-        if sender_blocked { return BlockedStatus::Sender; }
-        BlockedStatus::Unblocked
+        match (recipient_blocked, sender_blocked) {
+            (false, false) => BlockedStatus::Unblocked,
+            (false, true) => BlockedStatus::Sender,
+            (true, false) => BlockedStatus::Recipient,
+            (true, true) => BlockedStatus::Both,
+        }
     }
 }
 
