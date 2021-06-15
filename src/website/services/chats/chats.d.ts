@@ -56,6 +56,15 @@ export interface GetMessagesResult {
   'messages' : Array<Message>,
   'latest_message_id' : number,
 };
+export interface GetUpdatesRequest {
+  'message_count_for_top_chat' : [] | [number],
+  'updated_since' : [] | [Timestamp],
+};
+export type GetUpdatesResponse = { 'Success' : GetUpdatesResult };
+export interface GetUpdatesResult {
+  'chats' : Array<ChatSummary>,
+  'blocked_users' : Array<UserId>,
+};
 export interface GroupChatSummary {
   'id' : ChatId,
   'participants' : Array<UserId>,
@@ -133,7 +142,9 @@ export interface SendDirectMessageRequest {
 };
 export type SendDirectMessageResponse = { 'BalanceExceeded' : null } |
   { 'Success' : SendDirectMessageResult } |
+  { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : null } |
+  { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
@@ -150,7 +161,9 @@ export interface SendMessageRequest {
 };
 export type SendMessageResponse = { 'ChatNotFound' : null } |
   { 'Success' : SendMessageResult } |
+  { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : null } |
+  { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number };
 export interface SendMessageResult {
   'timestamp' : Timestamp,
@@ -181,6 +194,7 @@ export default interface _SERVICE {
   'add_participants' : (arg_0: ChatId, arg_1: Array<UserId>) => Promise<
       AddParticipantsResponse
     >,
+  'block_user' : (arg_0: UserId, arg_1: boolean) => Promise<undefined>,
   'create_group_chat' : (arg_0: CreateGroupChatRequest) => Promise<
       CreateGroupChatResponse
     >,
@@ -193,6 +207,7 @@ export default interface _SERVICE {
   'get_messages_by_id' : (arg_0: ChatId, arg_1: Array<number>) => Promise<
       GetMessagesByIdResponse
     >,
+  'get_updates' : (arg_0: GetUpdatesRequest) => Promise<GetUpdatesResponse>,
   'join_group' : (arg_0: ChatId) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: ChatId) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: ChatId, arg_1: number, arg_2: number) => Promise<

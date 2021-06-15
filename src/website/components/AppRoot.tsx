@@ -6,6 +6,8 @@ import useTheme from "@material-ui/core/styles/useTheme";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvider";
 import Container from "@material-ui/core/Container";
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { DelegationIdentity } from "@dfinity/identity";
 import { RootState } from "../reducers";
 import App from "./App";
@@ -58,6 +60,10 @@ const useStyles = makeStyles((theme: Theme) => ({
             }    
         }
     },
+    backdrop: {
+        zIndex: theme.zIndex.drawer + 1,
+        color: '#fff',
+    },
     container: {
         padding: 24,
         height: "100%",
@@ -92,6 +98,7 @@ function AppContainer() {
     const currentUser = useSelector((state: RootState) => state.usersState.me);
     const userRegistrationStatus = useSelector((state: RootState) => state.usersState.userRegistrationStatus);
     const currentViewMode = useSelector((state: RootState) => state.appState.viewMode);
+    const modalSpinner = useSelector((state: RootState) => state.appState.modalSpinner);
     const classes = useStyles();
     const theme = useTheme();
     const targetViewMode = useMediaQuery(theme.breakpoints.down("sm")) ? ViewMode.Mobile : ViewMode.Desktop;
@@ -179,13 +186,18 @@ function AppContainer() {
     }, [currentUser?.userId]);
 
     return (
-        <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
-            {component}
-            {sessionExpiredAlert ?
-                <AlertDialog
-                    content={sessionExpiredAlert}
-                    onClose={() => dispatch(sessionExpiryAcknowledged())}
-                /> : null}
-        </Container>
+        <>
+            <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
+                {component}
+                {sessionExpiredAlert ?
+                    <AlertDialog
+                        content={sessionExpiredAlert}
+                        onClose={() => dispatch(sessionExpiryAcknowledged())}
+                    /> : null}
+            </Container>
+            <Backdrop className={classes.backdrop} open={modalSpinner}>
+                <CircularProgress color="inherit" />
+            </Backdrop>        
+        </>
     );
 }

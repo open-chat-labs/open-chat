@@ -44,7 +44,7 @@ class RtcMessageReceiver {
                 }
 
                 RemoteUserTypingHandler.markTypingStopped(chatId, from);
-                store.dispatch(receiveP2PMessage(chatId, p2pMessage));
+                store.dispatch(receiveP2PMessage(chatId, p2pMessage) as any);
                 break;
             }
 

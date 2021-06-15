@@ -1,7 +1,7 @@
 import { Dispatch } from "react";
 import { v1 as uuidv1 } from "uuid";
 import chatsService from "../../services/chats/service";
-import { Chat, ConfirmedChat } from "../../domain/model/chats";
+import { Chat, ChatId, ConfirmedChat } from "../../domain/model/chats";
 import { Option } from "../../domain/model/common";
 import { LocalMessage, MessageContent, ReplyContext, DraftMessageContent } from "../../domain/model/messages";
 import { RootState } from "../../reducers";
@@ -14,6 +14,8 @@ import {
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
 import Stopwatch from "../../utils/Stopwatch";
+import { showAlertDialog } from "../app/showAlertDialog";
+import * as chatFunctions from "../../domain/model/chats";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
 export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
@@ -22,6 +24,19 @@ export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_F
 
 export default function(chat: Chat, sendMessageContent: DraftMessageContent, repliesTo: Option<ReplyContext>) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
+
+        // Don't send a direct message if you block the recipient
+        if (chatFunctions.isDirectChat(chat)) {
+            const blockedUsers = getState().chatsState.blockedUsers;
+            if (blockedUsers.includes(chat.them)) {    
+                dispatch(showAlertDialog({
+                    title: "Message not sent",
+                    message: "You have blocked this user - you must unblock them before sending a message"
+                }));            
+                return;
+            }
+        }
+
         const timer = Stopwatch.startNew();
         const clientMessageId = uuidv1().toString();
 
@@ -73,9 +88,41 @@ export default function(chat: Chat, sendMessageContent: DraftMessageContent, rep
             // Dispatch a failed event
             dispatch ({ 
                 type: SEND_MESSAGE_FAILED,  
-                payload: { content },
+                payload: { 
+                    chatId: chat.chatId,
+                    clientMessageId
+                },
                 httpError: response.kind === "httpError" ? response : undefined
             } as SendMessageFailedEvent);
+
+            if (response.kind !== "httpError") {
+                let message;
+                switch (response.kind) {
+                    case "userNotFound":
+                        message = "User not found";
+                        break;
+                    case "recipientNotFound":
+                        message = "Recipient not found";
+                        break;
+                    case "chatNotFound":
+                        message = "Chat not found";
+                        break;
+                    case "balanceExceeded":
+                        message = "Balance exceeded";
+                        break;
+                    case "senderBlocked":
+                        message = "You are blocked from sending messages to this user";
+                        break;
+                    case "recipientBlocked":
+                        message = "You have blocked this user - you must unblock them before sending a message";
+                        break;
+                }
+
+                dispatch(showAlertDialog({
+                    title: "Message not sent",
+                    message
+                }));            
+            }
             return;
         }
 
@@ -173,5 +220,6 @@ export type SendMessageRequest = {
 }
 
 export type SendMessageFailed = {
-    content: MessageContent
+    chatId: ChatId,
+    clientMessageId: string
 }
