@@ -70,7 +70,7 @@ function AddParticipantsPanel() {
 
     function closePanel() {
         clearInput();
-        dispatch(changeRightPanel(RightPanelType.Particpants));
+        dispatch(changeRightPanel(RightPanelType.Participants));
     }
 
     function handleSelectUser(user: UserSummary) {

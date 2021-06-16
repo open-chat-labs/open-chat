@@ -27,7 +27,7 @@ function DirectChatMenu(props: Props) {
     const classes = useStyles();
 
     const menuItems: MenuItem[] = [];
-    menuItems.push({ text: "Participants", action: () => dispatch(changeRightPanel(RightPanelType.Particpants)) });
+    menuItems.push({ text: "Participants", action: () => dispatch(changeRightPanel(RightPanelType.Participants)) });
     menuItems.push({ text: "Leave group", action: () => {
         if (confirm("Are you sure you want to leave this group?")) {
             dispatch(leaveGroup(props.chatId));
