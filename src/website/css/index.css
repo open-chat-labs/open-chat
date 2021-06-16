@@ -55,7 +55,11 @@ a {
     color: #111111;
 }
 
-a:hover {
+.text-link {
+    cursor: pointer;
+}
+
+a:hover, .text-link:hover {
     text-decoration: underline
 }
 
