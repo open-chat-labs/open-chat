@@ -14,7 +14,7 @@ export enum MiddlePanelType {
 export enum RightPanelType {
     None,
     AddParticipants,
-    Particpants,
+    Participants,
 }
 
 export type PanelState = {

@@ -110,7 +110,7 @@ function Header() {
 
                 subTitle = 
                     <Typography variant="caption">
-                        <Link href="#" onClick={() => (dispatch(changeRightPanel(RightPanelType.Particpants)))}>
+                        <Link href="#" onClick={() => (dispatch(changeRightPanel(RightPanelType.Participants)))}>
                             {text}
                         </Link>
                     </Typography>;

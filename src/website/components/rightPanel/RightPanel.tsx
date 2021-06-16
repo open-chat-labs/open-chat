@@ -13,7 +13,7 @@ function RightPanel(props: Props): JSX.Element {
     switch (props.type) {
         case RightPanelType.AddParticipants:
             return <AddParticipantsSidePanel />;
-        case RightPanelType.Particpants:
+        case RightPanelType.Participants:
             return <ParticipantsSidePanel/>;
         default:
             return <></>;
