@@ -43,6 +43,5 @@ pub enum Response {
     Success(GroupChatSummary),
     ChatAlreadyExists,
     SubjectTooShort(u8),
-    SubjectTooLong(u8),
-    TooManyParticipants(u8)
+    SubjectTooLong(u8)
 }

@@ -17,5 +17,6 @@ itertools = "0.10.0"
 enum_dispatch = "0.3.4"
 range-set = "0.0.5"
 serde = "1.0.111"
+serde_bytes = "0.11.5"
 shared = { path = "../shared", version = "0.1.0" }
 smallvec = "0.6.14"
