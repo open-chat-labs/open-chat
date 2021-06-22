@@ -1,0 +1,44 @@
+service: {
+    send_message: (SendMessageRequest) -> (SendMessageResponse);
+    mark_read: (MarkReadRequest) -> (MarkReadResponse);
+
+    // Public only
+    invite_users: () -> ();
+
+    // Public only
+    join_group: () -> ();
+    
+    // Admin only - public only
+    block_user: () -> (); 
+
+    // Admin only - public only
+    unblock_user: () -> ();
+
+    // Admin only - Private only
+    add_participants: (AddParticipantsRequest) -> (AddParticipantsResponse);
+
+    // Admin only - Private only
+    remove_participants: (RemoveParticipantsRequest) -> (RemoveParticipantsResponse);
+
+    // Admin only
+    make_admin: () -> ();
+
+    // Admin only
+    remove_admin: () -> ();
+
+    leave_group: () -> ();
+
+    // Admin only
+    set_avatar: (SetAvatarRequest) -> (SetAvatarResponse);
+
+    put_chunk: (PutChunkRequest) -> (PutChunkResponse);
+        
+    get_messages: (GetMessagesRequest) -> (GetMessagesResponse) query;
+    get_messages_by_id: (GetMessagesByIdRequest) -> (GetMessagesByIdResponse) query;
+
+    // Use Tantivy
+    search_messages: (SearchAllMessagesRequest) -> (SearchAllMessagesResponse) query;
+    
+    get_chunk: (GetChunkRequest) -> (GetChunkResponse) query;
+    metrics: () -> (Metrics) query;
+}

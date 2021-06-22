@@ -1,0 +1,87 @@
+// Maintains a store of users
+// In heartbeat function do zero or one of the following:
+// 1. upgrade user canisters as needed
+// 2. top-up user canisters with cycles as needed
+// 3. notify the "service" canister if this canister's cycle balance is getting low
+
+type PhoneNumber = 
+    record {
+        country_code: nat16;
+        number: vec nat8;
+    };
+
+type CreateUserRequest 
+    record {
+        principal: principal;
+        phone_number: PhoneNumber;
+    };
+
+type CreateUserResponse 
+    variant {
+        Success: record {
+            canister: CanisterId;            
+        }
+        UserExists;
+        UserLimitReached: nat64;
+    };
+
+type UpdateUsernameRequest
+    record {
+        username: text;        
+    };
+
+type UpdateUsernameResponse =
+    variant {
+        Success;
+        SuccessNoChange;
+        UsernameTaken;
+        UserNotFound;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+    };
+
+type MarkAsOnlineRequest = 
+    record {
+    };
+
+type GetCurrentUserRequest = 
+    record {
+    };
+
+type GetCurrentUserResponse =
+    variant {
+        Success: MyProfile;
+        UserNotFound;
+    };
+
+type Metrics = 
+    record {
+        user_count: nat64;
+        active_user_count: nat64;
+        online_user_count: nat64;
+        cycles_transferred: nat;
+        cycles_balance: int64;
+        bytes_used: nat64;
+        timestamp: nat64;
+        caller_id: principal;
+        wasm_memory_used: nat64;
+    };
+
+service: {
+    // Can only be called by phone_index canister (use inspect_message)
+    // Will create a new User canister and an account and return a new CanisterId
+    create: (CreateUserRequest) -> (CreateUserResponse);
+    
+    update_username: (UpdateUsernameRequest) -> (UpdateUsernameResponse);
+    mark_as_online: (MarkAsOnlineRequest) -> ();
+    transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
+
+    // Called by a user canister when it is low on cycles
+    notify_low_balance: () -> ();
+
+    get_current_user: (GetCurrentUserRequest) -> (GetCurrentUserResponse) query;
+    get_user: (GetUserRequest) -> (GetUserResponse) query;
+    get_users: (GetUsersRequest) -> (GetUsersResponse) query;
+    search_users: (SearchUsersRequest) -> (SearchUsersResponse) query;
+    metrics: () -> (Metrics) query;
+}
