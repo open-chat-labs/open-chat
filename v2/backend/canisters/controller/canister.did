@@ -1,0 +1,41 @@
+// We need heartbeat enabled on our subnet
+
+// Installs and upgrades top-level canisters
+// Maintains a registry of the top-level canisters (id, version)
+
+type CanisterId = principal;
+
+type CanisterType = 
+    variant {
+        PhoneIndex;
+        UserIndex;
+        GroupIndex;
+        Website;
+    };
+
+type InstallCanisterRequest = 
+    record {
+        type: CanisterType;
+        wasm: vec nat8;
+        version: text;
+    };
+
+type InstallCanisterResponse = 
+    variant {
+        Success: CanisterId;
+        Failure; // Need to enumerate these
+    };
+
+service(): {
+    // This either creates or upgrades a top-level canister. 
+    // The top-level canister WASM contains the WASM of its child canister.
+    // On bootstrap the website canister must be created last and it will be passed in 
+    // the canister ids of the other canisters.
+    // This method is also used to upgrade child canisters by upgrading the top-level
+    // canister embedded with the new WASM of its child canister.
+    install_canister: (InstallCanisterRequest) -> (InstallCanisterResponse);
+    
+    // Called by a top-level canister when it is low on cycles. The controller will then
+    // queue the notification and use the hearbeat to call deposit_cycles on needy canisters
+    notify_low_balance: () -> ();
+}

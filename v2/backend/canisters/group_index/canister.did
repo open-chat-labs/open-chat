@@ -1,0 +1,15 @@
+service: {
+    // Called by a user canister - costs 0.2T
+    create_group: (CreateGroupRequest) -> (CreateGroupResponse);
+    
+    // Any group admin can delete the group
+    delete_group: (DeleteGroupRequest) -> (DeleteGroupResponse);
+
+    // Find public groups
+    search_groups: (SearchGroupsRequest) -> (SearchGroupsResponse) query;
+
+    // Called by a group canister when it is low on cycles
+    notify_low_balance: () -> ();
+
+    metrics: () -> (MetricsResponse) query;
+}

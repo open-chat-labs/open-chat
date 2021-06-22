@@ -1,0 +1,70 @@
+
+type PutChunkRequest
+    record {
+        blob_id: nat;
+        index: nat32;
+        bytes: vec nat8;
+    };
+
+type PutChunkResponse
+    variant {
+        Success;
+        Full;
+    }; 
+
+type GetChunkRequest
+    record {
+        blob_id: nat;
+        index: nat32;
+    };
+
+type GetChunkResponse
+    variant {
+        Success: record {
+            bytes: vec nat8;
+        };
+        NotFound;
+    };
+
+type Metrics = 
+    record {
+        direct_chat_count: nat32;
+        group_chat_count: nat32;
+        text_message_count: nat64;
+        image_message_count: nat64;
+        video_message_count: nat64;
+        file_message_count: nat64;
+        cycles_message_count: nat64;
+        cycles_balance: int64;
+        bytes_used: nat64;
+        blob_bytes_used: nat64;
+        chunk_count: nat32;
+        timestamp: nat64;
+        caller_id: principal;
+        wasm_memory_used: nat64;
+    };
+
+service: {
+    send_message: (SendMessageRequest) -> (SendMessageResponse);
+    mark_read: (MarkReadRequest) -> (MarkReadResponse);
+    set_avatar: (SetAvatarRequest) -> (SetAvatarResponse);
+    block_user: (BlockUserRequest) -> (BlockUserResponse);
+    put_chunk: (PutChunkRequest) -> (PutChunkResponse);
+    create_group: (CreateGroupRequest) -> (CreateGroupResponse);
+    
+    handle_message_received: (HandleMessageRequest) -> (HandleMessageResponse);
+    handle_added_to_group: (HandleAddedToGroupRequest) -> (HandleAddedToGroupResponse);
+    handle_removed_from_group: (HandleRemovedFromGroupRequest) -> (HandleRemovedFromGroupResponse);
+    handle_invited_to_group: () -> ();
+    handle_joined_group: () -> ();
+    handle_left_group: () -> ();
+
+    get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
+    get_messages: (GetMessagesRequest) -> (GetMessagesResponse) query;
+    get_messages_by_id: (GetMessagesByIdRequest) -> (GetMessagesByIdResponse) query;
+
+    // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
+    search_all_messages: (SearchAllMessagesRequest) -> (SearchAllMessagesResponse) query;
+    get_chunk: (GetChunkRequest) -> (GetChunkResponse) query;
+    metrics: () -> (Metrics) query;
+}
