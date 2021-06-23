@@ -3,6 +3,9 @@ export interface Theme {
     name: string;
     label: string;
 
+    bg: string;
+    txt: string;
+
     participants: {
         bg: string;
         txt: string;
@@ -129,6 +132,9 @@ const defaultTheme = {
     name: "light",
     label: "Light",
 
+    bg: "linear-gradient(#22A7F2, #EF5DA8)",
+    txt: "#191919",
+
     participants: {
         bg: "#efefef",
         txt: "#191919",
@@ -254,6 +260,9 @@ export const themes: Themes = {
         ...defaultTheme,
         name: "batman",
         label: "Batman",
+
+        bg: "#121212",
+        txt: "#aaaaaa",
 
         participants: {
             bg: "#252525",

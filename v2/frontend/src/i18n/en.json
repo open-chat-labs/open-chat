@@ -1,3 +1,8 @@
 {
-    "sign_in": "Sign in"
+    "openChat": "Open Chat",
+    "login": {
+        "welcomeTo": "Welcome to ...",
+        "beforeContinuing": "Before continuing you must sign into The Internet Computer",
+        "signIn": "Sign in"
+    }
 }
