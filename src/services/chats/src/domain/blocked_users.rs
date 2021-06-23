@@ -63,6 +63,7 @@ impl BlockedUsers {
     }
 }
 
+#[derive(PartialEq)]
 pub enum BlockedStatus {
     Unblocked,
     Sender,

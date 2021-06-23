@@ -1,6 +1,6 @@
 import { UserId } from "../../domain/model/users";
 import { ChatId } from "../../domain/model/chats";
-import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import { toCandid as userIdToCandid, fromCandid as userIdFromCandid } from "../candidConverters/userId";
 import CanisterClientFactory from "../CanisterClientFactory";
 
 export default async function(chatId: ChatId, users: UserId[]) : Promise<AddParticipantsResponse> {
@@ -12,6 +12,13 @@ export default async function(chatId: ChatId, users: UserId[]) : Promise<AddPart
         return {
             kind: "success",
             countAdded: response.Success
+        };
+    } else if ("PartialSuccess" in response) {
+        const result = response.PartialSuccess;
+        return {
+            kind: "partialSuccess",
+            countAdded: result.count_added,
+            blocked: result.blocked.map(userIdFromCandid)
         };
     } else if ("Unauthorized" in response) {
         return {
@@ -32,6 +39,7 @@ export default async function(chatId: ChatId, users: UserId[]) : Promise<AddPart
 
 export type AddParticipantsResponse =
     Success |
+    PartialSuccess |
     Unauthorized |
     ChatNotFound |
     NotGroupChat;
@@ -39,6 +47,12 @@ export type AddParticipantsResponse =
 export type Success = {
     kind: "success",
     countAdded: number
+}
+
+export type PartialSuccess = {
+    kind: "partialSuccess",
+    countAdded: number,
+    blocked: UserId[]
 }
 
 export type Unauthorized = {

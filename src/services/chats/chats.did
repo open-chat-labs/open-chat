@@ -128,6 +128,10 @@ type MarkReadResponse =
 type AddParticipantsResponse =
     variant {
         Success: nat32;
+        PartialSuccess: record {
+            count_added: nat32;
+            blocked: vec UserId;
+        };
         Unauthorized;
         ChatNotFound;
         NotGroupChat;

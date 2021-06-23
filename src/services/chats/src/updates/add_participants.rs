@@ -5,6 +5,7 @@ use shared::user_id::UserId;
 use shared::timestamp;
 use crate::domain::chat::ChatEnum;
 use crate::domain::chat_list::ChatList;
+use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
 use self::Response::*;
 
 pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
@@ -19,16 +20,32 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
             if !group_chat.is_admin(&me) {
                 Unauthorized
             } else {
-                let added: Vec<_> = users
-                    .into_iter()
-                    .filter(|u| group_chat.add_participant(u.clone(), now))
-                    .collect();
+                // Check whether the user blocks any users to be added or vice-versa
+                let blocked_users: &mut BlockedUsers = storage::get_mut();
+
+                let mut added = Vec::new();
+                let mut blocked = Vec::new();
+                for u in users {
+                    if blocked_users.blocked_status(&me, &u) != BlockedStatus::Unblocked {
+                        blocked.push(u);
+                    } else if group_chat.add_participant(u.clone(), now) {
+                        added.push(u);
+                    }
+                }
 
                 let count_added = added.len() as u32;
-                for u in added.into_iter() {
+                for u in added {
                     chat_list.link_chat_to_user(chat_id, u);
                 }
-                Success(count_added)
+
+                if blocked.len() == 0 {
+                    Success(count_added)
+                } else {
+                    PartialSuccess(PartialSuccess {
+                        count_added,
+                        blocked
+                    })
+                }
             }
         },
         Some(_) => NotGroupChat,
@@ -37,8 +54,15 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
 }
 
 #[derive(CandidType)]
+pub struct PartialSuccess {
+    count_added: u32,
+    blocked: Vec<UserId>
+}
+
+#[derive(CandidType)]
 pub enum Response {
     Success(u32),
+    PartialSuccess(PartialSuccess),
     Unauthorized,
     ChatNotFound,
     NotGroupChat
