@@ -39,13 +39,11 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        @include size-above(sm) {
-            // @include fullScreenImg("../assets/campfire.avif");
-            // @include fullScreenImg("../assets/wood.jpg");
-            // @include fullScreenImg("../assets/sunset.jpg");
-            @include fullScreenImg("../assets/underwater.jpg");
-            // @include fullScreenImg("../assets/coral.jpg");
-        }
+        @include fullScreenImg("../assets/underwater.jpg");
+        // @include fullScreenImg("../assets/campfire.avif");
+        // @include fullScreenImg("../assets/wood.jpg");
+        // @include fullScreenImg("../assets/sunset.jpg");
+        // @include fullScreenImg("../assets/coral.jpg");
         @include fullHeight();
     }
     .welcome-panel {
@@ -79,7 +77,7 @@
             @include font(light, italic, fs-100);
         }
 
-        @include size-below(xs) {
+        @include size-below(md) {
             width: 100%;
             margin: 0 $sp4;
         }
