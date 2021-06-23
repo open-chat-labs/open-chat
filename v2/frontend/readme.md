@@ -48,7 +48,7 @@ TBD - integration testing? Maybe with Cypress
 ### Linting
 Linting is provided via eslint. Make sure that you have an editor plugin setup to help you. There is already an eslint config within the project. 
 
-TODO - add package.json lint command
+You can also run `npm run lint` to lint the frontend project.
 
 ### Formatting 
 Formatting is provided by prettier via the "Svelte for VS Code" plugin. 
