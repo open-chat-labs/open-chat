@@ -85,6 +85,8 @@ type SendDirectMessageResponse =
         BalanceExceeded;
         MessageTooLong: nat32;
         InvalidRequest;
+        SenderBlocked;
+        RecipientBlocked;
     };
 
 type SendMessageRequest =
@@ -108,6 +110,8 @@ type SendMessageResponse =
         ChatNotFound;
         MessageTooLong: nat32;
         InvalidRequest;
+        SenderBlocked;
+        RecipientBlocked;
     };
 
 type MarkReadResult =
@@ -172,6 +176,12 @@ type GetChatsRequest =
         message_count_for_top_chat: opt nat16;
     };
 
+type GetUpdatesRequest =
+    record {
+        updated_since: opt Timestamp;
+        message_count_for_top_chat: opt nat16;
+    };
+
 type ReplyContext =
     record {
         chat_id: ChatId;
@@ -223,6 +233,17 @@ type GroupChatSummary =
 type GetChatsResponse =
     variant {
         Success: vec ChatSummary;
+    };
+
+type GetUpdatesResponse =
+    variant {
+        Success: GetUpdatesResult;
+    };
+
+type GetUpdatesResult =
+    record {
+        chats: vec ChatSummary;
+        blocked_users: vec UserId
     };
 
 type GetMessagesResult =
@@ -289,8 +310,11 @@ service : {
     delete_group: (ChatId) -> (DeleteGroupResponse);
     join_group: (ChatId) -> (JoinGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
+    block_user: (UserId, bool) -> ();
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
+    get_updates: (GetUpdatesRequest) -> (GetUpdatesResponse) query;
+
     get_messages: (ChatId, nat32, nat32) -> (GetMessagesResponse) query;
     get_messages_by_id: (ChatId, vec nat32) -> (GetMessagesByIdResponse) query;
     get_chunk: (text, nat32) -> (opt vec nat8) query;

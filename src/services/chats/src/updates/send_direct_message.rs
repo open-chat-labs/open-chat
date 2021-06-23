@@ -4,10 +4,11 @@ use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::timestamp::{self, Timestamp};
 use shared::user_id::UserId;
-use crate::domain::chat::{Chat, ChatEnum, MessageContent, MessageContentValidationResponse, ReplyContext};
+use crate::domain::chat::{Chat, MessageContent, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::user_mgmt::*;
+use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
 use self::Response::*;
 
 pub async fn update(request: Request) -> Response {
@@ -16,13 +17,19 @@ pub async fn update(request: Request) -> Response {
         return response;
     }
 
-    let chat_list: &mut ChatList = storage::get_mut();
-    chat_list.add_message_to_stats(&request.content);
+    // Check whether either user blocks the other
+    let me = shared::user_id::get_current();
+    let blocked_users: &mut BlockedUsers = storage::get_mut();
+    let blocked_status = blocked_users.blocked_status(&me, &request.recipient);
+    match blocked_status {
+        BlockedStatus::Sender => return SenderBlocked,
+        BlockedStatus::Recipient => return RecipientBlocked,
+        BlockedStatus::Both => return RecipientBlocked,
+        BlockedStatus::Unblocked => ()
+    };
 
     let now = timestamp::now();
-    let me = shared::user_id::get_current();
     let chat_id = ChatId::for_direct_chat(&me, &request.recipient);
-    let chat = chat_list.get_mut(chat_id, &me);
 
     if let MessageContent::Cycles(cycle_content) = &request.content {
 
@@ -42,35 +49,31 @@ pub async fn update(request: Request) -> Response {
         }
     }
 
-    let chat_summary: DirectChatSummary;
-    let message_id: u32;
-    let is_blob = request.content.is_blob();
-    match chat {
-        Some(ChatEnum::Direct(c)) => {
-            message_id = c.push_message(
-                &me,
-                request.client_message_id,
-                request.content,
-                request.replies_to,
-                now);
+    let chat_list: &mut ChatList = storage::get_mut();
 
-            chat_summary = DirectChatSummary::new(c, &me, 0);
-        },
-        _ => {
-            message_id = 1;
-            chat_summary = chat_list.create_direct_chat(
+    // Create a new direct chat if it does not exist
+    {
+        let chat = chat_list.get(chat_id, &me);
+        if chat.is_none() {
+            chat_list.create_direct_chat(
                 chat_id,
-                me,
+                me.clone(),
                 request.recipient,
-                request.client_message_id,
-                request.content,
-                request.replies_to,
                 now);
         }
-    };
+    }
 
-    chat_list.push_message(chat_id, message_id, is_blob);
+    let message_id = chat_list.push_message(
+        chat_id, 
+        &me, 
+        request.client_message_id, 
+        request.content, 
+        request.replies_to, 
+        now).unwrap();
 
+    let chat = chat_list.get(chat_id, &me).unwrap();
+    let chat_summary = chat.to_summary(&me, 0).direct().unwrap();
+    
     Success(Result {
         chat_summary,
         message_id,
@@ -111,7 +114,9 @@ pub enum Response {
     RecipientNotFound,
     BalanceExceeded,
     MessageTooLong(u32),
-    InvalidRequest
+    InvalidRequest,
+    SenderBlocked,
+    RecipientBlocked
 }
 
 #[derive(CandidType)]

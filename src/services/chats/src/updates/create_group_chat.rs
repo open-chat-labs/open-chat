@@ -12,7 +12,6 @@ const MIN_GROUP_SUBJECT_LENGTH: u8 = 2;
 const MAX_GROUP_SUBJECT_LENGTH: u8 = 25;
 
 pub fn update(request: Request) -> Response {
-
     // Validation
     if request.subject.len() < MIN_GROUP_SUBJECT_LENGTH as usize {
         return SubjectTooShort(MIN_GROUP_SUBJECT_LENGTH);
@@ -24,9 +23,17 @@ pub fn update(request: Request) -> Response {
     let me = shared::user_id::get_current();
     let now = timestamp::now();
 
-    match chat_list.create_group_chat(me, request.chat_id, request.subject, request.participants, request.chat_history_visible_to_new_joiners, now) {
-        Some(chat_summary) => Success(chat_summary),
-        None => ChatAlreadyExists,
+    let chat_summary = chat_list.create_group_chat(
+        me, 
+        request.chat_id, 
+        request.subject, 
+        request.participants, 
+        request.chat_history_visible_to_new_joiners, 
+        now);
+
+    match chat_summary {
+        Some(cs) => Success(cs),
+        None => ChatAlreadyExists
     }
 }
 
