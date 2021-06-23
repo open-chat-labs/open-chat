@@ -1,8 +1,6 @@
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
-use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use shared::storage::StableState;
 
 const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 
@@ -48,39 +46,3 @@ impl BlobStorage {
         }        
     }
 }
-
-#[derive(CandidType, Deserialize)]
-pub struct BlobState {
-    chunks: Vec<(String, u32, ByteBuf)>,
-    total_bytes: u64
-}
-
-impl StableState for BlobStorage {
-    type State = BlobState;
-
-    fn drain(self) -> BlobState {
-        let chunks = self.chunks
-            .into_iter()
-            .map(|((id, idx), v)| (id, idx, ByteBuf::from(v)))
-            .collect();
-
-        BlobState {
-            chunks,
-            total_bytes: self.total_bytes
-        }
-    }
-
-    fn fill(state: BlobState) -> BlobStorage {
-        let map: HashMap<(String, u32), Vec<u8>> = state
-            .chunks
-            .into_iter()
-            .map(|(id, idx, v)| ((id, idx), v.into_vec()))
-            .collect();
-
-        BlobStorage {
-            chunks: map,
-            total_bytes: state.total_bytes
-        }
-    }
-}
-
