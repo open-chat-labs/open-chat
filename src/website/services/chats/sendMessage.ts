@@ -35,9 +35,11 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
             }
         };
     } else if ("ChatNotFound" in response) {
-        return {
-            kind: "chatNotFound"
-        };
+        return { kind: "chatNotFound" };
+    } else if ("SenderBlocked" in response) {
+        return { kind: "senderBlocked" };
+    } else if ("RecipientBlocked" in response) {
+        return { kind: "recipientBlocked" };
     } else {
         throw new Error("Unrecognised 'send_message' response");
     }
@@ -46,6 +48,8 @@ export default async function(chatId: ChatId, clientMessageId: string, content: 
 export type SendMessageResponse =
     Success |
     ChatNotFound | 
+    SenderBlocked |
+    RecipientBlocked|
     HttpError;
 
 export type Success = {
@@ -61,4 +65,12 @@ export type SendMessageResult = {
     chat: ConfirmedChat,
     messageId: number,
     date: Date
+}
+
+export type SenderBlocked = {
+    kind: "senderBlocked"
+}
+
+export type RecipientBlocked = {
+    kind: "recipientBlocked"
 }

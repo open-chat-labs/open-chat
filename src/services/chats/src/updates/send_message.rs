@@ -3,8 +3,9 @@ use ic_cdk::storage;
 use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::{timestamp, timestamp::Timestamp};
-use crate::domain::chat::{Chat, MessageContent, ChatSummary, MessageContentValidationResponse, ReplyContext};
+use crate::domain::chat::{Chat, MessageContent, ChatSummary, ChatEnum, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
+use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
 use self::Response::*;
 
 pub fn update(request: Request) -> Response {
@@ -13,26 +14,46 @@ pub fn update(request: Request) -> Response {
         return response;
     }
 
-    let chat_list: &mut ChatList = storage::get_mut();
-    chat_list.add_message_to_stats(&request.content);
-
     let me = shared::user_id::get_current();
-    let is_blob = request.content.is_blob();
-    let message_id;
-    let response;
+    let chat_list: &mut ChatList = storage::get_mut();    
     
-    if let Some(chat) = chat_list.get_mut(request.chat_id, &me) {
-        let now = timestamp::now();
-        message_id = chat.push_message(&me, request.client_message_id, request.content, request.replies_to, now);
-        let chat_summary = chat.to_summary(&me, 0);
-        response = Success(Result::new(chat_summary, message_id, now));
-    } else {
-        return ChatNotFound;
+    {
+        // Try to find the requested chat
+        let chat = chat_list.get(request.chat_id, &me);
+
+        if chat.is_none() {
+            return ChatNotFound;
+        }
+
+        // Check whether either user blocks the other
+        if let ChatEnum::Direct(dc) = chat.unwrap() {
+            let blocked_users: &mut BlockedUsers = storage::get_mut();
+            let blocked_status = blocked_users.blocked_status(&me, dc.get_other(&me));
+            match blocked_status {
+                BlockedStatus::Sender => return SenderBlocked,
+                BlockedStatus::Recipient => return RecipientBlocked,
+                BlockedStatus::Both => return RecipientBlocked,
+                BlockedStatus::Unblocked => ()
+            };
+        }
     }
 
-    chat_list.push_message(request.chat_id, message_id, is_blob);
+    {
+        let now = timestamp::now();
 
-    response
+        let message_id = chat_list.push_message(
+            request.chat_id, 
+            &me, 
+            request.client_message_id, 
+            request.content, 
+            request.replies_to, 
+            now).unwrap();
+
+        let chat = chat_list.get(request.chat_id, &me).unwrap();
+        let chat_summary = chat.to_summary(&me, 0);
+        let response = Success(Result::new(chat_summary, message_id, now));
+        response
+    }
 }
 
 fn validate(request: &Request) -> Option<Response> {
@@ -66,7 +87,9 @@ pub enum Response {
     Success(Result),
     ChatNotFound,
     MessageTooLong(u32),
-    InvalidRequest
+    InvalidRequest,
+    SenderBlocked,
+    RecipientBlocked
 }
 
 #[derive(CandidType)]

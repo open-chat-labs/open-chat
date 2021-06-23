@@ -5,8 +5,6 @@ import Paper from "@material-ui/core/Paper";
 import React from "react";
 import PersonIcon from '@material-ui/icons/Person';
 import Typography from "@material-ui/core/Typography";
-import Backdrop from '@material-ui/core/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import registerUser, { RegisterUserOutcomeEvent, REGISTER_USER_FAILED_USERNAME_EXISTS, REGISTER_USER_FAILED_USER_EXISTS, REGISTER_USER_LIMIT_REACHED, REGISTER_USER_SUCCEEDED } from "../actions/users/registerUser";
 import NameInput from "./shared/NameInput";
 
@@ -34,10 +32,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         maxWidth: 400,
         marginTop: 30
     },
-    backdrop: {
-        zIndex: theme.zIndex.drawer + 1,
-        color: '#fff',
-    },
     errorText: {
         minHeight: 20,
         maxWidth: 400,
@@ -54,12 +48,10 @@ const useStyles = makeStyles((theme: Theme) => ({
 export default function RegisterUser() {
     const dispatch = useDispatch();
     const classes = useStyles();
-    const [loading, setLoading] = React.useState(false);
     const [errorText, setErrorText] = React.useState("");
 
     function handleSubmit(text: string) {
         if (text && text.length > 2) {
-            setLoading(true);
             setErrorText("");
             const registerUserAsync: () => Promise<RegisterUserOutcomeEvent> = () => dispatch(registerUser(text)) as any;
             registerUserAsync().then((outcome) => {
@@ -77,35 +69,29 @@ export default function RegisterUser() {
                         setErrorText(`The number of users of this demo version of OpenChat has been limited to ${outcome.payload} and this limit has been reached. Check back soon for the full release!`);
                         break;
                 }
-                setLoading(false);
             });
         }
     }
 
     return (    
-        <>    
-            <Paper className={classes.paper}>
-                <PersonIcon className={classes.icon} />
-                <h1>Register user</h1>
-                <NameInput
-                    onSubmit={handleSubmit}
-                    placeholderText="Enter username"
-                    minLength={3}
-                    maxLength={25}
-                    className={classes.nameInput}
-                    disabled={loading} />
-                <div className={classes.errorContainer}>
-                    <Typography
-                        component="div"
-                        variant="body1"
-                        className={classes.errorText}>
-                        {errorText}
-                    </Typography>
-                </div>
-            </Paper>
-            <Backdrop className={classes.backdrop} open={loading}>
-                <CircularProgress color="inherit" />
-            </Backdrop>        
-        </>
-    );
+        <Paper className={classes.paper}>
+            <PersonIcon className={classes.icon} />
+            <h1>Register user</h1>
+            <NameInput
+                onSubmit={handleSubmit}
+                placeholderText="Enter username"
+                minLength={3}
+                maxLength={25}
+                className={classes.nameInput}
+                />
+            <div className={classes.errorContainer}>
+                <Typography
+                    component="div"
+                    variant="body1"
+                    className={classes.errorText}>
+                    {errorText}
+                </Typography>
+            </div>
+        </Paper>
+);
 }

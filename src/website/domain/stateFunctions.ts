@@ -7,7 +7,7 @@ import { ChatsState } from "../reducers/chatsReducer";
 export function getSelectedChat(chatsState: ChatsState) : Option<Chat> {
     return chatsState.selectedChatIndex === null
         ? null
-        : chatsState.chats[chatsState.selectedChatIndex];
+        : chatsState.chats[chatsState.selectedChatIndex] ?? null;
 }
 
 export function getChatSubject(chatsState: ChatsState, chatId: ChatId) : Option<string> {

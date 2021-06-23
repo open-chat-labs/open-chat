@@ -3,6 +3,7 @@ import { Dispatch } from "react";
 import userMgmtService from "../../services/userMgmt/service";
 import { MyProfile } from "../../domain/model/users";
 import { HttpError } from "../../errors/httpError";
+import { startSpinning, stopSpinning } from "../app/modalSpinner";
 
 export const REGISTER_USER_REQUESTED = "REGISTER_USER_REQUESTED";
 export const REGISTER_USER_SUCCEEDED = "REGISTER_USER_SUCCEEDED";
@@ -13,6 +14,9 @@ export const REGISTER_USER_LIMIT_REACHED = "REGISTER_USER_LIMIT_REACHED";
 
 export default function(username: string) {
     return async (dispatch: Dispatch<any>) => {
+
+        dispatch(startSpinning());
+
         const requestEvent: RegisterUserRequestedEvent = {
             type: REGISTER_USER_REQUESTED,
             payload: username
@@ -56,6 +60,9 @@ export default function(username: string) {
         }
 
         dispatch(outcomeEvent);
+
+        dispatch(stopSpinning());
+
         return outcomeEvent;
     }
 }

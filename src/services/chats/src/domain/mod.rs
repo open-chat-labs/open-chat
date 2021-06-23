@@ -1,4 +1,5 @@
 pub mod blob_storage;
+pub mod blocked_users;
 pub mod chat;
 pub mod chat_list;
 pub mod direct_chat;

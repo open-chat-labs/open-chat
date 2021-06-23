@@ -54,9 +54,19 @@ fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
     put_chunk::update(blob_id, chunk_index, data)
 }
 
+#[update]
+fn block_user(user: UserId, unblock: bool) {
+    block_user::update(user, unblock);
+}
+
 #[query]
 fn get_chats(request: get_chats::Request) -> get_chats::Response {
     get_chats::query(request)
+}
+
+#[query]
+fn get_updates(request: get_updates::Request) -> get_updates::Response {
+    get_updates::query(request)
 }
 
 #[query]
