@@ -8,11 +8,12 @@ import sendMessage, { SendMessageResponse } from "./sendMessage";
 import markRead, { MarkReadResponse } from "./markRead";
 import addParticipants, { AddParticipantsResponse } from "./addParticipants";
 import removeParticipant, { RemoveParticipantResponse } from "./removeParticipant";
-import getChats, { GetChatsRequest, GetChatsResponse } from "./getChats";
+import getUpdates, { GetUpdatesRequest, GetUpdatesResponse } from "./getUpdates";
 import getMessages, { getMessagesById, GetMessagesResponse } from "./getMessages";
 import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessages";
 import leaveGroup, { LeaveGroupResult } from "./leaveGroup";
 import joinGroup, { JoinGroupResult } from "./joinGroup";
+import blockUser from "./blockUser";
 
 export default class service {
     public static createGroupChat(chatId: ChatId, subject: string, users: UserId[], chatHistoryVisibleToNewJoiners: boolean) : Promise<CreateGroupChatResponse> {
@@ -47,8 +48,12 @@ export default class service {
         return joinGroup(chatId);
     }
 
-    public static getChats(request: GetChatsRequest) : Promise<GetChatsResponse> {
-        return getChats(request);
+    public static blockUser(userId: UserId, unblock: boolean) : Promise<void> {
+        return blockUser(userId, unblock);
+    }
+
+    public static getUpdates(request: GetUpdatesRequest) : Promise<GetUpdatesResponse> {
+        return getUpdates(request);
     }
 
     public static getMessages(chatId: ChatId, fromId: number, pageSize: number) : Promise<GetMessagesResponse> {

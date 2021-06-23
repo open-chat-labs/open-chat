@@ -56,6 +56,7 @@ import {
 } from "../actions/chats/getMessagesById";
 
 import {
+    SEND_MESSAGE_FAILED,
     SEND_MESSAGE_REQUESTED,
     SEND_MESSAGE_SUCCEEDED,
     SendMessageFailedEvent,
@@ -119,21 +120,30 @@ import {
     DeselectMessageEvent
 } from "../actions/chats/deselectMessage";
 
-import { ChatId } from "../services/chats/chats";
+import { 
+    USER_BLOCKED,
+    USER_UNBLOCKED,
+    UserBlockedEvent,
+    UserUnblockedEvent
+} from "../actions/chats/blockUser";
+
 import { GOTO_HOME, GotoHomeEvent } from "../actions/app/gotoHome";
+import { UserId } from "../domain/model/users";
 
 export type ChatsState = {
     chats: Chat[],
     selectedChatIndex: Option<number>,
     chatsSyncedUpTo: Option<Timestamp>,
-    runUpdateChatsTask: boolean
+    runUpdateChatsTask: boolean,
+    blockedUsers: UserId[]
 }
 
 const initialState: ChatsState = {
     chats: [],
     selectedChatIndex: null,
     chatsSyncedUpTo: null,
-    runUpdateChatsTask: false
+    runUpdateChatsTask: false,
+    blockedUsers: []
 };
 
 type Event =
@@ -172,10 +182,13 @@ type Event =
     ReplyToMessageSelectedEvent |
     ReplyToMessageCancelledEvent |
     SendMessageRequestedEvent |
+    SendMessageFailedEvent |
     SendMessageSucceededEvent |
     SendMessageFailedEvent |
     SessionExpiredEvent |
     SwitchViewModeRequestedEvent |
+    UserBlockedEvent |
+    UserUnblockedEvent |
     UserLoggedOutEvent;
 
 export default produce((state: ChatsState, event: Event) => {
@@ -267,7 +280,7 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_ALL_CHATS_SUCCEEDED: {
-            const { chats, latestUpdateTimestamp, selectedChatIndex } = event.payload;
+            const { chats, latestUpdateTimestamp, selectedChatIndex, blockedUsers } = event.payload;
             const historicalChatId = history?.state?.chatId ?? null;
             
             // If the path exists but it does not match a known chatId 
@@ -295,7 +308,8 @@ export default produce((state: ChatsState, event: Event) => {
                 chats,
                 selectedChatIndex,
                 chatsSyncedUpTo: latestUpdateTimestamp,
-                runUpdateChatsTask: true
+                runUpdateChatsTask: true,
+                blockedUsers
             };
         }
 
@@ -360,7 +374,7 @@ export default produce((state: ChatsState, event: Event) => {
         }
 
         case GET_UPDATED_CHATS_SUCCEEDED: {
-            const { chats, latestUpdateTimestamp } = event.payload;
+            const { chats, latestUpdateTimestamp, blockedUsers } = event.payload;
             if (!chats.length) {
                 return;
             }
@@ -387,6 +401,7 @@ export default produce((state: ChatsState, event: Event) => {
                 selectChatAndPushToHistory(state, newChatIndex!);        
             }
             state.chatsSyncedUpTo = latestUpdateTimestamp;
+            state.blockedUsers = blockedUsers;
             break;
         }
 
@@ -495,6 +510,16 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
+        case SEND_MESSAGE_FAILED: {
+            const { chatId, clientMessageId } = event.payload;
+            const [chat, _index] = chatFunctions.getChat(state.chats,chatId);            
+            const messageIndex = chat.messages.findIndex(m => m.kind !== "remote" && m.clientMessageId === clientMessageId);
+            if (messageIndex >= 0) {
+                chat.messages.splice(messageIndex, 1);
+            }
+            break;
+        }
+
         case ADD_PARTICIPANTS_REQUESTED: {
             const { chatId, users } = event.payload;
             const [chat] = chatFunctions.getChat(state.chats, chatId);
@@ -578,7 +603,7 @@ export default produce((state: ChatsState, event: Event) => {
                 const newChatIndex = state.chats.length
                     ? 0
                     : null;
-                if (newChatIndex) {
+                if (newChatIndex != null) {
                     selectChatAndPushToHistory(state, newChatIndex);
                 } else {
                     history.back();
@@ -594,6 +619,18 @@ export default produce((state: ChatsState, event: Event) => {
                     selectChatAndPushToHistory(state, 0);
                 }
             }
+            break;
+        }
+
+        case USER_BLOCKED: {
+            const { userId } = event.payload;
+            setFunctions.add(state.blockedUsers, userId);
+            break;
+        }
+
+        case USER_UNBLOCKED: {
+            const { userId } = event.payload;
+            setFunctions.remove(state.blockedUsers, userId);
             break;
         }
     }

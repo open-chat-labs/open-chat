@@ -55,13 +55,20 @@ import { DIRECT_CHAT_CREATED, DirectChatCreatedEvent } from "../actions/chats/go
 import { LeftPanelType, MiddlePanelType, PanelState, RightPanelType } from "../domain/model/panels";
 import { GotoHomeEvent, GOTO_HOME } from "../actions/app/gotoHome";
 import { GetAllChatsSucceededEvent, GET_ALL_CHATS_SUCCEEDED } from "../actions/chats/getAllChats";
+import { 
+    START_SPINNING,
+    STOP_SPINNING,
+    StartSpinningEvent,
+    StopSpinningEvent
+} from "../actions/app/modalSpinner";
 
 export type AppState = {
     sessionExpired: boolean,
     selectedTheme: SelectedTheme,
     alert: Option<AlertContent>,
     viewMode: ViewMode,
-    panelState: PanelState
+    panelState: PanelState,
+    modalSpinner: boolean
 }
 
 const initialState: AppState = {
@@ -73,7 +80,8 @@ const initialState: AppState = {
         leftPanel: LeftPanelType.Chats,
         middlePanel: MiddlePanelType.Messages,
         rightPanel: RightPanelType.None
-    } 
+    } ,
+    modalSpinner: false
 }
 
 type Event =
@@ -92,6 +100,8 @@ type Event =
     SessionExpiredEvent |
     SessionExpiryAcknowledgedEvent |
     ShowAlertDialogRequestedEvent |
+    StartSpinningEvent |
+    StopSpinningEvent |
     SwitchViewModeRequestedEvent |
     ThemeSelectedEvent | 
     UserLoggedOutEvent;
@@ -260,6 +270,16 @@ export default produce((state: AppState, event: Event) => {
                 state.panelState.middlePanel = MiddlePanelType.Messages;
                 state.panelState.leftPanel = LeftPanelType.None;
             }
+            break;
+        }
+
+        case START_SPINNING: {
+            state.modalSpinner = true;
+            break;
+        }
+
+        case STOP_SPINNING: {
+            state.modalSpinner = false;
             break;
         }
     }

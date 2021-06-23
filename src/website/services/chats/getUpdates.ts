@@ -1,12 +1,14 @@
 import { ConfirmedChat } from "../../domain/model/chats";
 import { Option, Timestamp } from "../../domain/model/common";
 import { chatFromCandid } from "../candidConverters/chat";
+import { fromCandid as userIdFromCandid } from "../candidConverters/userId";
 import { toCandid as optionToCandid } from "../candidConverters/option";
 import { fromCandid as timestampFromCandid, toCandid as timestampToCandid } from "../candidConverters/timestamp";
 import CanisterClientFactory from "../CanisterClientFactory";
 import { toHttpError, HttpError } from "../../errors/httpError";
+import { UserId } from "../../domain/model/users";
 
-export default async function(request: GetChatsRequest) : Promise<GetChatsResponse> {
+export default async function(request: GetUpdatesRequest) : Promise<GetUpdatesResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const canisterRequest = {
         updated_since: optionToCandid(request.updatedSince ? timestampToCandid(request.updatedSince) : null),
@@ -15,25 +17,27 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
 
     let response;    
     try {
-        response = await client.get_chats(canisterRequest);
+        response = await client.get_updates(canisterRequest);
     } catch (e) {
         return toHttpError(e as Error);        
     }
 
     if ("Success" in response) {
         const success = response.Success;
-        const chats = success.map(chatFromCandid);
+        const chats = success.chats.map(chatFromCandid);
         let latestUpdateTimestamp: Option<Timestamp> = null;
-        if (success.length) {
-            const latestChat = success[0];
+        if (success.chats.length) {
+            const latestChat = success.chats[0];
             latestUpdateTimestamp = timestampFromCandid("Direct" in latestChat
                 ? latestChat.Direct.last_updated
                 : latestChat.Group.last_updated);
         }
+        const blockedUsers = success.blocked_users.map(userIdFromCandid);
 
         return {
             kind: "success",
             chats,
+            blockedUsers,
             latestUpdateTimestamp
         };
     } else {
@@ -41,17 +45,18 @@ export default async function(request: GetChatsRequest) : Promise<GetChatsRespon
     }
 }
 
-export type GetChatsRequest = {
+export type GetUpdatesRequest = {
     updatedSince: Option<Timestamp>,
     messageCountForTopChat: Option<number>
 };
 
-export type GetChatsResponse =
+export type GetUpdatesResponse =
     Success | HttpError;
 
 export type Success = {
     kind: "success",
     chats: ConfirmedChat[],
+    blockedUsers: UserId[]
     latestUpdateTimestamp: Option<Timestamp>
 }
 

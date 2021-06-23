@@ -42,6 +42,10 @@ export default async function(userId: UserId, clientMessageId: string, content: 
         return { kind: "recipientNotFound" };
     } else if ("BalanceExceeded" in response) {
         return { kind: "balanceExceeded" };
+    } else if ("SenderBlocked" in response) {
+        return { kind: "senderBlocked" };
+    } else if ("RecipientBlocked" in response) {
+        return { kind: "recipientBlocked" };
     } else {
         throw new Error("Unrecognised 'send_direct_message' response");
     }
@@ -52,6 +56,8 @@ export type SendDirectMessageResponse =
     UserNotFound |
     RecipientNotFound |
     BalanceExceeded | 
+    SenderBlocked |
+    RecipientBlocked|
     HttpError;
 
 export type Success = {
@@ -75,4 +81,12 @@ export type RecipientNotFound = {
 
 export type BalanceExceeded = {
     kind: "balanceExceeded"
+}
+
+export type SenderBlocked = {
+    kind: "senderBlocked"
+}
+
+export type RecipientBlocked = {
+    kind: "recipientBlocked"
 }

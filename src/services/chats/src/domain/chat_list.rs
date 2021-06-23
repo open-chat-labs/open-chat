@@ -13,7 +13,6 @@ use super::direct_chat::DirectChat;
 use super::group_chat::GroupChat;
 use crate::domain::blob_storage::BlobStorage;
 use crate::domain::chat::{ChatStableState, MessageContentType, ReplyContext};
-use crate::domain::direct_chat::DirectChatSummary;
 use crate::domain::group_chat::GroupChatSummary;
 use crate::domain::user_to_chats_map::UserToChatsMap;
 
@@ -51,20 +50,13 @@ impl ChatList {
         chat_id: ChatId,
         sender: UserId,
         recipient: UserId,
-        client_message_id: String,
-        content: MessageContent,
-        replies_to: Option<ReplyContext>,
-        now: Timestamp) -> DirectChatSummary {
-
-        self.add_message_to_stats(&content);
-        let chat = DirectChat::new(chat_id, sender.clone(), recipient.clone(), client_message_id, content, replies_to, now);
-        let chat_summary = DirectChatSummary::new(&chat, &sender, 0);
-
-        self.chats.insert(chat_id, ChatEnum::Direct(chat));
+        now: Timestamp) {
+        let chat = DirectChat::new(chat_id, sender.clone(), recipient.clone(), now);
+        let chat_enum = ChatEnum::Direct(chat);
+        self.chats.insert(chat_id, chat_enum);
         self.user_to_chats_map.link_chat_to_user(chat_id, sender);
         self.user_to_chats_map.link_chat_to_user(chat_id, recipient);
         self.stats.direct_chat_count = self.stats.direct_chat_count + 1;
-        chat_summary
     }
 
     pub fn create_group_chat(
@@ -170,11 +162,23 @@ impl ChatList {
         }
     }
 
-    pub fn push_message(&mut self, chat_id: ChatId, message_id: u32, is_blob: bool) {
-        if is_blob {
-            self.messages_to_prune.push_back((chat_id, message_id));
-            self.stats.pruneable_message_count = self.stats.pruneable_message_count + 1;
-        }
+    pub fn push_message(&mut self, chat_id: ChatId, me: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Option<u32> {
+        self.add_message_to_stats(&content);
+        
+        match self.get_mut(chat_id, me) {
+            Some(chat) => {
+                let is_blob = content.is_blob();
+                let message_id = chat.push_message(me, client_message_id, content, replies_to, now);
+
+                if is_blob {
+                    self.messages_to_prune.push_back((chat_id, message_id));
+                    self.stats.pruneable_message_count = self.stats.pruneable_message_count + 1;
+                }
+                
+                Some(message_id)        
+            },
+            None => None
+        }        
     }
 
     pub fn prune_messages(&mut self, blob_storage: &mut BlobStorage) {
@@ -215,7 +219,7 @@ impl ChatList {
         self.stats.clone()
     }
 
-    pub fn add_message_to_stats(&mut self, content: &MessageContent) {
+    fn add_message_to_stats(&mut self, content: &MessageContent) {
         match content.get_type() {
             MessageContentType::Text => self.stats.text_message_count = self.stats.text_message_count + 1,
             MessageContentType::Image => self.stats.image_message_count = self.stats.image_message_count + 1,

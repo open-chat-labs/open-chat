@@ -42,23 +42,24 @@ pub struct DirectChatStableState {
 }
 
 impl DirectChat {
-    pub fn new(id: ChatId, sender: UserId, recipient: UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> DirectChat {
-
-        let message = Message::new(1, client_message_id, now, sender.clone(), content, replies_to);
-
+    pub fn new(id: ChatId, sender: UserId, recipient: UserId, now: Timestamp) -> DirectChat {
         DirectChat {
             id,
             user1: sender,
             user2: recipient,
             user1_unread_message_ids: RangeSet::new(),
-            user2_unread_message_ids: RangeSet::from(1..=1),
-            messages: vec![message],
+            user2_unread_message_ids: RangeSet::new(),
+            messages: vec![],
             last_updated: now
         }
     }
 
     pub fn get_participants(&self) -> [&UserId; 2] {
         [&self.user1, &self.user2]
+    }
+
+    pub fn get_other(&self, me: &UserId) -> &UserId {
+        if *me == self.user1 { &self.user2 } else { &self.user1 }
     }
 }
 
@@ -72,8 +73,11 @@ impl Chat for DirectChat {
     }
 
     fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32 {
-        let prev_id = self.messages.last().unwrap().get_id();
-        let id = prev_id + 1;
+
+        let id = match self.messages.last() {
+            Some(message) => message.get_id() + 1,
+            None => 1
+        };
 
         let message = Message::new(
             id,

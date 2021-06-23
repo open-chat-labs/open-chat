@@ -4,6 +4,7 @@ import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../domain/model/chats";
 import { Option, Timestamp } from "../../domain/model/common";
 import { HttpError } from "../../errors/httpError";
+import { UserId } from "../../domain/model/users";
 
 export const GET_UPDATED_CHATS_REQUESTED = "GET_UPDATED_CHATS_REQUESTED";
 export const GET_UPDATED_CHATS_SUCCEEDED = "GET_UPDATED_CHATS_SUCCEEDED";
@@ -20,7 +21,7 @@ export default function(updatedSince: Option<Timestamp>) {
         //
         // dispatch(requestEvent);
 
-        const response = await chatsService.getChats({
+        const response = await chatsService.getUpdates({
             updatedSince: updatedSince,
             messageCountForTopChat: null
         });
@@ -31,6 +32,7 @@ export default function(updatedSince: Option<Timestamp>) {
                 type: GET_UPDATED_CHATS_SUCCEEDED,
                 payload: {
                     chats: response.chats,
+                    blockedUsers: response.blockedUsers,
                     latestUpdateTimestamp: response.latestUpdateTimestamp
                 }
             } as GetUpdatedChatsSucceededEvent;
@@ -59,6 +61,7 @@ export type GetUpdatedChatsSucceededEvent = {
     type: typeof GET_UPDATED_CHATS_SUCCEEDED,
     payload: {
         chats: ConfirmedChat[],
+        blockedUsers: UserId[],
         latestUpdateTimestamp: Option<Timestamp>
     }
 }
