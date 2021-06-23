@@ -1,9 +1,10 @@
 <script lang="ts">
     import Button from "./Button.svelte";
     import Logo from "./Logo.svelte";
-    import { identityService } from "../fsm/identity.machine";
     import { _ } from "svelte-i18n";
-    const { send, state } = identityService;
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+    export let loading: boolean = false;
 </script>
 
 <div class="welcome">
@@ -18,24 +19,13 @@
                 >{$_("theInternetComputer")}</a
             >{$_("login.blurbPartTwo")}
         </p>
-        <Button
-            loading={$state.matches("logging_in")}
-            on:click={() => send({ type: "LOGIN" })}
+        <Button {loading} on:click={() => dispatch("login")}
             >{$_("login.signIn")}</Button>
     </div>
 </div>
 
 <style type="text/scss">
     @import "../styles/mixins";
-    img {
-        filter: brightness(50%);
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        object-fit: cover;
-    }
 
     .welcome {
         display: flex;

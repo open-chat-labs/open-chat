@@ -38,7 +38,9 @@
 </script>
 
 {#if $state.matches("login") || $state.matches("logging_in")}
-    <Login />
+    <Login
+        loading={$state.matches("logging_in")}
+        on:login={() => send({ type: "LOGIN" })} />
 {:else if $state.matches("register_user") || $state.matches("registering_user")}
     <Register />
 {:else if $state.matches("logged_in")}

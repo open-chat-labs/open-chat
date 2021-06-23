@@ -1,7 +1,9 @@
+import { isBreakStatement } from "typescript";
 import "../public/global.css";
+import "../src/i18n/i18n";
 import { loadSavedTheme, saveSeletedTheme } from "../src/theme/themes";
 loadSavedTheme();
-saveSeletedTheme('batman');
+saveSeletedTheme('light');
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
@@ -11,4 +13,6 @@ export const parameters = {
       date: /Date$/,
     },
   },
+  locales: ['en', 'fr', 'ar'],
+  defaultLocale: 'en',
 }

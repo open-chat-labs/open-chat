@@ -1,6 +1,7 @@
 <script>
     import { Meta, Template, Story } from "@storybook/addon-svelte-csf";
     import Button from "./Button.svelte";
+    import StoryTheme from "./StoryTheme.svelte";
 </script>
 
 <Meta
@@ -14,7 +15,11 @@
     }} />
 
 <Template let:args>
-    <Button {...args} on:click={args.onClick}>Click Me!</Button>
+    <StoryTheme>
+        <div class="button-wrapper">
+            <Button {...args} on:click={args.onClick}>Click Me!</Button>
+        </div>
+    </StoryTheme>
 </Template>
 
 <Story name="Primary" args={{}} />
@@ -36,3 +41,11 @@
     args={{
         disabled: true,
     }} />
+
+<style>
+    .button-wrapper {
+        padding: 40px;
+        background-color: #efefef;
+        height: 80vh;
+    }
+</style>

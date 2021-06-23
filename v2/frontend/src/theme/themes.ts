@@ -74,6 +74,7 @@ export interface Theme {
         txt: string;
         bd: string;
         disabled: string;
+        spinner: string;
     }
 
     link: {
@@ -207,6 +208,7 @@ const defaultTheme = {
         txt: "#ffffff",
         bd: "transparent",
         disabled: "#cccccc",
+        spinner: "#ffffff",
     },
 
     link: {
@@ -338,6 +340,7 @@ export const themes: Themes = {
             txt: "#ffffff",
             bd: "transparent",
             disabled: "#cccccc",
+            spinner: "#aaaaaa",
         },
 
         link: {
