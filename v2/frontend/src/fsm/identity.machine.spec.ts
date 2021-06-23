@@ -1,7 +1,7 @@
 import type { HttpAgentRequest, Identity } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
-import { interpret, MachineOptions, assign, createMachine } from 'xstate';
-import type { Event, StateValue } from 'xstate';
+import { interpret, MachineOptions } from 'xstate';
+import type { Event, StateValue, State } from 'xstate';
 import type { IdentityContext, IdentityEvents } from './identity.machine';
 import { identityMachine } from './identity.machine';
 
@@ -13,61 +13,101 @@ const fakeIdentity: Identity = {
 }
 
 // create a test version of all of our side effects
-const testConfig: Config = {
-    guards: {
-        isAnonymous: (_ctx, _) => false,
-        notAnonymous: (_ctx, _) => true,
-    },
+function testConfig(): Config {
+    return {
+        guards: {
+            isAnonymous: (_ctx, _) => false,
+            notAnonymous: (_ctx, _) => true,
+        },
 
-    // we definitely need the services to be separate so that we can easily mock them
-    services: {
-        login: jest.fn().mockResolvedValue(fakeIdentity),
-        logout: jest.fn().mockResolvedValue(undefined),
-        getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
-        startSession: jest.fn().mockResolvedValue(undefined),
+        // we definitely need the services to be separate so that we can easily mock them
+        services: {
+            login: jest.fn().mockResolvedValue(fakeIdentity),
+            logout: jest.fn().mockResolvedValue(undefined),
+            getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
+            startSession: jest.fn().mockResolvedValue(undefined),
+        }
     }
 }
 
-function updateConfig(partialGuards: typeof testConfig.guards = {}, partialServices: typeof testConfig.services = {}) {
+function updateConfig(partialGuards: any = {}, partialServices: any = {}) {
+    const defaultConfig = testConfig();
     return {
-        ...testConfig,
+        ...defaultConfig,
         guards: {
-            ...testConfig.guards,
+            ...defaultConfig.guards,
             ...partialGuards
         },
         services: {
-            ...testConfig.services,
+            ...defaultConfig.services,
             ...partialServices
         }
     }
 }
 
 
-function getService(config: Config = {}) {
-    return interpret(identityMachine.withConfig(config));
-}
-
 describe("identity machine end to end", () => {
-    test('successfully loaded identity', (done) => {
-        const sequence = ['requesting_identity', 'loading_user'];
-
-        const service = interpret(identityMachine.withConfig(testConfig)).onTransition((state) => {
+    function testSequence(
+        sequence: string[],
+        done: any,
+        machine: typeof identityMachine,
+        assert: (state: State<IdentityContext, IdentityEvents, any, any>) => void
+    ) {
+        const service = interpret(machine).onTransition((state) => {
             const nextState = sequence.shift();
             expect(state.matches(nextState)).toBe(true);
             if (sequence.length === 0) {
-                expect(testConfig.services!.getIdentity).toHaveBeenCalled();
-                expect(state.context.identity).toEqual(fakeIdentity);
-                service.stop();
-                done();
+                try {
+                    assert(state);
+                    done();
+                } catch (err) {
+                    done(err);
+                } finally {
+                    service.stop();
+                }
             }
         })
 
         service.start();
+    }
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    })
+
+    test('successfully loaded identity', (done) => {
+        const config = testConfig();
+        testSequence(['requesting_identity', 'loading_user'], done, identityMachine.withConfig(config), (state) => {
+            expect(config.services!.getIdentity).toHaveBeenCalled();
+            expect(state.context.identity).toEqual(fakeIdentity);
+        })
+    })
+
+    test('failed to load identity', (done) => {
+        const config = updateConfig({}, {
+            getIdentity: jest.fn().mockRejectedValue('failed to load identity')
+        });
+        testSequence(['requesting_identity', 'failure'], done, identityMachine.withConfig(config), (state) => {
+            expect(config.services!.getIdentity).toHaveBeenCalled();
+            expect(state.context.identity).toBe(undefined);
+            expect(state.context.error).toBe('failed to load identity');
+        })
+    })
+
+    test('received anonymous identity', (done) => {
+        const config = updateConfig({
+            isAnonymous: () => true
+        });
+        testSequence(['requesting_identity', 'login'], done, identityMachine.withConfig(config), (state) => {
+            expect(config.services!.getIdentity).toHaveBeenCalled();
+            expect(state.context.identity).toBe(fakeIdentity);
+            expect(state.context.error).toBe(undefined);
+        })
     })
 })
 
 describe('identity machine transitions', () => {
-    function testTransition(from: StateValue, ev: Event<IdentityEvents>, to: StateValue, config: Config = testConfig) {
+    function testTransition(from: StateValue, ev: Event<IdentityEvents>, to: StateValue, config: Config = testConfig()) {
         const machine = identityMachine.withConfig(config);
         const nextState = machine.transition(from, ev);
         expect(nextState.value).toBe(to);

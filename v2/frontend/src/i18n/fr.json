@@ -1,3 +1,5 @@
 {
-    "sign_in": "S'identifier"
+    "login": {
+        "signIn": "S'identifier"
+    }
 }

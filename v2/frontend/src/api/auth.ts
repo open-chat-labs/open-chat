@@ -2,6 +2,8 @@ import type { Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { DelegationIdentity } from "@dfinity/identity";
 
+const ONE_MINUTE_MILLIS = 60 * 1000;
+
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL =
     process.env.INTERNET_IDENTITY_URL ||
@@ -36,9 +38,14 @@ export function logout(): Promise<void> {
 }
 
 export function startSession(identity: Identity): Promise<void> {
-    const time = getTimeUntilSessionExpiryMs(identity);
     return new Promise((resolve) => {
-        setTimeout(resolve, time);
+        const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
+        const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
+        if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
+            resolve();
+        } else {
+            setTimeout(resolve, durationUntilLogoutMs);
+        }
         // setTimeout(resolve, 5000);
     })
 }

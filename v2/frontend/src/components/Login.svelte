@@ -12,7 +12,9 @@
         <Logo />
         <h1 class="title">{$_("openChat")}</h1>
         <p class="blurb">
-            {$_("login.blurbPartOne")}<a href="https://internetcomputer.org/"
+            {$_("login.blurbPartOne")}<a
+                target="_blank"
+                href="https://internetcomputer.org/"
                 >{$_("theInternetComputer")}</a
             >{$_("login.blurbPartTwo")}
         </p>
