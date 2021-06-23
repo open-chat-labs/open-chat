@@ -55,7 +55,7 @@
 {/if}
 
 <Overlay active={$state.matches("expired")}>
-    <ExpiredModal />
+    <ExpiredModal on:login={() => send({ type: "ACKNOWLEDGE_EXPIRY" })} />
 </Overlay>
 
 <svelte:window on:resize={calculateHeight} />

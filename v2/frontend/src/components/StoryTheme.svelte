@@ -12,6 +12,7 @@
 <style lang="scss">
     .theme {
         position: absolute;
+        z-index: 10;
         top: 20px;
         right: 20px;
     }
