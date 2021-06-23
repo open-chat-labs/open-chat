@@ -1,6 +1,6 @@
 import type { HttpAgentRequest, Identity } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
-import { interpret, MachineOptions } from 'xstate';
+import { interpret, MachineOptions, assign, createMachine } from 'xstate';
 import type { Event, StateValue } from 'xstate';
 import type { IdentityContext, IdentityEvents } from './identity.machine';
 import { identityMachine } from './identity.machine';
@@ -47,7 +47,26 @@ function getService(config: Config = {}) {
     return interpret(identityMachine.withConfig(config));
 }
 
-describe('identity machine', () => {
+describe("identity machine end to end", () => {
+    test('successfully loaded identity', (done) => {
+        const sequence = ['requesting_identity', 'loading_user'];
+
+        const service = interpret(identityMachine.withConfig(testConfig)).onTransition((state) => {
+            const nextState = sequence.shift();
+            expect(state.matches(nextState)).toBe(true);
+            if (sequence.length === 0) {
+                expect(testConfig.services!.getIdentity).toHaveBeenCalled();
+                expect(state.context.identity).toEqual(fakeIdentity);
+                service.stop();
+                done();
+            }
+        })
+
+        service.start();
+    })
+})
+
+describe('identity machine transitions', () => {
     function testTransition(from: StateValue, ev: Event<IdentityEvents>, to: StateValue, config: Config = testConfig) {
         const machine = identityMachine.withConfig(config);
         const nextState = machine.transition(from, ev);
