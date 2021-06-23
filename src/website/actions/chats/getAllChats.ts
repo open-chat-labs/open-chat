@@ -9,6 +9,7 @@ import { Option, Timestamp } from "../../domain/model/common";
 import { HttpError } from "../../errors/httpError";
 import { ViewMode } from "../../domain/model/viewMode";
 import { extractChatIdFromLocation } from "../../domain/historyFunctions";
+import { UserId } from "../../domain/model/users";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
@@ -23,7 +24,7 @@ export default function() {
 
         dispatch(requestEvent);
 
-        const response = await chatsService.getChats({
+        const response = await chatsService.getUpdates({
             updatedSince: null,
             messageCountForTopChat: PAGE_SIZE
         });
@@ -45,6 +46,7 @@ export default function() {
                 type: GET_ALL_CHATS_SUCCEEDED,
                 payload: {
                     chats: response.chats,
+                    blockedUsers: response.blockedUsers,
                     latestUpdateTimestamp: response.latestUpdateTimestamp,
                     selectedChatIndex: chatIndex
 
@@ -69,6 +71,7 @@ export type GetAllChatsSucceededEvent = {
     type: typeof GET_ALL_CHATS_SUCCEEDED,
     payload: {
         chats: ConfirmedChat[],
+        blockedUsers: UserId[],
         latestUpdateTimestamp: Option<Timestamp>,
         selectedChatIndex: Option<number>
     }

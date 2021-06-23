@@ -21,6 +21,7 @@ import DefaultGroupChatIcon from "../shared/DefaultGroupChatIcon";
 import LastOnline from "./LastOnline";
 import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import { LeftPanelType, RightPanelType } from "../../domain/model/panels";
+import DirectChatMenu from "./DirectChatMenu";
 
 export default React.memo(Header);
 
@@ -61,7 +62,7 @@ function Header() {
     let chatMenu: Option<JSX.Element> = null;
 
     if (chatFunctions.isDirectChat(chat)) {
-        //chatMenu = <DirectChatMenu />;
+        chatMenu = <DirectChatMenu userId={chat.them} />;
         let imageId = null;
         let isOnline = false;
         if (userDictionary.hasOwnProperty(chat.them)) {
