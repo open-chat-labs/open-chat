@@ -76,6 +76,10 @@ export interface Theme {
         disabled: string;
     }
 
+    link: {
+        underline: string;
+    }
+
     modal: {
         txt: string;
         bg: string;
@@ -205,6 +209,10 @@ const defaultTheme = {
         disabled: "#cccccc",
     },
 
+    link: {
+        underline: "#22A7F2",
+    },
+
     modal: {
         bg: "#ffffff",
         txt: "#191919",
@@ -330,6 +338,10 @@ export const themes: Themes = {
             txt: "#ffffff",
             bd: "transparent",
             disabled: "#cccccc",
+        },
+
+        link: {
+            underline: "#085d8c",
         },
 
         modal: {

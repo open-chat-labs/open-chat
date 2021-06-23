@@ -1,8 +1,10 @@
 {
     "openChat": "OpenChat",
+    "theInternetComputer": "The Internet Computer",
     "login": {
         "welcomeTo": "Welcome to ...",
-        "beforeContinuing": "Before continuing you must sign into The Internet Computer",
+        "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
+        "blurbPartTwo": " - the world's first internet-scale blockchain.",
         "signIn": "Sign in"
     }
 }

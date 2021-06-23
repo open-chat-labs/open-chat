@@ -11,7 +11,11 @@
         <h4 class="subtitle">{$_("login.welcomeTo")}</h4>
         <Logo />
         <h1 class="title">{$_("openChat")}</h1>
-        <p>{$_("login.beforeContinuing")}</p>
+        <p class="blurb">
+            {$_("login.blurbPartOne")}<a href="https://internetcomputer.org/"
+                >{$_("theInternetComputer")}</a
+            >{$_("login.blurbPartTwo")}
+        </p>
         <Button
             loading={$state.matches("logging_in")}
             on:click={() => send({ type: "LOGIN" })}
@@ -36,7 +40,11 @@
         justify-content: center;
         align-items: center;
         @include size-above(sm) {
-            @include fullScreenImg("../assets/campfire.avif");
+            // @include fullScreenImg("../assets/campfire.avif");
+            // @include fullScreenImg("../assets/wood.jpg");
+            // @include fullScreenImg("../assets/sunset.jpg");
+            @include fullScreenImg("../assets/underwater.jpg");
+            // @include fullScreenImg("../assets/coral.jpg");
         }
         @include fullHeight();
     }
@@ -59,20 +67,28 @@
         }
 
         .title {
-            @include font(bold, normal, fs-180);
+            @include font(bold, normal, fs-220);
             margin: $sp5 0;
         }
 
         @include z-index(login);
 
-        p {
+        .blurb {
             text-align: center;
             margin-bottom: $sp5;
+            @include font(light, italic, fs-100);
         }
 
         @include size-below(xs) {
             width: 100%;
             margin: 0 $sp4;
+        }
+
+        a {
+            text-decoration: underline;
+            text-decoration-color: var(--link-underline);
+            text-underline-offset: $sp1;
+            cursor: pointer;
         }
     }
 </style>
