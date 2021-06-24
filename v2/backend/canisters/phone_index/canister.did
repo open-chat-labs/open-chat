@@ -1,16 +1,5 @@
-// This canister will store:
-// phone_numbers: HashMap<NormalisedNumber, Info>
-// Info {
-//     most_recent_code: u32,
-//     when_code_generated: Option<Timestamp>,
-//     when_code_claimed: Option<Timestamp>,
-// }
-
-// 1. Sign-in with II
-// 2. If no account then start registration process
-// 2.1 CAPTCHA
-// 2.2 Enter phone number - call register
-// 2.3 Enter 6-digit code - call claim
+// This canister will store a map of phone number to code and claim info
+// In heartbeat function will check balance and notify the "controller" canister if its low
 
 type CanisterId = principal;
 

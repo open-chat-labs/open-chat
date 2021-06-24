@@ -1,15 +1,112 @@
+// Maintains a store of groups
+// In heartbeat function do zero or one of the following:
+// 1. upgrade group canisters as needed
+// 2. top-up group canisters with cycles as needed
+// 3. notify the "controller" canister if this canister's cycle balance is getting low
+
+type Timestamp = nat64;
+type CanisterId = principal;
+type GroupId = CanisterId;
+
+type CreateRequest =
+    record {
+        name: text;
+        is_public: bool;
+    };
+
+type CreateResponse =
+    variant {
+        Success: record {
+            canister_id: CanisterId;
+        };
+        PublicGroupAlreadyExists;
+        GroupLimitExceeded;
+        InvalidName;
+        NameTooLong: nat16;
+        UnknownError;
+    };
+
+type UpgradeRequest =
+    record {
+        wasm: vec nat8;
+        version: text;
+    };
+
+type UpgradeResponse =
+    variant {
+        Success: record {
+            canister_id: CanisterId;
+        };
+        Failure; // Need to enumerate these
+    };
+
+type DeleteRequest =
+    record {
+        group_id: GroupId;
+    };
+
+type DeleteResponse =
+    variant {
+        Success;
+        NotAdmin;
+        NotFound;
+    };
+
+type SearchRequest =
+    record {
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchResponse =
+    variant {
+        Success: record {
+            groups: vec record {
+                group_id: GroupId;
+                name: text;
+                score: nat32;
+            };
+        };
+        TermTooShort: nat16;
+        TermTooLong: nat16;
+        InvalidTerm;
+    };
+
+type BalanceNotification =
+    record {
+        balance: nat;
+    };
+
+type Metrics = 
+    record {
+        public_group_count: nat64;
+        private_group_count: nat64;
+        active_public_group_count: nat64;
+        active_private_group_count: nat64;
+        deleted_public_group_count: nat64;
+        deleted_private_group_count: nat64;
+        cycles_balance: int64;
+        bytes_used: nat64;
+        timestamp: nat64;
+        caller_id: principal;
+        wasm_memory_used: nat64;
+    };
+
 service: {
     // Called by a user canister - costs 0.2T
-    create_group: (CreateGroupRequest) -> (CreateGroupResponse);
+    create: (CreateRequest) -> (CreateResponse);
+    
+    // Takes a new Group canister WASM and schedules a rolling upgrade
+    upgrade: (UpgradeRequest) -> (UpgradeResponse);
     
     // Any group admin can delete the group
-    delete_group: (DeleteGroupRequest) -> (DeleteGroupResponse);
+    delete: (DeleteRequest) -> (DeleteResponse);
 
-    // Find public groups
-    search_groups: (SearchGroupsRequest) -> (SearchGroupsResponse) query;
+    // Search for public groups
+    search: (SearchRequest) -> (SearchResponse) query;
 
     // Called by a group canister when it is low on cycles
-    notify_low_balance: () -> ();
+    notify_balance: (BalanceNotification) -> ();
 
-    metrics: () -> (MetricsResponse) query;
+    metrics: () -> (Metrics) query;
 }
