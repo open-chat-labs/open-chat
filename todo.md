@@ -56,26 +56,27 @@
 - Shard chats
 
 # Questions
-- Authentication - how can we get to an MVP to be able to demo open-chat on IC?
+- <del>Authentication - how can we get to an MVP to be able to demo open-chat on IC?</del>
 - Sending cycles to users - would be good to discuss the shape of the API which we can then mock
 - Writing e2e tests - we want to be able to use the generated .js for canister endpoints but with the principal as a parameter
 - Serve assets like images over http from canister
-- Circumvent 2Mb limit so we can run FE code in development mode
+- <del>Circumvent 2Mb limit so we can run FE code in development mode</del>
 - How close are clocks on different canisters around the world?
 
 # Bugs
+- SendMessage returns full participants list and latest messages!!
 - Emoji Picker categories don't seem to work until the the picker has been used (https://github.com/missive/emoji-mart/issues/473)
 - <del>Messages being de-duped by content + sender. Instead give each message a client generated uuid (can be removed server-side once confirmed to save space)</del>
-- The UI is not shrinking properly when there is a chat whose latest message is quite long
+- <del>The UI is not shrinking properly when there is a chat whose latest message is quite long</del>
 - Cross-browser render issues in general
-- Validation - usernanme length, group name length, message length etc
+- <del>Validation - usernanme length, group name length, message length etc</del>
 - Lots of places where long content is not overflowing/scrolling properly
 - <del>Memory leak on client due to storing media blobs in main memory. We should make use of http cache. Would be good if we could serve images from canister over http</del>
 - In message box
   0 Add emoji
   0 Delete emoji
   0 Type test and it appear in font-size: 18px span
-- Add multiple emojis in a row and they appear on separate lines
+- <del>Add multiple emojis in a row and they appear on separate lines</del>
 - If the user changes their profile image the old image is currently orphaned on the IC and never deleted. Could solve by using the userId (+prefix) as the data key and also storing a version number with data in general, so that when the serving of content over http is supported, we can use etag caching based on the version number
 
 # Micro-features
@@ -94,16 +95,16 @@
   - Forward message
 
 # Ahead of mainnet release
-* Limit users to 10000
-- Validation on all user input
-* Limit image size to 1Mb
-* Limit video size to 5Mb
-* Limit other file size to 1Mb
-- Limit number of chats per user to 100
-- While the canister memory remaining is within a threshold then delete file data oldest first and add a flag to the corresponding message
-* Add dialog on first start expaining this is a demo version + link to dialog from menu
-- Fix issue where refresh takes user to sign-in page
-- Handle sign-out like we do in NNS app
+- <del>Limit users to 10000</del>
+- <del>Validation on all user input</del>
+- <del>Limit image size to 1Mb</del>
+- <del>Limit video size to 5Mb</del>
+- <del>Limit other file size to 1Mb</del>
+- <del>WON'T DO - Limit number of chats per user to 100</del>
+- <del>While the canister memory remaining is within a threshold then delete file data oldest first and add a flag to the corresponding message</del>
+- <del>Add dialog on first start expaining this is a demo version + link to dialog from menu</del>
+- <del>Fix issue where refresh takes user to sign-in page</del>
+- <del>Handle sign-out like we do in NNS app</del>
 
 - Finish leave/delete group
 - Show modal spinner when calling leave/delete group

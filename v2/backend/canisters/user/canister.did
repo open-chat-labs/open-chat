@@ -1,24 +1,312 @@
+// This is the canister for an indvidual user.
+// It holds all the user's direct chats and links to their group chats.
+// For now it also holds the file data for any direct messages sent by the user.
 
-type PutChunkRequest
+type Timestamp = nat64;
+type CanisterId = principal;
+type UserId = CanisterId;
+type GroupId = CanisterId;
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type BlobReference = 
+    record {
+        canister_id: CanisterId;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type MediaContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type MessageContent =
+    variant {
+        Text: TextContent;
+        Media: MediaContent;
+        File: FileContent;
+        Cycles: CyclesContent;
+    };
+
+type ReplyContext =
+    record {
+        user_id: UserId;
+        message_id: nat32;
+        content: MessageContent;
+    };
+
+type Message =
+    record {
+        id: nat32;
+        client_message_id: text;
+        timestamp: Timestamp;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
+type ChatSummary =
+    record {
+        them: UserId;
+        display_date: Timestamp;
+        last_updated: Timestamp;
+        unread_by_me_message_id_ranges: vec vec nat32;
+        unread_by_them_message_id_ranges: vec vec nat32;
+        latest_messages: vec Message;
+    };
+
+type SendMessageRequest =
+    record {
+        recipient: UserId;
+        client_message_id: text;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
+type SendMessageResponse =
+    variant {
+        Success: record {
+            chat_summary: ChatSummary;
+            message_index: nat32;
+            timestamp: Timestamp;
+        };
+        RecipientNotFound;
+        BalanceExceeded;
+        MessageTooLong: nat32;
+        InvalidRequest;
+        SenderBlocked;
+        RecipientBlocked;
+    }; 
+
+type MarkReadRequest =
+    record {
+        user_id: UserId;
+        from_index: nat32;
+        to_index: nat32;
+    };
+
+type MarkReadResponse =
+    variant {
+        Success: record {
+            unread_message_id_ranges: vec vec nat32;
+        };
+        ChatNotFound;
+    }; 
+
+type SetAvatarRequest =
+    record {
+        mime_type: text;
+        bytes: vec nat8;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        FileTooBig: nat32;
+        InvalidMimeType: nat32;
+    }; 
+
+type BlockUserRequest =
+    record {
+        user_id: UserId;        
+    };
+
+type UnblockUserRequest =
+    record {
+        user_id: UserId;        
+    };
+
+type PutChunkRequest =
     record {
         blob_id: nat;
         index: nat32;
         bytes: vec nat8;
     };
 
-type PutChunkResponse
+type PutChunkResponse =
     variant {
         Success;
         Full;
     }; 
 
-type GetChunkRequest
+type CreateGroupRequest =
+    record {
+        name: text;
+        is_public: bool;
+    };
+
+type CreateGroupResponse =
+    variant {
+        Success: record {
+            canister_id: CanisterId;
+        };
+        PublicGroupAlreadyExists;
+        GroupLimitExceeded: nat16;
+        InvalidName;
+        NameTooLong: nat16;
+        UnknownError;
+    }; 
+
+type HandleMessageRequest =
+    record {
+        sender: UserId;
+        client_message_id: text;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
+type HandleMessageResponse =
+    variant {
+        Success;
+        SenderBlocked;
+        Out
+    }; 
+
+type HandleAddedToGroupRequest =
+    record {
+        added_by: UserId;
+        group_id: GroupId;
+    };
+
+type HandleAddedToGroupResponse =
+    variant {
+        Success;
+        Blocked;        
+    }; 
+
+type HandleRemovedFromGroupRequest =
+    record {
+        group_id: GroupId;
+    };
+
+type HandleInvitedToGroupRequest =
+    record {
+        invited_by: UserId;
+        group_id: GroupId;
+    };
+
+type HandleInvitedToGroupResponse =
+    variant {
+        Success;
+    }; 
+
+type HandleJoinedGroupRequest =
+    record {
+        user_principal: principal;
+        group_id: GroupId;
+    };
+
+type HandleJoinedGroupResponse =
+    variant {
+        Success;
+        Unauthorized;
+    }; 
+
+type HandleLeftGroupRequest =
+    record {
+        user_principal: principal;
+        group_id: GroupId;
+    };
+
+type HandleLeftGroupResponse =
+    variant {
+        Success;
+        Unauthorized;
+    }; 
+
+type GetChatsRequest =
+    record {
+        updated_since: opt Timestamp;
+        message_count_for_top_chat: opt nat16;
+    };
+
+type GetChatsResponse =
+    variant {
+        Success: record {
+            chats: vec ChatSummary;
+        }; 
+    }; 
+
+type GetMessagesRequest =
+    record {
+        user_id: UserId;
+        from_index: nat32;
+        to_index: nat32;
+    };
+
+type GetMessagesSuccess =
+    record {
+        messages: vec Message;
+        latest_message_id: nat32;
+    };
+
+type GetMessagesResponse =
+    variant {
+        Success: GetMessagesSuccess;
+        ChatNotFound;
+    }; 
+
+type GetMessagesByIndexRequest =
+    record {
+        user_id: UserId;
+        messages: vec nat32;
+    };
+
+type GetMessagesByIndexResponse =
+    variant {
+        Success: GetMessagesSuccess;
+        ChatNotFound;
+    }; 
+
+type SearchAllMessagesRequest =
+    record {
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchAllMessagesResponse =
+    variant {
+        Success: record {
+            matches: vec record {
+                is_direct: bool;
+                chat: CanisterId;
+                message: Message;
+            };
+        };
+        Failure;
+    }; 
+
+type GetChunkRequest =
     record {
         blob_id: nat;
         index: nat32;
     };
 
-type GetChunkResponse
+type GetChunkResponse =
     variant {
         Success: record {
             bytes: vec nat8;
@@ -48,20 +336,21 @@ service: {
     send_message: (SendMessageRequest) -> (SendMessageResponse);
     mark_read: (MarkReadRequest) -> (MarkReadResponse);
     set_avatar: (SetAvatarRequest) -> (SetAvatarResponse);
-    block_user: (BlockUserRequest) -> (BlockUserResponse);
+    block_user: (BlockUserRequest) -> ();
+    unblock_user: (UnblockUserRequest) -> ();
     put_chunk: (PutChunkRequest) -> (PutChunkResponse);
     create_group: (CreateGroupRequest) -> (CreateGroupResponse);
     
     handle_message_received: (HandleMessageRequest) -> (HandleMessageResponse);
     handle_added_to_group: (HandleAddedToGroupRequest) -> (HandleAddedToGroupResponse);
-    handle_removed_from_group: (HandleRemovedFromGroupRequest) -> (HandleRemovedFromGroupResponse);
-    handle_invited_to_group: () -> ();
-    handle_joined_group: () -> ();
-    handle_left_group: () -> ();
+    handle_removed_from_group: (HandleRemovedFromGroupRequest) -> ();
+    handle_invited_to_group: (HandleInvitedToGroupRequest) -> (HandleInvitedToGroupResponse);
+    handle_joined_group: (HandleJoinedGroupRequest) -> (HandleJoinedGroupResponse);
+    handle_left_group: (HandleLeftGroupRequest) -> (HandleLeftGroupResponse);
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_messages: (GetMessagesRequest) -> (GetMessagesResponse) query;
-    get_messages_by_id: (GetMessagesByIdRequest) -> (GetMessagesByIdResponse) query;
+    get_messages_by_index: (GetMessagesByIndexRequest) -> (GetMessagesByIndexResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesRequest) -> (SearchAllMessagesResponse) query;

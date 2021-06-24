@@ -1,41 +1,94 @@
-// We need heartbeat enabled on our subnet
-
-// Installs and upgrades top-level canisters
-// Maintains a registry of the top-level canisters (id, version)
+// This is the root of the tree of OpenChat canisters.
+// Maintains a registry of the top-level canisters (id, version).
+// All descendant install/upgrades and top-ups happen via this canister.
+// In the heartbeat function top-up needy top-level canisters with cycles as needed
 
 type CanisterId = principal;
 
-type CanisterType = 
+type IndexCanister = 
     variant {
         PhoneIndex;
         UserIndex;
         GroupIndex;
-        Website;
     };
 
-type InstallCanisterRequest = 
+type BackendCanister = 
+    variant {
+        PhoneIndex;
+        UserIndex;
+        GroupIndex;
+        User;
+        Group;
+    };
+
+type InstallIndexRequest = 
     record {
-        type: CanisterType;
+        canister_type: IndexCanister;
         wasm: vec nat8;
         version: text;
     };
 
-type InstallCanisterResponse = 
+type InstallIndexResponse = 
     variant {
         Success: CanisterId;
         Failure; // Need to enumerate these
     };
 
-service(): {
-    // This either creates or upgrades a top-level canister. 
-    // The top-level canister WASM contains the WASM of its child canister.
-    // On bootstrap the website canister must be created last and it will be passed in 
-    // the canister ids of the other canisters.
-    // This method is also used to upgrade child canisters by upgrading the top-level
-    // canister embedded with the new WASM of its child canister.
-    install_canister: (InstallCanisterRequest) -> (InstallCanisterResponse);
+type InstallWebsiteRequest = 
+    record {
+        canister_type: IndexCanister;
+        wasm: vec nat8;
+        version: text;
+        // Assets?
+    };
+
+type InstallWebsiteResponse = 
+    variant {
+        Success: CanisterId;
+        Failure; // Need to enumerate these
+    };
+
+type UpgradeRequest = 
+    record {
+        canister_type: BackendCanister;
+        wasm: vec nat8;
+        version: text;
+    };
+
+type UpgradeResponse = 
+    variant {
+        Success: record {
+            canister_id: CanisterId;
+        };
+        Failure; // Need to enumerate these
+    };
+
+type BalanceNotification =
+    record {
+        balance: nat;
+    };
+
+type Metrics = 
+    record {
+        cycles_balance: int64;
+        bytes_used: nat64;
+        timestamp: nat64;
+        caller_id: principal;
+        wasm_memory_used: nat64;
+    };
+
+service: {
+    // This creates and installs the initial WASM of the index canisters
+    install_index: (InstallIndexRequest) -> (InstallIndexResponse);
+
+    // This creates/installs or upgrades the website canister
+    install_website: (InstallWebsiteRequest) -> (InstallWebsiteResponse);
     
-    // Called by a top-level canister when it is low on cycles. The controller will then
-    // queue the notification and use the hearbeat to call deposit_cycles on needy canisters
-    notify_low_balance: () -> ();
+    // This is used to upgrade the WASM of any back-end canister
+    upgrade: (UpgradeRequest) -> (UpgradeResponse);
+
+    // Called by a top-level canister when it is low on cycles
+    notify_balance: (BalanceNotification) -> ();
+
+    metrics: () -> (Metrics) query;
 }
