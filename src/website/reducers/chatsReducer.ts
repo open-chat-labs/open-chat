@@ -502,7 +502,7 @@ export default produce((state: ChatsState, event: Event) => {
             const updatedChat = event.payload.chat;
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = chatFunctions.getChat(state.chats, event.payload.chat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            let [chat, index] = chatFunctions.getChat(state.chats, updatedChat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
 
             state.chats[index] = chatFunctions.mergeUpdates(chat, updatedChat, index === state.selectedChatIndex);
             const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
