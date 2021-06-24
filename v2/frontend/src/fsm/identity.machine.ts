@@ -18,6 +18,7 @@ export interface IdentityContext {
 export type IdentityEvents =
     | { type: 'ACKNOWLEDGE_EXPIRY' }
     | { type: 'REQUEST_IDENTITY' }
+    | { type: 'REGISTER_USER', username: string }
     | { type: 'LOGOUT' }
     | { type: 'LOGIN' }
     | { type: 'done.invoke.getIdentity', data: Identity }

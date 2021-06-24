@@ -35,6 +35,14 @@
     $: {
         console.log($state.value);
     }
+
+    function logout() {
+        send({ type: "LOGOUT" });
+    }
+
+    function registerUser(ev: CustomEvent<{ username: string }>) {
+        send({ type: "REGISTER_USER", username: ev.detail.username });
+    }
 </script>
 
 {#if $state.matches("login") || $state.matches("logging_in")}
@@ -42,7 +50,10 @@
         loading={$state.matches("logging_in")}
         on:login={() => send({ type: "LOGIN" })} />
 {:else if $state.matches("register_user") || $state.matches("registering_user")}
-    <Register />
+    <Register
+        busy={$state.matches("registering_user")}
+        on:logout={logout}
+        on:registerUser={registerUser} />
 {:else if $state.matches("logged_in")}
     <h1>We are logged in</h1>
     <!-- <Router {routes} /> -->
