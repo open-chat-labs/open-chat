@@ -8,9 +8,7 @@ module.exports = {
         "prettier",
     ],
     rules: {
-        "@typescript-eslint/no-explicit-any": [
-            "error"
-        ],
-        "no-unused-vars": ["warn", { "argsIgnorePatter": "^_" }]
+        "@typescript-eslint/no-explicit-any": ["error"],
+        "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
 };
