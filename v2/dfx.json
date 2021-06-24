@@ -1,0 +1,51 @@
+{
+  "canisters": {
+    "chats": {
+      "type": "custom",
+      "candid": "backend/chats/chats.did",
+      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
+      "build": "./generate-wasm.sh chats"
+    },
+    "p2p": {
+      "type": "custom",
+      "candid": "backend/p2p/p2p.did",
+      "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
+      "build": "./generate-wasm.sh p2p"
+    },
+    "user_mgmt": {
+      "type": "custom",
+      "candid": "backend/user_mgmt/user_mgmt.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
+      "build": "./generate-wasm.sh user_mgmt"
+    },
+    "website": {
+      "dependencies": [
+        "chats",
+        "p2p",
+        "user_mgmt"
+      ],
+      "frontend": {
+        "entrypoint": "./frontend/public/index.html"
+      },
+      "source": [
+        "./frontend/public/assets",
+        "./frontend/public/build",
+        "./frontend/public"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "dfx": "0.7.1",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}

@@ -1,0 +1,34 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "include": [
+    "./src/**/*"
+  ],
+  "exclude": [
+    "node_modules/*",
+    "__sapper__/*",
+    "public/*"
+  ],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "module": "es2020",
+    "strict": true,
+    "types": [
+      "jest",
+      "node"
+    ],
+    "paths": {
+      "dfx-generated/chats": [
+        "../.dfx/ic/canisters/chats/chat.js"
+      ],
+      "dfx-generated/p2p": [
+        "../.dfx/ic/canisters/p2p/p2p.js"
+      ],
+      "dfx-generated/user_mgmt": [
+        "../.dfx/ic/canisters/user_mgmt/user_mgmt.js"
+      ],
+      "dfx-types/*": [
+        "../.dfx/local/canisters/*"
+      ]
+    }
+  },
+}
