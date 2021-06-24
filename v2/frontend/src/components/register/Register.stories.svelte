@@ -1,17 +1,10 @@
 <script>
     import { Meta, Template, Story } from "@storybook/addon-svelte-csf";
     import Register from "./Register.svelte";
-    import StoryTheme from "./StoryTheme.svelte";
+    import StoryTheme from "../StoryTheme.svelte";
 </script>
 
-<Meta
-    title="Register"
-    component={Register}
-    argTypes={{
-        loading: { control: "boolean" },
-        onLogout: { action: "onLogout" },
-        onRegisterUser: { action: "onRegisterUser" },
-    }} />
+<Meta title="Register" component={Register} />
 
 <Template let:args>
     <StoryTheme>

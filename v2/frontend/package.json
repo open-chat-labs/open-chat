@@ -85,6 +85,7 @@
         "@xstate/inspect": "^0.4.1",
         "@xstate/svelte": "^0.1.0",
         "@xstate/test": "^0.4.2",
+        "country-telephone-data": "^0.6.3",
         "emoji-mart": "^3.0.1",
         "preact": "^10.5.13",
         "remount": "^0.11.0",

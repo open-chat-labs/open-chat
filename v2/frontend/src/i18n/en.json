@@ -6,5 +6,11 @@
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
         "blurbPartTwo": " - the world's first internet-scale blockchain.",
         "signIn": "Sign in"
+    },
+    "register": {
+        "tellUsWho": "Tell us who you are ...",
+        "registerAs": "To register as a user",
+        "enterPhone": "please enter your phone number below",
+        "requestCode": "Request code"
     }
 }
