@@ -17,6 +17,7 @@ export type RegisterEvents =
     | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: number }
     | { type: "SUBMIT_REGISTRATION_CODE"; code: number }
     | { type: "REGISTER_USER"; username: string }
+    | { type: "COMPLETE" }
     | { type: "done.invoke.logout" }
     | { type: "error.platform.logout"; data: unknown };
 
@@ -58,7 +59,14 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
             },
         },
         registering_user_failed: {},
-        registering_user_succeeded: {},
+        registering_user_succeeded: {
+            on: {
+                COMPLETE: "registration_complete",
+            },
+        },
+        registration_complete: {
+            type: "final",
+        },
         unexpected_error: {},
     },
 };

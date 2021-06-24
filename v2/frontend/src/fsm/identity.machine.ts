@@ -144,6 +144,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     serviceContainer: ctx.serviceContainer,
                 }),
                 // todo - there might be more than one way that this sub-machine ends up being "done"
+                // also we need to pick up the user data from the on-done
                 onDone: "logged_in",
             },
         },

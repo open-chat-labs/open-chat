@@ -19,6 +19,10 @@
         machine.send({ type: "SUBMIT_REGISTRATION_CODE", ...ev.detail });
     }
 
+    function complete() {
+        machine.send({ type: "COMPLETE" });
+    }
+
     $: verifying =
         $machine.matches("checking_registration_code") ||
         $machine.matches("registering_user");
@@ -32,7 +36,9 @@
     awaitingPhoneNumber={$machine.matches("awaiting_phone_number")}
     awaitingCode={$machine.matches("awaiting_registration_code")}
     codeValid={$machine.matches("registration_code_valid")}
+    userValid={$machine.matches("registering_user_succeeded")}
     {verifying}
     on:submitPhoneNumber={submitPhoneNumber}
     on:submitUsername={submitUsername}
+    on:complete={complete}
     on:submitCode={submitCode} />

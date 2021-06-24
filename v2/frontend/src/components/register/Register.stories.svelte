@@ -4,7 +4,16 @@
     import StoryTheme from "../StoryTheme.svelte";
 </script>
 
-<Meta title="Register" component={Register} />
+<Meta
+    title="Register"
+    component={Register}
+    argTypes={{
+        awaitingPhoneNumber: { control: "boolean" },
+        awaitingCode: { control: "boolean" },
+        verifying: { control: "boolean" },
+        codeValid: { control: "boolean" },
+        userValid: { control: "boolean" },
+    }} />
 
 <Template let:args>
     <StoryTheme>
