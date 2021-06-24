@@ -15,4 +15,5 @@ export const parameters = {
   },
   locales: ['en', 'fr', 'ar'],
   defaultLocale: 'en',
+  layout: 'fullscreen',
 }

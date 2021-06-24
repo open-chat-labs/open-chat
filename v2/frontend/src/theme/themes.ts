@@ -339,7 +339,7 @@ export const themes: Themes = {
             hv: "#053d5c",
             txt: "#ffffff",
             bd: "transparent",
-            disabled: "#cccccc",
+            disabled: "#454545",
             spinner: "#aaaaaa",
         },
 

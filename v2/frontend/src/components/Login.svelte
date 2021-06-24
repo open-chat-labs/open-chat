@@ -19,7 +19,7 @@
                 >{$_("theInternetComputer")}</a
             >{$_("login.blurbPartTwo")}
         </p>
-        <Button {loading} on:click={() => dispatch("login")}
+        <Button disabled={loading} {loading} on:click={() => dispatch("login")}
             >{$_("login.signIn")}</Button>
     </div>
 </div>

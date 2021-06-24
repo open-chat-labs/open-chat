@@ -18,6 +18,6 @@
     </StoryTheme>
 </Template>
 
-<Story name="Login" args={{}} />
+<Story name="Default" args={{}} />
 
-<Story name="Loading" args={{ loading: true }} />
+<Story name="Logging In" args={{ loading: true }} />

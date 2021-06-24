@@ -61,7 +61,7 @@ In due course, we can add other language specific json files to the project and 
 Also, related to i18n, we wish to make sure that all UI code works correctly in rtl mode as well as ltr, so be sure to test that when making UI changes. 
 
 ## Styling
-Styles are generally written within svelte components using scss. Useful css utilities and variables are provided via a `mixins.scss` file which can be imported as needed.
+Styles are generally written within svelte components using scss. Useful css utilities and variables are provided via a `mixins.scss` file which can be imported as needed. Avoid ad hoc inline values for things like colors, spacing and font sizes. Use the mixins and scss variables defined and we will automatically achieve a certain continuity and consistency in the UI. 
 
 ### Theming 
 Themes are provided via css variables. When defining colours within the svelte components, use existing theme level css variables or extend the theme if necessary. Do not hard-code colours. 
@@ -70,13 +70,22 @@ Themes are provided via css variables. When defining colours within the svelte c
 // Bad 
 .my-thing {
     background-color: #efefef;
+    padding: 10px;
 }
 
 // Good 
 .my-thing {
     backgroung-color: var(--my-thing-bg);
+    padding: $sp4;
 }
 ```
 
 ## State Handling 
 There are a number of options within svelte and we should use the most appropriate tool for each case. Simple local state can just be handled with local variables. If state is simple and self-contained but required globally, then it can be provided using svelte stores. If state is complex and governed by important rules then it should be managed using xstate state machines. 
+
+## Storybook
+A good strategy for developing UI in isolation of any business logic is to try to develop pure UI components and create storybook stories for them during development. This has a number of benefits. It encourages the UI components to be appropriately decoupled from business logic and state handling. It allows UI development to proceed ahead of business logic if necessary. It leaves a useful set of stories that can serve as documentation on how UI components should be used. 
+
+To run storybook simply run `npm run storybook` and it should start running on `http://localhost:6006`. 
+
+Prefer to write storybook stories as svelte components rather than using js. 
