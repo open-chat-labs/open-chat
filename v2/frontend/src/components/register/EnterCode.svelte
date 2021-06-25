@@ -5,6 +5,8 @@
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
 
+    export let invalid = false;
+
     let codeValue: string = "";
 
     function submitCode() {
@@ -15,10 +17,15 @@
     $: valid = !isNaN(codeNumber);
 </script>
 
-<p class="enter-code">{$_("register.pleaseEnterCode")}</p>
+{#if invalid}
+    <p class="enter-code">{$_("register.codeInvalid")}</p>
+{:else}
+    <p class="enter-code">{$_("register.pleaseEnterCode")}</p>
+{/if}
 
 <div class="code-wrapper">
     <Input
+        {invalid}
         align="center"
         fontSize="large"
         autofocus={true}
@@ -29,8 +36,7 @@
 </div>
 
 <div class="actions">
-    <Button disabled={!valid} on:click={submitCode}
-        >{$_("register.validateCode")}</Button>
+    <Button disabled={!valid} on:click={submitCode}>{$_("register.validateCode")}</Button>
 </div>
 
 <style type="text/scss">

@@ -53,13 +53,21 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 REGISTER_USER: "registering_user",
             },
         },
-        registration_code_invalid: {},
+        registration_code_invalid: {
+            on: {
+                SUBMIT_REGISTRATION_CODE: "checking_registration_code",
+            },
+        },
         registering_user: {
             after: {
                 1500: "registering_user_succeeded",
             },
         },
-        registering_user_failed: {},
+        registering_user_failed: {
+            on: {
+                REGISTER_USER: "registering_user",
+            },
+        },
         registering_user_succeeded: {
             on: {
                 COMPLETE: "registration_complete",

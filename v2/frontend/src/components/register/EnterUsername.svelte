@@ -4,6 +4,7 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    export let invalid = false;
 
     let username: string = "";
 
@@ -14,8 +15,14 @@
     $: valid = username.length >= 3;
 </script>
 
-<p class="enter-username">{$_("register.enterUsername")}</p>
+{#if invalid}
+    <p class="enter-username">{$_("register.usernameInvalid")}</p>
+{:else}
+    <p class="enter-username">{$_("register.enterUsername")}</p>
+{/if}
+
 <Input
+    {invalid}
     autofocus={true}
     bind:value={username}
     minlength={3}

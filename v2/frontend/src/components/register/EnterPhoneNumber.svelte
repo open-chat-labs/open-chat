@@ -6,6 +6,7 @@
     import { allCountries } from "country-telephone-data";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import { rtlStore } from "../../stores/rtl";
 
     let phoneNumberStr: string = "";
     let countryCodeStr: string = "";
@@ -22,13 +23,11 @@
 <p class="enter-phone">{$_("register.enterPhone")}</p>
 
 <div class="phone-number">
-    <div class="country">
+    <div class="country" class:rtl={$rtlStore}>
         <Select bind:value={countryCodeStr}>
-            <option disabled={true} selected value="0"
-                >{$_("register.countryCode")}</option>
+            <option disabled={true} selected value="0">{$_("register.countryCode")}</option>
             {#each allCountries as country}
-                <option value={country.dialCode}
-                    >(+{country.dialCode}) {country.name}</option>
+                <option value={country.dialCode}>(+{country.dialCode}) {country.name}</option>
             {/each}
         </Select>
     </div>
@@ -56,6 +55,11 @@
         .country {
             flex: 1;
             margin-right: $sp3;
+
+            &.rtl {
+                margin-right: 0;
+                margin-left: $sp3;
+            }
         }
         .number {
             flex: 3;

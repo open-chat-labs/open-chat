@@ -5,6 +5,8 @@ export interface Theme {
     bg: string;
     txt: string;
 
+    error: string;
+
     input: {
         bg: string;
         txt: string;
@@ -144,6 +146,7 @@ const defaultTheme = {
 
     bg: "linear-gradient(#22A7F2, #EF5DA8)",
     txt: "#191919",
+    error: "#ff0000",
 
     input: {
         bg: "#ffffff",
@@ -284,6 +287,7 @@ export const themes: Themes = {
 
         bg: "#121212",
         txt: "#aaaaaa",
+        error: "#800000",
 
         input: {
             bg: "#555555",

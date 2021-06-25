@@ -13,11 +13,15 @@
         "enterPhone": "please enter your phone number below",
         "enterUsername": "Choose a username",
         "pleaseEnterCode": "please enter your registration code below",
+        "codeInvalid": "The code you entered is not valid - try again",
+        "usernameInvalid": "The username you entered is not valid - try again",
         "enterCode": "enter code",
         "requestCode": "Request code",
         "validateCode": "Validate code",
         "countryCode": "Country code",
         "letsGo": "Let's go!",
+        "registrationComplete": "Registration complete ...",
+        "welcome": "Welcome to OpenChat!",
         "enjoy": "Enjoy chatting on The Internet Computer"
     }
 }

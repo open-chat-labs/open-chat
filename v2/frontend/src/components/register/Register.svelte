@@ -2,27 +2,17 @@
     import Logo from "../Logo.svelte";
     import { _ } from "svelte-i18n";
     import ModalPage from "../ModalPage.svelte";
-    import Button from "../Button.svelte";
     import EnterPhoneNumber from "./EnterPhoneNumber.svelte";
+    import Complete from "./Complete.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
     import type { RegisterState } from "./Register.types";
-    const dispatch = createEventDispatcher();
     export let state: RegisterState;
-
-    function complete() {
-        dispatch("complete");
-    }
 </script>
 
 <ModalPage minHeight="380px">
     {#if state === "userValid"}
-        <h4 class="subtitle">Registration complete ...</h4>
-        <Logo />
-        <h1 class="title">Welcome to OpenChat!</h1>
-        <p class="enjoy">{$_("register.enjoy")}</p>
-        <Button on:click={complete}>{$_("register.letsGo")}</Button>
+        <Complete on:complete />
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
         <Logo />
@@ -30,12 +20,12 @@
 
         {#if state === "awaitingPhoneNumber"}
             <EnterPhoneNumber on:submitPhoneNumber />
-        {:else if state === "awaitingCode"}
-            <EnterCode on:submitCode />
+        {:else if state === "awaitingCode" || state === "codeInvalid"}
+            <EnterCode invalid={state === "codeInvalid"} on:submitCode />
         {:else if state === "verifying"}
             <div class="spinner" />
-        {:else if state === "codeValid"}
-            <EnterUsername on:submitUsername />
+        {:else if state === "codeValid" || state === "userInvalid"}
+            <EnterUsername invalid={state === "userInvalid"} on:submitUsername />
         {/if}
     {/if}
 </ModalPage>

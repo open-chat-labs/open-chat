@@ -13,9 +13,8 @@
     <Logo />
     <h1 class="title">{$_("openChat")}</h1>
     <p class="blurb">
-        {$_("login.blurbPartOne")}<a
-            target="_blank"
-            href="https://internetcomputer.org/">{$_("theInternetComputer")}</a
+        {$_("login.blurbPartOne")}<a target="_blank" href="https://internetcomputer.org/"
+            >{$_("theInternetComputer")}</a
         >{$_("login.blurbPartTwo")}
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}

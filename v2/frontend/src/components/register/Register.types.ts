@@ -5,5 +5,7 @@ export type RegisterState =
     | "awaitingCode"
     | "verifying"
     | "codeValid"
+    | "codeInvalid"
     | "userValid"
+    | "userInvalid"
     | { error: string };

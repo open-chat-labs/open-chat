@@ -15,7 +15,9 @@
                 "awaitingCode",
                 "verifying",
                 "codeValid",
+                "codeInvalid",
                 "userValid",
+                "userInvalid",
                 "error",
             ],
             control: {

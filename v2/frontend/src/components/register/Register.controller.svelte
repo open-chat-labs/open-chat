@@ -12,9 +12,7 @@
         machine.send({ type: "REGISTER_USER", ...ev.detail });
     }
 
-    function submitPhoneNumber(
-        ev: CustomEvent<{ countryCode: number; number: number }>
-    ) {
+    function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: number }>) {
         machine.send({ type: "REQUEST_REGISTRATION_CODE", ...ev.detail });
     }
 
@@ -37,8 +35,14 @@
             case "registration_code_valid":
                 uiState = "codeValid";
                 break;
-            case "registering_user_succceeded":
+            case "registration_code_invalid":
+                uiState = "codeInvalid";
+                break;
+            case "registering_user_succeeded":
                 uiState = "userValid";
+                break;
+            case "registering_user_failed":
+                uiState = "userInvalid";
                 break;
             case "checking_registration_code":
             case "registering_user":
