@@ -5,6 +5,12 @@ export interface Theme {
     bg: string;
     txt: string;
 
+    input: {
+        bg: string;
+        txt: string;
+        bd: string;
+    };
+
     participants: {
         bg: string;
         txt: string;
@@ -139,6 +145,12 @@ const defaultTheme = {
     bg: "linear-gradient(#22A7F2, #EF5DA8)",
     txt: "#191919",
 
+    input: {
+        bg: "#ffffff",
+        txt: "#191919",
+        bd: "#dddddd",
+    },
+
     participants: {
         bg: "#efefef",
         txt: "#191919",
@@ -272,6 +284,12 @@ export const themes: Themes = {
 
         bg: "#121212",
         txt: "#aaaaaa",
+
+        input: {
+            bg: "#555555",
+            txt: "#aaaaaa",
+            bd: "#333333",
+        },
 
         participants: {
             bg: "#252525",

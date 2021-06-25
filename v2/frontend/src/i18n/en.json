@@ -11,6 +11,11 @@
         "tellUsWho": "Tell us who you are ...",
         "registerAs": "To register as a user",
         "enterPhone": "please enter your phone number below",
-        "requestCode": "Request code"
+        "enterUsername": "Choose a username",
+        "pleaseEnterCode": "please enter your registration code below",
+        "enterCode": "enter code",
+        "requestCode": "Request code",
+        "validateCode": "Validate code",
+        "countryCode": "Country code"
     }
 }

@@ -8,22 +8,35 @@
     title="Register"
     component={Register}
     argTypes={{
-        awaitingPhoneNumber: { control: "boolean" },
-        awaitingCode: { control: "boolean" },
-        verifying: { control: "boolean" },
-        codeValid: { control: "boolean" },
-        userValid: { control: "boolean" },
+        state: {
+            defaultValue: "awaitingPhoneNumber",
+            options: [
+                "awaitingPhoneNumber",
+                "awaitingCode",
+                "verifying",
+                "codeValid",
+                "usernameValid",
+                "error",
+            ],
+            control: {
+                type: "radio",
+            },
+        },
+        submitPhoneNumber: { action: "submitPhoneNumber" },
+        submitCode: { action: "submitCode" },
+        submitUsername: { action: "submitUsername" },
+        complete: { action: "complete" },
     }} />
 
 <Template let:args>
     <StoryTheme>
         <Register
             {...args}
-            on:logout={args.onLogout}
-            on:registerUser={args.onRegisterUser} />
+            on:submitPhoneNumber={args.submitPhoneNumber}
+            on:submitCode={args.submitCode}
+            on:submitUsername={args.submitUsername}
+            on:complete={args.complete} />
     </StoryTheme>
 </Template>
 
 <Story name="Default" args={{}} />
-
-<Story name="Logging In" args={{ busy: true }} />

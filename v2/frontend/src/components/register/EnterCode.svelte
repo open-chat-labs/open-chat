@@ -1,32 +1,46 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
+    import Input from "../Input.svelte";
+    import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
 
-    let inp: HTMLInputElement;
     let codeValue: string = "";
-    onMount(() => inp.focus());
 
     function submitCode() {
         dispatch("submitCode", { code: parseInt(codeValue, 10) });
     }
 
-    $: codeInvalid = codeValue.length !== 6;
+    $: codeNumber = parseInt(codeValue.replace(/\D/g, ""), 10);
+    $: valid = !isNaN(codeNumber);
 </script>
 
-<p>Enter reg code</p>
-<input
-    minlength={6}
-    maxlength={6}
-    placeholder="enter your registration code"
-    bind:this={inp}
-    class="reg-code"
-    bind:value={codeValue} />
+<p class="enter-code">{$_("register.pleaseEnterCode")}</p>
+
+<div class="code-wrapper">
+    <Input
+        align="center"
+        fontSize="large"
+        autofocus={true}
+        bind:value={codeValue}
+        minlength={6}
+        maxlength={6}
+        placeholder={$_("register.enterCode")} />
+</div>
+
 <div class="actions">
-    <Button disabled={codeInvalid} on:click={submitCode}>Validate Code</Button>
+    <Button disabled={!valid} on:click={submitCode}
+        >{$_("register.validateCode")}</Button>
 </div>
 
 <style type="text/scss">
     @import "../../styles/mixins";
+
+    .enter-code {
+        margin-bottom: $sp5;
+    }
+
+    .code-wrapper {
+        max-width: 200px;
+    }
 </style>

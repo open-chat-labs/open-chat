@@ -1,15 +1,15 @@
 $breakpoints: (
-  xs: 576px,
-  sm: 768px,
-  md: 992px,
-  lg: 1200px
+    xs: 576px,
+    sm: 768px,
+    md: 992px,
+    lg: 1200px,
 );
 
 $font-weights: (
     light: 300,
     book: 400,
     medium: 500,
-    bold: 700
+    bold: 700,
 );
 
 // =============================================
@@ -19,63 +19,59 @@ $font-weights: (
 // Usage: @include font-size(fs-100);
 // The purpose of the key-numbers is to have them ordered relative to their font-size.
 // The key-numbers are not related in any other way to the font-size or line-height.
-// Use fs-100 as basic font-size.
-
-// TODO to make responsive we just add font-size-sm or line-height-md etc
-
 $font-sizes: (
     fs-70: (
         font-size: 13px,
-        line-height: 140%
+        line-height: 140%,
     ),
     fs-80: (
         font-size: 14px,
-        line-height: 140%
+        line-height: 140%,
     ),
     fs-90: (
         font-size: 15px,
-        line-height: 145%
+        line-height: 145%,
     ),
     fs-100: (
         font-size: 16px,
-        line-height: 150%
+        line-height: 150%,
     ),
     fs-110: (
         font-size: 18px,
-        line-height: 130%
+        line-height: 130%,
     ),
     fs-120: (
         font-size: 20px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-140: (
         font-size: 24px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-160: (
         font-size: 28px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-180: (
         font-size: 32px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-220: (
         font-size: 40px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-230: (
         font-size: 48px,
-        line-height: 105%
+        line-height: 105%,
     ),
     fs-240: (
         font-size: 60px,
-        line-height: 120%
+        line-height: 120%,
     ),
     fs-260: (
         font-size: 80px,
-        line-height: 120%
-    )
+        line-height: 120%,
+    ),
 );
 
 // =========================================================
@@ -117,12 +113,12 @@ $sp11: 192px;
 
 @mixin size-above($breakpoint) {
     @if map-has-key($breakpoints, $breakpoint) {
-      $breakpoint-value: map-get($breakpoints, $breakpoint);
-      @media (min-width: $breakpoint-value) {
-          @content;
-      }
+        $breakpoint-value: map-get($breakpoints, $breakpoint);
+        @media (min-width: $breakpoint-value) {
+            @content;
+        }
     } @else {
-      @warn 'Invalid breakpoint: #{$breakpoint}.';
+        @warn 'Invalid breakpoint: #{$breakpoint}.';
     }
 }
 
@@ -137,11 +133,17 @@ $sp11: 192px;
     }
 }
 
-@mixin loading-spinner($size: 1.2em, $offset: 0.6em, $block: false, $spinner-color: #191919, $background-color: #efefef) {
+@mixin loading-spinner(
+    $size: 1.2em,
+    $offset: 0.6em,
+    $block: false,
+    $spinner-color: #191919,
+    $background-color: #efefef
+) {
     position: relative;
 
     &::after {
-        content: '';
+        content: "";
         display: block;
         width: $size;
         height: $size;
@@ -150,35 +152,35 @@ $sp11: 192px;
         opacity: 0.8;
         left: calc(50% - #{$offset});
         top: calc(50% - #{$offset});
-        border-color: transparent transparent currentColor currentColor; 
+        border-color: transparent transparent currentColor currentColor;
         border-radius: 50%;
         transform-origin: 50% 50%;
         animation: loading-spinner 0.8s linear infinite;
         color: $spinner-color;
-        z-index: 10; 
+        z-index: 10;
     }
 
     @if $block {
         &::before {
-            content: '';
+            content: "";
             position: absolute;
             top: 0;
             height: 100%;
             width: 100%;
             pointer-events: none;
-            background-color: $background-color; 
-            z-index: 9; 
+            background-color: $background-color;
+            z-index: 9;
             opacity: 0.4;
         }
     }
 }
- 
+
 @keyframes loading-spinner {
     to {
         transform: rotate(360deg);
     }
 }
- 
+
 /* z-index stuff */
 
 /* 
@@ -187,16 +189,16 @@ $sp11: 192px;
     be sorted out magically
 */
 $z-indexed-items: (
-    'global': (
-        'login',
-        'bubble-stem',
-        'left-panel',
-        'current-user',
-        'right-panel',
-        'participants-header',
-        'emoji-picker',
-        'overlay',
-        'popup-menu',
+    "global": (
+        "login",
+        "bubble-stem",
+        "left-panel",
+        "current-user",
+        "right-panel",
+        "participants-header",
+        "emoji-picker",
+        "overlay",
+        "popup-menu",
     ),
 );
 
@@ -206,21 +208,31 @@ $z-index-map: ();
     $counter: 1;
     $group-map: ();
     @each $item in $group-list {
-        $group-map: map-merge($group-map, ($item: $counter));
+        $group-map: map-merge(
+            $group-map,
+            (
+                $item: $counter,
+            )
+        );
         $counter: $counter + 1;
     }
-    $z-index-map: map-merge($z-index-map, ($group-name: $group-map));
+    $z-index-map: map-merge(
+        $z-index-map,
+        (
+            $group-name: $group-map,
+        )
+    );
 }
- 
-@mixin z-index($key, $group: 'global') {
+
+@mixin z-index($key, $group: "global") {
     @if map-has-key($z-index-map, $group) {
         @if map-has-key(map-get($z-index-map, $group), $key) {
-            z-index: map-get(map-get($z-index-map, $group), $key); 
+            z-index: map-get(map-get($z-index-map, $group), $key);
         } @else {
-            @error('@include z-index() expects $key to be found in map z-indexed-items #{$group}, given `#{$key}`');
+            @error ('@include z-index() expects $key to be found in map z-indexed-items #{$group}, given `#{$key}`');
         }
     } @else {
-        @error('@include z-index() expects $group to be found in map z-indexed-items, given `#{$group}`');
+        @error ('@include z-index() expects $group to be found in map z-indexed-items, given `#{$group}`');
     }
 }
 
@@ -236,61 +248,43 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     } @else if $level == 3 {
         box-shadow: $shadow-level-3;
     } @else {
-        @error('box-shadow $level does not exist!');
+        @error ('box-shadow $level does not exist!');
     }
 }
 
- @mixin font-size($type: fs-100) {
+@mixin font-size($type: fs-100) {
     // Generating mixins below: Do not change
     $type: map-get($font-sizes, $type);
 
     // LINE-HEIGHTS
     @if map-has-key($type, line-height) {
         line-height: map-get($type, line-height);
-    }
-    @if map-has-key($type, line-height-sm) {
-        @include size-above(sm) {
-            line-height: map-get($type, line-height-sm);
+        @include size-below(md) {
+            line-height: calc(#{map-get($type, line-height)} * 0.9);
         }
-    }
-    @if map-has-key($type, line-height-md) {
-        @include size-above(md) {
-            line-height: map-get($type, line-height-md);
-        }
-    }
-    @if map-has-key($type, line-height-lg) {
-        @include size-above(lg) {
-            line-height: map-get($type, line-height-lg);
+        @include size-below(sm) {
+            line-height: calc(#{map-get($type, line-height)} * 0.8);
         }
     }
 
     // FONT-SIZES
     @if map-has-key($type, font-size) {
         font-size: map-get($type, font-size);
-    }
-    @if map-has-key($type, font-size-sm) {
-        @include size-above(sm) {
-            font-size: map-get($type, font-size-sm);
+        @include size-below(md) {
+            font-size: calc(#{map-get($type, font-size)} * 0.9);
         }
-    }
-    @if map-has-key($type, font-size-md) {
-        @include size-above(md) {
-            font-size: map-get($type, font-size-md);
-        }
-    }
-    @if map-has-key($type, font-size-lg) {
-        @include size-above(lg) {
-            font-size: map-get($type, font-size-lg);
+        @include size-below(sm) {
+            font-size: calc(#{map-get($type, font-size)} * 0.8);
         }
     }
 }
 
- @mixin font($weight: book, $style: null, $size: null) {
+@mixin font($weight: book, $style: null, $size: null) {
     // Error handling
     @if map-has-key($font-weights, $weight) {
         font-weight: map-get($font-weights, $weight);
     } @else {
-        @error('@include font() expects $weight to be found in map font, given `#{$weight}`');
+        @error ('@include font() expects $weight to be found in map font, given `#{$weight}`');
     }
 
     @if $style {
@@ -300,4 +294,4 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @if $size {
         @include font-size($size);
     }
-};
+} ;

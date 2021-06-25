@@ -1,34 +1,79 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import { createEventDispatcher, onMount } from "svelte";
+    import Input from "../Input.svelte";
+    import Select from "../Select.svelte";
+    import { createEventDispatcher } from "svelte";
+    import { allCountries } from "country-telephone-data";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
 
-    let inp: HTMLInputElement;
     let phoneNumberStr: string = "";
-    onMount(() => inp.focus());
+    let countryCodeStr: string = "";
 
     function submitPhoneNumber() {
-        dispatch("submitPhoneNumber", { countryCode: 123, number: 7583748 });
+        dispatch("submitPhoneNumber", { countryCode, number: phoneNumber });
     }
 
-    $: phoneNumberInvalid = phoneNumberStr.length < 3;
+    $: phoneNumber = parseInt(phoneNumberStr.replace(/\D/g, ""), 10);
+    $: countryCode = parseInt(countryCodeStr, 10);
+    $: valid = !isNaN(phoneNumber) && !isNaN(countryCode);
 </script>
 
 <p class="enter-phone">{$_("register.enterPhone")}</p>
-<input
-    minlength={3}
-    maxlength={25}
-    placeholder="enter your phone number"
-    bind:this={inp}
-    class="username"
-    bind:value={phoneNumberStr} />
+
+<div class="phone-number">
+    <div class="country">
+        <Select bind:value={countryCodeStr}>
+            <option disabled={true} selected value="0"
+                >{$_("register.countryCode")}</option>
+            {#each allCountries as country}
+                <option value={country.dialCode}
+                    >(+{country.dialCode}) {country.name}</option>
+            {/each}
+        </Select>
+    </div>
+    <div class="number">
+        <Input
+            autofocus={true}
+            bind:value={phoneNumberStr}
+            minlength={3}
+            maxlength={25}
+            placeholder="enter your phone number" />
+    </div>
+</div>
+
 <div class="actions">
-    <Button disabled={phoneNumberInvalid} on:click={submitPhoneNumber}>
+    <Button disabled={!valid} on:click={submitPhoneNumber}>
         {$_("register.requestCode")}
     </Button>
 </div>
 
 <style type="text/scss">
     @import "../../styles/mixins";
+
+    .phone-number {
+        display: flex;
+        .country {
+            flex: 1;
+            margin-right: $sp3;
+        }
+        .number {
+            flex: 3;
+        }
+
+        @include size-below(xs) {
+            flex-wrap: wrap;
+            .country {
+                flex-basis: 100%;
+                margin-right: 0;
+            }
+            .number {
+                flex-basis: 100%;
+            }
+        }
+    }
+
+    .enter-phone {
+        margin-bottom: $sp5;
+    }
 </style>

@@ -7,20 +7,17 @@
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
     import { createEventDispatcher, onMount } from "svelte";
+    import type { RegisterState } from "./Register.types";
     const dispatch = createEventDispatcher();
-    export let awaitingPhoneNumber: boolean;
-    export let awaitingCode: boolean;
-    export let verifying: boolean;
-    export let codeValid: boolean;
-    export let userValid: boolean;
+    export let state: RegisterState;
 
     function complete() {
         dispatch("complete");
     }
 </script>
 
-<ModalPage>
-    {#if userValid}
+<ModalPage minHeight="380px">
+    {#if state === "userValid"}
         <h4 class="subtitle">Registration complete ...</h4>
         <Logo />
         <h1 class="title">Welcome to OpenChat!</h1>
@@ -30,13 +27,13 @@
         <Logo />
         <h1 class="title">{$_("register.registerAs")}</h1>
 
-        {#if awaitingPhoneNumber}
+        {#if state === "awaitingPhoneNumber"}
             <EnterPhoneNumber on:submitPhoneNumber />
-        {:else if awaitingCode}
+        {:else if state === "awaitingCode"}
             <EnterCode on:submitCode />
-        {:else if verifying}
+        {:else if state === "verifying"}
             <div class="spinner" />
-        {:else if codeValid}
+        {:else if state === "codeValid"}
             <EnterUsername on:submitUsername />
         {/if}
     {/if}
@@ -46,9 +43,9 @@
     @import "../../styles/mixins";
 
     .spinner {
-        height: 100px;
+        height: 150px;
         width: 100%;
-        @include loading-spinner(3em, 1.5em, false, hotpink);
+        @include loading-spinner(3em, 1.5em, false, var(--button-bg));
     }
 
     .subtitle {

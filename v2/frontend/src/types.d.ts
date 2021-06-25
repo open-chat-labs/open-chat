@@ -9,3 +9,13 @@ declare module "dfx-types/chats";
 
 declare module "dfx-generated/p2p";
 declare module "dfx-types/p2p";
+
+declare module "country-telephone-data" {
+    type Country = {
+        name: string;
+        dialCode: string;
+        format: string;
+        iso2: string;
+    };
+    declare const allCountries: Country[];
+}

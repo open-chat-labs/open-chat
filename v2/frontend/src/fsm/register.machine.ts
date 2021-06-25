@@ -11,6 +11,7 @@ if (typeof window !== "undefined") {
 
 export interface RegisterContext {
     serviceContainer?: ServiceContainer;
+    error: string;
 }
 
 export type RegisterEvents =
@@ -30,7 +31,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
 export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     id: "register_machine",
     initial: "awaiting_phone_number",
-    context: {},
+    context: { error: "" },
     states: {
         awaiting_phone_number: {
             on: {

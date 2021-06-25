@@ -2,8 +2,11 @@
     import Register from "./Register.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { RegisterMachine } from "../../fsm/register.machine";
+    import type { RegisterState } from "./Register.types";
 
     export let machine: ActorRefFrom<RegisterMachine>;
+
+    let uiState: RegisterState = "awaitingPhoneNumber";
 
     function submitUsername(ev: CustomEvent<{ username: string }>) {
         machine.send({ type: "REGISTER_USER", ...ev.detail });
@@ -23,9 +26,28 @@
         machine.send({ type: "COMPLETE" });
     }
 
-    $: verifying =
-        $machine.matches("checking_registration_code") ||
-        $machine.matches("registering_user");
+    $: {
+        switch ($machine.value) {
+            case "awaiting_phone_number":
+                uiState = "awaitingPhoneNumber";
+                break;
+            case "awaiting_registration_code":
+                uiState = "awaitingCode";
+                break;
+            case "registration_code_valid":
+                uiState = "codeValid";
+                break;
+            case "registering_user_succceeded":
+                uiState = "userValid";
+                break;
+            case "checking_registration_code":
+            case "registering_user":
+                uiState = "verifying";
+                break;
+            default:
+                uiState = { error: $machine.context.error };
+        }
+    }
 
     $: {
         console.log($machine.value);
@@ -33,11 +55,7 @@
 </script>
 
 <Register
-    awaitingPhoneNumber={$machine.matches("awaiting_phone_number")}
-    awaitingCode={$machine.matches("awaiting_registration_code")}
-    codeValid={$machine.matches("registration_code_valid")}
-    userValid={$machine.matches("registering_user_succeeded")}
-    {verifying}
+    state={uiState}
     on:submitPhoneNumber={submitPhoneNumber}
     on:submitUsername={submitUsername}
     on:complete={complete}

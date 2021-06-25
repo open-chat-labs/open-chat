@@ -1,5 +1,9 @@
+<script lang="ts">
+    export let minHeight: string | undefined = undefined;
+</script>
+
 <div class="modal-page">
-    <div class="modal-page-panel">
+    <div class="modal-page-panel" style="min-height: {minHeight}">
         <slot />
     </div>
 </div>
