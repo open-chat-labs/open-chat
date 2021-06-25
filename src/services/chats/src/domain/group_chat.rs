@@ -293,7 +293,7 @@ impl Participant {
 impl GroupChatSummary {
     pub fn new(chat: &GroupChat, me: &UserId, message_count: u32) -> GroupChatSummary {
         let unread_by_me_message_id_ranges = chat.get_unread_message_id_ranges(me);
-        let unread_by_any_message_id_ranges = chat.get_unread_by_any_message_id_ranges(me, |p: &UserId| p != me);
+        let unread_by_any_message_id_ranges = Vec::new(); //chat.get_unread_by_any_message_id_ranges(me, |p: &UserId| p != me);
 
         let min_visible_message_id = chat.get_min_visible_message_id(me);
 

@@ -65,10 +65,8 @@ import {
 } from "../actions/chats/sendMessage";
 
 import {
-    ADD_PARTICIPANTS_FAILED,
-    ADD_PARTICIPANTS_REQUESTED,
-    AddParticipantsFailedEvent,
-    AddParticipantsRequestedEvent
+    ADD_PARTICIPANTS_SUCCEEDED,
+    AddParticipantsSucceededEvent
 } from "../actions/chats/addParticipants";
 
 import {
@@ -147,8 +145,7 @@ const initialState: ChatsState = {
 };
 
 type Event =
-    AddParticipantsRequestedEvent |
-    AddParticipantsFailedEvent |
+    AddParticipantsSucceededEvent |
     CreateGroupChatRequestedEvent |
     CreateGroupChatSucceededEvent |
     CreateGroupChatFailedEvent |
@@ -502,7 +499,7 @@ export default produce((state: ChatsState, event: Event) => {
             const updatedChat = event.payload.chat;
             // SEND_MESSAGE_SUCCEEDED will never happen on a NewGroupChat since messages need to be sent using either a
             // userId or a chatId and a NewGroupChat has neither.
-            let [chat, index] = chatFunctions.getChat(state.chats, event.payload.chat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
+            let [chat, index] = chatFunctions.getChat(state.chats, updatedChat.chatId) as [Exclude<Chat, UnconfirmedGroupChat>, number];
 
             state.chats[index] = chatFunctions.mergeUpdates(chat, updatedChat, index === state.selectedChatIndex);
             const newChatIndex = chatFunctions.sortChatsAndReturnSelectedIndex(state.chats, state.selectedChatIndex!);
@@ -520,28 +517,12 @@ export default produce((state: ChatsState, event: Event) => {
             break;
         }
 
-        case ADD_PARTICIPANTS_REQUESTED: {
+        case ADD_PARTICIPANTS_SUCCEEDED: {
             const { chatId, users } = event.payload;
             const [chat] = chatFunctions.getChat(state.chats, chatId);
-
-            if (chat.kind === UNCONFIRMED_GROUP_CHAT) {
-                // We can't add the participants until the chat is confirmed
-                // so store them for later
-                setFunctions.unionWith(chat.pendingParticipants, users);           
-            } else if (chat.kind === CONFIRMED_GROUP_CHAT) {
+            if (chat.kind === CONFIRMED_GROUP_CHAT) {
                 // Add the participants immediately and remove them if the call fails
                 setFunctions.unionWith(chat.participants, users); 
-            }
-            break;
-        }
-
-        case ADD_PARTICIPANTS_FAILED: {
-            const { chatId, users } = event.payload;
-            const [chat] = chatFunctions.getChat(state.chats, chatId);
-
-            if (chat.kind === CONFIRMED_GROUP_CHAT) {
-                // Adding the participants failed so remove them from the chat
-                setFunctions.exceptWith(chat.participants, users);
             }
             break;
         }

@@ -99,8 +99,7 @@ export type UnconfirmedDirectChat = UnconfirmedChatCommon & {
 export type UnconfirmedGroupChat = UnconfirmedChatCommon & {
     kind: typeof UNCONFIRMED_GROUP_CHAT,
     subject: string,
-    initialParticipants: UserId[],
-    pendingParticipants: UserId[]
+    initialParticipants: UserId[]
 }
 
 export const isDirectChat = (chat: Chat) : chat is DirectChat => {
@@ -220,7 +219,6 @@ export const newUnconfirmedGroupChat = (chatId: ChatId, subject: string, users: 
         chatId,
         subject,
         initialParticipants: users,
-        pendingParticipants: [],
         messages: [],
         scrollTop: null,
         scrollBottom: 0,
@@ -491,7 +489,7 @@ export const getUsers = (chat: Chat) : UserId[] => {
     if (isConfirmedChat(chat)) {
         return chat.participants;
     }
-    return chat.initialParticipants.concat(chat.pendingParticipants);
+    return chat.initialParticipants;
 }
 
 export const markMessagesAsReadLocally = (chat: ConfirmedChat, messageIds: number[]) : void => {

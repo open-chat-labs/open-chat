@@ -2,18 +2,18 @@ use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use shared::storage::StableState;
+use core::ops::{Deref};
 
 const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 
 #[derive(Default, CandidType, Deserialize)]
 pub struct BlobStorage {
-    chunks: HashMap<(String, u32), Vec<u8>>,
+    chunks: HashMap<(String, u32), ByteBuf>,
     total_bytes: u64
 }
 
 impl BlobStorage {
-    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
+    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: ByteBuf) -> bool {
         if data.len() > MAX_CHUNK_SIZE as usize {
             return false;
         }
@@ -23,7 +23,7 @@ impl BlobStorage {
         true
     }
 
-    pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {
+    pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&ByteBuf> {
         self.chunks.get(&(blob_id, chunk_index))
     }
 
@@ -48,39 +48,3 @@ impl BlobStorage {
         }        
     }
 }
-
-#[derive(CandidType, Deserialize)]
-pub struct BlobState {
-    chunks: Vec<(String, u32, ByteBuf)>,
-    total_bytes: u64
-}
-
-impl StableState for BlobStorage {
-    type State = BlobState;
-
-    fn drain(self) -> BlobState {
-        let chunks = self.chunks
-            .into_iter()
-            .map(|((id, idx), v)| (id, idx, ByteBuf::from(v)))
-            .collect();
-
-        BlobState {
-            chunks,
-            total_bytes: self.total_bytes
-        }
-    }
-
-    fn fill(state: BlobState) -> BlobStorage {
-        let map: HashMap<(String, u32), Vec<u8>> = state
-            .chunks
-            .into_iter()
-            .map(|(id, idx, v)| ((id, idx), v.into_vec()))
-            .collect();
-
-        BlobStorage {
-            chunks: map,
-            total_bytes: state.total_bytes
-        }
-    }
-}
-

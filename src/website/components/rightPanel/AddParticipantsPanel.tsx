@@ -8,7 +8,7 @@ import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
-import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
+import addParticipants from "../../actions/chats/addParticipants";
 import SearchBox from "../shared/SearchBox";
 import * as u64 from "../../utils/u64Functions";
 import UserListItem from "../shared/UserListItem";
@@ -18,7 +18,6 @@ import { GroupChat } from "../../domain/model/chats";
 import Header from "./Header";
 import CreateGroupChatIcon from "../shared/CreateGroupChatIcon";
 import { RightPanelType } from "../../domain/model/panels";
-import { Option } from "../../domain/model/common";
 
 const PLACEHOLDER_TEXT = "Type a username";
 
@@ -75,14 +74,14 @@ function AddParticipantsPanel() {
 
     function handleSelectUser(user: UserSummary) {
         closePanel();
-        dispatch(addParticipantsByUserId(chat, [user.userId]));
+        dispatch(addParticipants(chat, [user.userId]));
     }
 
     useLayoutEffect(() => {
         textBoxRef.current?.focus();
     }, []);
 
-    let mainContent: Option<JSX.Element>;
+    let mainContent: JSX.Element;
     if (results.length) {
         mainContent = (
             <List disablePadding={true}>
@@ -93,12 +92,11 @@ function AddParticipantsPanel() {
             </List>
         );
     } else {
-        mainContent = null;
-        // mainContent = (
-        //     <Tooltip title="copied!" placement="bottom" open={tooltipOpen}>
-        //         <Button onClick={handleCopyCodeButtonClick}>Copy Invite Code</Button>
-        //     </Tooltip>
-        // )
+        mainContent = (
+            <Tooltip title="copied!" placement="bottom" open={tooltipOpen}>
+                <Button onClick={handleCopyCodeButtonClick}>Copy Invite Code</Button>
+            </Tooltip>
+        )
     }
 
     return (

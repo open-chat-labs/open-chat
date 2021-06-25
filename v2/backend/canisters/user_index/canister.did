@@ -2,7 +2,11 @@
 // In heartbeat function do zero or one of the following:
 // 1. upgrade user canisters as needed
 // 2. top-up user canisters with cycles as needed
-// 3. notify the "service" canister if this canister's cycle balance is getting low
+// 3. notify the "controller" canister if this canister's cycle balance is getting low
+
+type Timestamp = nat64;
+type CanisterId = principal;
+type UserId = CanisterId;
 
 type PhoneNumber = 
     record {
@@ -10,22 +14,44 @@ type PhoneNumber =
         number: vec nat8;
     };
 
-type CreateUserRequest 
+type UserSummary =
     record {
-        principal: principal;
+        id: UserId;
+        username: text;
+        seconds_since_last_online: nat32;
+        version: nat32;
+    };
+
+type CreateUserRequest =
+    record {
+        user_principal: principal;
         phone_number: PhoneNumber;
     };
 
-type CreateUserResponse 
+type CreateUserResponse =
     variant {
         Success: record {
             canister: CanisterId;            
-        }
+        };
         UserExists;
         UserLimitReached: nat64;
     };
 
-type UpdateUsernameRequest
+type UpgradeRequest =
+    record {
+        wasm: vec nat8;
+        version: text;
+    };
+
+type UpgradeResponse =
+    variant {
+        Success: record {
+            canister_id: CanisterId;
+        };
+        Failure; // Need to enumerate these
+    };
+
+type UpdateUsernameRequest =
     record {
         username: text;        
     };
@@ -44,14 +70,82 @@ type MarkAsOnlineRequest =
     record {
     };
 
+type TransferCyclesRequest = 
+    record {
+        sender: UserId;
+        recipient: UserId;
+        amount: nat;
+    };
+
+type TransferCyclesResponse = 
+    variant {
+        Success: record {
+            new_balance: nat;
+        };
+        UserNotFound;
+        RecipientNotFound;
+        BalanceExceeded;
+    };
+
+type BalanceNotification =
+    record {
+        balance: nat;
+    };
+
 type GetCurrentUserRequest = 
     record {
+        user_id: opt UserId;
+        username: opt text;
     };
 
 type GetCurrentUserResponse =
     variant {
-        Success: MyProfile;
+        Success: record {
+            id: UserId;
+            username: text;
+            account_balance: nat;
+            version: nat32;
+        };
         UserNotFound;
+    };
+
+type GetUserRequest = 
+    record {
+        user_id: opt UserId;
+        username: opt text;
+    };
+
+type GetUserResponse =
+    variant {
+        Success: UserSummary;
+        UserNotFound;
+    };
+
+type GetUsersRequest =
+    record {
+        users: vec UserId;
+        updated_since: opt Timestamp;
+    };
+
+type GetUsersResponse =
+    variant {
+        Success: record {
+            users: vec UserSummary;
+            timestamp: Timestamp;
+        }
+    };
+
+type SearchUsersRequest =
+    record {
+        search_term: text;
+        max_results: nat8
+    };
+
+type SearchUsersResponse =
+    variant {
+        Success: record {
+            users: vec UserSummary;
+        }
     };
 
 type Metrics = 
@@ -71,13 +165,18 @@ service: {
     // Can only be called by phone_index canister (use inspect_message)
     // Will create a new User canister and an account and return a new CanisterId
     create: (CreateUserRequest) -> (CreateUserResponse);
+
+    // Takes a new User canister WASM and schedules a rolling upgrade
+    upgrade: (UpgradeRequest) -> (UpgradeResponse);
     
     update_username: (UpdateUsernameRequest) -> (UpdateUsernameResponse);
     mark_as_online: (MarkAsOnlineRequest) -> ();
+
+    // Called by a user canister - authorize based on caller
     transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
 
     // Called by a user canister when it is low on cycles
-    notify_low_balance: () -> ();
+    notify_balance: (BalanceNotification) -> ();
 
     get_current_user: (GetCurrentUserRequest) -> (GetCurrentUserResponse) query;
     get_user: (GetUserRequest) -> (GetUserResponse) query;

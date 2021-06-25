@@ -48,12 +48,12 @@ function NewGroupChatPanel() {
 
     const newChatIcon = <CreateGroupChatIcon size="sm" />;
 
-    // const chatHistoryVisibleCheckBox = <FormControlLabel
-    //     control={<Checkbox color="default" />}
-    //     label="Chat history visible to new joiners"
-    //     className={classes.checkBox}
-    //     checked={chatHistoryVisibleToNewJoiners}
-    //     onChange={(_, checked) => setChatHistoryVisibleToNewJoiners(checked)} />;
+    const chatHistoryVisibleCheckBox = <FormControlLabel
+        control={<Checkbox color="default" />}
+        label="Chat history visible to new joiners"
+        className={classes.checkBox}
+        checked={chatHistoryVisibleToNewJoiners}
+        onChange={(_, checked) => setChatHistoryVisibleToNewJoiners(checked)} />;
 
     return (
         <>
@@ -66,7 +66,7 @@ function NewGroupChatPanel() {
                 placeholderText={PLACEHOLDER_TEXT}
                 minLength={2}
                 maxLength={25}
-                // children={[chatHistoryVisibleCheckBox]}
+                children={[chatHistoryVisibleCheckBox]}
                 className={classes.nameInput}
                 textBoxClassName={classes.textBox} />
         </>

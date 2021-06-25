@@ -7,7 +7,6 @@ import { UserId } from "../../domain/model/users";
 import { RootState } from "../../reducers";
 
 import sendMessage from "./sendMessage";
-import { addParticipantsByUserId } from "./addParticipants";
 import { TextContent } from "../../domain/model/messages";
 import Stopwatch from "../../utils/Stopwatch";
 import { CreateGroupChatResponse } from "../../services/chats/createGroupChat";
@@ -48,12 +47,9 @@ export default function(subject: string, users: UserId[], chatHistoryVisibleToNe
             return;
         }
  
-        // 1. Messages may have been added on the UI before the chat was confirmed on the back end. These messages will
+        // Messages may have been added on the UI before the chat was confirmed on the back end. These messages will
         // have been added to the 'chat.unconfirmedMessages' array. So we need to read the values out of this array,
         // then apply the state change to confirm the chat, then send those messages using the new chatId.
-        // 2. Likewise participants may have been added to the UI before the chat was confirmed on the back end. 
-        // In which case those participants will have been added to the pendingParticipants on the chat and we should now  
-        // call addParticipants with them
         const oldChat = chatFunctions.getChat(getState().chatsState.chats, chatId)[0] as UnconfirmedGroupChat;
 
         dispatch({
@@ -65,16 +61,10 @@ export default function(subject: string, users: UserId[], chatHistoryVisibleToNe
             }
         } as CreateGroupChatSucceededEvent);
 
-        const participantsToAdd = oldChat.pendingParticipants;
         const messagesToSend = oldChat.messages;
 
-        if (participantsToAdd.length || messagesToSend.length) {
+        if (messagesToSend.length) {
             const chat = chatFunctions.getChat(getState().chatsState.chats, chatId)[0] as ConfirmedGroupChat;
-
-            if (participantsToAdd.length) {
-                dispatch(addParticipantsByUserId(chat, participantsToAdd));
-            }
-
             messagesToSend.forEach(m => dispatch(sendMessage(chat, m.content as TextContent, m.repliesTo)));
         }    
     }
