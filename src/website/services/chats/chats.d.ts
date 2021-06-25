@@ -1,7 +1,8 @@
 import type { Principal } from '@dfinity/agent';
 export type AddParticipantsResponse = {
-    'ChatNotFound' : null
+    'PartialSuccess' : { 'count_added' : number, 'blocked' : Array<UserId> }
   } |
+  { 'ChatNotFound' : null } |
   { 'NotGroupChat' : null } |
   { 'Success' : number } |
   { 'Unauthorized' : null };

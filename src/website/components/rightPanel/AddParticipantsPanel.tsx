@@ -8,7 +8,7 @@ import { RootState } from "../../reducers";
 import { getSelectedChat } from "../../domain/stateFunctions";
 import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import userMgmtService from "../../services/userMgmt/service";
-import { addParticipantsByUserId } from "../../actions/chats/addParticipants";
+import addParticipants from "../../actions/chats/addParticipants";
 import SearchBox from "../shared/SearchBox";
 import * as u64 from "../../utils/u64Functions";
 import UserListItem from "../shared/UserListItem";
@@ -75,7 +75,7 @@ function AddParticipantsPanel() {
 
     function handleSelectUser(user: UserSummary) {
         closePanel();
-        dispatch(addParticipantsByUserId(chat, [user.userId]));
+        dispatch(addParticipants(chat, [user.userId]));
     }
 
     useLayoutEffect(() => {
