@@ -1,12 +1,14 @@
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
+use serde_bytes::ByteBuf;
 use std::collections::HashMap;
+use core::ops::{Deref};
 
 const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 
 #[derive(Default, CandidType, Deserialize)]
 pub struct BlobStorage {
-    chunks: HashMap<(String, u32), Vec<u8>>,
+    chunks: HashMap<(String, u32), ByteBuf>,
     total_bytes: u64
 }
 
@@ -16,13 +18,13 @@ impl BlobStorage {
             return false;
         }
         let byte_count = data.len() as u64;
-        self.chunks.insert((blob_id, chunk_index), data);
+        self.chunks.insert((blob_id, chunk_index), ByteBuf::from(data));
         self.total_bytes = self.total_bytes + byte_count;
         true
     }
 
     pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {
-        self.chunks.get(&(blob_id, chunk_index))
+        self.chunks.get(&(blob_id, chunk_index)).map(|b| b.deref())
     }
 
     pub fn delete_blob(&mut self, blob_id: &String, blob_size: u32, chunk_size: u32) {
