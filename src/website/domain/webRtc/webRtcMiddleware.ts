@@ -66,6 +66,14 @@ const webRtcMiddleware : Middleware<{}, RootState> = store => next => event => {
         case CURRENT_USER_TYPING: {
             const chatId = (event as CurrentUserTypingEvent).payload;
             const [chat] = chatFunctions.getChat(store.getState().chatsState.chats, chatId);
+
+            if (chatFunctions.isDirectChat(chat)) {
+                const blockedUsers = store.getState().chatsState.blockedUsers;
+                if (blockedUsers.includes(chat.them)) {
+                    break;
+                }
+            }
+
             const p2pMessage = {
                 kind: REMOTE_USER_TYPING,
                 chatId: chat.chatId
