@@ -1,4 +1,3 @@
-
 export interface Theme {
     name: string;
     label: string;
@@ -15,8 +14,8 @@ export interface Theme {
             bg: string;
             txt: string;
             bd: string;
-        }
-    }
+        };
+    };
 
     entry: {
         bg: string;
@@ -24,30 +23,30 @@ export interface Theme {
         input: {
             txt: string;
             bg: string;
-        }
-    }
+        };
+    };
 
     panel: {
         bg: string;
-    }
+    };
 
     currentUser: {
         bd: string;
         bg: string;
         txt: string;
         ic: string;
-    }
+    };
 
     avatar: {
         bd: string;
         sh: string;
-    }
+    };
 
     chatSearch: {
         bg: string;
         txt: string;
         bd: string;
-    }
+    };
 
     chatSummary: {
         bg: string;
@@ -56,7 +55,7 @@ export interface Theme {
         txt2: string;
         bd: string;
         "bd-selected": string;
-    }
+    };
 
     spinner: string;
 
@@ -66,7 +65,7 @@ export interface Theme {
         bd: string;
         hv: string;
         sh: string;
-    }
+    };
 
     button: {
         bg: string;
@@ -75,11 +74,11 @@ export interface Theme {
         bd: string;
         disabled: string;
         spinner: string;
-    }
+    };
 
     link: {
         underline: string;
-    }
+    };
 
     modal: {
         txt: string;
@@ -90,23 +89,23 @@ export interface Theme {
             txt: string;
             bg: string;
             bd: string;
-        }
+        };
         footer: {
             txt: string;
             bg: string;
             bd: string;
-        }
-    }
+        };
+    };
 
     currentChat: {
         header: {
             bg: string;
             txt: string;
             bd: string;
-        }
+        };
         msgs: {
             bg: string;
-        }
+        };
         msg: {
             bg: string;
             txt: string;
@@ -118,20 +117,20 @@ export interface Theme {
                 txt: string;
                 hv: string;
                 bd: string;
-            }
-        }
-    }
+            };
+        };
+    };
 
     icon: {
         color: string;
         hv: string;
-    }
+    };
 }
 
 export type Themes = {
     light: Theme;
     batman: Theme;
-}
+};
 
 const defaultTheme = {
     name: "light",
@@ -149,7 +148,7 @@ const defaultTheme = {
             bg: "#efefef",
             txt: "#191919",
             bd: "transparent",
-        }
+        },
     },
 
     entry: {
@@ -158,11 +157,11 @@ const defaultTheme = {
         input: {
             bg: "#ffffff",
             txt: "#191919",
-        }
+        },
     },
 
     panel: {
-        bg: "linear-gradient(#22A7F2, #EF5DA8)"
+        bg: "linear-gradient(#22A7F2, #EF5DA8)",
     },
 
     currentUser: {
@@ -254,14 +253,14 @@ const defaultTheme = {
                 txt: "#ffffff",
                 hv: "#ff4fa7",
                 bd: "#ff69b4",
-            }
-        }
+            },
+        },
     },
 
     icon: {
         color: "#cccccc",
         hv: "#dddddd",
-    }
+    },
 };
 
 export const themes: Themes = {
@@ -282,8 +281,8 @@ export const themes: Themes = {
             header: {
                 bg: "#252525",
                 txt: "#aaaaaa",
-                bd: "#333333"
-            }
+                bd: "#333333",
+            },
         },
 
         entry: {
@@ -292,11 +291,11 @@ export const themes: Themes = {
             input: {
                 bg: "#555555",
                 txt: "#aaaaaa",
-            }
+            },
         },
 
         panel: {
-            bg: "#121212"
+            bg: "#121212",
         },
 
         currentUser: {
@@ -385,8 +384,8 @@ export const themes: Themes = {
                     txt: "#aaaaaa",
                     hv: "#680034",
                     bd: "#820041",
-                }
-            }
+                },
+            },
         },
 
         icon: {
@@ -395,7 +394,7 @@ export const themes: Themes = {
         },
         spinner: "#555555",
     },
-}
+};
 
 function writeCssVars(prefix: string, section: Theme): void {
     for (const [comp, props] of Object.entries(section)) {
@@ -414,16 +413,13 @@ function osDark(): boolean {
 }
 
 function themeByName(name: string | null): Theme {
-    if (!name)
-        return themes.light;
+    if (!name) return themes.light;
 
     if (name === "system") {
-        return osDark()
-            ? themes.batman
-            : themes.light;
+        return osDark() ? themes.batman : themes.light;
     }
 
-    return themes[name as (keyof Themes)] ?? themes.light;
+    return themes[name as keyof Themes] ?? themes.light;
 }
 
 export function loadSavedTheme(): string {
