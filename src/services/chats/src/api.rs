@@ -1,4 +1,5 @@
 use ic_cdk_macros::*;
+use serde_bytes::ByteBuf;
 use shared::chat_id::ChatId;
 use shared::user_id::UserId;
 use crate::queries::*;
@@ -50,7 +51,7 @@ fn join_group(chat_id: ChatId) -> join_group::Response {
 }
 
 #[update]
-fn put_chunk(blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
+fn put_chunk(blob_id: String, chunk_index: u32, data: ByteBuf) -> bool {
     put_chunk::update(blob_id, chunk_index, data)
 }
 
@@ -80,7 +81,7 @@ fn get_messages_by_id(chat_id: ChatId, ids: Vec<u32>) -> get_messages_by_id::Res
 }
 
 #[query]
-fn get_chunk(blob_id: String, chunk_index: u32) -> Option<Vec<u8>> {
+fn get_chunk(blob_id: String, chunk_index: u32) -> Option<ByteBuf> {
     get_chunk::query(blob_id, chunk_index)
 }
 
