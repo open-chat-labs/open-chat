@@ -22,7 +22,7 @@ pub fn update(chat_id: ChatId, user: UserId) -> Response {
             if !group_chat.is_admin(&user) {
                 return Unauthorized;
             }
-            match group_chat.remove_participant(&me, now) {
+            match group_chat.remove_participant(&user, now) {
                 true => {
                     chat_list.unlink_chat_from_user(&chat_id, &user);
                     Success
