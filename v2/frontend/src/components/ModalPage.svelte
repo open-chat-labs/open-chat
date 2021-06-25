@@ -22,7 +22,8 @@
         padding: $sp5 $sp6;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
+        text-align: center;
         align-items: center;
         border-radius: $sp5;
         width: 50%;

@@ -16,6 +16,8 @@
         "enterCode": "enter code",
         "requestCode": "Request code",
         "validateCode": "Validate code",
-        "countryCode": "Country code"
+        "countryCode": "Country code",
+        "letsGo": "Let's go!",
+        "enjoy": "Enjoy chatting on The Internet Computer"
     }
 }

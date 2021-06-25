@@ -21,7 +21,8 @@
         <h4 class="subtitle">Registration complete ...</h4>
         <Logo />
         <h1 class="title">Welcome to OpenChat!</h1>
-        <Button on:click={complete}>Let's go!</Button>
+        <p class="enjoy">{$_("register.enjoy")}</p>
+        <Button on:click={complete}>{$_("register.letsGo")}</Button>
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
         <Logo />
@@ -57,5 +58,10 @@
         @include font(bold, normal, fs-220);
         margin: $sp3 $sp4;
         text-align: center;
+    }
+
+    .enjoy {
+        margin-top: $sp5;
+        margin-bottom: $sp7;
     }
 </style>
