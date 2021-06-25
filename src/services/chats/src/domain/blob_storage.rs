@@ -13,18 +13,18 @@ pub struct BlobStorage {
 }
 
 impl BlobStorage {
-    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: Vec<u8>) -> bool {
+    pub fn put_chunk(&mut self, blob_id: String, chunk_index: u32, data: ByteBuf) -> bool {
         if data.len() > MAX_CHUNK_SIZE as usize {
             return false;
         }
         let byte_count = data.len() as u64;
-        self.chunks.insert((blob_id, chunk_index), ByteBuf::from(data));
+        self.chunks.insert((blob_id, chunk_index), data);
         self.total_bytes = self.total_bytes + byte_count;
         true
     }
 
-    pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&Vec<u8>> {
-        self.chunks.get(&(blob_id, chunk_index)).map(|b| b.deref())
+    pub fn get_chunk(&self, blob_id: String, chunk_index: u32) -> Option<&ByteBuf> {
+        self.chunks.get(&(blob_id, chunk_index))
     }
 
     pub fn delete_blob(&mut self, blob_id: &String, blob_size: u32, chunk_size: u32) {
