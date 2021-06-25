@@ -28,7 +28,7 @@ function UserMenu() {
     const menuItems: MenuItem[] = [];
     menuItems.push({ text: "New chat", action: () => dispatch(changeLeftPanel(LeftPanelType.NewDirectChat)) });
     menuItems.push({ text: "New group", action: () => dispatch(changeLeftPanel(LeftPanelType.NewGroupChat)) });
-    // menuItems.push({ text: "Join group", action: () => dispatch(changeLeftPanel(LeftPanelType.JoinGroupChat)) });
+    menuItems.push({ text: "Join group", action: () => dispatch(changeLeftPanel(LeftPanelType.JoinGroupChat)) });
     menuItems.push({ text: "Theme", action: () => setThemeSelectorOpen(true) });
     menuItems.push({ text: "Internet Identity", action: () => window.open(IDP_URL, "_blank") });
     menuItems.push({ text: "TEST MODE", action: () => dispatch(aboutUs()) });
