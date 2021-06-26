@@ -140,7 +140,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             invoke: {
                 id: "registerMachine",
                 src: registerMachine,
-                data: (ctx, ev) => ({
+                data: (ctx, _ev) => ({
                     serviceContainer: ctx.serviceContainer,
                 }),
                 // todo - there might be more than one way that this sub-machine ends up being "done"

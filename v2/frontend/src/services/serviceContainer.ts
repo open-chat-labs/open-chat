@@ -2,6 +2,9 @@ import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { GetCurrentUserResponse } from "../domain/user";
 import { fromCandid as fromUserResponse } from "./mappers/user";
+// import userIndexIdl, {
+//     _SERVICE as UserIndexService,
+// } from "../../../backend/canisters/user_index/canister";
 
 export class ServiceContainer {
     private createServiceClient<T>(
@@ -17,7 +20,13 @@ export class ServiceContainer {
     }
 
     // eslint-disable-next-line no-unused-vars
-    constructor(private identity: Identity) {}
+    // constructor(private identity: Identity) {
+    //     const userService = this.createServiceClient<UserIndexService>(
+    //         identity,
+    //         userIndexIdl,
+    //         "canisterId"
+    //     );
+    // }
 
     getCurrentUser(): Promise<GetCurrentUserResponse> {
         return Promise.resolve(fromUserResponse({}));
