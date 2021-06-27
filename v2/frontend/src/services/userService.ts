@@ -9,7 +9,11 @@ export class UserService extends CandidService {
 
     constructor(identity: Identity) {
         super(identity);
-        this.userService = this.createServiceClient<UserIndexService>(idlFactory, "canisterId");
+        console.log(idlFactory);
+        this.userService = this.createServiceClient<UserIndexService>(
+            idlFactory,
+            "user_index_canister_id" // todo - where does this come from
+        );
     }
 
     getCurrentUser(): Promise<GetCurrentUserResponse> {

@@ -1,15 +1,21 @@
-import type { Principal } from '@dfinity/principal';
-export type CanisterId = Principal;
-export interface ClaimRequest { 'code' : number, 'number' : PhoneNumber };
-export type ClaimResponse = { 'Invalid' : null } |
-  { 'Success' : { 'canister' : CanisterId } } |
-  { 'Expired' : null };
-export interface PhoneNumber { 'country_code' : number, 'number' : bigint };
-export interface RegisterRequest { 'number' : PhoneNumber };
-export type RegisterResponse = { 'Success' : null } |
-  { 'Taken' : null } |
-  { 'TooManyAttempts' : null };
-export default interface _SERVICE {
-  'claim' : (arg_0: ClaimRequest) => Promise<ClaimResponse>,
-  'register' : (arg_0: RegisterRequest) => Promise<RegisterResponse>,
+import type { IDL } from "@dfinity/candid";
+import _SERVICE, {
+  RegisterRequest,
+  RegisterResponse,
+  ClaimRequest,
+  ClaimResponse,
+  PhoneNumber,
+  CanisterId,
+} from "./canister_types";
+export {
+  _SERVICE as PhoneIndexService,
+  RegisterRequest as ApiRegisterRequest,
+  RegisterResponse as ApiRegisterResponse,
+  ClaimRequest as ApiClaimRequest,
+  ClaimResponse as ApiClaimResponse,
+  PhoneNumber as ApiPhoneNumber,
+  CanisterId as ApiCanisterId,
 };
+
+declare const idlFactory: IDL.InterfaceFactory;
+export default idlFactory;
