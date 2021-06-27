@@ -12,7 +12,7 @@
 </script>
 
 <ModalPage minHeight="380px">
-    {#if state === "userValid"}
+    {#if state === "awaitingCompletion"}
         <Complete on:complete />
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
@@ -21,12 +21,12 @@
 
         {#if state === "awaitingPhoneNumber"}
             <EnterPhoneNumber {error} on:submitPhoneNumber />
-        {:else if state === "awaitingCode" || state === "codeInvalid"}
-            <EnterCode invalid={state === "codeInvalid"} on:submitCode />
+        {:else if state === "awaitingCode"}
+            <EnterCode {error} on:submitCode on:resendCode />
         {:else if state === "verifying"}
             <div class="spinner" />
-        {:else if state === "codeValid" || state === "userInvalid"}
-            <EnterUsername invalid={state === "userInvalid"} on:submitUsername />
+        {:else if state === "awaitingUsername"}
+            <EnterUsername {error} on:submitUsername />
         {/if}
     {/if}
 </ModalPage>

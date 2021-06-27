@@ -13,12 +13,9 @@
             options: [
                 "awaitingPhoneNumber",
                 "awaitingCode",
+                "awaitingUsername",
+                "awaitingCompletion",
                 "verifying",
-                "codeValid",
-                "codeInvalid",
-                "userValid",
-                "userInvalid",
-                "error",
             ],
             control: {
                 type: "radio",

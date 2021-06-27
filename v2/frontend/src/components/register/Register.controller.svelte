@@ -8,6 +8,10 @@
 
     let uiState: RegisterState = "awaitingPhoneNumber";
 
+    function resendCode() {
+        machine.send({ type: "RESEND_REGISTRATION_CODE" });
+    }
+
     function submitUsername(ev: CustomEvent<{ username: string }>) {
         machine.send({ type: "REGISTER_USER", ...ev.detail });
     }
@@ -36,17 +40,11 @@
             case "awaiting_registration_code":
                 uiState = "awaitingCode";
                 break;
-            case "registration_code_valid":
-                uiState = "codeValid";
-                break;
-            case "registration_code_invalid":
-                uiState = "codeInvalid";
+            case "awaiting_username":
+                uiState = "awaitingUsername";
                 break;
             case "registering_user_succeeded":
-                uiState = "userValid";
-                break;
-            case "registering_user_failed":
-                uiState = "userInvalid";
+                uiState = "awaitingCompletion";
                 break;
             case "checking_registration_code":
             case "checking_phone_number":
@@ -68,5 +66,6 @@
     state={uiState}
     on:submitPhoneNumber={submitPhoneNumber}
     on:submitUsername={submitUsername}
+    on:resendCode={resendCode}
     on:complete={complete}
     on:submitCode={submitCode} />

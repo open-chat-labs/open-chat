@@ -3,6 +3,7 @@ import { assign, createMachine, MachineConfig, MachineOptions } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
+import { claim_text } from "svelte/internal";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -20,6 +21,7 @@ export interface RegisterContext {
 
 export type RegisterEvents =
     | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: number }
+    | { type: "RESEND_REGISTRATION_CODE" }
     | { type: "SUBMIT_REGISTRATION_CODE"; code: number }
     | { type: "REGISTER_USER"; username: string }
     | { type: "COMPLETE" }
@@ -35,6 +37,12 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         },
         tooManyAttempts: (_, ev) => {
             return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "too_many_attempts";
+        },
+        claimInvalid: (_, ev) => {
+            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "invalid";
+        },
+        claimExpired: (_, ev) => {
+            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "expired";
         },
     },
     services: {
@@ -63,10 +71,14 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
         checking_phone_number: {
             entry: assign({
                 error: (_, _ev) => undefined,
-                countryCode: (_, ev) =>
-                    ev.type === "REQUEST_REGISTRATION_CODE" ? ev.countryCode : undefined,
-                phoneNumber: (_, ev) =>
-                    ev.type === "REQUEST_REGISTRATION_CODE" ? ev.number : undefined,
+                countryCode: (ctx, ev) =>
+                    ev.type === "REQUEST_REGISTRATION_CODE"
+                        ? ev.countryCode
+                        : ctx.countryCode ?? undefined,
+                phoneNumber: (ctx, ev) =>
+                    ev.type === "REQUEST_REGISTRATION_CODE"
+                        ? ev.number
+                        : ctx.phoneNumber ?? undefined,
             }),
             invoke: {
                 id: "registerPhoneNumber",
@@ -106,21 +118,51 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
         awaiting_registration_code: {
             on: {
                 SUBMIT_REGISTRATION_CODE: "checking_registration_code",
+                RESEND_REGISTRATION_CODE: "checking_phone_number",
             },
         },
         checking_registration_code: {
-            after: {
-                1500: "registration_code_valid",
+            entry: assign({
+                error: (_, _ev) => undefined,
+                registrationCode: (_, ev) =>
+                    ev.type === "SUBMIT_REGISTRATION_CODE" ? ev.code : undefined,
+            }),
+            invoke: {
+                id: "claimPhoneNumber",
+                src: "claimPhoneNumber",
+                onDone: [
+                    {
+                        target: "awaiting_registration_code",
+                        cond: "claimInvalid",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.claimInvalid"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_registration_code",
+                        cond: "claimExpired",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.claimExpired"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_username",
+                        actions: assign({
+                            error: (_, _ev) => undefined,
+                        }),
+                    },
+                ],
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
             },
         },
-        registration_code_valid: {
+        awaiting_username: {
             on: {
                 REGISTER_USER: "registering_user",
-            },
-        },
-        registration_code_invalid: {
-            on: {
-                SUBMIT_REGISTRATION_CODE: "checking_registration_code",
             },
         },
         registering_user: {

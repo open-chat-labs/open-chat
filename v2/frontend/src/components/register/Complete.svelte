@@ -31,6 +31,7 @@
     }
 
     .enjoy {
+        @include font(light, normal, fs-100);
         margin-top: $sp5;
         margin-bottom: $sp7;
     }

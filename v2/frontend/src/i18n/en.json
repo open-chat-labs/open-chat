@@ -1,6 +1,7 @@
 {
     "openChat": "OpenChat",
     "theInternetComputer": "The Internet Computer",
+    "unexpectedError": "Sorry - an error has occurred",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
@@ -13,18 +14,20 @@
         "enterPhone": "please enter your phone number below",
         "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
-        "pleaseEnterCode": "please enter your registration code below",
-        "codeInvalid": "The code you entered is not valid - try again",
+        "pleaseEnterCode": "please enter the code we sent you below",
         "usernameInvalid": "The username you entered is not valid - try again",
         "enterCode": "enter code",
         "requestCode": "Request code",
         "validateCode": "Validate code",
+        "resendCode": "Resend code",
         "countryCode": "Country code",
         "letsGo": "Let's go!",
         "registrationComplete": "Registration complete ...",
         "welcome": "Welcome to OpenChat!",
         "enjoy": "Enjoy chatting on The Internet Computer",
         "phoneNumberTaken": "Phone number is already taken",
-        "TooManyAttempts": "Too many registration attempts"
+        "tooManyAttempts": "Too many registration attempts",
+        "claimInvalid": "The code you entered is invalid",
+        "claimExpired": "The code you entered has expired"
     }
 }

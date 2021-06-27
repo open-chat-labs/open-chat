@@ -4,8 +4,6 @@ export type RegisterState =
     | "awaitingPhoneNumber"
     | "awaitingCode"
     | "verifying"
-    | "codeValid"
-    | "codeInvalid"
-    | "userValid"
-    | "userInvalid"
+    | "awaitingUsername"
+    | "awaitingCompletion"
     | { error: string };

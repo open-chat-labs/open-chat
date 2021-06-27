@@ -287,7 +287,8 @@ export const themes: Themes = {
 
         bg: "#121212",
         txt: "#aaaaaa",
-        error: "#800000",
+        // error: "#800000",
+        error: "#CF6679",
 
         input: {
             bg: "#555555",

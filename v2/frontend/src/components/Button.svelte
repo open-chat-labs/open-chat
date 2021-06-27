@@ -6,14 +6,7 @@
     export let small: boolean = false;
 </script>
 
-<button
-    on:click
-    class={cls}
-    class:loading
-    class:disabled
-    class:small
-    {disabled}
-    class:secondary>
+<button on:click class={cls} class:loading class:disabled class:small {disabled} class:secondary>
     {#if !loading}
         <slot />
     {/if}
@@ -52,8 +45,8 @@
         // todo this needs theming
         &.secondary {
             background: transparent;
-            color: #cccccc;
-            border: 1px solid #cccccc;
+            color: var(--button-bg);
+            border: 1px solid var(--button-bg);
         }
     }
 </style>

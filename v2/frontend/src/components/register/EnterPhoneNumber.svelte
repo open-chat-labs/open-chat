@@ -66,7 +66,7 @@
     .phone-number {
         display: flex;
         .country {
-            flex: 1;
+            flex: 2;
             margin-right: $sp3;
 
             &.rtl {
@@ -75,7 +75,7 @@
             }
         }
         .number {
-            flex: 3;
+            flex: 4;
         }
 
         @include size-below(xs) {
@@ -91,6 +91,7 @@
     }
 
     .enter-phone {
+        @include font(light, normal, fs-100);
         margin-bottom: $sp5;
     }
 </style>

@@ -10,8 +10,15 @@ export class PhoneServiceMock implements IPhoneService {
     }
 
     claim(_code: number, _countryCode: number, _phoneNumber: number): Promise<ClaimResponse> {
-        return Promise.resolve({
-            kind: "expired",
+        return new Promise((resolve) => {
+            // setTimeout(() => resolve("taken"), 2000);
+            setTimeout(
+                () =>
+                    resolve({
+                        kind: "invalid",
+                    }),
+                2000
+            );
         });
     }
 }
