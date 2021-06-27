@@ -25,6 +25,10 @@
     }
 
     $: {
+        console.log($machine.context.error?.message);
+    }
+
+    $: {
         switch ($machine.value) {
             case "awaiting_phone_number":
                 uiState = "awaitingPhoneNumber";
@@ -45,11 +49,12 @@
                 uiState = "userInvalid";
                 break;
             case "checking_registration_code":
+            case "checking_phone_number":
             case "registering_user":
                 uiState = "verifying";
                 break;
             default:
-                uiState = { error: $machine.context.error };
+                uiState = { error: $machine.context.error?.message ?? "" };
         }
     }
 
@@ -59,6 +64,7 @@
 </script>
 
 <Register
+    error={$machine.context.error?.message}
     state={uiState}
     on:submitPhoneNumber={submitPhoneNumber}
     on:submitUsername={submitUsername}

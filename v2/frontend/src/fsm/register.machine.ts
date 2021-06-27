@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, MachineConfig, MachineOptions } from "xstate";
+import { assign, createMachine, MachineConfig, MachineOptions } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
+import type { ClaimResponse, RegisterResponse } from "../domain/phone";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -11,29 +12,95 @@ if (typeof window !== "undefined") {
 
 export interface RegisterContext {
     serviceContainer?: ServiceContainer;
-    error: string;
+    error?: Error;
+    countryCode?: number;
+    phoneNumber?: number;
+    registrationCode?: number;
 }
 
 export type RegisterEvents =
     | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: number }
     | { type: "SUBMIT_REGISTRATION_CODE"; code: number }
     | { type: "REGISTER_USER"; username: string }
-    | { type: "COMPLETE" };
+    | { type: "COMPLETE" }
+    | { type: "done.invoke.claimPhoneNumber"; data: ClaimResponse }
+    | { type: "error.platform.claimPhoneNumber"; data: unknown }
+    | { type: "done.invoke.registerPhoneNumber"; data: RegisterResponse }
+    | { type: "error.platform.registerPhoneNumber"; data: unknown };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
-    guards: {},
-    services: {},
+    guards: {
+        phoneNumberTaken: (_, ev) => {
+            return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "taken";
+        },
+        tooManyAttempts: (_, ev) => {
+            return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "too_many_attempts";
+        },
+    },
+    services: {
+        registerPhoneNumber: (ctx, _) =>
+            ctx.serviceContainer!.registerPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
+        claimPhoneNumber: (ctx, _) =>
+            ctx.serviceContainer!.claimPhoneNumber(
+                ctx.registrationCode!,
+                ctx.countryCode!,
+                ctx.phoneNumber!
+            ),
+    },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     id: "register_machine",
     initial: "awaiting_phone_number",
-    context: { error: "" },
+    context: {},
     states: {
         awaiting_phone_number: {
             on: {
-                REQUEST_REGISTRATION_CODE: "awaiting_registration_code",
+                REQUEST_REGISTRATION_CODE: "checking_phone_number",
+            },
+        },
+        checking_phone_number: {
+            entry: assign({
+                error: (_, _ev) => undefined,
+                countryCode: (_, ev) =>
+                    ev.type === "REQUEST_REGISTRATION_CODE" ? ev.countryCode : undefined,
+                phoneNumber: (_, ev) =>
+                    ev.type === "REQUEST_REGISTRATION_CODE" ? ev.number : undefined,
+            }),
+            invoke: {
+                id: "registerPhoneNumber",
+                src: "registerPhoneNumber",
+                onDone: [
+                    {
+                        target: "awaiting_phone_number",
+                        cond: "phoneNumberTaken",
+                        actions: assign({
+                            // todo - is this the right place to do this
+                            error: (_, _ev) => new Error("register.phoneNumberTaken"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_phone_number",
+                        cond: "tooManyAttempts",
+                        actions: assign({
+                            // todo - is this the right place to do this
+                            error: (_, _ev) => new Error("register.tooManyAttempts"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_registration_code",
+                        actions: assign({
+                            error: (_, _ev) => undefined,
+                        }),
+                    },
+                ],
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
             },
         },
         awaiting_registration_code: {

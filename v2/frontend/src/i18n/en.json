@@ -11,6 +11,7 @@
         "tellUsWho": "Tell us who you are ...",
         "registerAs": "To register as a user",
         "enterPhone": "please enter your phone number below",
+        "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
         "pleaseEnterCode": "please enter your registration code below",
         "codeInvalid": "The code you entered is not valid - try again",
@@ -22,6 +23,8 @@
         "letsGo": "Let's go!",
         "registrationComplete": "Registration complete ...",
         "welcome": "Welcome to OpenChat!",
-        "enjoy": "Enjoy chatting on The Internet Computer"
+        "enjoy": "Enjoy chatting on The Internet Computer",
+        "phoneNumberTaken": "Phone number is already taken",
+        "TooManyAttempts": "Too many registration attempts"
     }
 }

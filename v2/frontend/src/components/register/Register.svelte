@@ -8,6 +8,7 @@
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "./Register.types";
     export let state: RegisterState;
+    export let error: string | undefined = undefined;
 </script>
 
 <ModalPage minHeight="380px">
@@ -19,7 +20,7 @@
         <h1 class="title">{$_("register.registerAs")}</h1>
 
         {#if state === "awaitingPhoneNumber"}
-            <EnterPhoneNumber on:submitPhoneNumber />
+            <EnterPhoneNumber {error} on:submitPhoneNumber />
         {:else if state === "awaitingCode" || state === "codeInvalid"}
             <EnterCode invalid={state === "codeInvalid"} on:submitCode />
         {:else if state === "verifying"}

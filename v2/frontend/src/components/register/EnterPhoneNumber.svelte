@@ -3,10 +3,12 @@
     import Input from "../Input.svelte";
     import Select from "../Select.svelte";
     import { createEventDispatcher } from "svelte";
+    import { fade } from "svelte/transition";
     import { allCountries } from "country-telephone-data";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
+    export let error: string | undefined = undefined;
 
     let phoneNumberStr: string = "";
     let countryCodeStr: string = "";
@@ -24,7 +26,7 @@
 
 <div class="phone-number">
     <div class="country" class:rtl={$rtlStore}>
-        <Select bind:value={countryCodeStr}>
+        <Select invalid={error !== undefined} bind:value={countryCodeStr}>
             <option disabled={true} selected value="0">{$_("register.countryCode")}</option>
             {#each allCountries as country}
                 <option value={country.dialCode}>(+{country.dialCode}) {country.name}</option>
@@ -33,13 +35,18 @@
     </div>
     <div class="number">
         <Input
+            invalid={error !== undefined}
             autofocus={true}
             bind:value={phoneNumberStr}
             minlength={3}
             maxlength={25}
-            placeholder="enter your phone number" />
+            placeholder={$_("register.enterPhonePlaceholder")} />
     </div>
 </div>
+
+{#if error}
+    <h4 in:fade class="error">{$_(error)}</h4>
+{/if}
 
 <div class="actions">
     <Button disabled={!valid} on:click={submitPhoneNumber}>
@@ -49,6 +56,12 @@
 
 <style type="text/scss">
     @import "../../styles/mixins";
+
+    .error {
+        @include font(bold, normal, fs-140);
+        color: var(--error);
+        margin-bottom: $sp4;
+    }
 
     .phone-number {
         display: flex;

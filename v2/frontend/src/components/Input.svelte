@@ -41,6 +41,7 @@
     @import "../styles/mixins";
 
     .textbox {
+        transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
         height: 40px;
@@ -56,7 +57,7 @@
         text-overflow: ellipsis;
         border-radius: $sp2;
 
-        margin-bottom: $sp5;
+        margin-bottom: $sp4;
 
         &.small {
             @include font(book, normal, fs-80);

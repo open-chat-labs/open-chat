@@ -1,10 +1,11 @@
 import type { Identity } from "@dfinity/agent";
-import { CandidService } from "./candidService";
+import { CandidService } from "../candidService";
 import idlFactory, { PhoneIndexService } from "api-canisters/phone_index/canister";
-import type { ClaimResponse, RegisterResponse } from "../domain/phone";
-import { registerResponse, claimResponse } from "./mappers/phone";
+import type { ClaimResponse, RegisterResponse } from "../../domain/phone";
+import { registerResponse, claimResponse } from "./mappers";
+import type { IPhoneService } from "./phone.service.interface";
 
-export class PhoneService extends CandidService {
+export class PhoneService extends CandidService implements IPhoneService {
     private phoneService: PhoneIndexService;
 
     constructor(identity: Identity) {
@@ -15,25 +16,25 @@ export class PhoneService extends CandidService {
         );
     }
 
-    register(): Promise<RegisterResponse> {
+    register(countryCode: number, phoneNumber: number): Promise<RegisterResponse> {
         return this.handleResponse(
             this.phoneService.register({
                 number: {
-                    country_code: 123,
-                    number: BigInt(123),
+                    country_code: countryCode,
+                    number: BigInt(phoneNumber),
                 },
             }),
             registerResponse
         );
     }
 
-    claim(): Promise<ClaimResponse> {
+    claim(code: number, countryCode: number, phoneNumber: number): Promise<ClaimResponse> {
         return this.handleResponse(
             this.phoneService.claim({
-                code: 123,
+                code,
                 number: {
-                    country_code: 123,
-                    number: BigInt(123),
+                    country_code: countryCode,
+                    number: BigInt(phoneNumber),
                 },
             }),
             claimResponse

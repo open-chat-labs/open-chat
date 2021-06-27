@@ -24,6 +24,12 @@
                 type: "radio",
             },
         },
+        error: {
+            defaultValue: undefined,
+            control: {
+                type: "text",
+            },
+        },
         submitPhoneNumber: { action: "submitPhoneNumber" },
         submitCode: { action: "submitCode" },
         submitUsername: { action: "submitUsername" },
