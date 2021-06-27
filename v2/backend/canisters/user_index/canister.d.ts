@@ -1,12 +1,16 @@
 import type { IDL } from "@dfinity/candid";
-import _SERVICE, {
+import UserIndexService, {
   GetCurrentUserResponse,
   GetCurrentUserRequest,
+  CreateUserResponse,
+  CreateUserRequest,
 } from "./canister_types";
 export {
-  _SERVICE as UserIndexService,
+  UserIndexService,
   GetCurrentUserResponse as ApiGetCurrentUserResponse,
   GetCurrentUserRequest as ApiGetCurrentUserRequest,
+  CreateUserRequest as ApiCreateUserRequest,
+  CreateUserResponse as ApiCreateUserResponse,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

@@ -3,7 +3,7 @@ import { assign, createMachine, MachineConfig, MachineOptions } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
-import { claim_text } from "svelte/internal";
+import type { CreateUserResponse } from "../domain/user";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -28,7 +28,9 @@ export type RegisterEvents =
     | { type: "done.invoke.claimPhoneNumber"; data: ClaimResponse }
     | { type: "error.platform.claimPhoneNumber"; data: unknown }
     | { type: "done.invoke.registerPhoneNumber"; data: RegisterResponse }
-    | { type: "error.platform.registerPhoneNumber"; data: unknown };
+    | { type: "error.platform.registerPhoneNumber"; data: unknown }
+    | { type: "done.invoke.createUser"; data: CreateUserResponse }
+    | { type: "error.platform.createUser"; data: unknown };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     guards: {
@@ -43,6 +45,12 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         },
         claimExpired: (_, ev) => {
             return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "expired";
+        },
+        userExists: (_, _ev) => {
+            return false;
+        },
+        userLimitReached: (_, _ev) => {
+            return false;
         },
     },
     services: {
@@ -166,13 +174,37 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
             },
         },
         registering_user: {
-            after: {
-                1500: "registering_user_succeeded",
-            },
-        },
-        registering_user_failed: {
-            on: {
-                REGISTER_USER: "registering_user",
+            invoke: {
+                id: "createUser",
+                src: "createUser",
+                onDone: [
+                    {
+                        target: "awaiting_username",
+                        cond: "userExists",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.userExists"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_username",
+                        cond: "userLimitReached",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.userLimitReached"),
+                        }),
+                    },
+                    {
+                        target: "registering_user_succeeded",
+                        actions: assign({
+                            error: (_, _ev) => undefined,
+                        }),
+                    },
+                ],
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
             },
         },
         registering_user_succeeded: {

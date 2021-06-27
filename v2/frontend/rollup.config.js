@@ -45,7 +45,6 @@ const aliases = ["controller", "group", "group_index", "phone_index", "user", "u
     (name) => {
         const find = `api-canisters/${name}/canister`;
         const replacement = path.join(__dirname, "..", "backend", "canisters", name, "canister");
-        console.log(find, replacement);
 
         return {
             find,

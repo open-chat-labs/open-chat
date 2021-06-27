@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import type { GetCurrentUserResponse } from "../domain/user";
+import type { CreateUserResponse, GetCurrentUserResponse } from "../domain/user";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
 import type { IUserService } from "./user/user.service.interface";
 import type { IPhoneService } from "./phone/phone.service.interface";
@@ -7,6 +7,7 @@ import type { IPhoneService } from "./phone/phone.service.interface";
 // import { PhoneService } from "./phone/phone.service";
 import { UserServiceMock } from "./user/user.service.mock";
 import { PhoneServiceMock } from "./phone/phone.service.mock";
+import type { Principal } from "@dfinity/principal";
 
 export class ServiceContainer {
     private userService: IUserService;
@@ -21,6 +22,14 @@ export class ServiceContainer {
 
     getCurrentUser(): Promise<GetCurrentUserResponse> {
         return this.userService.getCurrentUser();
+    }
+
+    createUser(
+        userPrincipal: Principal,
+        countryCode: number,
+        phoneNumber: number
+    ): Promise<CreateUserResponse> {
+        return this.userService.createUser(userPrincipal, countryCode, phoneNumber);
     }
 
     registerPhoneNumber(countryCode: number, phoneNumber: number): Promise<RegisterResponse> {

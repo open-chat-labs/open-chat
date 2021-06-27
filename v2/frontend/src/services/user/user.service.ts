@@ -1,8 +1,9 @@
 import type { Identity } from "@dfinity/agent";
+import type { Principal } from "@dfinity/principal";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/canister";
-import type { GetCurrentUserResponse } from "../../domain/user";
+import type { CreateUserResponse, GetCurrentUserResponse } from "../../domain/user";
 import { CandidService } from "../candidService";
-import { getCurrentUserResponse } from "./mappers";
+import { createUserResponse, getCurrentUserResponse } from "./mappers";
 import type { IUserService } from "./user.service.interface";
 
 export class UserService extends CandidService implements IUserService {
@@ -23,6 +24,23 @@ export class UserService extends CandidService implements IUserService {
                 username: [],
             }),
             getCurrentUserResponse
+        );
+    }
+
+    createUser(
+        userPrincipal: Principal,
+        countryCode: number,
+        phoneNumber: number
+    ): Promise<CreateUserResponse> {
+        return this.handleResponse(
+            this.userService.create({
+                user_principal: userPrincipal,
+                phone_number: {
+                    country_code: countryCode,
+                    number: BigInt(phoneNumber),
+                },
+            }),
+            createUserResponse
         );
     }
 }

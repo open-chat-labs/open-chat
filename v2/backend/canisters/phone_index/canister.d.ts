@@ -1,5 +1,5 @@
 import type { IDL } from "@dfinity/candid";
-import _SERVICE, {
+import PhoneIndexService, {
   RegisterRequest,
   RegisterResponse,
   ClaimRequest,
@@ -8,7 +8,7 @@ import _SERVICE, {
   CanisterId,
 } from "./canister_types";
 export {
-  _SERVICE as PhoneIndexService,
+  PhoneIndexService,
   RegisterRequest as ApiRegisterRequest,
   RegisterResponse as ApiRegisterResponse,
   ClaimRequest as ApiClaimRequest,

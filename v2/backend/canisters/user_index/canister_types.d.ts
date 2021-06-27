@@ -51,7 +51,7 @@ export interface Metrics {
 }
 export interface PhoneNumber {
   country_code: number;
-  number: Array<number>;
+  number: bigint;
 }
 export interface SearchUsersRequest {
   max_results: number;

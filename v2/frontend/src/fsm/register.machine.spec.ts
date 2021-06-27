@@ -1,7 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Event, StateValue } from "xstate";
-import { RegisterEvents, registerMachine } from "./register.machine";
+import type { Event, MachineOptions, StateValue } from "xstate";
+import { RegisterContext, RegisterEvents, registerMachine } from "./register.machine";
+import type { Principal } from "@dfinity/principal";
+
+type Config = Partial<MachineOptions<RegisterContext, RegisterEvents>>;
+
+function testConfig(): Config {
+    return {
+        guards: {
+            phoneNumberTaken: () => false,
+            tooManyAttempts: () => false,
+            claimInvalid: () => false,
+            claimExpired: () => false,
+        },
+        services: {
+            registerPhoneNumber: () => jest.fn(),
+            claimPhoneNumber: () => jest.fn(),
+        },
+    };
+}
+
+function updateConfig(partialGuards: any = {}) {
+    const defaultConfig = testConfig();
+    return {
+        ...defaultConfig,
+        guards: {
+            ...defaultConfig.guards,
+            ...partialGuards,
+        },
+    };
+}
 
 describe("identity machine transitions", () => {
     function testTransition(from: StateValue, ev: Event<RegisterEvents>, to: StateValue) {
@@ -14,11 +43,43 @@ describe("identity machine transitions", () => {
         testTransition(
             "awaiting_phone_number",
             "REQUEST_REGISTRATION_CODE",
+            "checking_phone_number"
+        );
+    });
+
+    test("checking phone number - success", () => {
+        testTransition(
+            "checking_phone_number",
+            "done.invoke.registerPhoneNumber",
             "awaiting_registration_code"
         );
     });
 
-    test("enter reg code", () => {
+    test("checking phone number - taken", () => {
+        testTransition(
+            "checking_phone_number",
+            { type: "done.invoke.registerPhoneNumber", data: "taken" },
+            "awaiting_phone_number"
+        );
+    });
+
+    test("checking phone number - too many attempts", () => {
+        testTransition(
+            "checking_phone_number",
+            { type: "done.invoke.registerPhoneNumber", data: "too_many_attempts" },
+            "awaiting_phone_number"
+        );
+    });
+
+    test("checking phone number - error", () => {
+        testTransition(
+            "checking_phone_number",
+            "error.platform.registerPhoneNumber",
+            "unexpected_error"
+        );
+    });
+
+    test("submit reg code", () => {
         testTransition(
             "awaiting_registration_code",
             "SUBMIT_REGISTRATION_CODE",
@@ -26,23 +87,48 @@ describe("identity machine transitions", () => {
         );
     });
 
-    test("resubmit reg code", () => {
+    test("request new reg code", () => {
         testTransition(
-            "registration_code_invalid",
-            "SUBMIT_REGISTRATION_CODE",
-            "checking_registration_code"
+            "awaiting_registration_code",
+            "RESEND_REGISTRATION_CODE",
+            "checking_phone_number"
+        );
+    });
+
+    test("claim phone number - success", () => {
+        testTransition(
+            "checking_registration_code",
+            {
+                type: "done.invoke.claimPhoneNumber",
+                data: { kind: "success", canisterId: {} as Principal },
+            },
+            "awaiting_username"
+        );
+    });
+
+    test("claim phone number - invalid", () => {
+        testTransition(
+            "checking_registration_code",
+            {
+                type: "done.invoke.claimPhoneNumber",
+                data: { kind: "invalid" },
+            },
+            "awaiting_registration_code"
+        );
+    });
+
+    test("claim phone number - expired", () => {
+        testTransition(
+            "checking_registration_code",
+            {
+                type: "done.invoke.claimPhoneNumber",
+                data: { kind: "expired" },
+            },
+            "awaiting_registration_code"
         );
     });
 
     test("register user", () => {
-        testTransition("registration_code_valid", "REGISTER_USER", "registering_user");
-    });
-
-    test("re-register user", () => {
-        testTransition("registering_user_failed", "REGISTER_USER", "registering_user");
-    });
-
-    test("complete process", () => {
-        testTransition("registering_user_succeeded", "COMPLETE", "registration_complete");
+        testTransition("awaiting_username", "REGISTER_USER", "registering_user");
     });
 });
