@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { CandidService } from "./candidService";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/canister";
 import type { GetCurrentUserResponse } from "../domain/user";
-import { fromCandid as mapGetCurrentUserResponse } from "./mappers/user";
+import { getCurrentUserResponse } from "./mappers/user";
 
 export class UserService extends CandidService {
     private userService: UserIndexService;
@@ -22,7 +22,7 @@ export class UserService extends CandidService {
                 user_id: [],
                 username: [],
             }),
-            mapGetCurrentUserResponse
+            getCurrentUserResponse
         );
     }
 }
