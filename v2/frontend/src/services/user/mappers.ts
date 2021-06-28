@@ -1,7 +1,7 @@
-import type { CreateUserResponse, GetCurrentUserResponse } from "../../domain/user";
+import type { UpdateUsernameResponse, GetCurrentUserResponse } from "../../domain/user";
 import type {
     ApiGetCurrentUserResponse,
-    ApiCreateUserResponse,
+    ApiUpdateUsernameResponse,
 } from "api-canisters/user_index/canister";
 
 // todo - fill this out as we go along and as we know what shape out domain model actually needs to be
@@ -18,22 +18,24 @@ export function getCurrentUserResponse(_candid: ApiGetCurrentUserResponse): GetC
     };
 }
 
-export function createUserResponse(candid: ApiCreateUserResponse): CreateUserResponse {
+export function updateUsernameResponse(candid: ApiUpdateUsernameResponse): UpdateUsernameResponse {
     if ("Success" in candid) {
-        return {
-            kind: "success",
-            canisterId: candid.Success.canister,
-        };
+        return "success";
     }
-    if ("UserLimitReached" in candid) {
-        return {
-            kind: "user_limit_reached",
-        };
+    if ("SuccessNoChange" in candid) {
+        return "no_change";
     }
-    if ("UserExists" in candid) {
-        return {
-            kind: "user_exists",
-        };
+    if ("UsernameTaken" in candid) {
+        return "username_taken";
     }
-    throw new Error(`Unknown UserIndex.CreateUserResponse of ${candid}`);
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    if ("UsernameTooShort" in candid) {
+        return "username_too_short";
+    }
+    if ("UsernameTooLong" in candid) {
+        return "username_too_long";
+    }
+    throw new Error(`Unknown UserIndex.UpdateUsernameResponse of ${candid}`);
 }

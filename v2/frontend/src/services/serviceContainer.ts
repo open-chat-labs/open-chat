@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import type { CreateUserResponse, GetCurrentUserResponse } from "../domain/user";
+import type { GetCurrentUserResponse, UpdateUsernameResponse } from "../domain/user";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
 import type { IUserService } from "./user/user.service.interface";
 import type { IPhoneService } from "./phone/phone.service.interface";
@@ -24,14 +24,6 @@ export class ServiceContainer {
         return this.userService.getCurrentUser();
     }
 
-    createUser(
-        userPrincipal: Principal,
-        countryCode: number,
-        phoneNumber: number
-    ): Promise<CreateUserResponse> {
-        return this.userService.createUser(userPrincipal, countryCode, phoneNumber);
-    }
-
     registerPhoneNumber(countryCode: number, phoneNumber: number): Promise<RegisterResponse> {
         return this.phoneService.register(countryCode, phoneNumber);
     }
@@ -42,5 +34,9 @@ export class ServiceContainer {
         phoneNumber: number
     ): Promise<ClaimResponse> {
         return this.phoneService.claim(code, countryCode, phoneNumber);
+    }
+
+    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse> {
+        return this.userService.updateUsername(userPrincipal, username);
     }
 }

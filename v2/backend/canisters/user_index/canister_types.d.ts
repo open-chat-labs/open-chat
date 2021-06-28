@@ -72,6 +72,7 @@ export type TransferCyclesResponse =
   | { UserNotFound: null }
   | { RecipientNotFound: null };
 export interface UpdateUsernameRequest {
+  user_principal: Principal;
   username: string;
 }
 export type UpdateUsernameResponse =

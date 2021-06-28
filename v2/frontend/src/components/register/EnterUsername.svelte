@@ -6,8 +6,7 @@
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
     export let error: string | undefined = undefined;
-
-    let username: string = "";
+    export let username: string = "";
 
     function submitUsername() {
         dispatch("submitUsername", { username: username });

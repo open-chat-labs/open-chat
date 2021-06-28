@@ -1,9 +1,9 @@
 import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/canister";
-import type { CreateUserResponse, GetCurrentUserResponse } from "../../domain/user";
+import type { GetCurrentUserResponse, UpdateUsernameResponse } from "../../domain/user";
 import { CandidService } from "../candidService";
-import { createUserResponse, getCurrentUserResponse } from "./mappers";
+import { updateUsernameResponse, getCurrentUserResponse } from "./mappers";
 import type { IUserService } from "./user.service.interface";
 
 export class UserService extends CandidService implements IUserService {
@@ -27,20 +27,13 @@ export class UserService extends CandidService implements IUserService {
         );
     }
 
-    createUser(
-        userPrincipal: Principal,
-        countryCode: number,
-        phoneNumber: number
-    ): Promise<CreateUserResponse> {
+    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse> {
         return this.handleResponse(
-            this.userService.create({
+            this.userService.update_username({
                 user_principal: userPrincipal,
-                phone_number: {
-                    country_code: countryCode,
-                    number: BigInt(phoneNumber),
-                },
+                username: username,
             }),
-            createUserResponse
+            updateUsernameResponse
         );
     }
 }

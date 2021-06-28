@@ -58,12 +58,14 @@
 
     $: {
         console.log($machine.value);
+        console.log($machine.context.username);
     }
 </script>
 
 <Register
     error={$machine.context.error?.message}
     state={uiState}
+    username={$machine.context.username}
     on:submitPhoneNumber={submitPhoneNumber}
     on:submitUsername={submitUsername}
     on:resendCode={resendCode}

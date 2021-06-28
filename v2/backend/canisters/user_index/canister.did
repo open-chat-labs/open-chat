@@ -53,6 +53,7 @@ type UpgradeResponse =
 
 type UpdateUsernameRequest =
     record {
+        user_principal: principal;
         username: text;        
     };
 

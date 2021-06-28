@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { assign, createMachine, MachineConfig, MachineOptions } from "xstate";
+import { assign, createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
-import type { CreateUserResponse } from "../domain/user";
+import type { Principal } from "@dfinity/principal";
+import type { UpdateUsernameResponse } from "../domain/user";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -17,6 +18,8 @@ export interface RegisterContext {
     countryCode?: number;
     phoneNumber?: number;
     registrationCode?: number;
+    userCanister?: Principal;
+    username?: string;
 }
 
 export type RegisterEvents =
@@ -29,8 +32,8 @@ export type RegisterEvents =
     | { type: "error.platform.claimPhoneNumber"; data: unknown }
     | { type: "done.invoke.registerPhoneNumber"; data: RegisterResponse }
     | { type: "error.platform.registerPhoneNumber"; data: unknown }
-    | { type: "done.invoke.createUser"; data: CreateUserResponse }
-    | { type: "error.platform.createUser"; data: unknown };
+    | { type: "done.invoke.updateUsername"; data: UpdateUsernameResponse }
+    | { type: "error.platform.updateUsername"; data: unknown };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     guards: {
@@ -46,11 +49,25 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         claimExpired: (_, ev) => {
             return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "expired";
         },
-        userExists: (_, _ev) => {
-            return false;
+        userExists: (_, ev) => {
+            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "user_exists";
         },
-        userLimitReached: (_, _ev) => {
-            return false;
+        userLimitReached: (_, ev) => {
+            return (
+                ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "user_limit_reached"
+            );
+        },
+        usernameTaken: (_, ev) => {
+            return ev.type === "done.invoke.updateUsername" && ev.data === "username_taken";
+        },
+        userNotFound: (_, ev) => {
+            return ev.type === "done.invoke.updateUsername" && ev.data === "user_not_found";
+        },
+        usernameTooShort: (_, ev) => {
+            return ev.type === "done.invoke.updateUsername" && ev.data === "username_too_short";
+        },
+        usernameTooLong: (_, ev) => {
+            return ev.type === "done.invoke.updateUsername" && ev.data === "username_too_long";
         },
     },
     services: {
@@ -62,6 +79,14 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
                 ctx.countryCode!,
                 ctx.phoneNumber!
             ),
+        updateUsername: (ctx, ev) => {
+            if (ev.type === "REGISTER_USER") {
+                return ctx.serviceContainer!.updateUsername(ctx.userCanister!, ev.username);
+            }
+            // todo - not completely sure what happens if we throw here
+            // todo - can we avoid this by using Typestates?
+            throw new Error(`updateUsername called with unexpected event type: ${ev.type}`);
+        },
     },
 };
 
@@ -154,8 +179,29 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                         }),
                     },
                     {
+                        target: "awaiting_registration_code",
+                        cond: "userExists",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.userExists"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_registration_code",
+                        cond: "userLimitReached",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.userLimitReached"),
+                        }),
+                    },
+                    {
                         target: "awaiting_username",
                         actions: assign({
+                            userCanister: (_, { type, data }: DoneInvokeEvent<ClaimResponse>) => {
+                                if (type === "done.invoke.claimPhoneNumber") {
+                                    if (data.kind === "success") {
+                                        return data.canisterId;
+                                    }
+                                }
+                            },
                             error: (_, _ev) => undefined,
                         }),
                     },
@@ -174,22 +220,39 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
             },
         },
         registering_user: {
+            entry: assign({
+                username: (_, ev) => (ev.type === "REGISTER_USER" ? ev.username : undefined),
+            }),
             invoke: {
-                id: "createUser",
-                src: "createUser",
+                id: "updateUsername",
+                src: "updateUsername",
                 onDone: [
                     {
                         target: "awaiting_username",
-                        cond: "userExists",
+                        cond: "usernameTaken",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.userExists"),
+                            error: (_, _ev) => new Error("register.usernameTaken"),
                         }),
                     },
                     {
                         target: "awaiting_username",
-                        cond: "userLimitReached",
+                        cond: "userNotFound",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.userLimitReached"),
+                            error: (_, _ev) => new Error("register.userNotFound"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_username",
+                        cond: "usernameTooShort",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.usernameTooShort"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_username",
+                        cond: "usernameTooLong",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.usernameTooLong"),
                         }),
                     },
                     {

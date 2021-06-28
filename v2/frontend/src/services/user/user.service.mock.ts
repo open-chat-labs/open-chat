@@ -1,21 +1,11 @@
 import type { Principal } from "@dfinity/principal";
-import type { CreateUserResponse, GetCurrentUserResponse } from "../../domain/user";
+import type { UpdateUsernameResponse, GetCurrentUserResponse } from "../../domain/user";
 import type { IUserService } from "./user.service.interface";
 
 export class UserServiceMock implements IUserService {
-    createUser(
-        _userPrincipal: Principal,
-        _countryCode: number,
-        _phoneNumber: number
-    ): Promise<CreateUserResponse> {
+    updateUsername(_userPrincipal: Principal, _username: string): Promise<UpdateUsernameResponse> {
         return new Promise((resolve) => {
-            setTimeout(
-                () =>
-                    resolve({
-                        kind: "user_exists",
-                    }),
-                2000
-            );
+            setTimeout(() => resolve("username_taken"), 2000);
         });
     }
     getCurrentUser(): Promise<GetCurrentUserResponse> {

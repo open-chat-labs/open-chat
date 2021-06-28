@@ -13,13 +13,10 @@ export type UnknownUser = {
     kind: "unknown";
 };
 
-export type CreateUserResponse = CreateUserSuccess | UserExists | UserLimitReached;
-
-export type CreateUserSuccess = {
-    kind: "success";
-    canisterId: string;
-};
-
-export type UserExists = { kind: "user_exists" };
-
-export type UserLimitReached = { kind: "user_limit_reached" };
+export type UpdateUsernameResponse =
+    | "success"
+    | "no_change"
+    | "username_taken"
+    | "user_not_found"
+    | "username_too_short"
+    | "username_too_long";

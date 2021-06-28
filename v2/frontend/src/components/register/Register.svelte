@@ -8,6 +8,7 @@
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "./Register.types";
     export let state: RegisterState;
+    export let username: string = "";
     export let error: string | undefined = undefined;
 </script>
 
@@ -26,7 +27,7 @@
         {:else if state === "verifying"}
             <div class="spinner" />
         {:else if state === "awaitingUsername"}
-            <EnterUsername {error} on:submitUsername />
+            <EnterUsername {username} {error} on:submitUsername />
         {/if}
     {/if}
 </ModalPage>

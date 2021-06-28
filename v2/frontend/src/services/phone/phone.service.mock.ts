@@ -1,3 +1,4 @@
+import type { Principal } from "@dfinity/principal";
 import type { ClaimResponse, RegisterResponse } from "../../domain/phone";
 import type { IPhoneService } from "./phone.service.interface";
 
@@ -15,7 +16,8 @@ export class PhoneServiceMock implements IPhoneService {
             setTimeout(
                 () =>
                     resolve({
-                        kind: "invalid",
+                        kind: "success",
+                        canisterId: {} as Principal,
                     }),
                 2000
             );

@@ -28,6 +28,10 @@
         "phoneNumberTaken": "Phone number is already taken",
         "tooManyAttempts": "Too many registration attempts",
         "claimInvalid": "The code you entered is invalid",
+        "usernameTaken": "That username is already taken",
+        "userNotFound": "User not found",
+        "usernameTooShort": "That username is too short",
+        "usernameTooLong": "That username is too long",
         "claimExpired": "The code you entered has expired"
     }
 }

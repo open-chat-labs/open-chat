@@ -35,6 +35,7 @@
     {placeholder}
     on:input={handleInput}
     bind:this={inp}
+    {value}
     class={`textbox ${fontSize} ${align}`} />
 
 <style type="text/scss">
