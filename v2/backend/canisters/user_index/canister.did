@@ -11,7 +11,7 @@ type UserId = CanisterId;
 type PhoneNumber = 
     record {
         country_code: nat16;
-        number: vec nat8;
+        number: nat64;
     };
 
 type UserSummary =
@@ -53,6 +53,7 @@ type UpgradeResponse =
 
 type UpdateUsernameRequest =
     record {
+        user_principal: principal;
         username: text;        
     };
 
