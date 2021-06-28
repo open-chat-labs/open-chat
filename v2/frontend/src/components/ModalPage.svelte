@@ -28,9 +28,11 @@
         border-radius: $sp5;
         width: 50%;
         max-width: 500px;
-        background-color: var(--modal-bg);
-        color: var(--modal-txt);
-        box-shadow: var(--modal-sh);
+        background-color: var(--modalPage-bg);
+        color: var(--modalPage-txt);
+        box-shadow: var(--modalPage-sh);
+        backdrop-filter: var(--modalPage-filter);
+        border: var(--modalPage-bd);
         @include z-index(login);
         @include size-below(md) {
             width: 100%;

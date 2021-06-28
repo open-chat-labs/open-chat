@@ -105,6 +105,15 @@ export interface Theme {
         };
     };
 
+    modalPage: {
+        bg: string;
+        txt: string;
+        sh: string;
+        filter: string;
+        bd: string;
+        "txt-sh": string;
+    };
+
     currentChat: {
         header: {
             bg: string;
@@ -146,7 +155,8 @@ const defaultTheme = {
 
     bg: "linear-gradient(#22A7F2, #EF5DA8)",
     txt: "#191919",
-    error: "#ff0000",
+    // error: "#ff0000",
+    error: "#CF6679",
 
     input: {
         bg: "#ffffff",
@@ -244,6 +254,15 @@ const defaultTheme = {
             txt: "#191919",
             bd: "#dddddd",
         },
+    },
+
+    modalPage: {
+        bg: "rgba(255, 255, 255, 0.5)",
+        txt: "#191919",
+        sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
+        filter: "blur(10px)",
+        bd: "1px inset rgba(255, 255, 255, 0.3)",
+        "txt-sh": "1px 1px rgba(255, 255, 255, 0.2)",
     },
 
     currentChat: {
@@ -384,6 +403,16 @@ export const themes: Themes = {
                 txt: "#aaaaaa",
                 bd: "#333333",
             },
+        },
+
+        modalPage: {
+            // bg: "rgba(8,93,140, 0.3)",
+            bg: "rgba(0, 0, 0, 0.4)",
+            txt: "#aaaaaa",
+            sh: "none",
+            filter: "blur(10px)",
+            bd: "1px inset rgba(255, 255, 255, 0.1)",
+            "txt-sh": "1px 1px rgba(0, 0, 0, 0.2)",
         },
 
         currentChat: {

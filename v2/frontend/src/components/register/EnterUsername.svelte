@@ -17,13 +17,15 @@
 
 <p class="enter-username">{$_("register.enterUsername")}</p>
 
-<Input
-    invalid={error !== undefined}
-    autofocus={true}
-    bind:value={username}
-    minlength={3}
-    maxlength={25}
-    placeholder={$_("register.enterUsername")} />
+<div class="username-wrapper">
+    <Input
+        invalid={error !== undefined}
+        autofocus={true}
+        bind:value={username}
+        minlength={3}
+        maxlength={25}
+        placeholder={$_("register.enterUsername")} />
+</div>
 
 {#if error}
     <h4 in:fade class="error">{$_(error)}</h4>
@@ -45,5 +47,11 @@
     .enter-username {
         @include font(light, normal, fs-100);
         margin-bottom: $sp5;
+    }
+    .username-wrapper {
+        width: 80%;
+        @include size-below(xs) {
+            width: 100%;
+        }
     }
 </style>

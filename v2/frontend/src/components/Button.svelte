@@ -44,7 +44,7 @@
 
         // todo this needs theming
         &.secondary {
-            background: transparent;
+            background: var(--button-txt);
             color: var(--button-bg);
             border: 1px solid var(--button-bg);
         }
