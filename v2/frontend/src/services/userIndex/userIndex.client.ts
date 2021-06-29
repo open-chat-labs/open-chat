@@ -4,9 +4,9 @@ import idlFactory, { UserIndexService } from "api-canisters/user_index/canister"
 import type { GetCurrentUserResponse, UpdateUsernameResponse } from "../../domain/user";
 import { CandidService } from "../candidService";
 import { updateUsernameResponse, getCurrentUserResponse } from "./mappers";
-import type { IUserService } from "./user.service.interface";
+import type { IUserIndexClient } from "./userIndex.client.interface";
 
-export class UserService extends CandidService implements IUserService {
+export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
 
     constructor(identity: Identity) {

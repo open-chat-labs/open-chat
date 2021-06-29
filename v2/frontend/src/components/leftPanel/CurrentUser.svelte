@@ -1,23 +1,23 @@
 <script lang="ts">
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
-    import Avatar from "./Avatar.svelte";
-    import HoverIcon from "./HoverIcon.svelte";
-    import MenuIcon from "./MenuIcon.svelte";
-    import Menu from "./Menu.svelte";
-    import MenuItem from "./MenuItem.svelte";
-    import MediaQuery from "./MediaQuery.svelte";
-    import { modalStore, ModalType } from "../stores/modal";
-    import { identityService } from "../fsm/identity.machine";
-    import { avatarUrl, AvatarSize, UserStatus } from "../domain/user";
-    import type { User } from "../domain/user";
-    const { send } = identityService;
+    import Avatar from "../Avatar.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import MediaQuery from "../MediaQuery.svelte";
+    import { modalStore, ModalType } from "../../stores/modal";
+    import { avatarUrl, AvatarSize, UserStatus } from "../../domain/user";
+    import type { User } from "../../domain/user";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     export let user: User;
 </script>
 
 <div class="current-user-box">
-    <span title="logout" class="logout" on:click={() => send({ type: "LOGOUT" })}>
+    <span title="logout" class="logout" on:click={() => dispatch("logout")}>
         <HoverIcon>
             <Logout size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
@@ -41,10 +41,11 @@
                 <Menu>
                     <MenuItem text="New chat" on:click={() => console.log("one")} />
                     <MenuItem text="New group" on:click={() => console.log("two")} />
+                    <MenuItem text="Join group" on:click={() => console.log("three")} />
                     <MenuItem
                         text="Change theme"
                         on:click={() => modalStore.showModal(ModalType.ThemeSelection)} />
-                    <MenuItem text="Internet identity" on:click={() => console.log("two")} />
+                    <MenuItem text="Internet identity" on:click={() => console.log("four")} />
                     <MenuItem
                         text="Test mode"
                         on:click={() => modalStore.showModal(ModalType.TestMode)} />
@@ -58,7 +59,7 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
+    @import "../../styles/mixins";
 
     .current-user-box {
         display: flex;

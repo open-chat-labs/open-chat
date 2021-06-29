@@ -21,6 +21,7 @@ if (typeof window !== "undefined") {
 export interface LoggedInContext {
     serviceContainer?: ServiceContainer;
     user?: User;
+    chats: unknown[];
     error?: Error;
 }
 
@@ -28,16 +29,41 @@ export type LoggedInEvents = { type: "WHATEVS" };
 
 const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
     guards: {},
-    services: {},
+    services: {
+        getChats: (ctx, ev) => ctx.serviceContainer!.getChats(),
+    },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
     id: "logged_in_machine",
     initial: "loading_chats",
-    context: {},
+    context: {
+        chats: [],
+    },
     states: {
-        loading_chats: {},
+        loading_chats: {
+            invoke: {
+                id: "getChats",
+                src: "getChats",
+                onDone: [
+                    {
+                        target: "chats_loaded",
+                        actions: assign({
+                            chats: (_, ev) => [],
+                            error: (_, _ev) => undefined,
+                        }),
+                    },
+                ],
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
+            },
+        },
+        chats_loaded: {},
         unexpected_error: {
             type: "final",
             entry: sendParent((ctx, _) => ({

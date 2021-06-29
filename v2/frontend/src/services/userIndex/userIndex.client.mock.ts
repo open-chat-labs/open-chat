@@ -1,8 +1,8 @@
 import type { Principal } from "@dfinity/principal";
 import type { UpdateUsernameResponse, GetCurrentUserResponse } from "../../domain/user";
-import type { IUserService } from "./user.service.interface";
+import type { IUserIndexClient } from "./userIndex.client.interface";
 
-export class UserServiceMock implements IUserService {
+export class UserIndexClientMock implements IUserIndexClient {
     updateUsername(_userPrincipal: Principal, _username: string): Promise<UpdateUsernameResponse> {
         return new Promise((resolve) => {
             setTimeout(() => resolve("username_taken"), 2000);

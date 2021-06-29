@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LeftPanel from "./LeftPanel.svelte";
+    import LeftPanel from "./leftPanel/LeftPanel.controller.svelte";
     // import MiddlePanel from "./MiddlePanel.svelte";
     // import { fly } from "svelte/transition";
     // import RightPanel from "./RightPanel.svelte";
@@ -27,6 +27,10 @@
     //     }
     // }
 
+    function logout() {
+        send({ type: "LOGOUT" });
+    }
+
     // $: {
     //     if (user) {
     //         params.chatId = user.chats[0].chatId;
@@ -42,8 +46,7 @@
 
 {#if $loggedIn.context.user}
     <main>
-        <pre>logged in as {$loggedIn.context.user.username}</pre>
-        <LeftPanel chats={[]} user={$loggedIn.context.user} {hideLeft} />
+        <LeftPanel machine={loggedIn} on:logout={logout} />
         <!-- <MiddlePanel on:goback={() => (hideLeft = false)} {hideLeft} />
         {#if $navStore}
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>

@@ -8,7 +8,10 @@ export type User = {
 };
 
 export function avatarUrl(user: User): string {
-    return "";
+    // todo - we will use a dummy avatar url for the time being
+    return "https://i.pravatar.cc/300";
+    const url = new URL(window.location.toString());
+    return `${url.protocol}//${user.userId}${url.host}/avatar`;
 }
 
 export enum UserStatus {
