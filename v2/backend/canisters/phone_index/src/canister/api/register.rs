@@ -29,7 +29,7 @@ fn register_impl(request: ApiRequest, runtime_state: &mut RuntimeState) -> ApiRe
                 RegisterResult::AlreadyRegisteredByOther => ApiResponse::AlreadyRegisteredByOther,
                 RegisterResult::AlreadyRegisteredButUnclaimed(r) => ApiResponse::AlreadyRegisteredButUnclaimed(
                     AlreadyRegisteredButUnclaimedResult {
-                        time_until_resend_confirmation_code_permitted: r
+                        time_until_resend_code_permitted: r
                     }
                 )
             }
@@ -60,5 +60,5 @@ pub enum ApiResponse {
 
 #[derive(CandidType)]
 pub struct AlreadyRegisteredButUnclaimedResult {
-    time_until_resend_confirmation_code_permitted: Option<Milliseconds>
+    time_until_resend_code_permitted: Option<Milliseconds>
 }

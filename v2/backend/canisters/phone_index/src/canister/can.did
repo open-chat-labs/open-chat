@@ -83,8 +83,9 @@ type StatusRequest =
 type StatusResponse = 
     variant {
         NotFound;
-        Registered record {
+        Unclaimed record {
             phone_number: PhoneNumber;
+            time_until_resend_code_permitted: Milliseconds;
         };
         Claimed: record {
             canister_id: CanisterId;

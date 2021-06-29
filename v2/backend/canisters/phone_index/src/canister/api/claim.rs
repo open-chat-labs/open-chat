@@ -58,5 +58,5 @@ pub enum ApiResponse {
 
 #[derive(CandidType)]
 pub struct SuccessResult {
-    canister_id: Principal
+    canister_id: Principal,
 }

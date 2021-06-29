@@ -72,6 +72,27 @@ impl PhoneIndex {
             ClaimResult::NotFound
         }
     }
+
+    pub fn status(&self, request: StatusRequest) -> StatusResult {
+        if let Some(phone_number) = self.principal_to_phone_number_map.get(&request.caller) {
+            match self.phone_numbers.get(phone_number).unwrap() {
+                Unclaimed(uc) => {
+                    let code_expires_at = uc.get_date_generated() + CONFIRMATION_CODE_EXPIRY_MILLIS;
+                    let has_code_expired = request.now > code_expires_at;
+                    let time_until_resend_code_permitted = if has_code_expired { None } else { Some(code_expires_at - request.now) };
+                    StatusResult::Unclaimed(PhoneNumberResult {
+                        phone_number: phone_number.clone(),
+                        time_until_resend_code_permitted
+                    })
+                },
+                Claimed(c) => {                
+                    StatusResult::Claimed(c.get_principal())
+                }
+            }
+        } else {
+            StatusResult::NotFound
+        }
+    }
 }
 
 pub struct RegisterRequest {
@@ -126,4 +147,20 @@ pub enum ClaimResult {
     ConfirmationCodeExpired,
     AlreadyClaimed,
     NotFound,
+}
+
+pub struct StatusRequest {
+    pub caller: Principal,
+    pub now: TimestampMillis,
+}
+
+pub enum StatusResult {
+    NotFound,
+    Unclaimed(PhoneNumberResult),
+    Claimed(Principal),
+}
+
+pub struct PhoneNumberResult {
+    pub phone_number: PhoneNumber,
+    pub time_until_resend_code_permitted: Option<Milliseconds>
 }
