@@ -22,12 +22,14 @@
     .subtitle {
         @include font(bold, normal, fs-140);
         margin-bottom: $sp5;
+        text-shadow: var(--modalPage-txt-sh);
     }
 
     .title {
         @include font(bold, normal, fs-220);
         margin: $sp3 $sp4;
         text-align: center;
+        text-shadow: var(--modalPage-txt-sh);
     }
 
     .enjoy {

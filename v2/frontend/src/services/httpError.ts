@@ -1,8 +1,17 @@
-export type HttpError = {
-    kind: "httpError";
-    code: number;
-    message: string;
-};
+export class HttpError extends Error {
+    constructor(public code: number, error: Error) {
+        super(error.message);
+        this.stack = error.stack;
+        this.name = "HttpError";
+    }
+}
+
+export class AuthError extends HttpError {
+    constructor(public code: number, error: Error) {
+        super(code, error);
+        this.name = "AuthError";
+    }
+}
 
 export function toHttpError(error: Error): HttpError {
     let code = 500;
@@ -27,9 +36,5 @@ export function toHttpError(error: Error): HttpError {
         }
     }
 
-    return {
-        ...error,
-        kind: "httpError",
-        code: code,
-    };
+    return code === 401 || code === 403 ? new AuthError(code, error) : new HttpError(code, error);
 }

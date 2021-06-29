@@ -1,7 +1,7 @@
 <script lang="ts">
     import Panel from "./Panel.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import UnexpectedError from "./UnexpectedError.svelte";
+    import UnexpectedError from "./unexpectedError/UnexpectedError.svelte";
     import Loading from "./Loading.svelte";
     import { chatStore } from "../stores/chats";
     export let hideLeft: boolean = false;

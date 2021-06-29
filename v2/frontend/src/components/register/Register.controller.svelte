@@ -55,11 +55,6 @@
                 uiState = { error: $machine.context.error?.message ?? "" };
         }
     }
-
-    $: {
-        console.log($machine.value);
-        console.log($machine.context.username);
-    }
 </script>
 
 <Register
