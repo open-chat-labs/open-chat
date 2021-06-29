@@ -2,6 +2,7 @@
 // In heartbeat function will check balance and notify the "controller" canister if its low
 
 type CanisterId = principal;
+type Milliseconds = nat64;
 
 type PhoneNumber = 
     record {
@@ -10,30 +11,35 @@ type PhoneNumber =
     };
 
 type RegisterRequest = 
-    record {        
+    record {
         number: PhoneNumber;
     };
 
 type RegisterResponse = 
     variant {
         Success;
-        Taken;
-        TooManyAttempts;
+        AlreadyRegistered;
+        AlreadyRegisteredByOther;
+        AlreadyRegisteredButUnclaimed: record {
+            time_until_resend_confirmation_code_permitted: opt Milliseconds
+        };
+        InvalidPhoneNumber;
     };
 
 type ClaimRequest = 
-    record {        
-        number: PhoneNumber;
-        code: nat32;
+    record {
+        confirmation_code: text;
     };
 
 type ClaimResponse = 
     variant {
         Success: record {
-            canister: CanisterId;
+            canister_id: CanisterId
         };
-        Invalid;
-        Expired;
+        ConfirmationCodeIncorrect;
+        ConfirmationCodeExpired;
+        AlreadyClaimed;
+        NotFound;
     };
 
 service : {

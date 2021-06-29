@@ -34,7 +34,7 @@ type CreateUserResponse =
             canister: CanisterId;            
         };
         UserExists;
-        UserLimitReached: nat64;
+        UserLimitReached;
     };
 
 type UpgradeRequest =
