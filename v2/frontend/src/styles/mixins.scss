@@ -260,10 +260,10 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @if map-has-key($type, line-height) {
         line-height: map-get($type, line-height);
         @include size-below(md) {
-            line-height: calc(#{map-get($type, line-height)} * 0.9);
+            line-height: calc(#{map-get($type, line-height)} * 0.95);
         }
         @include size-below(sm) {
-            line-height: calc(#{map-get($type, line-height)} * 0.8);
+            line-height: calc(#{map-get($type, line-height)} * 0.9);
         }
     }
 

@@ -10,9 +10,19 @@
     export let state: RegisterState;
     export let username: string = "";
     export let error: string | undefined = undefined;
+    let bgClass: "underwater" | "sunset" = "underwater";
+    $: {
+        switch (state) {
+            case "awaitingCompletion":
+                bgClass = "sunset";
+                break;
+            default:
+                bgClass = "underwater";
+        }
+    }
 </script>
 
-<ModalPage minHeight="380px">
+<ModalPage {bgClass} minHeight="380px">
     {#if state === "awaitingCompletion"}
         <Complete on:complete />
     {:else}
@@ -52,10 +62,5 @@
         margin: $sp3 $sp4;
         text-align: center;
         text-shadow: var(--modalPage-txt-sh);
-    }
-
-    .enjoy {
-        margin-top: $sp5;
-        margin-bottom: $sp7;
     }
 </style>

@@ -1,7 +1,10 @@
 {
     "openChat": "OpenChat",
     "theInternetComputer": "The Internet Computer",
-    "unexpectedError": "Sorry - an error has occurred",
+    "unexpectedError": "Unexpected Error",
+    "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
+    "sessionExpired": "Session Expired",
+    "sessionExpiredBlurb": "Please sign into The Internet Computer again",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",

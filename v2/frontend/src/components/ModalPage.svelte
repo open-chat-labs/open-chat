@@ -1,8 +1,9 @@
 <script lang="ts">
     export let minHeight: string | undefined = undefined;
+    export let bgClass: "underwater" | "woods" | "sunset" | "error" = "underwater";
 </script>
 
-<div class="modal-page">
+<div class={`modal-page ${bgClass}`}>
     <div class="modal-page-panel" style="min-height: {minHeight}">
         <slot />
     </div>
@@ -15,7 +16,23 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        @include fullScreenImg("../assets/underwater.jpg");
+
+        &.underwater {
+            @include fullScreenImg("../assets/underwater.jpg");
+        }
+
+        &.woods {
+            @include fullScreenImg("../assets/woods.jpg");
+        }
+
+        &.sunset {
+            @include fullScreenImg("../assets/sunset.jpg");
+        }
+
+        &.error {
+            @include fullScreenImg("../assets/error.jpg");
+        }
+
         @include fullHeight();
     }
     .modal-page-panel {
@@ -32,6 +49,7 @@
         color: var(--modalPage-txt);
         box-shadow: var(--modalPage-sh);
         backdrop-filter: var(--modalPage-filter);
+        -webkit-backdrop-filter: var(--modalPage-filter);
         border: var(--modalPage-bd);
         @include z-index(login);
         @include size-below(md) {

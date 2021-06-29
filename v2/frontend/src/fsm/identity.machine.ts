@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
 import { createMachine, assign, MachineConfig, MachineOptions } from "xstate";
-import { getIdentity, login, logout, startSession } from "../api/auth";
+import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";
 import { ServiceContainer } from "../services/serviceContainer";
 import type { User, GetCurrentUserResponse } from "../domain/user";
 import { registerMachine } from "./register.machine";
+import { rollbar } from "../utils/logging";
+import { AuthError } from "../services/httpError";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -22,19 +24,26 @@ export interface IdentityContext {
     registrationFailure?: string;
 }
 
+type RegisterFailed = { kind: "failure" };
+type RegisterSucceeded = { kind: "success" };
+
+type RegisterResult = RegisterFailed | RegisterSucceeded;
+
 export type IdentityEvents =
     | { type: "ACKNOWLEDGE_EXPIRY" }
     | { type: "REQUEST_IDENTITY" }
     | { type: "LOGOUT" }
     | { type: "LOGIN" }
     | { type: "done.invoke.getIdentity"; data: Identity }
-    | { type: "error.platform.getIdentity"; data: unknown }
+    | { type: "error.platform.getIdentity"; data: Error }
     | { type: "done.invoke.login"; data: Identity }
-    | { type: "error.platform.login"; data: unknown }
+    | { type: "error.platform.login"; data: Error }
     | { type: "done.invoke.logout" }
-    | { type: "error.platform.logout"; data: unknown }
+    | { type: "error.platform.logout"; data: Error }
     | { type: "done.invoke.getUser"; data: GetCurrentUserResponse }
-    | { type: "error.platform.getUser"; data: unknown };
+    | { type: "error.platform.getUser"; data: Error }
+    | { type: "done.invoke.registerMachine"; data: RegisterResult }
+    | { type: "error.platform.registerMachine"; data: Error };
 
 const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
     guards: {
@@ -52,6 +61,13 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
             }
             return false;
         },
+        registrationSucceeded: (_, ev) => {
+            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "success";
+        },
+        registrationFailed: (_, ev) => {
+            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "failure";
+        },
+        isAuthError: (ctx, _) => ctx.error instanceof AuthError,
     },
     services: {
         getUser: ({ serviceContainer }, _) => serviceContainer!.getCurrentUser(),
@@ -59,6 +75,14 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         logout,
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
+    },
+    actions: {
+        logError: (ctx, _) => {
+            if (ctx.error) {
+                console.error(ctx.error);
+                rollbar.error("Unexpected error", ctx.error);
+            }
+        },
     },
 };
 
@@ -82,7 +106,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     }),
                 },
                 onError: {
-                    target: "failure",
+                    target: "unexpected_error",
                     actions: assign({
                         error: (_, { data }) => data,
                     }),
@@ -126,7 +150,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     },
                 ],
                 onError: {
-                    target: "failure",
+                    target: "unexpected_error",
                     actions: assign({
                         error: (_, { data }) => data,
                     }),
@@ -143,15 +167,21 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                 data: (ctx, _ev) => ({
                     serviceContainer: ctx.serviceContainer,
                 }),
-                // todo - there might be more than one way that this sub-machine ends up being "done"
-                // also we need to pick up the user data from the on-done
                 onDone: "logged_in",
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, ev) => ev.data,
+                    }),
+                },
             },
         },
-        failure: {
-            // TODO - add an entry condition here to check for 401 / 403 errors and go to the session
-            // expired state instead
-            // Also add logging of the error
+        unexpected_error: {
+            always: {
+                target: "expired",
+                cond: "isAuthError",
+            },
+            entry: ["logError"],
             on: {
                 REQUEST_IDENTITY: "requesting_identity",
             },
@@ -172,7 +202,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     }),
                 },
                 onError: {
-                    target: "failure",
+                    target: "unexpected_error",
                     actions: assign({
                         error: (_, { data }) => data,
                     }),
@@ -211,7 +241,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     }),
                 },
                 onError: {
-                    target: "failure",
+                    target: "unexpected_error",
                     actions: assign({
                         identity: (_, _ev) => undefined,
                     }),

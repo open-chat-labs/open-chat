@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { assign, createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
+import {
+    assign,
+    createMachine,
+    DoneInvokeEvent,
+    MachineConfig,
+    MachineOptions,
+    sendParent,
+} from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ClaimResponse, RegisterResponse } from "../domain/phone";
@@ -29,11 +36,11 @@ export type RegisterEvents =
     | { type: "REGISTER_USER"; username: string }
     | { type: "COMPLETE" }
     | { type: "done.invoke.claimPhoneNumber"; data: ClaimResponse }
-    | { type: "error.platform.claimPhoneNumber"; data: unknown }
+    | { type: "error.platform.claimPhoneNumber"; data: Error }
     | { type: "done.invoke.registerPhoneNumber"; data: RegisterResponse }
-    | { type: "error.platform.registerPhoneNumber"; data: unknown }
+    | { type: "error.platform.registerPhoneNumber"; data: Error }
     | { type: "done.invoke.updateUsername"; data: UpdateUsernameResponse }
-    | { type: "error.platform.updateUsername"; data: unknown };
+    | { type: "error.platform.updateUsername"; data: Error };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     guards: {
@@ -83,8 +90,6 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             if (ev.type === "REGISTER_USER") {
                 return ctx.serviceContainer!.updateUsername(ctx.userCanister!, ev.username);
             }
-            // todo - not completely sure what happens if we throw here
-            // todo - can we avoid this by using Typestates?
             throw new Error(`updateUsername called with unexpected event type: ${ev.type}`);
         },
     },
@@ -277,8 +282,17 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
         },
         registration_complete: {
             type: "final",
+            data: {
+                kind: () => "success",
+            },
         },
-        unexpected_error: {},
+        unexpected_error: {
+            type: "final",
+            entry: sendParent((ctx, _) => ({
+                type: "error.platform.registerMachine",
+                data: ctx.error,
+            })),
+        },
     },
 };
 
