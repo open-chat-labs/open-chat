@@ -1,5 +1,5 @@
 // This canister will store a map of phone number to code and claim info
-// In heartbeat function will check balance and notify the "controller" canister if its low
+// In heartbeat function will check balance and notify the "controller" canister if it's low
 
 type CanisterId = principal;
 type Milliseconds = nat64;

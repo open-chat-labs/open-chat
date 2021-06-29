@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::{Principal};
 use crate::domain::phone_number_state::{PhoneNumberState, UnclaimedPhoneNumberState, ClaimedPhoneNumberState};
 use crate::domain::phone_number_state::PhoneNumberState::{Claimed, Unclaimed};
 use phonenumber::PhoneNumber;
@@ -30,14 +30,8 @@ impl PhoneIndex {
                     let code_expires_at = s.get_date_generated() + CONFIRMATION_CODE_EXPIRY_MILLIS;
                     let has_code_expired = request.now > code_expires_at;
                     if s.get_principal() == request.caller {
-                        let result = AlreadyRegisteredButUnclaimedResult {
-                            time_until_resend_confirmation_code_permitted: if has_code_expired {
-                                None
-                            } else {
-                                Some(code_expires_at - request.now)
-                            }
-                        };
-                        return RegisterResult::AlreadyRegisteredButUnclaimed(result);
+                        let time_until_resend_confirmation_code_permitted = if has_code_expired { None } else { Some(code_expires_at - request.now) };
+                        return RegisterResult::AlreadyRegisteredButUnclaimed(time_until_resend_confirmation_code_permitted);
                     } else if !has_code_expired {
                         return RegisterResult::AlreadyRegisteredByOther;
                     }
@@ -107,7 +101,7 @@ pub enum RegisterResult {
     Success,
     AlreadyRegistered,
     AlreadyRegisteredByOther,
-    AlreadyRegisteredButUnclaimed(AlreadyRegisteredButUnclaimedResult),
+    AlreadyRegisteredButUnclaimed(Option<Milliseconds>),
 }
 
 pub struct ClaimRequest {
@@ -132,9 +126,4 @@ pub enum ClaimResult {
     ConfirmationCodeExpired,
     AlreadyClaimed,
     NotFound,
-}
-
-#[derive(CandidType)]
-pub struct AlreadyRegisteredButUnclaimedResult {
-    time_until_resend_confirmation_code_permitted: Option<Milliseconds>
 }

@@ -1,10 +1,11 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::domain::phone_index::{AlreadyRegisteredButUnclaimedResult, RegisterRequest, RegisterResult};
+use crate::domain::phone_index::{RegisterRequest, RegisterResult};
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
+use shared::time::{Milliseconds};
 use std::str::FromStr;
 
 #[update]
@@ -26,7 +27,11 @@ fn register_impl(request: ApiRequest, runtime_state: &mut RuntimeState) -> ApiRe
                 RegisterResult::Success => ApiResponse::Success,
                 RegisterResult::AlreadyRegistered => ApiResponse::AlreadyRegistered,
                 RegisterResult::AlreadyRegisteredByOther => ApiResponse::AlreadyRegisteredByOther,
-                RegisterResult::AlreadyRegisteredButUnclaimed(r) => ApiResponse::AlreadyRegisteredButUnclaimed(r)
+                RegisterResult::AlreadyRegisteredButUnclaimed(r) => ApiResponse::AlreadyRegisteredButUnclaimed(
+                    AlreadyRegisteredButUnclaimedResult {
+                        time_until_resend_confirmation_code_permitted: r
+                    }
+                )
             }
         },
         Err(_) => ApiResponse::InvalidPhoneNumber
@@ -51,4 +56,9 @@ pub enum ApiResponse {
     AlreadyRegisteredByOther,
     AlreadyRegisteredButUnclaimed(AlreadyRegisteredButUnclaimedResult),
     InvalidPhoneNumber,
+}
+
+#[derive(CandidType)]
+pub struct AlreadyRegisteredButUnclaimedResult {
+    time_until_resend_confirmation_code_permitted: Option<Milliseconds>
 }
