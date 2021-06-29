@@ -1,4 +1,5 @@
 mod claim;
 mod init;
-mod status;
 mod register;
+mod resend_code;
+mod status;

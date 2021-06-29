@@ -1,9 +1,10 @@
 use candid::{Principal};
+use crate::domain::confirmation_code_sms::ConfirmationCodeSms;
 use crate::domain::phone_number_state::{PhoneNumberState, UnclaimedPhoneNumberState, ClaimedPhoneNumberState};
 use crate::domain::phone_number_state::PhoneNumberState::{Claimed, Unclaimed};
 use phonenumber::PhoneNumber;
 use shared::time::{TimestampMillis, Milliseconds};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 
@@ -12,6 +13,7 @@ pub struct PhoneIndex {
     // TODO move these 2 maps into a single struct which ensures consistency
     principal_to_phone_number_map: HashMap<Principal, PhoneNumber>,
     phone_numbers: HashMap<PhoneNumber, PhoneNumberState>,
+    sms_queue: VecDeque<ConfirmationCodeSms>,
 }
 
 impl PhoneIndex {
@@ -39,12 +41,13 @@ impl PhoneIndex {
             }
         }
 
-        let state = Unclaimed(UnclaimedPhoneNumberState::new(request.caller, request.confirmation_code, request.now));
+        let state = Unclaimed(UnclaimedPhoneNumberState::new(request.caller, request.confirmation_code.clone(), request.now));
         if let Some(existing) = self.phone_numbers.insert(request.phone_number.clone(), state) {
             // Unlink the old principal from this phone number
             self.principal_to_phone_number_map.remove(&existing.get_principal());
         }
-        self.principal_to_phone_number_map.insert(request.caller, request.phone_number);
+        self.principal_to_phone_number_map.insert(request.caller, request.phone_number.clone());
+        Self::append_sms_to_queue(&mut self.sms_queue, request.phone_number, request.confirmation_code);
 
         RegisterResult::Success
     }
@@ -73,6 +76,31 @@ impl PhoneIndex {
         }
     }
 
+    pub fn resend_code(&mut self, request: ResendCodeRequest) -> ResendCodeResult {
+        if let Some(phone_number) = self.principal_to_phone_number_map.get(&request.caller) {
+            match self.phone_numbers.get(phone_number).unwrap() {
+                Claimed(_) => {
+                    return ResendCodeResult::AlreadyClaimed
+                },
+                Unclaimed(s) => {
+                    let code_expires_at = s.get_date_generated() + CONFIRMATION_CODE_EXPIRY_MILLIS;
+                    let has_code_expired = request.now > code_expires_at;
+                    if !has_code_expired {
+                        Self::append_sms_to_queue(
+                            &mut self.sms_queue,
+                            phone_number.clone(),
+                            s.get_confirmation_code().to_string());
+                        ResendCodeResult::Success
+                    } else {
+                        ResendCodeResult::CodeNotExpiredYet(code_expires_at - request.now)
+                    }
+                }
+            }
+        } else {
+            ResendCodeResult::NotFound
+        }
+    }
+
     pub fn status(&self, request: StatusRequest) -> StatusResult {
         if let Some(phone_number) = self.principal_to_phone_number_map.get(&request.caller) {
             match self.phone_numbers.get(phone_number).unwrap() {
@@ -92,6 +120,12 @@ impl PhoneIndex {
         } else {
             StatusResult::NotFound
         }
+    }
+
+    fn append_sms_to_queue(queue: &mut VecDeque<ConfirmationCodeSms>, phone_number: PhoneNumber, confirmation_code: String) {
+        let sms_index = queue.front().map_or(0, |s| s.get_index() + 1);
+        let sms = ConfirmationCodeSms::new(phone_number, confirmation_code, sms_index);
+        queue.push_front(sms);
     }
 }
 
@@ -146,6 +180,27 @@ pub enum ClaimResult {
     ConfirmationCodeIncorrect,
     ConfirmationCodeExpired,
     AlreadyClaimed,
+    NotFound,
+}
+
+pub struct ResendCodeRequest {
+    caller: Principal,
+    now: TimestampMillis,
+}
+
+impl ResendCodeRequest {
+    pub fn new(caller: Principal, now: TimestampMillis) -> ResendCodeRequest {
+        ResendCodeRequest {
+            caller,
+            now
+        }
+    }
+}
+
+pub enum ResendCodeResult {
+    Success,
+    AlreadyClaimed,
+    CodeNotExpiredYet(Milliseconds),
     NotFound,
 }
 
