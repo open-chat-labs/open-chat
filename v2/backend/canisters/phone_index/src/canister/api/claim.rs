@@ -6,12 +6,17 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 
 #[update]
-pub async fn claim(request: ApiRequest) -> ApiResponse {
+pub async fn claim(request: Request) -> Response {
     let (caller, now, user_index_canister_client) = RUNTIME_STATE.with(|state| {
         state.borrow().as_ref().map(|s| (s.env.caller(), s.env.now(), s.user_index_canister_client)).unwrap()
     });
 
-    let claim_request = ClaimRequest::new(caller, request.confirmation_code, now);
+    let claim_request = ClaimRequest {
+        caller, 
+        confirmation_code: request.confirmation_code, 
+        now
+    };
+
     let claim_result = RUNTIME_STATE.with(|state| {
         state.borrow_mut().as_mut().unwrap().phone_index.claim(claim_request)
     });
@@ -23,30 +28,30 @@ pub async fn claim(request: ApiRequest) -> ApiResponse {
             match user_index_canister_client.create(create_user_request).await {
                 Ok(result) => {
                     match result {
-                        CreateUserResponse::Success(r) => ApiResponse::Success(SuccessResult { canister_id: r.get_canister_id() }),
-                        CreateUserResponse::UserExists => ApiResponse::AlreadyClaimed,
-                        CreateUserResponse::UserLimitReached => ApiResponse::UserLimitReached
+                        CreateUserResponse::Success(r) => Response::Success(SuccessResult { canister_id: r.get_canister_id() }),
+                        CreateUserResponse::UserExists => Response::AlreadyClaimed,
+                        CreateUserResponse::UserLimitReached => Response::UserLimitReached
                     }
                 },
                 Err(error) => {
-                    ApiResponse::FailedToCreateUserCanister(error)
+                    Response::FailedToCreateUserCanister(error)
                 }
             }
         },
-        ClaimResult::ConfirmationCodeIncorrect => ApiResponse::ConfirmationCodeIncorrect,
-        ClaimResult::ConfirmationCodeExpired => ApiResponse::ConfirmationCodeExpired,
-        ClaimResult::AlreadyClaimed => ApiResponse::AlreadyClaimed,
-        ClaimResult::NotFound => ApiResponse::NotFound,
+        ClaimResult::ConfirmationCodeIncorrect => Response::ConfirmationCodeIncorrect,
+        ClaimResult::ConfirmationCodeExpired => Response::ConfirmationCodeExpired,
+        ClaimResult::AlreadyClaimed => Response::AlreadyClaimed,
+        ClaimResult::NotFound => Response::NotFound,
     }
 }
 
 #[derive(Deserialize)]
-pub struct ApiRequest {
+pub struct Request {
     confirmation_code: String
 }
 
 #[derive(CandidType)]
-pub enum ApiResponse {
+pub enum Response {
     Success(SuccessResult),
     ConfirmationCodeIncorrect,
     ConfirmationCodeExpired,

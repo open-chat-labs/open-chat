@@ -9,37 +9,39 @@ use shared::time::{Milliseconds};
 use std::str::FromStr;
 
 #[update]
-fn register(request: ApiRequest) -> ApiResponse {
+fn register(request: Request) -> Response {
     RUNTIME_STATE.with(|state| {
         register_impl(request, state.borrow_mut().as_mut().unwrap())
     })
 }
 
-fn register_impl(request: ApiRequest, runtime_state: &mut RuntimeState) -> ApiResponse {
+fn register_impl(request: Request, runtime_state: &mut RuntimeState) -> Response {
     match PhoneNumber::from_str(&format!("+{} {}", request.phone_number.country_code, request.phone_number.number)) {
         Ok(phone_number) => {
-            let caller = runtime_state.env.caller();
-            let now = runtime_state.env.now();
-            let confirmation_code = format!("{:0>6}", runtime_state.env.random_u32());
-            let register_request = RegisterRequest::new(caller, phone_number, now, confirmation_code);
+            let register_request = RegisterRequest {
+                caller: runtime_state.env.caller(),
+                phone_number,
+                now: runtime_state.env.now(),
+                confirmation_code: format!("{:0>6}", runtime_state.env.random_u32())                
+            };
 
             match runtime_state.phone_index.register(register_request) {
-                RegisterResult::Success => ApiResponse::Success,
-                RegisterResult::AlreadyRegistered => ApiResponse::AlreadyRegistered,
-                RegisterResult::AlreadyRegisteredByOther => ApiResponse::AlreadyRegisteredByOther,
-                RegisterResult::AlreadyRegisteredButUnclaimed(r) => ApiResponse::AlreadyRegisteredButUnclaimed(
+                RegisterResult::Success => Response::Success,
+                RegisterResult::AlreadyRegistered => Response::AlreadyRegistered,
+                RegisterResult::AlreadyRegisteredByOther => Response::AlreadyRegisteredByOther,
+                RegisterResult::AlreadyRegisteredButUnclaimed(r) => Response::AlreadyRegisteredButUnclaimed(
                     AlreadyRegisteredButUnclaimedResult {
                         time_until_resend_code_permitted: r
                     }
                 )
             }
         },
-        Err(_) => ApiResponse::InvalidPhoneNumber
+        Err(_) => Response::InvalidPhoneNumber
     }
 }
 
 #[derive(Deserialize)]
-pub struct ApiRequest {
+pub struct Request {
     phone_number: UnvalidatedPhoneNumber,
 }
 
@@ -50,7 +52,7 @@ pub struct UnvalidatedPhoneNumber {
 }
 
 #[derive(CandidType)]
-pub enum ApiResponse {
+pub enum Response {
     Success,
     AlreadyRegistered,
     AlreadyRegisteredByOther,

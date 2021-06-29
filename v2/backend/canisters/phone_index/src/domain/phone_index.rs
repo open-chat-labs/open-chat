@@ -130,26 +130,10 @@ impl PhoneIndex {
 }
 
 pub struct RegisterRequest {
-    caller: Principal,
-    phone_number: PhoneNumber,
-    now: TimestampMillis,
-    confirmation_code: String
-}
-
-impl RegisterRequest {
-    pub fn new(
-        caller: Principal,
-        phone_number: PhoneNumber,
-        now: TimestampMillis,
-        confirmation_code: String) -> RegisterRequest {
-
-        RegisterRequest {
-            caller,
-            phone_number,
-            now,
-            confirmation_code
-        }
-    }
+    pub caller: Principal,
+    pub phone_number: PhoneNumber,
+    pub now: TimestampMillis,
+    pub confirmation_code: String
 }
 
 pub enum RegisterResult {
@@ -160,19 +144,9 @@ pub enum RegisterResult {
 }
 
 pub struct ClaimRequest {
-    caller: Principal,
-    confirmation_code: String,
-    now: TimestampMillis,
-}
-
-impl ClaimRequest {
-    pub fn new(caller: Principal, confirmation_code: String, now: TimestampMillis) -> ClaimRequest {
-        ClaimRequest {
-            caller,
-            confirmation_code,
-            now
-        }
-    }
+    pub caller: Principal,
+    pub confirmation_code: String,
+    pub now: TimestampMillis,
 }
 
 pub enum ClaimResult {
@@ -184,17 +158,8 @@ pub enum ClaimResult {
 }
 
 pub struct ResendCodeRequest {
-    caller: Principal,
-    now: TimestampMillis,
-}
-
-impl ResendCodeRequest {
-    pub fn new(caller: Principal, now: TimestampMillis) -> ResendCodeRequest {
-        ResendCodeRequest {
-            caller,
-            now
-        }
-    }
+    pub caller: Principal,
+    pub now: TimestampMillis,
 }
 
 pub enum ResendCodeResult {

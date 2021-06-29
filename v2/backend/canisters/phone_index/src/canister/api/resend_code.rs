@@ -7,35 +7,36 @@ use serde::Deserialize;
 use shared::time::Milliseconds;
 
 #[update]
-pub async fn resend_code(_: ApiRequest) -> ApiResponse {
+pub async fn resend_code(_: Request) -> Response {
     RUNTIME_STATE.with(|state| {
         resend_code_impl(state.borrow_mut().as_mut().unwrap())
     })
 }
 
-fn resend_code_impl(runtime_state: &mut RuntimeState) -> ApiResponse {
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    let resend_code_request = ResendCodeRequest::new(caller, now);
+fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
+    let resend_code_request = ResendCodeRequest {
+        caller: runtime_state.env.caller(),
+        now: runtime_state.env.now()
+    };
 
     match runtime_state.phone_index.resend_code(resend_code_request) {
-        ResendCodeResult::Success => ApiResponse::Success,
-        ResendCodeResult::AlreadyClaimed => ApiResponse::AlreadyClaimed,
-        ResendCodeResult::CodeNotExpiredYet(milliseconds) => ApiResponse::CodeNotExpiredYet(
+        ResendCodeResult::Success => Response::Success,
+        ResendCodeResult::AlreadyClaimed => Response::AlreadyClaimed,
+        ResendCodeResult::CodeNotExpiredYet(milliseconds) => Response::CodeNotExpiredYet(
             CodeNotExpiredYetResult {
                 time_until_resend_code_permitted: milliseconds
             }
         ),
-        ResendCodeResult::NotFound => ApiResponse::NotFound
+        ResendCodeResult::NotFound => Response::NotFound
     }
 }
 
 #[derive(Deserialize)]
-pub struct ApiRequest {
+pub struct Request {
 }
 
 #[derive(CandidType)]
-pub enum ApiResponse {
+pub enum Response {
     Success,
     AlreadyClaimed,
     CodeNotExpiredYet(CodeNotExpiredYetResult),
