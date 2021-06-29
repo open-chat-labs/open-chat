@@ -1,6 +1,6 @@
 <script lang="ts">
     export let minHeight: string | undefined = undefined;
-    export let bgClass: "underwater" | "woods" | "sunset" | "error" = "underwater";
+    export let bgClass: "underwater" | "woods" | "sunset" | "error" | "expired" = "underwater";
 </script>
 
 <div class={`modal-page ${bgClass}`}>
@@ -31,6 +31,10 @@
 
         &.error {
             @include fullScreenImg("../assets/error.jpg");
+        }
+
+        &.expired {
+            @include fullScreenImg("../assets/expired.jpg");
         }
 
         @include fullHeight();

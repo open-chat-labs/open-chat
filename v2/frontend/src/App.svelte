@@ -7,8 +7,8 @@
     import { _ } from "svelte-i18n";
     import { identityService } from "./fsm/identity.machine";
     const { state, send } = identityService;
-    // import Router from "svelte-spa-router";
-    // import { routes } from "./routes";
+    import Router from "svelte-spa-router";
+    import { routes } from "./routes";
     import Login from "./components/Login.svelte";
     import Register from "./components/register/Register.controller.svelte";
     import Loading from "./components/Loading.svelte";
@@ -41,8 +41,7 @@
 {:else if $state.matches("register_user") && regMachine}
     <Register machine={regMachine} />
 {:else if $state.matches("logged_in")}
-    <h1>We are logged in as {$state.context.user?.username}</h1>
-    <!-- <Router {routes} /> -->
+    <Router {routes} />
 {:else if $state.matches("unexpected_error")}
     <UnexpectedError error={$state.context.error} />
 {:else if $state.matches("expired")}

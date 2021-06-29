@@ -1,74 +1,55 @@
 <script lang="ts">
     import LeftPanel from "./LeftPanel.svelte";
-    import MiddlePanel from "./MiddlePanel.svelte";
-    import { fly } from "svelte/transition";
-    import RightPanel from "./RightPanel.svelte";
+    // import MiddlePanel from "./MiddlePanel.svelte";
+    // import { fly } from "svelte/transition";
+    // import RightPanel from "./RightPanel.svelte";
     import TestModeModal from "./TestModeModal.svelte";
     import ThemePicker from "./ThemePicker.svelte";
     import Overlay from "./Overlay.svelte";
     import { modalStore, ModalType } from "../stores/modal";
-    import { chatStore } from "../stores/chats";
     import { navStore } from "../stores/nav";
     import { rtlStore } from "../stores/rtl";
     import { identityService } from "../fsm/identity.machine";
-    import type { LoggedInMachine } from "../fsm/loggedin.machine";
     import type { ActorRefFrom } from "xstate";
-    import { onMount } from "svelte";
-    import { getFakeUser } from "../services/user";
-    import type { User } from "../services/user";
+    import type { LoggedInMachine } from "../fsm/loggedin.machine";
     const { state, send } = identityService;
 
-    let user: User;
-
-    onMount(() => {
-        getFakeUser().then((u) => {
-            user = u;
-        });
-    });
-
-    $: loggedIn = $state.children
-        .loggedInMachine as ActorRefFrom<LoggedInMachine>;
+    $: loggedIn = $state.children.loggedInMachine as ActorRefFrom<LoggedInMachine>;
 
     let hideLeft: boolean = false;
     export let params: { chatId?: string } = {};
 
-    function selectChat(chatId?: string) {
-        if (user) {
-            const summary =
-                user.chats.find((c) => c.chatId === chatId) ?? user.chats[0];
-            hideLeft = !hideLeft;
-            chatStore.selectChat(summary);
-        }
-    }
+    // function selectChat(chatId?: string) {
+    //     if (user) {
+    //         const summary = user.chats.find((c) => c.chatId === chatId) ?? user.chats[0];
+    //         hideLeft = !hideLeft;
+    //         chatStore.selectChat(summary);
+    //     }
+    // }
 
-    $: {
-        if (user) {
-            params.chatId = user.chats[0].chatId;
-        }
-    }
+    // $: {
+    //     if (user) {
+    //         params.chatId = user.chats[0].chatId;
+    //     }
+    // }
 
-    $: {
-        selectChat(params.chatId);
-    }
+    // $: {
+    //     selectChat(params.chatId);
+    // }
 
     $: x = $rtlStore ? -350 : 350;
 </script>
 
-{#if $state.context.userProfile}
+{#if $loggedIn.context.user}
     <main>
-        <LeftPanel
-            chats={[]}
-            userProfile={$loggedIn.context.userProfile}
-            {hideLeft} />
-        <MiddlePanel on:goback={() => (hideLeft = false)} {hideLeft} />
+        <pre>logged in as {$loggedIn.context.user.username}</pre>
+        <LeftPanel chats={[]} user={$loggedIn.context.user} {hideLeft} />
+        <!-- <MiddlePanel on:goback={() => (hideLeft = false)} {hideLeft} />
         {#if $navStore}
-            <div
-                transition:fly={{ x, duration: 400 }}
-                class="right-wrapper"
-                class:rtl={$rtlStore}>
+            <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel />
             </div>
-        {/if}
+        {/if} -->
     </main>
 {/if}
 

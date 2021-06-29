@@ -5,7 +5,7 @@
 </script>
 
 <Meta
-    title="Register"
+    title="UnexpectedError"
     component={UnexpectedError}
     argTypes={{
         error: {

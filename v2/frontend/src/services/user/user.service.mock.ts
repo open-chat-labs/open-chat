@@ -10,7 +10,13 @@ export class UserServiceMock implements IUserService {
     }
     getCurrentUser(): Promise<GetCurrentUserResponse> {
         return Promise.resolve({
-            kind: "unknown",
+            kind: "success",
+            user: {
+                userId: {} as Principal,
+                username: "julian_jelfs",
+                version: 0,
+                accountBalance: BigInt(1000000),
+            },
         });
     }
 }

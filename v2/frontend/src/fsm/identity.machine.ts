@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { createMachine, assign, MachineConfig, MachineOptions } from "xstate";
+import { createMachine, assign, MachineConfig, MachineOptions, DoneInvokeEvent } from "xstate";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";
@@ -9,6 +9,7 @@ import type { User, GetCurrentUserResponse } from "../domain/user";
 import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
+import { loggedInMachine } from "./loggedin.machine";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -79,7 +80,6 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
     actions: {
         logError: (ctx, _) => {
             if (ctx.error) {
-                console.error(ctx.error);
                 rollbar.error("Unexpected error", ctx.error);
             }
         },
@@ -133,14 +133,12 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         target: "logged_in",
                         cond: "userIsRegistered",
                         actions: assign({
-                            user: (_, { data, type }) => {
-                                console.log(data);
-                                if (type === "done.invoke.getUser") {
-                                    if (data.kind === "success") {
-                                        return data.user;
+                            user: (_, ev: DoneInvokeEvent<GetCurrentUserResponse>) => {
+                                if (ev.type === "done.invoke.getUser") {
+                                    if (ev.data.kind === "success") {
+                                        return ev.data.user;
                                     }
                                 }
-                                return undefined;
                             },
                         }),
                     },
@@ -167,7 +165,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                 data: (ctx, _ev) => ({
                     serviceContainer: ctx.serviceContainer,
                 }),
-                onDone: "logged_in",
+                onDone: "loading_user",
                 onError: {
                     target: "unexpected_error",
                     actions: assign({
@@ -213,17 +211,34 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             on: {
                 LOGOUT: "logging_out",
             },
-            invoke: {
-                id: "startSession",
-                src: "startSession",
-                onDone: {
-                    target: "expired",
-                    actions: assign({
-                        identity: (_, _ev) => undefined,
-                        user: (_, _ev) => undefined,
+            invoke: [
+                {
+                    id: "loggedInMachine",
+                    src: loggedInMachine,
+                    data: (ctx, _ev) => ({
+                        serviceContainer: ctx.serviceContainer,
+                        user: ctx.user,
                     }),
+                    onDone: "login",
+                    onError: {
+                        target: "unexpected_error",
+                        actions: assign({
+                            error: (_, ev) => ev.data,
+                        }),
+                    },
                 },
-            },
+                {
+                    id: "startSession",
+                    src: "startSession",
+                    onDone: {
+                        target: "expired",
+                        actions: assign({
+                            identity: (_, _ev) => undefined,
+                            user: (_, _ev) => undefined,
+                        }),
+                    },
+                },
+            ],
         },
         expired: {
             on: {

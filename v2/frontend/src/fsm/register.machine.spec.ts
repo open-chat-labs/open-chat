@@ -1,53 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Event, MachineOptions, StateValue } from "xstate";
-import { RegisterContext, RegisterEvents, registerMachine } from "./register.machine";
+import { registerMachine } from "./register.machine";
 import type { Principal } from "@dfinity/principal";
-
-type Config = Partial<MachineOptions<RegisterContext, RegisterEvents>>;
-
-function testConfig(): Config {
-    return {
-        guards: {
-            phoneNumberTaken: () => false,
-            tooManyAttempts: () => false,
-            claimInvalid: () => false,
-            claimExpired: () => false,
-            userExists: () => false,
-            userLimitReached: () => false,
-            usernameTaken: () => false,
-            userNotFound: () => false,
-            usernameTooShort: () => false,
-            usernameTooLong: () => false,
-        },
-        services: {
-            registerPhoneNumber: () => jest.fn(),
-            claimPhoneNumber: () => jest.fn(),
-            updateUsername: () => jest.fn(),
-        },
-    };
-}
-
-function updateConfig(partialGuards: any = {}) {
-    const defaultConfig = testConfig();
-    return {
-        ...defaultConfig,
-        guards: {
-            ...defaultConfig.guards,
-            ...partialGuards,
-        },
-    };
-}
+import { testTransition } from "./machine.spec.utils";
 
 describe("identity machine transitions", () => {
-    function testTransition(from: StateValue, ev: Event<RegisterEvents>, to: StateValue) {
-        const machine = registerMachine;
-        const nextState = machine.transition(from, ev);
-        expect(nextState.value).toBe(to);
-    }
-
     test("enter phone number", () => {
         testTransition(
+            registerMachine,
             "awaiting_phone_number",
             "REQUEST_REGISTRATION_CODE",
             "checking_phone_number"
@@ -56,6 +14,7 @@ describe("identity machine transitions", () => {
 
     test("checking phone number - success", () => {
         testTransition(
+            registerMachine,
             "checking_phone_number",
             "done.invoke.registerPhoneNumber",
             "awaiting_registration_code"
@@ -64,6 +23,7 @@ describe("identity machine transitions", () => {
 
     test("checking phone number - taken", () => {
         testTransition(
+            registerMachine,
             "checking_phone_number",
             { type: "done.invoke.registerPhoneNumber", data: "taken" },
             "awaiting_phone_number"
@@ -72,6 +32,7 @@ describe("identity machine transitions", () => {
 
     test("checking phone number - too many attempts", () => {
         testTransition(
+            registerMachine,
             "checking_phone_number",
             { type: "done.invoke.registerPhoneNumber", data: "too_many_attempts" },
             "awaiting_phone_number"
@@ -80,6 +41,7 @@ describe("identity machine transitions", () => {
 
     test("checking phone number - error", () => {
         testTransition(
+            registerMachine,
             "checking_phone_number",
             "error.platform.registerPhoneNumber",
             "unexpected_error"
@@ -88,6 +50,7 @@ describe("identity machine transitions", () => {
 
     test("submit reg code", () => {
         testTransition(
+            registerMachine,
             "awaiting_registration_code",
             "SUBMIT_REGISTRATION_CODE",
             "checking_registration_code"
@@ -96,6 +59,7 @@ describe("identity machine transitions", () => {
 
     test("request new reg code", () => {
         testTransition(
+            registerMachine,
             "awaiting_registration_code",
             "RESEND_REGISTRATION_CODE",
             "checking_phone_number"
@@ -104,6 +68,7 @@ describe("identity machine transitions", () => {
 
     test("claim phone number - success", () => {
         testTransition(
+            registerMachine,
             "checking_registration_code",
             {
                 type: "done.invoke.claimPhoneNumber",
@@ -115,6 +80,7 @@ describe("identity machine transitions", () => {
 
     test("claim phone number - invalid", () => {
         testTransition(
+            registerMachine,
             "checking_registration_code",
             {
                 type: "done.invoke.claimPhoneNumber",
@@ -126,6 +92,7 @@ describe("identity machine transitions", () => {
 
     test("claim phone number - expired", () => {
         testTransition(
+            registerMachine,
             "checking_registration_code",
             {
                 type: "done.invoke.claimPhoneNumber",
@@ -137,6 +104,7 @@ describe("identity machine transitions", () => {
 
     test("claim phone number - user exists", () => {
         testTransition(
+            registerMachine,
             "checking_registration_code",
             {
                 type: "done.invoke.claimPhoneNumber",
@@ -148,6 +116,7 @@ describe("identity machine transitions", () => {
 
     test("claim phone number - user limit reached", () => {
         testTransition(
+            registerMachine,
             "checking_registration_code",
             {
                 type: "done.invoke.claimPhoneNumber",
@@ -158,11 +127,12 @@ describe("identity machine transitions", () => {
     });
 
     test("register user", () => {
-        testTransition("awaiting_username", "REGISTER_USER", "registering_user");
+        testTransition(registerMachine, "awaiting_username", "REGISTER_USER", "registering_user");
     });
 
     test("update username - success", () => {
         testTransition(
+            registerMachine,
             "registering_user",
             {
                 type: "done.invoke.updateUsername",
@@ -174,6 +144,7 @@ describe("identity machine transitions", () => {
 
     test("update username - username taken", () => {
         testTransition(
+            registerMachine,
             "registering_user",
             {
                 type: "done.invoke.updateUsername",
@@ -185,6 +156,7 @@ describe("identity machine transitions", () => {
 
     test("update username - user not found", () => {
         testTransition(
+            registerMachine,
             "registering_user",
             {
                 type: "done.invoke.updateUsername",
@@ -196,6 +168,7 @@ describe("identity machine transitions", () => {
 
     test("update username - username too short", () => {
         testTransition(
+            registerMachine,
             "registering_user",
             {
                 type: "done.invoke.updateUsername",
@@ -207,6 +180,7 @@ describe("identity machine transitions", () => {
 
     test("update username - username too long", () => {
         testTransition(
+            registerMachine,
             "registering_user",
             {
                 type: "done.invoke.updateUsername",

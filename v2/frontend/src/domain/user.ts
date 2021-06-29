@@ -1,6 +1,27 @@
+import type { Principal } from "@dfinity/principal";
+
 export type User = {
+    userId: Principal;
     username: string;
+    version: number;
+    accountBalance: bigint;
 };
+
+export function avatarUrl(user: User): string {
+    return "";
+}
+
+export enum UserStatus {
+    Offline,
+    Online,
+    Busy,
+}
+
+export enum AvatarSize {
+    Small,
+    Medium,
+    Large,
+}
 
 export type GetCurrentUserResponse = UserSuccess | UnknownUser;
 
