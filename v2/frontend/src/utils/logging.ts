@@ -1,7 +1,7 @@
 import Rollbar from "rollbar";
 
 export const rollbar = Rollbar.init({
-    accessToken: "3194bdfb0c064240911a79b287765413",
+    accessToken: "process.env.ROLLBAR_ACCESS_TOKEN",
     captureUncaught: true,
     captureUnhandledRejections: true,
     payload: {

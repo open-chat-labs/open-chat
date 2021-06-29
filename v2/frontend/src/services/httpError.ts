@@ -1,9 +1,3 @@
-// export type HttpError = {
-//     kind: "httpError";
-//     code: number;
-//     message: string;
-// };
-
 export class HttpError extends Error {
     constructor(public code: number, error: Error) {
         super(error.message);
