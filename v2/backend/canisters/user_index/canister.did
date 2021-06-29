@@ -4,7 +4,7 @@
 // 2. top-up user canisters with cycles as needed
 // 3. notify the "controller" canister if this canister's cycle balance is getting low
 
-type Timestamp = nat64;
+type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
 
@@ -124,14 +124,14 @@ type GetUserResponse =
 type GetUsersRequest =
     record {
         users: vec UserId;
-        updated_since: opt Timestamp;
+        updated_since: opt TimestampMillis;
     };
 
 type GetUsersResponse =
     variant {
         Success: record {
             users: vec UserSummary;
-            timestamp: Timestamp;
+            timestamp: TimestampMillis;
         }
     };
 
@@ -156,7 +156,7 @@ type Metrics =
         cycles_transferred: nat;
         cycles_balance: int64;
         bytes_used: nat64;
-        timestamp: nat64;
+        timestamp: TimestampMillis;
         caller_id: principal;
         wasm_memory_used: nat64;
     };

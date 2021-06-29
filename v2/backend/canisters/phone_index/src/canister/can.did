@@ -1,13 +1,14 @@
 // This canister will store a map of phone number to code and claim info
 // In heartbeat function will check balance and notify the "controller" canister if it's low
 
+type TimestampNanos = nat64;
 type CanisterId = principal;
 type Milliseconds = nat64;
 
 type PhoneNumber = 
     record {
         country_code: nat16;
-        number: nat64;
+        number: text;
     };
 
 type RegisterRequest = 
@@ -21,7 +22,7 @@ type RegisterResponse =
         AlreadyRegistered;
         AlreadyRegisteredByOther;
         AlreadyRegisteredButUnclaimed: record {
-            time_until_resend_confirmation_code_permitted: opt Milliseconds
+            time_until_resend_code_permitted: opt Milliseconds
         };
         InvalidPhoneNumber;
     };
@@ -42,6 +43,54 @@ type ClaimResponse =
         NotFound;
     };
 
+type ResendCodeRequest = 
+    record {        
+    };
+
+type ResendCodeResponse = 
+    variant {
+        Success;
+        AlreadyClaimed;
+        CodeNotExpiredYet: record {
+            time_until_resend_code_permitted: Milliseconds
+        };
+        NotFound;
+    };
+
+type PendingSmsNotificationsRequest = 
+    record {
+        from: TimestampNanos;        
+    };
+
+type SmsNotification = 
+    record {
+        phone_number: text;
+        message: text;
+    };
+
+type PendingSmsNotificationsResponse = 
+    variant {
+        Success: record {
+            notifications: vec SmsNotification;
+            latest: TimestampNanos;
+        };
+    };
+
+type StatusRequest = 
+    record {
+    };
+
+type StatusResponse = 
+    variant {
+        NotFound;
+        Registered record {
+            phone_number: PhoneNumber;
+        };
+        Claimed: record {
+            canister_id: CanisterId;
+        };
+    };
+
 service : {
     // Checks phone number not already registered and if not then sends code to phone
     register: (RegisterRequest) -> (RegisterResponse);
@@ -49,4 +98,14 @@ service : {
     // If code is valid and not expired then register principal with user_index
     // (calls user_index to create user canister)
     claim: (ClaimRequest) -> (ClaimResponse);
+
+    // If the user did not receive or enter the confirmation code before it expired then
+    // call this to resend the code
+    resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
+
+    // Get a page of pending SMS notifications to send and mark them as sent
+    pending_sms_notifications: (PendingSmsNotificationsRequest) -> (PendingSmsNotificationsResponse) query;
+
+    // Call to find out the status of the phone number registration/claim process for the caller
+    status: (StatusRequest) -> (StatusResponse) query;
 }
