@@ -1,6 +1,6 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::domain::phone_index::{ResendCodeRequest, ResendCodeResult};
+use crate::data::{ResendCodeRequest, ResendCodeResult};
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use serde::Deserialize;
@@ -19,7 +19,7 @@ fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
         now: runtime_state.env.now()
     };
 
-    match runtime_state.phone_index.resend_code(resend_code_request) {
+    match runtime_state.data.resend_code(resend_code_request) {
         ResendCodeResult::Success => Response::Success,
         ResendCodeResult::AlreadyClaimed => Response::AlreadyClaimed,
         ResendCodeResult::CodeNotExpiredYet(milliseconds) => Response::CodeNotExpiredYet(

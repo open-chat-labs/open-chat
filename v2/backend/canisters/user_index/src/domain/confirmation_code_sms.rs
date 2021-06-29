@@ -1,8 +1,10 @@
+use candid::CandidType;
 use phonenumber::PhoneNumber;
 
 #[allow(dead_code)]
+#[derive(Clone, CandidType)]
 pub struct ConfirmationCodeSms {
-    phone_number: PhoneNumber,
+    phone_number: String,
     confirmation_code: String,
     index: u64,
 }
@@ -10,7 +12,7 @@ pub struct ConfirmationCodeSms {
 impl ConfirmationCodeSms {
     pub fn new(phone_number: PhoneNumber, confirmation_code: String, index: u64) -> ConfirmationCodeSms {
         ConfirmationCodeSms {
-            phone_number,
+            phone_number: phone_number.to_string(),
             confirmation_code,
             index
         }

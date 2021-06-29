@@ -57,9 +57,10 @@ type ResendCodeResponse =
         NotFound;
     };
 
-type PendingSmsNotificationsRequest = 
+type PendingSmsMessagesRequest =
     record {
-        from: TimestampNanos;        
+        from_index: nat64;
+        max_results: nat64;
     };
 
 type SmsNotification = 
@@ -68,11 +69,11 @@ type SmsNotification =
         message: text;
     };
 
-type PendingSmsNotificationsResponse = 
+type PendingSmsMessagesResponse =
     variant {
         Success: record {
             notifications: vec SmsNotification;
-            latest: TimestampNanos;
+            latest_index: nat64;
         };
     };
 
@@ -93,19 +94,19 @@ type StatusResponse =
     };
 
 service : {
-    // Checks phone number not already registered and if not then sends code to phone
-    register: (RegisterRequest) -> (RegisterResponse);
+    // Checks if phone number already registered and if not then sends code to phone
+    register_phone_number: (RegisterPhoneNumberRequest) -> (RegisterPhoneNumberResponse);
 
     // If code is valid and not expired then register principal with user_index
     // (calls user_index to create user canister)
-    claim: (ClaimRequest) -> (ClaimResponse);
+    confirm_phone_number: (ConfirmPhoneNumberRequest) -> (ConfirmPhoneNumberResponse);
 
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
     resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
 
     // Get a page of pending SMS notifications to send and mark them as sent
-    pending_sms_notifications: (PendingSmsNotificationsRequest) -> (PendingSmsNotificationsResponse) query;
+    pending_sms_messages: (PendingSmsMessagesRequest) -> (PendingSmsMessagesResponse) query;
 
     // Call to find out the status of the phone number registration/claim process for the caller
     status: (StatusRequest) -> (StatusResponse) query;
