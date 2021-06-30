@@ -1,4 +1,4 @@
-// Maintains a registery of users and manages the user canisters
+// Maintains a registry of users and manages the user canisters
 
 type Milliseconds = nat64;
 type TimestampMillis = nat64;
@@ -68,7 +68,6 @@ type SetUsernameRequest =
 type SetUsernameResponse =
     variant {
         Success;
-        SuccessNoChange;
         UsernameTaken;
         UserNotFound;
         UsernameInvalid;

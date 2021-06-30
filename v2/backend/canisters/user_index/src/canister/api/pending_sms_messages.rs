@@ -19,14 +19,19 @@ fn pending_sms_messages_impl(request: Request, runtime_state: &RuntimeState) -> 
         return Response::Unauthorized;
     }
 
-    let pending_sms_messages_request = crate::data::pending_sms_messages::Request {
-        from_index: request.from_index,
-        max_results: request.max_results
-    };
+    let mut messages = Vec::new();
+    if let Some(earliest_index) = runtime_state.data.sms_queue.back().map(|s| s.index) {
+        let from_index = request.from_index - earliest_index;
+        for i in from_index..(from_index + request.max_results) {
+            if let Some(message) = runtime_state.data.sms_queue.get(i as usize) {
+                messages.push(message.clone());
+            } else {
+                break;
+            }
+        }
+    }
 
-    let result = runtime_state.data.pending_sms_messages(pending_sms_messages_request);
-
-    Response::Success(SuccessResult { messages: result.sms_messages })
+    Response::Success(SuccessResult { messages })
 }
 
 #[derive(Deserialize)]
