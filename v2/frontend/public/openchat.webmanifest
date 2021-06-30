@@ -1,0 +1,16 @@
+{
+    "background_color": "#22A7F2",
+    "description": "OpenChat",
+    "display": "fullscreen",
+    "icons": [
+        {
+            "src": "logo-icon.svg",
+            "purpose": "maskable any",
+            "type": "image/svg+xml",
+            "sizes": "48x48 72x72 96x96 128x128 150x150 256x256 512x512 1024x1024"
+        }
+    ],
+    "name": "OpenChat",
+    "short_name": "OpenChat",
+    "start_url": "/index.html"
+}
