@@ -1,5 +1,3 @@
 node_modules
 public/build
 .env
-./src/.DS_Store
-./public/.DS_Store

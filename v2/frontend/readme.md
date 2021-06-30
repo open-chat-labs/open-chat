@@ -25,6 +25,7 @@ This should look something like this:
 ```bash
 INTERNET_IDENTITY_URL=http://rwlgt-iiaaa-aaaaa-aaaaa-cai.localhost:8000/
 DFX_NETWORK=local
+ROLLBAR_ACCESS_TOKEN=3194bdfb0c064240911a79b287765413
 ```
 
 Where the INTERNET_IDENTITY value should be replaced with a value containing the correct internet identity canister ID for your local environment.

@@ -1,15 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgentRequest, Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import { interpret, MachineOptions } from "xstate";
 import type { Event, StateValue, State } from "xstate";
 import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
+import type { User } from "../domain/user";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
+const fakeUser: User = { username: "julian_jelfs" };
+
 const fakeIdentity: Identity = {
     getPrincipal: () => ({} as Principal),
-    transformRequest: (req: HttpAgentRequest) => Promise.resolve({}),
+    transformRequest: (_req: HttpAgentRequest) => Promise.resolve({}),
 };
 
 // create a test version of all of our side effects
@@ -18,10 +23,13 @@ function testConfig(): Config {
         guards: {
             isAnonymous: (_ctx, _) => false,
             notAnonymous: (_ctx, _) => true,
+            userIsRegistered: (_ctx, _) => true,
+            userIsNotRegistered: (_ctx, _) => true,
         },
 
         // we definitely need the services to be separate so that we can easily mock them
         services: {
+            getUser: jest.fn().mockResolvedValue(fakeUser),
             login: jest.fn().mockResolvedValue(fakeIdentity),
             logout: jest.fn().mockResolvedValue(undefined),
             getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
@@ -50,9 +58,7 @@ describe("identity machine end to end", () => {
         sequence: string[],
         done: any,
         machine: typeof identityMachine,
-        assert: (
-            state: State<IdentityContext, IdentityEvents, any, any>
-        ) => void
+        assert: (state: State<IdentityContext, IdentityEvents, any, any>) => void
     ) {
         const service = interpret(machine).onTransition((state) => {
             const nextState = sequence.shift();
@@ -76,10 +82,26 @@ describe("identity machine end to end", () => {
         jest.resetAllMocks();
     });
 
-    test("successfully loaded identity", (done) => {
+    test("successfully loaded user", (done) => {
         const config = testConfig();
         testSequence(
-            ["requesting_identity", "loading_user"],
+            ["requesting_identity", "loading_user", "logged_in"],
+            done,
+            identityMachine.withConfig(config),
+            (state) => {
+                expect(config.services!.getIdentity).toHaveBeenCalled();
+                expect(state.context.identity).toEqual(fakeIdentity);
+            }
+        );
+    });
+
+    test("successfully loaded identity, user not registered", (done) => {
+        const config = updateConfig({
+            userIsRegistered: () => false,
+            userIsNotRegistered: () => true,
+        });
+        testSequence(
+            ["requesting_identity", "loading_user", "register_user"],
             done,
             identityMachine.withConfig(config),
             (state) => {
@@ -93,9 +115,7 @@ describe("identity machine end to end", () => {
         const config = updateConfig(
             {},
             {
-                getIdentity: jest
-                    .fn()
-                    .mockRejectedValue("failed to load identity"),
+                getIdentity: jest.fn().mockRejectedValue("failed to load identity"),
             }
         );
         testSequence(
@@ -140,11 +160,7 @@ describe("identity machine transitions", () => {
     }
 
     test("when requesting identity succeeds", () => {
-        testTransition(
-            "requesting_identity",
-            "done.invoke.getIdentity",
-            "loading_user"
-        );
+        testTransition("requesting_identity", "done.invoke.getIdentity", "loading_user");
     });
 
     test("when requesting identity returns anonymous identity", () => {
@@ -182,11 +198,7 @@ describe("identity machine transitions", () => {
     });
 
     test("when requesting identity fails", () => {
-        testTransition(
-            "requesting_identity",
-            "error.platform.getIdentity",
-            "failure"
-        );
+        testTransition("requesting_identity", "error.platform.getIdentity", "failure");
     });
 
     test("can retry from the failure state", () => {
@@ -207,5 +219,9 @@ describe("identity machine transitions", () => {
 
     test("when logout fails", () => {
         testTransition("logging_out", "error.platform.logout", "failure");
+    });
+
+    test("when logging out from register user", () => {
+        testTransition("register_user", "LOGOUT", "logging_out");
     });
 });

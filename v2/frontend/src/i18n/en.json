@@ -1,10 +1,40 @@
 {
     "openChat": "OpenChat",
     "theInternetComputer": "The Internet Computer",
+    "unexpectedError": "Unexpected Error",
+    "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
+    "sessionExpired": "Session Expired",
+    "sessionExpiredBlurb": "Please sign in again",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
         "blurbPartTwo": " - the world's first internet-scale blockchain.",
         "signIn": "Sign in"
+    },
+    "register": {
+        "tellUsWho": "Tell us who you are ...",
+        "registerAs": "To register as a user",
+        "enterPhone": "please enter your phone number below",
+        "enterPhonePlaceholder": "enter your phone number",
+        "enterUsername": "Choose a username",
+        "pleaseEnterCode": "please enter the code we sent you below",
+        "usernameInvalid": "The username you entered is not valid - try again",
+        "enterCode": "enter code",
+        "requestCode": "Request code",
+        "validateCode": "Validate code",
+        "resendCode": "Resend code",
+        "countryCode": "Country code",
+        "letsGo": "Let's go!",
+        "registrationComplete": "Registration complete ...",
+        "welcome": "Welcome to OpenChat!",
+        "enjoy": "Enjoy chatting on The Internet Computer",
+        "phoneNumberTaken": "Phone number is already taken",
+        "tooManyAttempts": "Too many registration attempts",
+        "claimInvalid": "The code you entered is invalid",
+        "usernameTaken": "That username is already taken",
+        "userNotFound": "User not found",
+        "usernameTooShort": "That username is too short",
+        "usernameTooLong": "That username is too long",
+        "claimExpired": "The code you entered has expired"
     }
 }
