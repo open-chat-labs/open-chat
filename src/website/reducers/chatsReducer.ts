@@ -461,10 +461,7 @@ export default produce((state: ChatsState, event: Event) => {
             // Chat may not exist locally yet
             if (chat) {
                 if (chatFunctions.isDirectChat(chat)) {
-                    const blockedUsers = state.blockedUsers;
-                    if (!blockedUsers.includes(chat.them)) {
-                        chat.themTyping = true;
-                    }        
+                    chat.themTyping = !state.blockedUsers.includes(chat.them);
                 } else {
                     setFunctions.add(chat.participantsTyping, userId);
                 }
