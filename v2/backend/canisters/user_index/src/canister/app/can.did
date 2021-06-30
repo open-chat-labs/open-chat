@@ -38,7 +38,7 @@ type ConfirmPhoneNumberResponse =
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
-        NotFound;
+        UserNotFound;
     };
 
 type ResendCodeRequest = 
@@ -52,7 +52,7 @@ type ResendCodeResponse =
         CodeNotExpiredYet: record {
             time_until_resend_code_permitted: Milliseconds
         };
-        NotFound;
+        UserNotFound;
     };
 
 
