@@ -57,26 +57,6 @@ type ResendCodeResponse =
         NotFound;
     };
 
-type PendingSmsMessagesRequest =
-    record {
-        from_index: nat64;
-        max_results: nat64;
-    };
-
-type SmsNotification = 
-    record {
-        phone_number: text;
-        message: text;
-    };
-
-type PendingSmsMessagesResponse =
-    variant {
-        Success: record {
-            notifications: vec SmsNotification;
-            latest_index: nat64;
-        };
-    };
-
 type StatusRequest = 
     record {
     };
@@ -104,9 +84,6 @@ service : {
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
     resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
-
-    // Get a page of pending SMS notifications to send and mark them as sent
-    pending_sms_messages: (PendingSmsMessagesRequest) -> (PendingSmsMessagesResponse) query;
 
     // Call to find out the status of the phone number registration/claim process for the caller
     status: (StatusRequest) -> (StatusResponse) query;
