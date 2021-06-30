@@ -1,6 +1,6 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::{ConfirmationCodeSms, PendingSmsMessagesRequest};
+use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::query;
 use serde::Deserialize;
@@ -19,7 +19,7 @@ fn pending_sms_messages_impl(request: Request, runtime_state: &RuntimeState) -> 
         return Response::Unauthorized;
     }
 
-    let pending_sms_messages_request = PendingSmsMessagesRequest {
+    let pending_sms_messages_request = crate::data::pending_sms_messages::Request {
         from_index: request.from_index,
         max_results: request.max_results
     };

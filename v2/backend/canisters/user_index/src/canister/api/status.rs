@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use crate::canister::RUNTIME_STATE;
-use crate::data::{StatusResult, StatusRequest};
+use crate::data::status::Result;
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::query;
 use phonenumber::{Mode};
@@ -15,23 +15,23 @@ fn status(_request: Request) -> Response {
 }
 
 fn status_impl(runtime_state: &RuntimeState) -> Response {
-    let status_request = StatusRequest {
+    let status_request = crate::data::status::Request {
         caller: runtime_state.env.caller(),
         now: runtime_state.env.now()
     };
 
     match runtime_state.data.status(status_request) {
-        StatusResult::NotFound => Response::NotFound,
-        StatusResult::Unconfirmed(uc) => Response::Unconfirmed(UnconfirmedResult {
+        Result::NotFound => Response::NotFound,
+        Result::Unconfirmed(uc) => Response::Unconfirmed(UnconfirmedResult {
             phone_number: PhoneNumber {
                 country_code: uc.phone_number.code().value(),
                 number: uc.phone_number.format().mode(Mode::National).to_string()
             },
             time_until_resend_code_permitted: uc.time_until_resend_code_permitted
         }),
-        StatusResult::ConfirmedPendingUsername => Response::ConfirmedPendingUsername,
-        StatusResult::ConfirmedPendingCanisterCreation => Response::ConfirmedPendingCanisterCreation,
-        StatusResult::Created(user_id) => Response::Created(CreatedResult { user_id }),
+        Result::ConfirmedPendingUsername => Response::ConfirmedPendingUsername,
+        Result::ConfirmedPendingCanisterCreation => Response::ConfirmedPendingCanisterCreation,
+        Result::Created(user_id) => Response::Created(CreatedResult { user_id }),
     }
 }
 

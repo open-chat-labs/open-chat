@@ -1,6 +1,6 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::{ResendCodeRequest, ResendCodeResult};
+use crate::data::resend_code::Result;
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use serde::Deserialize;
@@ -14,20 +14,20 @@ pub async fn resend_code(_: Request) -> Response {
 }
 
 fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
-    let resend_code_request = ResendCodeRequest {
+    let resend_code_request = crate::data::resend_code::Request {
         caller: runtime_state.env.caller(),
         now: runtime_state.env.now()
     };
 
     match runtime_state.data.resend_code(resend_code_request) {
-        ResendCodeResult::Success => Response::Success,
-        ResendCodeResult::AlreadyClaimed => Response::AlreadyClaimed,
-        ResendCodeResult::CodeNotExpiredYet(milliseconds) => Response::CodeNotExpiredYet(
+        Result::Success => Response::Success,
+        Result::AlreadyClaimed => Response::AlreadyClaimed,
+        Result::CodeNotExpiredYet(milliseconds) => Response::CodeNotExpiredYet(
             CodeNotExpiredYetResult {
                 time_until_resend_code_permitted: milliseconds
             }
         ),
-        ResendCodeResult::NotFound => Response::NotFound
+        Result::NotFound => Response::NotFound
     }
 }
 

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::{ConfirmPhoneNumberRequest, ConfirmPhoneNumberResult};
+use crate::data::confirm_phone_number::Result;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 
@@ -10,7 +10,7 @@ pub fn confirm_phone_number(request: Request) -> Response {
         state.borrow().as_ref().map(|s| (s.env.caller(), s.env.now())).unwrap()
     });
 
-    let confirm_phone_number_request = ConfirmPhoneNumberRequest {
+    let confirm_phone_number_request = crate::data::confirm_phone_number::Request {
         caller, 
         confirmation_code: request.confirmation_code, 
         now
@@ -21,11 +21,11 @@ pub fn confirm_phone_number(request: Request) -> Response {
     });
 
     match confirm_phone_number_result {
-        ConfirmPhoneNumberResult::Success(_) => Response::Success,
-        ConfirmPhoneNumberResult::ConfirmationCodeIncorrect => Response::ConfirmationCodeIncorrect,
-        ConfirmPhoneNumberResult::ConfirmationCodeExpired => Response::ConfirmationCodeExpired,
-        ConfirmPhoneNumberResult::AlreadyClaimed => Response::AlreadyClaimed,
-        ConfirmPhoneNumberResult::NotFound => Response::NotFound,
+        Result::Success(_) => Response::Success,
+        Result::ConfirmationCodeIncorrect => Response::ConfirmationCodeIncorrect,
+        Result::ConfirmationCodeExpired => Response::ConfirmationCodeExpired,
+        Result::AlreadyClaimed => Response::AlreadyClaimed,
+        Result::NotFound => Response::NotFound,
     }
 }
 
