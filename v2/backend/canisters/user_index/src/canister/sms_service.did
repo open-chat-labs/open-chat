@@ -1,0 +1,24 @@
+type PendingSmsMessagesRequest =
+    record {
+        from_index: nat64;
+        max_results: nat64;
+    };
+
+type SmsNotification =
+    record {
+        phone_number: text;
+        message: text;
+    };
+
+type PendingSmsMessagesResponse =
+    variant {
+        Success: record {
+            notifications: vec SmsNotification;
+            latest_index: nat64;
+        };
+    };
+
+service : {
+    // Get a page of pending SMS notifications to send and mark them as sent
+    pending_sms_messages: (PendingSmsMessagesRequest) -> (PendingSmsMessagesResponse) query;
+}
