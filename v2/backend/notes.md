@@ -1,7 +1,6 @@
 Canisters
 ---------
 Controller
-PhoneIndex
 UserIndex
 GroupIndex
 User

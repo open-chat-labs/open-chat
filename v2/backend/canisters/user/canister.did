@@ -2,7 +2,7 @@
 // It holds all the user's direct chats and links to their group chats.
 // For now it also holds the file data for any direct messages sent by the user.
 
-type Timestamp = nat64;
+type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
 type GroupId = CanisterId;
@@ -63,7 +63,7 @@ type Message =
     record {
         id: nat32;
         client_message_id: text;
-        timestamp: Timestamp;
+        timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
         replies_to: opt ReplyContext;
@@ -72,8 +72,8 @@ type Message =
 type ChatSummary =
     record {
         them: UserId;
-        display_date: Timestamp;
-        last_updated: Timestamp;
+        display_date: TimestampMillis;
+        last_updated: TimestampMillis;
         unread_by_me_message_id_ranges: vec vec nat32;
         unread_by_them_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
@@ -92,7 +92,7 @@ type SendMessageResponse =
         Success: record {
             chat_summary: ChatSummary;
             message_index: nat32;
-            timestamp: Timestamp;
+            timestamp: TimestampMillis;
         };
         RecipientNotFound;
         BalanceExceeded;
@@ -240,7 +240,7 @@ type HandleLeftGroupResponse =
 
 type GetChatsRequest =
     record {
-        updated_since: opt Timestamp;
+        updated_since: opt TimestampMillis;
         message_count_for_top_chat: opt nat16;
     };
 
@@ -327,7 +327,7 @@ type Metrics =
         bytes_used: nat64;
         blob_bytes_used: nat64;
         chunk_count: nat32;
-        timestamp: nat64;
+        timestamp: TimestampMillis;
         caller_id: principal;
         wasm_memory_used: nat64;
     };
