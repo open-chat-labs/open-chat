@@ -9,6 +9,7 @@ use std::collections::VecDeque;
 pub mod submit_phone_number;
 pub mod confirm_phone_number;
 pub mod resend_code;
+pub mod set_username;
 pub mod status;
 pub mod pending_sms_messages;
 
@@ -115,6 +116,26 @@ impl Data {
             }
         } else {
             resend_code::Result::NotFound
+        }
+    }
+
+    pub fn set_username(&mut self, request: set_username::Request) -> set_username::Result {
+        // TODO: Need to be able to check whether the username already exists (case insensitive)
+        
+        if let Some(user) = self.users.get_mut(&request.caller) {
+            match user {
+                User::Confirmed(u) => {
+                    u.username = Some(request.username);
+                    set_username::Result::Success
+                },
+                User::Created(u) => {
+                    u.username = Some(request.username);
+                    set_username::Result::Success
+                },
+                _ => set_username::Result::UserUnconfirmed
+            }
+        } else {
+            set_username::Result::UserNotFound
         }
     }
 
