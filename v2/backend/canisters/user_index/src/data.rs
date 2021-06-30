@@ -1,9 +1,8 @@
-use candid::{Principal};
-use crate::domain::confirmation_code_sms::ConfirmationCodeSms;
+use candid::{CandidType, Principal};
+use multi_map::MultiMap;
 use phonenumber::PhoneNumber;
 use shared::time::{TimestampMillis, Milliseconds};
 use std::collections::VecDeque;
-use multi_map::MultiMap;
 
 pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 
@@ -53,6 +52,27 @@ pub struct CreatedUser {
     user_id: Principal,
     username: Option<String>,
     date_created: TimestampMillis,
+}
+
+#[derive(Clone, CandidType)]
+pub struct ConfirmationCodeSms {
+    phone_number: String,
+    confirmation_code: String,
+    index: u64,
+}
+
+impl ConfirmationCodeSms {
+    pub fn new(phone_number: PhoneNumber, confirmation_code: String, index: u64) -> ConfirmationCodeSms {
+        ConfirmationCodeSms {
+            phone_number: phone_number.to_string(),
+            confirmation_code,
+            index
+        }
+    }
+
+    pub fn get_index(&self) -> u64 {
+        self.index
+    }
 }
 
 impl Data {

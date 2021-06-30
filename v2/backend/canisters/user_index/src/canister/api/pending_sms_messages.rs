@@ -1,7 +1,6 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::PendingSmsMessagesRequest;
-use crate::domain::confirmation_code_sms::ConfirmationCodeSms;
+use crate::data::{ConfirmationCodeSms, PendingSmsMessagesRequest};
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::query;
 use serde::Deserialize;
