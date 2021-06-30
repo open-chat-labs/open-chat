@@ -1,8 +1,8 @@
-// This canister will store a map of phone number to code and claim info
-// In heartbeat function will check balance and notify the "controller" canister if it's low
+// Maintains a registery of users and manages the user canisters
 
 type TimestampNanos = nat64;
 type CanisterId = principal;
+type UserId = CanisterId;
 type Milliseconds = nat64;
 
 type PhoneNumber = 
@@ -73,36 +73,172 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type StatusRequest = 
+type UpdateWasmRequest =
+    record {
+        wasm: vec nat8;
+        version: text;
+    };
+
+type MarkAsOnlineRequest = 
     record {
     };
 
-type StatusResponse = 
+type TransferCyclesRequest = 
+    record {
+        sender: UserId;
+        recipient: UserId;
+        amount: nat;
+    };
+
+type TransferCyclesResponse = 
     variant {
-        NotFound;
-        Unclaimed record {
+        Success: record {
+            new_balance: nat;
+        };
+        UserNotFound;
+        RecipientNotFound;
+        BalanceExceeded;
+    };
+
+type BalanceNotification =
+    record {
+        balance: nat;
+    };
+
+type CurrentUserRequest = 
+    record {
+    };
+
+type CurrentUserResponse =
+    variant {
+        UserNotFound;
+        Unconfirmed record {
             phone_number: PhoneNumber;
             time_until_resend_code_permitted: Milliseconds;
         };
-        Claimed: record {
-            canister_id: CanisterId;
+        ConfirmedPendingUsername: record {
+            canister_creation_in_progress: boolean;
         };
+        Confirmed: record {
+            username: text;
+            canister_creation_in_progress: boolean;
+        };
+        Created: record {
+            user_id: UserId;
+            username: text;
+            account_balance: nat;
+            upgrade_required: boolean;
+        };
+        UpgradeInProgress;
+    };
+
+type UserSummary =
+    record {
+        user_id: UserId;
+        username: text;
+        last_online: Milliseconds;
+    };
+
+type UserRequest = 
+    record {
+        user_id: opt UserId;
+        username: opt text;
+    };
+
+type UserResponse =
+    variant {
+        Success: UserSummary;
+        UserNotFound;
+    };
+
+type UsersRequest =
+    record {
+        users: vec UserId;
+        updated_since: opt TimestampMillis;
+    };
+
+type UsersResponse =
+    variant {
+        Success: record {
+            users: vec UserSummary;
+            timestamp: TimestampMillis;
+        }
+    };
+
+type SearchRequest =
+    record {
+        search_term: text;
+        max_results: nat8
+    };
+
+type SearchResponse =
+    variant {
+        Success: record {
+            users: vec UserSummary;
+        }
+    };
+
+type Metrics = 
+    record {
+        user_count: nat64;
+        active_user_count: nat64;
+        online_user_count: nat64;
+        cycles_transferred: nat;
+        cycles_balance: int64;
+        bytes_used: nat64;
+        timestamp: TimestampMillis;
+        caller_id: principal;
+        wasm_memory_used: nat64;
     };
 
 service : {
-    // Checks if phone number already registered and if not then sends code to phone
+    // If the current user does not exist, the phone number is valid, and not already in use 
+    // then send an SMS with a confirmation code to this phone number
     register_phone_number: (RegisterPhoneNumberRequest) -> (RegisterPhoneNumberResponse);
 
-    // If the code is valid and not expired the then user is now confirmed
+    // Once the user receives a confirmation code by SMS and enters it, call this method to
+    // confirm the code matches and this set the user state as "confirmed"
     confirm_phone_number: (ConfirmPhoneNumberRequest) -> (ConfirmPhoneNumberResponse);
 
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
     resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
 
+    // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
+    // then call this to create a canister for the user
+    create_canister: () -> ();
+
+    // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameRequest) -> (SetUsernameResponse);
 
-    // Call to find out the status of the phone number registration/claim process for the caller
-    // TODO: REPLACE WITH get_current_user
-    status: (StatusRequest) -> (StatusResponse) query;
+    // Update the WASM version for the user canisters - this doesn't actually upgrade any user canisters
+    update_wasm: (UpdateWasmRequest) -> ();
+
+    // If the current user is "upgrade_required" then call this to upgrade the user canister
+    // Will need to block in the app until this has completed
+    upgrade_canister: () -> ();
+
+    // Call this regularly to maintain the online status of the user
+    mark_as_online: (MarkAsOnlineRequest) -> ();
+
+    // Called by a user canister - authorized based on caller
+    transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
+
+    // Called by a user canister when it is low on cycles
+    notify_balance: (BalanceNotification) -> ();
+
+    // Gets the user based on the caller principal. The user can be in a variety of states
+    current_user: (CurrentUserRequest) -> (CurrentUserResponse) query;
+
+    // Gets a user by id or username
+    user: (UserRequest) -> (UserResponse) query;
+
+    // Gets some users by id
+    users: (UsersRequest) -> (UsersResponse) query;
+
+    // Search for users matching some query
+    search: (SearchRequest) -> (SearchResponse) query;
+
+    // Canister metrics
+    metrics: () -> (Metrics) query;
 }
