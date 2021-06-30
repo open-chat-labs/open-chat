@@ -11,6 +11,7 @@
     import { routes } from "./routes";
     import Login from "./components/Login.svelte";
     import Register from "./components/register/Register.controller.svelte";
+    import Upgrading from "./components/upgrading/Upgrading.svelte";
     import Loading from "./components/Loading.svelte";
     import UnexpectedError from "./components/unexpectedError/UnexpectedError.svelte";
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
@@ -34,6 +35,10 @@
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
     }
+
+    $: {
+        console.log($state.value);
+    }
 </script>
 
 {#if $state.matches("login") || $state.matches("logging_in")}
@@ -46,6 +51,8 @@
     <UnexpectedError error={$state.context.error} />
 {:else if $state.matches("expired")}
     <SessionExpired on:login={() => send({ type: "ACKNOWLEDGE_EXPIRY" })} />
+{:else if $state.matches("upgrading_user") || $state.matches("upgrade_user")}
+    <Upgrading />
 {:else}
     <Loading />
 {/if}

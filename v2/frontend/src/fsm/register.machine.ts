@@ -12,8 +12,8 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import type { Principal } from "@dfinity/principal";
 import type {
     ConfirmPhoneNumberResponse,
-    RegisterPhoneNumberResponse,
-    UpdateUsernameResponse,
+    SubmitPhoneNumberResponse,
+    SetUsernameResponse,
 } from "../domain/user";
 
 if (typeof window !== "undefined") {
@@ -40,9 +40,9 @@ export type RegisterEvents =
     | { type: "COMPLETE" }
     | { type: "done.invoke.confirmPhoneNumber"; data: ConfirmPhoneNumberResponse }
     | { type: "error.platform.confirmPhoneNumber"; data: Error }
-    | { type: "done.invoke.registerPhoneNumber"; data: RegisterPhoneNumberResponse }
+    | { type: "done.invoke.registerPhoneNumber"; data: SubmitPhoneNumberResponse }
     | { type: "error.platform.registerPhoneNumber"; data: Error }
-    | { type: "done.invoke.updateUsername"; data: UpdateUsernameResponse }
+    | { type: "done.invoke.updateUsername"; data: SetUsernameResponse }
     | { type: "error.platform.updateUsername"; data: Error };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
@@ -83,12 +83,12 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     },
     services: {
         registerPhoneNumber: (ctx, _) =>
-            ctx.serviceContainer!.registerPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
+            ctx.serviceContainer!.submitPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
         confirmPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.confirmPhoneNumber(ctx.registrationCode!),
         updateUsername: (ctx, ev) => {
             if (ev.type === "REGISTER_USER") {
-                return ctx.serviceContainer!.updateUsername(ctx.userCanister!, ev.username);
+                return ctx.serviceContainer!.setUsername(ctx.userCanister!, ev.username);
             }
             throw new Error(`updateUsername called with unexpected event type: ${ev.type}`);
         },

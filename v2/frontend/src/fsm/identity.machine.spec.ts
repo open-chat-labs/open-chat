@@ -12,7 +12,6 @@ const fakeUser: User = {
     userId: {} as Principal,
     username: "julian_jelfs",
     accountBalance: BigInt(0),
-    version: 0,
 };
 
 const fakeIdentity: Identity = {
@@ -31,6 +30,8 @@ function testConfig(): Config {
             registrationSucceeded: (_ctx, _) => true,
             registrationFailed: (_ctx, _) => false,
             isAuthError: (_ctx, _) => false,
+            userRequiresUpgrade: (_, _ev) => false,
+            userUpgradeInProgress: (_, _ev) => false,
         },
 
         // we definitely need the services to be separate so that we can easily mock them
@@ -40,6 +41,7 @@ function testConfig(): Config {
             logout: jest.fn().mockResolvedValue(undefined),
             getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
             startSession: jest.fn().mockResolvedValue(undefined),
+            upgradeUser: jest.fn().mockResolvedValue(undefined),
         },
     };
 }
@@ -259,6 +261,30 @@ describe("identity machine transitions", () => {
             "done.invoke.registerMachine",
             "loading_user",
             testConfig()
+        );
+    });
+
+    test("when user requires upgrade", () => {
+        testTransition(
+            identityMachine,
+            "loading_user",
+            "done.invoke.getUser",
+            "upgrade_user",
+            updateConfig({
+                userRequiredUpgrade: () => true,
+            })
+        );
+    });
+
+    test("when user is upgrading", () => {
+        testTransition(
+            identityMachine,
+            "loading_user",
+            "done.invoke.getUser",
+            "upgrading_user",
+            updateConfig({
+                userUpgradeInProgress: () => true,
+            })
         );
     });
 });

@@ -1,13 +1,12 @@
 import type { Identity } from "@dfinity/agent";
 import type {
-    GetCurrentUserResponse,
-    UpdateUsernameResponse,
-    RegisterPhoneNumberResponse,
+    CurrentUserResponse,
+    SetUsernameResponse,
+    SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
 } from "../domain/user";
 // import { UserService } from "./user/user.service";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
-import type { Principal } from "@dfinity/principal";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import { UserClientMock } from "./user/user.client.mock";
@@ -39,22 +38,26 @@ export class ServiceContainer {
         return this.userClient.getChats();
     }
 
-    getCurrentUser(): Promise<GetCurrentUserResponse> {
+    getCurrentUser(): Promise<CurrentUserResponse> {
         return this.userIndexClient.getCurrentUser();
     }
 
-    registerPhoneNumber(
+    upgradeUser(): Promise<void> {
+        return this.userIndexClient.upgradeUser();
+    }
+
+    submitPhoneNumber(
         countryCode: number,
-        phoneNumber: number
-    ): Promise<RegisterPhoneNumberResponse> {
-        return this.userIndexClient.registerPhoneNumber(countryCode, phoneNumber);
+        phoneNumber: string
+    ): Promise<SubmitPhoneNumberResponse> {
+        return this.userIndexClient.submitPhoneNumber(countryCode, phoneNumber);
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
         return this.userIndexClient.confirmPhoneNumber(code);
     }
 
-    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse> {
-        return this.userIndexClient.updateUsername(userPrincipal, username);
+    setUsername(username: string): Promise<SetUsernameResponse> {
+        return this.userIndexClient.setUsername(username);
     }
 }

@@ -5,11 +5,13 @@ import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";
 import { ServiceContainer } from "../services/serviceContainer";
-import type { User, GetCurrentUserResponse } from "../domain/user";
+import type { User, CurrentUserResponse } from "../domain/user";
 import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
 import { loggedInMachine } from "./loggedin.machine";
+
+const UPGRADE_POLL_INTERVAL = 1000;
 
 if (typeof window !== "undefined") {
     inspect({
@@ -41,26 +43,51 @@ export type IdentityEvents =
     | { type: "error.platform.login"; data: Error }
     | { type: "done.invoke.logout" }
     | { type: "error.platform.logout"; data: Error }
-    | { type: "done.invoke.getUser"; data: GetCurrentUserResponse }
+    | { type: "done.invoke.getUser"; data: CurrentUserResponse }
     | { type: "error.platform.getUser"; data: Error }
     | { type: "done.invoke.registerMachine"; data: RegisterResult }
-    | { type: "error.platform.registerMachine"; data: Error };
+    | { type: "error.platform.registerMachine"; data: Error }
+    | { type: "done.invoke.upgradeUser" }
+    | { type: "error.platform.upgradeUser"; data: Error };
 
 const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
     guards: {
         isAnonymous: ({ identity }) => (identity ? identity.getPrincipal().isAnonymous() : true),
         notAnonymous: ({ identity }) => (identity ? !identity.getPrincipal().isAnonymous() : false),
+        userRequiresUpgrade: (_, ev) => {
+            if (ev.type === "done.invoke.getUser") {
+                if (ev.data.kind === "created_user") {
+                    return ev.data.upgradeRequired;
+                }
+                return false;
+            }
+            throw new Error(`Unexpected event type for userRequiresUpgrade guard: ${ev.type}`);
+        },
+        userUpgradeInProgress: (_, ev) => {
+            if (ev.type === "done.invoke.getUser") {
+                return ev.data.kind === "upgrade_in_progress";
+            }
+            throw new Error(`Unexpected event type for userUpgradeInProgress guard: ${ev.type}`);
+        },
         userIsRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind === "success";
+                return (
+                    ev.data.kind === "confirmed_user" ||
+                    ev.data.kind == "upgrade_in_progress" ||
+                    ev.data.kind == "created_user"
+                );
             }
-            return false;
+            throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
         },
         userIsNotRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind === "unknown";
+                return (
+                    ev.data.kind === "unknown_user" ||
+                    ev.data.kind === "unconfirmed_user" ||
+                    ev.data.kind === "confirmed_pending_username"
+                );
             }
-            return false;
+            throw new Error(`Unexpected event type for userIsNotRegistered guard: ${ev.type}`);
         },
         registrationSucceeded: (_, ev) => {
             return ev.type === "done.invoke.registerMachine" && ev.data.kind === "success";
@@ -76,6 +103,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         logout,
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
+        upgradeUser: ({ serviceContainer }) => serviceContainer!.upgradeUser(),
     },
     actions: {
         logError: (ctx, _) => {
@@ -121,30 +149,38 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
         },
         loading_user: {
             entry: assign({
-                serviceContainer: ({ identity }, _) =>
+                serviceContainer: ({ identity, serviceContainer }, _) =>
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    new ServiceContainer(identity!),
+                    serviceContainer ?? new ServiceContainer(identity!),
             }),
             invoke: {
                 id: "getUser",
                 src: "getUser",
                 onDone: [
                     {
+                        target: "register_user",
+                        cond: "userIsNotRegistered",
+                    },
+                    {
+                        target: "upgrade_user",
+                        cond: "userRequiresUpgrade",
+                    },
+                    {
+                        target: "upgrading_user",
+                        cond: "userUpgradeInProgress",
+                    },
+                    {
                         target: "logged_in",
                         cond: "userIsRegistered",
                         actions: assign({
-                            user: (_, ev: DoneInvokeEvent<GetCurrentUserResponse>) => {
+                            user: (_, ev: DoneInvokeEvent<CurrentUserResponse>) => {
                                 if (ev.type === "done.invoke.getUser") {
-                                    if (ev.data.kind === "success") {
-                                        return ev.data.user;
+                                    if (ev.data.kind === "created_user") {
+                                        return { ...ev.data };
                                     }
                                 }
                             },
                         }),
-                    },
-                    {
-                        target: "register_user",
-                        cond: "userIsNotRegistered",
                     },
                 ],
                 onError: {
@@ -153,6 +189,24 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         error: (_, { data }) => data,
                     }),
                 },
+            },
+        },
+        upgrade_user: {
+            invoke: {
+                id: "upgradeUser",
+                src: "upgradeUser",
+                onDone: "loading_user",
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, ev) => ev.data,
+                    }),
+                },
+            },
+        },
+        upgrading_user: {
+            after: {
+                [UPGRADE_POLL_INTERVAL]: "loading_user",
             },
         },
         register_user: {

@@ -3,7 +3,6 @@ import type { Principal } from "@dfinity/principal";
 export type User = {
     userId: Principal;
     username: string;
-    version: number;
     accountBalance: bigint;
 };
 
@@ -26,19 +25,62 @@ export enum AvatarSize {
     Large,
 }
 
-export type GetCurrentUserResponse = UserSuccess | UnknownUser;
-export type UserSuccess = { kind: "success"; user: User };
-export type UnknownUser = { kind: "unknown" };
+export type PhoneNumber = {
+    countryCode: number;
+    number: string;
+};
 
-export type UpdateUsernameResponse =
+export type CurrentUserResponse =
+    | UpgradeInProgress
+    | UnconfirmedUser
+    | ConfirmedUser
+    | ConfirmedPendingUsername
+    | CreatedUser
+    | UserNotFound;
+
+export type UpgradeInProgress = {
+    kind: "upgrade_in_progress";
+};
+
+export type UnconfirmedUser = {
+    kind: "unconfirmed_user";
+    timeUntilResendCodePermitted: bigint;
+    phoneNumber: PhoneNumber;
+};
+
+export type ConfirmedUser = {
+    kind: "confirmed_user";
+    canisterCreationInProgress: boolean;
+    username: string;
+};
+
+export type ConfirmedPendingUsername = {
+    kind: "confirmed_pending_username";
+    canisterCreationInProgress: boolean;
+};
+
+export type CreatedUser = {
+    kind: "created_user";
+    username: string;
+    userId: Principal;
+    accountBalance: bigint;
+    upgradeRequired: boolean;
+};
+
+export type UserNotFound = {
+    kind: "unknown_user";
+};
+
+export type SetUsernameResponse =
     | "success"
     | "no_change"
     | "username_taken"
     | "user_not_found"
     | "username_too_short"
-    | "username_too_long";
+    | "username_too_long"
+    | "username_invalid";
 
-export type RegisterPhoneNumberResponse =
+export type SubmitPhoneNumberResponse =
     | RegisterSuccess
     | AlreadyRegistered
     | AlreadyRegisteredByOther
@@ -52,17 +94,11 @@ export type AlreadyRegisteredButUnclaimed = { kind: "already_registered_but_uncl
 export type InvalidPhoneNumber = { kind: "invalid_phone_number" };
 
 export type ConfirmPhoneNumberResponse =
-    | ConfirmSuccess
-    | ConfirmAlreadyClaimed
-    | ConfirmCodeIncorrect
-    | ConfirmCodeExpired
-    | NotFound;
-
-export type ConfirmSuccess = { kind: "success"; canisterId: Principal };
-export type ConfirmAlreadyClaimed = { kind: "already_claimed" };
-export type ConfirmCodeIncorrect = { kind: "code_incorrect" };
-export type ConfirmCodeExpired = { kind: "code_expired" };
-export type NotFound = { kind: "not_found" };
+    | "success"
+    | "already_claimed"
+    | "code_incorrect"
+    | "code_expired"
+    | "not_found";
 
 export type ResendCodeResponse =
     | ResendSuccess
@@ -73,3 +109,4 @@ export type ResendCodeResponse =
 export type ResendSuccess = { kind: "success" };
 export type ResendAlreadyClaimed = { kind: "already_claimed" };
 export type CodeNotExpiredYet = { kind: "not_expired"; timeUntilResendPermitted: number };
+export type NotFound = { kind: "not_found" };

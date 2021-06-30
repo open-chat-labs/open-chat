@@ -1,17 +1,18 @@
 import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
-import idlFactory, { UserIndexService } from "api-canisters/user_index/canister";
+import idlFactory, { UserIndexService } from "api-canisters/user_index/src/canister/app/idl";
 import type {
     ConfirmPhoneNumberResponse,
-    GetCurrentUserResponse,
-    RegisterPhoneNumberResponse,
-    UpdateUsernameResponse,
+    CurrentUserResponse,
+    SubmitPhoneNumberResponse,
+    SetUsernameResponse,
 } from "../../domain/user";
+import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
 import {
-    updateUsernameResponse,
-    getCurrentUserResponse,
-    registerPhoneNumberResponse,
+    setUsernameResponse,
+    currentUserResponse,
+    submitPhoneNumberResponse,
     confirmPhoneNumber,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -27,38 +28,35 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    getCurrentUser(): Promise<GetCurrentUserResponse> {
-        return this.handleResponse(
-            this.userService.get_current_user({
-                user_id: [],
-                username: [],
-            }),
-            getCurrentUserResponse
-        );
+    upgradeUser(): Promise<void> {
+        return this.handleResponse(this.userService.upgrade_canister({}), identity);
     }
 
-    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse> {
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+    }
+
+    setUsername(username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
-            this.userService.update_username({
-                user_principal: userPrincipal,
+            this.userService.set_username({
                 username: username,
             }),
-            updateUsernameResponse
+            setUsernameResponse
         );
     }
 
-    registerPhoneNumber(
+    submitPhoneNumber(
         countryCode: number,
-        phoneNumber: number
-    ): Promise<RegisterPhoneNumberResponse> {
+        phoneNumber: string
+    ): Promise<SubmitPhoneNumberResponse> {
         return this.handleResponse(
-            this.userService.register_phone_number({
+            this.userService.submit_phone_number({
                 number: {
                     country_code: countryCode,
-                    number: BigInt(phoneNumber),
+                    number: phoneNumber,
                 },
             }),
-            registerPhoneNumberResponse
+            submitPhoneNumberResponse
         );
     }
 

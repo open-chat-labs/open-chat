@@ -1,33 +1,57 @@
 import type { Principal } from "@dfinity/principal";
 import type {
-    UpdateUsernameResponse,
-    GetCurrentUserResponse,
-    RegisterPhoneNumberResponse,
+    SetUsernameResponse,
+    CurrentUserResponse,
+    SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
 } from "../../domain/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export class UserIndexClientMock implements IUserIndexClient {
-    updateUsername(_userPrincipal: Principal, _username: string): Promise<UpdateUsernameResponse> {
+    private count: number = 0;
+
+    upgradeUser(): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(), 3000);
+        });
+    }
+
+    setUsername(_username: string): Promise<SetUsernameResponse> {
         return new Promise((resolve) => {
             setTimeout(() => resolve("username_taken"), 2000);
         });
     }
-    getCurrentUser(): Promise<GetCurrentUserResponse> {
-        return Promise.resolve({
-            kind: "success",
-            user: {
+
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        if (this.count === 0) {
+            this.count += 1;
+            return Promise.resolve({
+                kind: "created_user",
                 userId: {} as Principal,
                 username: "julian_jelfs",
-                version: 0,
-                accountBalance: BigInt(1000000),
-            },
-        });
+                accountBalance: BigInt(10000),
+                upgradeRequired: true,
+            });
+        } else if (this.count === 1) {
+            this.count += 1;
+            return Promise.resolve({
+                kind: "upgrade_in_progress",
+            });
+        } else {
+            return Promise.resolve({
+                kind: "created_user",
+                userId: {} as Principal,
+                username: "julian_jelfs",
+                accountBalance: BigInt(10000),
+                upgradeRequired: false,
+            });
+        }
     }
-    registerPhoneNumber(
+
+    submitPhoneNumber(
         _countryCode: number,
-        _phoneNumber: number
-    ): Promise<RegisterPhoneNumberResponse> {
+        _phoneNumber: string
+    ): Promise<SubmitPhoneNumberResponse> {
         return new Promise((resolve, _reject) => {
             // setTimeout(() => resolve("taken"), 2000);
             // throw new AuthError(401, new Error("looks like an auth error"));
@@ -39,14 +63,7 @@ export class UserIndexClientMock implements IUserIndexClient {
     confirmPhoneNumber(_code: string): Promise<ConfirmPhoneNumberResponse> {
         return new Promise((resolve) => {
             // setTimeout(() => resolve("taken"), 2000);
-            setTimeout(
-                () =>
-                    resolve({
-                        kind: "success",
-                        canisterId: {} as Principal,
-                    }),
-                2000
-            );
+            setTimeout(() => resolve("success"), 2000);
         });
     }
 }

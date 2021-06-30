@@ -1,19 +1,21 @@
 import type {
-    UpdateUsernameResponse,
-    GetCurrentUserResponse,
-    RegisterPhoneNumberResponse,
+    SetUsernameResponse,
+    CurrentUserResponse,
+    SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
+    PhoneNumber,
 } from "../../domain/user";
 import type {
     ApiConfirmPhoneNumberResponse,
-    ApiGetCurrentUserResponse,
-    ApiRegisterPhoneNumberResponse,
-    ApiUpdateUsernameResponse,
-} from "api-canisters/user_index/canister";
+    ApiCurrentUserResponse,
+    ApiPhoneNumber,
+    ApiSetUsernameResponse,
+    ApiSubmitPhoneNumberResponse,
+} from "api-canisters/user_index/src/canister/app/idl";
 
-export function registerPhoneNumberResponse(
-    candid: ApiRegisterPhoneNumberResponse
-): RegisterPhoneNumberResponse {
+export function submitPhoneNumberResponse(
+    candid: ApiSubmitPhoneNumberResponse
+): SubmitPhoneNumberResponse {
     if ("Success" in candid) {
         return { kind: "success" };
     }
@@ -30,53 +32,76 @@ export function registerPhoneNumberResponse(
         return { kind: "invalid_phone_number" };
     }
 
-    throw new Error(`Unknown UserIndex.RegisterPhoneNumberResponse of ${candid}`);
+    throw new Error(`Unknown UserIndex.SubmitPhoneNumberResponse of ${candid}`);
 }
 
 export function confirmPhoneNumber(
     candid: ApiConfirmPhoneNumberResponse
 ): ConfirmPhoneNumberResponse {
-    if ("Success" in candid)
-        return {
-            kind: "success",
-            canisterId: candid.Success.canister_id,
-        };
+    if ("Success" in candid) return "success";
+    if ("NotFound" in candid) return "not_found";
+    if ("AlreadyClaimed" in candid) return "already_claimed";
+    if ("ConfirmationCodeExpired" in candid) return "code_expired";
+    if ("ConfirmationCodeIncorrect" in candid) return "code_incorrect";
 
-    if ("NotFound" in candid) {
-        return { kind: "not_found" };
-    }
-    if ("AlreadyClaimed" in candid) {
-        return { kind: "already_claimed" };
-    }
-    if ("ConfirmationCodeExpired" in candid) {
-        return { kind: "code_expired" };
-    }
-    if ("ConfirmationCodeIncorrect" in candid) {
-        return { kind: "code_incorrect" };
-    }
-
-    throw new Error(`Unknown PhoneIndex.ClaimResponse of ${candid}`);
+    throw new Error(`Unknown UserIndex.ConfirmPhoneNumberResponse of ${candid}`);
 }
 
-export function getCurrentUserResponse(candid: ApiGetCurrentUserResponse): GetCurrentUserResponse {
-    if ("Success" in candid) {
+export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
+    return {
+        countryCode: candid.country_code,
+        number: candid.number,
+    };
+}
+
+export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
+    if ("UpgradeInProgress" in candid) {
         return {
-            kind: "success",
-            user: {
-                userId: candid.Success.id,
-                username: candid.Success.username,
-                version: candid.Success.version,
-                accountBalance: candid.Success.account_balance,
-            },
+            kind: "upgrade_in_progress",
         };
     }
-    if ("UserNotFound" in candid) {
-        return { kind: "unknown" };
+    if ("Unconfirmed" in candid) {
+        return {
+            kind: "unconfirmed_user",
+            timeUntilResendCodePermitted: candid.Unconfirmed.time_until_resend_code_permitted,
+            phoneNumber: phoneNumber(candid.Unconfirmed.phone_number),
+        };
     }
+
+    if ("Confirmed" in candid) {
+        return {
+            kind: "confirmed_user",
+            canisterCreationInProgress: candid.Confirmed.canister_creation_in_progress,
+            username: candid.Confirmed.username,
+        };
+    }
+
+    if ("ConfirmedPendingUsername" in candid) {
+        return {
+            kind: "confirmed_pending_username",
+            canisterCreationInProgress:
+                candid.ConfirmedPendingUsername.canister_creation_in_progress,
+        };
+    }
+
+    if ("Created" in candid) {
+        return {
+            kind: "created_user",
+            userId: candid.Created.user_id,
+            username: candid.Created.username,
+            accountBalance: candid.Created.account_balance,
+            upgradeRequired: candid.Created.upgrade_required,
+        };
+    }
+
+    if ("UserNotFound" in candid) {
+        return { kind: "unknown_user" };
+    }
+
     throw new Error(`Unknown UserIndex.GetCurrentUserResponse of ${candid}`);
 }
 
-export function updateUsernameResponse(candid: ApiUpdateUsernameResponse): UpdateUsernameResponse {
+export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -95,5 +120,8 @@ export function updateUsernameResponse(candid: ApiUpdateUsernameResponse): Updat
     if ("UsernameTooLong" in candid) {
         return "username_too_long";
     }
-    throw new Error(`Unknown UserIndex.UpdateUsernameResponse of ${candid}`);
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    throw new Error(`Unknown UserIndex.SetUsernameResponse of ${candid}`);
 }

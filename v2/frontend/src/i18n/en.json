@@ -5,6 +5,8 @@
     "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
     "sessionExpired": "Session Expired",
     "sessionExpiredBlurb": "Please sign in again",
+    "performingUpgrade": "Performing Upgrade",
+    "pleaseWait": "Please wait for a few seconds",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",

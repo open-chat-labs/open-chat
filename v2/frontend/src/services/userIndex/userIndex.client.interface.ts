@@ -1,17 +1,15 @@
 import type { Principal } from "@dfinity/principal";
 import type {
-    UpdateUsernameResponse,
-    GetCurrentUserResponse,
+    SetUsernameResponse,
+    CurrentUserResponse,
     ConfirmPhoneNumberResponse,
-    RegisterPhoneNumberResponse,
+    SubmitPhoneNumberResponse,
 } from "../../domain/user";
 
 export interface IUserIndexClient {
-    getCurrentUser: () => Promise<GetCurrentUserResponse>;
-    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse>;
-    registerPhoneNumber(
-        countryCode: number,
-        phoneNumber: number
-    ): Promise<RegisterPhoneNumberResponse>;
+    upgradeUser: () => Promise<void>;
+    getCurrentUser: () => Promise<CurrentUserResponse>;
+    setUsername(username: string): Promise<SetUsernameResponse>;
+    submitPhoneNumber(countryCode: number, phoneNumber: string): Promise<SubmitPhoneNumberResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
 }
