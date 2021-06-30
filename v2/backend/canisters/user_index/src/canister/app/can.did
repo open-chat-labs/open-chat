@@ -1,9 +1,9 @@
 // Maintains a registery of users and manages the user canisters
 
-type TimestampNanos = nat64;
+type Milliseconds = nat64;
+type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
-type Milliseconds = nat64;
 
 type PhoneNumber = 
     record {
@@ -11,12 +11,12 @@ type PhoneNumber =
         number: text;
     };
 
-type RegisterRequest = 
+type SubmitPhoneNumberRequest = 
     record {
         number: PhoneNumber;
     };
 
-type RegisterResponse = 
+type SubmitPhoneNumberResponse = 
     variant {
         Success;
         AlreadyRegistered;
@@ -27,16 +27,14 @@ type RegisterResponse =
         InvalidPhoneNumber;
     };
 
-type ClaimRequest = 
+type ConfirmPhoneNumberRequest = 
     record {
         confirmation_code: text;
     };
 
-type ClaimResponse = 
+type ConfirmPhoneNumberResponse = 
     variant {
-        Success: record {
-            canister_id: CanisterId
-        };
+        Success;
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
@@ -55,6 +53,11 @@ type ResendCodeResponse =
             time_until_resend_code_permitted: Milliseconds
         };
         NotFound;
+    };
+
+
+type CreateCanisterRequest =
+    record {
     };
 
 type SetUsernameRequest =
@@ -77,6 +80,10 @@ type UpdateWasmRequest =
     record {
         wasm: vec nat8;
         version: text;
+    };
+
+type UpgradeCanisterRequest =
+    record {
     };
 
 type MarkAsOnlineRequest = 
@@ -112,22 +119,22 @@ type CurrentUserRequest =
 type CurrentUserResponse =
     variant {
         UserNotFound;
-        Unconfirmed record {
+        Unconfirmed: record {
             phone_number: PhoneNumber;
             time_until_resend_code_permitted: Milliseconds;
         };
         ConfirmedPendingUsername: record {
-            canister_creation_in_progress: boolean;
+            canister_creation_in_progress: bool;
         };
         Confirmed: record {
             username: text;
-            canister_creation_in_progress: boolean;
+            canister_creation_in_progress: bool;
         };
         Created: record {
             user_id: UserId;
             username: text;
             account_balance: nat;
-            upgrade_required: boolean;
+            upgrade_required: bool;
         };
         UpgradeInProgress;
     };
@@ -178,6 +185,10 @@ type SearchResponse =
         }
     };
 
+type MetricsRequest =
+    record {
+    };
+
 type Metrics = 
     record {
         user_count: nat64;
@@ -194,7 +205,7 @@ type Metrics =
 service : {
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
-    register_phone_number: (RegisterPhoneNumberRequest) -> (RegisterPhoneNumberResponse);
+    submit_phone_number: (SubmitPhoneNumberRequest) -> (SubmitPhoneNumberResponse);
 
     // Once the user receives a confirmation code by SMS and enters it, call this method to
     // confirm the code matches and this set the user state as "confirmed"
@@ -206,7 +217,7 @@ service : {
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user
-    create_canister: () -> ();
+    create_canister: (CreateCanisterRequest) -> ();
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameRequest) -> (SetUsernameResponse);
@@ -216,7 +227,7 @@ service : {
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed
-    upgrade_canister: () -> ();
+    upgrade_canister: (UpgradeCanisterRequest) -> ();
 
     // Call this regularly to maintain the online status of the user
     mark_as_online: (MarkAsOnlineRequest) -> ();
@@ -240,5 +251,5 @@ service : {
     search: (SearchRequest) -> (SearchResponse) query;
 
     // Canister metrics
-    metrics: () -> (Metrics) query;
+    metrics: (MetricsRequest) -> (Metrics) query;
 }
