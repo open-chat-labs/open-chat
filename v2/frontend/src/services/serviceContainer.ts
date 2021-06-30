@@ -10,6 +10,7 @@ import type { Principal } from "@dfinity/principal";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import { UserClientMock } from "./user/user.client.mock";
+import type { ChatSummary } from "../domain/chat";
 
 export class ServiceContainer {
     private userIndexClient: IUserIndexClient;
@@ -36,7 +37,7 @@ export class ServiceContainer {
         throw new Error("Attempted to user the user client before it has been initialised");
     }
 
-    getChats(): Promise<unknown> {
+    getChats(): Promise<ChatSummary[]> {
         return this.userClient.getChats();
     }
 
