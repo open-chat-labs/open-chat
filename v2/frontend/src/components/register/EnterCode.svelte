@@ -11,15 +11,14 @@
     let codeValue: string = "";
 
     function submitCode() {
-        dispatch("submitCode", { code: parseInt(codeValue, 10) });
+        dispatch("submitCode", { code: codeValue });
     }
 
     function resendCode() {
         dispatch("resendCode");
     }
 
-    $: codeNumber = parseInt(codeValue.replace(/\D/g, ""), 10);
-    $: valid = !isNaN(codeNumber);
+    $: valid = codeValue.length !== 6;
 </script>
 
 <p class="enter-code">{$_("register.pleaseEnterCode")}</p>

@@ -14,6 +14,7 @@ import type {
     ConfirmPhoneNumberResponse,
     SubmitPhoneNumberResponse,
     SetUsernameResponse,
+    CurrentUserResponse,
 } from "../domain/user";
 
 if (typeof window !== "undefined") {
@@ -23,74 +24,101 @@ if (typeof window !== "undefined") {
 }
 
 export interface RegisterContext {
+    currentUser?: CurrentUserResponse;
     serviceContainer?: ServiceContainer;
     error?: Error;
     countryCode?: number;
-    phoneNumber?: number;
+    phoneNumber?: string;
     registrationCode?: string;
     userCanister?: Principal;
     username?: string;
 }
 
 export type RegisterEvents =
-    | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: number }
+    | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: string }
     | { type: "RESEND_REGISTRATION_CODE" }
     | { type: "SUBMIT_REGISTRATION_CODE"; code: string }
     | { type: "REGISTER_USER"; username: string }
     | { type: "COMPLETE" }
     | { type: "done.invoke.confirmPhoneNumber"; data: ConfirmPhoneNumberResponse }
     | { type: "error.platform.confirmPhoneNumber"; data: Error }
-    | { type: "done.invoke.registerPhoneNumber"; data: SubmitPhoneNumberResponse }
-    | { type: "error.platform.registerPhoneNumber"; data: Error }
-    | { type: "done.invoke.updateUsername"; data: SetUsernameResponse }
-    | { type: "error.platform.updateUsername"; data: Error };
+    | { type: "done.invoke.submitPhoneNumber"; data: SubmitPhoneNumberResponse }
+    | { type: "error.platform.submitPhoneNumber"; data: Error }
+    | { type: "done.invoke.setUsername"; data: SetUsernameResponse }
+    | { type: "error.platform.setUsername"; data: Error };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     guards: {
-        phoneNumberTaken: (_, ev) => {
-            return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "taken";
+        isAwaitingPhoneNumber: (ctx, _) => {
+            return ctx.currentUser?.kind === "unknown_user";
         },
-        tooManyAttempts: (_, ev) => {
-            return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "too_many_attempts";
+        isAwaitingCode: (ctx, _) => {
+            return ctx.currentUser?.kind === "unconfirmed_user";
         },
-        claimInvalid: (_, ev) => {
-            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "invalid";
+        isAwaitingUsername: (ctx, _) => {
+            return ctx.currentUser?.kind === "confirmed_pending_username";
         },
-        claimExpired: (_, ev) => {
-            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "expired";
-        },
-        userExists: (_, ev) => {
-            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "user_exists";
-        },
-        userLimitReached: (_, ev) => {
+        phoneAlreadyRegistered: (_, ev) => {
             return (
-                ev.type === "done.invoke.confirmPhoneNumber" &&
-                ev.data.kind === "user_limit_reached"
+                ev.type === "done.invoke.submitPhoneNumber" && ev.data.kind === "already_registered"
             );
         },
+        phoneAlreadyRegisteredByAnother: (_, ev) => {
+            return (
+                ev.type === "done.invoke.submitPhoneNumber" &&
+                ev.data.kind === "already_registered_by_other"
+            );
+        },
+        phoneAlreadyRegisteredButUnclaimed: (_, ev) => {
+            return (
+                ev.type === "done.invoke.submitPhoneNumber" &&
+                ev.data.kind === "already_registered_but_unclaimed"
+            );
+        },
+        phoneInvalid: (_, ev) => {
+            return (
+                ev.type === "done.invoke.submitPhoneNumber" &&
+                ev.data.kind === "invalid_phone_number"
+            );
+        },
+        alreadyClaimed: (_, ev) => {
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data === "already_claimed";
+        },
+        codeIncorrect: (_, ev) => {
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data === "code_incorrect";
+        },
+        codeExpired: (_, ev) => {
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data === "code_expired";
+        },
+        codeNotFound: (_, ev) => {
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data === "not_found";
+        },
         usernameTaken: (_, ev) => {
-            return ev.type === "done.invoke.updateUsername" && ev.data === "username_taken";
+            return ev.type === "done.invoke.setUsername" && ev.data === "username_taken";
         },
         userNotFound: (_, ev) => {
-            return ev.type === "done.invoke.updateUsername" && ev.data === "user_not_found";
+            return ev.type === "done.invoke.setUsername" && ev.data === "user_not_found";
         },
         usernameTooShort: (_, ev) => {
-            return ev.type === "done.invoke.updateUsername" && ev.data === "username_too_short";
+            return ev.type === "done.invoke.setUsername" && ev.data === "username_too_short";
         },
         usernameTooLong: (_, ev) => {
-            return ev.type === "done.invoke.updateUsername" && ev.data === "username_too_long";
+            return ev.type === "done.invoke.setUsername" && ev.data === "username_too_long";
+        },
+        usernameInvalid: (_, ev) => {
+            return ev.type === "done.invoke.setUsername" && ev.data === "username_invalid";
         },
     },
     services: {
-        registerPhoneNumber: (ctx, _) =>
+        submitPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.submitPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
         confirmPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.confirmPhoneNumber(ctx.registrationCode!),
-        updateUsername: (ctx, ev) => {
+        setUsername: (ctx, ev) => {
             if (ev.type === "REGISTER_USER") {
-                return ctx.serviceContainer!.setUsername(ctx.userCanister!, ev.username);
+                return ctx.serviceContainer!.setUsername(ev.username);
             }
-            throw new Error(`updateUsername called with unexpected event type: ${ev.type}`);
+            throw new Error(`setUsername called with unexpected event type: ${ev.type}`);
         },
     },
 };
@@ -98,9 +126,18 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     id: "register_machine",
-    initial: "awaiting_phone_number",
+    initial: "initial",
     context: {},
     states: {
+        initial: {
+            always: [
+                { target: "awaiting_phone_number", cond: "isAwaitingPhoneNumber" },
+                { target: "awaiting_registration_code", cond: "isAwaitingCode" },
+                { target: "awaiting_username", cond: "isAwaitingUsername" },
+                // { target: "loading_user", cond: "requiresCanisterCreation" },
+                // { target: "loading_user", cond: "canisterCreationInProgress" },
+            ],
+        },
         awaiting_phone_number: {
             on: {
                 REQUEST_REGISTRATION_CODE: "checking_phone_number",
@@ -119,23 +156,37 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                         : ctx.phoneNumber ?? undefined,
             }),
             invoke: {
-                id: "registerPhoneNumber",
-                src: "registerPhoneNumber",
+                id: "submitPhoneNumber",
+                src: "submitPhoneNumber",
                 onDone: [
                     {
                         target: "awaiting_phone_number",
-                        cond: "phoneNumberTaken",
+                        cond: "phoneAlreadyRegistered",
                         actions: assign({
-                            // todo - is this the right place to do this
-                            error: (_, _ev) => new Error("register.phoneNumberTaken"),
+                            error: (_, _ev) => new Error("register.phoneAlreadyRegistered"),
                         }),
                     },
                     {
                         target: "awaiting_phone_number",
-                        cond: "tooManyAttempts",
+                        cond: "phoneAlreadyRegisteredByAnother",
                         actions: assign({
-                            // todo - is this the right place to do this
-                            error: (_, _ev) => new Error("register.tooManyAttempts"),
+                            error: (_, _ev) =>
+                                new Error("register.phoneAlreadyRegisteredByAnother"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_phone_number",
+                        cond: "phoneAlreadyRegisteredButUnclaimed",
+                        actions: assign({
+                            error: (_, _ev) =>
+                                new Error("register.phoneAlreadyRegisteredButUnclaimed"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_phone_number",
+                        cond: "phoneInvalid",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.phoneInvalid"),
                         }),
                     },
                     {
@@ -171,45 +222,35 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 onDone: [
                     {
                         target: "awaiting_registration_code",
-                        cond: "claimInvalid",
+                        cond: "alreadyClaimed",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.claimInvalid"),
+                            error: (_, _ev) => new Error("register.alreadyClaimed"),
                         }),
                     },
                     {
                         target: "awaiting_registration_code",
-                        cond: "claimExpired",
+                        cond: "codeIncorrect",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.claimExpired"),
+                            error: (_, _ev) => new Error("register.codeIncorrect"),
                         }),
                     },
                     {
                         target: "awaiting_registration_code",
-                        cond: "userExists",
+                        cond: "codeExpired",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.userExists"),
+                            error: (_, _ev) => new Error("register.codeExpired"),
                         }),
                     },
                     {
                         target: "awaiting_registration_code",
-                        cond: "userLimitReached",
+                        cond: "codeNotFound",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.userLimitReached"),
+                            error: (_, _ev) => new Error("register.codeNotFound"),
                         }),
                     },
                     {
                         target: "awaiting_username",
                         actions: assign({
-                            userCanister: (
-                                _,
-                                { type, data }: DoneInvokeEvent<ConfirmPhoneNumberResponse>
-                            ) => {
-                                if (type === "done.invoke.confirmPhoneNumber") {
-                                    if (data.kind === "success") {
-                                        return data.canisterId;
-                                    }
-                                }
-                            },
                             error: (_, _ev) => undefined,
                         }),
                     },
@@ -232,8 +273,8 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 username: (_, ev) => (ev.type === "REGISTER_USER" ? ev.username : undefined),
             }),
             invoke: {
-                id: "updateUsername",
-                src: "updateUsername",
+                id: "setUsername",
+                src: "setUsername",
                 onDone: [
                     {
                         target: "awaiting_username",
@@ -261,6 +302,13 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                         cond: "usernameTooLong",
                         actions: assign({
                             error: (_, _ev) => new Error("register.usernameTooLong"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_username",
+                        cond: "usernameInvalid",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.usernameInvalid"),
                         }),
                     },
                     {

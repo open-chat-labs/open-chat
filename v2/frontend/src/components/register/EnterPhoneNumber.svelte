@@ -17,9 +17,9 @@
         dispatch("submitPhoneNumber", { countryCode, number: phoneNumber });
     }
 
-    $: phoneNumber = parseInt(phoneNumberStr.replace(/\D/g, ""), 10);
+    $: phoneNumber = phoneNumberStr.replace(/\D/g, "");
     $: countryCode = parseInt(countryCodeStr, 10);
-    $: valid = !isNaN(phoneNumber) && !isNaN(countryCode);
+    $: valid = !isNaN(parseInt(phoneNumber, 10)) && !isNaN(countryCode);
 </script>
 
 <p class="enter-phone">{$_("register.enterPhone")}</p>

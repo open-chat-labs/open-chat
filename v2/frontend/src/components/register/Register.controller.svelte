@@ -16,11 +16,11 @@
         machine.send({ type: "REGISTER_USER", ...ev.detail });
     }
 
-    function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: number }>) {
+    function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: string }>) {
         machine.send({ type: "REQUEST_REGISTRATION_CODE", ...ev.detail });
     }
 
-    function submitCode(ev: CustomEvent<{ code: number }>) {
+    function submitCode(ev: CustomEvent<{ code: string }>) {
         machine.send({ type: "SUBMIT_REGISTRATION_CODE", ...ev.detail });
     }
 

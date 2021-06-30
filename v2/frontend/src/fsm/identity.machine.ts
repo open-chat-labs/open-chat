@@ -71,17 +71,14 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         },
         userIsRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return (
-                    ev.data.kind === "confirmed_user" ||
-                    ev.data.kind == "upgrade_in_progress" ||
-                    ev.data.kind == "created_user"
-                );
+                return ev.data.kind == "upgrade_in_progress" || ev.data.kind == "created_user";
             }
             throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
         },
         userIsNotRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
                 return (
+                    ev.data.kind === "confirmed_user" ||
                     ev.data.kind === "unknown_user" ||
                     ev.data.kind === "unconfirmed_user" ||
                     ev.data.kind === "confirmed_pending_username"
@@ -216,7 +213,8 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             invoke: {
                 id: "registerMachine",
                 src: registerMachine,
-                data: (ctx, _ev) => ({
+                data: (ctx, ev) => ({
+                    currentUser: ev.type === "done.invoke.getUser" ? ev.data : undefined,
                     serviceContainer: ctx.serviceContainer,
                 }),
                 onDone: "loading_user",
