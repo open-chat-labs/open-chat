@@ -7,6 +7,7 @@
 type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
+type Milliseconds = nat64;
 
 type PhoneNumber = 
     record {
@@ -162,6 +163,69 @@ type Metrics =
         wasm_memory_used: nat64;
     };
 
+
+type RegisterPhoneNumberRequest = 
+    record {
+        number: PhoneNumber;
+    };
+
+type RegisterPhoneNumberResponse = 
+    variant {
+        Success;
+        AlreadyRegistered;
+        AlreadyRegisteredByOther;
+        AlreadyRegisteredButUnclaimed: record {
+            time_until_resend_code_permitted: opt Milliseconds
+        };
+        InvalidPhoneNumber;
+    };
+
+type ConfirmPhoneNumberRequest = 
+    record {
+        confirmation_code: text;
+    };
+
+type ConfirmPhoneNumberResponse = 
+    variant {
+        Success: record {
+            canister_id: CanisterId
+        };
+        ConfirmationCodeIncorrect;
+        ConfirmationCodeExpired;
+        AlreadyClaimed;
+        NotFound;
+    };
+
+type ResendCodeRequest = 
+    record {        
+    };
+
+type ResendCodeResponse = 
+    variant {
+        Success;
+        AlreadyClaimed;
+        CodeNotExpiredYet: record {
+            time_until_resend_code_permitted: Milliseconds
+        };
+        NotFound;
+    };
+
+type SetUsernameRequest =
+    record {
+        username: text;
+    };
+
+type SetUsernameResponse =
+    variant {
+        Success;
+        SuccessNoChange;
+        UsernameTaken;
+        UserNotFound;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+    };
+
 service: {
     // Can only be called by phone_index canister (use inspect_message)
     // Will create a new User canister and an account and return a new CanisterId
@@ -170,7 +234,6 @@ service: {
     // Takes a new User canister WASM and schedules a rolling upgrade
     upgrade: (UpgradeRequest) -> (UpgradeResponse);
     
-    update_username: (UpdateUsernameRequest) -> (UpdateUsernameResponse);
     mark_as_online: (MarkAsOnlineRequest) -> ();
 
     // Called by a user canister - authorize based on caller
@@ -184,4 +247,24 @@ service: {
     get_users: (GetUsersRequest) -> (GetUsersResponse) query;
     search_users: (SearchUsersRequest) -> (SearchUsersResponse) query;
     metrics: () -> (Metrics) query;
+
+
+    // - stuff that used to be in the phone index
+    // ===============================================
+
+    // Checks if phone number already registered and if not then sends code to phone
+    register_phone_number: (RegisterPhoneNumberRequest) -> (RegisterPhoneNumberResponse);
+
+    // If the code is valid and not expired the then user is now confirmed
+    confirm_phone_number: (ConfirmPhoneNumberRequest) -> (ConfirmPhoneNumberResponse);
+
+    // If the user did not receive or enter the confirmation code before it expired then
+    // call this to resend the code
+    resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
+
+    set_username: (SetUsernameRequest) -> (SetUsernameResponse);
+
+    // Call to find out the status of the phone number registration/claim process for the caller
+    // TODO: REPLACE WITH get_current_user
+    // status: (StatusRequest) -> (StatusResponse) query;
 }

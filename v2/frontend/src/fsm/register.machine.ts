@@ -9,9 +9,12 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ClaimResponse, RegisterResponse } from "../domain/phone";
 import type { Principal } from "@dfinity/principal";
-import type { UpdateUsernameResponse } from "../domain/user";
+import type {
+    ConfirmPhoneNumberResponse,
+    RegisterPhoneNumberResponse,
+    UpdateUsernameResponse,
+} from "../domain/user";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -24,7 +27,7 @@ export interface RegisterContext {
     error?: Error;
     countryCode?: number;
     phoneNumber?: number;
-    registrationCode?: number;
+    registrationCode?: string;
     userCanister?: Principal;
     username?: string;
 }
@@ -32,12 +35,12 @@ export interface RegisterContext {
 export type RegisterEvents =
     | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: number }
     | { type: "RESEND_REGISTRATION_CODE" }
-    | { type: "SUBMIT_REGISTRATION_CODE"; code: number }
+    | { type: "SUBMIT_REGISTRATION_CODE"; code: string }
     | { type: "REGISTER_USER"; username: string }
     | { type: "COMPLETE" }
-    | { type: "done.invoke.claimPhoneNumber"; data: ClaimResponse }
-    | { type: "error.platform.claimPhoneNumber"; data: Error }
-    | { type: "done.invoke.registerPhoneNumber"; data: RegisterResponse }
+    | { type: "done.invoke.confirmPhoneNumber"; data: ConfirmPhoneNumberResponse }
+    | { type: "error.platform.confirmPhoneNumber"; data: Error }
+    | { type: "done.invoke.registerPhoneNumber"; data: RegisterPhoneNumberResponse }
     | { type: "error.platform.registerPhoneNumber"; data: Error }
     | { type: "done.invoke.updateUsername"; data: UpdateUsernameResponse }
     | { type: "error.platform.updateUsername"; data: Error };
@@ -51,17 +54,18 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             return ev.type === "done.invoke.registerPhoneNumber" && ev.data === "too_many_attempts";
         },
         claimInvalid: (_, ev) => {
-            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "invalid";
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "invalid";
         },
         claimExpired: (_, ev) => {
-            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "expired";
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "expired";
         },
         userExists: (_, ev) => {
-            return ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "user_exists";
+            return ev.type === "done.invoke.confirmPhoneNumber" && ev.data.kind === "user_exists";
         },
         userLimitReached: (_, ev) => {
             return (
-                ev.type === "done.invoke.claimPhoneNumber" && ev.data.kind === "user_limit_reached"
+                ev.type === "done.invoke.confirmPhoneNumber" &&
+                ev.data.kind === "user_limit_reached"
             );
         },
         usernameTaken: (_, ev) => {
@@ -80,12 +84,8 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     services: {
         registerPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.registerPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
-        claimPhoneNumber: (ctx, _) =>
-            ctx.serviceContainer!.claimPhoneNumber(
-                ctx.registrationCode!,
-                ctx.countryCode!,
-                ctx.phoneNumber!
-            ),
+        confirmPhoneNumber: (ctx, _) =>
+            ctx.serviceContainer!.confirmPhoneNumber(ctx.registrationCode!),
         updateUsername: (ctx, ev) => {
             if (ev.type === "REGISTER_USER") {
                 return ctx.serviceContainer!.updateUsername(ctx.userCanister!, ev.username);
@@ -166,8 +166,8 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                     ev.type === "SUBMIT_REGISTRATION_CODE" ? ev.code : undefined,
             }),
             invoke: {
-                id: "claimPhoneNumber",
-                src: "claimPhoneNumber",
+                id: "confirmPhoneNumber",
+                src: "confirmPhoneNumber",
                 onDone: [
                     {
                         target: "awaiting_registration_code",
@@ -200,8 +200,11 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                     {
                         target: "awaiting_username",
                         actions: assign({
-                            userCanister: (_, { type, data }: DoneInvokeEvent<ClaimResponse>) => {
-                                if (type === "done.invoke.claimPhoneNumber") {
+                            userCanister: (
+                                _,
+                                { type, data }: DoneInvokeEvent<ConfirmPhoneNumberResponse>
+                            ) => {
+                                if (type === "done.invoke.confirmPhoneNumber") {
                                     if (data.kind === "success") {
                                         return data.canisterId;
                                     }

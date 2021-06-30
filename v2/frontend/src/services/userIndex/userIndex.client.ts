@@ -1,9 +1,19 @@
 import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/canister";
-import type { GetCurrentUserResponse, UpdateUsernameResponse } from "../../domain/user";
+import type {
+    ConfirmPhoneNumberResponse,
+    GetCurrentUserResponse,
+    RegisterPhoneNumberResponse,
+    UpdateUsernameResponse,
+} from "../../domain/user";
 import { CandidService } from "../candidService";
-import { updateUsernameResponse, getCurrentUserResponse } from "./mappers";
+import {
+    updateUsernameResponse,
+    getCurrentUserResponse,
+    registerPhoneNumberResponse,
+    confirmPhoneNumber,
+} from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
@@ -34,6 +44,30 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 username: username,
             }),
             updateUsernameResponse
+        );
+    }
+
+    registerPhoneNumber(
+        countryCode: number,
+        phoneNumber: number
+    ): Promise<RegisterPhoneNumberResponse> {
+        return this.handleResponse(
+            this.userService.register_phone_number({
+                number: {
+                    country_code: countryCode,
+                    number: BigInt(phoneNumber),
+                },
+            }),
+            registerPhoneNumberResponse
+        );
+    }
+
+    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
+        return this.handleResponse(
+            this.userService.confirm_phone_number({
+                confirmation_code: code,
+            }),
+            confirmPhoneNumber
         );
     }
 }

@@ -11,12 +11,12 @@ type PhoneNumber =
         number: text;
     };
 
-type RegisterRequest = 
+type RegisterPhoneNumberRequest = 
     record {
         number: PhoneNumber;
     };
 
-type RegisterResponse = 
+type RegisterPhoneNumberResponse = 
     variant {
         Success;
         AlreadyRegistered;
@@ -27,12 +27,12 @@ type RegisterResponse =
         InvalidPhoneNumber;
     };
 
-type ClaimRequest = 
+type ConfirmPhoneNumberRequest = 
     record {
         confirmation_code: text;
     };
 
-type ClaimResponse = 
+type ConfirmPhoneNumberResponse = 
     variant {
         Success: record {
             canister_id: CanisterId
@@ -80,7 +80,7 @@ type StatusRequest =
 type StatusResponse = 
     variant {
         NotFound;
-        Unclaimed record {
+        Unclaimed: record {
             phone_number: PhoneNumber;
             time_until_resend_code_permitted: Milliseconds;
         };

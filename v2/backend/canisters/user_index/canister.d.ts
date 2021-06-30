@@ -4,6 +4,10 @@ import UserIndexService, {
   GetCurrentUserRequest,
   UpdateUsernameRequest,
   UpdateUsernameResponse,
+  RegisterPhoneNumberRequest,
+  RegisterPhoneNumberResponse,
+  ConfirmPhoneNumberRequest,
+  ConfirmPhoneNumberResponse,
 } from "./canister_types";
 export {
   UserIndexService,
@@ -11,6 +15,10 @@ export {
   GetCurrentUserRequest as ApiGetCurrentUserRequest,
   UpdateUsernameRequest as ApiUpdateUsernameRequest,
   UpdateUsernameResponse as ApiUpdateUsernameResponse,
+  RegisterPhoneNumberRequest as ApiRegisterPhoneNumberRequest,
+  RegisterPhoneNumberResponse as ApiRegisterPhoneNumberResponse,
+  ConfirmPhoneNumberRequest as ApiConfirmPhoneNumberRequest,
+  ConfirmPhoneNumberResponse as ApiConfirmPhoneNumberResponse,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;
