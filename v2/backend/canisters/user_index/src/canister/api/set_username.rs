@@ -1,8 +1,8 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
 use crate::model::user::User;
-use crate::runtime_state::RuntimeState;
-use crate::user_map::UpdateUserResult;
+use crate::model::runtime_state::RuntimeState;
+use crate::model::user_map::UpdateUserResult;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 

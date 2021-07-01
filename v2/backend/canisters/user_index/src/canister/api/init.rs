@@ -1,8 +1,8 @@
 use candid::Principal;
 use crate::canister::RUNTIME_STATE;
 use crate::canister::env::CanisterEnv;
-use crate::data::Data;
-use crate::runtime_state::RuntimeState;
+use crate::model::data::Data;
+use crate::model::runtime_state::RuntimeState;
 use ic_cdk_macros::init;
 use serde::Deserialize;
 

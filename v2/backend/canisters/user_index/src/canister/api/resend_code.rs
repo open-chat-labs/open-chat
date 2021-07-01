@@ -1,8 +1,8 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::append_sms_to_queue;
+use crate::model::data::append_sms_to_queue;
 use crate::model::user::User;
-use crate::runtime_state::RuntimeState;
+use crate::model::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 
