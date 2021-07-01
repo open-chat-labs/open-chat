@@ -63,4 +63,8 @@ export class ServiceContainer {
     setUsername(username: string): Promise<SetUsernameResponse> {
         return this.userIndexClient.setUsername(username);
     }
+
+    createCanister(): Promise<void> {
+        return this.userIndexClient.createCanister();
+    }
 }

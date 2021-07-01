@@ -35,6 +35,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleResponse(this.userService.upgrade_canister({}), identity);
     }
 
+    createCanister(): Promise<void> {
+        return this.handleResponse(this.userService.create_canister({}), identity);
+    }
+
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }

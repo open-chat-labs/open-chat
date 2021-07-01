@@ -12,6 +12,12 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 export class UserIndexClientMock implements IUserIndexClient {
     private count: number = 0;
 
+    createCanister(): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(), 3000);
+        });
+    }
+
     upgradeUser(): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(() => resolve(), 3000);
@@ -89,7 +95,7 @@ export class UserIndexClientMock implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         // return this.confirmedPendingUsernameScenario();
-        // return this.confirmedUserScenario();
+        return this.confirmedUserScenario();
         return this.uncomfirmedUserScenario();
         return this.unknownUserScenario();
         return this.requiredUpgradeScenario();

@@ -9,6 +9,7 @@ import type {
 } from "../../domain/user";
 
 export interface IUserIndexClient {
+    createCanister: () => Promise<void>;
     upgradeUser: () => Promise<void>;
     getCurrentUser: () => Promise<CurrentUserResponse>;
     setUsername(username: string): Promise<SetUsernameResponse>;

@@ -19,6 +19,8 @@ import type {
     ResendCodeResponse,
 } from "../domain/user";
 
+const CANISTER_CREATION_INTERVAL = 1000;
+
 if (typeof window !== "undefined") {
     inspect({
         iframe: false,
@@ -61,6 +63,12 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         },
         isAwaitingUsername: (ctx, _) => {
             return ctx.currentUser?.kind === "confirmed_pending_username";
+        },
+        isAwaitingCanister: (ctx, _) => {
+            return (
+                ctx.currentUser?.kind === "confirmed_user" &&
+                ctx.currentUser.canisterCreationStatus === "in_progress"
+            );
         },
         phoneAlreadyRegistered: (_, ev) => {
             return (
@@ -125,6 +133,18 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             throw new Error(`setUsername called with unexpected event type: ${ev.type}`);
         },
     },
+    actions: {
+        optionallyTriggerCanisterCreation: (ctx, _) => {
+            if (
+                ctx.currentUser?.kind === "confirmed_user" ||
+                ctx.currentUser?.kind === "confirmed_pending_username"
+            ) {
+                if (ctx.currentUser.canisterCreationStatus === "pending") {
+                    ctx.serviceContainer!.createCanister();
+                }
+            }
+        },
+    },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,13 +154,18 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     context: {},
     states: {
         initial: {
+            entry: "optionallyTriggerCanisterCreation",
             always: [
                 { target: "awaiting_phone_number", cond: "isAwaitingPhoneNumber" },
                 { target: "awaiting_registration_code", cond: "isAwaitingCode" },
                 { target: "awaiting_username", cond: "isAwaitingUsername" },
-                // { target: "loading_user", cond: "requiresCanisterCreation" },
-                // { target: "loading_user", cond: "canisterCreationInProgress" },
+                { target: "awaiting_canister", cond: "isAwaitingCanister" },
             ],
+        },
+        awaiting_canister: {
+            after: {
+                [CANISTER_CREATION_INTERVAL]: "registration_complete",
+            },
         },
         awaiting_phone_number: {
             on: {
