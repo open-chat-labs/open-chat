@@ -21,9 +21,6 @@ type SubmitPhoneNumberResponse =
         Success;
         AlreadyRegistered;
         AlreadyRegisteredByOther;
-        AlreadyRegisteredButUnclaimed: record {
-            time_until_resend_code_permitted: opt Milliseconds
-        };
         InvalidPhoneNumber;
     };
 
