@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
@@ -69,7 +69,7 @@ pub struct ConfirmedUser {
     pub phone_number: PhoneNumber,
     pub user_id: Option<UserId>,
     pub username: Option<String>,
-    //pub canister_creation_in_progress: bool,
+    pub canister_creation_status: CanisterCreationStatus,
     pub date_confirmed: TimestampMillis,
 }
 
@@ -80,4 +80,11 @@ pub struct CreatedUser {
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
+}
+
+#[derive(CandidType, Clone, Copy)]
+pub enum CanisterCreationStatus {
+    Pending,
+    InProgress,
+    Created,
 }
