@@ -1,7 +1,7 @@
 use candid::Principal;
 use crate::model::user::User;
-use std::collections::HashMap;
 use phonenumber::PhoneNumber;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct UserMap {
