@@ -124,11 +124,18 @@ type CurrentUserResponse =
             time_until_resend_code_permitted: Milliseconds;
         };
         ConfirmedPendingUsername: record {
-            canister_creation_in_progress: bool;
+            canister_creation_status: variant {
+                Pending;
+                InProgress;
+                Created;
+            };
         };
         Confirmed: record {
             username: text;
-            canister_creation_in_progress: bool;
+            canister_creation_status: variant {
+                Pending;
+                InProgress;
+            };
         };
         Created: record {
             user_id: UserId;
