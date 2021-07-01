@@ -46,9 +46,6 @@ type ResendCodeResponse =
     variant {
         Success;
         AlreadyClaimed;
-        CodeNotExpiredYet: record {
-            time_until_resend_code_permitted: Milliseconds
-        };
         UserNotFound;
     };
 
@@ -117,7 +114,6 @@ type CurrentUserResponse =
         UserNotFound;
         Unconfirmed: record {
             phone_number: PhoneNumber;
-            time_until_resend_code_permitted: Milliseconds;
         };
         ConfirmedPendingUsername: record {
             canister_creation_status: variant {

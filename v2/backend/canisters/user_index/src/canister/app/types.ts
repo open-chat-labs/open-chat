@@ -12,12 +12,7 @@ export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
 export type CreateCanisterRequest = {};
 export type CurrentUserRequest = {};
 export type CurrentUserResponse = { 'UpgradeInProgress' : null } |
-  {
-    'Unconfirmed' : {
-      'time_until_resend_code_permitted' : Milliseconds,
-      'phone_number' : PhoneNumber,
-    }
-  } |
+  { 'Unconfirmed' : { 'phone_number' : PhoneNumber } } |
   {
     'Confirmed' : {
       'username' : string,
@@ -59,9 +54,6 @@ export interface PhoneNumber { 'country_code' : number, 'number' : string };
 export type ResendCodeRequest = {};
 export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
-  {
-    'CodeNotExpiredYet' : { 'time_until_resend_code_permitted' : Milliseconds }
-  } |
   { 'UserNotFound' : null };
 export interface SearchRequest {
   'max_results' : number,
@@ -79,11 +71,6 @@ export interface SubmitPhoneNumberRequest { 'number' : PhoneNumber };
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
   { 'AlreadyRegisteredByOther' : null } |
-  {
-    'AlreadyRegisteredButUnclaimed' : {
-      'time_until_resend_code_permitted' : [] | [Milliseconds],
-    }
-  } |
   { 'InvalidPhoneNumber' : null };
 export type TimestampMillis = bigint;
 export interface TransferCyclesRequest {
