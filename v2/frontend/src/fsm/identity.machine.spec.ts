@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { HttpAgentRequest, Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import type { MachineOptions } from "xstate";
 import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
-import type { CurrentUserResponse, User } from "../domain/user";
+import type { CurrentUserResponse } from "../domain/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
