@@ -46,6 +46,7 @@ pub fn query(runtime_state: &RuntimeState) -> Response {
 pub struct Request {
 }
 
+#[allow(dead_code)]
 #[derive(CandidType)]
 pub enum Response {
     UserNotFound,

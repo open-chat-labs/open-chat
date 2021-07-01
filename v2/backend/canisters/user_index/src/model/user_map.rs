@@ -138,3 +138,319 @@ pub enum UpdateUserResult {
     UsernameTaken,
     UserNotFound,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use itertools::Itertools;
+    use std::str::FromStr;
+    use super::*;
+
+    #[test]
+    fn add_with_no_clashes() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number3 = PhoneNumber::from_str("+443333333333").unwrap();
+
+        let username2 = "2".to_string();
+        let username3 = "3".to_string();
+
+        let user_id2 = Principal::from_slice(&[2,2]);
+        let user_id3 = Principal::from_slice(&[3,3]);
+
+        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+            principal: principal1,
+            phone_number: phone_number1.clone(),
+            confirmation_code: "1".to_string(),
+            date_generated: 1,
+            sms_messages_sent: 1
+        });
+        user_map.add(unconfirmed.clone());
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal: principal2,
+            phone_number: phone_number2.clone(),
+            user_id: Some(user_id2),
+            username: Some(username2.clone()),
+            date_confirmed: 2,
+        });
+        user_map.add(confirmed.clone());
+
+        let created = User::Created(CreatedUser {
+            principal: principal3,
+            phone_number: phone_number3.clone(),
+            user_id: user_id3,
+            username: username3.clone(),
+            date_created: 3,
+        });
+        user_map.add(created.clone());
+
+        let users_by_principal: Vec<_> = user_map.users_by_principal.iter().map(|(p, u)| (p.clone(), u.clone())).sorted_by_key(|(p, _)| *p).collect();
+        let phone_number_to_principal: Vec<_> = user_map.phone_number_to_principal.iter().map(|(ph, p)| (ph.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
+        let username_to_principal: Vec<_> = user_map.username_to_principal.iter().map(|(u, p)| (u.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
+        let user_id_to_principal: Vec<_> = user_map.user_id_to_principal.iter().map(|(u, p)| (u.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
+
+        assert_eq!(users_by_principal, vec!((principal1, unconfirmed), (principal2, confirmed), (principal3, created)));
+        assert_eq!(phone_number_to_principal, vec!((phone_number1, principal1), (phone_number2, principal2), (phone_number3, principal3)));
+        assert_eq!(username_to_principal, vec!((username2, principal2), (username3, principal3)));
+        assert_eq!(user_id_to_principal, vec!((user_id2, principal2), (user_id3, principal3)));
+    }
+
+    #[test]
+    fn add_with_clashing_principal() {
+        let mut user_map = UserMap::default();
+        let principal = Principal::from_slice(&[1]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+
+        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+            principal,
+            phone_number: phone_number1.clone(),
+            confirmation_code: "1".to_string(),
+            date_generated: 1,
+            sms_messages_sent: 1
+        });
+        user_map.add(unconfirmed);
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal,
+            phone_number: phone_number2.clone(),
+            user_id: Some(principal),
+            username: Some("2".to_string()),
+            date_confirmed: 2,
+        });
+        assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
+        assert_eq!(user_map.users_by_principal.len(), 1);
+    }
+
+    #[test]
+    fn add_with_clashing_phone_number() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number = PhoneNumber::from_str("+441111111111").unwrap();
+
+        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+            principal: principal1,
+            phone_number: phone_number.clone(),
+            confirmation_code: "1".to_string(),
+            date_generated: 1,
+            sms_messages_sent: 1
+        });
+        user_map.add(unconfirmed);
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal: principal2,
+            phone_number,
+            user_id: Some(principal2),
+            username: Some("2".to_string()),
+            date_confirmed: 2,
+        });
+        assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
+        assert_eq!(user_map.users_by_principal.len(), 1);
+    }
+
+    #[test]
+    fn add_with_clashing_username() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+
+        let username = "1".to_string();
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal: principal1,
+            phone_number: phone_number1,
+            user_id: Some(principal1),
+            username: Some(username.clone()),
+            date_confirmed: 2,
+        });
+        user_map.add(confirmed);
+
+        let created = User::Created(CreatedUser {
+            principal: principal2,
+            phone_number: phone_number2,
+            user_id: principal2,
+            username,
+            date_created: 3,
+        });
+        assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
+        assert_eq!(user_map.users_by_principal.len(), 1);
+    }
+
+    #[test]
+    fn update_with_no_clashes() {
+        let mut user_map = UserMap::default();
+        let principal = Principal::from_slice(&[1]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+
+        let username1 = "1".to_string();
+        let username2 = "2".to_string();
+
+        let user_id = Principal::from_slice(&[1,1]);
+
+        let original = User::Created(CreatedUser {
+            principal,
+            phone_number: phone_number1.clone(),
+            user_id,
+            username: username1.clone(),
+            date_created: 1,
+        });
+
+        let mut updated = original.clone();
+        updated.set_username(username2.clone());
+        updated.set_phone_number(phone_number2.clone());
+
+        user_map.add(original);
+        assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
+
+        assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
+        assert_eq!(user_map.phone_number_to_principal.keys().collect_vec(), vec!(&phone_number2));
+        assert_eq!(user_map.username_to_principal.keys().collect_vec(), vec!(&username2));
+        assert_eq!(user_map.user_id_to_principal.keys().collect_vec(), vec!(&user_id));
+    }
+
+    #[test]
+    fn update_with_clashing_phone_number() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+
+        let username1 = "1".to_string();
+        let username2 = "2".to_string();
+
+        let user_id1 = Principal::from_slice(&[1,1]);
+        let user_id2 = Principal::from_slice(&[2,2]);
+
+        let original = User::Created(CreatedUser {
+            principal: principal1,
+            phone_number: phone_number1,
+            user_id: user_id1,
+            username: username1.clone(),
+            date_created: 1,
+        });
+
+        let other = User::Created(CreatedUser {
+            principal: principal2,
+            phone_number: phone_number2.clone(),
+            user_id: user_id2,
+            username: username2.clone(),
+            date_created: 1,
+        });
+
+        let mut updated = original.clone();
+        updated.set_phone_number(phone_number2);
+
+        user_map.add(original);
+        user_map.add(other);
+        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
+    }
+
+    #[test]
+    fn update_with_clashing_username() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+
+        let username1 = "1".to_string();
+        let username2 = "2".to_string();
+
+        let user_id1 = Principal::from_slice(&[1,1]);
+        let user_id2 = Principal::from_slice(&[2,2]);
+
+        let original = User::Created(CreatedUser {
+            principal: principal1,
+            phone_number: phone_number1,
+            user_id: user_id1,
+            username: username1.clone(),
+            date_created: 1,
+        });
+
+        let other = User::Created(CreatedUser {
+            principal: principal2,
+            phone_number: phone_number2.clone(),
+            user_id: user_id2,
+            username: username2.clone(),
+            date_created: 1,
+        });
+
+        let mut updated = original.clone();
+        updated.set_phone_number(phone_number2);
+
+        user_map.add(original);
+        user_map.add(other);
+        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
+    }
+
+    #[test]
+    fn remove() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+
+        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number3 = PhoneNumber::from_str("+443333333333").unwrap();
+
+        let username2 = "2".to_string();
+        let username3 = "3".to_string();
+
+        let user_id2 = Principal::from_slice(&[2,2]);
+        let user_id3 = Principal::from_slice(&[3,3]);
+
+        let unconfirmed = User::Unconfirmed(UnconfirmedUser {
+            principal: principal1,
+            phone_number: phone_number1.clone(),
+            confirmation_code: "1".to_string(),
+            date_generated: 1,
+            sms_messages_sent: 1
+        });
+        user_map.add(unconfirmed.clone());
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal: principal2,
+            phone_number: phone_number2.clone(),
+            user_id: Some(user_id2),
+            username: Some(username2.clone()),
+            date_confirmed: 2,
+        });
+        user_map.add(confirmed.clone());
+
+        let created = User::Created(CreatedUser {
+            principal: principal3,
+            phone_number: phone_number3.clone(),
+            user_id: user_id3,
+            username: username3.clone(),
+            date_created: 3,
+        });
+        user_map.add(created.clone());
+
+        user_map.remove_by_principal(&principal1);
+        user_map.remove_by_principal(&principal2);
+        user_map.remove_by_principal(&principal3);
+
+        assert_eq!(user_map.users_by_principal.len(), 0);
+        assert_eq!(user_map.phone_number_to_principal.len(), 0);
+        assert_eq!(user_map.username_to_principal.len(), 0);
+        assert_eq!(user_map.user_id_to_principal.len(), 0);
+    }
+}
