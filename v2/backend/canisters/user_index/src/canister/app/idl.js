@@ -25,11 +25,18 @@ export default ({ IDL }) => {
       'phone_number' : PhoneNumber,
     }),
     'Confirmed' : IDL.Record({
-      'canister_creation_in_progress' : IDL.Bool,
       'username' : IDL.Text,
+      'canister_creation_status' : IDL.Variant({
+        'InProgress' : IDL.Null,
+        'Pending' : IDL.Null,
+      }),
     }),
     'ConfirmedPendingUsername' : IDL.Record({
-      'canister_creation_in_progress' : IDL.Bool,
+      'canister_creation_status' : IDL.Variant({
+        'InProgress' : IDL.Null,
+        'Created' : IDL.Null,
+        'Pending' : IDL.Null,
+      }),
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,

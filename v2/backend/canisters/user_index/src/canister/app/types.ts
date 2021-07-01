@@ -20,12 +20,17 @@ export type CurrentUserResponse = { 'UpgradeInProgress' : null } |
   } |
   {
     'Confirmed' : {
-      'canister_creation_in_progress' : boolean,
       'username' : string,
+      'canister_creation_status' : { 'InProgress' : null } |
+        { 'Pending' : null },
     }
   } |
   {
-    'ConfirmedPendingUsername' : { 'canister_creation_in_progress' : boolean }
+    'ConfirmedPendingUsername' : {
+      'canister_creation_status' : { 'InProgress' : null } |
+        { 'Created' : null } |
+        { 'Pending' : null },
+    }
   } |
   {
     'Created' : {
