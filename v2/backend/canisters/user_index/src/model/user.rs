@@ -52,6 +52,16 @@ impl User {
         }
         true
     }
+
+    pub fn set_last_online(&mut self, now: TimestampMillis) -> bool {
+        match self {
+            User::Created(u) => { 
+                u.last_online = now;
+                true
+            },
+            _ => false
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -80,6 +90,7 @@ pub struct CreatedUser {
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
+    pub last_online: TimestampMillis,
 }
 
 #[derive(CandidType, Clone, Copy)]
