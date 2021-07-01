@@ -1,9 +1,9 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::{CONFIRMATION_CODE_EXPIRY_MILLIS, append_sms_to_queue};
+use crate::model::data::{CONFIRMATION_CODE_EXPIRY_MILLIS, append_sms_to_queue};
 use crate::model::user::{UnconfirmedUser, User};
-use crate::runtime_state::RuntimeState;
-use crate::user_map::AddUserResult;
+use crate::model::runtime_state::RuntimeState;
+use crate::model::user_map::AddUserResult;
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;

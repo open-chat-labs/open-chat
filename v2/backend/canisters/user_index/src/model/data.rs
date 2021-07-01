@@ -1,5 +1,5 @@
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
-use crate::user_map::UserMap;
+use crate::model::user_map::UserMap;
 use phonenumber::PhoneNumber;
 use std::collections::VecDeque;
 

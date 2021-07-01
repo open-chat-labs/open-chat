@@ -1,7 +1,7 @@
 mod api;
 mod env;
 
-use crate::runtime_state::RuntimeState;
+use crate::model::runtime_state::RuntimeState;
 use std::cell::RefCell;
 
 thread_local! {
