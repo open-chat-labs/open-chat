@@ -329,5 +329,5 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
 
 export const identityMachine = createMachine<IdentityContext, IdentityEvents>(schema, liveConfig);
 export const identityService = useMachine(identityMachine, {
-    devTools: process.env.NODE_ENV !== "production",
+    devTools: process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "ci",
 });
