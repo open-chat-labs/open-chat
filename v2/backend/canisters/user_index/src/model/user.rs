@@ -1,6 +1,7 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
+use shared::types::UserId;
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -66,8 +67,9 @@ pub struct UnconfirmedUser {
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
-    pub user_id: Option<Principal>,
+    pub user_id: Option<UserId>,
     pub username: Option<String>,
+    //pub canister_creation_in_progress: bool,
     pub date_confirmed: TimestampMillis,
 }
 
@@ -75,7 +77,7 @@ pub struct ConfirmedUser {
 pub struct CreatedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
-    pub user_id: Principal,
+    pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
 }
