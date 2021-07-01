@@ -141,7 +141,7 @@ pub enum UpdateUserResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser, CanisterCreationStatus};
     use itertools::Itertools;
     use std::str::FromStr;
     use super::*;
@@ -177,6 +177,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             user_id: Some(user_id2),
             username: Some(username2.clone()),
+            canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());
@@ -187,6 +188,7 @@ mod tests {
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
+            last_online: 1,
         });
         user_map.add(created.clone());
 
@@ -223,6 +225,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             user_id: Some(principal),
             username: Some("2".to_string()),
+            canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
@@ -251,6 +254,7 @@ mod tests {
             phone_number,
             user_id: Some(principal2),
             username: Some("2".to_string()),
+            canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
@@ -273,6 +277,7 @@ mod tests {
             phone_number: phone_number1,
             user_id: Some(principal1),
             username: Some(username.clone()),
+            canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
         });
         user_map.add(confirmed);
@@ -283,6 +288,7 @@ mod tests {
             user_id: principal2,
             username,
             date_created: 3,
+            last_online: 1,
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -307,6 +313,7 @@ mod tests {
             user_id,
             username: username1.clone(),
             date_created: 1,
+            last_online: 1,
         });
 
         let mut updated = original.clone();
@@ -343,6 +350,7 @@ mod tests {
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
+            last_online: 1,
         });
 
         let other = User::Created(CreatedUser {
@@ -351,6 +359,7 @@ mod tests {
             user_id: user_id2,
             username: username2.clone(),
             date_created: 1,
+            last_online: 1,
         });
 
         let mut updated = original.clone();
@@ -382,6 +391,7 @@ mod tests {
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
+            last_online: 1,
         });
 
         let other = User::Created(CreatedUser {
@@ -390,6 +400,7 @@ mod tests {
             user_id: user_id2,
             username: username2.clone(),
             date_created: 1,
+            last_online: 1,
         });
 
         let mut updated = original.clone();
@@ -431,6 +442,7 @@ mod tests {
             phone_number: phone_number2.clone(),
             user_id: Some(user_id2),
             username: Some(username2.clone()),
+            canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());
@@ -441,6 +453,7 @@ mod tests {
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
+            last_online: 1,
         });
         user_map.add(created.clone());
 
