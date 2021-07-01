@@ -5,6 +5,7 @@ import type {
     SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../domain/user";
 // import { UserService } from "./user/user.service";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
@@ -49,6 +50,10 @@ export class ServiceContainer {
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
         return this.userIndexClient.submitPhoneNumber(phoneNumber);
+    }
+
+    resendRegistrationCode(): Promise<ResendCodeResponse> {
+        return this.userIndexClient.resendRegistrationCode();
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {

@@ -25,7 +25,7 @@
         dispatch("changePhoneNumber");
     }
 
-    $: valid = codeValue.length !== 6;
+    $: valid = codeValue.length === 6;
 </script>
 
 <p class="enter-code">
@@ -61,6 +61,11 @@
 
 <style type="text/scss">
     @import "../../styles/mixins";
+
+    .actions {
+        display: flex;
+        gap: 10px;
+    }
 
     .error {
         @include font(bold, normal, fs-140);

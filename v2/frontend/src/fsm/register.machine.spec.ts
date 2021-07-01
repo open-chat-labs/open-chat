@@ -43,18 +43,6 @@ describe("register machine transitions", () => {
             );
         });
 
-        test("already registered but unclaimed", () => {
-            testTransition(
-                registerMachine,
-                "checking_phone_number",
-                {
-                    type: "done.invoke.submitPhoneNumber",
-                    data: { kind: "already_registered_but_unclaimed" },
-                },
-                "awaiting_phone_number"
-            );
-        });
-
         test("invalid phone number", () => {
             testTransition(
                 registerMachine,
@@ -86,13 +74,49 @@ describe("register machine transitions", () => {
         );
     });
 
-    test("request new reg code", () => {
-        testTransition(
-            registerMachine,
-            "awaiting_registration_code",
-            "RESEND_REGISTRATION_CODE",
-            "checking_phone_number"
-        );
+    describe("resending code", () => {
+        test("triggering request", () => {
+            testTransition(
+                registerMachine,
+                "awaiting_registration_code",
+                "RESEND_REGISTRATION_CODE",
+                "resending_code"
+            );
+        });
+
+        test("request succeeds", () => {
+            testTransition(
+                registerMachine,
+                "resending_code",
+                {
+                    type: "done.invoke.resendCode",
+                    data: "success",
+                },
+                "awaiting_registration_code"
+            );
+        });
+        test("already claimed", () => {
+            testTransition(
+                registerMachine,
+                "resending_code",
+                {
+                    type: "done.invoke.resendCode",
+                    data: "already_claimed",
+                },
+                "awaiting_registration_code"
+            );
+        });
+        test("user not found", () => {
+            testTransition(
+                registerMachine,
+                "resending_code",
+                {
+                    type: "done.invoke.resendCode",
+                    data: "user_not_found",
+                },
+                "awaiting_registration_code"
+            );
+        });
     });
 
     describe("confirming phone number", () => {

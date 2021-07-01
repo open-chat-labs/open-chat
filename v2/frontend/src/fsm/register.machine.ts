@@ -16,6 +16,7 @@ import type {
     SetUsernameResponse,
     CurrentUserResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../domain/user";
 
 if (typeof window !== "undefined") {
@@ -32,7 +33,6 @@ export interface RegisterContext {
     registrationCode?: string;
     userCanister?: Principal;
     username?: string;
-    timeUntilResendCodePermitted: bigint;
 }
 
 export type RegisterEvents =
@@ -47,7 +47,9 @@ export type RegisterEvents =
     | { type: "done.invoke.submitPhoneNumber"; data: SubmitPhoneNumberResponse }
     | { type: "error.platform.submitPhoneNumber"; data: Error }
     | { type: "done.invoke.setUsername"; data: SetUsernameResponse }
-    | { type: "error.platform.setUsername"; data: Error };
+    | { type: "error.platform.setUsername"; data: Error }
+    | { type: "done.invoke.resendCode"; data: ResendCodeResponse }
+    | { type: "error.platform.resendCode"; data: Error };
 
 const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
     guards: {
@@ -71,19 +73,13 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
                 ev.data.kind === "already_registered_by_other"
             );
         },
-        phoneAlreadyRegisteredButUnclaimed: (_, ev) => {
-            return (
-                ev.type === "done.invoke.submitPhoneNumber" &&
-                ev.data.kind === "already_registered_but_unclaimed"
-            );
-        },
         phoneInvalid: (_, ev) => {
             return (
                 ev.type === "done.invoke.submitPhoneNumber" &&
                 ev.data.kind === "invalid_phone_number"
             );
         },
-        alreadyClaimed: (_, ev) => {
+        confirmAlreadyClaimed: (_, ev) => {
             return ev.type === "done.invoke.confirmPhoneNumber" && ev.data === "already_claimed";
         },
         codeIncorrect: (_, ev) => {
@@ -110,8 +106,15 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         usernameInvalid: (_, ev) => {
             return ev.type === "done.invoke.setUsername" && ev.data === "username_invalid";
         },
+        resendAlreadyClaimed: (_, ev) => {
+            return ev.type === "done.invoke.resendCode" && ev.data === "already_claimed";
+        },
+        resendUserNotFound: (_, ev) => {
+            return ev.type === "done.invoke.resendCode" && ev.data === "user_not_found";
+        },
     },
     services: {
+        resendCode: (ctx, _) => ctx.serviceContainer!.resendRegistrationCode(),
         submitPhoneNumber: (ctx, _) => ctx.serviceContainer!.submitPhoneNumber(ctx.phoneNumber!),
         confirmPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.confirmPhoneNumber(ctx.registrationCode!),
@@ -128,7 +131,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
 export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     id: "register_machine",
     initial: "initial",
-    context: { timeUntilResendCodePermitted: BigInt(1000) },
+    context: {},
     states: {
         initial: {
             always: [
@@ -171,14 +174,6 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                     },
                     {
                         target: "awaiting_phone_number",
-                        cond: "phoneAlreadyRegisteredButUnclaimed",
-                        actions: assign({
-                            error: (_, _ev) =>
-                                new Error("register.phoneAlreadyRegisteredButUnclaimed"),
-                        }),
-                    },
-                    {
-                        target: "awaiting_phone_number",
                         cond: "phoneInvalid",
                         actions: assign({
                             error: (_, _ev) => new Error("register.phoneInvalid"),
@@ -202,8 +197,42 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
         awaiting_registration_code: {
             on: {
                 SUBMIT_REGISTRATION_CODE: "checking_registration_code",
-                RESEND_REGISTRATION_CODE: "checking_phone_number",
+                RESEND_REGISTRATION_CODE: "resending_code",
                 CHANGE_PHONE_NUMBER: "awaiting_phone_number",
+            },
+        },
+        resending_code: {
+            invoke: {
+                id: "resendCode",
+                src: "resendCode",
+                onDone: [
+                    {
+                        target: "awaiting_registration_code",
+                        cond: "resendAlreadyClaimed",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.resendAlreadyClaimed"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_registration_code",
+                        cond: "resendUserNotFound",
+                        actions: assign({
+                            error: (_, _ev) => new Error("register.userNotFound"),
+                        }),
+                    },
+                    {
+                        target: "awaiting_registration_code",
+                        actions: assign({
+                            error: (_, _ev) => undefined,
+                        }),
+                    },
+                ],
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
             },
         },
         checking_registration_code: {
@@ -218,9 +247,9 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 onDone: [
                     {
                         target: "awaiting_registration_code",
-                        cond: "alreadyClaimed",
+                        cond: "confirmAlreadyClaimed",
                         actions: assign({
-                            error: (_, _ev) => new Error("register.alreadyClaimed"),
+                            error: (_, _ev) => new Error("register.confirmAlreadyClaimed"),
                         }),
                     },
                     {

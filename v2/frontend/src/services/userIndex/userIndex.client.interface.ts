@@ -5,6 +5,7 @@ import type {
     ConfirmPhoneNumberResponse,
     SubmitPhoneNumberResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../../domain/user";
 
 export interface IUserIndexClient {
@@ -12,5 +13,6 @@ export interface IUserIndexClient {
     getCurrentUser: () => Promise<CurrentUserResponse>;
     setUsername(username: string): Promise<SetUsernameResponse>;
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
+    resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
 }

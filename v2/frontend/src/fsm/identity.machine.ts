@@ -214,16 +214,13 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                 id: "registerMachine",
                 src: registerMachine,
                 data: (ctx, ev) => {
-                    let timeUntilResendCodePermitted = BigInt(1000);
                     let phoneNumber = undefined;
                     if (ev.type === "done.invoke.getUser" && ev.data.kind === "unconfirmed_user") {
-                        timeUntilResendCodePermitted = ev.data.timeUntilResendCodePermitted;
                         phoneNumber = ev.data.phoneNumber;
                     }
                     return {
                         currentUser: ev.type === "done.invoke.getUser" ? ev.data : undefined,
                         serviceContainer: ctx.serviceContainer,
-                        timeUntilResendCodePermitted,
                         phoneNumber,
                     };
                 },

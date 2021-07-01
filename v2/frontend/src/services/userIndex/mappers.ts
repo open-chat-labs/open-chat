@@ -4,11 +4,13 @@ import type {
     SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../../domain/user";
 import type {
     ApiConfirmPhoneNumberResponse,
     ApiCurrentUserResponse,
     ApiPhoneNumber,
+    ApiResendCodeResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
 } from "api-canisters/user_index/src/canister/app/idl";
@@ -24,9 +26,6 @@ export function submitPhoneNumberResponse(
     }
     if ("AlreadyRegisteredByOther" in candid) {
         return { kind: "already_registered_by_other" };
-    }
-    if ("AlreadyRegisteredButUnclaimed" in candid) {
-        return { kind: "already_registered_but_unclaimed" };
     }
     if ("InvalidPhoneNumber" in candid) {
         return { kind: "invalid_phone_number" };
@@ -63,7 +62,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
-            timeUntilResendCodePermitted: candid.Unconfirmed.time_until_resend_code_permitted,
             phoneNumber: phoneNumber(candid.Unconfirmed.phone_number),
         };
     }
@@ -71,7 +69,10 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Confirmed" in candid) {
         return {
             kind: "confirmed_user",
-            canisterCreationInProgress: candid.Confirmed.canister_creation_in_progress,
+            canisterCreationStatus:
+                "InProgress" in candid.Confirmed.canister_creation_status
+                    ? "in_progress"
+                    : "pending",
             username: candid.Confirmed.username,
         };
     }
@@ -79,8 +80,12 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("ConfirmedPendingUsername" in candid) {
         return {
             kind: "confirmed_pending_username",
-            canisterCreationInProgress:
-                candid.ConfirmedPendingUsername.canister_creation_in_progress,
+            canisterCreationStatus:
+                "InProgress" in candid.ConfirmedPendingUsername.canister_creation_status
+                    ? "in_progress"
+                    : "Created" in candid.ConfirmedPendingUsername.canister_creation_status
+                    ? "created"
+                    : "pending",
         };
     }
 
@@ -124,4 +129,17 @@ export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsername
         return "username_invalid";
     }
     throw new Error(`Unknown UserIndex.SetUsernameResponse of ${candid}`);
+}
+
+export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyClaimed" in candid) {
+        return "already_claimed";
+    }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+    throw new Error(`Unknown UserIndex.ResendCodeResponse of ${candid}`);
 }

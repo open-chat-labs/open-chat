@@ -48,19 +48,18 @@ export type UpgradeInProgress = {
 
 export type UnconfirmedUser = {
     kind: "unconfirmed_user";
-    timeUntilResendCodePermitted: bigint;
     phoneNumber: PhoneNumber;
 };
 
 export type ConfirmedUser = {
     kind: "confirmed_user";
-    canisterCreationInProgress: boolean;
+    canisterCreationStatus: "in_progress" | "pending";
     username: string;
 };
 
 export type ConfirmedPendingUsername = {
     kind: "confirmed_pending_username";
-    canisterCreationInProgress: boolean;
+    canisterCreationStatus: "in_progress" | "pending" | "created";
 };
 
 export type CreatedUser = {
@@ -88,13 +87,11 @@ export type SubmitPhoneNumberResponse =
     | RegisterSuccess
     | AlreadyRegistered
     | AlreadyRegisteredByOther
-    | AlreadyRegisteredButUnclaimed
     | InvalidPhoneNumber;
 
 export type RegisterSuccess = { kind: "success" };
 export type AlreadyRegistered = { kind: "already_registered" };
 export type AlreadyRegisteredByOther = { kind: "already_registered_by_other" };
-export type AlreadyRegisteredButUnclaimed = { kind: "already_registered_but_unclaimed" };
 export type InvalidPhoneNumber = { kind: "invalid_phone_number" };
 
 export type ConfirmPhoneNumberResponse =
@@ -104,13 +101,4 @@ export type ConfirmPhoneNumberResponse =
     | "code_expired"
     | "not_found";
 
-export type ResendCodeResponse =
-    | ResendSuccess
-    | ResendAlreadyClaimed
-    | CodeNotExpiredYet
-    | NotFound;
-
-export type ResendSuccess = { kind: "success" };
-export type ResendAlreadyClaimed = { kind: "already_claimed" };
-export type CodeNotExpiredYet = { kind: "not_expired"; timeUntilResendPermitted: number };
-export type NotFound = { kind: "not_found" };
+export type ResendCodeResponse = "success" | "already_claimed" | "user_not_found";

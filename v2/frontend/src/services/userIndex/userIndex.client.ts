@@ -7,6 +7,7 @@ import type {
     SubmitPhoneNumberResponse,
     SetUsernameResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../../domain/user";
 import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
@@ -15,6 +16,7 @@ import {
     currentUserResponse,
     submitPhoneNumberResponse,
     confirmPhoneNumber,
+    resendCodeResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -35,6 +37,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
+    }
+
+    resendRegistrationCode(): Promise<ResendCodeResponse> {
+        return this.handleResponse(this.userService.resend_code({}), resendCodeResponse);
     }
 
     setUsername(username: string): Promise<SetUsernameResponse> {

@@ -50,6 +50,7 @@
             case "registering_user_succeeded":
                 uiState = "awaitingCompletion";
                 break;
+            case "resending_code":
             case "checking_registration_code":
             case "checking_phone_number":
             case "registering_user":

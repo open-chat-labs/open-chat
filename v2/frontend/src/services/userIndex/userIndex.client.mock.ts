@@ -5,6 +5,7 @@ import type {
     SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
     PhoneNumber,
+    ResendCodeResponse,
 } from "../../domain/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -14,6 +15,12 @@ export class UserIndexClientMock implements IUserIndexClient {
     upgradeUser(): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(() => resolve(), 3000);
+        });
+    }
+
+    resendRegistrationCode(): Promise<ResendCodeResponse> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve("success"), 2000);
         });
     }
 
@@ -58,7 +65,6 @@ export class UserIndexClientMock implements IUserIndexClient {
     uncomfirmedUserScenario(): Promise<CurrentUserResponse> {
         return Promise.resolve({
             kind: "unconfirmed_user",
-            timeUntilResendCodePermitted: BigInt(1000),
             phoneNumber: {
                 countryCode: 41,
                 number: "7867538921",
@@ -69,7 +75,7 @@ export class UserIndexClientMock implements IUserIndexClient {
     confirmedUserScenario(): Promise<CurrentUserResponse> {
         return Promise.resolve({
             kind: "confirmed_user",
-            canisterCreationInProgress: false,
+            canisterCreationStatus: "in_progress",
             username: "julian_jelfs",
         });
     }
@@ -77,7 +83,7 @@ export class UserIndexClientMock implements IUserIndexClient {
     confirmedPendingUsernameScenario(): Promise<CurrentUserResponse> {
         return Promise.resolve({
             kind: "confirmed_pending_username",
-            canisterCreationInProgress: false,
+            canisterCreationStatus: "created",
         });
     }
 
