@@ -96,8 +96,8 @@ export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
   'username' : string,
-  'last_online' : Milliseconds,
   'user_id' : UserId,
+  'seconds_since_last_online' : number,
 };
 export interface UsersRequest {
   'users' : Array<UserId>,

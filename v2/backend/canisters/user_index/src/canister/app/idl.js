@@ -67,11 +67,10 @@ export default ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
-    'last_online' : Milliseconds,
     'user_id' : UserId,
+    'seconds_since_last_online' : IDL.Nat32,
   });
   const SearchResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserSummary) }),
