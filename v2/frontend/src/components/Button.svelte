@@ -40,6 +40,8 @@
 
         &.disabled {
             background: var(--button-disabled);
+            color: var(--button-disabled-txt);
+            cursor: not-allowed;
         }
 
         // todo this needs theming

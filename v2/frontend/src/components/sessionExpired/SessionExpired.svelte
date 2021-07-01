@@ -6,7 +6,7 @@
     const dispatch = createEventDispatcher();
 </script>
 
-<ModalPage bgClass="woods" minHeight="200px">
+<ModalPage bgClass="expired" minHeight="200px">
     <div class="content">
         <div>
             <h1 class="title">{$_("sessionExpired")}</h1>

@@ -1,42 +1,70 @@
 import type { Identity } from "@dfinity/agent";
-import type { GetCurrentUserResponse, UpdateUsernameResponse } from "../domain/user";
-import type { ClaimResponse, RegisterResponse } from "../domain/phone";
-import type { IUserService } from "./user/user.service.interface";
-import type { IPhoneService } from "./phone/phone.service.interface";
+import type {
+    CurrentUserResponse,
+    SetUsernameResponse,
+    SubmitPhoneNumberResponse,
+    ConfirmPhoneNumberResponse,
+    PhoneNumber,
+    ResendCodeResponse,
+} from "../domain/user";
 // import { UserService } from "./user/user.service";
-// import { PhoneService } from "./phone/phone.service";
-import { UserServiceMock } from "./user/user.service.mock";
-import { PhoneServiceMock } from "./phone/phone.service.mock";
-import type { Principal } from "@dfinity/principal";
+import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
+import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
+import type { IUserClient } from "./user/user.client.interface";
+import { UserClientMock } from "./user/user.client.mock";
+import type { ChatSummary } from "../domain/chat";
 
 export class ServiceContainer {
-    private userService: IUserService;
-    private phoneService: IPhoneService;
+    private userIndexClient: IUserIndexClient;
+    private _userClient?: IUserClient;
 
     constructor(_identity: Identity) {
         // this.userService = new UserService(identity);
-        // this.phoneService = new PhoneService(identity);
-        this.userService = new UserServiceMock();
-        this.phoneService = new PhoneServiceMock();
+        this.userIndexClient = new UserIndexClientMock();
+
+        // todo - we need to know when this is going to get created
+        // as soon as we have the canister id we need to create this service
+        // which is annoying because it means that we then need to guard all
+        // references to that service in case it has *not* been created
+        // this._userClient = new UserClientMock();
     }
 
-    getCurrentUser(): Promise<GetCurrentUserResponse> {
-        return this.userService.getCurrentUser();
+    private get userClient(): IUserClient {
+        if (this._userClient) {
+            return this._userClient;
+        }
+        throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    registerPhoneNumber(countryCode: number, phoneNumber: number): Promise<RegisterResponse> {
-        return this.phoneService.register(countryCode, phoneNumber);
+    getChats(): Promise<ChatSummary[]> {
+        return this.userClient.getChats();
     }
 
-    claimPhoneNumber(
-        code: number,
-        countryCode: number,
-        phoneNumber: number
-    ): Promise<ClaimResponse> {
-        return this.phoneService.claim(code, countryCode, phoneNumber);
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        return this.userIndexClient.getCurrentUser();
     }
 
-    updateUsername(userPrincipal: Principal, username: string): Promise<UpdateUsernameResponse> {
-        return this.userService.updateUsername(userPrincipal, username);
+    upgradeUser(): Promise<void> {
+        return this.userIndexClient.upgradeUser();
+    }
+
+    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
+        return this.userIndexClient.submitPhoneNumber(phoneNumber);
+    }
+
+    resendRegistrationCode(): Promise<ResendCodeResponse> {
+        return this.userIndexClient.resendRegistrationCode();
+    }
+
+    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
+        return this.userIndexClient.confirmPhoneNumber(code);
+    }
+
+    setUsername(username: string): Promise<SetUsernameResponse> {
+        return this.userIndexClient.setUsername(username);
+    }
+
+    createCanister(): Promise<void> {
+        return this.userIndexClient.createCanister();
     }
 }

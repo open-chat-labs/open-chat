@@ -5,6 +5,9 @@
     "errorBlurb": "Sorry, we encountered an unexpected error. Please try reloading OpenChat.",
     "sessionExpired": "Session Expired",
     "sessionExpiredBlurb": "Please sign in again",
+    "performingUpgrade": "Performing Upgrade",
+    "pleaseWait": "Please wait for a few seconds",
+    "change": "change",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",
@@ -14,6 +17,7 @@
     "register": {
         "tellUsWho": "Tell us who you are ...",
         "registerAs": "To register as a user",
+        "enterCodeSentTo": "code sent to ",
         "enterPhone": "please enter your phone number below",
         "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
@@ -30,11 +34,16 @@
         "enjoy": "Enjoy chatting on The Internet Computer",
         "phoneNumberTaken": "Phone number is already taken",
         "tooManyAttempts": "Too many registration attempts",
+        "confirmAlreadyClaimed": "Code has already been claimed",
+        "resendAlreadyClaimed": "Code has already been claimed",
         "claimInvalid": "The code you entered is invalid",
         "usernameTaken": "That username is already taken",
         "userNotFound": "User not found",
         "usernameTooShort": "That username is too short",
         "usernameTooLong": "That username is too long",
-        "claimExpired": "The code you entered has expired"
+        "claimExpired": "The code you entered has expired",
+        "phoneAlreadyRegisterd": "The phone number is already registered",
+        "phoneAlreadyRegisterdByAnother": "The phone number is already registered by someone else",
+        "phoneInvalid": "The phone number is invalid"
     }
 }

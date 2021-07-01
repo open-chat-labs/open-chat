@@ -1,16 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { HttpAgentRequest, Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
-import { interpret, MachineOptions } from "xstate";
-import type { Event, StateValue, State } from "xstate";
+import type { MachineOptions } from "xstate";
 import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
-import type { User } from "../domain/user";
+import type { CurrentUserResponse, User } from "../domain/user";
+import { testSequence, testTransition } from "./machine.spec.utils";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
-const fakeUser: User = { username: "julian_jelfs" };
+const fakeUser: CurrentUserResponse = {
+    kind: "created_user",
+    userId: {} as Principal,
+    username: "julian_jelfs",
+    accountBalance: BigInt(10000),
+    upgradeRequired: false,
+};
 
 const fakeIdentity: Identity = {
     getPrincipal: () => ({} as Principal),
@@ -24,7 +28,12 @@ function testConfig(): Config {
             isAnonymous: (_ctx, _) => false,
             notAnonymous: (_ctx, _) => true,
             userIsRegistered: (_ctx, _) => true,
-            userIsNotRegistered: (_ctx, _) => true,
+            userIsNotRegistered: (_ctx, _) => false,
+            registrationSucceeded: (_ctx, _) => true,
+            registrationFailed: (_ctx, _) => false,
+            isAuthError: (_ctx, _) => false,
+            userRequiresUpgrade: (_, _ev) => false,
+            userUpgradeInProgress: (_, _ev) => false,
         },
 
         // we definitely need the services to be separate so that we can easily mock them
@@ -34,6 +43,9 @@ function testConfig(): Config {
             logout: jest.fn().mockResolvedValue(undefined),
             getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
             startSession: jest.fn().mockResolvedValue(undefined),
+            upgradeUser: jest.fn().mockResolvedValue(undefined),
+            loggedInMachine: jest.fn().mockResolvedValue(undefined),
+            registerMachine: jest.fn().mockResolvedValue(undefined),
         },
     };
 }
@@ -54,30 +66,6 @@ function updateConfig(partialGuards: any = {}, partialServices: any = {}) {
 }
 
 describe("identity machine end to end", () => {
-    function testSequence(
-        sequence: string[],
-        done: any,
-        machine: typeof identityMachine,
-        assert: (state: State<IdentityContext, IdentityEvents, any, any>) => void
-    ) {
-        const service = interpret(machine).onTransition((state) => {
-            const nextState = sequence.shift();
-            expect(state.matches(nextState)).toBe(true);
-            if (sequence.length === 0) {
-                try {
-                    assert(state);
-                    done();
-                } catch (err) {
-                    done(err);
-                } finally {
-                    service.stop();
-                }
-            }
-        });
-
-        service.start();
-    }
-
     afterEach(() => {
         jest.resetAllMocks();
     });
@@ -119,7 +107,7 @@ describe("identity machine end to end", () => {
             }
         );
         testSequence(
-            ["requesting_identity", "failure"],
+            ["requesting_identity", "unexpected_error"],
             done,
             identityMachine.withConfig(config),
             (state) => {
@@ -148,23 +136,19 @@ describe("identity machine end to end", () => {
 });
 
 describe("identity machine transitions", () => {
-    function testTransition(
-        from: StateValue,
-        ev: Event<IdentityEvents>,
-        to: StateValue,
-        config: Config = testConfig()
-    ) {
-        const machine = identityMachine.withConfig(config);
-        const nextState = machine.transition(from, ev);
-        expect(nextState.value).toBe(to);
-    }
-
     test("when requesting identity succeeds", () => {
-        testTransition("requesting_identity", "done.invoke.getIdentity", "loading_user");
+        testTransition(
+            identityMachine,
+            "requesting_identity",
+            "done.invoke.getIdentity",
+            "loading_user",
+            testConfig()
+        );
     });
 
     test("when requesting identity returns anonymous identity", () => {
         testTransition(
+            identityMachine,
             "requesting_identity",
             "done.invoke.getIdentity",
             "login",
@@ -175,15 +159,22 @@ describe("identity machine transitions", () => {
     });
 
     test("firing login intiates logging in", () => {
-        testTransition("login", "LOGIN", "logging_in");
+        testTransition(identityMachine, "login", "LOGIN", "logging_in", testConfig());
     });
 
     test("logging in successfully goes to loading_user", () => {
-        testTransition("logging_in", "done.invoke.login", "loading_user");
+        testTransition(
+            identityMachine,
+            "logging_in",
+            "done.invoke.login",
+            "loading_user",
+            testConfig()
+        );
     });
 
     test("logging in with anonymous user returns to login", () => {
         testTransition(
+            identityMachine,
             "logging_in",
             "done.invoke.login",
             "login",
@@ -194,34 +185,124 @@ describe("identity machine transitions", () => {
     });
 
     test("when login fails", () => {
-        testTransition("logging_in", "error.platform.login", "failure");
+        testTransition(
+            identityMachine,
+            "logging_in",
+            "error.platform.login",
+            "unexpected_error",
+            testConfig()
+        );
     });
 
     test("when requesting identity fails", () => {
-        testTransition("requesting_identity", "error.platform.getIdentity", "failure");
+        testTransition(
+            identityMachine,
+            "requesting_identity",
+            "error.platform.getIdentity",
+            "unexpected_error",
+            testConfig()
+        );
     });
 
-    test("can retry from the failure state", () => {
-        testTransition("failure", "REQUEST_IDENTITY", "requesting_identity");
+    test("can retry from the unexpected_error state", () => {
+        testTransition(
+            identityMachine,
+            "unexpected_error",
+            "REQUEST_IDENTITY",
+            "requesting_identity",
+            testConfig()
+        );
     });
 
     test("can acknowledge session expiry", () => {
-        testTransition("expired", "ACKNOWLEDGE_EXPIRY", "logging_in");
+        testTransition(
+            identityMachine,
+            "expired",
+            "ACKNOWLEDGE_EXPIRY",
+            "logging_in",
+            testConfig()
+        );
     });
 
     test("can initiate logout", () => {
-        testTransition("logged_in", "LOGOUT", "logging_out");
+        testTransition(identityMachine, "logged_in", "LOGOUT", "logging_out", testConfig());
     });
 
     test("when logout succeeds", () => {
-        testTransition("logging_out", "done.invoke.logout", "login");
+        testTransition(identityMachine, "logging_out", "done.invoke.logout", "login", testConfig());
     });
 
     test("when logout fails", () => {
-        testTransition("logging_out", "error.platform.logout", "failure");
+        testTransition(
+            identityMachine,
+            "logging_out",
+            "error.platform.logout",
+            "unexpected_error",
+            testConfig()
+        );
     });
 
     test("when logging out from register user", () => {
-        testTransition("register_user", "LOGOUT", "logging_out");
+        testTransition(identityMachine, "register_user", "LOGOUT", "logging_out", testConfig());
+    });
+
+    test("auth errors send us to expired state", () => {
+        testTransition(
+            identityMachine,
+            "register_user",
+            "error.platform.registerMachine",
+            "expired",
+            updateConfig({
+                isAuthError: () => true,
+            })
+        );
+    });
+
+    test("when register user succeeds", () => {
+        testTransition(
+            identityMachine,
+            "register_user",
+            "done.invoke.registerMachine",
+            "loading_user",
+            testConfig()
+        );
+    });
+
+    test("when user requires upgrade", () => {
+        testTransition(
+            identityMachine,
+            "loading_user",
+            {
+                type: "done.invoke.getUser",
+                data: {
+                    kind: "created_user",
+                    userId: {} as Principal,
+                    username: "julian_jelfs",
+                    accountBalance: BigInt(10000),
+                    upgradeRequired: true,
+                },
+            },
+            "upgrade_user",
+            updateConfig({
+                userRequiresUpgrade: () => true,
+            })
+        );
+    });
+
+    test("when user is upgrading", () => {
+        testTransition(
+            identityMachine,
+            "loading_user",
+            {
+                type: "done.invoke.getUser",
+                data: {
+                    kind: "upgrade_in_progress",
+                },
+            },
+            "upgrading_user",
+            updateConfig({
+                userUpgradeInProgress: () => true,
+            })
+        );
     });
 });

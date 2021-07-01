@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../services/user";
-
-    // import { UserStatus } from "../services/user";
+    import { AvatarSize, UserStatus } from "../domain/user";
 
     export let url = "";
     export let status: UserStatus = UserStatus.Offline;
@@ -16,8 +14,7 @@
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
-    style="background-image: url({url});"
-/>
+    style="background-image: url({url});" />
 
 <style type="text/scss">
     .avatar {

@@ -16,11 +16,15 @@
         machine.send({ type: "REGISTER_USER", ...ev.detail });
     }
 
-    function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: number }>) {
-        machine.send({ type: "REQUEST_REGISTRATION_CODE", ...ev.detail });
+    function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: string }>) {
+        machine.send({ type: "REQUEST_REGISTRATION_CODE", phoneNumber: ev.detail });
     }
 
-    function submitCode(ev: CustomEvent<{ code: number }>) {
+    function changePhoneNumber() {
+        machine.send({ type: "CHANGE_PHONE_NUMBER" });
+    }
+
+    function submitCode(ev: CustomEvent<{ code: string }>) {
         machine.send({ type: "SUBMIT_REGISTRATION_CODE", ...ev.detail });
     }
 
@@ -46,8 +50,10 @@
             case "registering_user_succeeded":
                 uiState = "awaitingCompletion";
                 break;
+            case "resending_code":
             case "checking_registration_code":
             case "checking_phone_number":
+            case "awaiting_canister":
             case "registering_user":
                 uiState = "verifying";
                 break;
@@ -61,7 +67,9 @@
     error={$machine.context.error?.message}
     state={uiState}
     username={$machine.context.username}
+    phoneNumber={$machine.context.phoneNumber}
     on:submitPhoneNumber={submitPhoneNumber}
+    on:changePhoneNumber={changePhoneNumber}
     on:submitUsername={submitUsername}
     on:resendCode={resendCode}
     on:complete={complete}

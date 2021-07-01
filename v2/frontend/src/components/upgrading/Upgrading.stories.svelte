@@ -1,21 +1,19 @@
 <script>
     import { Meta, Template, Story } from "@storybook/addon-svelte-csf";
-    import UnexpectedError from "./UnexpectedError.svelte";
+    import Upgrading from "./Upgrading.svelte";
     import StoryTheme from "../StoryTheme.svelte";
 </script>
 
 <Meta
-    title="UnexpectedError"
-    component={UnexpectedError}
+    title="Upgrading"
+    component={Upgrading}
     argTypes={{
-        error: {
-            defaultValue: { message: "Oh no - something terrible has happened" },
-        },
+        login: { action: "login" },
     }} />
 
 <Template let:args>
     <StoryTheme>
-        <UnexpectedError {...args} />
+        <Upgrading {...args} on:login={args.login} />
     </StoryTheme>
 </Template>
 
