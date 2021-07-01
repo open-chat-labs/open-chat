@@ -1,20 +1,11 @@
 use candid::CandidType;
-use crate::canister::RUNTIME_STATE;
 use crate::model::data::CONFIRMATION_CODE_EXPIRY_MILLIS;
 use crate::model::user::{CanisterCreationStatus, ConfirmedUser, User};
 use crate::model::runtime_state::RuntimeState;
-use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 
-#[update]
-fn confirm_phone_number(request: Request) -> Response {
-    RUNTIME_STATE.with(|state| {
-        confirm_phone_number_impl(request, state.borrow_mut().as_mut().unwrap())
-    })
-}
-
-fn confirm_phone_number_impl(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 

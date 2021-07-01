@@ -1,23 +1,14 @@
 use candid::CandidType;
-use crate::canister::RUNTIME_STATE;
 use crate::model::data::{CONFIRMATION_CODE_EXPIRY_MILLIS, append_sms_to_queue};
 use crate::model::user::{UnconfirmedUser, User};
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user_map::AddUserResult;
-use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 use shared::time::Milliseconds;
 use std::str::FromStr;
 
-#[update]
-fn submit_phone_number(request: Request) -> Response {
-    RUNTIME_STATE.with(|state| {
-        submit_phone_number_impl(request, state.borrow_mut().as_mut().unwrap())
-    })
-}
-
-fn submit_phone_number_impl(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 

@@ -1,7 +1,6 @@
+mod api;
 mod env;
-mod install;
-mod queries;
-mod updates;
+mod init;
 
 use crate::model::runtime_state::RuntimeState;
 use std::cell::RefCell;

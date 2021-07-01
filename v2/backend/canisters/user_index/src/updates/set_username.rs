@@ -1,22 +1,13 @@
 use candid::CandidType;
-use crate::canister::RUNTIME_STATE;
 use crate::model::user::User;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user_map::UpdateUserResult;
-use ic_cdk_macros::update;
 use serde::Deserialize;
 
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
 
-#[update]
-fn set_username(request: Request) -> Response {
-    RUNTIME_STATE.with(|state| {
-        set_username_impl(request, state.borrow_mut().as_mut().unwrap())
-    })
-}
-
-fn set_username_impl(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
     let username = request.username;
     
     if username.len() > MAX_USERNAME_LENGTH as usize {

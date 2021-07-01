@@ -1,20 +1,11 @@
 use candid::{CandidType};
-use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, User};
-use ic_cdk_macros::query;
 use phonenumber::{Mode};
 use serde::Deserialize;
 use shared::types::UserId;
 
-#[query]
-fn current_user(_request: Request) -> Response {
-    RUNTIME_STATE.with(|state| {
-        current_user_impl(state.borrow().as_ref().unwrap())
-    })
-}
-
-fn current_user_impl(runtime_state: &RuntimeState) -> Response {
+pub fn query(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
