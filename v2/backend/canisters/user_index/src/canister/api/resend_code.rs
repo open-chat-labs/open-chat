@@ -1,10 +1,10 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::resend_code::Result;
+use crate::data::append_sms_to_queue;
+use crate::model::user::User;
 use crate::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use serde::Deserialize;
-use shared::time::Milliseconds;
 
 #[update]
 pub async fn resend_code(_: Request) -> Response {
@@ -14,20 +14,21 @@ pub async fn resend_code(_: Request) -> Response {
 }
 
 fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
-    let resend_code_request = crate::data::resend_code::Request {
-        caller: runtime_state.env.caller(),
-        now: runtime_state.env.now()
-    };
+    let caller = runtime_state.env.caller();
 
-    match runtime_state.data.resend_code(resend_code_request) {
-        Result::Success => Response::Success,
-        Result::AlreadyClaimed => Response::AlreadyClaimed,
-        Result::CodeNotExpiredYet(milliseconds) => Response::CodeNotExpiredYet(
-            CodeNotExpiredYetResult {
-                time_until_resend_code_permitted: milliseconds
-            }
-        ),
-        Result::NotFound => Response::NotFound
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
+        match user {
+            User::Unconfirmed(u) => {
+                append_sms_to_queue(
+                    &mut runtime_state.data.sms_queue,
+                    u.phone_number.clone(),
+                    u.confirmation_code.to_string());
+                Response::Success
+            },
+            _ => Response::AlreadyClaimed
+        }
+    } else {
+        Response::UserNotFound
     }
 }
 
@@ -39,11 +40,5 @@ pub struct Request {
 pub enum Response {
     Success,
     AlreadyClaimed,
-    CodeNotExpiredYet(CodeNotExpiredYetResult),
-    NotFound,
-}
-
-#[derive(CandidType)]
-pub struct CodeNotExpiredYetResult {
-    time_until_resend_code_permitted: Milliseconds
+    UserNotFound,
 }

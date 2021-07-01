@@ -3,15 +3,14 @@ export default ({ IDL }) => {
     'confirmation_code' : IDL.Text,
   });
   const ConfirmPhoneNumberResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'ConfirmationCodeExpired' : IDL.Null,
     'ConfirmationCodeIncorrect' : IDL.Null,
+    'UserNotFound' : IDL.Null,
   });
   const CreateCanisterRequest = IDL.Record({});
   const CurrentUserRequest = IDL.Record({});
-  const Milliseconds = IDL.Nat64;
   const PhoneNumber = IDL.Record({
     'country_code' : IDL.Nat16,
     'number' : IDL.Text,
@@ -20,16 +19,20 @@ export default ({ IDL }) => {
   const UserId = CanisterId;
   const CurrentUserResponse = IDL.Variant({
     'UpgradeInProgress' : IDL.Null,
-    'Unconfirmed' : IDL.Record({
-      'time_until_resend_code_permitted' : Milliseconds,
-      'phone_number' : PhoneNumber,
-    }),
+    'Unconfirmed' : IDL.Record({ 'phone_number' : PhoneNumber }),
     'Confirmed' : IDL.Record({
-      'canister_creation_in_progress' : IDL.Bool,
       'username' : IDL.Text,
+      'canister_creation_status' : IDL.Variant({
+        'InProgress' : IDL.Null,
+        'Pending' : IDL.Null,
+      }),
     }),
     'ConfirmedPendingUsername' : IDL.Record({
-      'canister_creation_in_progress' : IDL.Bool,
+      'canister_creation_status' : IDL.Variant({
+        'InProgress' : IDL.Null,
+        'Created' : IDL.Null,
+        'Pending' : IDL.Null,
+      }),
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,
@@ -56,17 +59,15 @@ export default ({ IDL }) => {
   const BalanceNotification = IDL.Record({ 'balance' : IDL.Nat });
   const ResendCodeRequest = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
-    'CodeNotExpiredYet' : IDL.Record({
-      'time_until_resend_code_permitted' : Milliseconds,
-    }),
+    'UserNotFound' : IDL.Null,
   });
   const SearchRequest = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const Milliseconds = IDL.Nat64;
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
     'last_online' : Milliseconds,
@@ -77,7 +78,6 @@ export default ({ IDL }) => {
   });
   const SetUsernameRequest = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
     'UsernameTaken' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
     'UsernameInvalid' : IDL.Null,
@@ -90,9 +90,6 @@ export default ({ IDL }) => {
     'AlreadyRegistered' : IDL.Null,
     'Success' : IDL.Null,
     'AlreadyRegisteredByOther' : IDL.Null,
-    'AlreadyRegisteredButUnclaimed' : IDL.Record({
-      'time_until_resend_code_permitted' : IDL.Opt(Milliseconds),
-    }),
     'InvalidPhoneNumber' : IDL.Null,
   });
   const TransferCyclesRequest = IDL.Record({

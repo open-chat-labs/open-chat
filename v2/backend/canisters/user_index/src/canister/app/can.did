@@ -1,4 +1,4 @@
-// Maintains a registery of users and manages the user canisters
+// Maintains a registry of users and manages the user canisters
 
 type Milliseconds = nat64;
 type TimestampMillis = nat64;
@@ -21,9 +21,6 @@ type SubmitPhoneNumberResponse =
         Success;
         AlreadyRegistered;
         AlreadyRegisteredByOther;
-        AlreadyRegisteredButUnclaimed: record {
-            time_until_resend_code_permitted: opt Milliseconds
-        };
         InvalidPhoneNumber;
     };
 
@@ -38,7 +35,7 @@ type ConfirmPhoneNumberResponse =
         ConfirmationCodeIncorrect;
         ConfirmationCodeExpired;
         AlreadyClaimed;
-        NotFound;
+        UserNotFound;
     };
 
 type ResendCodeRequest = 
@@ -49,10 +46,7 @@ type ResendCodeResponse =
     variant {
         Success;
         AlreadyClaimed;
-        CodeNotExpiredYet: record {
-            time_until_resend_code_permitted: Milliseconds
-        };
-        NotFound;
+        UserNotFound;
     };
 
 
@@ -68,7 +62,6 @@ type SetUsernameRequest =
 type SetUsernameResponse =
     variant {
         Success;
-        SuccessNoChange;
         UsernameTaken;
         UserNotFound;
         UsernameInvalid;
@@ -121,14 +114,20 @@ type CurrentUserResponse =
         UserNotFound;
         Unconfirmed: record {
             phone_number: PhoneNumber;
-            time_until_resend_code_permitted: Milliseconds;
         };
         ConfirmedPendingUsername: record {
-            canister_creation_in_progress: bool;
+            canister_creation_status: variant {
+                Pending;
+                InProgress;
+                Created;
+            };
         };
         Confirmed: record {
             username: text;
-            canister_creation_in_progress: bool;
+            canister_creation_status: variant {
+                Pending;
+                InProgress;
+            };
         };
         Created: record {
             user_id: UserId;

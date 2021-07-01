@@ -1,7 +1,8 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
-use crate::data::set_username::Result;
+use crate::model::user::User;
 use crate::runtime_state::RuntimeState;
+use crate::user_map::UpdateUserResult;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 
@@ -26,17 +27,21 @@ fn set_username_impl(request: Request, runtime_state: &mut RuntimeState) -> Resp
         return Response::UsernameTooShort(MIN_USERNAME_LENGTH);
     }
 
-    let set_username_request = crate::data::set_username::Request {
-        caller: runtime_state.env.caller(),
-        username,
-        now: runtime_state.env.now()                
-    };
-
-    match runtime_state.data.set_username(set_username_request) {
-        Result::Success => Response::Success,
-        Result::UserUnconfirmed => Response::UserUnconfirmed,
-        Result::UsernameTaken => Response::UsernameTaken,
-        Result::UserNotFound => Response::UserNotFound,
+    if let Some(user) = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()) {
+        let mut user = user.clone();
+        if matches!(user, User::Unconfirmed(_)) {
+            Response::UserUnconfirmed
+        } else {
+            user.set_username(username);
+            match runtime_state.data.users.update(user) {
+                UpdateUserResult::Success => Response::Success,
+                UpdateUserResult::PhoneNumberTaken => panic!("PhoneNumberTaken returned when updating username"),
+                UpdateUserResult::UsernameTaken => Response::UsernameTaken,
+                UpdateUserResult::UserNotFound => Response::UserNotFound,
+            }
+        }
+    } else {
+        Response::UserNotFound
     }
 }
 
@@ -45,6 +50,7 @@ pub struct Request {
     username: String
 }
 
+#[allow(dead_code)]
 #[derive(CandidType)]
 pub enum Response {
     Success,
