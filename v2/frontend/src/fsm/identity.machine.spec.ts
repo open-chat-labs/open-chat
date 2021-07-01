@@ -3,15 +3,17 @@ import type { Principal } from "@dfinity/principal";
 import type { MachineOptions } from "xstate";
 import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
-import type { User } from "../domain/user";
+import type { CurrentUserResponse, User } from "../domain/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
-const fakeUser: User = {
+const fakeUser: CurrentUserResponse = {
+    kind: "created_user",
     userId: {} as Principal,
     username: "julian_jelfs",
-    accountBalance: BigInt(0),
+    accountBalance: BigInt(10000),
+    upgradeRequired: false,
 };
 
 const fakeIdentity: Identity = {
@@ -26,7 +28,7 @@ function testConfig(): Config {
             isAnonymous: (_ctx, _) => false,
             notAnonymous: (_ctx, _) => true,
             userIsRegistered: (_ctx, _) => true,
-            userIsNotRegistered: (_ctx, _) => true,
+            userIsNotRegistered: (_ctx, _) => false,
             registrationSucceeded: (_ctx, _) => true,
             registrationFailed: (_ctx, _) => false,
             isAuthError: (_ctx, _) => false,
@@ -42,6 +44,8 @@ function testConfig(): Config {
             getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
             startSession: jest.fn().mockResolvedValue(undefined),
             upgradeUser: jest.fn().mockResolvedValue(undefined),
+            loggedInMachine: jest.fn().mockResolvedValue(undefined),
+            registerMachine: jest.fn().mockResolvedValue(undefined),
         },
     };
 }
@@ -268,10 +272,19 @@ describe("identity machine transitions", () => {
         testTransition(
             identityMachine,
             "loading_user",
-            "done.invoke.getUser",
+            {
+                type: "done.invoke.getUser",
+                data: {
+                    kind: "created_user",
+                    userId: {} as Principal,
+                    username: "julian_jelfs",
+                    accountBalance: BigInt(10000),
+                    upgradeRequired: true,
+                },
+            },
             "upgrade_user",
             updateConfig({
-                userRequiredUpgrade: () => true,
+                userRequiresUpgrade: () => true,
             })
         );
     });
@@ -280,7 +293,12 @@ describe("identity machine transitions", () => {
         testTransition(
             identityMachine,
             "loading_user",
-            "done.invoke.getUser",
+            {
+                type: "done.invoke.getUser",
+                data: {
+                    kind: "upgrade_in_progress",
+                },
+            },
             "upgrading_user",
             updateConfig({
                 userUpgradeInProgress: () => true,

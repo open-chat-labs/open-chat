@@ -101,6 +101,8 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
         upgradeUser: ({ serviceContainer }) => serviceContainer!.upgradeUser(),
+        loggedInMachine,
+        registerMachine,
     },
     actions: {
         logError: (ctx, _) => {
@@ -212,7 +214,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             },
             invoke: {
                 id: "registerMachine",
-                src: registerMachine,
+                src: "registerMachine",
                 data: (ctx, ev) => {
                     let phoneNumber = undefined;
                     if (ev.type === "done.invoke.getUser" && ev.data.kind === "unconfirmed_user") {
@@ -273,7 +275,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             invoke: [
                 {
                     id: "loggedInMachine",
-                    src: loggedInMachine,
+                    src: "loggedInMachine",
                     data: (ctx, _ev) => ({
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
