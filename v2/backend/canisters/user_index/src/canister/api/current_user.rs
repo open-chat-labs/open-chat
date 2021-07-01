@@ -1,7 +1,7 @@
 use candid::{CandidType};
 use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
-use crate::model::user::User;
+use crate::model::user::{CanisterCreationStatus, User};
 use ic_cdk_macros::query;
 use phonenumber::{Mode};
 use serde::Deserialize;
@@ -30,11 +30,11 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             User::Confirmed(u) => {
                 if u.username.is_none() {
                     Response::ConfirmedPendingUsername(ConfirmedPendingUsernameResult {
-                        canister_creation_status: CanisterCreationStatus::Pending
+                        canister_creation_status: u.canister_creation_status
                     })
                 } else {
                     Response::Confirmed(ConfirmedResult {
-                        canister_creation_status: CanisterCreationStatus::Pending,
+                        canister_creation_status: u.canister_creation_status,
                         username: u.username.as_ref().unwrap().clone()
                     })
                 }
@@ -93,11 +93,4 @@ pub struct CreatedResult {
     username: String,
     account_balance: u128,
     upgrade_required: bool,
-}
-
-#[derive(CandidType)]
-pub enum CanisterCreationStatus {
-    Pending,
-    InProgress,
-    Created,
 }

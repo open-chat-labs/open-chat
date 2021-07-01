@@ -1,7 +1,7 @@
 use candid::CandidType;
 use crate::canister::RUNTIME_STATE;
 use crate::model::data::CONFIRMATION_CODE_EXPIRY_MILLIS;
-use crate::model::user::{ConfirmedUser, User};
+use crate::model::user::{CanisterCreationStatus, ConfirmedUser, User};
 use crate::model::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
@@ -43,7 +43,8 @@ fn confirm_phone_number_impl(request: Request, runtime_state: &mut RuntimeState)
         phone_number,
         user_id: None,
         username: None,
-        date_confirmed: now
+        date_confirmed: now,
+        canister_creation_status: CanisterCreationStatus::Pending
     };
     runtime_state.data.users.update(User::Confirmed(user));
 
