@@ -3,11 +3,11 @@ export default ({ IDL }) => {
     'confirmation_code' : IDL.Text,
   });
   const ConfirmPhoneNumberResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'ConfirmationCodeExpired' : IDL.Null,
     'ConfirmationCodeIncorrect' : IDL.Null,
+    'UserNotFound' : IDL.Null,
   });
   const CreateCanisterRequest = IDL.Record({});
   const CurrentUserRequest = IDL.Record({});
@@ -63,12 +63,12 @@ export default ({ IDL }) => {
   const BalanceNotification = IDL.Record({ 'balance' : IDL.Nat });
   const ResendCodeRequest = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'CodeNotExpiredYet' : IDL.Record({
       'time_until_resend_code_permitted' : Milliseconds,
     }),
+    'UserNotFound' : IDL.Null,
   });
   const SearchRequest = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -84,7 +84,6 @@ export default ({ IDL }) => {
   });
   const SetUsernameRequest = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
     'UsernameTaken' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
     'UsernameInvalid' : IDL.Null,

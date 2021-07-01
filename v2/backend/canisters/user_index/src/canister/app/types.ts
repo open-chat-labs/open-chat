@@ -4,11 +4,11 @@ export interface BalanceNotification {
 };
 export type CanisterId = Principal;
 export interface ConfirmPhoneNumberRequest { 'confirmation_code' : string };
-export type ConfirmPhoneNumberResponse = { 'NotFound' : null } |
-  { 'AlreadyClaimed' : null } |
+export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
   { 'ConfirmationCodeExpired' : null } |
-  { 'ConfirmationCodeIncorrect' : null };
+  { 'ConfirmationCodeIncorrect' : null } |
+  { 'UserNotFound' : null };
 export type CreateCanisterRequest = {};
 export type CurrentUserRequest = {};
 export type CurrentUserResponse = { 'UpgradeInProgress' : null } |
@@ -57,20 +57,19 @@ export type MetricsRequest = {};
 export type Milliseconds = bigint;
 export interface PhoneNumber { 'country_code' : number, 'number' : string };
 export type ResendCodeRequest = {};
-export type ResendCodeResponse = { 'NotFound' : null } |
-  { 'AlreadyClaimed' : null } |
+export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
   {
     'CodeNotExpiredYet' : { 'time_until_resend_code_permitted' : Milliseconds }
-  };
+  } |
+  { 'UserNotFound' : null };
 export interface SearchRequest {
   'max_results' : number,
   'search_term' : string,
 };
 export type SearchResponse = { 'Success' : { 'users' : Array<UserSummary> } };
 export interface SetUsernameRequest { 'username' : string };
-export type SetUsernameResponse = { 'SuccessNoChange' : null } |
-  { 'UsernameTaken' : null } |
+export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
