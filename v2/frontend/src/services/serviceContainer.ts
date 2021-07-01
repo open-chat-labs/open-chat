@@ -33,7 +33,7 @@ export class ServiceContainer {
         if (this._userClient) {
             return this._userClient;
         }
-        throw new Error("Attempted to user the user client before it has been initialised");
+        throw new Error("Attempted to use the user client before it has been initialised");
     }
 
     getChats(): Promise<ChatSummary[]> {

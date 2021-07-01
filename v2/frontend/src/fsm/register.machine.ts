@@ -65,10 +65,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             return ctx.currentUser?.kind === "confirmed_pending_username";
         },
         isAwaitingCanister: (ctx, _) => {
-            return (
-                ctx.currentUser?.kind === "confirmed_user" &&
-                ctx.currentUser.canisterCreationStatus === "in_progress"
-            );
+            return ctx.currentUser?.kind === "confirmed_user";
         },
         phoneAlreadyRegistered: (_, ev) => {
             return (

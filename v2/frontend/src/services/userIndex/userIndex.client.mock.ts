@@ -93,11 +93,20 @@ export class UserIndexClientMock implements IUserIndexClient {
         });
     }
 
+    confirmedUserPendingCanister(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "confirmed_user",
+            canisterCreationStatus: "pending",
+            username: "",
+        });
+    }
+
     getCurrentUser(): Promise<CurrentUserResponse> {
         // return this.confirmedPendingUsernameScenario();
-        return this.confirmedUserScenario();
-        return this.uncomfirmedUserScenario();
-        return this.unknownUserScenario();
+        // return this.confirmedUserScenario();
+        // return this.uncomfirmedUserScenario();
+        // return this.confirmedUserPendingCanister();
+        // return this.unknownUserScenario();
         return this.requiredUpgradeScenario();
     }
 
