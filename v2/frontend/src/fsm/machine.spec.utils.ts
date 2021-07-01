@@ -36,7 +36,7 @@ export function testTransition<TContext, TEvent extends EventObject>(
     ev: Event<TEvent>,
     to: StateValue,
     config: Config<TContext, TEvent> = {}
-): void {
+) {
     const configured = machine.withConfig(config);
     const nextState = configured.transition(from, ev);
     expect(nextState.value).toBe(to);
