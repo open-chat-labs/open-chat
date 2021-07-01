@@ -1,16 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-    assign,
-    createMachine,
-    DoneInvokeEvent,
-    MachineConfig,
-    MachineOptions,
-    sendParent,
-} from "xstate";
+import { assign, createMachine, MachineConfig, MachineOptions, sendParent } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { Principal } from "@dfinity/principal";
 import type { User } from "../domain/user";
+import type { ChatSummary } from "../domain/chat";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -25,12 +18,14 @@ export interface LoggedInContext {
     error?: Error;
 }
 
-export type LoggedInEvents = { type: "WHATEVS" };
+export type LoggedInEvents =
+    | { type: "done.invoke.getChats"; data: ChatSummary[] }
+    | { type: "error.platform.getChats"; data: Error };
 
 const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
     guards: {},
     services: {
-        getChats: (ctx, ev) => ctx.serviceContainer!.getChats(),
+        getChats: (ctx, _) => ctx.serviceContainer!.getChats(),
     },
 };
 
@@ -50,7 +45,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                     {
                         target: "chats_loaded",
                         actions: assign({
-                            chats: (_, ev) => [],
+                            chats: (_, _ev) => [],
                             error: (_, _ev) => undefined,
                         }),
                     },

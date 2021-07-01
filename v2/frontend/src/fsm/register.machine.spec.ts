@@ -1,5 +1,4 @@
 import { registerMachine } from "./register.machine";
-import type { Principal } from "@dfinity/principal";
 import { testTransition } from "./machine.spec.utils";
 
 describe("register machine transitions", () => {

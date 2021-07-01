@@ -7,11 +7,9 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
 } from "../domain/user";
-// import { UserService } from "./user/user.service";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import { UserClientMock } from "./user/user.client.mock";
 import type { ChatSummary } from "../domain/chat";
 
 export class ServiceContainer {

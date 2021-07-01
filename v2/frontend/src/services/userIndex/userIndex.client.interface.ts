@@ -1,4 +1,3 @@
-import type { Principal } from "@dfinity/principal";
 import type {
     SetUsernameResponse,
     CurrentUserResponse,

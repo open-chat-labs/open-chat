@@ -10,7 +10,7 @@ import type {
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export class UserIndexClientMock implements IUserIndexClient {
-    private count: number = 0;
+    private count = 0;
 
     createCanister(): Promise<void> {
         return new Promise((resolve) => {

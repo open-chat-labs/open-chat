@@ -1,5 +1,4 @@
 import type { Identity } from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/src/canister/app/idl";
 import type {
     ConfirmPhoneNumberResponse,

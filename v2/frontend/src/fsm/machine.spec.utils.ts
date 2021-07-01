@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     Event,
     EventObject,
@@ -14,7 +16,7 @@ export function updateConfig<TContext, TEvents extends EventObject>(
     defaultConfig: Config<TContext, TEvents>,
     partialGuards: any = {},
     partialServices: any = {}
-) {
+): Config<TContext, TEvents> {
     return {
         ...defaultConfig,
         guards: {
@@ -34,7 +36,7 @@ export function testTransition<TContext, TEvent extends EventObject>(
     ev: Event<TEvent>,
     to: StateValue,
     config: Config<TContext, TEvent> = {}
-) {
+): void {
     const configured = machine.withConfig(config);
     const nextState = configured.transition(from, ev);
     expect(nextState.value).toBe(to);
@@ -45,7 +47,7 @@ export function testSequence<TContext, TEvent extends EventObject>(
     done: any,
     machine: StateMachine<TContext, any, TEvent>,
     assert: (state: State<TContext, TEvent, any, any>) => void
-) {
+): void {
     const service = interpret(machine).onTransition((state) => {
         const nextState = sequence.shift();
         expect(state.matches(nextState)).toBe(true);
