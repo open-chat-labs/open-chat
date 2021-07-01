@@ -17,7 +17,11 @@
     }
 
     function submitPhoneNumber(ev: CustomEvent<{ countryCode: number; number: string }>) {
-        machine.send({ type: "REQUEST_REGISTRATION_CODE", ...ev.detail });
+        machine.send({ type: "REQUEST_REGISTRATION_CODE", phoneNumber: ev.detail });
+    }
+
+    function changePhoneNumber() {
+        machine.send({ type: "CHANGE_PHONE_NUMBER" });
     }
 
     function submitCode(ev: CustomEvent<{ code: string }>) {
@@ -61,7 +65,9 @@
     error={$machine.context.error?.message}
     state={uiState}
     username={$machine.context.username}
+    phoneNumber={$machine.context.phoneNumber}
     on:submitPhoneNumber={submitPhoneNumber}
+    on:changePhoneNumber={changePhoneNumber}
     on:submitUsername={submitUsername}
     on:resendCode={resendCode}
     on:complete={complete}

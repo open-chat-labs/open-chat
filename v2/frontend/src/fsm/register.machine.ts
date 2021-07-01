@@ -15,6 +15,7 @@ import type {
     SubmitPhoneNumberResponse,
     SetUsernameResponse,
     CurrentUserResponse,
+    PhoneNumber,
 } from "../domain/user";
 
 if (typeof window !== "undefined") {
@@ -27,16 +28,17 @@ export interface RegisterContext {
     currentUser?: CurrentUserResponse;
     serviceContainer?: ServiceContainer;
     error?: Error;
-    countryCode?: number;
-    phoneNumber?: string;
+    phoneNumber?: PhoneNumber;
     registrationCode?: string;
     userCanister?: Principal;
     username?: string;
+    timeUntilResendCodePermitted: bigint;
 }
 
 export type RegisterEvents =
-    | { type: "REQUEST_REGISTRATION_CODE"; countryCode: number; number: string }
+    | { type: "REQUEST_REGISTRATION_CODE"; phoneNumber: PhoneNumber }
     | { type: "RESEND_REGISTRATION_CODE" }
+    | { type: "CHANGE_PHONE_NUMBER" }
     | { type: "SUBMIT_REGISTRATION_CODE"; code: string }
     | { type: "REGISTER_USER"; username: string }
     | { type: "COMPLETE" }
@@ -110,8 +112,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         },
     },
     services: {
-        submitPhoneNumber: (ctx, _) =>
-            ctx.serviceContainer!.submitPhoneNumber(ctx.countryCode!, ctx.phoneNumber!),
+        submitPhoneNumber: (ctx, _) => ctx.serviceContainer!.submitPhoneNumber(ctx.phoneNumber!),
         confirmPhoneNumber: (ctx, _) =>
             ctx.serviceContainer!.confirmPhoneNumber(ctx.registrationCode!),
         setUsername: (ctx, ev) => {
@@ -127,7 +128,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
 export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     id: "register_machine",
     initial: "initial",
-    context: {},
+    context: { timeUntilResendCodePermitted: BigInt(1000) },
     states: {
         initial: {
             always: [
@@ -146,14 +147,8 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
         checking_phone_number: {
             entry: assign({
                 error: (_, _ev) => undefined,
-                countryCode: (ctx, ev) =>
-                    ev.type === "REQUEST_REGISTRATION_CODE"
-                        ? ev.countryCode
-                        : ctx.countryCode ?? undefined,
                 phoneNumber: (ctx, ev) =>
-                    ev.type === "REQUEST_REGISTRATION_CODE"
-                        ? ev.number
-                        : ctx.phoneNumber ?? undefined,
+                    ev.type === "REQUEST_REGISTRATION_CODE" ? ev.phoneNumber : ctx.phoneNumber,
             }),
             invoke: {
                 id: "submitPhoneNumber",
@@ -208,6 +203,7 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
             on: {
                 SUBMIT_REGISTRATION_CODE: "checking_registration_code",
                 RESEND_REGISTRATION_CODE: "checking_phone_number",
+                CHANGE_PHONE_NUMBER: "awaiting_phone_number",
             },
         },
         checking_registration_code: {

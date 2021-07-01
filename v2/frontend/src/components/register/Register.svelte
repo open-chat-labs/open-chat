@@ -7,8 +7,10 @@
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "./Register.types";
+    import type { PhoneNumber } from "../../domain/user";
     export let state: RegisterState;
     export let username: string = "";
+    export let phoneNumber: PhoneNumber | undefined;
     export let error: string | undefined = undefined;
     let bgClass: "underwater" | "sunset" = "underwater";
     $: {
@@ -32,8 +34,8 @@
 
         {#if state === "awaitingPhoneNumber"}
             <EnterPhoneNumber {error} on:submitPhoneNumber />
-        {:else if state === "awaitingCode"}
-            <EnterCode {error} on:submitCode on:resendCode />
+        {:else if state === "awaitingCode" && phoneNumber}
+            <EnterCode {phoneNumber} {error} on:submitCode on:resendCode on:changePhoneNumber />
         {:else if state === "verifying"}
             <div class="spinner" />
         {:else if state === "awaitingUsername"}

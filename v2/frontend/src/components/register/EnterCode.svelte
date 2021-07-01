@@ -5,7 +5,10 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
+    import { phoneNumberToString } from "../../domain/user";
+    import type { PhoneNumber } from "../../domain/user";
 
+    export let phoneNumber: PhoneNumber;
     export let error: string | undefined = undefined;
 
     let codeValue: string = "";
@@ -18,10 +21,22 @@
         dispatch("resendCode");
     }
 
+    function changePhoneNumber() {
+        dispatch("changePhoneNumber");
+    }
+
     $: valid = codeValue.length !== 6;
 </script>
 
-<p class="enter-code">{$_("register.pleaseEnterCode")}</p>
+<p class="enter-code">
+    <span>
+        {$_("register.enterCodeSentTo")}
+    </span>
+    <span class="phone-number">{phoneNumberToString(phoneNumber)}</span>
+    <span>
+        (<a href="/#" on:click|preventDefault={changePhoneNumber}>{$_("change")}</a>)
+    </span>
+</p>
 
 <div class="code-wrapper">
     <Input
@@ -58,7 +73,18 @@
         margin-bottom: $sp5;
     }
 
+    .phone-number {
+        @include font(bold, normal, fs-100);
+    }
+
     .code-wrapper {
         max-width: 200px;
+    }
+
+    a {
+        text-decoration: underline;
+        text-decoration-color: var(--link-underline);
+        text-underline-offset: $sp2;
+        cursor: pointer;
     }
 </style>

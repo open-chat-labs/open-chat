@@ -30,6 +30,10 @@ export type PhoneNumber = {
     number: string;
 };
 
+export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {
+    return `(+${countryCode}) ${number}`;
+}
+
 export type CurrentUserResponse =
     | UpgradeInProgress
     | UnconfirmedUser

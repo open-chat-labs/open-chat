@@ -6,6 +6,7 @@ import type {
     CurrentUserResponse,
     SubmitPhoneNumberResponse,
     SetUsernameResponse,
+    PhoneNumber,
 } from "../../domain/user";
 import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
@@ -45,15 +46,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    submitPhoneNumber(
-        countryCode: number,
-        phoneNumber: string
-    ): Promise<SubmitPhoneNumberResponse> {
+    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
         return this.handleResponse(
             this.userService.submit_phone_number({
                 number: {
-                    country_code: countryCode,
-                    number: phoneNumber,
+                    country_code: phoneNumber.countryCode,
+                    number: phoneNumber.number,
                 },
             }),
             submitPhoneNumberResponse

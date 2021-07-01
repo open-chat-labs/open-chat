@@ -4,6 +4,7 @@ import type {
     CurrentUserResponse,
     SubmitPhoneNumberResponse,
     ConfirmPhoneNumberResponse,
+    PhoneNumber,
 } from "../../domain/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -22,7 +23,7 @@ export class UserIndexClientMock implements IUserIndexClient {
         });
     }
 
-    getCurrentUser(): Promise<CurrentUserResponse> {
+    requiredUpgradeScenario(): Promise<CurrentUserResponse> {
         if (this.count === 0) {
             this.count += 1;
             return Promise.resolve({
@@ -48,10 +49,47 @@ export class UserIndexClientMock implements IUserIndexClient {
         }
     }
 
-    submitPhoneNumber(
-        _countryCode: number,
-        _phoneNumber: string
-    ): Promise<SubmitPhoneNumberResponse> {
+    unknownUserScenario(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "unknown_user",
+        });
+    }
+
+    uncomfirmedUserScenario(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "unconfirmed_user",
+            timeUntilResendCodePermitted: BigInt(1000),
+            phoneNumber: {
+                countryCode: 41,
+                number: "7867538921",
+            },
+        });
+    }
+
+    confirmedUserScenario(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "confirmed_user",
+            canisterCreationInProgress: false,
+            username: "julian_jelfs",
+        });
+    }
+
+    confirmedPendingUsernameScenario(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "confirmed_pending_username",
+            canisterCreationInProgress: false,
+        });
+    }
+
+    getCurrentUser(): Promise<CurrentUserResponse> {
+        // return this.confirmedPendingUsernameScenario();
+        // return this.confirmedUserScenario();
+        return this.uncomfirmedUserScenario();
+        return this.unknownUserScenario();
+        return this.requiredUpgradeScenario();
+    }
+
+    submitPhoneNumber(_phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
         return new Promise((resolve, _reject) => {
             // setTimeout(() => resolve("taken"), 2000);
             // throw new AuthError(401, new Error("looks like an auth error"));

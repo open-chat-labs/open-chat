@@ -2,7 +2,7 @@ import { registerMachine } from "./register.machine";
 import type { Principal } from "@dfinity/principal";
 import { testTransition } from "./machine.spec.utils";
 
-describe("identity machine transitions", () => {
+describe("register machine transitions", () => {
     test("enter phone number", () => {
         testTransition(
             registerMachine,
@@ -17,7 +17,7 @@ describe("identity machine transitions", () => {
             testTransition(
                 registerMachine,
                 "checking_phone_number",
-                "done.invoke.submitPhoneNumber",
+                { type: "done.invoke.submitPhoneNumber", data: { kind: "success" } },
                 "awaiting_registration_code"
             );
         });
@@ -74,6 +74,15 @@ describe("identity machine transitions", () => {
             "awaiting_registration_code",
             "SUBMIT_REGISTRATION_CODE",
             "checking_registration_code"
+        );
+    });
+
+    test("change phone number ", () => {
+        testTransition(
+            registerMachine,
+            "awaiting_registration_code",
+            "CHANGE_PHONE_NUMBER",
+            "awaiting_phone_number"
         );
     });
 
