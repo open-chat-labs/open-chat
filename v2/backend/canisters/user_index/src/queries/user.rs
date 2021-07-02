@@ -1,6 +1,7 @@
 use candid::{CandidType};
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
+use crate::model::user_summary::UserSummary;
 use serde::Deserialize;
 use shared::types::UserId;
 
@@ -14,13 +15,7 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
 
     if let Some(User::Created(user)) = user {
         let now = runtime_state.env.now();
-        let last_online = user.last_online;
-        let seconds_since_last_online = ((now - last_online) / 1000) as u32;
-        return Response::Success(UserSummary {
-            user_id: user.user_id,
-            username: user.username.clone(),
-            seconds_since_last_online,          
-        });
+        return Response::Success(UserSummary::new(user, Some(now)));
     }
 
     Response::UserNotFound
@@ -30,13 +25,6 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
 pub struct Request {
     user_id: Option<UserId>,
     username: Option<String>,
-}
-
-#[derive(CandidType)]
-pub struct UserSummary {
-    user_id: UserId,
-    username: String,
-    seconds_since_last_online: u32,
 }
 
 #[derive(CandidType)]
