@@ -91,8 +91,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                 src: "getChats",
                 onDone: [
                     {
-                        target: "loading_messages",
-                        cond: "atLeastOneChat",
+                        target: "loaded_chats",
                         actions: assign({
                             chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
                                 return ev.type === "done.invoke.getChats" ? ev.data : [];
@@ -100,15 +99,25 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                             error: (_, _ev) => undefined,
                         }),
                     },
-                    {
-                        target: "idle",
-                        actions: assign({
-                            chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
-                                return ev.type === "done.invoke.getChats" ? ev.data : [];
-                            },
-                            error: (_, _ev) => undefined,
-                        }),
-                    },
+                    // {
+                    //     target: "loading_messages",
+                    //     cond: "atLeastOneChat",
+                    //     actions: assign({
+                    //         chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
+                    //             return ev.type === "done.invoke.getChats" ? ev.data : [];
+                    //         },
+                    //         error: (_, _ev) => undefined,
+                    //     }),
+                    // },
+                    // {
+                    //     target: "idle",
+                    //     actions: assign({
+                    //         chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
+                    //             return ev.type === "done.invoke.getChats" ? ev.data : [];
+                    //         },
+                    //         error: (_, _ev) => undefined,
+                    //     }),
+                    // },
                 ],
                 onError: {
                     target: "unexpected_error",
@@ -118,6 +127,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                 },
             },
         },
+        loaded_chats: {},
         idle: {},
         loading_messages: {
             entry: log("entering loading_messages"),
