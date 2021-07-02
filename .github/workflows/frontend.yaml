@@ -3,7 +3,7 @@ on:
     branches:
       - master
 
-name: Linting, type check & unit tests
+name: Frontend linting, type check & unit tests
 
 jobs:
   install-and-test:

@@ -3,7 +3,7 @@ on:
     branches:
       - master
 
-name: Backend CI
+name: Backend linting and unit tests
 
 jobs:
   test:
