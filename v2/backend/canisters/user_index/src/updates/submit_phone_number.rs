@@ -99,9 +99,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new_user_returns_success() {
-        let env = Box::new(TestEnv::default());
-        let mut runtime_state = RuntimeState::new(env, Data::default());
+    fn new_user_succeeds() {
+        let env = TestEnv::default();
+        let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
@@ -111,12 +111,15 @@ mod tests {
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
+
+        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        assert!(matches!(user, User::Unconfirmed(_)));
     }
 
     #[test]
-    fn existing_unconfirmed_user_returns_success() {
-        let env = Box::new(TestEnv::default());
-        let mut runtime_state = RuntimeState::new(env, Data::default());
+    fn existing_unconfirmed_user_succeeds() {
+        let env = TestEnv::default();
+        let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
         let request1 = Request {
             phone_number: UnvalidatedPhoneNumber {
@@ -135,6 +138,10 @@ mod tests {
         };
         let result2 = update(request2, &mut runtime_state);
         assert!(matches!(result2, Response::Success));
+
+        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        assert!(matches!(user, User::Unconfirmed(_)));
+        assert_eq!(user.get_phone_number().national().value(), 2222222222);
     }
 
     #[test]

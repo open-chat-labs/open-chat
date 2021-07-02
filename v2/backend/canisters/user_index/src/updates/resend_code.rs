@@ -45,7 +45,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn unconfirmed_user_returns_success() {
+    fn unconfirmed_user_succeeds() {
         let env = TestEnv::default();
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {

@@ -66,7 +66,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn correct_code_returns_success() {
+    fn correct_code_succeeds() {
         let env = TestEnv::default();
         let confirmation_code = "123456".to_string();
         let mut data = Data::default();
@@ -84,6 +84,9 @@ mod tests {
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
+
+        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        assert!(matches!(user, User::Confirmed(_)));
     }
 
     #[test]
