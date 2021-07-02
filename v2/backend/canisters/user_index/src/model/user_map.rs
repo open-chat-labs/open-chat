@@ -66,20 +66,20 @@ impl UserMap {
             }
 
             if previous_username != username {
-                if previous_username.is_some() {
-                    self.username_to_principal.remove(previous_username.unwrap());
+                if let Some(val) = previous_username {
+                    self.username_to_principal.remove(val);
                 }
-                if username.is_some() {
-                    self.username_to_principal.insert(username.unwrap().to_string(), principal);
+                if let Some(val) = username {
+                    self.username_to_principal.insert(val.to_string(), principal);
                 }
             }
 
             if previous_user_id != user_id {
-                if previous_user_id.is_some() {
-                    self.user_id_to_principal.remove(&previous_user_id.unwrap());
+                if let Some(val) = previous_user_id {
+                    self.user_id_to_principal.remove(&val);
                 }
-                if user_id.is_some() {
-                    self.user_id_to_principal.insert(user_id.unwrap(), principal);
+                if let Some(val) = user_id {
+                    self.user_id_to_principal.insert(val, principal);
                 }
             }
 
