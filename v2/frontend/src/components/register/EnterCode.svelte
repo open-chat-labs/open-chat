@@ -7,6 +7,7 @@
     import { _ } from "svelte-i18n";
     import { phoneNumberToString } from "../../domain/user";
     import type { PhoneNumber } from "../../domain/user";
+    import Link from "../Link.svelte";
 
     export let phoneNumber: PhoneNumber;
     export let error: string | undefined = undefined;
@@ -34,7 +35,7 @@
     </span>
     <span class="phone-number">{phoneNumberToString(phoneNumber)}</span>
     <span>
-        (<a href="/#" on:click|preventDefault={changePhoneNumber}>{$_("change")}</a>)
+        <Link underline={true} on:click={changePhoneNumber}>({$_("change")})</Link>
     </span>
 </p>
 
@@ -91,5 +92,8 @@
         text-decoration-color: var(--link-underline);
         text-underline-offset: $sp2;
         cursor: pointer;
+        &:hover {
+            text-decoration-thickness: 2px;
+        }
     }
 </style>

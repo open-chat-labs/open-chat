@@ -10,13 +10,14 @@
     import Router from "svelte-spa-router";
     import { routes } from "./routes";
     import Login from "./components/Login.svelte";
-    import Register from "./components/register/Register.controller.svelte";
+    const Register = () => import("./components/register/Register.controller.svelte");
     import Upgrading from "./components/upgrading/Upgrading.svelte";
     import Loading from "./components/Loading.svelte";
     import UnexpectedError from "./components/unexpectedError/UnexpectedError.svelte";
     import SessionExpired from "./components/sessionExpired/SessionExpired.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { RegisterMachine } from "./fsm/register.machine";
+    import Lazy from "./components/Lazy.svelte";
 
     onMount(() => {
         loadSavedTheme();
@@ -44,7 +45,7 @@
 {#if $state.matches("login") || $state.matches("logging_in")}
     <Login loading={$state.matches("logging_in")} on:login={() => send({ type: "LOGIN" })} />
 {:else if $state.matches("register_user") && regMachine}
-    <Register machine={regMachine} />
+    <Lazy component={Register} machine={regMachine} />
 {:else if $state.matches("logged_in")}
     <Router {routes} />
 {:else if $state.matches("unexpected_error")}
