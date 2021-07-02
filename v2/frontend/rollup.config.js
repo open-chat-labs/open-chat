@@ -14,6 +14,7 @@ import inject from "rollup-plugin-inject";
 import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
+import filesize from "rollup-plugin-filesize";
 // import copy from 'rollup-plugin-copy';
 // import cleaner from 'rollup-plugin-cleaner';
 import dotenv from "dotenv";
@@ -132,7 +133,9 @@ export default {
         // instead of npm run dev), minify
         production && terser(),
 
-        analyze({ summaryOnly: true }),
+        production && analyze({ summaryOnly: true }),
+
+        production && filesize(),
     ],
     watch: {
         clearScreen: false,
