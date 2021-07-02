@@ -4,6 +4,7 @@ use ic_cdk_macros::update;
 use crate::queries::current_user;
 use crate::queries::pending_sms_messages;
 use crate::queries::user;
+use crate::queries::users;
 use crate::updates::submit_phone_number;
 use crate::updates::confirm_phone_number;
 use crate::updates::resend_code;
@@ -63,5 +64,12 @@ pub fn pending_sms_messages(request: pending_sms_messages::Request) -> pending_s
 pub fn user(request: user::Request) -> user::Response {
     RUNTIME_STATE.with(|state| {
         user::query(request, state.borrow().as_ref().unwrap())
+    })
+}
+
+#[query]
+pub fn users(request: users::Request) -> users::Response {
+    RUNTIME_STATE.with(|state| {
+        users::query(request, state.borrow().as_ref().unwrap())
     })
 }

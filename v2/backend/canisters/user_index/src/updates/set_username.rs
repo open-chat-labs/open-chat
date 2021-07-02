@@ -8,6 +8,11 @@ const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
 
 pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
+    let caller = &runtime_state.env.caller();
+    let now = runtime_state.env.now();
+
+    runtime_state.data.users.mark_online(caller, now);
+
     let username = request.username;
     
     if username.len() > MAX_USERNAME_LENGTH as usize {
@@ -18,7 +23,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
         return Response::UsernameTooShort(MIN_USERNAME_LENGTH);
     }
 
-    if let Some(user) = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()) {
+    if let Some(user) = runtime_state.data.users.get_by_principal(caller) {
         let mut user = user.clone();
         if matches!(user, User::Unconfirmed(_)) {
             Response::UserUnconfirmed
