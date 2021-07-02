@@ -163,7 +163,7 @@ mod tests {
 
     #[test]
     fn phone_number_taken_returns_already_taken_by_other() {
-        let env = Box::new(TestEnv::default());
+        let env = TestEnv::default();
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: Principal::from_slice(&[2]),
@@ -173,7 +173,7 @@ mod tests {
             canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: env.now,
         }));
-        let mut runtime_state = RuntimeState::new(env, data);
+        let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
@@ -187,8 +187,8 @@ mod tests {
 
     #[test]
     fn invalid_phone_number() {
-        let env = Box::new(TestEnv::default());
-        let mut runtime_state = RuntimeState::new(env, Data::default());
+        let env = TestEnv::default();
+        let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
