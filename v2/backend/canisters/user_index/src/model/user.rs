@@ -44,13 +44,6 @@ impl User {
         }
     }
 
-    pub fn get_last_online(&self) -> Option<TimestampMillis> {
-        match self {
-            User::Created(u) => Some(u.last_online),
-            _ => None
-        }
-    }
-
     #[allow(dead_code)]
     pub fn set_phone_number(&mut self, phone_number: PhoneNumber) {
         match self {
@@ -67,16 +60,6 @@ impl User {
             User::Created(u) => u.username = username,
         }
         true
-    }
-
-    pub fn set_last_online(&mut self, now: TimestampMillis) -> bool {
-        match self {
-            User::Created(u) => { 
-                u.last_online = now;
-                true
-            },
-            _ => false
-        }
     }
 }
 

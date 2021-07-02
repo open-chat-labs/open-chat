@@ -12,17 +12,15 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
         user = runtime_state.data.users.get_by_username(&username);
     }
 
-    if let Some(user) = user {
-        if matches!(user, User::Created(_)) {
-            let now = runtime_state.env.now();
-            let last_online = user.get_last_online().unwrap();
-            let seconds_since_last_online = ((now - last_online) / 1000) as u32;
-            return Response::Success(UserSummary {
-                user_id: user.get_user_id().unwrap(),
-                username: user.get_username().unwrap().to_string(),
-                seconds_since_last_online,          
-            });
-        }
+    if let Some(User::Created(user)) = user {
+        let now = runtime_state.env.now();
+        let last_online = user.last_online;
+        let seconds_since_last_online = ((now - last_online) / 1000) as u32;
+        return Response::Success(UserSummary {
+            user_id: user.user_id,
+            username: user.username.clone(),
+            seconds_since_last_online,          
+        });
     }
 
     Response::UserNotFound
