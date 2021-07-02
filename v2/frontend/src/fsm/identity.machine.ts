@@ -172,6 +172,17 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         target: "logged_in",
                         cond: "userIsRegistered",
                         actions: assign({
+                            serviceContainer: (
+                                { serviceContainer },
+                                ev: DoneInvokeEvent<CurrentUserResponse>
+                            ) => {
+                                if (ev.type === "done.invoke.getUser") {
+                                    if (ev.data.kind === "created_user") {
+                                        return serviceContainer!.createUserClient(ev.data.userId);
+                                    }
+                                }
+                                return serviceContainer;
+                            },
                             user: (_, ev: DoneInvokeEvent<CurrentUserResponse>) => {
                                 if (ev.type === "done.invoke.getUser") {
                                     if (ev.data.kind === "created_user") {
@@ -279,6 +290,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     data: (ctx, _ev) => ({
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
+                        chats: [],
                     }),
                     onDone: "login",
                     onError: {

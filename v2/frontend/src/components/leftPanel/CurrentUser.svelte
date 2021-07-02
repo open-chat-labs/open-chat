@@ -25,7 +25,10 @@
     <div class="current-user">
         <MediaQuery query="(min-width: 576px)" let:matches>
             {#if matches}
-                <Avatar url={avatarUrl(user)} status={UserStatus.Online} size={AvatarSize.Large} />
+                <Avatar
+                    url={avatarUrl(user.userId.toString())}
+                    status={UserStatus.Online}
+                    size={AvatarSize.Large} />
             {/if}
         </MediaQuery>
         <h4 class="name">{user.username}</h4>
@@ -66,7 +69,7 @@
         flex: 0 0 180px;
         background-color: var(--currentUser-bg);
         border: 1px solid var(--currentUser-bd);
-        margin-bottom: $sp4;
+        margin-bottom: $sp3;
 
         @include size-below(xs) {
             flex: 0 0 60px;

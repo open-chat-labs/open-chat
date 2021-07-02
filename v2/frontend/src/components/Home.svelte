@@ -46,7 +46,7 @@
 
 {#if $loggedIn.context.user}
     <main>
-        <LeftPanel machine={loggedIn} on:logout={logout} />
+        <LeftPanel {params} machine={loggedIn} on:logout={logout} />
         <!-- <MiddlePanel on:goback={() => (hideLeft = false)} {hideLeft} />
         {#if $navStore}
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>

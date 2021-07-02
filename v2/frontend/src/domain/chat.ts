@@ -54,6 +54,12 @@ export interface Message {
 }
 
 export interface ChatSummary {
+    chatId: string;
+    name: string;
+    lastMessage: string;
+}
+
+export interface ChatSummaryTodo {
     them: Principal;
     lastUpdated: bigint;
     displayDate: bigint;
@@ -61,3 +67,51 @@ export interface ChatSummary {
     latestMessages: Message[];
     unreadByMeMessageIdRanges: number[][];
 }
+
+// ==================================================
+type ChatCommon = {
+    chatId: bigint;
+    scrollTop?: number;
+    scrollBottom?: number;
+    draftMessage: string;
+    replyContext?: ReplyContext;
+};
+
+type ConfirmedChatCommon = ChatCommon & {
+    displayDate: Date;
+    lastUpdated: Date;
+    messages: Message[];
+    messagesToDownload: number[];
+    messagesDownloading: number[];
+    minLocalMessageId?: number;
+    maxLocalMessageId?: number;
+    minimumUnconfirmedMessageIndex: number;
+
+    // If the messageId is known, add to unreadMessageIds, otherwise add to unreadClientMessageIds, never add to both
+    unreadMessageIds: number[];
+    unreadClientMessageIds: string[];
+
+    // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
+    markAsReadPending: number[];
+    markAsReadByClientIdPending: string[];
+
+    messageToSelect?: number;
+};
+
+export type ConfirmedDirectChat = ConfirmedChatCommon & {
+    kind: "confirmed_direct_chat";
+    them: Principal;
+    themTyping: boolean;
+    unreadByThemMessageIds: number[];
+    markAsReadByThemPendingSync: number[];
+    markAsReadByThemByClientIdPendingSync: string[];
+};
+
+export type ConfirmedGroupChat = ConfirmedChatCommon & {
+    kind: "confirmed_group_chat";
+    subject: string;
+    minMessageIdOnServer: number;
+    participants: Principal[];
+    participantsTyping: Principal[];
+    unreadByAnyMessageIds: number[];
+};

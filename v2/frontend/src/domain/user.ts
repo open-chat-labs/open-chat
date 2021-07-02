@@ -6,11 +6,11 @@ export type User = {
     accountBalance: bigint;
 };
 
-export function avatarUrl(user: User): string {
+export function avatarUrl(userId: string): string {
     // todo - we will use a dummy avatar url for the time being
     return "https://i.pravatar.cc/300";
     const url = new URL(window.location.toString());
-    return `${url.protocol}//${user.userId}${url.host}/avatar`;
+    return `${url.protocol}//${userId}${url.host}/avatar`;
 }
 
 export enum UserStatus {
