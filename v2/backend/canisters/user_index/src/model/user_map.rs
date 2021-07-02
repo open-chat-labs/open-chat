@@ -1,3 +1,4 @@
+use shared::time::TimestampMillis;
 use candid::Principal;
 use crate::model::user::User;
 use phonenumber::PhoneNumber;
@@ -87,6 +88,12 @@ impl UserMap {
             UpdateUserResult::Success
         } else {
             UpdateUserResult::UserNotFound
+        }
+    }
+
+    pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) {
+        if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
+            user.last_online = now;
         }
     }
 
