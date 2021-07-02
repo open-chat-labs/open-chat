@@ -4,7 +4,8 @@
     import type { LoggedInMachine } from "../../fsm/loggedin.machine";
     import type { LeftPanelState } from "./LeftPanel.types";
     import type { ChatSummary } from "../../domain/chat";
-    import { push } from "svelte-spa-router";
+    import { push, replace } from "svelte-spa-router";
+    import { screenWidth } from "../../stores/screenWidth";
 
     export let params: { chatId?: string } = {};
     export let machine: ActorRefFrom<LoggedInMachine>;
@@ -21,14 +22,19 @@
     // then a chat_selected event which fires when the route changes which causes the messages to be loaded
     $: {
         if (params.chatId !== $machine.context.selectedChatId && params.chatId) {
+            console.log("this should trigger loading messages");
             machine.send({ type: "SET_SELECTED_CHAT_ID", data: params.chatId });
         }
+    }
+
+    $: {
+        console.log($screenWidth);
     }
 
     function selectChat(ev: CustomEvent<ChatSummary>) {
         // tell the router about the selection so that the router can tell the state machine
         // we need the router to be the source of truth so that the browser history works as expected
-        push(`/chat/${ev.detail.chatId}`);
+        replace(`/chat/${ev.detail.chatId}`);
     }
 
     $: {

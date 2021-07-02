@@ -12,6 +12,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import type { User } from "../domain/user";
 import type { ChatSummary } from "../domain/chat";
 import { push } from "svelte-spa-router";
+import { log } from "xstate/lib/actions";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -62,6 +63,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
             cond: "atLeastOneChat",
             actions: assign({
                 selectedChatId: (ctx, ev) => {
+                    console.log("setting chat id from click");
                     if (ev.type === "SET_SELECTED_CHAT_ID") {
                         return ctx.chats.find((c) => c.chatId === ev.data)?.chatId;
                     }
@@ -118,6 +120,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
         },
         idle: {},
         loading_messages: {
+            entry: log("entering loading_messages"),
             invoke: {
                 id: "loadMessages",
                 src: "loadMessages",

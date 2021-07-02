@@ -1,22 +1,21 @@
 <script lang="ts">
-    import Button from "./Button.svelte";
+    import Link from "./Link.svelte";
+    import ModalPage from "./ModalPage.svelte";
+    import { _ } from "svelte-i18n";
+    import { push } from "svelte-spa-router";
 </script>
 
-<div class="background">
-    <div class="msg">404</div>
-    <a href="/#">home</a>
-</div>
+<ModalPage bgClass="empty" minHeight="200px">
+    <div class="content">
+        <div>
+            <h1 class="msg">404</h1>
+            <Link on:click={() => push("/")}>{$_("home")}</Link>
+        </div>
+    </div>
+</ModalPage>
 
 <style type="text/scss">
     @import "../styles/mixins";
-    .background {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        @include fullHeight();
-        @include fullScreenImg("../assets/empty.jpg");
-    }
     .msg {
         font-weight: bold;
         font-size: 100px;

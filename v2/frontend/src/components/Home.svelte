@@ -19,27 +19,9 @@
     let hideLeft: boolean = false;
     export let params: { chatId?: string } = {};
 
-    // function selectChat(chatId?: string) {
-    //     if (user) {
-    //         const summary = user.chats.find((c) => c.chatId === chatId) ?? user.chats[0];
-    //         hideLeft = !hideLeft;
-    //         chatStore.selectChat(summary);
-    //     }
-    // }
-
     function logout() {
         send({ type: "LOGOUT" });
     }
-
-    // $: {
-    //     if (user) {
-    //         params.chatId = user.chats[0].chatId;
-    //     }
-    // }
-
-    // $: {
-    //     selectChat(params.chatId);
-    // }
 
     $: x = $rtlStore ? -350 : 350;
 </script>
