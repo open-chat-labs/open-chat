@@ -1,9 +1,9 @@
-name: Linting, type check & unit tests
-
 on:
   pull_request:
     branches:
       - master
+
+name: Frontend linting, type check & unit tests
 
 jobs:
   install-and-test:

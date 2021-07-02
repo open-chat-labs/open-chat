@@ -31,7 +31,7 @@ impl User {
     pub fn get_username(&self) -> Option<&str> {
         match self {
             User::Unconfirmed(_) => None,
-            User::Confirmed(u) => u.username.as_ref().map(|u| u.as_str()),
+            User::Confirmed(u) => u.username.as_deref(),
             User::Created(u) => Some(&u.username),
         }
     }
