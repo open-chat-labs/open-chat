@@ -91,12 +91,12 @@ pub struct AlreadyRegisteredButUnclaimedResult {
 
 #[cfg(test)]
 mod tests {
+    use candid::Principal;
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::{CanisterCreationStatus, ConfirmedUser};
     use crate::test::env::TestEnv;
     use super::*;
-    use candid::Principal;
 
     #[test]
     fn new_user_returns_success() {
