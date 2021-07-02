@@ -1,7 +1,7 @@
-use candid::CandidType;
 use crate::model::data::append_sms_to_queue;
-use crate::model::user::User;
 use crate::model::runtime_state::RuntimeState;
+use crate::model::user::User;
+use candid::CandidType;
 use serde::Deserialize;
 
 pub fn update(runtime_state: &mut RuntimeState) -> Response {
@@ -13,10 +13,11 @@ pub fn update(runtime_state: &mut RuntimeState) -> Response {
                 append_sms_to_queue(
                     &mut runtime_state.data.sms_queue,
                     u.phone_number.clone(),
-                    u.confirmation_code.to_string());
+                    u.confirmation_code.to_string(),
+                );
                 Response::Success
-            },
-            _ => Response::AlreadyClaimed
+            }
+            _ => Response::AlreadyClaimed,
         }
     } else {
         Response::UserNotFound
@@ -24,8 +25,7 @@ pub fn update(runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
-}
+pub struct Request {}
 
 #[derive(CandidType)]
 pub enum Response {
@@ -36,13 +36,13 @@ pub enum Response {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
-    use crate::model::user::{UnconfirmedUser, ConfirmedUser, CanisterCreationStatus};
+    use crate::model::user::{CanisterCreationStatus, ConfirmedUser, UnconfirmedUser};
     use crate::test::env::TestEnv;
     use phonenumber::PhoneNumber;
     use std::str::FromStr;
-    use super::*;
 
     #[test]
     fn unconfirmed_user_succeeds() {

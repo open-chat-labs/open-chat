@@ -1,5 +1,5 @@
-use shared::time::TimestampMillis;
 use candid::Principal;
+use shared::time::TimestampMillis;
 
 pub trait Environment {
     fn now(&self) -> TimestampMillis;

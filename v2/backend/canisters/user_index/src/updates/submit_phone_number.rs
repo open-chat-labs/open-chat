@@ -1,8 +1,8 @@
-use candid::CandidType;
-use crate::model::data::{CONFIRMATION_CODE_EXPIRY_MILLIS, append_sms_to_queue};
-use crate::model::user::{UnconfirmedUser, User};
+use crate::model::data::{append_sms_to_queue, CONFIRMATION_CODE_EXPIRY_MILLIS};
 use crate::model::runtime_state::RuntimeState;
+use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
+use candid::CandidType;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 use shared::time::Milliseconds;
@@ -12,7 +12,10 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
-    match PhoneNumber::from_str(&format!("+{} {}", request.phone_number.country_code, request.phone_number.number)) {
+    match PhoneNumber::from_str(&format!(
+        "+{} {}",
+        request.phone_number.country_code, request.phone_number.number
+    )) {
         Ok(phone_number) => {
             let mut sms_messages_sent = 0u16;
 
@@ -21,7 +24,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
                     User::Unconfirmed(u) => {
                         sms_messages_sent = u.sms_messages_sent;
                         runtime_state.data.users.remove_by_principal(&caller);
-                    },
+                    }
                     _ => return Response::AlreadyRegistered,
                 }
             } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
@@ -32,14 +35,14 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
                         if !has_code_expired {
                             return Response::AlreadyRegisteredByOther;
                         }
-                    },
+                    }
                     _ => {
                         return if user.get_principal() == caller {
                             Response::AlreadyRegistered
                         } else {
                             // TODO we should support the case where a phone number is recycled
                             Response::AlreadyRegisteredByOther
-                        }
+                        };
                     }
                 }
             }
@@ -51,7 +54,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
                 phone_number: phone_number.clone(),
                 confirmation_code: confirmation_code.clone(),
                 date_generated: now,
-                sms_messages_sent: sms_messages_sent + 1
+                sms_messages_sent: sms_messages_sent + 1,
             };
 
             if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
@@ -60,8 +63,8 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
             } else {
                 panic!("Failed to add user");
             }
-        },
-        Err(_) => Response::InvalidPhoneNumber
+        }
+        Err(_) => Response::InvalidPhoneNumber,
     }
 }
 
@@ -86,17 +89,17 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct AlreadyRegisteredButUnclaimedResult {
-    time_until_resend_code_permitted: Option<Milliseconds>
+    time_until_resend_code_permitted: Option<Milliseconds>,
 }
 
 #[cfg(test)]
 mod tests {
-    use candid::Principal;
+    use super::*;
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::{CanisterCreationStatus, ConfirmedUser};
     use crate::test::env::TestEnv;
-    use super::*;
+    use candid::Principal;
 
     #[test]
     fn new_user_succeeds() {
@@ -106,13 +109,17 @@ mod tests {
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "1111 111 111".to_string()
-            }
+                number: "1111 111 111".to_string(),
+            },
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
-        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        let user = runtime_state
+            .data
+            .users
+            .get_by_principal(&runtime_state.env.caller())
+            .unwrap();
         assert!(matches!(user, User::Unconfirmed(_)));
     }
 
@@ -124,8 +131,8 @@ mod tests {
         let request1 = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "1111 111 111".to_string()
-            }
+                number: "1111 111 111".to_string(),
+            },
         };
         let result1 = update(request1, &mut runtime_state);
         assert!(matches!(result1, Response::Success));
@@ -133,13 +140,17 @@ mod tests {
         let request2 = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "2222 222 222".to_string()
-            }
+                number: "2222 222 222".to_string(),
+            },
         };
         let result2 = update(request2, &mut runtime_state);
         assert!(matches!(result2, Response::Success));
 
-        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        let user = runtime_state
+            .data
+            .users
+            .get_by_principal(&runtime_state.env.caller())
+            .unwrap();
         assert!(matches!(user, User::Unconfirmed(_)));
         assert_eq!(user.get_phone_number().national().value(), 2222222222);
     }
@@ -161,8 +172,8 @@ mod tests {
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "2222 222 222".to_string()
-            }
+                number: "2222 222 222".to_string(),
+            },
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegistered));
@@ -185,8 +196,8 @@ mod tests {
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "1111 111 111".to_string()
-            }
+                number: "1111 111 111".to_string(),
+            },
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegisteredByOther));
@@ -200,8 +211,8 @@ mod tests {
         let request = Request {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
-                number: "_".to_string()
-            }
+                number: "_".to_string(),
+            },
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));

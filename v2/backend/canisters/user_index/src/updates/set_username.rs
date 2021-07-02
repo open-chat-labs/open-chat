@@ -1,7 +1,7 @@
-use candid::CandidType;
-use crate::model::user::User;
 use crate::model::runtime_state::RuntimeState;
+use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
+use candid::CandidType;
 use serde::Deserialize;
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -14,7 +14,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
     runtime_state.data.users.mark_online(caller, now);
 
     let username = request.username;
-    
+
     if username.len() > MAX_USERNAME_LENGTH as usize {
         return Response::UsernameTooLong(MAX_USERNAME_LENGTH);
     }
@@ -43,7 +43,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
 
 #[derive(Deserialize)]
 pub struct Request {
-    username: String
+    username: String,
 }
 
 #[allow(dead_code)]

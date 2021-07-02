@@ -1,5 +1,5 @@
-use crate::model::data::Data;
 use crate::env::Environment;
+use crate::model::data::Data;
 
 pub struct RuntimeState {
     pub env: Box<dyn Environment>,
@@ -8,9 +8,6 @@ pub struct RuntimeState {
 
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState {
-            env,
-            data,
-        }
+        RuntimeState { env, data }
     }
 }

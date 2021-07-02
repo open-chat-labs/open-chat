@@ -16,7 +16,7 @@ pub fn append_sms_to_queue(queue: &mut VecDeque<ConfirmationCodeSms>, phone_numb
     let sms = ConfirmationCodeSms {
         phone_number: phone_number.to_string(),
         confirmation_code,
-        index
+        index,
     };
     queue.push_front(sms);
 }
