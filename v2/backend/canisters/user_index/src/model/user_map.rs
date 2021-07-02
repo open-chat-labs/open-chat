@@ -18,7 +18,6 @@ impl UserMap {
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
 
-        #[allow(clippy::map_entry)]
         if self.users_by_principal.contains_key(&principal) {
             AddUserResult::AlreadyExists
         } else if self.phone_number_to_principal.contains_key(phone_number) {

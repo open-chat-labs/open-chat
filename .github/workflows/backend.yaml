@@ -35,7 +35,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path v2/backend/Cargo.toml -- -D warnings
+          args: --manifest-path v2/backend/Cargo.toml
+          # args: --manifest-path v2/backend/Cargo.toml -- -D warnings
 
   # check:
   #   name: run check
