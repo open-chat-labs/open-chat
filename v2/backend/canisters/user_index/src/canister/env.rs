@@ -29,7 +29,7 @@ impl CanisterEnv {
                 StdRng::from_seed(seed)
             },
             sms_service_principals,
-            user_canister_wasm
+            user_canister_wasm,
         }
     }
 }

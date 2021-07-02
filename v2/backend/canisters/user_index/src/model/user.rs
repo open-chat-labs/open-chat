@@ -40,14 +40,14 @@ impl User {
         match self {
             User::Unconfirmed(_) => None,
             User::Confirmed(u) => u.user_id,
-            User::Created(u) => Some(u.user_id)
+            User::Created(u) => Some(u.user_id),
         }
     }
 
     pub fn created_user(&self) -> Option<&CreatedUser> {
         match self {
             User::Created(u) => Some(u),
-            _ => None
+            _ => None,
         }
     }
 

@@ -1,7 +1,7 @@
-use candid::{CandidType};
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use crate::model::user_summary::UserSummary;
+use candid::CandidType;
 use serde::Deserialize;
 use shared::types::UserId;
 

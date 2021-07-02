@@ -1,7 +1,7 @@
-use candid::CandidType;
 use crate::model::data::CONFIRMATION_CODE_EXPIRY_MILLIS;
-use crate::model::user::{CanisterCreationStatus, ConfirmedUser, User};
 use crate::model::runtime_state::RuntimeState;
+use crate::model::user::{CanisterCreationStatus, ConfirmedUser, User};
+use candid::CandidType;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 
@@ -22,11 +22,11 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
                 } else {
                     phone_number = u.phone_number.clone();
                 }
-            },
-            _ => return Response::AlreadyClaimed
+            }
+            _ => return Response::AlreadyClaimed,
         }
     } else {
-        return Response::UserNotFound
+        return Response::UserNotFound;
     }
 
     let user = ConfirmedUser {
@@ -35,7 +35,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
         user_id: None,
         username: None,
         date_confirmed: now,
-        canister_creation_status: CanisterCreationStatus::Pending
+        canister_creation_status: CanisterCreationStatus::Pending,
     };
     runtime_state.data.users.update(User::Confirmed(user));
 
@@ -44,7 +44,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
 
 #[derive(Deserialize)]
 pub struct Request {
-    confirmation_code: String
+    confirmation_code: String,
 }
 
 #[derive(CandidType)]
@@ -58,12 +58,12 @@ pub enum Response {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::UnconfirmedUser;
     use crate::test::env::TestEnv;
     use std::str::FromStr;
-    use super::*;
 
     #[test]
     fn correct_code_succeeds() {
@@ -79,13 +79,15 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
-            confirmation_code
-        };
+        let request = Request { confirmation_code };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
-        let user = runtime_state.data.users.get_by_principal(&runtime_state.env.caller()).unwrap();
+        let user = runtime_state
+            .data
+            .users
+            .get_by_principal(&runtime_state.env.caller())
+            .unwrap();
         assert!(matches!(user, User::Confirmed(_)));
     }
 
@@ -103,7 +105,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            confirmation_code: "123457".to_string()
+            confirmation_code: "123457".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeIncorrect));
@@ -124,9 +126,7 @@ mod tests {
         env.now += CONFIRMATION_CODE_EXPIRY_MILLIS + 1;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
-            confirmation_code
-        };
+        let request = Request { confirmation_code };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeExpired));
     }
@@ -146,7 +146,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            confirmation_code: "123456".to_string()
+            confirmation_code: "123456".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyClaimed));
@@ -159,7 +159,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            confirmation_code: "123456".to_string()
+            confirmation_code: "123456".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UserNotFound));

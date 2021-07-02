@@ -1,5 +1,5 @@
-use candid::CandidType;
 use crate::model::user::CreatedUser;
+use candid::CandidType;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
 
@@ -22,7 +22,7 @@ impl UserSummary {
         UserSummary {
             user_id: user.user_id,
             username: user.username.clone(),
-            seconds_since_last_online
+            seconds_since_last_online,
         }
     }
 }

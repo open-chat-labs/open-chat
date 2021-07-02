@@ -1,6 +1,6 @@
-use candid::CandidType;
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::runtime_state::RuntimeState;
+use candid::CandidType;
 use serde::Deserialize;
 
 pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
@@ -39,5 +39,5 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct SuccessResult {
-    messages: Vec<ConfirmationCodeSms>
+    messages: Vec<ConfirmationCodeSms>,
 }

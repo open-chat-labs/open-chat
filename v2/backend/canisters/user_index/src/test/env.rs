@@ -1,5 +1,5 @@
-use candid::Principal;
 use crate::env::Environment;
+use candid::Principal;
 
 pub struct TestEnv {
     pub now: u64,
@@ -38,7 +38,7 @@ impl Default for TestEnv {
             caller: Principal::from_slice(&[1]),
             random_u32: 1,
             sms_service_principals: Vec::new(),
-            user_canister_wasm: Vec::new()
+            user_canister_wasm: Vec::new(),
         }
     }
 }

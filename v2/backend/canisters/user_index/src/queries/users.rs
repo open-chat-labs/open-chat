@@ -1,7 +1,7 @@
-use candid::{CandidType};
+use self::Response::*;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user_summary::UserSummary;
-use self::Response::*;
+use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
@@ -19,10 +19,7 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
         .map(|u| UserSummary::new(&u, Some(now)))
         .collect();
 
-    Success(Result {
-        users,
-        timestamp: now
-    })    
+    Success(Result { users, timestamp: now })
 }
 
 #[derive(Deserialize)]
