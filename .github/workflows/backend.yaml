@@ -1,0 +1,79 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+name: Backend CI
+
+jobs:
+  check:
+    name: run check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2/backend
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  test:
+    name: run tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2/backend
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  fmt:
+    name: format code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2/backend
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    name: run clippy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2/backend
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
