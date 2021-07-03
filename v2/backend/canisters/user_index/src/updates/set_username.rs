@@ -36,8 +36,9 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
             user.set_username(username);
             match runtime_state.data.users.update(user) {
                 UpdateUserResult::Success => Response::Success,
+                UpdateUserResult::PhoneNumberTaken => panic!("PhoneNumberTaken returned when updating username"),
                 UpdateUserResult::UsernameTaken => Response::UsernameTaken,
-                _ => Response::UserNotFound,
+                UpdateUserResult::UserNotFound => Response::UserNotFound,
             }
         }
     } else {
