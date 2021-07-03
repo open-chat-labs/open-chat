@@ -12,7 +12,7 @@ import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type { ChatSummary } from "../domain/chat";
 import type { Principal } from "@dfinity/principal";
-import { UserClient } from "./user/user.client";
+// import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
 
 export class ServiceContainer {
