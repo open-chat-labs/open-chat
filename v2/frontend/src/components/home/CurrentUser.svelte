@@ -14,6 +14,10 @@
     const dispatch = createEventDispatcher();
 
     export let user: User;
+
+    function newChat() {
+        dispatch("newchat");
+    }
 </script>
 
 <div class="current-user-box">
@@ -42,7 +46,7 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem text="New chat" on:click={() => console.log("one")} />
+                    <MenuItem text="New chat" on:click={newChat} />
                     <MenuItem text="New group" on:click={() => console.log("two")} />
                     <MenuItem text="Join group" on:click={() => console.log("three")} />
                     <MenuItem

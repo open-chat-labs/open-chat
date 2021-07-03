@@ -19,7 +19,7 @@
 
 {#if user}
     <Panel left {hideLeft}>
-        <CurrentUser on:logout {user} />
+        <CurrentUser on:logout {user} on:newchat />
         <SearchChats on:filter={filterChats} />
         {#if state === "loadingChats"}
             <Loading />

@@ -51,7 +51,7 @@
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
         padding: $sp3;
-        margin-bottom: $sp2;
+        margin-bottom: $sp3;
         cursor: pointer;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         position: relative;

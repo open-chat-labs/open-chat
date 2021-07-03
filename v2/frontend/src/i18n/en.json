@@ -9,6 +9,9 @@
     "performingUpgrade": "Performing Upgrade",
     "pleaseWait": "Please wait for a few seconds",
     "change": "change",
+    "noChatSelected": "No chat currently selected",
+    "selectAChat": "Please select a chat or start a new one.",
+    "newChat": "New chat",
     "login": {
         "welcomeTo": "Welcome to ...",
         "blurbPartOne": "A secure, intuitive, decentralized chat app running entirely on ",

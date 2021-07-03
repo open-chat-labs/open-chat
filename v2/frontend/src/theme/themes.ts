@@ -1,3 +1,10 @@
+const darkBase = "#121212";
+const dark10 = "#2b2b2b";
+const dark15 = "#383838";
+const dark20 = "#454545";
+const dark25 = "#525252";
+const dark60 = "#ababab";
+
 export interface Theme {
     name: string;
     label: string;
@@ -306,47 +313,47 @@ export const themes: Themes = {
         name: "batman",
         label: "Batman",
 
-        bg: "#121212",
-        txt: "#aaaaaa",
+        bg: darkBase,
+        txt: dark60,
         // error: "#800000",
         error: "#CF6679",
 
         input: {
             bg: "#555555",
-            txt: "#aaaaaa",
-            bd: "#333333",
+            txt: dark60,
+            bd: dark15,
         },
 
         participants: {
-            bg: "#252525",
-            txt: "#aaaaaa",
-            hv: "#353535",
-            bd: "#333333",
+            bg: dark20,
+            txt: dark60,
+            hv: dark15,
+            bd: dark15,
             header: {
-                bg: "#252525",
-                txt: "#aaaaaa",
-                bd: "#333333",
+                bg: dark20,
+                txt: dark60,
+                bd: dark15,
             },
         },
 
         entry: {
-            bg: "#252525",
-            bd: "#333333",
+            bg: dark20,
+            bd: dark15,
             input: {
                 bg: "#555555",
-                txt: "#aaaaaa",
+                txt: dark60,
             },
         },
 
         panel: {
-            bg: "#121212",
+            bg: "#2b2b2b",
         },
 
         currentUser: {
-            bd: "#333333",
-            bg: "#252525",
-            txt: "#aaaaaa",
-            ic: "#aaa",
+            bd: dark15,
+            bg: dark20,
+            txt: dark60,
+            ic: dark60,
         },
 
         avatar: {
@@ -356,23 +363,23 @@ export const themes: Themes = {
 
         chatSearch: {
             bg: "#555555",
-            txt: "#aaaaaa",
-            bd: "#333333",
+            txt: dark60,
+            bd: dark15,
         },
 
         chatSummary: {
-            bg: "#252525",
-            hv: "#353535",
-            txt1: "#aaaaaa",
+            bg: dark20,
+            hv: dark15,
+            txt1: dark60,
             txt2: "#888888",
-            bd: "#222222",
+            bd: dark10,
             "bd-selected": "#085d8c",
         },
 
         menu: {
-            bg: "#353535",
-            txt: "#aaaaaa",
-            bd: "#454545",
+            bg: dark15,
+            txt: dark60,
+            bd: dark20,
             hv: "#424242",
             sh: "0px 0px 30px 10px rgba(8,93,140,0.3)",
         },
@@ -382,8 +389,8 @@ export const themes: Themes = {
             hv: "#053d5c",
             txt: "#ffffff",
             bd: "transparent",
-            disabled: "#454545",
-            spinner: "#aaaaaa",
+            disabled: dark20,
+            spinner: dark60,
             "disabled-txt": "#999999",
         },
 
@@ -392,26 +399,26 @@ export const themes: Themes = {
         },
 
         modal: {
-            bg: "#252525",
-            txt: "#aaaaaa",
+            bg: dark20,
+            txt: dark60,
             sh: "0px 0px 30px 10px rgba(8,93,140,0.5)",
             filter: "blur(5px)",
             header: {
-                bg: "#252525",
-                txt: "#aaaaaa",
-                bd: "#333333",
+                bg: dark20,
+                txt: dark60,
+                bd: dark15,
             },
             footer: {
-                bg: "#252525",
-                txt: "#aaaaaa",
-                bd: "#333333",
+                bg: dark20,
+                txt: dark60,
+                bd: dark15,
             },
         },
 
         modalPage: {
             // bg: "rgba(8,93,140, 0.3)",
             bg: "rgba(0, 0, 0, 0.4)",
-            txt: "#aaaaaa",
+            txt: dark60,
             sh: "none",
             filter: "blur(10px)",
             bd: "1px inset rgba(255, 255, 255, 0.1)",
@@ -420,23 +427,23 @@ export const themes: Themes = {
 
         currentChat: {
             header: {
-                bg: "#252525",
-                txt: "#aaaaaa",
-                bd: "#333333",
+                bg: dark20,
+                txt: dark60,
+                bd: dark15,
             },
             msgs: {
                 bg: "transparent",
             },
 
             msg: {
-                bg: "#252525",
-                txt: "#aaaaaa",
-                hv: "#292929",
-                bd: "#333333",
+                bg: dark20,
+                txt: dark60,
+                hv: dark10,
+                bd: dark15,
 
                 me: {
                     bg: "#820041",
-                    txt: "#aaaaaa",
+                    txt: dark60,
                     hv: "#680034",
                     bd: "#820041",
                 },
@@ -444,10 +451,10 @@ export const themes: Themes = {
         },
 
         icon: {
-            color: "#555555",
-            hv: "#555555",
+            color: dark25,
+            hv: dark25,
         },
-        spinner: "#555555",
+        spinner: dark25,
     },
 };
 
