@@ -2,6 +2,7 @@ use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -19,22 +20,24 @@ impl UserMap {
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
 
-        if self.users_by_principal.contains_key(&principal) {
-            AddUserResult::AlreadyExists
-        } else if self.phone_number_to_principal.contains_key(phone_number) {
-            AddUserResult::PhoneNumberTaken
-        } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
-            AddUserResult::UsernameTaken
+        if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
+            if self.phone_number_to_principal.contains_key(phone_number) {
+                AddUserResult::PhoneNumberTaken
+            } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
+                AddUserResult::UsernameTaken
+            } else {
+                self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                if let Some(username) = maybe_username {
+                    self.username_to_principal.insert(username.to_string(), principal);
+                }
+                if let Some(user_id) = maybe_user_id {
+                    self.user_id_to_principal.insert(user_id, principal);
+                }
+                principal_entry.insert(user);
+                AddUserResult::Success
+            }
         } else {
-            self.phone_number_to_principal.insert(phone_number.clone(), principal);
-            if let Some(username) = maybe_username {
-                self.username_to_principal.insert(username.to_string(), principal);
-            }
-            if let Some(user_id) = maybe_user_id {
-                self.user_id_to_principal.insert(user_id, principal);
-            }
-            self.users_by_principal.insert(principal, user);
-            AddUserResult::Success
+            AddUserResult::AlreadyExists
         }
     }
 
