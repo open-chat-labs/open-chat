@@ -1,13 +1,13 @@
-<script lang="ts">
-    export let text: string;
-</script>
-
 <div class="menu-item" on:click>
-    {text}
+    <span class="icon">
+        <slot name="icon" />
+    </span>
+    <slot name="text" />
 </div>
 
 <style type="text/scss">
     .menu-item {
+        display: flex;
         padding: 10px;
         cursor: pointer;
         border-bottom: 1px solid var(--menu-bd);
@@ -20,6 +20,10 @@
 
         &:hover {
             background-color: var(--menu-hv);
+        }
+
+        .icon {
+            flex: 0 0 30px;
         }
     }
 </style>

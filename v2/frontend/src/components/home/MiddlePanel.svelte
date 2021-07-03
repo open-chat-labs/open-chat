@@ -5,7 +5,6 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
     import type { MiddlePanelState } from "./MiddlePanel.types";
-    import Loading from "../Loading.svelte";
     // import CurrentChat from "./CurrentChat.svelte";
     // import UnexpectedError from "../unexpectedError/UnexpectedError.svelte";
     // import Loading from "../Loading.svelte";
@@ -16,7 +15,7 @@
 
 <Panel middle {hideLeft}>
     {#if state === "loadingChats"}
-        <Loading />
+        <div />
     {:else if selectedChatId === undefined}
         <NoChatSelected on:newchat />
     {:else}

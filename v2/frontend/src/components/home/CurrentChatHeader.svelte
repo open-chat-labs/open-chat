@@ -37,11 +37,7 @@
         {/if}
     </MediaQuery>
     <span class="avatar">
-        <Avatar
-            status={UserStatus.Online}
-            url={chat.avatar}
-            size={AvatarSize.Small}
-        />
+        <Avatar status={UserStatus.Online} url={chat.avatar} size={AvatarSize.Small} />
     </span>
     <span class="chat-details">{chat.name}</span>
     <span class="menu">
@@ -53,14 +49,8 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem
-                        text="Leave group"
-                        on:click={() => console.log("one")}
-                    />
-                    <MenuItem
-                        text="Participants"
-                        on:click={navStore.showRight}
-                    />
+                    <MenuItem text="Leave group" on:click={() => console.log("one")} />
+                    <MenuItem text="Participants" on:click={navStore.showRight} />
                 </Menu>
             </span>
         </MenuIcon>

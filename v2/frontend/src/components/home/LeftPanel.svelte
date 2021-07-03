@@ -7,6 +7,8 @@
     import Loading from "../Loading.svelte";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat";
     import ChatSummary from "./ChatSummary.svelte";
+    import NewMessageFab from "./NewMessageFab.svelte";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
 
     export let state: LeftPanelState;
     export let user: User;
@@ -32,6 +34,9 @@
                         {chatSummary} />
                 {/each}
             </div>
+        {/if}
+        {#if $screenWidth === ScreenWidth.ExtraSmall}
+            <NewMessageFab on:newchat />
         {/if}
     </Panel>
 {/if}

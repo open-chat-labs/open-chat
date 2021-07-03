@@ -1,14 +1,22 @@
 <script lang="ts">
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import MessagePlus from "svelte-material-icons/MessagePlus.svelte";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
+    import Palette from "svelte-material-icons/Palette.svelte";
+    import ShieldLock from "svelte-material-icons/ShieldLock.svelte";
+    import TestTube from "svelte-material-icons/TestTube.svelte";
+    import Cog from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import MediaQuery from "../MediaQuery.svelte";
+    import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl, AvatarSize, UserStatus } from "../../domain/user";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { User } from "../../domain/user";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -27,14 +35,12 @@
         </HoverIcon>
     </span>
     <div class="current-user">
-        <MediaQuery query="(min-width: 576px)" let:matches>
-            {#if matches}
-                <Avatar
-                    url={avatarUrl(user.userId.toString())}
-                    status={UserStatus.Online}
-                    size={AvatarSize.Large} />
-            {/if}
-        </MediaQuery>
+        {#if $screenWidth !== ScreenWidth.ExtraSmall}
+            <Avatar
+                url={avatarUrl(user.userId.toString())}
+                status={UserStatus.Online}
+                size={AvatarSize.Large} />
+        {/if}
         <h4 class="name">{user.username}</h4>
     </div>
     <span class="menu">
@@ -46,19 +52,34 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem text="New chat" on:click={newChat} />
-                    <MenuItem text="New group" on:click={() => console.log("two")} />
-                    <MenuItem text="Join group" on:click={() => console.log("three")} />
-                    <MenuItem
-                        text="Change theme"
-                        on:click={() => modalStore.showModal(ModalType.ThemeSelection)} />
-                    <MenuItem text="Internet identity" on:click={() => console.log("four")} />
-                    <MenuItem
-                        text="Test mode"
-                        on:click={() => modalStore.showModal(ModalType.TestMode)} />
-                    <MenuItem
-                        text="Settings"
-                        on:click={() => console.log("launch settings modal")} />
+                    <MenuItem on:click={newChat}>
+                        <MessagePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">{$_("newChat")}</span>
+                    </MenuItem>
+                    <MenuItem on:click={newChat}>
+                        <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">New group</span>
+                    </MenuItem>
+                    <MenuItem on:click={newChat}>
+                        <AccountMultiplePlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Join group</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => modalStore.showModal(ModalType.ThemeSelection)}>
+                        <Palette size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Change theme</span>
+                    </MenuItem>
+                    <MenuItem on:click={newChat}>
+                        <ShieldLock size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Internet identity</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => modalStore.showModal(ModalType.TestMode)}>
+                        <TestTube size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Test mode</span>
+                    </MenuItem>
+                    <MenuItem on:click={newChat}>
+                        <Cog size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Settings</span>
+                    </MenuItem>
                 </Menu>
             </span>
         </MenuIcon>
