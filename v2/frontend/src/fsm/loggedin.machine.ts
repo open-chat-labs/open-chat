@@ -11,8 +11,6 @@ import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { User } from "../domain/user";
 import type { ChatSummary } from "../domain/chat";
-import { push } from "svelte-spa-router";
-import { log } from "xstate/lib/actions";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -29,17 +27,18 @@ export interface LoggedInContext {
 }
 
 export type LoggedInEvents =
-    | { type: "SET_SELECTED_CHAT_ID"; data: string }
+    | { type: "LOAD_MESSAGES"; data: string }
+    | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "done.invoke.getChats"; data: ChatSummary[] }
     | { type: "error.platform.getChats"; data: Error };
 
 const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
     guards: {
-        atLeastOneChat: (ctx, ev) => {
-            if (ev.type === "done.invoke.getChats") {
-                return ev.data.length > 0;
+        selectedChatIsValid: (ctx, ev) => {
+            if (ev.type === "LOAD_MESSAGES") {
+                return ctx.chats.findIndex((c) => c.chatId === ev.data) >= 0;
             }
-            return ctx.chats.length > 0;
+            return false;
         },
     },
     services: {
@@ -55,37 +54,8 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
     context: {
         chats: [],
     },
-    on: {
-        SET_SELECTED_CHAT_ID: {
-            // if we arrive at this outer handler it means we are not currently loading chats
-            // so we can immediately go off and try to load the messages
-            target: "loading_messages",
-            cond: "atLeastOneChat",
-            actions: assign({
-                selectedChatId: (ctx, ev) => {
-                    console.log("setting chat id from click");
-                    if (ev.type === "SET_SELECTED_CHAT_ID") {
-                        return ctx.chats.find((c) => c.chatId === ev.data)?.chatId;
-                    }
-                    return undefined;
-                },
-            }),
-        },
-    },
     states: {
         loading_chats: {
-            on: {
-                // we define this inside the loading state so that we can handle it slightly differently
-                SET_SELECTED_CHAT_ID: {
-                    actions: assign({
-                        selectedChatId: (_, ev) => {
-                            // because we are in the middle of loading chats we will just record the
-                            // selected chat id
-                            return ev.type === "SET_SELECTED_CHAT_ID" ? ev.data : undefined;
-                        },
-                    }),
-                },
-            },
             invoke: {
                 id: "getChats",
                 src: "getChats",
@@ -99,25 +69,6 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                             error: (_, _ev) => undefined,
                         }),
                     },
-                    // {
-                    //     target: "loading_messages",
-                    //     cond: "atLeastOneChat",
-                    //     actions: assign({
-                    //         chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
-                    //             return ev.type === "done.invoke.getChats" ? ev.data : [];
-                    //         },
-                    //         error: (_, _ev) => undefined,
-                    //     }),
-                    // },
-                    // {
-                    //     target: "idle",
-                    //     actions: assign({
-                    //         chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
-                    //             return ev.type === "done.invoke.getChats" ? ev.data : [];
-                    //         },
-                    //         error: (_, _ev) => undefined,
-                    //     }),
-                    // },
                 ],
                 onError: {
                     target: "unexpected_error",
@@ -127,24 +78,43 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                 },
             },
         },
-        loaded_chats: {},
-        idle: {},
-        loading_messages: {
-            entry: log("entering loading_messages"),
-            invoke: {
-                id: "loadMessages",
-                src: "loadMessages",
-                onDone: [
-                    {
-                        target: "idle",
-                    },
-                ],
-                onError: {
-                    target: "unexpected_error",
+        loaded_chats: {
+            initial: "idle",
+            id: "loaded_chats",
+            on: {
+                LOAD_MESSAGES: {
+                    // if we arrive at this outer handler it means we are not currently loading chats
+                    // so we can immediately go off and try to load the messages
+                    target: "loaded_chats.loading_messages",
+                    cond: "selectedChatIsValid",
+                },
+                CLEAR_SELECTED_CHAT: {
                     actions: assign({
-                        error: (_, { data }) => data,
+                        selectedChatId: (_ctx, _) => undefined,
                     }),
                 },
+            },
+            states: {
+                loading_messages: {
+                    entry: assign({
+                        selectedChatId: (ctx, ev) => {
+                            if (ev.type === "LOAD_MESSAGES") {
+                                return ctx.chats.find((c) => c.chatId === ev.data)?.chatId;
+                            }
+                            return undefined;
+                        },
+                    }),
+                    invoke: {
+                        id: "loadMessages",
+                        src: "loadMessages",
+                        onDone: [
+                            {
+                                target: "idle",
+                            },
+                        ],
+                    },
+                },
+                idle: {},
             },
         },
         unexpected_error: {

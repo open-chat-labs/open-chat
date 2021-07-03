@@ -21,23 +21,25 @@
     }
 </script>
 
-<div role="button" class="chat-summary" class:selected on:click={onSelect}>
-    <span class="avatar">
-        <Avatar
-            url={avatarUrl(chatSummary.chatId)}
-            status={UserStatus.Online}
-            size={AvatarSize.Small} />
-    </span>
-    <span class="details">
-        <h4 class="chat-name">{chatSummary.name}</h4>
-        <p class="chat-msg">{chatSummary.lastMessage}</p>
-    </span>
-    {#if $rtlStore}
-        <span class="icon"><ChevronLeft /></span>
-    {:else}
-        <span class="icon"><ChevronRight /></span>
-    {/if}
-</div>
+<a href={`/#/${chatSummary.chatId}`}>
+    <div role="button" class="chat-summary" class:selected>
+        <span class="avatar">
+            <Avatar
+                url={avatarUrl(chatSummary.chatId)}
+                status={UserStatus.Online}
+                size={AvatarSize.Small} />
+        </span>
+        <span class="details">
+            <h4 class="chat-name">{chatSummary.name}</h4>
+            <p class="chat-msg">{chatSummary.lastMessage}</p>
+        </span>
+        {#if $rtlStore}
+            <span class="icon"><ChevronLeft /></span>
+        {:else}
+            <span class="icon"><ChevronRight /></span>
+        {/if}
+    </div>
+</a>
 
 <style type="text/scss">
     @import "../../styles/mixins";

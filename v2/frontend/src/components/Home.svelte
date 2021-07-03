@@ -1,13 +1,12 @@
 <script lang="ts">
     import LeftPanel from "./leftPanel/LeftPanel.controller.svelte";
-    // import MiddlePanel from "./MiddlePanel.svelte";
+    import MiddlePanel from "./middlePanel/MiddlePanel.controller.svelte";
     // import { fly } from "svelte/transition";
     // import RightPanel from "./RightPanel.svelte";
     import TestModeModal from "./TestModeModal.svelte";
     import ThemePicker from "./ThemePicker.svelte";
     import Overlay from "./Overlay.svelte";
     import { modalStore, ModalType } from "../stores/modal";
-    import { navStore } from "../stores/nav";
     import { rtlStore } from "../stores/rtl";
     import { identityService } from "../fsm/identity.machine";
     import type { ActorRefFrom } from "xstate";
@@ -16,8 +15,7 @@
 
     $: loggedIn = $state.children.loggedInMachine as ActorRefFrom<LoggedInMachine>;
 
-    let hideLeft: boolean = false;
-    export let params: { chatId?: string } = {};
+    export let params: { chatId: string | null } = { chatId: null };
 
     function logout() {
         send({ type: "LOGOUT" });
@@ -29,8 +27,8 @@
 {#if $loggedIn.context.user}
     <main>
         <LeftPanel {params} machine={loggedIn} on:logout={logout} />
-        <!-- <MiddlePanel on:goback={() => (hideLeft = false)} {hideLeft} />
-        {#if $navStore}
+        <MiddlePanel machine={loggedIn} />
+        <!-- {#if $navStore}
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel />
             </div>
