@@ -65,10 +65,10 @@ pub enum Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
     use crate::model::data::Data;
     use crate::model::user::{CreatedUser, UnconfirmedUser};
     use crate::test::env::TestEnv;
+    use candid::Principal;
     use phonenumber::PhoneNumber;
     use std::str::FromStr;
 
@@ -87,16 +87,12 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "xyz".to_string()
+            username: "xyz".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
-        let user = runtime_state
-            .data
-            .users
-            .get_by_username("xyz")
-            .unwrap();
+        let user = runtime_state.data.users.get_by_username("xyz").unwrap();
 
         assert_eq!(user.get_username().unwrap(), "xyz");
     }
@@ -116,7 +112,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "abc".to_string()
+            username: "abc".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::Success));
@@ -145,7 +141,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "xyz".to_string()
+            username: "xyz".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTaken));
@@ -165,7 +161,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "abc".to_string()
+            username: "abc".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UserUnconfirmed));
@@ -186,7 +182,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "a a".to_string()
+            username: "a a".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UsernameInvalid));
@@ -207,7 +203,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "a".to_string()
+            username: "a".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooShort(2)));
@@ -228,7 +224,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let request = Request {
-            username: "abcdefghijklmnopqrstuvwxyz".to_string()
+            username: "abcdefghijklmnopqrstuvwxyz".to_string(),
         };
         let result = update(request, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooLong(25)));
