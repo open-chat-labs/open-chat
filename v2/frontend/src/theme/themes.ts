@@ -381,7 +381,8 @@ export const themes: Themes = {
             txt: dark60,
             bd: dark20,
             hv: "#424242",
-            sh: "0px 0px 30px 10px rgba(8,93,140,0.3)",
+            // sh: "0px 0px 30px 10px rgba(8,93,140,0.3)",
+            sh: "-10px 10px 10px 0px rgba(8,93,140,0.3)",
         },
 
         button: {
@@ -401,7 +402,8 @@ export const themes: Themes = {
         modal: {
             bg: dark20,
             txt: dark60,
-            sh: "0px 0px 30px 10px rgba(8,93,140,0.5)",
+            // sh: "0px 0px 30px 10px rgba(8,93,140,0.5)",
+            sh: "0px 0px 0px 10px rgba(8,93,140,0.4)",
             filter: "blur(5px)",
             header: {
                 bg: dark20,

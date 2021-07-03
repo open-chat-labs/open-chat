@@ -1,6 +1,7 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
     import Button from "../Button.svelte";
+    import Loading from "../Loading.svelte";
     import { push } from "svelte-spa-router";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
@@ -15,7 +16,11 @@
 
 <Panel middle {hideLeft}>
     {#if state === "loadingChats"}
-        <div />
+        {#if $screenWidth === ScreenWidth.ExtraSmall}
+            <div />
+        {:else}
+            <Loading />
+        {/if}
     {:else if selectedChatId === undefined}
         <NoChatSelected on:newchat />
     {:else}
