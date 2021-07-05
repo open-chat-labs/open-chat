@@ -55,17 +55,3 @@ pub fn user(request: user::Request) -> user::Response {
 pub fn users(request: users::Request) -> users::Response {
     RUNTIME_STATE.with(|state| users::query(request, state.borrow().as_ref().unwrap()))
 }
-
-#[query]
-pub fn user(request: user::Request) -> user::Response {
-    RUNTIME_STATE.with(|state| {
-        user::query(request, state.borrow().as_ref().unwrap())
-    })
-}
-
-#[query]
-pub fn users(request: users::Request) -> users::Response {
-    RUNTIME_STATE.with(|state| {
-        users::query(request, state.borrow().as_ref().unwrap())
-    })
-}

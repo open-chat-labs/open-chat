@@ -51,13 +51,6 @@ impl User {
         }
     }
 
-    pub fn created_user(&self) -> Option<&CreatedUser> {
-        match self {
-            User::Created(u) => Some(u),
-            _ => None
-        }
-    }
-
     #[allow(dead_code)]
     pub fn set_phone_number(&mut self, phone_number: PhoneNumber) {
         match self {
