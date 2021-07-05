@@ -2,7 +2,6 @@ use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
-use core::ops::{Deref};
 
 const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 
