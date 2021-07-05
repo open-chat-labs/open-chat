@@ -190,7 +190,9 @@ type MetricsRequest =
 
 type Metrics = 
     record {
-        user_count: nat64;
+        unconfirmed_user_count: nat64;
+        confirmed_user_count: nat64;
+        created_user_count: nat64;
         active_user_count: nat64;
         online_user_count: nat64;
         cycles_transferred: nat;
