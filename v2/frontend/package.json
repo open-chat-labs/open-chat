@@ -114,7 +114,7 @@
             "svelte"
         ],
         "moduleNameMapper": {
-            "dfx-generated/user_mgmt": "<rootDir>/.dfx/local/canisters/user_mgmt/user_mgmt.js"
+            "api-canisters/*": "<rootDir>/../backend/canisters/*"
         }
     }
 }

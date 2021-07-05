@@ -17,3 +17,11 @@
         <em>Enjoy! - Open Chat devs</em>
     </span>
 </ModalContent>
+
+<style type="text/scss">
+    @import "../styles/mixins";
+
+    ul {
+        margin: $sp4;
+    }
+</style>

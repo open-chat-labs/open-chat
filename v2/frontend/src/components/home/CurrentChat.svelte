@@ -1,9 +1,9 @@
 <script lang="ts">
     import type { ChatDetails } from "../services/chats";
 
-    import CurrentChatHeader from "./CurrentChatHeader.svelte";
-    import CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import MessageEntry from "./MessageEntry.svelte";
+    import CurrentChatHeader from "../CurrentChatHeader.svelte";
+    import CurrentChatMessages from "../CurrentChatMessages.svelte";
+    import MessageEntry from "../MessageEntry.svelte";
 
     export let chat: ChatDetails;
 </script>

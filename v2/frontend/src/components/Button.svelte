@@ -44,7 +44,6 @@
             cursor: not-allowed;
         }
 
-        // todo this needs theming
         &.secondary {
             background: var(--button-txt);
             color: var(--button-bg);

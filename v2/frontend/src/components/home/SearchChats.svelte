@@ -17,27 +17,23 @@
 
 <form on:submit|preventDefault={performSearch} class="wrapper">
     <span class="icon"><Magnify color={"#ccc"} /></span>
-    <input
-        bind:value={filter}
-        type="text"
-        placeholder="search chats, users and messages"
-    />
+    <input bind:value={filter} type="text" placeholder="search chats, users and messages" />
     {#if filter !== ""}
-        <span on:click={clearSearch} class="icon close"
-            ><Close color={"#ccc"} /></span
-        >
+        <span on:click={clearSearch} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
 </form>
 
 <style type="text/scss">
+    @import "../../styles/mixins";
+
     .wrapper {
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
-        padding: 10px 15px;
-        margin-bottom: 15px;
-        border-radius: 24px;
+        padding: $sp2 $sp4;
+        margin-bottom: $sp3;
+        border-radius: $sp5;
         border: 1px solid var(--chatSearch-bd);
     }
     .icon {
@@ -51,10 +47,10 @@
         color: var(--chatSearch-txt);
         outline: none;
         flex: 1;
-        padding: 5px;
+        padding: $sp3;
         margin: 0;
         border: none;
         width: 100%;
-        font-size: 12px;
+        @include font(book, normal, fs-100);
     }
 </style>

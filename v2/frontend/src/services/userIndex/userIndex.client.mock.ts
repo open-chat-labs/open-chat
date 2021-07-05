@@ -36,6 +36,16 @@ export class UserIndexClientMock implements IUserIndexClient {
         });
     }
 
+    normalUserScenario(): Promise<CurrentUserResponse> {
+        return Promise.resolve({
+            kind: "created_user",
+            userId: {} as Principal,
+            username: "julian_jelfs",
+            accountBalance: BigInt(10000),
+            upgradeRequired: false,
+        });
+    }
+
     requiredUpgradeScenario(): Promise<CurrentUserResponse> {
         if (this.count === 0) {
             this.count += 1;
@@ -52,13 +62,7 @@ export class UserIndexClientMock implements IUserIndexClient {
                 kind: "upgrade_in_progress",
             });
         } else {
-            return Promise.resolve({
-                kind: "created_user",
-                userId: {} as Principal,
-                username: "julian_jelfs",
-                accountBalance: BigInt(10000),
-                upgradeRequired: false,
-            });
+            return this.normalUserScenario();
         }
     }
 
@@ -106,6 +110,7 @@ export class UserIndexClientMock implements IUserIndexClient {
         // return this.confirmedUserScenario();
         // return this.uncomfirmedUserScenario();
         // return this.confirmedUserPendingCanister();
+        return this.normalUserScenario();
         return this.unknownUserScenario();
         return this.requiredUpgradeScenario();
     }

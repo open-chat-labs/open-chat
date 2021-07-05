@@ -9,7 +9,7 @@
     import Lazy from "./Lazy.svelte";
     import { emojiStore } from "../stores/emoji";
 
-    const EmojiPicker = () => import("./EmojiPicker.svelte");
+    const EmojiPicker = () => import("./middlePanel/EmojiPicker.svelte");
 
     let inp: HTMLDivElement;
     let showEmojiPicker = false;
@@ -104,8 +104,7 @@
         on:paste={onPaste}
         placeholder="Type a message"
         spellcheck={true}
-        on:keypress={checkEnter}
-    />
+        on:keypress={checkEnter} />
     <div class="send" on:click={sendMessage}>
         <HoverIcon>
             <Send size={"1.2em"} color={"#aaa"} />
