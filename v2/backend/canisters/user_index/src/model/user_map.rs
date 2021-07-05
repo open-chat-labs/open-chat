@@ -1,7 +1,8 @@
-use shared::time::TimestampMillis;
-use candid::Principal;
 use crate::model::user::User;
+use candid::Principal;
 use phonenumber::PhoneNumber;
+use shared::time::TimestampMillis;
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -19,22 +20,24 @@ impl UserMap {
         let maybe_username = user.get_username();
         let maybe_user_id = user.get_user_id();
 
-        if self.users_by_principal.contains_key(&principal) {
-            AddUserResult::AlreadyExists
-        } else if self.phone_number_to_principal.contains_key(phone_number) {
-            AddUserResult::PhoneNumberTaken
-        } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
-            AddUserResult::UsernameTaken
+        if let Vacant(principal_entry) = self.users_by_principal.entry(principal) {
+            if self.phone_number_to_principal.contains_key(phone_number) {
+                AddUserResult::PhoneNumberTaken
+            } else if maybe_username.is_some() && self.username_to_principal.contains_key(maybe_username.unwrap()) {
+                AddUserResult::UsernameTaken
+            } else {
+                self.phone_number_to_principal.insert(phone_number.clone(), principal);
+                if let Some(username) = maybe_username {
+                    self.username_to_principal.insert(username.to_string(), principal);
+                }
+                if let Some(user_id) = maybe_user_id {
+                    self.user_id_to_principal.insert(user_id, principal);
+                }
+                principal_entry.insert(user);
+                AddUserResult::Success
+            }
         } else {
-            self.phone_number_to_principal.insert(phone_number.clone(), principal);
-            if let Some(username) = maybe_username {
-                self.username_to_principal.insert(username.to_string(), principal);
-            }
-            if let Some(user_id) = maybe_user_id {
-                self.user_id_to_principal.insert(user_id, principal);
-            }
-            self.users_by_principal.insert(principal, user);
-            AddUserResult::Success
+            AddUserResult::AlreadyExists
         }
     }
 
@@ -103,16 +106,25 @@ impl UserMap {
 
     #[allow(dead_code)]
     pub fn get_by_user_id(&self, user_id: &Principal) -> Option<&User> {
-        self.user_id_to_principal.get(user_id).map(|p| self.users_by_principal.get(p)).flatten()
+        self.user_id_to_principal
+            .get(user_id)
+            .map(|p| self.users_by_principal.get(p))
+            .flatten()
     }
 
     pub fn get_by_phone_number(&self, phone_number: &PhoneNumber) -> Option<&User> {
-        self.phone_number_to_principal.get(phone_number).map(|p| self.users_by_principal.get(p)).flatten()
+        self.phone_number_to_principal
+            .get(phone_number)
+            .map(|p| self.users_by_principal.get(p))
+            .flatten()
     }
 
     #[allow(dead_code)]
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
-        self.username_to_principal.get(username).map(|p| self.users_by_principal.get(p)).flatten()
+        self.username_to_principal
+            .get(username)
+            .map(|p| self.users_by_principal.get(p))
+            .flatten()
     }
 
     pub fn remove_by_principal(&mut self, principal: &Principal) -> Option<User> {
@@ -148,10 +160,10 @@ pub enum UpdateUserResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser, CanisterCreationStatus};
+    use super::*;
+    use crate::model::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
     use std::str::FromStr;
-    use super::*;
 
     #[test]
     fn add_with_no_clashes() {
@@ -167,15 +179,15 @@ mod tests {
         let username2 = "2".to_string();
         let username3 = "3".to_string();
 
-        let user_id2 = Principal::from_slice(&[2,2]);
-        let user_id3 = Principal::from_slice(&[3,3]);
+        let user_id2 = Principal::from_slice(&[2, 2]);
+        let user_id3 = Principal::from_slice(&[3, 3]);
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
             phone_number: phone_number1.clone(),
             confirmation_code: "1".to_string(),
             date_generated: 1,
-            sms_messages_sent: 1
+            sms_messages_sent: 1,
         });
         user_map.add(unconfirmed.clone());
 
@@ -199,13 +211,43 @@ mod tests {
         });
         user_map.add(created.clone());
 
-        let users_by_principal: Vec<_> = user_map.users_by_principal.iter().map(|(p, u)| (p.clone(), u.clone())).sorted_by_key(|(p, _)| *p).collect();
-        let phone_number_to_principal: Vec<_> = user_map.phone_number_to_principal.iter().map(|(ph, p)| (ph.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
-        let username_to_principal: Vec<_> = user_map.username_to_principal.iter().map(|(u, p)| (u.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
-        let user_id_to_principal: Vec<_> = user_map.user_id_to_principal.iter().map(|(u, p)| (u.clone(), p.clone())).sorted_by_key(|(_, p)| *p).collect();
+        let users_by_principal: Vec<_> = user_map
+            .users_by_principal
+            .iter()
+            .map(|(p, u)| (p.clone(), u.clone()))
+            .sorted_by_key(|(p, _)| *p)
+            .collect();
+        let phone_number_to_principal: Vec<_> = user_map
+            .phone_number_to_principal
+            .iter()
+            .map(|(ph, p)| (ph.clone(), p.clone()))
+            .sorted_by_key(|(_, p)| *p)
+            .collect();
+        let username_to_principal: Vec<_> = user_map
+            .username_to_principal
+            .iter()
+            .map(|(u, p)| (u.clone(), p.clone()))
+            .sorted_by_key(|(_, p)| *p)
+            .collect();
+        let user_id_to_principal: Vec<_> = user_map
+            .user_id_to_principal
+            .iter()
+            .map(|(u, p)| (u.clone(), p.clone()))
+            .sorted_by_key(|(_, p)| *p)
+            .collect();
 
-        assert_eq!(users_by_principal, vec!((principal1, unconfirmed), (principal2, confirmed), (principal3, created)));
-        assert_eq!(phone_number_to_principal, vec!((phone_number1, principal1), (phone_number2, principal2), (phone_number3, principal3)));
+        assert_eq!(
+            users_by_principal,
+            vec!((principal1, unconfirmed), (principal2, confirmed), (principal3, created))
+        );
+        assert_eq!(
+            phone_number_to_principal,
+            vec!(
+                (phone_number1, principal1),
+                (phone_number2, principal2),
+                (phone_number3, principal3)
+            )
+        );
         assert_eq!(username_to_principal, vec!((username2, principal2), (username3, principal3)));
         assert_eq!(user_id_to_principal, vec!((user_id2, principal2), (user_id3, principal3)));
     }
@@ -223,7 +265,7 @@ mod tests {
             phone_number: phone_number1.clone(),
             confirmation_code: "1".to_string(),
             date_generated: 1,
-            sms_messages_sent: 1
+            sms_messages_sent: 1,
         });
         user_map.add(unconfirmed);
 
@@ -252,7 +294,7 @@ mod tests {
             phone_number: phone_number.clone(),
             confirmation_code: "1".to_string(),
             date_generated: 1,
-            sms_messages_sent: 1
+            sms_messages_sent: 1,
         });
         user_map.add(unconfirmed);
 
@@ -312,7 +354,7 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id = Principal::from_slice(&[1,1]);
+        let user_id = Principal::from_slice(&[1, 1]);
 
         let original = User::Created(CreatedUser {
             principal,
@@ -348,8 +390,8 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id1 = Principal::from_slice(&[1,1]);
-        let user_id2 = Principal::from_slice(&[2,2]);
+        let user_id1 = Principal::from_slice(&[1, 1]);
+        let user_id2 = Principal::from_slice(&[2, 2]);
 
         let original = User::Created(CreatedUser {
             principal: principal1,
@@ -389,8 +431,8 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id1 = Principal::from_slice(&[1,1]);
-        let user_id2 = Principal::from_slice(&[2,2]);
+        let user_id1 = Principal::from_slice(&[1, 1]);
+        let user_id2 = Principal::from_slice(&[2, 2]);
 
         let original = User::Created(CreatedUser {
             principal: principal1,
@@ -432,15 +474,15 @@ mod tests {
         let username2 = "2".to_string();
         let username3 = "3".to_string();
 
-        let user_id2 = Principal::from_slice(&[2,2]);
-        let user_id3 = Principal::from_slice(&[3,3]);
+        let user_id2 = Principal::from_slice(&[2, 2]);
+        let user_id3 = Principal::from_slice(&[3, 3]);
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
             phone_number: phone_number1.clone(),
             confirmation_code: "1".to_string(),
             date_generated: 1,
-            sms_messages_sent: 1
+            sms_messages_sent: 1,
         });
         user_map.add(unconfirmed.clone());
 

@@ -110,8 +110,6 @@ export class UserIndexClientMock implements IUserIndexClient {
         // return this.confirmedUserScenario();
         // return this.uncomfirmedUserScenario();
         // return this.confirmedUserPendingCanister();
-        // return this.unknownUserScenario();
-        return this.normalUserScenario();
         return this.unknownUserScenario();
         return this.requiredUpgradeScenario();
     }
