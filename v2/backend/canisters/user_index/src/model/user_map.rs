@@ -2,6 +2,7 @@ use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
+use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
@@ -141,6 +142,11 @@ impl UserMap {
         } else {
             None
         }
+    }
+
+    /// Iterate through all the Users in the primary map
+    pub fn iter(&self) -> hash_map::Values<'_, Principal, User> {
+        self.users_by_principal.values()
     }
 }
 

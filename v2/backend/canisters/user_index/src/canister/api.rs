@@ -1,6 +1,7 @@
 use crate::canister::RUNTIME_STATE;
 use crate::queries::current_user;
 use crate::queries::pending_sms_messages;
+use crate::queries::search;
 use crate::queries::user;
 use crate::queries::users;
 use crate::updates::confirm_phone_number;
@@ -54,4 +55,9 @@ pub fn user(request: user::Request) -> user::Response {
 #[query]
 pub fn users(request: users::Request) -> users::Response {
     RUNTIME_STATE.with(|state| users::query(request, state.borrow().as_ref().unwrap()))
+}
+
+#[query]
+pub fn search(request: search::Request) -> search::Response {
+    RUNTIME_STATE.with(|state| search::query(request, state.borrow().as_ref().unwrap()))
 }
