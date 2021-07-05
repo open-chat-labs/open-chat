@@ -1,5 +1,5 @@
 [package]
-name = "user_index"
+name = "user"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
@@ -10,8 +10,5 @@ edition = "2018"
 candid = "0.6.21"
 ic-cdk = "0.3.0"
 ic-cdk-macros = "0.3.0"
-itertools = "0.10.1"
-phonenumber = "0.3.1"
-rand = "0.8.4"
 serde = "1.0.126"
 shared = { path = "../../shared" }

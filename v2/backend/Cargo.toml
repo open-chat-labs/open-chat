@@ -1,5 +1,8 @@
 [workspace]
 members = [
+    "canisters/group",
+    "canisters/group_index",
+    "canisters/user",
     "canisters/user_index",
     "shared",
 ]
