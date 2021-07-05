@@ -144,8 +144,7 @@ impl UserMap {
         }
     }
 
-    /// Iterate through all the Users in the primary map
-    pub fn iter(&self) -> hash_map::Values<'_, Principal, User> {
+    pub fn values(&self) -> hash_map::Values<'_, Principal, User> {
         self.users_by_principal.values()
     }
 }

@@ -5,16 +5,19 @@ use candid::CandidType;
 use core::cmp::Ordering;
 use serde::Deserialize;
 
+const MAX_SEARCH_TERM_LENGTH: usize = 25;
+
 pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let caller = runtime_state.env.caller();
-    let search_term = request.search_term;
     let users = &runtime_state.data.users;
+    let mut search_term = request.search_term;
+    search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
     let search_term_lower = search_term.to_lowercase();
     let mut matches: Vec<&CreatedUser> = users
-        .iter()
+        .values()
         .filter_map(|u| u.created_user())
         .filter(|u| username_matches(&search_term_lower, &u.username) && u.user_id != caller)
         .collect();
@@ -23,13 +26,13 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
     matches.sort_unstable_by(|u1, u2| order_usernames(&search_term, &u1.username, &u2.username));
 
     // Page
-    let users = matches
+    let results = matches
         .iter()
         .take(request.max_results as usize)
         .map(|u| UserSummary::new(u, Some(now)))
         .collect();
 
-    Response::Success(Result { users })
+    Response::Success(Result { users: results })
 }
 
 fn username_matches(search_term_lower: &str, username: &str) -> bool {
@@ -40,25 +43,19 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
     let u1_starts = u1.starts_with(&search_term);
     let u2_starts = u2.starts_with(&search_term);
 
-    if u1_starts && u2_starts {
-        if u1.len() < u2.len() {
-            return Ordering::Less;
-        } else if u1.len() > u2.len() {
-            return Ordering::Greater;
+    if u1_starts != u2_starts {
+        if u1_starts {
+            Ordering::Less
+        } else {
+            Ordering::Greater
         }
-    } else if u1_starts {
-        return Ordering::Less;
-    } else if u2_starts {
-        return Ordering::Greater;
+    } else {
+        match u1.len().cmp(&u2.len()) {
+            Ordering::Less => Ordering::Less,
+            Ordering::Equal => u1.cmp(&u2),
+            Ordering::Greater => Ordering::Greater,
+        }
     }
-
-    if u1.len() < u2.len() {
-        return Ordering::Less;
-    } else if u1.len() > u2.len() {
-        return Ordering::Greater;
-    }
-
-    u1.cmp(&u2)
 }
 
 #[derive(Deserialize)]
@@ -151,6 +148,22 @@ mod tests {
         let Response::Success(results) = response;
         assert_eq!("jUlian", results.users[0].username());
         assert_eq!("julian", results.users[1].username());
+    }
+
+    #[test]
+    fn search_with_zero_length_term_matches_all_users() {
+        let runtime_state = setup_runtime_state();
+
+        let response = query(
+            Request {
+                max_results: 10,
+                search_term: "".to_string(),
+            },
+            &runtime_state,
+        );
+
+        let Response::Success(results) = response;
+        assert_eq!(9, results.users.len());
     }
 
     fn setup_runtime_state() -> RuntimeState {
