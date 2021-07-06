@@ -25,4 +25,9 @@ impl UserSummary {
             seconds_since_last_online,
         }
     }
+
+    #[allow(dead_code)]
+    pub fn username(&self) -> &str {
+        &self.username
+    }
 }

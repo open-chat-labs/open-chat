@@ -1,4 +1,4 @@
-type PendingSmsMessagesRequest =
+type PendingSmsMessagesArgs =
     record {
         from_index: nat64;
         max_results: nat64;
@@ -20,5 +20,5 @@ type PendingSmsMessagesResponse =
 
 service : {
     // Get a page of pending SMS notifications to send and mark them as sent
-    pending_sms_messages: (PendingSmsMessagesRequest) -> (PendingSmsMessagesResponse) query;
+    pending_sms_messages: (PendingSmsMessagesArgs) -> (PendingSmsMessagesResponse) query;
 }

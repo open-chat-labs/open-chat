@@ -8,7 +8,7 @@
         OpenChat is running in test mode.
 
         <ul>
-            <li>Maximum users 10,000</li>
+            <li>Maximum users 20,000</li>
             <li>Old media files scavenged</li>
             <li>Dummy cycle balances</li>
             <li>Accounts may get reset on beta release</li>

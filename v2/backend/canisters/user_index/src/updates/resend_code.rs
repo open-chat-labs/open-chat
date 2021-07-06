@@ -25,7 +25,7 @@ pub fn update(runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {}
+pub struct Args {}
 
 #[derive(CandidType)]
 pub enum Response {

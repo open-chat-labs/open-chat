@@ -5,7 +5,7 @@ use candid::CandidType;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 
-pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
@@ -17,7 +17,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
                 let has_code_expired = now > code_expires_at;
                 if has_code_expired {
                     return Response::ConfirmationCodeExpired;
-                } else if request.confirmation_code != u.confirmation_code {
+                } else if args.confirmation_code != u.confirmation_code {
                     return Response::ConfirmationCodeIncorrect;
                 } else {
                     phone_number = u.phone_number.clone();
@@ -43,7 +43,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     confirmation_code: String,
 }
 
@@ -79,8 +79,8 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request { confirmation_code };
-        let result = update(request, &mut runtime_state);
+        let args = Args { confirmation_code };
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state
@@ -104,10 +104,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             confirmation_code: "123457".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeIncorrect));
     }
 
@@ -126,8 +126,8 @@ mod tests {
         env.now += CONFIRMATION_CODE_EXPIRY_MILLIS + 1;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request { confirmation_code };
-        let result = update(request, &mut runtime_state);
+        let args = Args { confirmation_code };
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeExpired));
     }
 
@@ -145,10 +145,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             confirmation_code: "123456".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyClaimed));
     }
 
@@ -158,10 +158,10 @@ mod tests {
         let data = Data::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             confirmation_code: "123456".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UserNotFound));
     }
 }

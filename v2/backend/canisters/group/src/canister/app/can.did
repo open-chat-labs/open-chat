@@ -1,0 +1,371 @@
+type TimestampMillis = nat64;
+type CanisterId = principal;
+type UserId = CanisterId;
+type GroupId = CanisterId;
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type BlobReference = 
+    record {
+        canister_id: CanisterId;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type MediaContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type MessageContent =
+    variant {
+        Text: TextContent;
+        Media: MediaContent;
+        File: FileContent;
+    };
+
+type ReplyContext =
+    record {
+        user_id: UserId;
+        message_id: nat32;
+        content: MessageContent;
+    };
+
+type Message =
+    record {
+        id: nat32;
+        client_message_id: text;
+        timestamp: TimestampMillis;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
+type SendMessageArgs =
+    record {
+        client_message_id: text;
+        content: MessageContent;
+        replies_to: opt ReplyContext;
+    };
+
+type SendMessageResponse =
+    variant {
+        Success: record {
+            chat_summary: record {
+                display_date: TimestampMillis;
+                last_updated: TimestampMillis;
+                min_visible_message_id: nat32;
+                unread_by_me_message_id_ranges: vec vec nat32;
+                unread_by_any_message_id_ranges: vec vec nat32;
+            };
+            message_index: nat32;
+            timestamp: TimestampMillis;
+        };
+        RecipientNotFound;
+        BalanceExceeded;
+        MessageTooLong: nat32;
+        InvalidRequest;
+        SenderBlocked;
+        RecipientBlocked;
+    }; 
+
+type MarkReadArgs =
+    record {
+        user_id: UserId;
+        from_index: nat32;
+        to_index: nat32;
+    };
+
+type MarkReadResponse =
+    variant {
+        Success: record {
+            unread_message_id_ranges: vec vec nat32;
+        };
+        ChatNotFound;
+    }; 
+
+type SetAvatarArgs =
+    record {
+        mime_type: text;
+        bytes: vec nat8;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        FileTooBig: nat32;
+        InvalidMimeType: nat32;
+    }; 
+
+// TODO
+type InviteUsersArgs =
+    record {
+    };
+
+// TODO
+type InviteUsersResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type JoinGroupArgs =
+    record {
+    };
+
+// TODO
+type JoinGroupResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type BlockUserArgs =
+    record {
+    };
+
+// TODO
+type BlockUserResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type UnblockUserArgs =
+    record {
+    };
+
+// TODO
+type UnblockUserResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type AddParticipantsArgs =
+    record {
+    };
+
+// TODO
+type AddParticipantsResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type RemoveParticipantsArgs =
+    record {
+    };
+
+// TODO
+type RemoveParticipantsResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type MakeAdminArgs =
+    record {
+    };
+
+// TODO
+type MakeAdminResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type RemoveAdminArgs =
+    record {
+    };
+
+// TODO
+type RemoveAdminResponse =
+    variant {
+        Success;
+    }; 
+
+// TODO
+type LeaveGroupArgs =
+    record {
+    };
+
+// TODO
+type LeaveGroupResponse =
+    variant {
+        Success;
+    }; 
+
+type PutChunkArgs =
+    record {
+        blob_id: nat;
+        index: nat32;
+        bytes: vec nat8;
+    };
+
+type PutChunkResponse =
+    variant {
+        Success;
+        Full;
+    }; 
+
+type GetGroupArgs =
+    record {
+    };
+
+type GetGroupResponse =
+    variant {
+        Success: record {
+            subject: text;
+            display_date: TimestampMillis;
+            last_updated: TimestampMillis;
+            min_visible_message_id: nat32;
+            participants: vec UserId;
+            unread_by_me_message_id_ranges: vec vec nat32;
+            unread_by_any_message_id_ranges: vec vec nat32;
+            latest_messages: vec Message;
+        };
+    };
+
+type GetChunkArgs =
+    record {
+        blob_id: nat;
+        index: nat32;
+    };
+
+type GetChunkResponse =
+    variant {
+        Success: record {
+            bytes: vec nat8;
+        };
+        NotFound;
+    };
+
+type GetMessagesArgs =
+    record {
+        from_index: nat32;
+        to_index: nat32;
+    };
+
+type GetMessagesSuccess =
+    record {
+        messages: vec Message;
+        latest_message_id: nat32;
+    };
+
+type GetMessagesResponse =
+    variant {
+        Success: GetMessagesSuccess;
+        ChatNotFound;
+    }; 
+
+type GetMessagesByIndexArgs =
+    record {
+        messages: vec nat32;
+    };
+
+type GetMessagesByIndexResponse =
+    variant {
+        Success: GetMessagesSuccess;
+        ChatNotFound;
+    }; 
+
+type SearchMessagesArgs =
+    record {
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchMessagesResponse =
+    variant {
+        Success: record {
+            matches: vec record {
+                message: Message;
+                score: nat32;
+            };
+        };
+        Failure;
+    }; 
+
+type MetricsArgs =
+    record {
+    };
+
+type MetricsResponse = 
+    record {
+        text_message_count: nat64;
+        image_message_count: nat64;
+        video_message_count: nat64;
+        file_message_count: nat64;
+        cycles_balance: int64;
+        bytes_used: nat64;
+        blob_bytes_used: nat64;
+        chunk_count: nat32;
+        timestamp: TimestampMillis;
+        caller_id: principal;
+        wasm_memory_used: nat64;
+    };
+
+service: {
+    send_message: (SendMessageArgs) -> (SendMessageResponse);
+    mark_read: (MarkReadArgs) -> (MarkReadResponse);
+
+    // Admin only
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+
+    // Public only
+    invite_users: (InviteUsersArgs) -> (InviteUsersResponse);
+
+    // Public only
+    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    
+    // Admin only - public only
+    block_user: (BlockUserArgs) -> (BlockUserResponse); 
+
+    // Admin only - public only
+    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
+
+    // Admin only - Private only
+    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
+
+    // Admin only - Private only
+    remove_participants: (RemoveParticipantsArgs) -> (RemoveParticipantsResponse);
+
+    // Admin only
+    make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
+
+    // Admin only
+    remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
+
+    leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
+
+    put_chunk: (PutChunkArgs) -> (PutChunkResponse);
+
+    get_group: (GetGroupArgs) -> (GetGroupResponse) query;
+        
+    get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
+    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
+
+    // Use Tantivy
+    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;
+    
+    get_chunk: (GetChunkArgs) -> (GetChunkResponse) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
+}
