@@ -5,6 +5,8 @@ import type {
     ConfirmPhoneNumberResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersResponse,
+    UserSummary,
 } from "../../domain/user";
 import type {
     ApiConfirmPhoneNumberResponse,
@@ -13,7 +15,27 @@ import type {
     ApiResendCodeResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiUsersResponse,
+    ApiUserSummary,
 } from "api-canisters/user_index/src/canister/app/idl";
+
+export function usersResponse(candid: ApiUsersResponse): UsersResponse {
+    if ("Success" in candid) {
+        return {
+            timestamp: candid.Success.timestamp,
+            users: candid.Success.users.map(userSummary),
+        };
+    }
+    throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
+}
+
+export function userSummary(candid: ApiUserSummary): UserSummary {
+    return {
+        userId: candid.user_id.toString(),
+        username: candid.username,
+        secondsSinceLastOnline: candid.seconds_since_last_online,
+    };
+}
 
 export function submitPhoneNumberResponse(
     candid: ApiSubmitPhoneNumberResponse

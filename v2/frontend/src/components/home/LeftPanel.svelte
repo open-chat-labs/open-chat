@@ -3,16 +3,20 @@
     import CurrentUser from "./CurrentUser.svelte";
     import SearchChats from "./SearchChats.svelte";
     import { avatarUrl, UserStatus } from "../../domain/user";
+    import type { UserLookup } from "../../domain/user";
     import type { User } from "../../domain/user";
     import type { LeftPanelState } from "./LeftPanel.types";
     import Loading from "../Loading.svelte";
-    import type { ChatSummary as ChatSummaryType } from "../../domain/chat";
+    import { getContentAsText } from "../../domain/chat";
+    import type { ChatSummary as ChatSummaryType, DirectChatSummary } from "../../domain/chat";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { _ } from "svelte-i18n";
 
     export let state: LeftPanelState;
     export let user: User;
+    export let users: UserLookup;
     export let chatSummaries: ChatSummaryType[] = [];
     export let selectedChatId: bigint | undefined;
     export let hideLeft = false;
@@ -23,16 +27,26 @@
         return lastestMessageId - lastReadByUs;
     }
 
+    function userStatus({ them }: DirectChatSummary): UserStatus {
+        return (users[them]?.secondsSinceLastOnline ?? Number.MAX_VALUE) < 120
+            ? UserStatus.Online
+            : UserStatus.Offline;
+    }
+
+    function latestMessageText({ latestMessage }: ChatSummaryType): string {
+        return latestMessage ? getContentAsText(latestMessage.content) : "";
+    }
+
     function chatSummaryProps(chatSummary: ChatSummaryType) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 selected: chatSummary.chatId === selectedChatId,
                 chatId: chatSummary.chatId,
                 date: chatSummary.displayDate,
-                name: "TODO - look up the username",
-                lastMessage: "TODO - str summary of latest message",
-                avatarUrl: avatarUrl(chatSummary.them.toString()),
-                userStatus: UserStatus.Online, // todo - work out if the other user is online
+                name: users[chatSummary.them]?.username,
+                lastMessage: latestMessageText(chatSummary),
+                avatarUrl: avatarUrl(chatSummary.them),
+                userStatus: userStatus(chatSummary),
                 unreadMessages: unreadMessages(chatSummary),
             };
         }
@@ -41,9 +55,10 @@
             chatId: chatSummary.chatId,
             date: chatSummary.displayDate,
             name: chatSummary.subject,
-            lastMessage: "TODO - str summary of latest message",
+            lastMessage: latestMessageText(chatSummary),
             userStatus: UserStatus.None,
             unreadMessages: unreadMessages(chatSummary),
+            avatarUrl: undefined,
         };
     }
 </script>

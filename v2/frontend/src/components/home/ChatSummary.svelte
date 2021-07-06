@@ -10,7 +10,7 @@
     export let selected: boolean;
     export let chatId: bigint;
     export let date: bigint;
-    export let name: string;
+    export let name: string | undefined;
     export let lastMessage: string;
     export let avatarUrl: string | undefined;
     export let userStatus: UserStatus;
@@ -29,11 +29,13 @@
             <p class="chat-date">{formatMessageDate(new Date(Number(date)))}</p>
         </div>
         <div class="chat-msg">{lastMessage}</div>
-        <div
-            title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
-            class="unread-msgs">
-            {unreadMessages > 9 ? "9+" : unreadMessages}
-        </div>
+        {#if unreadMessages > 0}
+            <div
+                title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
+                class="unread-msgs">
+                {unreadMessages > 9 ? "9+" : unreadMessages}
+            </div>
+        {/if}
     </div>
     {#if $rtlStore}
         <div class="icon rtl"><ChevronLeft /></div>

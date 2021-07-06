@@ -1,9 +1,27 @@
 import type { Principal } from "@dfinity/principal";
 
+export type UserSummary = {
+    userId: string;
+    username: string;
+    secondsSinceLastOnline: number;
+};
+
+export type UserLookup = Record<string, UserSummary>;
+
 export type User = {
-    userId: Principal;
+    userId: string;
     username: string;
     accountBalance: bigint;
+};
+
+export type UsersArgs = {
+    users: string[];
+    updatedSince?: bigint;
+};
+
+export type UsersResponse = {
+    timestamp: bigint;
+    users: UserSummary[];
 };
 
 export function avatarUrl(userId: string): string {
@@ -65,7 +83,7 @@ export type ConfirmedPendingUsername = {
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    userId: Principal;
+    userId: string;
     accountBalance: bigint;
     upgradeRequired: boolean;
 };

@@ -13,13 +13,11 @@ import UserService, {
   TextContent,
   MediaContent,
   CyclesContent,
-  Timestamp,
+  TimestampMillis,
   BlobReference,
-  User,
-} from "./canister_types";
+} from "./types";
 export {
   UserService,
-  User as ApiUser,
   GetChatsArgs as ApiGetChatsArgs,
   GetChatsResponse as ApiGetChatsResponse,
   ChatSummary as ApiChatSummary,
@@ -33,7 +31,7 @@ export {
   TextContent as ApiTextContent,
   MediaContent as ApiMediaContent,
   CyclesContent as ApiCyclesContent,
-  Timestamp as ApiTimestamp,
+  TimestampMillis as ApiTimestampMillis,
   BlobReference as ApiBlobReference,
 };
 

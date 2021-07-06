@@ -9,12 +9,12 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     // import { rtlStore } from "../../stores/rtl";
-    import type { LoggedInMachine } from "../../fsm/loggedin.machine";
+    import type { HomeMachine } from "../../fsm/home.machine";
     import type { LeftPanelState } from "./LeftPanel.types";
     import type { ChatSummary } from "../../domain/chat";
     import { push, replace } from "svelte-spa-router";
     import type { MiddlePanelState } from "./MiddlePanel.types";
-    export let machine: ActorRefFrom<LoggedInMachine>;
+    export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
     let leftState: LeftPanelState = "loadingChats";
     let middleState: MiddlePanelState = "loadingChats";
@@ -71,6 +71,7 @@
 {#if $machine.context.user}
     <main>
         <LeftPanel
+            users={$machine.context.userLookup}
             hideLeft={params.chatId !== null}
             chatSummaries={$machine.context.chats}
             selectedChatId={$machine.context.selectedChatId}

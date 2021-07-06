@@ -53,7 +53,7 @@ export interface GetChatsArgs {
   updated_since: [] | [TimestampMillis];
 }
 export type GetChatsResponse = {
-  Success: { chats: Array<ChatSummary>; users: Array<User> };
+  Success: { chats: Array<ChatSummary> };
 };
 export interface GetChunkArgs {
   blob_id: bigint;
@@ -235,11 +235,6 @@ export interface TextContent {
   text: string;
 }
 export type TimestampMillis = bigint;
-export interface User {
-  username: string;
-  last_online: TimestampMillis;
-  user_id: UserId;
-}
 export interface UnblockUserArgs {
   user_id: UserId;
 }

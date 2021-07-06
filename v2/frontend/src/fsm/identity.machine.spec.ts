@@ -12,7 +12,7 @@ type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
 const fakeUser: CurrentUserResponse = {
     kind: "created_user",
-    userId: {} as Principal,
+    userId: "abcdefg",
     username: "julian_jelfs",
     accountBalance: BigInt(10000),
     upgradeRequired: false,
@@ -46,7 +46,7 @@ function testConfig(): Config {
             getIdentity: jest.fn().mockResolvedValue(fakeIdentity),
             startSession: jest.fn().mockResolvedValue(undefined),
             upgradeUser: jest.fn().mockResolvedValue(undefined),
-            loggedInMachine: jest.fn().mockResolvedValue(undefined),
+            homeMachine: jest.fn().mockResolvedValue(undefined),
             registerMachine: jest.fn().mockResolvedValue(undefined),
         },
     };
@@ -278,7 +278,7 @@ describe("identity machine transitions", () => {
                 type: "done.invoke.getUser",
                 data: {
                     kind: "created_user",
-                    userId: {} as Principal,
+                    userId: "abcdefg",
                     username: "julian_jelfs",
                     accountBalance: BigInt(10000),
                     upgradeRequired: true,

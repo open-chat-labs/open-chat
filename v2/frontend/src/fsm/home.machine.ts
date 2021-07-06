@@ -9,8 +9,8 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary, GetChatsResponse, UserSummary } from "../domain/chat";
-import type { User } from "../domain/user";
+import { ChatSummary, userIdsFromChatSummaries } from "../domain/chat";
+import type { User, UserLookup, UserSummary } from "../domain/user";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -18,22 +18,35 @@ if (typeof window !== "undefined") {
     });
 }
 
-export interface LoggedInContext {
-    serviceContainer?: ServiceContainer;
-    user?: User;
-    chats: ChatSummary[];
-    users: UserSummary[]; //todo let's make this is lookup
-    selectedChatId?: bigint;
-    error?: Error;
+function missingUserIds(userLookup: UserLookup, userIds: string[]): string[] {
+    return userIds.filter((userId) => userLookup[userId] === undefined);
 }
 
-export type LoggedInEvents =
+function mergeUsers(userLookup: UserLookup, users: UserSummary[]): UserLookup {
+    return users.reduce<UserLookup>((lookup, user) => {
+        lookup[user.userId] = user;
+        return lookup;
+    }, userLookup);
+}
+
+export interface HomeContext {
+    serviceContainer?: ServiceContainer;
+    user?: User; // currently signed in user
+    chats: ChatSummary[]; // the list of chats
+    selectedChatId?: bigint; // the id of the selected chat
+    error?: Error; // any error that might have occurred
+    userLookup: UserLookup; // a lookup of user summaries
+}
+
+type ChatsResponse = { chats: ChatSummary[]; users: UserSummary[] };
+
+export type HomeEvents =
     | { type: "LOAD_MESSAGES"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
-    | { type: "done.invoke.getChats"; data: GetChatsResponse }
+    | { type: "done.invoke.getChats"; data: ChatsResponse }
     | { type: "error.platform.getChats"; data: Error };
 
-const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
+const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "LOAD_MESSAGES") {
@@ -43,18 +56,28 @@ const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
         },
     },
     services: {
-        getChats: (ctx, _) => ctx.serviceContainer!.getChats(),
+        getChats: async (ctx, _) => {
+            const { chats } = await ctx.serviceContainer!.getChats();
+            const userIds = userIdsFromChatSummaries(chats);
+            const { users } = await ctx.serviceContainer!.getUsers(
+                missingUserIds(ctx.userLookup, userIds)
+            );
+            return {
+                chats,
+                users,
+            };
+        },
         loadMessages: (_ctx, _) => new Promise((resolve) => setTimeout(resolve, 2000)),
     },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
+export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
     id: "logged_in_machine",
     initial: "loading_chats",
     context: {
         chats: [],
-        users: [],
+        userLookup: {},
     },
     states: {
         loading_chats: {
@@ -65,11 +88,14 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                     {
                         target: "loaded_chats",
                         actions: assign({
-                            chats: (_, ev: DoneInvokeEvent<GetChatsResponse>) => {
+                            chats: (_, ev: DoneInvokeEvent<ChatsResponse>) => {
                                 return ev.type === "done.invoke.getChats" ? ev.data.chats : [];
                             },
-                            users: (_, ev: DoneInvokeEvent<GetChatsResponse>) => {
-                                return ev.type === "done.invoke.getChats" ? ev.data.users : [];
+                            userLookup: (ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
+                                if (ev.type === "done.invoke.getChats") {
+                                    return mergeUsers(ctx.userLookup, ev.data.users);
+                                }
+                                return ctx.userLookup;
                             },
                             error: (_, _ev) => undefined,
                         }),
@@ -125,12 +151,12 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
         unexpected_error: {
             type: "final",
             entry: sendParent((ctx, _) => ({
-                type: "error.platform.loggedInMachine",
+                type: "error.platform.homeMachine",
                 data: ctx.error,
             })),
         },
     },
 };
 
-export const loggedInMachine = createMachine<LoggedInContext, LoggedInEvents>(schema, liveConfig);
-export type LoggedInMachine = typeof loggedInMachine;
+export const homeMachine = createMachine<HomeContext, HomeEvents>(schema, liveConfig);
+export type HomeMachine = typeof homeMachine;

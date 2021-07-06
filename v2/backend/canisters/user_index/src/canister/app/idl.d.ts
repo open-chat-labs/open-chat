@@ -10,6 +10,9 @@ import UserIndexService, {
   ConfirmPhoneNumberResponse,
   PhoneNumber,
   ResendCodeResponse,
+  UsersArgs,
+  UsersResponse,
+  UserSummary,
 } from "./types";
 export {
   UserIndexService,
@@ -23,6 +26,9 @@ export {
   ConfirmPhoneNumberResponse as ApiConfirmPhoneNumberResponse,
   PhoneNumber as ApiPhoneNumber,
   ResendCodeResponse as ApiResendCodeResponse,
+  UsersArgs as ApiUsersArgs,
+  UsersResponse as ApiUsersResponse,
+  UserSummary as ApiUserSummary,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

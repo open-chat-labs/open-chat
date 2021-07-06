@@ -6,12 +6,12 @@ import type {
     ConfirmPhoneNumberResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersResponse,
 } from "../domain/user";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type { ChatSummary, GetChatsResponse } from "../domain/chat";
-import type { Principal } from "@dfinity/principal";
+import type { GetChatsResponse } from "../domain/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
 
@@ -21,12 +21,6 @@ export class ServiceContainer {
 
     constructor(private identity: Identity) {
         this.userIndexClient = new UserIndexClientMock();
-
-        // todo - we need to know when this is going to get created
-        // as soon as we have the canister id we need to create this service
-        // which is annoying because it means that we then need to guard all
-        // references to that service in case it has *not* been created
-        // this._userClient = new UserClientMock();
     }
 
     private get userClient(): IUserClient {
@@ -36,10 +30,14 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    createUserClient(_userId: Principal): ServiceContainer {
+    createUserClient(_userId: string): ServiceContainer {
         this._userClient = new UserClientMock();
         // this._userClient = new UserClient(this.identity, userId);
         return this;
+    }
+
+    getUsers(userIds: string[]): Promise<UsersResponse> {
+        return this.userIndexClient.getUsers(userIds);
     }
 
     getChats(): Promise<GetChatsResponse> {

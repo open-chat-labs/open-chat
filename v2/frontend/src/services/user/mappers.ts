@@ -9,8 +9,7 @@ import type {
     ApiMessageContent,
     ApiReplyContext,
     ApiTextContent,
-    ApiUser,
-} from "api-canisters/user/canister";
+} from "api-canisters/user/src/canister/app/idl";
 import type {
     BlobReference,
     ChatSummary,
@@ -22,7 +21,6 @@ import type {
     MessageContent,
     ReplyContext,
     TextContent,
-    UserSummary,
 } from "../../domain/chat";
 import { identity, optional } from "../../utils/mapping";
 
@@ -30,18 +28,9 @@ export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse 
     if ("Success" in candid) {
         return {
             chats: candid.Success.chats.map(chatSummary),
-            users: candid.Success.users.map(chatUser),
         };
     }
     throw new Error(`Unexpected GetChatsResponse type received: ${candid}`);
-}
-
-function chatUser(candid: ApiUser): UserSummary {
-    return {
-        userId: candid.user_id,
-        username: candid.username,
-        lastOnline: candid.last_online,
-    };
 }
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {

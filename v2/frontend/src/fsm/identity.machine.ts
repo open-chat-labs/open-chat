@@ -9,7 +9,7 @@ import type { User, CurrentUserResponse } from "../domain/user";
 import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
-import { loggedInMachine } from "./loggedin.machine";
+import { homeMachine } from "./home.machine";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 
@@ -101,7 +101,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
         upgradeUser: ({ serviceContainer }) => serviceContainer!.upgradeUser(),
-        loggedInMachine,
+        homeMachine: homeMachine,
         registerMachine,
     },
     actions: {
@@ -285,12 +285,13 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
             },
             invoke: [
                 {
-                    id: "loggedInMachine",
-                    src: "loggedInMachine",
+                    id: "homeMachine",
+                    src: "homeMachine",
                     data: (ctx, _ev) => ({
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
                         chats: [],
+                        userLookup: {},
                     }),
                     onDone: "login",
                     onError: {
