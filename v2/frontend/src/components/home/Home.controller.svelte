@@ -10,14 +10,12 @@
     const dispatch = createEventDispatcher();
     // import { rtlStore } from "../../stores/rtl";
     import type { HomeMachine } from "../../fsm/home.machine";
-    import type { LeftPanelState } from "./LeftPanel.types";
+    import type { HomeState } from "./Home.types";
     import type { ChatSummary } from "../../domain/chat";
     import { push, replace } from "svelte-spa-router";
-    import type { MiddlePanelState } from "./MiddlePanel.types";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
-    let leftState: LeftPanelState = "loadingChats";
-    let middleState: MiddlePanelState = "loadingChats";
+    let homeState: HomeState = "loadingChats";
 
     function logout() {
         dispatch("logout");
@@ -56,14 +54,15 @@
     }
 
     $: {
-        switch ($machine.value) {
-            case "loading_chats":
-                leftState = "loadingChats";
-                middleState = "loadingChats";
-                break;
-            default:
-                leftState = { error: $machine.context.error?.message ?? "" };
-                middleState = { error: $machine.context.error?.message ?? "" };
+        // todo - not too thrilled about this
+        if ($machine.matches("loading_chats")) {
+            homeState = "loadingChats";
+        } else if ($machine.matches({ loaded_chats: "loading_messages" })) {
+            homeState = "loadingMessages";
+        } else if ($machine.matches({ loaded_chats: "idle" })) {
+            homeState = "idle";
+        } else if ($machine.matches("unexpected_error")) {
+            homeState = { error: $machine.context.error?.message ?? "" };
         }
     }
 </script>
@@ -75,13 +74,13 @@
             hideLeft={params.chatId !== null}
             chatSummaries={$machine.context.chats}
             selectedChatId={$machine.context.selectedChatId}
-            state={leftState}
+            state={homeState}
             on:logout={logout}
             on:newchat={newChat}
             on:selectChat={selectChat}
             user={$machine.context.user} />
         <MiddlePanel
-            state={middleState}
+            state={homeState}
             on:newchat={newChat}
             hideLeft={params.chatId !== null}
             selectedChatId={$machine.context.selectedChatId} />

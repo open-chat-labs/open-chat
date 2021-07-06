@@ -6,17 +6,25 @@
     import { push } from "svelte-spa-router";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
-    import type { MiddlePanelState } from "./MiddlePanel.types";
+    import type { HomeState } from "./Home.types";
     // import CurrentChat from "./CurrentChat.svelte";
     // import UnexpectedError from "../unexpectedError/UnexpectedError.svelte";
     // import Loading from "../Loading.svelte";
     export let hideLeft: boolean = false;
     export let selectedChatId: bigint | undefined;
-    export let state: MiddlePanelState;
+    export let state: HomeState;
+
+    $: console.log(state);
 </script>
 
 <Panel middle {hideLeft}>
     {#if state === "loadingChats"}
+        {#if $screenWidth === ScreenWidth.ExtraSmall}
+            <div />
+        {:else}
+            <Loading />
+        {/if}
+    {:else if state === "loadingMessages"}
         {#if $screenWidth === ScreenWidth.ExtraSmall}
             <div />
         {:else}
@@ -34,16 +42,6 @@
             <p class="title">{selectedChatId}</p>
         </div>
     {/if}
-
-    <!-- {#if $chatStore}
-        {#await $chatStore.chatDetails}
-            <Loading />
-        {:then chat}
-            <CurrentChat on:goback {chat} />
-        {:catch err}
-            <UnexpectedError error={err} />
-        {/await}
-    {/if} -->
 </Panel>
 
 <style type="text/scss">

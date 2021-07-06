@@ -5,7 +5,7 @@
     import { avatarUrl, UserStatus } from "../../domain/user";
     import type { UserLookup } from "../../domain/user";
     import type { User } from "../../domain/user";
-    import type { LeftPanelState } from "./LeftPanel.types";
+    import type { HomeState } from "./Home.types";
     import Loading from "../Loading.svelte";
     import { getContentAsText } from "../../domain/chat";
     import type { ChatSummary as ChatSummaryType, DirectChatSummary } from "../../domain/chat";
@@ -14,7 +14,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import { _ } from "svelte-i18n";
 
-    export let state: LeftPanelState;
+    export let state: HomeState;
     export let user: User;
     export let users: UserLookup;
     export let chatSummaries: ChatSummaryType[] = [];

@@ -67,7 +67,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 users,
             };
         },
-        loadMessages: (_ctx, _) => new Promise((resolve) => setTimeout(resolve, 2000)),
+        loadMessages: (_ctx, _) => new Promise((resolve) => setTimeout(resolve, 1000)),
     },
 };
 
