@@ -25,7 +25,10 @@
         // wait until we have loaded the chats
         if ($machine.matches("loaded_chats")) {
             // if we have a chatid in the params then we need to select that chat
-            if (params.chatId && params.chatId !== $machine.context.selectedChatId?.toString()) {
+            if (
+                params.chatId &&
+                params.chatId !== $machine.context.selectedChat?.chatId?.toString()
+            ) {
                 // if we have an unknown chat in the param, then redirect to home
                 if (
                     $machine.context.chats.findIndex((c) => c.chatId.toString() === params.chatId) <
@@ -45,6 +48,10 @@
         }
     }
 
+    function clearSelectedChat() {
+        push("/");
+    }
+
     function selectChat(ev: CustomEvent<ChatSummary>) {
         push(`/chat/${ev.detail.chatId}`);
     }
@@ -59,12 +66,16 @@
             homeState = "loadingChats";
         } else if ($machine.matches({ loaded_chats: "loading_messages" })) {
             homeState = "loadingMessages";
-        } else if ($machine.matches({ loaded_chats: "idle" })) {
-            homeState = "idle";
+        } else if ($machine.matches({ loaded_chats: "chat_selected" })) {
+            homeState = "chatSelected";
+        } else if ($machine.matches({ loaded_chats: "no_chat_selected" })) {
+            homeState = "noChatSelected";
         } else if ($machine.matches("unexpected_error")) {
             homeState = { error: $machine.context.error?.message ?? "" };
         }
     }
+
+    $: console.log($machine.value);
 </script>
 
 {#if $machine.context.user}
@@ -73,7 +84,7 @@
             users={$machine.context.userLookup}
             hideLeft={params.chatId !== null}
             chatSummaries={$machine.context.chats}
-            selectedChatId={$machine.context.selectedChatId}
+            selectedChatId={$machine.context.selectedChat?.chatId}
             state={homeState}
             on:logout={logout}
             on:newchat={newChat}
@@ -82,8 +93,9 @@
         <MiddlePanel
             state={homeState}
             on:newchat={newChat}
+            on:clearSelection={clearSelectedChat}
             hideLeft={params.chatId !== null}
-            selectedChatId={$machine.context.selectedChatId} />
+            selectedChatSummary={$machine.context.selectedChat} />
         <!-- {#if $navStore}
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel />

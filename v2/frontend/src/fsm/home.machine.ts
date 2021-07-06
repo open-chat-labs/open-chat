@@ -33,7 +33,7 @@ export interface HomeContext {
     serviceContainer?: ServiceContainer;
     user?: User; // currently signed in user
     chats: ChatSummary[]; // the list of chats
-    selectedChatId?: bigint; // the id of the selected chat
+    selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
     userLookup: UserLookup; // a lookup of user summaries
 }
@@ -110,7 +110,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             },
         },
         loaded_chats: {
-            initial: "idle",
+            initial: "no_chat_selected",
             id: "loaded_chats",
             on: {
                 LOAD_MESSAGES: {
@@ -120,17 +120,18 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     cond: "selectedChatIsValid",
                 },
                 CLEAR_SELECTED_CHAT: {
+                    target: "loaded_chats.no_chat_selected",
                     actions: assign({
-                        selectedChatId: (_ctx, _) => undefined,
+                        selectedChat: (_ctx, _) => undefined,
                     }),
                 },
             },
             states: {
                 loading_messages: {
                     entry: assign({
-                        selectedChatId: (ctx, ev) => {
+                        selectedChat: (ctx, ev) => {
                             if (ev.type === "LOAD_MESSAGES") {
-                                return ctx.chats.find((c) => c.chatId === ev.data)?.chatId;
+                                return ctx.chats.find((c) => c.chatId === ev.data);
                             }
                             return undefined;
                         },
@@ -140,12 +141,13 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         src: "loadMessages",
                         onDone: [
                             {
-                                target: "idle",
+                                target: "chat_selected",
                             },
                         ],
                     },
                 },
-                idle: {},
+                no_chat_selected: {},
+                chat_selected: {},
             },
         },
         unexpected_error: {

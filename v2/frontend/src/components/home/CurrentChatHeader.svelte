@@ -1,45 +1,44 @@
 <script lang="ts">
-    import type { ChatDetails } from "../services/chats";
-    import { AvatarSize, UserStatus } from "../services/user";
+    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Avatar from "./Avatar.svelte";
-    import HoverIcon from "./HoverIcon.svelte";
-    import MenuIcon from "./MenuIcon.svelte";
-    import MediaQuery from "./MediaQuery.svelte";
-    import Menu from "./Menu.svelte";
-    import MenuItem from "./MenuItem.svelte";
+    import Avatar from "../Avatar.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher } from "svelte";
-    import { rtlStore } from "../stores/rtl";
-    import { navStore } from "../stores/nav";
+    import { rtlStore } from "../../stores/rtl";
+    import { navStore } from "../../stores/nav";
+    import type { ChatSummary } from "../../domain/chat";
     const dispatch = createEventDispatcher();
 
-    export let chat: ChatDetails;
+    export let selectedChatSummary: ChatSummary;
 
-    function back() {
-        dispatch("goback");
+    function clearSelection() {
+        dispatch("clearSelection");
     }
 </script>
 
 <div class="chat-header">
-    <MediaQuery query="(max-width: 576px)" let:matches>
-        {#if matches}
-            <span class="back" class:rtl={$rtlStore} on:click={back}>
-                <HoverIcon>
-                    {#if $rtlStore}
-                        <ArrowRight size={"1.2em"} color={"#aaa"} />
-                    {:else}
-                        <ArrowLeft size={"1.2em"} color={"#aaa"} />
-                    {/if}
-                </HoverIcon>
-            </span>
-        {/if}
-    </MediaQuery>
+    {#if $screenWidth === ScreenWidth.ExtraSmall}
+        <span class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+            <HoverIcon>
+                {#if $rtlStore}
+                    <ArrowRight size={"1.2em"} color={"#aaa"} />
+                {:else}
+                    <ArrowLeft size={"1.2em"} color={"#aaa"} />
+                {/if}
+            </HoverIcon>
+        </span>
+    {/if}
     <span class="avatar">
-        <Avatar status={UserStatus.Online} url={chat.avatar} size={AvatarSize.Small} />
+        <Avatar status={UserStatus.Online} url={"assets/group.svg"} size={AvatarSize.Small} />
     </span>
-    <span class="chat-details">{chat.name}</span>
+    <span class="chat-details">{"this is the chat name"}</span>
     <span class="menu">
         <MenuIcon>
             <span slot="icon">
@@ -49,8 +48,10 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem text="Leave group" on:click={() => console.log("one")} />
-                    <MenuItem text="Participants" on:click={navStore.showRight} />
+                    <MenuItem on:click={() => console.log("one")}>
+                        <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <span slot="text">Participants</span>
+                    </MenuItem>
                 </Menu>
             </span>
         </MenuIcon>
@@ -70,7 +71,7 @@
     }
 
     .avatar {
-        flex: 0 0 50px;
+        flex: 0 0 55px;
     }
 
     .chat-details {

@@ -1,1 +1,7 @@
-export type HomeState = "loadingChats" | "loadingMessages" | "idle" | { error: string };
+export type HomeState =
+    | "loadingChats"
+    | "loadingMessages"
+    | "idle"
+    | "chatSelected"
+    | "noChatSelected"
+    | { error: string };

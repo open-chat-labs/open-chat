@@ -1,17 +1,23 @@
 <script lang="ts">
-    import type { ChatDetails } from "../services/chats";
+    import CurrentChatHeader from "./CurrentChatHeader.svelte";
+    import Loading from "../Loading.svelte";
+    // import CurrentChatMessages from "../CurrentChatMessages.svelte";
+    // import MessageEntry from "../MessageEntry.svelte";
+    import type { ChatSummary } from "../../domain/chat";
+    import type { HomeState } from "./Home.types";
 
-    import CurrentChatHeader from "../CurrentChatHeader.svelte";
-    import CurrentChatMessages from "../CurrentChatMessages.svelte";
-    import MessageEntry from "../MessageEntry.svelte";
-
-    export let chat: ChatDetails;
+    export let state: HomeState;
+    export let selectedChatSummary: ChatSummary;
 </script>
 
 <div class="wrapper">
-    <CurrentChatHeader on:goback {chat} />
-    <CurrentChatMessages {chat} />
-    <MessageEntry />
+    <CurrentChatHeader on:clearSelection {selectedChatSummary} />
+
+    {#if state === "loadingMessages"}
+        <Loading />
+    {/if}
+    <!-- <CurrentChatMessages {chat} />
+    <MessageEntry /> -->
 </div>
 
 <style type="text/scss">

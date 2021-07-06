@@ -1,20 +1,15 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
-    import Button from "../Button.svelte";
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
-    import { push } from "svelte-spa-router";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
     import type { HomeState } from "./Home.types";
-    // import CurrentChat from "./CurrentChat.svelte";
-    // import UnexpectedError from "../unexpectedError/UnexpectedError.svelte";
-    // import Loading from "../Loading.svelte";
+    import CurrentChat from "./CurrentChat.svelte";
+    import type { ChatSummary } from "../../domain/chat";
     export let hideLeft: boolean = false;
-    export let selectedChatId: bigint | undefined;
+    export let selectedChatSummary: ChatSummary | undefined;
     export let state: HomeState;
-
-    $: console.log(state);
 </script>
 
 <Panel middle {hideLeft}>
@@ -24,23 +19,12 @@
         {:else}
             <Loading />
         {/if}
-    {:else if state === "loadingMessages"}
-        {#if $screenWidth === ScreenWidth.ExtraSmall}
-            <div />
-        {:else}
-            <Loading />
-        {/if}
-    {:else if selectedChatId === undefined}
+    {:else if state === "noChatSelected" || selectedChatSummary === undefined}
         <div in:fade>
             <NoChatSelected on:newchat />
         </div>
     {:else}
-        <div class="currentChat">
-            {#if $screenWidth === ScreenWidth.ExtraSmall}
-                <Button on:click={() => push("/")}>Back</Button>
-            {/if}
-            <p class="title">{selectedChatId}</p>
-        </div>
+        <CurrentChat {state} on:clearSelection {selectedChatSummary} />
     {/if}
 </Panel>
 

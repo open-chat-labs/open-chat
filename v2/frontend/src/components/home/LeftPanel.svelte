@@ -37,6 +37,11 @@
         return latestMessage ? getContentAsText(latestMessage.content) : "";
     }
 
+    // don't like that this lives here and that we also want a very similar normalised view of the chat summary in the
+    // selected chat header.
+    // perhaps this should be moved inside the ChatSummary component
+    // and we have a similar thing inside the CurrentChatHeader or at least inside the CurrentChat
+    // I think we are at a delicate point where things are either going to come together or fall apart
     function chatSummaryProps(chatSummary: ChatSummaryType) {
         if (chatSummary.kind === "direct_chat") {
             return {
