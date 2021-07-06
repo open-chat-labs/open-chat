@@ -1,6 +1,6 @@
 import type { IDL } from "@dfinity/candid";
 import UserService, {
-  GetChatsRequest,
+  GetChatsArgs,
   GetChatsResponse,
   ChatSummary,
   Message,
@@ -16,7 +16,7 @@ import UserService, {
 } from "./canister_types";
 export {
   UserService,
-  GetChatsRequest as ApiGetChatsRequest,
+  GetChatsArgs as ApiGetChatsArgs,
   GetChatsResponse as ApiGetChatsResponse,
   ChatSummary as ApiChatSummary,
   Message as ApiMessage,

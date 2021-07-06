@@ -79,7 +79,7 @@ type ChatSummary =
         latest_messages: vec Message;
     };
 
-type SendMessageRequest =
+type SendMessageArgs =
     record {
         recipient: UserId;
         client_message_id: text;
@@ -102,7 +102,7 @@ type SendMessageResponse =
         RecipientBlocked;
     }; 
 
-type MarkReadRequest =
+type MarkReadArgs =
     record {
         user_id: UserId;
         from_index: nat32;
@@ -117,7 +117,7 @@ type MarkReadResponse =
         ChatNotFound;
     }; 
 
-type SetAvatarRequest =
+type SetAvatarArgs =
     record {
         mime_type: text;
         bytes: vec nat8;
@@ -130,17 +130,17 @@ type SetAvatarResponse =
         InvalidMimeType: nat32;
     }; 
 
-type BlockUserRequest =
+type BlockUserArgs =
     record {
         user_id: UserId;        
     };
 
-type UnblockUserRequest =
+type UnblockUserArgs =
     record {
         user_id: UserId;        
     };
 
-type PutChunkRequest =
+type PutChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
@@ -153,7 +153,7 @@ type PutChunkResponse =
         Full;
     }; 
 
-type CreateGroupRequest =
+type CreateGroupArgs =
     record {
         name: text;
         is_public: bool;
@@ -171,7 +171,7 @@ type CreateGroupResponse =
         UnknownError;
     }; 
 
-type HandleMessageRequest =
+type HandleMessageArgs =
     record {
         sender: UserId;
         client_message_id: text;
@@ -186,7 +186,7 @@ type HandleMessageResponse =
         Out
     }; 
 
-type HandleAddedToGroupRequest =
+type HandleAddedToGroupArgs =
     record {
         added_by: UserId;
         group_id: GroupId;
@@ -198,12 +198,12 @@ type HandleAddedToGroupResponse =
         Blocked;        
     }; 
 
-type HandleRemovedFromGroupRequest =
+type HandleRemovedFromGroupArgs =
     record {
         group_id: GroupId;
     };
 
-type HandleInvitedToGroupRequest =
+type HandleInvitedToGroupArgs =
     record {
         invited_by: UserId;
         group_id: GroupId;
@@ -214,7 +214,7 @@ type HandleInvitedToGroupResponse =
         Success;
     }; 
 
-type HandleJoinedGroupRequest =
+type HandleJoinedGroupArgs =
     record {
         user_principal: principal;
         group_id: GroupId;
@@ -226,7 +226,7 @@ type HandleJoinedGroupResponse =
         Unauthorized;
     }; 
 
-type HandleLeftGroupRequest =
+type HandleLeftGroupArgs =
     record {
         user_principal: principal;
         group_id: GroupId;
@@ -238,7 +238,7 @@ type HandleLeftGroupResponse =
         Unauthorized;
     }; 
 
-type GetChatsRequest =
+type GetChatsArgs =
     record {
         updated_since: opt TimestampMillis;
         message_count_for_top_chat: opt nat16;
@@ -251,7 +251,7 @@ type GetChatsResponse =
         }; 
     }; 
 
-type GetMessagesRequest =
+type GetMessagesArgs =
     record {
         user_id: UserId;
         from_index: nat32;
@@ -270,7 +270,7 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexRequest =
+type GetMessagesByIndexArgs =
     record {
         user_id: UserId;
         messages: vec nat32;
@@ -282,7 +282,7 @@ type GetMessagesByIndexResponse =
         ChatNotFound;
     }; 
 
-type SearchAllMessagesRequest =
+type SearchAllMessagesArgs =
     record {
         search_term: text;
         max_results: nat8;
@@ -300,7 +300,7 @@ type SearchAllMessagesResponse =
         Failure;
     }; 
 
-type GetChunkRequest =
+type GetChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
@@ -314,7 +314,11 @@ type GetChunkResponse =
         NotFound;
     };
 
-type Metrics = 
+type MetricsArgs =
+    record {
+    };
+
+type MetricsResponse = 
     record {
         direct_chat_count: nat32;
         group_chat_count: nat32;
@@ -333,27 +337,27 @@ type Metrics =
     };
 
 service: {
-    send_message: (SendMessageRequest) -> (SendMessageResponse);
-    mark_read: (MarkReadRequest) -> (MarkReadResponse);
-    set_avatar: (SetAvatarRequest) -> (SetAvatarResponse);
-    block_user: (BlockUserRequest) -> ();
-    unblock_user: (UnblockUserRequest) -> ();
-    put_chunk: (PutChunkRequest) -> (PutChunkResponse);
-    create_group: (CreateGroupRequest) -> (CreateGroupResponse);
+    send_message: (SendMessageArgs) -> (SendMessageResponse);
+    mark_read: (MarkReadArgs) -> (MarkReadResponse);
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+    block_user: (BlockUserArgs) -> ();
+    unblock_user: (UnblockUserArgs) -> ();
+    put_chunk: (PutChunkArgs) -> (PutChunkResponse);
+    create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     
-    handle_message_received: (HandleMessageRequest) -> (HandleMessageResponse);
-    handle_added_to_group: (HandleAddedToGroupRequest) -> (HandleAddedToGroupResponse);
-    handle_removed_from_group: (HandleRemovedFromGroupRequest) -> ();
-    handle_invited_to_group: (HandleInvitedToGroupRequest) -> (HandleInvitedToGroupResponse);
-    handle_joined_group: (HandleJoinedGroupRequest) -> (HandleJoinedGroupResponse);
-    handle_left_group: (HandleLeftGroupRequest) -> (HandleLeftGroupResponse);
+    handle_message_received: (HandleMessageArgs) -> (HandleMessageResponse);
+    handle_added_to_group: (HandleAddedToGroupArgs) -> (HandleAddedToGroupResponse);
+    handle_removed_from_group: (HandleRemovedFromGroupArgs) -> ();
+    handle_invited_to_group: (HandleInvitedToGroupArgs) -> (HandleInvitedToGroupResponse);
+    handle_joined_group: (HandleJoinedGroupArgs) -> (HandleJoinedGroupResponse);
+    handle_left_group: (HandleLeftGroupArgs) -> (HandleLeftGroupResponse);
 
-    get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
-    get_messages: (GetMessagesRequest) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexRequest) -> (GetMessagesByIndexResponse) query;
+    get_chats: (GetChatsArgs) -> (GetChatsResponse) query;
+    get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
+    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
-    search_all_messages: (SearchAllMessagesRequest) -> (SearchAllMessagesResponse) query;
-    get_chunk: (GetChunkRequest) -> (GetChunkResponse) query;
-    metrics: () -> (Metrics) query;
+    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
+    get_chunk: (GetChunkArgs) -> (GetChunkResponse) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

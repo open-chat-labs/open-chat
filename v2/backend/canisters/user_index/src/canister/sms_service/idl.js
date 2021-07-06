@@ -1,5 +1,5 @@
 export default ({ IDL }) => {
-  const PendingSmsMessagesRequest = IDL.Record({
+  const PendingSmsMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat64,
     'from_index' : IDL.Nat64,
   });
@@ -15,7 +15,7 @@ export default ({ IDL }) => {
   });
   return IDL.Service({
     'pending_sms_messages' : IDL.Func(
-        [PendingSmsMessagesRequest],
+        [PendingSmsMessagesArgs],
         [PendingSmsMessagesResponse],
         ['query'],
       ),

@@ -1,7 +1,5 @@
 export default ({ IDL }) => {
-  const ConfirmPhoneNumberRequest = IDL.Record({
-    'confirmation_code' : IDL.Text,
-  });
+  const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
   const ConfirmPhoneNumberResponse = IDL.Variant({
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
@@ -9,8 +7,8 @@ export default ({ IDL }) => {
     'ConfirmationCodeIncorrect' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const CreateCanisterRequest = IDL.Record({});
-  const CurrentUserRequest = IDL.Record({});
+  const CreateCanisterArgs = IDL.Record({});
+  const CurrentUserArgs = IDL.Record({});
   const PhoneNumber = IDL.Record({
     'country_code' : IDL.Nat16,
     'number' : IDL.Text,
@@ -42,28 +40,30 @@ export default ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const MarkAsOnlineRequest = IDL.Record({});
-  const MetricsRequest = IDL.Record({});
+  const MarkAsOnlineArgs = IDL.Record({});
+  const MetricsArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
-  const Metrics = IDL.Record({
-    'user_count' : IDL.Nat64,
+  const MetricsResponse = IDL.Record({
     'cycles_balance' : IDL.Int64,
+    'unconfirmed_user_count' : IDL.Nat64,
     'caller_id' : IDL.Principal,
     'bytes_used' : IDL.Nat64,
     'timestamp' : TimestampMillis,
+    'created_user_count' : IDL.Nat64,
     'online_user_count' : IDL.Nat64,
+    'confirmed_user_count' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
     'cycles_transferred' : IDL.Nat,
     'active_user_count' : IDL.Nat64,
   });
-  const BalanceNotification = IDL.Record({ 'balance' : IDL.Nat });
-  const ResendCodeRequest = IDL.Record({});
+  const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
+  const ResendCodeArgs = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
     'AlreadyClaimed' : IDL.Null,
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const SearchRequest = IDL.Record({
+  const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
@@ -75,7 +75,7 @@ export default ({ IDL }) => {
   const SearchResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserSummary) }),
   });
-  const SetUsernameRequest = IDL.Record({ 'username' : IDL.Text });
+  const SetUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
@@ -84,14 +84,14 @@ export default ({ IDL }) => {
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const SubmitPhoneNumberRequest = IDL.Record({ 'number' : PhoneNumber });
+  const SubmitPhoneNumberArgs = IDL.Record({ 'number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
     'Success' : IDL.Null,
     'AlreadyRegisteredByOther' : IDL.Null,
     'InvalidPhoneNumber' : IDL.Null,
   });
-  const TransferCyclesRequest = IDL.Record({
+  const TransferCyclesArgs = IDL.Record({
     'recipient' : UserId,
     'sender' : UserId,
     'amount' : IDL.Nat,
@@ -102,12 +102,12 @@ export default ({ IDL }) => {
     'UserNotFound' : IDL.Null,
     'RecipientNotFound' : IDL.Null,
   });
-  const UpdateWasmRequest = IDL.Record({
+  const UpdateWasmArgs = IDL.Record({
     'wasm' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
   });
-  const UpgradeCanisterRequest = IDL.Record({});
-  const UserRequest = IDL.Record({
+  const UpgradeCanisterArgs = IDL.Record({});
+  const UserArgs = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : IDL.Opt(UserId),
   });
@@ -115,7 +115,7 @@ export default ({ IDL }) => {
     'Success' : UserSummary,
     'UserNotFound' : IDL.Null,
   });
-  const UsersRequest = IDL.Record({
+  const UsersArgs = IDL.Record({
     'users' : IDL.Vec(UserId),
     'updated_since' : IDL.Opt(TimestampMillis),
   });
@@ -127,36 +127,36 @@ export default ({ IDL }) => {
   });
   return IDL.Service({
     'confirm_phone_number' : IDL.Func(
-        [ConfirmPhoneNumberRequest],
+        [ConfirmPhoneNumberArgs],
         [ConfirmPhoneNumberResponse],
         [],
       ),
-    'create_canister' : IDL.Func([CreateCanisterRequest], [], []),
+    'create_canister' : IDL.Func([CreateCanisterArgs], [], []),
     'current_user' : IDL.Func(
-        [CurrentUserRequest],
+        [CurrentUserArgs],
         [CurrentUserResponse],
         ['query'],
       ),
-    'mark_as_online' : IDL.Func([MarkAsOnlineRequest], [], []),
-    'metrics' : IDL.Func([MetricsRequest], [Metrics], ['query']),
-    'notify_balance' : IDL.Func([BalanceNotification], [], []),
-    'resend_code' : IDL.Func([ResendCodeRequest], [ResendCodeResponse], []),
-    'search' : IDL.Func([SearchRequest], [SearchResponse], ['query']),
-    'set_username' : IDL.Func([SetUsernameRequest], [SetUsernameResponse], []),
+    'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [], []),
+    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
+    'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
+    'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
     'submit_phone_number' : IDL.Func(
-        [SubmitPhoneNumberRequest],
+        [SubmitPhoneNumberArgs],
         [SubmitPhoneNumberResponse],
         [],
       ),
     'transfer_cycles' : IDL.Func(
-        [TransferCyclesRequest],
+        [TransferCyclesArgs],
         [TransferCyclesResponse],
         [],
       ),
-    'update_wasm' : IDL.Func([UpdateWasmRequest], [], []),
-    'upgrade_canister' : IDL.Func([UpgradeCanisterRequest], [], []),
-    'user' : IDL.Func([UserRequest], [UserResponse], ['query']),
-    'users' : IDL.Func([UsersRequest], [UsersResponse], ['query']),
+    'update_wasm' : IDL.Func([UpdateWasmArgs], [], []),
+    'upgrade_canister' : IDL.Func([UpgradeCanisterArgs], [], []),
+    'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
+    'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

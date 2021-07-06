@@ -1,5 +1,5 @@
-import type { Principal } from '@dfinity/principal';
-export type AddParticipantsRequest = {};
+import type { Principal } from '@dfinity/agent';
+export type AddParticipantsArgs = {};
 export type AddParticipantsResponse = { 'Success' : null };
 export interface BlobReference {
   'blob_size' : number,
@@ -7,7 +7,7 @@ export interface BlobReference {
   'canister_id' : CanisterId,
   'chunk_size' : number,
 };
-export type BlockUserRequest = {};
+export type BlockUserArgs = {};
 export type BlockUserResponse = { 'Success' : null };
 export type CanisterId = Principal;
 export interface FileContent {
@@ -16,29 +16,26 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 };
-export interface GetChunkRequest { 'blob_id' : bigint, 'index' : number };
+export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number };
 export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
-export type GetGroupRequest = {};
+export type GetGroupArgs = {};
 export type GetGroupResponse = {
     'Success' : {
       'participants' : Array<UserId>,
       'subject' : string,
-      'last_updated' : Timestamp,
-      'display_date' : Timestamp,
+      'last_updated' : TimestampMillis,
+      'display_date' : TimestampMillis,
       'min_visible_message_id' : number,
       'latest_messages' : Array<Message>,
       'unread_by_me_message_id_ranges' : Array<Array<number>>,
       'unread_by_any_message_id_ranges' : Array<Array<number>>,
     }
   };
-export interface GetMessagesByIndexRequest { 'messages' : Array<number> };
+export interface GetMessagesArgs { 'to_index' : number, 'from_index' : number };
+export interface GetMessagesByIndexArgs { 'messages' : Array<number> };
 export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
-export interface GetMessagesRequest {
-  'to_index' : number,
-  'from_index' : number,
-};
 export type GetMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export interface GetMessagesSuccess {
@@ -46,15 +43,15 @@ export interface GetMessagesSuccess {
   'latest_message_id' : number,
 };
 export type GroupId = CanisterId;
-export type InviteUsersRequest = {};
+export type InviteUsersArgs = {};
 export type InviteUsersResponse = { 'Success' : null };
-export type JoinGroupRequest = {};
+export type JoinGroupArgs = {};
 export type JoinGroupResponse = { 'Success' : null };
-export type LeaveGroupRequest = {};
+export type LeaveGroupArgs = {};
 export type LeaveGroupResponse = { 'Success' : null };
-export type MakeAdminRequest = {};
+export type MakeAdminArgs = {};
 export type MakeAdminResponse = { 'Success' : null };
-export interface MarkReadRequest {
+export interface MarkReadArgs {
   'user_id' : UserId,
   'to_index' : number,
   'from_index' : number,
@@ -73,14 +70,15 @@ export interface Message {
   'id' : number,
   'content' : MessageContent,
   'sender' : UserId,
-  'timestamp' : Timestamp,
+  'timestamp' : TimestampMillis,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
 };
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Media' : MediaContent };
-export interface Metrics {
+export type MetricsArgs = {};
+export interface MetricsResponse {
   'blob_bytes_used' : bigint,
   'cycles_balance' : bigint,
   'image_message_count' : bigint,
@@ -88,28 +86,28 @@ export interface Metrics {
   'chunk_count' : number,
   'bytes_used' : bigint,
   'file_message_count' : bigint,
-  'timestamp' : bigint,
+  'timestamp' : TimestampMillis,
   'text_message_count' : bigint,
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
 };
-export interface PutChunkRequest {
+export interface PutChunkArgs {
   'blob_id' : bigint,
   'bytes' : Array<number>,
   'index' : number,
 };
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null };
-export type RemoveAdminRequest = {};
+export type RemoveAdminArgs = {};
 export type RemoveAdminResponse = { 'Success' : null };
-export type RemoveParticipantsRequest = {};
+export type RemoveParticipantsArgs = {};
 export type RemoveParticipantsResponse = { 'Success' : null };
 export interface ReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
   'message_id' : number,
 };
-export interface SearchMessagesRequest {
+export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
 };
@@ -117,7 +115,7 @@ export type SearchMessagesResponse = {
     'Success' : { 'matches' : Array<{ 'score' : number, 'message' : Message }> }
   } |
   { 'Failure' : null };
-export interface SendMessageRequest {
+export interface SendMessageArgs {
   'content' : MessageContent,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
@@ -125,10 +123,10 @@ export interface SendMessageRequest {
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
-      'timestamp' : Timestamp,
+      'timestamp' : TimestampMillis,
       'chat_summary' : {
-        'last_updated' : Timestamp,
-        'display_date' : Timestamp,
+        'last_updated' : TimestampMillis,
+        'display_date' : TimestampMillis,
         'min_visible_message_id' : number,
         'unread_by_me_message_id_ranges' : Array<Array<number>>,
         'unread_by_any_message_id_ranges' : Array<Array<number>>,
@@ -136,12 +134,12 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
       'message_index' : number,
     }
   } |
-  { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : null } |
+  { 'RecipientBlocked' : null } |
   { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
-export interface SetAvatarRequest {
+export interface SetAvatarArgs {
   'mime_type' : string,
   'bytes' : Array<number>,
 };
@@ -149,36 +147,36 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'FileTooBig' : number } |
   { 'Success' : null };
 export interface TextContent { 'text' : string };
-export type Timestamp = bigint;
-export type UnblockUserRequest = {};
+export type TimestampMillis = bigint;
+export type UnblockUserArgs = {};
 export type UnblockUserResponse = { 'Success' : null };
 export type UserId = CanisterId;
 export default interface _SERVICE {
-  'add_participants' : (arg_0: AddParticipantsRequest) => Promise<
+  'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
       AddParticipantsResponse
     >,
-  'block_user' : (arg_0: BlockUserRequest) => Promise<BlockUserResponse>,
-  'get_chunk' : (arg_0: GetChunkRequest) => Promise<GetChunkResponse>,
-  'get_group' : (arg_0: GetGroupRequest) => Promise<GetGroupResponse>,
-  'get_messages' : (arg_0: GetMessagesRequest) => Promise<GetMessagesResponse>,
-  'get_messages_by_index' : (arg_0: GetMessagesByIndexRequest) => Promise<
+  'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
+  'get_group' : (arg_0: GetGroupArgs) => Promise<GetGroupResponse>,
+  'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
+  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
       GetMessagesByIndexResponse
     >,
-  'invite_users' : (arg_0: InviteUsersRequest) => Promise<InviteUsersResponse>,
-  'join_group' : (arg_0: JoinGroupRequest) => Promise<JoinGroupResponse>,
-  'leave_group' : (arg_0: LeaveGroupRequest) => Promise<LeaveGroupResponse>,
-  'make_admin' : (arg_0: MakeAdminRequest) => Promise<MakeAdminResponse>,
-  'mark_read' : (arg_0: MarkReadRequest) => Promise<MarkReadResponse>,
-  'metrics' : () => Promise<Metrics>,
-  'put_chunk' : (arg_0: PutChunkRequest) => Promise<PutChunkResponse>,
-  'remove_admin' : (arg_0: RemoveAdminRequest) => Promise<RemoveAdminResponse>,
-  'remove_participants' : (arg_0: RemoveParticipantsRequest) => Promise<
+  'invite_users' : (arg_0: InviteUsersArgs) => Promise<InviteUsersResponse>,
+  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
+  'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
+  'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
+  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
+  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
+  'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
+  'remove_participants' : (arg_0: RemoveParticipantsArgs) => Promise<
       RemoveParticipantsResponse
     >,
-  'search_messages' : (arg_0: SearchMessagesRequest) => Promise<
+  'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
       SearchMessagesResponse
     >,
-  'send_message' : (arg_0: SendMessageRequest) => Promise<SendMessageResponse>,
-  'set_avatar' : (arg_0: SetAvatarRequest) => Promise<SetAvatarResponse>,
-  'unblock_user' : (arg_0: UnblockUserRequest) => Promise<UnblockUserResponse>,
+  'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
+  'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
 };

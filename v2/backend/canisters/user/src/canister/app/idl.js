@@ -1,8 +1,8 @@
 export default ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
-  const BlockUserRequest = IDL.Record({ 'user_id' : UserId });
-  const CreateGroupRequest = IDL.Record({
+  const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
+  const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
   });
@@ -14,10 +14,10 @@ export default ({ IDL }) => {
     'NameTooLong' : IDL.Nat16,
     'GroupLimitExceeded' : IDL.Nat16,
   });
-  const Timestamp = IDL.Nat64;
-  const GetChatsRequest = IDL.Record({
+  const TimestampMillis = IDL.Nat64;
+  const GetChatsArgs = IDL.Record({
     'message_count_for_top_chat' : IDL.Opt(IDL.Nat16),
-    'updated_since' : IDL.Opt(Timestamp),
+    'updated_since' : IDL.Opt(TimestampMillis),
   });
   const BlobReference = IDL.Record({
     'blob_size' : IDL.Nat32,
@@ -59,14 +59,14 @@ export default ({ IDL }) => {
     'id' : IDL.Nat32,
     'content' : MessageContent,
     'sender' : UserId,
-    'timestamp' : Timestamp,
+    'timestamp' : TimestampMillis,
     'replies_to' : IDL.Opt(ReplyContext),
     'client_message_id' : IDL.Text,
   });
   const ChatSummary = IDL.Record({
     'them' : UserId,
-    'last_updated' : Timestamp,
-    'display_date' : Timestamp,
+    'last_updated' : TimestampMillis,
+    'display_date' : TimestampMillis,
     'unread_by_them_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
     'latest_messages' : IDL.Vec(Message),
     'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
@@ -74,15 +74,12 @@ export default ({ IDL }) => {
   const GetChatsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'chats' : IDL.Vec(ChatSummary) }),
   });
-  const GetChunkRequest = IDL.Record({
-    'blob_id' : IDL.Nat,
-    'index' : IDL.Nat32,
-  });
+  const GetChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
   const GetChunkResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
   });
-  const GetMessagesRequest = IDL.Record({
+  const GetMessagesArgs = IDL.Record({
     'user_id' : UserId,
     'to_index' : IDL.Nat32,
     'from_index' : IDL.Nat32,
@@ -95,7 +92,7 @@ export default ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
-  const GetMessagesByIndexRequest = IDL.Record({
+  const GetMessagesByIndexArgs = IDL.Record({
     'messages' : IDL.Vec(IDL.Nat32),
     'user_id' : UserId,
   });
@@ -104,7 +101,7 @@ export default ({ IDL }) => {
     'Success' : GetMessagesSuccess,
   });
   const GroupId = CanisterId;
-  const HandleAddedToGroupRequest = IDL.Record({
+  const HandleAddedToGroupArgs = IDL.Record({
     'added_by' : UserId,
     'group_id' : GroupId,
   });
@@ -112,12 +109,12 @@ export default ({ IDL }) => {
     'Blocked' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const HandleInvitedToGroupRequest = IDL.Record({
+  const HandleInvitedToGroupArgs = IDL.Record({
     'group_id' : GroupId,
     'invited_by' : UserId,
   });
   const HandleInvitedToGroupResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const HandleJoinedGroupRequest = IDL.Record({
+  const HandleJoinedGroupArgs = IDL.Record({
     'user_principal' : IDL.Principal,
     'group_id' : GroupId,
   });
@@ -125,7 +122,7 @@ export default ({ IDL }) => {
     'Success' : IDL.Null,
     'Unauthorized' : IDL.Null,
   });
-  const HandleLeftGroupRequest = IDL.Record({
+  const HandleLeftGroupArgs = IDL.Record({
     'user_principal' : IDL.Principal,
     'group_id' : GroupId,
   });
@@ -133,7 +130,7 @@ export default ({ IDL }) => {
     'Success' : IDL.Null,
     'Unauthorized' : IDL.Null,
   });
-  const HandleMessageRequest = IDL.Record({
+  const HandleMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'replies_to' : IDL.Opt(ReplyContext),
@@ -144,8 +141,8 @@ export default ({ IDL }) => {
     'Success' : IDL.Null,
     'SenderBlocked' : IDL.Null,
   });
-  const HandleRemovedFromGroupRequest = IDL.Record({ 'group_id' : GroupId });
-  const MarkReadRequest = IDL.Record({
+  const HandleRemovedFromGroupArgs = IDL.Record({ 'group_id' : GroupId });
+  const MarkReadArgs = IDL.Record({
     'user_id' : UserId,
     'to_index' : IDL.Nat32,
     'from_index' : IDL.Nat32,
@@ -156,7 +153,8 @@ export default ({ IDL }) => {
       'unread_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
     }),
   });
-  const Metrics = IDL.Record({
+  const MetricsArgs = IDL.Record({});
+  const MetricsResponse = IDL.Record({
     'blob_bytes_used' : IDL.Nat64,
     'cycles_balance' : IDL.Int64,
     'group_chat_count' : IDL.Nat32,
@@ -167,12 +165,12 @@ export default ({ IDL }) => {
     'bytes_used' : IDL.Nat64,
     'file_message_count' : IDL.Nat64,
     'cycles_message_count' : IDL.Nat64,
-    'timestamp' : IDL.Nat64,
+    'timestamp' : TimestampMillis,
     'text_message_count' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
     'video_message_count' : IDL.Nat64,
   });
-  const PutChunkRequest = IDL.Record({
+  const PutChunkArgs = IDL.Record({
     'blob_id' : IDL.Nat,
     'bytes' : IDL.Vec(IDL.Nat8),
     'index' : IDL.Nat32,
@@ -181,7 +179,7 @@ export default ({ IDL }) => {
     'Full' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const SearchAllMessagesRequest = IDL.Record({
+  const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
@@ -197,7 +195,7 @@ export default ({ IDL }) => {
     }),
     'Failure' : IDL.Null,
   });
-  const SendMessageRequest = IDL.Record({
+  const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'recipient' : UserId,
     'replies_to' : IDL.Opt(ReplyContext),
@@ -206,17 +204,17 @@ export default ({ IDL }) => {
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
-      'timestamp' : Timestamp,
+      'timestamp' : TimestampMillis,
       'chat_summary' : ChatSummary,
       'message_index' : IDL.Nat32,
     }),
-    'RecipientBlocked' : IDL.Null,
     'InvalidRequest' : IDL.Null,
+    'RecipientBlocked' : IDL.Null,
     'SenderBlocked' : IDL.Null,
     'MessageTooLong' : IDL.Nat32,
     'RecipientNotFound' : IDL.Null,
   });
-  const SetAvatarRequest = IDL.Record({
+  const SetAvatarArgs = IDL.Record({
     'mime_type' : IDL.Text,
     'bytes' : IDL.Vec(IDL.Nat8),
   });
@@ -225,63 +223,63 @@ export default ({ IDL }) => {
     'FileTooBig' : IDL.Nat32,
     'Success' : IDL.Null,
   });
-  const UnblockUserRequest = IDL.Record({ 'user_id' : UserId });
+  const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   return IDL.Service({
-    'block_user' : IDL.Func([BlockUserRequest], [], []),
-    'create_group' : IDL.Func([CreateGroupRequest], [CreateGroupResponse], []),
-    'get_chats' : IDL.Func([GetChatsRequest], [GetChatsResponse], ['query']),
-    'get_chunk' : IDL.Func([GetChunkRequest], [GetChunkResponse], ['query']),
+    'block_user' : IDL.Func([BlockUserArgs], [], []),
+    'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
+    'get_chats' : IDL.Func([GetChatsArgs], [GetChatsResponse], ['query']),
+    'get_chunk' : IDL.Func([GetChunkArgs], [GetChunkResponse], ['query']),
     'get_messages' : IDL.Func(
-        [GetMessagesRequest],
+        [GetMessagesArgs],
         [GetMessagesResponse],
         ['query'],
       ),
     'get_messages_by_index' : IDL.Func(
-        [GetMessagesByIndexRequest],
+        [GetMessagesByIndexArgs],
         [GetMessagesByIndexResponse],
         ['query'],
       ),
     'handle_added_to_group' : IDL.Func(
-        [HandleAddedToGroupRequest],
+        [HandleAddedToGroupArgs],
         [HandleAddedToGroupResponse],
         [],
       ),
     'handle_invited_to_group' : IDL.Func(
-        [HandleInvitedToGroupRequest],
+        [HandleInvitedToGroupArgs],
         [HandleInvitedToGroupResponse],
         [],
       ),
     'handle_joined_group' : IDL.Func(
-        [HandleJoinedGroupRequest],
+        [HandleJoinedGroupArgs],
         [HandleJoinedGroupResponse],
         [],
       ),
     'handle_left_group' : IDL.Func(
-        [HandleLeftGroupRequest],
+        [HandleLeftGroupArgs],
         [HandleLeftGroupResponse],
         [],
       ),
     'handle_message_received' : IDL.Func(
-        [HandleMessageRequest],
+        [HandleMessageArgs],
         [HandleMessageResponse],
         [],
       ),
     'handle_removed_from_group' : IDL.Func(
-        [HandleRemovedFromGroupRequest],
+        [HandleRemovedFromGroupArgs],
         [],
         [],
       ),
-    'mark_read' : IDL.Func([MarkReadRequest], [MarkReadResponse], []),
-    'metrics' : IDL.Func([], [Metrics], ['query']),
-    'put_chunk' : IDL.Func([PutChunkRequest], [PutChunkResponse], []),
+    'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
-        [SearchAllMessagesRequest],
+        [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],
         ['query'],
       ),
-    'send_message' : IDL.Func([SendMessageRequest], [SendMessageResponse], []),
-    'set_avatar' : IDL.Func([SetAvatarRequest], [SetAvatarResponse], []),
-    'unblock_user' : IDL.Func([UnblockUserRequest], [], []),
+    'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'unblock_user' : IDL.Func([UnblockUserArgs], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

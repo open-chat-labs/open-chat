@@ -4,7 +4,7 @@ export default ({ IDL }) => {
     'PhoneIndex' : IDL.Null,
     'GroupIndex' : IDL.Null,
   });
-  const InstallIndexRequest = IDL.Record({
+  const InstallIndexArgs = IDL.Record({
     'wasm' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
     'canister_type' : IndexCanister,
@@ -14,7 +14,7 @@ export default ({ IDL }) => {
     'Success' : CanisterId,
     'Failure' : IDL.Null,
   });
-  const InstallWebsiteRequest = IDL.Record({
+  const InstallWebsiteArgs = IDL.Record({
     'wasm' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
     'canister_type' : IndexCanister,
@@ -23,14 +23,15 @@ export default ({ IDL }) => {
     'Success' : CanisterId,
     'Failure' : IDL.Null,
   });
-  const Metrics = IDL.Record({
+  const MetricsArgs = IDL.Record({});
+  const MetricsResponse = IDL.Record({
     'cycles_balance' : IDL.Int64,
     'caller_id' : IDL.Principal,
     'bytes_used' : IDL.Nat64,
     'timestamp' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
   });
-  const BalanceNotification = IDL.Record({ 'balance' : IDL.Nat });
+  const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
   const BackendCanister = IDL.Variant({
     'UserIndex' : IDL.Null,
     'PhoneIndex' : IDL.Null,
@@ -38,7 +39,7 @@ export default ({ IDL }) => {
     'Group' : IDL.Null,
     'User' : IDL.Null,
   });
-  const UpgradeRequest = IDL.Record({
+  const UpgradeArgs = IDL.Record({
     'wasm' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
     'canister_type' : BackendCanister,
@@ -48,19 +49,15 @@ export default ({ IDL }) => {
     'Failure' : IDL.Null,
   });
   return IDL.Service({
-    'install_index' : IDL.Func(
-        [InstallIndexRequest],
-        [InstallIndexResponse],
-        [],
-      ),
+    'install_index' : IDL.Func([InstallIndexArgs], [InstallIndexResponse], []),
     'install_website' : IDL.Func(
-        [InstallWebsiteRequest],
+        [InstallWebsiteArgs],
         [InstallWebsiteResponse],
         [],
       ),
-    'metrics' : IDL.Func([], [Metrics], ['query']),
-    'notify_balance' : IDL.Func([BalanceNotification], [], []),
-    'upgrade' : IDL.Func([UpgradeRequest], [UpgradeResponse], []),
+    'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
+    'upgrade' : IDL.Func([UpgradeArgs], [UpgradeResponse], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

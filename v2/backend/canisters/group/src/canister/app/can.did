@@ -58,7 +58,7 @@ type Message =
         replies_to: opt ReplyContext;
     };
 
-type SendMessageRequest =
+type SendMessageArgs =
     record {
         client_message_id: text;
         content: MessageContent;
@@ -86,7 +86,7 @@ type SendMessageResponse =
         RecipientBlocked;
     }; 
 
-type MarkReadRequest =
+type MarkReadArgs =
     record {
         user_id: UserId;
         from_index: nat32;
@@ -101,7 +101,7 @@ type MarkReadResponse =
         ChatNotFound;
     }; 
 
-type SetAvatarRequest =
+type SetAvatarArgs =
     record {
         mime_type: text;
         bytes: vec nat8;
@@ -115,7 +115,7 @@ type SetAvatarResponse =
     }; 
 
 // TODO
-type InviteUsersRequest =
+type InviteUsersArgs =
     record {
     };
 
@@ -126,7 +126,7 @@ type InviteUsersResponse =
     }; 
 
 // TODO
-type JoinGroupRequest =
+type JoinGroupArgs =
     record {
     };
 
@@ -137,7 +137,7 @@ type JoinGroupResponse =
     }; 
 
 // TODO
-type BlockUserRequest =
+type BlockUserArgs =
     record {
     };
 
@@ -148,7 +148,7 @@ type BlockUserResponse =
     }; 
 
 // TODO
-type UnblockUserRequest =
+type UnblockUserArgs =
     record {
     };
 
@@ -159,7 +159,7 @@ type UnblockUserResponse =
     }; 
 
 // TODO
-type AddParticipantsRequest =
+type AddParticipantsArgs =
     record {
     };
 
@@ -170,7 +170,7 @@ type AddParticipantsResponse =
     }; 
 
 // TODO
-type RemoveParticipantsRequest =
+type RemoveParticipantsArgs =
     record {
     };
 
@@ -181,7 +181,7 @@ type RemoveParticipantsResponse =
     }; 
 
 // TODO
-type MakeAdminRequest =
+type MakeAdminArgs =
     record {
     };
 
@@ -192,7 +192,7 @@ type MakeAdminResponse =
     }; 
 
 // TODO
-type RemoveAdminRequest =
+type RemoveAdminArgs =
     record {
     };
 
@@ -203,7 +203,7 @@ type RemoveAdminResponse =
     }; 
 
 // TODO
-type LeaveGroupRequest =
+type LeaveGroupArgs =
     record {
     };
 
@@ -213,7 +213,7 @@ type LeaveGroupResponse =
         Success;
     }; 
 
-type PutChunkRequest =
+type PutChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
@@ -226,7 +226,7 @@ type PutChunkResponse =
         Full;
     }; 
 
-type GetGroupRequest =
+type GetGroupArgs =
     record {
     };
 
@@ -244,7 +244,7 @@ type GetGroupResponse =
         };
     };
 
-type GetChunkRequest =
+type GetChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
@@ -258,7 +258,7 @@ type GetChunkResponse =
         NotFound;
     };
 
-type GetMessagesRequest =
+type GetMessagesArgs =
     record {
         from_index: nat32;
         to_index: nat32;
@@ -276,7 +276,7 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexRequest =
+type GetMessagesByIndexArgs =
     record {
         messages: vec nat32;
     };
@@ -287,7 +287,7 @@ type GetMessagesByIndexResponse =
         ChatNotFound;
     }; 
 
-type SearchMessagesRequest =
+type SearchMessagesArgs =
     record {
         search_term: text;
         max_results: nat8;
@@ -304,7 +304,11 @@ type SearchMessagesResponse =
         Failure;
     }; 
 
-type Metrics = 
+type MetricsArgs =
+    record {
+    };
+
+type MetricsResponse = 
     record {
         text_message_count: nat64;
         image_message_count: nat64;
@@ -320,48 +324,48 @@ type Metrics =
     };
 
 service: {
-    send_message: (SendMessageRequest) -> (SendMessageResponse);
-    mark_read: (MarkReadRequest) -> (MarkReadResponse);
+    send_message: (SendMessageArgs) -> (SendMessageResponse);
+    mark_read: (MarkReadArgs) -> (MarkReadResponse);
 
     // Admin only
-    set_avatar: (SetAvatarRequest) -> (SetAvatarResponse);
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
 
     // Public only
-    invite_users: (InviteUsersRequest) -> (InviteUsersResponse);
+    invite_users: (InviteUsersArgs) -> (InviteUsersResponse);
 
     // Public only
-    join_group: (JoinGroupRequest) -> (JoinGroupResponse);
+    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     
     // Admin only - public only
-    block_user: (BlockUserRequest) -> (BlockUserResponse); 
+    block_user: (BlockUserArgs) -> (BlockUserResponse); 
 
     // Admin only - public only
-    unblock_user: (UnblockUserRequest) -> (UnblockUserResponse);
+    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
 
     // Admin only - Private only
-    add_participants: (AddParticipantsRequest) -> (AddParticipantsResponse);
+    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Admin only - Private only
-    remove_participants: (RemoveParticipantsRequest) -> (RemoveParticipantsResponse);
+    remove_participants: (RemoveParticipantsArgs) -> (RemoveParticipantsResponse);
 
     // Admin only
-    make_admin: (MakeAdminRequest) -> (MakeAdminResponse);
+    make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
 
     // Admin only
-    remove_admin: (RemoveAdminRequest) -> (RemoveAdminResponse);
+    remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
 
-    leave_group: (LeaveGroupRequest) -> (LeaveGroupResponse);
+    leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
 
-    put_chunk: (PutChunkRequest) -> (PutChunkResponse);
+    put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
-    get_group: (GetGroupRequest) -> (GetGroupResponse) query;
+    get_group: (GetGroupArgs) -> (GetGroupResponse) query;
         
-    get_messages: (GetMessagesRequest) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexRequest) -> (GetMessagesByIndexResponse) query;
+    get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
+    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
 
     // Use Tantivy
-    search_messages: (SearchMessagesRequest) -> (SearchMessagesResponse) query;
+    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;
     
-    get_chunk: (GetChunkRequest) -> (GetChunkResponse) query;
-    metrics: () -> (Metrics) query;
+    get_chunk: (GetChunkArgs) -> (GetChunkResponse) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

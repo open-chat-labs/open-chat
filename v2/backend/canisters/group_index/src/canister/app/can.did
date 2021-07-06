@@ -8,7 +8,7 @@ type TimestampMillis = nat64;
 type CanisterId = principal;
 type GroupId = CanisterId;
 
-type CreateRequest =
+type CreateArgs =
     record {
         name: text;
         is_public: bool;
@@ -26,7 +26,7 @@ type CreateResponse =
         UnknownError;
     };
 
-type UpgradeRequest =
+type UpgradeArgs =
     record {
         wasm: vec nat8;
         version: text;
@@ -40,7 +40,7 @@ type UpgradeResponse =
         Failure; // Need to enumerate these
     };
 
-type DeleteRequest =
+type DeleteArgs =
     record {
         group_id: GroupId;
     };
@@ -52,7 +52,7 @@ type DeleteResponse =
         NotFound;
     };
 
-type SearchRequest =
+type SearchArgs =
     record {
         search_term: text;
         max_results: nat8;
@@ -72,12 +72,16 @@ type SearchResponse =
         InvalidTerm;
     };
 
-type BalanceNotification =
+type NotifyBalanceArgs =
     record {
         balance: nat;
     };
 
-type Metrics = 
+type MetricsArgs =
+    record {
+    };
+
+type MetricsResponse = 
     record {
         public_group_count: nat64;
         private_group_count: nat64;
@@ -94,19 +98,19 @@ type Metrics =
 
 service: {
     // Called by a user canister - costs 0.2T
-    create: (CreateRequest) -> (CreateResponse);
+    create: (CreateArgs) -> (CreateResponse);
     
     // Takes a new Group canister WASM and schedules a rolling upgrade
-    upgrade: (UpgradeRequest) -> (UpgradeResponse);
+    upgrade: (UpgradeArgs) -> (UpgradeResponse);
     
     // Any group admin can delete the group
-    delete: (DeleteRequest) -> (DeleteResponse);
+    delete: (DeleteArgs) -> (DeleteResponse);
 
     // Search for public groups
-    search: (SearchRequest) -> (SearchResponse) query;
+    search: (SearchArgs) -> (SearchResponse) query;
 
     // Called by a group canister when it is low on cycles
-    notify_balance: (BalanceNotification) -> ();
+    notify_balance: (NotifyBalanceArgs) -> ();
 
-    metrics: () -> (Metrics) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

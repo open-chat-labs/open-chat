@@ -5,11 +5,11 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::types::UserId;
 
-pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
+pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let mut user = None;
-    if let Some(user_id) = request.user_id {
+    if let Some(user_id) = args.user_id {
         user = runtime_state.data.users.get_by_user_id(&user_id);
-    } else if let Some(username) = request.username {
+    } else if let Some(username) = args.username {
         user = runtime_state.data.users.get_by_username(&username);
     }
 
@@ -22,7 +22,7 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     user_id: Option<UserId>,
     username: Option<String>,
 }
