@@ -16,7 +16,7 @@ export function avatarUrl(userId: string): string {
 export enum UserStatus {
     Offline,
     Online,
-    Busy,
+    None,
 }
 
 export enum AvatarSize {

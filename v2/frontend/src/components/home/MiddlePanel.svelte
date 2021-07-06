@@ -2,6 +2,7 @@
     import Panel from "../Panel.svelte";
     import Button from "../Button.svelte";
     import Loading from "../Loading.svelte";
+    import { fade } from "svelte/transition";
     import { push } from "svelte-spa-router";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
@@ -10,7 +11,7 @@
     // import UnexpectedError from "../unexpectedError/UnexpectedError.svelte";
     // import Loading from "../Loading.svelte";
     export let hideLeft: boolean = false;
-    export let selectedChatId: string | undefined;
+    export let selectedChatId: bigint | undefined;
     export let state: MiddlePanelState;
 </script>
 
@@ -22,7 +23,9 @@
             <Loading />
         {/if}
     {:else if selectedChatId === undefined}
-        <NoChatSelected on:newchat />
+        <div in:fade>
+            <NoChatSelected on:newchat />
+        </div>
     {:else}
         <div class="currentChat">
             {#if $screenWidth === ScreenWidth.ExtraSmall}
@@ -44,8 +47,6 @@
 </Panel>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .currentChat {
         background-color: var(--currentChat-header-bg);
         color: var(--currentChat-header-txt);

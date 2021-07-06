@@ -1,11 +1,11 @@
 /* eslint-disable no-undef */
 import svelte from "rollup-plugin-svelte";
+import sveltePreprocess from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import livereload from "rollup-plugin-livereload";
 import alias from "@rollup/plugin-alias";
 import { terser } from "rollup-plugin-terser";
-import sveltePreprocess from "svelte-preprocess";
 import typescript from "@rollup/plugin-typescript";
 import css from "rollup-plugin-css-only";
 import dfxJson from "../dfx.json";
@@ -87,9 +87,13 @@ export default {
                 },
             ],
         }),
+
         svelte({
             preprocess: sveltePreprocess({
                 sourceMap: !production,
+                scss: {
+                    prependData: `@import 'src/styles/mixins.scss';`,
+                },
             }),
             compilerOptions: {
                 dev: !production,

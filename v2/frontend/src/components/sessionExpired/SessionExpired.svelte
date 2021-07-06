@@ -17,8 +17,6 @@
 </ModalPage>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .content {
         display: flex;
         flex-direction: column;

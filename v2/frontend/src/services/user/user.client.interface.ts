@@ -1,5 +1,5 @@
-import type { ChatSummary } from "../../domain/chat";
+import type { GetChatsResponse } from "../../domain/chat";
 
 export interface IUserClient {
-    getChats(): Promise<ChatSummary[]>;
+    getChats(): Promise<GetChatsResponse>;
 }

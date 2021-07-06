@@ -17,8 +17,6 @@
 <Button on:click={complete}>{$_("register.letsGo")}</Button>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .subtitle {
         @include font(bold, normal, fs-140);
         margin-bottom: $sp5;

@@ -14,11 +14,12 @@ export default ({ IDL }) => {
     'NameTooLong' : IDL.Nat16,
     'GroupLimitExceeded' : IDL.Nat16,
   });
-  const Timestamp = IDL.Nat64;
+  const TimestampMillis = IDL.Nat64;
   const GetChatsRequest = IDL.Record({
     'message_count_for_top_chat' : IDL.Opt(IDL.Nat16),
-    'updated_since' : IDL.Opt(Timestamp),
+    'updated_since' : IDL.Opt(TimestampMillis),
   });
+  const ChatId = IDL.Nat;
   const BlobReference = IDL.Record({
     'blob_size' : IDL.Nat32,
     'blob_id' : IDL.Text,
@@ -59,20 +60,46 @@ export default ({ IDL }) => {
     'id' : IDL.Nat32,
     'content' : MessageContent,
     'sender' : UserId,
-    'timestamp' : Timestamp,
+    'timestamp' : TimestampMillis,
     'replies_to' : IDL.Opt(ReplyContext),
     'client_message_id' : IDL.Text,
   });
-  const ChatSummary = IDL.Record({
+  const GroupChatSummary = IDL.Record({
+    'id' : ChatId,
+    'last_read_by_us' : IDL.Nat32,
+    'participants' : IDL.Vec(UserId),
+    'subject' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'display_date' : TimestampMillis,
+    'min_visible_message_id' : IDL.Nat32,
+    'last_read_by_them' : IDL.Nat32,
+    'latest_message_id' : IDL.Nat32,
+    'latest_message' : IDL.Opt(Message),
+  });
+  const DirectChatSummary = IDL.Record({
+    'id' : ChatId,
+    'last_read_by_us' : IDL.Nat32,
     'them' : UserId,
-    'last_updated' : Timestamp,
-    'display_date' : Timestamp,
-    'unread_by_them_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
-    'latest_messages' : IDL.Vec(Message),
-    'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
+    'last_updated' : TimestampMillis,
+    'display_date' : TimestampMillis,
+    'last_read_by_them' : IDL.Nat32,
+    'latest_message_id' : IDL.Nat32,
+    'latest_message' : IDL.Opt(Message),
+  });
+  const ChatSummary = IDL.Variant({
+    'Group' : GroupChatSummary,
+    'Direct' : DirectChatSummary,
+  });
+  const User = IDL.Record({
+    'username' : IDL.Text,
+    'last_online' : TimestampMillis,
+    'user_id' : UserId,
   });
   const GetChatsResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'chats' : IDL.Vec(ChatSummary) }),
+    'Success' : IDL.Record({
+      'chats' : IDL.Vec(ChatSummary),
+      'users' : IDL.Vec(User),
+    }),
   });
   const GetChunkRequest = IDL.Record({
     'blob_id' : IDL.Nat,
@@ -167,7 +194,7 @@ export default ({ IDL }) => {
     'bytes_used' : IDL.Nat64,
     'file_message_count' : IDL.Nat64,
     'cycles_message_count' : IDL.Nat64,
-    'timestamp' : IDL.Nat64,
+    'timestamp' : TimestampMillis,
     'text_message_count' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
     'video_message_count' : IDL.Nat64,
@@ -206,7 +233,7 @@ export default ({ IDL }) => {
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
-      'timestamp' : Timestamp,
+      'timestamp' : TimestampMillis,
       'chat_summary' : ChatSummary,
       'message_index' : IDL.Nat32,
     }),

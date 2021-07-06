@@ -9,8 +9,6 @@
 </select>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     :global(option) {
         color: var(--input-txt);
     }

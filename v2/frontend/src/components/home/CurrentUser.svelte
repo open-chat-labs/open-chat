@@ -38,7 +38,7 @@
         {#if $screenWidth !== ScreenWidth.ExtraSmall}
             <Avatar
                 url={avatarUrl(user.userId.toString())}
-                status={UserStatus.Online}
+                status={UserStatus.None}
                 size={AvatarSize.Large} />
         {/if}
         <h4 class="name">{user.username}</h4>
@@ -87,8 +87,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .current-user-box {
         display: flex;
         flex: 0 0 180px;

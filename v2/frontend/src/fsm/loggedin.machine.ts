@@ -9,8 +9,8 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
+import type { ChatSummary, GetChatsResponse, UserSummary } from "../domain/chat";
 import type { User } from "../domain/user";
-import type { ChatSummary } from "../domain/chat";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -22,14 +22,15 @@ export interface LoggedInContext {
     serviceContainer?: ServiceContainer;
     user?: User;
     chats: ChatSummary[];
-    selectedChatId?: string;
+    users: UserSummary[]; //todo let's make this is lookup
+    selectedChatId?: bigint;
     error?: Error;
 }
 
 export type LoggedInEvents =
-    | { type: "LOAD_MESSAGES"; data: string }
+    | { type: "LOAD_MESSAGES"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
-    | { type: "done.invoke.getChats"; data: ChatSummary[] }
+    | { type: "done.invoke.getChats"; data: GetChatsResponse }
     | { type: "error.platform.getChats"; data: Error };
 
 const liveConfig: Partial<MachineOptions<LoggedInContext, LoggedInEvents>> = {
@@ -53,6 +54,7 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
     initial: "loading_chats",
     context: {
         chats: [],
+        users: [],
     },
     states: {
         loading_chats: {
@@ -63,8 +65,11 @@ export const schema: MachineConfig<LoggedInContext, any, LoggedInEvents> = {
                     {
                         target: "loaded_chats",
                         actions: assign({
-                            chats: (_, ev: DoneInvokeEvent<ChatSummary[]>) => {
-                                return ev.type === "done.invoke.getChats" ? ev.data : [];
+                            chats: (_, ev: DoneInvokeEvent<GetChatsResponse>) => {
+                                return ev.type === "done.invoke.getChats" ? ev.data.chats : [];
+                            },
+                            users: (_, ev: DoneInvokeEvent<GetChatsResponse>) => {
+                                return ev.type === "done.invoke.getChats" ? ev.data.users : [];
                             },
                             error: (_, _ev) => undefined,
                         }),

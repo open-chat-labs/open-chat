@@ -53,22 +53,42 @@ export interface Message {
     clientMessageId: string;
 }
 
-export interface ChatSummary {
-    chatId: string;
-    name: string;
-    lastMessage: string;
-}
+export type UserSummary = {
+    userId: Principal;
+    username: string;
+    lastOnline: bigint;
+};
 
-export interface ChatSummaryTodo {
-    them: Principal;
+export type GetChatsResponse = {
+    chats: ChatSummary[];
+    users: UserSummary[];
+};
+
+export type ChatSummary = DirectChatSummary | GroupChatSummary;
+
+type ChatSummaryCommon = {
+    chatId: bigint;
     lastUpdated: bigint;
     displayDate: bigint;
-    unreadByThemMessageIdRanges: number[][];
-    latestMessages: Message[];
-    unreadByMeMessageIdRanges: number[][];
-}
+    lastReadByUs: number;
+    lastReadByThem: number;
+    lastestMessageId: number;
+    latestMessage?: Message;
+};
 
-// ==================================================
+export type DirectChatSummary = ChatSummaryCommon & {
+    kind: "direct_chat";
+    them: Principal;
+};
+
+export type GroupChatSummary = ChatSummaryCommon & {
+    kind: "group_chat";
+    subject: string;
+};
+
+// ================================================================
+// below here is the chat detail stuff which we may or may not need
+// ================================================================
 type ChatCommon = {
     chatId: bigint;
     scrollTop?: number;

@@ -7,8 +7,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .menu {
         width: 200px;
         position: absolute;

@@ -2,7 +2,6 @@
     import { Meta, Template, Story } from "@storybook/addon-svelte-csf";
     import Register from "./Register.svelte";
     import StoryTheme from "../StoryTheme.svelte";
-    import { phoneNumber } from "../../services/userIndex/mappers";
 </script>
 
 <Meta

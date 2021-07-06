@@ -13,7 +13,6 @@
 </button>
 
 <style type="text/scss">
-    @import "../styles/mixins";
     button {
         transition: background ease-in-out 200ms;
         background: var(--button-bg);

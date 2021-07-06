@@ -27,13 +27,16 @@
         // wait until we have loaded the chats
         if ($machine.matches("loaded_chats")) {
             // if we have a chatid in the params then we need to select that chat
-            if (params.chatId && params.chatId !== $machine.context.selectedChatId) {
+            if (params.chatId && params.chatId !== $machine.context.selectedChatId?.toString()) {
                 // if we have an unknown chat in the param, then redirect to home
-                if ($machine.context.chats.findIndex((c) => c.chatId === params.chatId) < 0) {
+                if (
+                    $machine.context.chats.findIndex((c) => c.chatId.toString() === params.chatId) <
+                    0
+                ) {
                     replace("/");
                 } else {
                     // otherwise tell the machine to load messages for this chat
-                    machine.send({ type: "LOAD_MESSAGES", data: params.chatId });
+                    machine.send({ type: "LOAD_MESSAGES", data: BigInt(params.chatId) });
                 }
             }
 
@@ -98,8 +101,6 @@
 </Overlay>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     main {
         position: relative;
         @include fullHeight();

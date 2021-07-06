@@ -19,8 +19,6 @@
 </ModalContent>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     ul {
         margin: $sp4;
     }

@@ -61,8 +61,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .actions {
         display: flex;
         gap: 10px;

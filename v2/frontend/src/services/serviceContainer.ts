@@ -10,7 +10,7 @@ import type {
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type { ChatSummary } from "../domain/chat";
+import type { ChatSummary, GetChatsResponse } from "../domain/chat";
 import type { Principal } from "@dfinity/principal";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
@@ -42,7 +42,7 @@ export class ServiceContainer {
         return this;
     }
 
-    getChats(): Promise<ChatSummary[]> {
+    getChats(): Promise<GetChatsResponse> {
         return this.userClient.getChats();
     }
 

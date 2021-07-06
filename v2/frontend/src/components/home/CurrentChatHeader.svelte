@@ -58,8 +58,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .chat-header {
         display: flex;
         justify-content: space-between;

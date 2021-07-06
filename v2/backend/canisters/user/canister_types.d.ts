@@ -7,14 +7,9 @@ export interface BlobReference {
 };
 export interface BlockUserRequest { 'user_id' : UserId };
 export type CanisterId = Principal;
-export interface ChatSummary {
-  'them' : UserId,
-  'last_updated' : Timestamp,
-  'display_date' : Timestamp,
-  'unread_by_them_message_id_ranges' : Array<Array<number>>,
-  'latest_messages' : Array<Message>,
-  'unread_by_me_message_id_ranges' : Array<Array<number>>,
-};
+export type ChatId = bigint;
+export type ChatSummary = { 'Group' : GroupChatSummary } |
+  { 'Direct' : DirectChatSummary };
 export interface CreateGroupRequest { 'is_public' : boolean, 'name' : string };
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'UnknownError' : null } |
@@ -23,6 +18,16 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : number };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint };
+export interface DirectChatSummary {
+  'id' : ChatId,
+  'last_read_by_us' : number,
+  'them' : UserId,
+  'last_updated' : TimestampMillis,
+  'display_date' : TimestampMillis,
+  'last_read_by_them' : number,
+  'latest_message_id' : number,
+  'latest_message' : [] | [Message],
+};
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
@@ -31,9 +36,11 @@ export interface FileContent {
 };
 export interface GetChatsRequest {
   'message_count_for_top_chat' : [] | [number],
-  'updated_since' : [] | [Timestamp],
+  'updated_since' : [] | [TimestampMillis],
 };
-export type GetChatsResponse = { 'Success' : { 'chats' : Array<ChatSummary> } };
+export type GetChatsResponse = {
+    'Success' : { 'chats' : Array<ChatSummary>, 'users' : Array<User> }
+  };
 export interface GetChunkRequest { 'blob_id' : bigint, 'index' : number };
 export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
@@ -53,6 +60,18 @@ export type GetMessagesResponse = { 'ChatNotFound' : null } |
 export interface GetMessagesSuccess {
   'messages' : Array<Message>,
   'latest_message_id' : number,
+};
+export interface GroupChatSummary {
+  'id' : ChatId,
+  'last_read_by_us' : number,
+  'participants' : Array<UserId>,
+  'subject' : string,
+  'last_updated' : TimestampMillis,
+  'display_date' : TimestampMillis,
+  'min_visible_message_id' : number,
+  'last_read_by_them' : number,
+  'latest_message_id' : number,
+  'latest_message' : [] | [Message],
 };
 export type GroupId = CanisterId;
 export interface HandleAddedToGroupRequest {
@@ -107,7 +126,7 @@ export interface Message {
   'id' : number,
   'content' : MessageContent,
   'sender' : UserId,
-  'timestamp' : Timestamp,
+  'timestamp' : TimestampMillis,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
 };
@@ -126,7 +145,7 @@ export interface Metrics {
   'bytes_used' : bigint,
   'file_message_count' : bigint,
   'cycles_message_count' : bigint,
-  'timestamp' : bigint,
+  'timestamp' : TimestampMillis,
   'text_message_count' : bigint,
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
@@ -164,7 +183,7 @@ export interface SendMessageRequest {
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
-      'timestamp' : Timestamp,
+      'timestamp' : TimestampMillis,
       'chat_summary' : ChatSummary,
       'message_index' : number,
     }
@@ -182,8 +201,13 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'FileTooBig' : number } |
   { 'Success' : null };
 export interface TextContent { 'text' : string };
-export type Timestamp = bigint;
+export type TimestampMillis = bigint;
 export interface UnblockUserRequest { 'user_id' : UserId };
+export interface User {
+  'username' : string,
+  'last_online' : TimestampMillis,
+  'user_id' : UserId,
+};
 export type UserId = CanisterId;
 export default interface _SERVICE {
   'block_user' : (arg_0: BlockUserRequest) => Promise<undefined>,

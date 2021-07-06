@@ -12,8 +12,6 @@
 </ModalPage>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .blurb {
         @include font(light, normal, fs-120);
         margin-bottom: $sp6;

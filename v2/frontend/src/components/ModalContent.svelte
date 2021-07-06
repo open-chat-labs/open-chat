@@ -27,7 +27,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
     .modal-content {
         display: flex;
         flex-direction: column;
