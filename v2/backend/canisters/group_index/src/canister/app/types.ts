@@ -1,19 +1,19 @@
-import type { Principal } from '@dfinity/principal';
-export interface BalanceNotification { 'balance' : bigint };
+import type { Principal } from '@dfinity/agent';
 export type CanisterId = Principal;
-export interface CreateRequest { 'is_public' : boolean, 'name' : string };
+export interface CreateArgs { 'is_public' : boolean, 'name' : string };
 export type CreateResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'UnknownError' : null } |
   { 'Success' : { 'canister_id' : CanisterId } } |
   { 'InvalidName' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : null };
-export interface DeleteRequest { 'group_id' : GroupId };
+export interface DeleteArgs { 'group_id' : GroupId };
 export type DeleteResponse = { 'NotFound' : null } |
   { 'Success' : null } |
   { 'NotAdmin' : null };
 export type GroupId = CanisterId;
-export interface Metrics {
+export type MetricsArgs = {};
+export interface MetricsResponse {
   'cycles_balance' : bigint,
   'private_group_count' : bigint,
   'active_public_group_count' : bigint,
@@ -21,15 +21,13 @@ export interface Metrics {
   'caller_id' : Principal,
   'deleted_public_group_count' : bigint,
   'bytes_used' : bigint,
-  'timestamp' : bigint,
+  'timestamp' : TimestampMillis,
   'deleted_private_group_count' : bigint,
   'public_group_count' : bigint,
   'wasm_memory_used' : bigint,
 };
-export interface SearchRequest {
-  'max_results' : number,
-  'search_term' : string,
-};
+export interface NotifyBalanceArgs { 'balance' : bigint };
+export interface SearchArgs { 'max_results' : number, 'search_term' : string };
 export type SearchResponse = { 'TermTooShort' : number } |
   {
     'Success' : {
@@ -40,15 +38,15 @@ export type SearchResponse = { 'TermTooShort' : number } |
   } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
-export type Timestamp = bigint;
-export interface UpgradeRequest { 'wasm' : Array<number>, 'version' : string };
+export type TimestampMillis = bigint;
+export interface UpgradeArgs { 'wasm' : Array<number>, 'version' : string };
 export type UpgradeResponse = { 'Success' : { 'canister_id' : CanisterId } } |
   { 'Failure' : null };
 export default interface _SERVICE {
-  'create' : (arg_0: CreateRequest) => Promise<CreateResponse>,
-  'delete' : (arg_0: DeleteRequest) => Promise<DeleteResponse>,
-  'metrics' : () => Promise<Metrics>,
-  'notify_balance' : (arg_0: BalanceNotification) => Promise<undefined>,
-  'search' : (arg_0: SearchRequest) => Promise<SearchResponse>,
-  'upgrade' : (arg_0: UpgradeRequest) => Promise<UpgradeResponse>,
+  'create' : (arg_0: CreateArgs) => Promise<CreateResponse>,
+  'delete' : (arg_0: DeleteArgs) => Promise<DeleteResponse>,
+  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'notify_balance' : (arg_0: NotifyBalanceArgs) => Promise<undefined>,
+  'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
+  'upgrade' : (arg_0: UpgradeArgs) => Promise<UpgradeResponse>,
 };

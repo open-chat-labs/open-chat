@@ -41,7 +41,7 @@ pub fn query(runtime_state: &RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {}
+pub struct Args {}
 
 #[allow(dead_code)]
 #[derive(CandidType)]

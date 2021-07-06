@@ -7,11 +7,11 @@ use serde::Deserialize;
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
-pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
+pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let caller = runtime_state.env.caller();
     let users = &runtime_state.data.users;
-    let mut search_term = request.search_term;
+    let mut search_term = args.search_term;
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
@@ -28,7 +28,7 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
     // Page
     let results = matches
         .iter()
-        .take(request.max_results as usize)
+        .take(args.max_results as usize)
         .map(|u| UserSummary::new(u, Some(now)))
         .collect();
 
@@ -59,7 +59,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     search_term: String,
     max_results: u8,
 }
@@ -89,7 +89,7 @@ mod tests {
         let runtime_state = setup_runtime_state();
 
         let response = query(
-            Request {
+            Args {
                 max_results: 3,
                 search_term: "ma".to_string(),
             },
@@ -105,7 +105,7 @@ mod tests {
         let runtime_state = setup_runtime_state();
 
         let response = query(
-            Request {
+            Args {
                 max_results: 10,
                 search_term: "mA".to_string(),
             },
@@ -121,7 +121,7 @@ mod tests {
         let runtime_state = setup_runtime_state();
 
         let response = query(
-            Request {
+            Args {
                 max_results: 2,
                 search_term: "ma".to_string(),
             },
@@ -138,7 +138,7 @@ mod tests {
         let runtime_state = setup_runtime_state();
 
         let response = query(
-            Request {
+            Args {
                 max_results: 2,
                 search_term: "jU".to_string(),
             },
@@ -155,7 +155,7 @@ mod tests {
         let runtime_state = setup_runtime_state();
 
         let response = query(
-            Request {
+            Args {
                 max_results: 10,
                 search_term: "".to_string(),
             },

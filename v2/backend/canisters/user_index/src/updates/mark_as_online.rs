@@ -8,7 +8,7 @@ pub fn update(runtime_state: &mut RuntimeState) {
 }
 
 #[derive(Deserialize)]
-pub struct Request {}
+pub struct Args {}
 
 #[cfg(test)]
 mod tests {

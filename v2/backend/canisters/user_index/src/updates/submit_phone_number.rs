@@ -8,14 +8,11 @@ use serde::Deserialize;
 use shared::time::Milliseconds;
 use std::str::FromStr;
 
-pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
-    match PhoneNumber::from_str(&format!(
-        "+{} {}",
-        request.phone_number.country_code, request.phone_number.number
-    )) {
+    match PhoneNumber::from_str(&format!("+{} {}", args.phone_number.country_code, args.phone_number.number)) {
         Ok(phone_number) => {
             let mut sms_messages_sent = 0u16;
 
@@ -69,7 +66,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     phone_number: UnvalidatedPhoneNumber,
 }
 
@@ -106,13 +103,13 @@ mod tests {
         let env = TestEnv::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
-        let request = Request {
+        let args = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "1111 111 111".to_string(),
             },
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state
@@ -128,22 +125,22 @@ mod tests {
         let env = TestEnv::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
-        let request1 = Request {
+        let args1 = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "1111 111 111".to_string(),
             },
         };
-        let result1 = update(request1, &mut runtime_state);
+        let result1 = update(args1, &mut runtime_state);
         assert!(matches!(result1, Response::Success));
 
-        let request2 = Request {
+        let args2 = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "2222 222 222".to_string(),
             },
         };
-        let result2 = update(request2, &mut runtime_state);
+        let result2 = update(args2, &mut runtime_state);
         assert!(matches!(result2, Response::Success));
 
         let user = runtime_state
@@ -169,13 +166,13 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(env, data);
 
-        let request = Request {
+        let args = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "2222 222 222".to_string(),
             },
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegistered));
     }
 
@@ -193,13 +190,13 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "1111 111 111".to_string(),
             },
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegisteredByOther));
     }
 
@@ -208,13 +205,13 @@ mod tests {
         let env = TestEnv::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), Data::default());
 
-        let request = Request {
+        let args = Args {
             phone_number: UnvalidatedPhoneNumber {
                 country_code: 44,
                 number: "_".to_string(),
             },
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));
     }
 }

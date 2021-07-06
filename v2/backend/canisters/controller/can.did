@@ -21,7 +21,7 @@ type BackendCanister =
         Group;
     };
 
-type InstallIndexRequest = 
+type InstallIndexArgs = 
     record {
         canister_type: IndexCanister;
         wasm: vec nat8;
@@ -34,7 +34,7 @@ type InstallIndexResponse =
         Failure; // Need to enumerate these
     };
 
-type InstallWebsiteRequest = 
+type InstallWebsiteArgs = 
     record {
         canister_type: IndexCanister;
         wasm: vec nat8;
@@ -48,7 +48,7 @@ type InstallWebsiteResponse =
         Failure; // Need to enumerate these
     };
 
-type UpgradeRequest = 
+type UpgradeArgs = 
     record {
         canister_type: BackendCanister;
         wasm: vec nat8;
@@ -63,12 +63,16 @@ type UpgradeResponse =
         Failure; // Need to enumerate these
     };
 
-type BalanceNotification =
+type NotifyBalanceArgs =
     record {
         balance: nat;
     };
 
-type Metrics = 
+type MetricsArgs =
+    record {
+    };
+
+type MetricsResponse = 
     record {
         cycles_balance: int64;
         bytes_used: nat64;
@@ -79,16 +83,16 @@ type Metrics =
 
 service: {
     // This creates and installs the initial WASM of the index canisters
-    install_index: (InstallIndexRequest) -> (InstallIndexResponse);
+    install_index: (InstallIndexArgs) -> (InstallIndexResponse);
 
     // This creates/installs or upgrades the website canister
-    install_website: (InstallWebsiteRequest) -> (InstallWebsiteResponse);
+    install_website: (InstallWebsiteArgs) -> (InstallWebsiteResponse);
     
     // This is used to upgrade the WASM of any back-end canister
-    upgrade: (UpgradeRequest) -> (UpgradeResponse);
+    upgrade: (UpgradeArgs) -> (UpgradeResponse);
 
     // Called by a top-level canister when it is low on cycles
-    notify_balance: (BalanceNotification) -> ();
+    notify_balance: (NotifyBalanceArgs) -> ();
 
-    metrics: () -> (Metrics) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

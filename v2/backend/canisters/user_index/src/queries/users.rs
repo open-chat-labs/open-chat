@@ -6,11 +6,11 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
 
-pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
+pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
-    let updated_since = request.updated_since;
+    let updated_since = args.updated_since;
 
-    let users = request
+    let users = args
         .users
         .iter()
         .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
@@ -23,7 +23,7 @@ pub fn query(request: Request, runtime_state: &RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     users: Vec<UserId>,
     updated_since: Option<TimestampMillis>,
 }

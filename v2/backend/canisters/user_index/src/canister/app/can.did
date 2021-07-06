@@ -11,7 +11,7 @@ type PhoneNumber =
         number: text;
     };
 
-type SubmitPhoneNumberRequest = 
+type SubmitPhoneNumberArgs = 
     record {
         number: PhoneNumber;
     };
@@ -24,7 +24,7 @@ type SubmitPhoneNumberResponse =
         InvalidPhoneNumber;
     };
 
-type ConfirmPhoneNumberRequest = 
+type ConfirmPhoneNumberArgs = 
     record {
         confirmation_code: text;
     };
@@ -38,7 +38,7 @@ type ConfirmPhoneNumberResponse =
         UserNotFound;
     };
 
-type ResendCodeRequest = 
+type ResendCodeArgs = 
     record {        
     };
 
@@ -50,11 +50,11 @@ type ResendCodeResponse =
     };
 
 
-type CreateCanisterRequest =
+type CreateCanisterArgs =
     record {
     };
 
-type SetUsernameRequest =
+type SetUsernameArgs =
     record {
         username: text;
     };
@@ -69,21 +69,21 @@ type SetUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type UpdateWasmRequest =
+type UpdateWasmArgs =
     record {
         wasm: vec nat8;
         version: text;
     };
 
-type UpgradeCanisterRequest =
+type UpgradeCanisterArgs =
     record {
     };
 
-type MarkAsOnlineRequest = 
+type MarkAsOnlineArgs = 
     record {
     };
 
-type TransferCyclesRequest = 
+type TransferCyclesArgs = 
     record {
         sender: UserId;
         recipient: UserId;
@@ -100,12 +100,12 @@ type TransferCyclesResponse =
         BalanceExceeded;
     };
 
-type BalanceNotification =
+type NotifyBalanceArgs =
     record {
         balance: nat;
     };
 
-type CurrentUserRequest = 
+type CurrentUserArgs = 
     record {
     };
 
@@ -145,7 +145,7 @@ type UserSummary =
         seconds_since_last_online: nat32;
     };
 
-type UserRequest = 
+type UserArgs = 
     record {
         user_id: opt UserId;
         username: opt text;
@@ -157,7 +157,7 @@ type UserResponse =
         UserNotFound;
     };
 
-type UsersRequest =
+type UsersArgs =
     record {
         users: vec UserId;
         updated_since: opt TimestampMillis;
@@ -171,7 +171,7 @@ type UsersResponse =
         }
     };
 
-type SearchRequest =
+type SearchArgs =
     record {
         search_term: text;
         max_results: nat8
@@ -184,11 +184,11 @@ type SearchResponse =
         }
     };
 
-type MetricsRequest =
+type MetricsArgs =
     record {
     };
 
-type Metrics = 
+type MetricsResponse = 
     record {
         unconfirmed_user_count: nat64;
         confirmed_user_count: nat64;
@@ -206,51 +206,51 @@ type Metrics =
 service : {
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
-    submit_phone_number: (SubmitPhoneNumberRequest) -> (SubmitPhoneNumberResponse);
+    submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
 
     // Once the user receives a confirmation code by SMS and enters it, call this method to
     // confirm the code matches and this set the user state as "confirmed"
-    confirm_phone_number: (ConfirmPhoneNumberRequest) -> (ConfirmPhoneNumberResponse);
+    confirm_phone_number: (ConfirmPhoneNumberArgs) -> (ConfirmPhoneNumberResponse);
 
     // If the user did not receive or enter the confirmation code before it expired then
     // call this to resend the code
-    resend_code: (ResendCodeRequest) -> (ResendCodeResponse);
+    resend_code: (ResendCodeArgs) -> (ResendCodeResponse);
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user
-    create_canister: (CreateCanisterRequest) -> ();
+    create_canister: (CreateCanisterArgs) -> ();
 
     // This is used to set the initial username and subsequently to change it
-    set_username: (SetUsernameRequest) -> (SetUsernameResponse);
+    set_username: (SetUsernameArgs) -> (SetUsernameResponse);
 
     // Update the WASM version for the user canisters - this doesn't actually upgrade any user canisters
-    update_wasm: (UpdateWasmRequest) -> ();
+    update_wasm: (UpdateWasmArgs) -> ();
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed
-    upgrade_canister: (UpgradeCanisterRequest) -> ();
+    upgrade_canister: (UpgradeCanisterArgs) -> ();
 
     // Call this regularly to maintain the online status of the user
-    mark_as_online: (MarkAsOnlineRequest) -> ();
+    mark_as_online: (MarkAsOnlineArgs) -> ();
 
     // Called by a user canister - authorized based on caller
-    transfer_cycles: (TransferCyclesRequest) -> (TransferCyclesResponse);
+    transfer_cycles: (TransferCyclesArgs) -> (TransferCyclesResponse);
 
     // Called by a user canister when it is low on cycles
-    notify_balance: (BalanceNotification) -> ();
+    notify_balance: (NotifyBalanceArgs) -> ();
 
     // Gets the user based on the caller principal. The user can be in a variety of states
-    current_user: (CurrentUserRequest) -> (CurrentUserResponse) query;
+    current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
 
     // Gets a user by id or username
-    user: (UserRequest) -> (UserResponse) query;
+    user: (UserArgs) -> (UserResponse) query;
 
     // Gets some users by id
-    users: (UsersRequest) -> (UsersResponse) query;
+    users: (UsersArgs) -> (UsersResponse) query;
 
     // Search for users matching some query
-    search: (SearchRequest) -> (SearchResponse) query;
+    search: (SearchArgs) -> (SearchResponse) query;
 
     // Canister metrics
-    metrics: (MetricsRequest) -> (Metrics) query;
+    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

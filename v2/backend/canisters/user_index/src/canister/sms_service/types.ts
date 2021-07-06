@@ -1,5 +1,5 @@
 import type { Principal } from '@dfinity/agent';
-export interface PendingSmsMessagesRequest {
+export interface PendingSmsMessagesArgs {
   'max_results' : bigint,
   'from_index' : bigint,
 };
@@ -14,7 +14,7 @@ export interface SmsNotification {
   'phone_number' : string,
 };
 export default interface _SERVICE {
-  'pending_sms_messages' : (arg_0: PendingSmsMessagesRequest) => Promise<
+  'pending_sms_messages' : (arg_0: PendingSmsMessagesArgs) => Promise<
       PendingSmsMessagesResponse
     >,
 };

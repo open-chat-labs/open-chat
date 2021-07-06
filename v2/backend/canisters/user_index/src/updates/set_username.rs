@@ -8,13 +8,13 @@ const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
 const INVALID_CHARS: [char; 2] = [' ', ','];
 
-pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
+pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     let now = runtime_state.env.now();
 
     runtime_state.data.users.mark_online(caller, now);
 
-    let username = request.username;
+    let username = args.username;
 
     if username.len() > MAX_USERNAME_LENGTH as usize {
         return Response::UsernameTooLong(MAX_USERNAME_LENGTH);
@@ -47,7 +47,7 @@ pub fn update(request: Request, runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Request {
+pub struct Args {
     username: String,
 }
 
@@ -87,10 +87,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "xyz".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state.data.users.get_by_username("xyz").unwrap();
@@ -112,10 +112,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "abc".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
     }
 
@@ -141,10 +141,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "xyz".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTaken));
     }
 
@@ -161,10 +161,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "abc".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UserUnconfirmed));
     }
 
@@ -182,10 +182,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "a a".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameInvalid));
     }
 
@@ -203,10 +203,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "a".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooShort(2)));
     }
 
@@ -224,10 +224,10 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let request = Request {
+        let args = Args {
             username: "abcdefghijklmnopqrstuvwxyz".to_string(),
         };
-        let result = update(request, &mut runtime_state);
+        let result = update(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooLong(25)));
     }
 }
