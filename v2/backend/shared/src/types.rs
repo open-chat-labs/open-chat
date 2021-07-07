@@ -30,3 +30,15 @@ impl MessageId {
         MessageId(self.0 + 1)
     }
 }
+
+impl From<u32> for MessageId {
+    fn from(val: u32) -> Self {
+        MessageId(val)
+    }
+}
+
+impl From<MessageId> for u32 {
+    fn from(message_id: MessageId) -> Self {
+        message_id.0
+    }
+}
