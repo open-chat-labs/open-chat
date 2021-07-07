@@ -45,3 +45,8 @@ fn handle_mark_read(args: mark_read::c2c::Args) -> mark_read::c2c::Response {
 fn chats(args: chats::Args) -> chats::Response {
     RUNTIME_STATE.with(|state| chats::query(args, state.borrow().as_ref().unwrap()))
 }
+
+#[query]
+fn messages(args: messages::Args) -> messages::Response {
+    RUNTIME_STATE.with(|state| messages::query(args, state.borrow().as_ref().unwrap()))
+}
