@@ -26,6 +26,6 @@ impl DirectChat {
     }
 
     pub fn next_message_id(&self) -> MessageId {
-        self.messages.last().map_or(MessageId::default(), |m| m.id.incr())
+        self.messages.last().map_or(MessageId::default(), |m| m.id).incr()
     }
 }
