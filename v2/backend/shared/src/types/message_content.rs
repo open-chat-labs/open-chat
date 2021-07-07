@@ -1,3 +1,4 @@
+use crate::types::CanisterId;
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -16,26 +17,20 @@ pub struct TextContent {
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct MediaContent {
-    caption: Option<String>,
-    mime_type: String,
     width: u32,
     height: u32,
-    blob_id: String,
-    blob_size: u32,
-    chunk_size: u32,
     thumbnail_data: String,
-    blob_deleted: bool,
+    caption: Option<String>,
+    mime_type: String,
+    blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct FileContent {
-    caption: Option<String>,
     name: String,
+    caption: Option<String>,
     mime_type: String,
-    blob_id: String,
-    blob_size: u32,
-    chunk_size: u32,
-    blob_deleted: bool,
+    blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -51,4 +46,12 @@ pub enum MessageContentType {
     Video,
     File,
     Cycles,
+}
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct BlobReference {
+    canister_id: CanisterId,
+    blob_id: String,
+    blob_size: u32,
+    chunk_size: u32,
 }
