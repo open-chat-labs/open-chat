@@ -91,6 +91,7 @@
             on:selectChat={selectChat}
             user={$machine.context.user} />
         <MiddlePanel
+            users={$machine.context.userLookup}
             state={homeState}
             on:newchat={newChat}
             on:clearSelection={clearSelectedChat}

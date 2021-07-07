@@ -1,6 +1,12 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../../domain/user";
+    import {
+        AvatarSize,
+        avatarUrl as getAvatarUrl,
+        getUserStatus,
+        UserStatus,
+    } from "../../domain/user";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import type { UserLookup } from "../../domain/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -17,10 +23,33 @@
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
+    export let users: UserLookup;
 
     function clearSelection() {
         dispatch("clearSelection");
     }
+
+    function normaliseChatSummary(chatSummary: ChatSummary) {
+        if (chatSummary.kind === "direct_chat") {
+            return {
+                name: users[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl(chatSummary.them),
+                userStatus: getUserStatus(users, chatSummary.them),
+            };
+        }
+        return {
+            name: chatSummary.subject,
+            userStatus: UserStatus.None,
+            avatarUrl: "assets/group.svg",
+        };
+    }
+
+    $: chat = normaliseChatSummary(selectedChatSummary);
+
+    // for direct chats we want to either show when the user was last online or if they are typing
+    // for group chats we also show if any participants are typing (they all get listed)
+    // if no one is typing we check how many users there are. If > 5 we just say n members (m online)
+    // if 5 or fewer, we list the usernames sorted by online status
 </script>
 
 <div class="chat-header">
@@ -36,9 +65,9 @@
         </span>
     {/if}
     <span class="avatar">
-        <Avatar status={UserStatus.Online} url={"assets/group.svg"} size={AvatarSize.Small} />
+        <Avatar status={chat.userStatus} url={chat.avatarUrl} size={AvatarSize.Small} />
     </span>
-    <span class="chat-details">{"this is the chat name"}</span>
+    <span class="chat-details">{chat.name}</span>
     <span class="menu">
         <MenuIcon>
             <span slot="icon">

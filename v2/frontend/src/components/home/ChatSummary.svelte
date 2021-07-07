@@ -1,39 +1,30 @@
 <script lang="ts">
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import { AvatarSize, avatarUrl as getAvatarUrl, UserStatus } from "../../domain/user";
+    import {
+        AvatarSize,
+        avatarUrl as getAvatarUrl,
+        getUserStatus,
+        UserStatus,
+    } from "../../domain/user";
     import type { UserLookup } from "../../domain/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
-    import { getContentAsText } from "../../domain/chat";
-    import type { ChatSummary, DirectChatSummary } from "../../domain/chat";
+    import { getUnreadMessages, latestMessageText } from "../../domain/chat";
+    import type { ChatSummary } from "../../domain/chat";
 
     export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
-
-    function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
-        return lastestMessageId - lastReadByUs;
-    }
-
-    function getUserStatus({ them }: DirectChatSummary): UserStatus {
-        return (users[them]?.secondsSinceLastOnline ?? Number.MAX_VALUE) < 120
-            ? UserStatus.Online
-            : UserStatus.Offline;
-    }
-
-    function latestMessageText({ latestMessage }: ChatSummary): string {
-        return latestMessage ? getContentAsText(latestMessage.content) : "";
-    }
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: users[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl(chatSummary.them),
-                userStatus: getUserStatus(chatSummary),
+                userStatus: getUserStatus(users, chatSummary.them),
             };
         }
         return {

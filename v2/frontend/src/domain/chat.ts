@@ -169,3 +169,11 @@ export function userIdsFromChatSummaries(chats: ChatSummary[]): string[] {
         return userIds;
     }, []);
 }
+
+export function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
+    return lastestMessageId - lastReadByUs;
+}
+
+export function latestMessageText({ latestMessage }: ChatSummary): string {
+    return latestMessage ? getContentAsText(latestMessage.content) : "";
+}

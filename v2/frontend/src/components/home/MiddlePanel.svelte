@@ -3,6 +3,7 @@
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import type { UserLookup } from "../../domain/user";
     import NoChatSelected from "./NoChatSelected.svelte";
     import type { HomeState } from "./Home.types";
     import CurrentChat from "./CurrentChat.svelte";
@@ -10,6 +11,7 @@
     export let hideLeft: boolean = false;
     export let selectedChatSummary: ChatSummary | undefined;
     export let state: HomeState;
+    export let users: UserLookup;
 </script>
 
 <Panel middle {hideLeft}>
@@ -24,7 +26,7 @@
             <NoChatSelected on:newchat />
         </div>
     {:else}
-        <CurrentChat {state} on:clearSelection {selectedChatSummary} />
+        <CurrentChat {users} {state} on:clearSelection {selectedChatSummary} />
     {/if}
 </Panel>
 
