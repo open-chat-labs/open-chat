@@ -2,6 +2,7 @@ use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
+use shared::types::UserId;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
@@ -11,7 +12,7 @@ pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: HashMap<String, Principal>,
-    user_id_to_principal: HashMap<Principal, Principal>,
+    user_id_to_principal: HashMap<UserId, Principal>,
 }
 
 impl UserMap {
@@ -106,7 +107,7 @@ impl UserMap {
     }
 
     #[allow(dead_code)]
-    pub fn get_by_user_id(&self, user_id: &Principal) -> Option<&User> {
+    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&User> {
         self.user_id_to_principal
             .get(user_id)
             .map(|p| self.users_by_principal.get(p))

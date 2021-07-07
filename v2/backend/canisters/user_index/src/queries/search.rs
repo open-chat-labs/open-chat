@@ -19,7 +19,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let mut matches: Vec<&CreatedUser> = users
         .values()
         .filter_map(|u| u.created_user())
-        .filter(|u| username_matches(&search_term_lower, &u.username) && u.user_id != caller)
+        .filter(|u| username_matches(&search_term_lower, &u.username) && u.principal != caller)
         .collect();
 
     // Sort

@@ -10,4 +10,8 @@ impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
     }
+
+    pub fn is_caller_owner(&self) -> bool {
+        self.env.caller() == self.data.owner
+    }
 }
