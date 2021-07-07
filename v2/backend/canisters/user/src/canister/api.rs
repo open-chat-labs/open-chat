@@ -7,13 +7,9 @@ use ic_cdk_macros::{query, update};
 async fn send_message(args: send_message::Args) -> send_message::Response {
     let response = RUNTIME_STATE.with(|state| send_message::update(&args, state.borrow_mut().as_mut().unwrap()));
 
-    if let send_message::Response::Success(_) = &response {
-        let send_message_c2c_args = send_message::c2c::Args {
-            client_message_id: args.client_message_id,
-            content: args.content,
-            replies_to: args.replies_to,
-        };
-        if let Err(e) = send_message::c2c::call(args.recipient.into(), send_message_c2c_args).await {
+    if matches!(response, send_message::Response::Success(_)) {
+        let (canister_id, send_message_c2c_args) = args.into();
+        if let Err(e) = send_message::c2c::call(canister_id, send_message_c2c_args).await {
             panic!("{}", e);
         }
     }
@@ -24,6 +20,25 @@ async fn send_message(args: send_message::Args) -> send_message::Response {
 #[update]
 fn handle_message_received(args: send_message::c2c::Args) -> send_message::c2c::Response {
     RUNTIME_STATE.with(|state| send_message::c2c::update(args, state.borrow_mut().as_mut().unwrap()))
+}
+
+#[update]
+async fn mark_read(args: mark_read::Args) -> mark_read::Response {
+    let response = RUNTIME_STATE.with(|state| mark_read::update(&args, state.borrow_mut().as_mut().unwrap()));
+
+    if matches!(response, mark_read::Response::Success) {
+        let (canister_id, mark_read_c2c_args) = args.into();
+        if let Err(e) = mark_read::c2c::call(canister_id, mark_read_c2c_args).await {
+            panic!("{}", e);
+        }
+    }
+
+    response
+}
+
+#[update]
+fn handle_mark_read(args: mark_read::c2c::Args) -> mark_read::c2c::Response {
+    RUNTIME_STATE.with(|state| mark_read::c2c::update(args, state.borrow_mut().as_mut().unwrap()))
 }
 
 #[query]

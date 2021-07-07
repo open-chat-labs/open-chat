@@ -7,6 +7,8 @@ pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub messages: Vec<Message>,
+    pub read_up_to: MessageId,
+    pub read_up_to_by_them: MessageId,
 }
 
 impl DirectChat {
@@ -16,6 +18,8 @@ impl DirectChat {
             them,
             date_created: now,
             messages: Vec::new(),
+            read_up_to: MessageId::default(),
+            read_up_to_by_them: MessageId::default(),
         }
     }
 

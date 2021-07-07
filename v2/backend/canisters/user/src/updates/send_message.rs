@@ -55,10 +55,10 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
 
 #[derive(Deserialize)]
 pub struct Args {
-    pub client_message_id: u128,
-    pub recipient: UserId,
-    pub content: MessageContent,
-    pub replies_to: Option<ReplyContext>,
+    client_message_id: u128,
+    recipient: UserId,
+    content: MessageContent,
+    replies_to: Option<ReplyContext>,
 }
 
 #[derive(CandidType)]
@@ -112,13 +112,25 @@ pub mod c2c {
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
-        pub client_message_id: u128,
-        pub content: MessageContent,
-        pub replies_to: Option<ReplyContext>,
+        client_message_id: u128,
+        content: MessageContent,
+        replies_to: Option<ReplyContext>,
     }
 
     #[derive(CandidType, Deserialize)]
     pub enum Response {
         Success,
+    }
+
+    impl From<super::Args> for (CanisterId, Args) {
+        fn from(args: super::Args) -> Self {
+            let c2c_args = Args {
+                client_message_id: args.client_message_id,
+                content: args.content,
+                replies_to: args.replies_to,
+            };
+
+            (args.recipient.into(), c2c_args)
+        }
     }
 }
