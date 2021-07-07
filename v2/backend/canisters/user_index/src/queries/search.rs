@@ -29,7 +29,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let results = matches
         .iter()
         .take(args.max_results as usize)
-        .map(|u| UserSummary::new(u, Some(now)))
+        .map(|u| UserSummary::new(u, true, Some(now)))
         .collect();
 
     Response::Success(Result { users: results })
@@ -129,8 +129,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("matt", results.users[0].username());
-        assert_eq!("marcus", results.users[1].username());
+        assert_eq!("matt", results.users[0].username().unwrap());
+        assert_eq!("marcus", results.users[1].username().unwrap());
     }
 
     #[test]
@@ -146,8 +146,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("jUlian", results.users[0].username());
-        assert_eq!("julian", results.users[1].username());
+        assert_eq!("jUlian", results.users[0].username().unwrap());
+        assert_eq!("julian", results.users[1].username().unwrap());
     }
 
     #[test]
@@ -185,6 +185,7 @@ mod tests {
                 user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,
+                date_updated: env.now,
                 last_online: env.now,
             }));
         }

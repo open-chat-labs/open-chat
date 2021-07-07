@@ -6,13 +6,13 @@ use shared::types::UserId;
 #[derive(CandidType)]
 pub struct UserSummary {
     user_id: UserId,
-    username: String,
+    username: Option<String>,
     seconds_since_last_online: u32,
 }
 
 impl UserSummary {
     // You can pass in now = None if you know that the user is online now
-    pub fn new(user: &CreatedUser, now: Option<TimestampMillis>) -> UserSummary {
+    pub fn new(user: &CreatedUser, include_username: bool, now: Option<TimestampMillis>) -> UserSummary {
         let mut seconds_since_last_online: u32 = 0;
         if let Some(t) = now {
             let millis_since_last_online = t - user.last_online;
@@ -21,13 +21,13 @@ impl UserSummary {
 
         UserSummary {
             user_id: user.user_id,
-            username: user.username.clone(),
+            username: if include_username { Some(user.username.clone()) } else { None },
             seconds_since_last_online,
         }
     }
 
-    #[allow(dead_code)]
-    pub fn username(&self) -> &str {
-        &self.username
+    #[cfg(test)]
+    pub fn username(&self) -> Option<&str> {
+        self.username.as_deref()
     }
 }

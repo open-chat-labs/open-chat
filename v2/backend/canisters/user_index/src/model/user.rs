@@ -52,19 +52,25 @@ impl User {
     }
 
     #[allow(dead_code)]
-    pub fn set_phone_number(&mut self, phone_number: PhoneNumber) {
+    pub fn set_phone_number(&mut self, phone_number: PhoneNumber, now: TimestampMillis) {
         match self {
             User::Unconfirmed(u) => u.phone_number = phone_number,
             User::Confirmed(u) => u.phone_number = phone_number,
-            User::Created(u) => u.phone_number = phone_number,
+            User::Created(u) => {
+                u.phone_number = phone_number;
+                u.date_updated = now;
+            }
         }
     }
 
-    pub fn set_username(&mut self, username: String) -> bool {
+    pub fn set_username(&mut self, username: String, now: TimestampMillis) -> bool {
         match self {
             User::Unconfirmed(_) => return false,
             User::Confirmed(u) => u.username = Some(username),
-            User::Created(u) => u.username = username,
+            User::Created(u) => {
+                u.username = username;
+                u.date_updated = now;
+            }
         }
         true
     }
@@ -96,6 +102,7 @@ pub struct CreatedUser {
     pub user_id: UserId,
     pub username: String,
     pub date_created: TimestampMillis,
+    pub date_updated: TimestampMillis,
     pub last_online: TimestampMillis,
 }
 

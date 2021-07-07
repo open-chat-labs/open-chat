@@ -69,7 +69,7 @@ export default ({ IDL }) => {
   });
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
-    'user_id' : UserId,
+    'user_id' : IDL.Opt(UserId),
     'seconds_since_last_online' : IDL.Nat32,
   });
   const SearchResponse = IDL.Variant({

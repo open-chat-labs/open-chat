@@ -8,15 +8,15 @@ use shared::types::UserId;
 
 pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
-    let updated_since = args.updated_since;
+    let updated_since = args.updated_since.unwrap_or(0);
 
     let users = args
         .users
         .iter()
         .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
         .filter_map(|u| u.created_user())
-        .filter(|u| if let Some(updated_since) = updated_since { u.last_online > updated_since } else { true })
-        .map(|u| UserSummary::new(&u, Some(now)))
+        .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
+        .map(|u| UserSummary::new(&u, u.date_updated <= updated_since, Some(now)))
         .collect();
 
     Success(Result { users, timestamp: now })
