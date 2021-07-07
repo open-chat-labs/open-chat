@@ -1,32 +1,63 @@
 <script lang="ts">
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { AvatarSize, avatarUrl as getAvatarUrl, UserStatus } from "../../domain/user";
+    import type { UserLookup } from "../../domain/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
+    import { getContentAsText } from "../../domain/chat";
+    import type { ChatSummary, DirectChatSummary } from "../../domain/chat";
 
+    export let users: UserLookup;
+    export let chatSummary: ChatSummary;
     export let selected: boolean;
-    export let chatId: bigint;
-    export let date: bigint;
-    export let name: string | undefined;
-    export let lastMessage: string;
-    export let avatarUrl: string | undefined;
-    export let userStatus: UserStatus;
-    export let unreadMessages: number;
+
+    function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
+        return lastestMessageId - lastReadByUs;
+    }
+
+    function getUserStatus({ them }: DirectChatSummary): UserStatus {
+        return (users[them]?.secondsSinceLastOnline ?? Number.MAX_VALUE) < 120
+            ? UserStatus.Online
+            : UserStatus.Offline;
+    }
+
+    function latestMessageText({ latestMessage }: ChatSummary): string {
+        return latestMessage ? getContentAsText(latestMessage.content) : "";
+    }
+
+    function normaliseChatSummary(chatSummary: ChatSummary) {
+        if (chatSummary.kind === "direct_chat") {
+            return {
+                name: users[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl(chatSummary.them),
+                userStatus: getUserStatus(chatSummary),
+            };
+        }
+        return {
+            name: chatSummary.subject,
+            userStatus: UserStatus.None,
+            avatarUrl: "assets/group.svg",
+        };
+    }
+
+    const { name, userStatus, avatarUrl } = normaliseChatSummary(chatSummary);
+    const lastMessage = latestMessageText(chatSummary);
+    const unreadMessages = getUnreadMessages(chatSummary);
 </script>
 
-<a role="button" class="chat-summary" class:selected href={`/#/${chatId}`}>
+<a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar url={avatarUrl ?? "assets/group.svg"} status={userStatus} size={AvatarSize.Small} />
+        <Avatar url={avatarUrl} status={userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
         <div class="name-date">
             <h4 class="chat-name">{name}</h4>
             <!-- this date formatting is OK for now but we might want to use something like this: 
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-            <p class="chat-date">{formatMessageDate(new Date(Number(date)))}</p>
+            <p class="chat-date">{formatMessageDate(new Date(Number(chatSummary.displayDate)))}</p>
         </div>
         <div class="chat-msg">{lastMessage}</div>
         {#if unreadMessages > 0}
