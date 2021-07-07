@@ -1,6 +1,6 @@
 use crate::model::message::Message;
 use shared::time::TimestampMillis;
-use shared::types::{ChatId, MessageId, UserId};
+use shared::types::{chat_id::DirectChatId, MessageId, UserId};
 
 pub struct DirectChat {
     pub them: UserId,
@@ -17,7 +17,7 @@ impl DirectChat {
         }
     }
 
-    pub fn chat_id(&self, my_user_id: &UserId) -> ChatId {
+    pub fn chat_id(&self, my_user_id: &UserId) -> DirectChatId {
         (my_user_id, &self.them).into()
     }
 

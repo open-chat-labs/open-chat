@@ -5,7 +5,8 @@ use candid::CandidType;
 use itertools::Itertools;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
-use shared::types::{ChatId, UserId};
+use shared::types::chat_id::{DirectChatId, GroupChatId};
+use shared::types::UserId;
 
 pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
@@ -78,7 +79,7 @@ impl ChatSummary {
 #[derive(CandidType)]
 pub struct DirectChatSummary {
     pub them: UserId,
-    pub chat_id: ChatId,
+    pub chat_id: DirectChatId,
     pub latest_message: Message,
     pub date_created: TimestampMillis,
 }
@@ -92,7 +93,7 @@ impl DirectChatSummary {
 #[derive(CandidType)]
 pub struct GroupChatSummary {
     pub name: String,
-    pub chat_id: ChatId,
+    pub chat_id: GroupChatId,
     pub latest_message: Option<Message>,
     pub date_added: TimestampMillis,
 }

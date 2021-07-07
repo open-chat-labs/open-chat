@@ -1,6 +1,6 @@
-use shared::types::ChatId;
+use shared::types::chat_id::GroupChatId;
 
 #[allow(dead_code)]
 pub struct GroupChat {
-    chat_id: ChatId,
+    chat_id: GroupChatId,
 }

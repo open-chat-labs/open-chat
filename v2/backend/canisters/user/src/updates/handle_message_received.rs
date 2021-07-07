@@ -6,7 +6,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::types::message_content::MessageContent;
 use shared::types::reply_context::ReplyContext;
-use shared::types::{CanisterId, ChatId};
+use shared::types::{chat_id::DirectChatId, CanisterId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 pub async fn call_c2c(canister_id: CanisterId, args: Args) -> Result<Response, String> {
@@ -22,7 +22,7 @@ pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let sender_user_id = runtime_state.env.caller().into();
 
     let now = runtime_state.env.now();
-    let chat_id = ChatId::from((&runtime_state.env.owner_user_id(), &sender_user_id));
+    let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &sender_user_id));
     let chat: &mut DirectChat = match runtime_state.data.direct_chats.entry(chat_id) {
         Occupied(e) => e.into_mut(),
         Vacant(e) => e.insert(DirectChat::new(sender_user_id, now)),
