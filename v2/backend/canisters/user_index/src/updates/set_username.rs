@@ -80,7 +80,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -105,7 +105,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -126,7 +126,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -134,7 +134,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: PhoneNumber::from_str("+44 2222 222 222").unwrap(),
-            user_id: Principal::from_slice(&[2]),
+            user_id: Principal::from_slice(&[2]).into(),
             username: "xyz".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -175,7 +175,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -196,7 +196,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
@@ -217,7 +217,7 @@ mod tests {
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: Principal::from_slice(&[1]),
+            user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
             last_online: env.now,
