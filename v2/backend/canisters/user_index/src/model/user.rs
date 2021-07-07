@@ -36,7 +36,7 @@ impl User {
         }
     }
 
-    pub fn get_user_id(&self) -> Option<Principal> {
+    pub fn get_user_id(&self) -> Option<UserId> {
         match self {
             User::Unconfirmed(_) => None,
             User::Confirmed(u) => u.user_id,

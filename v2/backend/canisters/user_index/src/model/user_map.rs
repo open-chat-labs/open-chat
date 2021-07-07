@@ -2,6 +2,7 @@ use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
+use shared::types::UserId;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
@@ -11,7 +12,7 @@ pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: HashMap<String, Principal>,
-    user_id_to_principal: HashMap<Principal, Principal>,
+    user_id_to_principal: HashMap<UserId, Principal>,
 }
 
 impl UserMap {
@@ -106,7 +107,7 @@ impl UserMap {
     }
 
     #[allow(dead_code)]
-    pub fn get_by_user_id(&self, user_id: &Principal) -> Option<&User> {
+    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&User> {
         self.user_id_to_principal
             .get(user_id)
             .map(|p| self.users_by_principal.get(p))
@@ -184,8 +185,8 @@ mod tests {
         let username2 = "2".to_string();
         let username3 = "3".to_string();
 
-        let user_id2 = Principal::from_slice(&[2, 2]);
-        let user_id3 = Principal::from_slice(&[3, 3]);
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
+        let user_id3 = Principal::from_slice(&[3, 3]).into();
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
@@ -265,6 +266,8 @@ mod tests {
         let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
         let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
 
+        let user_id = Principal::from_slice(&[1, 1]).into();
+
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
             phone_number: phone_number1.clone(),
@@ -277,7 +280,7 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal,
             phone_number: phone_number2.clone(),
-            user_id: Some(principal),
+            user_id: Some(user_id),
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
@@ -294,6 +297,8 @@ mod tests {
 
         let phone_number = PhoneNumber::from_str("+441111111111").unwrap();
 
+        let user_id = Principal::from_slice(&[2, 2]).into();
+
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
             phone_number: phone_number.clone(),
@@ -306,7 +311,7 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
             phone_number,
-            user_id: Some(principal2),
+            user_id: Some(user_id),
             username: Some("2".to_string()),
             canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
@@ -324,12 +329,15 @@ mod tests {
         let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
         let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
 
+        let user_id1 = Principal::from_slice(&[1, 1]).into();
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
+
         let username = "1".to_string();
 
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal1,
             phone_number: phone_number1,
-            user_id: Some(principal1),
+            user_id: Some(user_id1),
             username: Some(username.clone()),
             canister_creation_status: CanisterCreationStatus::Pending,
             date_confirmed: 2,
@@ -339,7 +347,7 @@ mod tests {
         let created = User::Created(CreatedUser {
             principal: principal2,
             phone_number: phone_number2,
-            user_id: principal2,
+            user_id: user_id2,
             username,
             date_created: 3,
             last_online: 1,
@@ -359,7 +367,7 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id = Principal::from_slice(&[1, 1]);
+        let user_id = Principal::from_slice(&[1, 1]).into();
 
         let original = User::Created(CreatedUser {
             principal,
@@ -395,8 +403,8 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id1 = Principal::from_slice(&[1, 1]);
-        let user_id2 = Principal::from_slice(&[2, 2]);
+        let user_id1 = Principal::from_slice(&[1, 1]).into();
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
 
         let original = User::Created(CreatedUser {
             principal: principal1,
@@ -436,8 +444,8 @@ mod tests {
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
-        let user_id1 = Principal::from_slice(&[1, 1]);
-        let user_id2 = Principal::from_slice(&[2, 2]);
+        let user_id1 = Principal::from_slice(&[1, 1]).into();
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
 
         let original = User::Created(CreatedUser {
             principal: principal1,
@@ -479,8 +487,8 @@ mod tests {
         let username2 = "2".to_string();
         let username3 = "3".to_string();
 
-        let user_id2 = Principal::from_slice(&[2, 2]);
-        let user_id3 = Principal::from_slice(&[3, 3]);
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
+        let user_id3 = Principal::from_slice(&[3, 3]).into();
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
