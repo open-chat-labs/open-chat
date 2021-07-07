@@ -42,6 +42,13 @@
     // perhaps this should be moved inside the ChatSummary component
     // and we have a similar thing inside the CurrentChatHeader or at least inside the CurrentChat
     // I think we are at a delicate point where things are either going to come together or fall apart
+
+    // big questions - which components should know about the machines and which should not. The downside to making the
+    // components machine agnostic is that we end up passing a lot of props around and bubbling events a long way
+    // which is not necessarily terrible. The downside of passing the machines around is that we are coupling our components
+    // to them which we might come to regret
+    // context of the machine is not really the interface against which I want to code.
+    // need to do a bit of thinking otherwise things could unravel a bit
     function chatSummaryProps(chatSummary: ChatSummaryType) {
         if (chatSummary.kind === "direct_chat") {
             return {

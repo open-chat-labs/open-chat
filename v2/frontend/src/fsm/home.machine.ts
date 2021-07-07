@@ -114,8 +114,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             id: "loaded_chats",
             on: {
                 LOAD_MESSAGES: {
-                    // if we arrive at this outer handler it means we are not currently loading chats
-                    // so we can immediately go off and try to load the messages
                     target: "loaded_chats.loading_messages",
                     cond: "selectedChatIsValid",
                 },

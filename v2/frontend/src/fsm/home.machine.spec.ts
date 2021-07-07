@@ -12,7 +12,7 @@ describe("home machine transitions", () => {
             homeMachine,
             "loading_chats",
             { type: "done.invoke.getChats", data: { chats: [], users: [] } },
-            { loaded_chats: "idle" }
+            { loaded_chats: "no_chat_selected" }
         );
     });
     test("trigger load messages", () => {
@@ -33,7 +33,7 @@ describe("home machine transitions", () => {
                 ],
                 userLookup: {},
             }),
-            { loaded_chats: "idle" },
+            { loaded_chats: "no_chat_selected" },
             { type: "LOAD_MESSAGES", data: BigInt(123) },
             {
                 loaded_chats: "loading_messages",
@@ -43,10 +43,10 @@ describe("home machine transitions", () => {
     test("trigger load messages - does nothing for invalid chat", () => {
         testTransition(
             homeMachine,
-            { loaded_chats: "idle" },
+            { loaded_chats: "no_chat_selected" },
             { type: "LOAD_MESSAGES", data: BigInt(999) },
             {
-                loaded_chats: "idle",
+                loaded_chats: "no_chat_selected",
             }
         );
     });
@@ -54,13 +54,12 @@ describe("home machine transitions", () => {
         testTransition(
             homeMachine.withContext({
                 chats: [],
-                selectedChatId: BigInt(123),
                 userLookup: {},
             }),
-            { loaded_chats: "idle" },
+            { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",
             {
-                loaded_chats: "idle",
+                loaded_chats: "no_chat_selected",
             }
         );
     });
