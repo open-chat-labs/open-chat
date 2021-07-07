@@ -129,8 +129,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("matt", results.users[0].username().unwrap());
-        assert_eq!("marcus", results.users[1].username().unwrap());
+        assert_eq!("matt", results.users[0].username.as_deref().unwrap());
+        assert_eq!("marcus", results.users[1].username.as_deref().unwrap());
     }
 
     #[test]
@@ -146,8 +146,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("jUlian", results.users[0].username().unwrap());
-        assert_eq!("julian", results.users[1].username().unwrap());
+        assert_eq!("jUlian", results.users[0].username.as_deref().unwrap());
+        assert_eq!("julian", results.users[1].username.as_deref().unwrap());
     }
 
     #[test]

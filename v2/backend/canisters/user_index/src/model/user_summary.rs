@@ -5,9 +5,9 @@ use shared::types::UserId;
 
 #[derive(CandidType)]
 pub struct UserSummary {
-    user_id: UserId,
-    username: Option<String>,
-    seconds_since_last_online: u32,
+    pub user_id: UserId,
+    pub username: Option<String>,
+    pub seconds_since_last_online: u32,
 }
 
 impl UserSummary {
@@ -24,10 +24,5 @@ impl UserSummary {
             username: if include_username { Some(user.username.clone()) } else { None },
             seconds_since_last_online,
         }
-    }
-
-    #[cfg(test)]
-    pub fn username(&self) -> Option<&str> {
-        self.username.as_deref()
     }
 }

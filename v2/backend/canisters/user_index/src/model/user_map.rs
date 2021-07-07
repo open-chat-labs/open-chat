@@ -352,7 +352,7 @@ mod tests {
             username,
             date_created: 3,
             date_updated: 3,
-            last_online: 1,
+            last_online: 3,
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
