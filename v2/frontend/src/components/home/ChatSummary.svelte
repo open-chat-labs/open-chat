@@ -34,18 +34,18 @@
         };
     }
 
-    const { name, userStatus, avatarUrl } = normaliseChatSummary(chatSummary);
-    const lastMessage = latestMessageText(chatSummary);
-    const unreadMessages = getUnreadMessages(chatSummary);
+    $: chat = normaliseChatSummary(chatSummary);
+    $: lastMessage = latestMessageText(chatSummary);
+    $: unreadMessages = getUnreadMessages(chatSummary);
 </script>
 
 <a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar url={avatarUrl} status={userStatus} size={AvatarSize.Small} />
+        <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
         <div class="name-date">
-            <h4 class="chat-name">{name}</h4>
+            <h4 class="chat-name">{chat.name}</h4>
             <!-- this date formatting is OK for now but we might want to use something like this: 
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(chatSummary.displayDate)))}</p>

@@ -28,6 +28,7 @@ export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse 
     if ("Success" in candid) {
         return {
             chats: candid.Success.chats.map(chatSummary),
+            timestamp: candid.Success.timestamp,
         };
     }
     throw new Error(`Unexpected GetChatsResponse type received: ${candid}`);
@@ -45,6 +46,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             lastReadByThem: candid.Group.last_read_by_them,
             lastestMessageId: candid.Group.latest_message_id,
             latestMessage: optional(candid.Group.latest_message, message),
+            participants: candid.Group.participants,
         };
     }
     if ("Direct" in candid) {

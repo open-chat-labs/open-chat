@@ -13,11 +13,11 @@ export class UserClient extends CandidService implements IUserClient {
         super(identity);
         this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
     }
-    getChats(): Promise<GetChatsResponse> {
+    getChats(since: bigint): Promise<GetChatsResponse> {
         return this.handleResponse(
             this.userService.get_chats({
                 message_count_for_top_chat: [],
-                updated_since: [],
+                updated_since: [since],
             }),
             getChatsResponse
         );

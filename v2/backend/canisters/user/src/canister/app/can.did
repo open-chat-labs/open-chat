@@ -278,7 +278,7 @@ type GetChatsResponse =
     variant {
         Success: record {
             chats: vec ChatSummary;
-            users: vec User;
+            timestamp: TimestampMillis;
         }; 
     }; 
 

@@ -40,8 +40,8 @@ export class ServiceContainer {
         return this.userIndexClient.getUsers(userIds);
     }
 
-    getChats(): Promise<GetChatsResponse> {
-        return this.userClient.getChats();
+    getChats(since: bigint): Promise<GetChatsResponse> {
+        return this.userClient.getChats(since);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

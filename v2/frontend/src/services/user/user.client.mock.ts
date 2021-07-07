@@ -1,4 +1,5 @@
 import type {
+    ChatSummary,
     DirectChatSummary,
     GetChatsResponse,
     GroupChatSummary,
@@ -32,6 +33,15 @@ function mockGroupChat(): GroupChatSummary {
         lastReadByThem: 0,
         lastestMessageId: 500,
         latestMessage: mockMessage(),
+        participants: [
+            randomString(),
+            randomString(),
+            randomString(),
+            randomString(),
+            randomString(),
+            randomString(),
+            randomString(),
+        ],
     };
 }
 
@@ -74,11 +84,16 @@ function createN<T>(n: number, factory: () => T, sofar: T[] = []): T[] {
 }
 
 export class UserClientMock implements IUserClient {
-    getChats(): Promise<GetChatsResponse> {
+    getChats(since: bigint): Promise<GetChatsResponse> {
+        const numChats = since === BigInt(0) ? 1 : 2;
+        const direct = createN(numChats, mockDirectChat);
+        const group = createN(1, mockGroupChat);
+        const chats = ([] as ChatSummary[]).concat(direct, group);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
-                    chats: [...createN(10, mockDirectChat), ...createN(10, mockGroupChat)],
+                    chats,
+                    timestamp: BigInt(+new Date()),
                 });
             }, 1000);
         });

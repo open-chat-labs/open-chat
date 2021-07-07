@@ -75,7 +75,7 @@
         }
     }
 
-    $: console.log($machine.value);
+    $: console.log("Home machine state:", $machine.value);
 </script>
 
 {#if $machine.context.user}

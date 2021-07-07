@@ -11,6 +11,7 @@ import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { ChatSummary, userIdsFromChatSummaries } from "../domain/chat";
 import type { User, UserLookup, UserSummary } from "../domain/user";
+import { log } from "xstate/lib/actions";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -18,8 +19,11 @@ if (typeof window !== "undefined") {
     });
 }
 
-function missingUserIds(userLookup: UserLookup, userIds: string[]): string[] {
-    return userIds.filter((userId) => userLookup[userId] === undefined);
+// const CHAT_UPDATE_INTERVAL = 60 * 1000;
+const CHAT_UPDATE_INTERVAL = 1000;
+
+function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
+    return Array.from(userIds).filter((userId) => userLookup[userId] === undefined);
 }
 
 function mergeUsers(userLookup: UserLookup, users: UserSummary[]): UserLookup {
@@ -36,13 +40,15 @@ export interface HomeContext {
     selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
     userLookup: UserLookup; // a lookup of user summaries
+    chatsTimestamp: bigint;
 }
 
-type ChatsResponse = { chats: ChatSummary[]; users: UserSummary[] };
+type ChatsResponse = { chats: ChatSummary[]; users: UserSummary[]; timestamp: bigint };
 
 export type HomeEvents =
     | { type: "LOAD_MESSAGES"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
+    | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
     | { type: "error.platform.getChats"; data: Error };
 
@@ -57,17 +63,61 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     },
     services: {
         getChats: async (ctx, _) => {
-            const { chats } = await ctx.serviceContainer!.getChats();
-            const userIds = userIdsFromChatSummaries(chats);
+            const { chats, timestamp } = await ctx.serviceContainer!.getChats(ctx.chatsTimestamp);
+            const userIds = userIdsFromChatSummaries(chats, false);
             const { users } = await ctx.serviceContainer!.getUsers(
                 missingUserIds(ctx.userLookup, userIds)
             );
             return {
                 chats,
+                timestamp,
                 users,
             };
         },
-        loadMessages: (_ctx, _) => new Promise((resolve) => setTimeout(resolve, 1000)),
+        // todo - updateChats is virtually identical to the getChats.
+        // We can probably do something about that but I'm not too worried about it at the moment
+        updateChats: (ctx, _ev) => (callback) => {
+            const id = setInterval(async () => {
+                // todo - we need to handle any errors that may occur during polling
+                const { chats, timestamp } = await ctx.serviceContainer!.getChats(
+                    ctx.chatsTimestamp
+                );
+                const userIds = userIdsFromChatSummaries(chats, false);
+                const { users } = await ctx.serviceContainer!.getUsers(
+                    missingUserIds(ctx.userLookup, userIds)
+                );
+                callback({
+                    type: "CHATS_UPDATED",
+                    data: {
+                        chats,
+                        timestamp,
+                        users,
+                    },
+                });
+            }, CHAT_UPDATE_INTERVAL);
+            return () => {
+                console.log("Stopping update chats poller");
+                clearInterval(id);
+            };
+        },
+
+        // we need to run this periodically to make sure that our users are up to date
+        updateUsers: async (ctx, _) => ctx.serviceContainer!.getUsers(Object.keys(ctx.userLookup)),
+
+        // we will kick this off in parallel when we load a group chat
+        loadMissingUsers: async (ctx, _) => {
+            if (ctx.selectedChat && ctx.selectedChat.kind === "group_chat") {
+                const userIds = userIdsFromChatSummaries([ctx.selectedChat], true);
+                const { users } = await ctx.serviceContainer!.getUsers(
+                    missingUserIds(ctx.userLookup, userIds)
+                );
+                return users;
+            }
+            return [];
+        },
+        loadMessages: (_ctx, _) => {
+            return new Promise((resolve) => setTimeout(resolve, 1000));
+        },
     },
 };
 
@@ -78,6 +128,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
     context: {
         chats: [],
         userLookup: {},
+        chatsTimestamp: BigInt(0),
     },
     states: {
         loading_chats: {
@@ -87,17 +138,16 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 onDone: [
                     {
                         target: "loaded_chats",
-                        actions: assign({
-                            chats: (_, ev: DoneInvokeEvent<ChatsResponse>) => {
-                                return ev.type === "done.invoke.getChats" ? ev.data.chats : [];
-                            },
-                            userLookup: (ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
-                                if (ev.type === "done.invoke.getChats") {
-                                    return mergeUsers(ctx.userLookup, ev.data.users);
-                                }
-                                return ctx.userLookup;
-                            },
-                            error: (_, _ev) => undefined,
+                        actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
+                            if (ev.type === "done.invoke.getChats") {
+                                return {
+                                    chats: ev.data.chats,
+                                    chatsTimestamp: ev.data.timestamp,
+                                    userLookup: mergeUsers(ctx.userLookup, ev.data.users),
+                                    error: undefined,
+                                };
+                            }
+                            return ctx;
                         }),
                     },
                 ],
@@ -112,7 +162,26 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         loaded_chats: {
             initial: "no_chat_selected",
             id: "loaded_chats",
+            invoke: {
+                id: "updateChats",
+                src: "updateChats",
+            },
             on: {
+                CHATS_UPDATED: {
+                    actions: assign((ctx, ev) => {
+                        // todo - this assign is actually a bit more complicated since we need to splice the
+                        // new chats with the existing chats
+                        if (ev.type === "CHATS_UPDATED") {
+                            return {
+                                chats: ev.data.chats,
+                                chatsTimestamp: ev.data.timestamp,
+                                userLookup: mergeUsers(ctx.userLookup, ev.data.users),
+                                error: undefined,
+                            };
+                        }
+                        return ctx;
+                    }),
+                },
                 LOAD_MESSAGES: {
                     target: "loaded_chats.loading_messages",
                     cond: "selectedChatIsValid",

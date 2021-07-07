@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/agent";
+import type { Principal } from "@dfinity/principal";
 export interface BlobReference {
   blob_size: number;
   blob_id: string;
@@ -13,10 +13,6 @@ export type ChatId = bigint;
 export type ChatSummary =
   | { Group: GroupChatSummary }
   | { Direct: DirectChatSummary };
-export interface CreateGroupRequest {
-  is_public: boolean;
-  name: string;
-}
 export interface CreateGroupArgs {
   is_public: boolean;
   name: string;
@@ -53,7 +49,10 @@ export interface GetChatsArgs {
   updated_since: [] | [TimestampMillis];
 }
 export type GetChatsResponse = {
-  Success: { chats: Array<ChatSummary> };
+  Success: {
+    chats: Array<ChatSummary>;
+    timestamp: TimestampMillis;
+  };
 };
 export interface GetChunkArgs {
   blob_id: bigint;
@@ -218,8 +217,8 @@ export type SendMessageResponse =
         message_index: number;
       };
     }
-  | { InvalidRequest: null }
   | { RecipientBlocked: null }
+  | { InvalidRequest: null }
   | { SenderBlocked: null }
   | { MessageTooLong: number }
   | { RecipientNotFound: null };
@@ -236,6 +235,11 @@ export interface TextContent {
 }
 export type TimestampMillis = bigint;
 export interface UnblockUserArgs {
+  user_id: UserId;
+}
+export interface User {
+  username: string;
+  last_online: TimestampMillis;
   user_id: UserId;
 }
 export type UserId = CanisterId;

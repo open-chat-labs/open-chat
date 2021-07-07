@@ -55,6 +55,7 @@ export interface Message {
 
 export type GetChatsResponse = {
     chats: ChatSummary[];
+    timestamp: bigint;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -77,6 +78,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
 export type GroupChatSummary = ChatSummaryCommon & {
     kind: "group_chat";
     subject: string;
+    participants: string[];
 };
 
 // ================================================================
@@ -160,14 +162,21 @@ function buildTextForMediaContent({ caption, mimeType }: MediaContent): string {
     }
 }
 
-export function userIdsFromChatSummaries(chats: ChatSummary[]): string[] {
-    return chats.reduce<string[]>((userIds, chat) => {
-        // todo - for now we are only interested in direct chats
+export function userIdsFromChatSummaries(
+    chats: ChatSummary[],
+    includeGroupChats = false
+): Set<string> {
+    return chats.reduce<Set<string>>((userIds, chat) => {
         if (chat.kind === "direct_chat") {
-            userIds.push(chat.them.toString());
+            userIds.add(chat.them);
+        }
+        if (chat.kind === "group_chat" && includeGroupChats) {
+            for (const p in chat.participants) {
+                userIds.add(p);
+            }
         }
         return userIds;
-    }, []);
+    }, new Set<string>());
 }
 
 export function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
