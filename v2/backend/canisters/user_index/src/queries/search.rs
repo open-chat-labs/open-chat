@@ -182,7 +182,7 @@ mod tests {
             data.users.add(User::Created(CreatedUser {
                 principal: p,
                 phone_number: PhoneNumber::from_str(&phone_number).unwrap(),
-                user_id: p,
+                user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,
                 last_online: env.now,
