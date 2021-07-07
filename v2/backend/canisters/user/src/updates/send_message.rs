@@ -124,14 +124,13 @@ pub mod c2c {
 
     impl From<super::Args> for (CanisterId, Args) {
         fn from(args: super::Args) -> Self {
-            (
-                args.recipient.into(),
-                Args {
-                    client_message_id: args.client_message_id,
-                    content: args.content,
-                    replies_to: args.replies_to,
-                },
-            )
+            let c2c_args = Args {
+                client_message_id: args.client_message_id,
+                content: args.content,
+                replies_to: args.replies_to,
+            };
+
+            (args.recipient.into(), c2c_args)
         }
     }
 }

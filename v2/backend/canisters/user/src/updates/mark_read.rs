@@ -80,12 +80,11 @@ pub mod c2c {
 
     impl From<super::Args> for (CanisterId, Args) {
         fn from(args: super::Args) -> Self {
-            (
-                args.user_id.into(),
-                Args {
-                    up_to_message_id: args.up_to_message_id,
-                },
-            )
+            let c2c_args = Args {
+                up_to_message_id: args.up_to_message_id,
+            };
+
+            (args.user_id.into(), c2c_args)
         }
     }
 }
