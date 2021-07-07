@@ -33,7 +33,7 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
 
     let chat: &mut DirectChat = match runtime_state.data.direct_chats.entry(chat_id) {
         Occupied(e) => e.into_mut(),
-        Vacant(e) => e.insert(DirectChat::new(args.their_user_id, now)),
+        Vacant(e) => e.insert(DirectChat::new(chat_id, args.their_user_id, now)),
     };
 
     let message_id = chat.next_message_id();

@@ -3,22 +3,20 @@ use shared::time::TimestampMillis;
 use shared::types::{chat_id::DirectChatId, MessageId, UserId};
 
 pub struct DirectChat {
+    pub chat_id: DirectChatId,
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub messages: Vec<Message>,
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, now: TimestampMillis) -> DirectChat {
+    pub fn new(chat_id: DirectChatId, them: UserId, now: TimestampMillis) -> DirectChat {
         DirectChat {
+            chat_id,
             them,
             date_created: now,
             messages: Vec::new(),
         }
-    }
-
-    pub fn chat_id(&self, my_user_id: &UserId) -> DirectChatId {
-        (my_user_id, &self.them).into()
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

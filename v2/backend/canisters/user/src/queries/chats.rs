@@ -25,7 +25,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
             )
             .map(|c| {
                 ChatSummary::Direct(DirectChatSummary {
-                    chat_id: c.chat_id(&runtime_state.env.owner_user_id()),
+                    chat_id: c.chat_id,
                     them: c.them,
                     latest_message: c.messages.last().unwrap().clone(),
                     date_created: c.date_created,
