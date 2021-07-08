@@ -23,7 +23,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
     .chat-messages {
         flex: 1;
         background-color: var(--currentChat-msgs-bg);

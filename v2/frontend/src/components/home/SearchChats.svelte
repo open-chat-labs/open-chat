@@ -24,8 +24,6 @@
 </form>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .wrapper {
         background-color: var(--chatSearch-bg);
         display: flex;

@@ -14,8 +14,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .new-chat {
         width: 50px;
         height: 50px;

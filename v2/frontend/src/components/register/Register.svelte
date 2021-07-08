@@ -45,8 +45,6 @@
 </ModalPage>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .spinner {
         height: 150px;
         width: 100%;

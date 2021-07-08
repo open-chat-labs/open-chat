@@ -15,7 +15,8 @@
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
-    import { avatarUrl, AvatarSize, UserStatus } from "../../domain/user";
+    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { avatarUrl } from "../../domain/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { User } from "../../domain/user";
     import { createEventDispatcher } from "svelte";
@@ -38,7 +39,7 @@
         {#if $screenWidth !== ScreenWidth.ExtraSmall}
             <Avatar
                 url={avatarUrl(user.userId.toString())}
-                status={UserStatus.Online}
+                status={UserStatus.None}
                 size={AvatarSize.Large} />
         {/if}
         <h4 class="name">{user.username}</h4>
@@ -87,8 +88,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .current-user-box {
         display: flex;
         flex: 0 0 180px;

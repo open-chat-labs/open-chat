@@ -6,6 +6,7 @@ type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
 type GroupId = CanisterId;
+type ChatId = nat;
 
 type TextContent =
     record {
@@ -70,13 +71,35 @@ type Message =
     };
 
 type ChatSummary =
+    variant {
+        Direct: DirectChatSummary;
+        Group: GroupChatSummary;
+    }; 
+
+type DirectChatSummary =
     record {
+        id: ChatId;
         them: UserId;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
-        unread_by_me_message_id_ranges: vec vec nat32;
-        unread_by_them_message_id_ranges: vec vec nat32;
-        latest_messages: vec Message;
+        last_read_by_us: nat32;
+        last_read_by_them: nat32;
+        latest_message_id: nat32;
+        latest_message: opt Message;
+    };
+
+type GroupChatSummary =
+    record {
+        id: ChatId;
+        subject: text;
+        display_date: TimestampMillis;
+        last_updated: TimestampMillis;
+        min_visible_message_id: nat32;
+        participants: vec UserId;
+        last_read_by_us: nat32;
+        last_read_by_them: nat32;
+        latest_message_id: nat32;
+        latest_message: opt Message;
     };
 
 type SendMessageArgs =
@@ -244,10 +267,18 @@ type GetChatsArgs =
         message_count_for_top_chat: opt nat16;
     };
 
+type User = 
+    record {
+        user_id: UserId;
+        username: text; 
+        last_online: TimestampMillis;
+    };
+
 type GetChatsResponse =
     variant {
         Success: record {
             chats: vec ChatSummary;
+            timestamp: TimestampMillis;
         }; 
     }; 
 

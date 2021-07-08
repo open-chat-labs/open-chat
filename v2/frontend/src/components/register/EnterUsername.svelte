@@ -36,8 +36,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .error {
         @include font(bold, normal, fs-140);
         color: var(--error);

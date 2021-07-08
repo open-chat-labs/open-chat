@@ -3,6 +3,8 @@ import UserService, {
   GetChatsArgs,
   GetChatsResponse,
   ChatSummary,
+  GroupChatSummary,
+  DirectChatSummary,
   Message,
   UserId,
   ReplyContext,
@@ -11,14 +13,16 @@ import UserService, {
   TextContent,
   MediaContent,
   CyclesContent,
-  Timestamp,
+  TimestampMillis,
   BlobReference,
-} from "./canister_types";
+} from "./types";
 export {
   UserService,
   GetChatsArgs as ApiGetChatsArgs,
   GetChatsResponse as ApiGetChatsResponse,
   ChatSummary as ApiChatSummary,
+  GroupChatSummary as ApiGroupChatSummary,
+  DirectChatSummary as ApiDirectChatSummary,
   Message as ApiMessage,
   UserId as ApiUserId,
   ReplyContext as ApiReplyContext,
@@ -27,7 +31,7 @@ export {
   TextContent as ApiTextContent,
   MediaContent as ApiMediaContent,
   CyclesContent as ApiCyclesContent,
-  Timestamp as ApiTimestamp,
+  TimestampMillis as ApiTimestampMillis,
   BlobReference as ApiBlobReference,
 };
 

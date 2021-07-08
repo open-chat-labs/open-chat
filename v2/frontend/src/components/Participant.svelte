@@ -13,11 +13,7 @@
 
 <div class="participant">
     <span class="avatar">
-        <Avatar
-            url={participant.avatar}
-            status={UserStatus.Online}
-            size={AvatarSize.Small}
-        />
+        <Avatar url={participant.avatar} status={UserStatus.Online} size={AvatarSize.Small} />
     </span>
     <h4 class="details">
         {participant.username}
@@ -31,14 +27,8 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem
-                        text="Remove"
-                        on:click={() => console.log("one")}
-                    />
-                    <MenuItem
-                        text="Dismiss as admin"
-                        on:click={() => console.log("two")}
-                    />
+                    <MenuItem text="Remove" on:click={() => console.log("one")} />
+                    <MenuItem text="Dismiss as admin" on:click={() => console.log("two")} />
                 </Menu>
             </span>
         </MenuIcon>
@@ -46,8 +36,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .participant {
         display: flex;
         margin-left: 10px;
@@ -59,8 +47,7 @@
         color: var(--participants-txt);
         padding: 10px;
         margin-bottom: 8px;
-        transition: background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
+        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
         &:hover,
         &.selected {

@@ -39,7 +39,7 @@ export function testTransition<TContext, TEvent extends EventObject>(
 ): void {
     const configured = machine.withConfig(config);
     const nextState = configured.transition(from, ev);
-    expect(nextState.value).toBe(to);
+    expect(nextState.value).toStrictEqual(to);
 }
 
 export function testSequence<TContext, TEvent extends EventObject>(

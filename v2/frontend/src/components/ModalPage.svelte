@@ -17,8 +17,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .modal-page {
         display: flex;
         justify-content: center;

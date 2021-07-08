@@ -9,12 +9,13 @@ import type {
     ApiMessageContent,
     ApiReplyContext,
     ApiTextContent,
-} from "api-canisters/user/canister";
+} from "api-canisters/user/src/canister/app/idl";
 import type {
     BlobReference,
     ChatSummary,
     CyclesContent,
     FileContent,
+    GetChatsResponse,
     MediaContent,
     Message,
     MessageContent,
@@ -23,19 +24,45 @@ import type {
 } from "../../domain/chat";
 import { identity, optional } from "../../utils/mapping";
 
-export function getChatsResponse(candid: ApiGetChatsResponse): ChatSummary[] {
-    return candid.Success.chats.map(chatSummary);
+export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse {
+    if ("Success" in candid) {
+        return {
+            chats: candid.Success.chats.map(chatSummary),
+            timestamp: candid.Success.timestamp,
+        };
+    }
+    throw new Error(`Unexpected GetChatsResponse type received: ${candid}`);
 }
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
-    return {
-        them: candid.them,
-        lastUpdated: candid.last_updated,
-        displayDate: candid.display_date,
-        unreadByThemMessageIdRanges: candid.unread_by_them_message_id_ranges,
-        latestMessages: candid.latest_messages.map(message),
-        unreadByMeMessageIdRanges: candid.unread_by_me_message_id_ranges,
-    };
+    if ("Group" in candid) {
+        return {
+            kind: "group_chat",
+            subject: candid.Group.subject,
+            chatId: candid.Group.id,
+            lastUpdated: candid.Group.last_updated,
+            displayDate: candid.Group.display_date,
+            lastReadByUs: candid.Group.last_read_by_us,
+            lastReadByThem: candid.Group.last_read_by_them,
+            lastestMessageId: candid.Group.latest_message_id,
+            latestMessage: optional(candid.Group.latest_message, message),
+            participants: candid.Group.participants,
+        };
+    }
+    if ("Direct" in candid) {
+        return {
+            kind: "direct_chat",
+            chatId: candid.Direct.id,
+            them: candid.Direct.them,
+            lastUpdated: candid.Direct.last_updated,
+            displayDate: candid.Direct.display_date,
+            lastReadByUs: candid.Direct.last_read_by_us,
+            lastReadByThem: candid.Direct.last_read_by_them,
+            lastestMessageId: candid.Direct.latest_message_id,
+            latestMessage: optional(candid.Direct.latest_message, message),
+        };
+    }
+    throw new Error(`Unexpected ChatSummary type received: ${candid}`);
 }
 
 function message(candid: ApiMessage): Message {

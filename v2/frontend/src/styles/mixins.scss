@@ -97,7 +97,7 @@ $sp11: 192px;
     background-size: cover;
 }
 
-@mixin ellipsis($width) {
+@mixin ellipsis($width: auto) {
     width: $width;
     white-space: nowrap;
     overflow: hidden;

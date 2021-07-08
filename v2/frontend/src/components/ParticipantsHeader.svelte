@@ -21,7 +21,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
     h4 {
         flex: 1;
         margin: 0;

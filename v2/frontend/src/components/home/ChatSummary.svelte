@@ -1,52 +1,83 @@
 <script lang="ts">
-    import { push } from "svelte-spa-router";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import { avatarUrl, AvatarSize, UserStatus } from "../../domain/user";
+    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user.utils";
+    import type { UserLookup } from "../../domain/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
+    import { formatMessageDate } from "../../utils/date";
+    import { _ } from "svelte-i18n";
+    import { getUnreadMessages, latestMessageText } from "../../domain/chat.utils";
     import type { ChatSummary } from "../../domain/chat";
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
+    import { elasticOut } from "svelte/easing";
 
+    export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
 
-    // $: {
-    //     selected = $chatStore?.chatId === chat.chatId;
-    // }
-
-    function onSelect() {
-        dispatch("selectChat", chatSummary);
+    function pop(_node: any, { duration }: any) {
+        return {
+            duration,
+            css: (t: number) => {
+                return `transform: scale(${elasticOut(t)});`;
+            },
+        };
     }
+
+    function normaliseChatSummary(chatSummary: ChatSummary) {
+        if (chatSummary.kind === "direct_chat") {
+            return {
+                name: users[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl(chatSummary.them),
+                userStatus: getUserStatus(users, chatSummary.them),
+            };
+        }
+        return {
+            name: chatSummary.subject,
+            userStatus: UserStatus.None,
+            avatarUrl: "assets/group.svg",
+        };
+    }
+
+    $: chat = normaliseChatSummary(chatSummary);
+    $: lastMessage = latestMessageText(chatSummary);
+    $: unreadMessages = getUnreadMessages(chatSummary);
 </script>
 
-<a href={`/#/${chatSummary.chatId}`}>
-    <div role="button" class="chat-summary" class:selected>
-        <span class="avatar">
-            <Avatar
-                url={avatarUrl(chatSummary.chatId)}
-                status={UserStatus.Online}
-                size={AvatarSize.Small} />
-        </span>
-        <span class="details">
-            <h4 class="chat-name">{chatSummary.name}</h4>
-            <p class="chat-msg">{chatSummary.lastMessage}</p>
-        </span>
-        {#if $rtlStore}
-            <span class="icon"><ChevronLeft /></span>
-        {:else}
-            <span class="icon"><ChevronRight /></span>
+<a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
+    <div class="avatar">
+        <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
+    </div>
+    <div class="details">
+        <div class="name-date">
+            <h4 class="chat-name">{chat.name}</h4>
+            <!-- this date formatting is OK for now but we might want to use something like this: 
+            https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
+            <p class="chat-date">{formatMessageDate(new Date(Number(chatSummary.displayDate)))}</p>
+        </div>
+        <div class="chat-msg">{lastMessage}</div>
+        {#if unreadMessages > 0}
+            <div
+                in:pop={{ duration: 1500 }}
+                title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
+                class="unread-msgs">
+                {unreadMessages > 9 ? "9+" : unreadMessages}
+            </div>
         {/if}
     </div>
+    {#if $rtlStore}
+        <div class="icon rtl"><ChevronLeft /></div>
+    {:else}
+        <div class="icon"><ChevronRight /></div>
+    {/if}
 </a>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .chat-summary {
+        position: relative;
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         background-color: var(--chatSummary-bg);
         color: var(--chatSummary-txt1);
@@ -75,7 +106,7 @@
         }
     }
     .avatar {
-        flex: 0 0 50px;
+        flex: 0 0 55px;
     }
     .details {
         flex: 1;
@@ -83,23 +114,57 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 45px;
-        .chat-name {
-            margin: 0;
-            color: var(--theme-box-text);
-            @include ellipsis(200px);
+        height: $sp7;
+        overflow: hidden;
+
+        .name-date {
+            display: flex;
+            .chat-name {
+                color: var(--theme-box-text);
+                @include ellipsis();
+                flex: auto;
+            }
+            .chat-date {
+                @include font(light, normal, fs-70);
+                color: var(--chatSummary-txt2);
+            }
         }
+
         .chat-msg {
-            @include ellipsis(200px);
+            @include ellipsis();
             @include font(light, normal, fs-70);
             color: var(--chatSummary-txt2);
-            margin: 0;
         }
     }
 
     .icon {
+        position: absolute;
+        top: calc(50% - 8px);
         opacity: 0;
         transition: opactity ease-in-out 300ms;
         color: var(--button-bg);
+        &:not(.rtl) {
+            right: $sp3;
+        }
+        &.rtl {
+            left: $sp3;
+        }
+    }
+
+    .unread-msgs {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: hotpink;
+        text-shadow: 1px 1px 1px rgba(150, 50, 50, 0.8);
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 10px;
+        color: #ffffff;
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        bottom: 5px;
+        left: 35px;
     }
 </style>

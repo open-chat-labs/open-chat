@@ -1,4 +1,5 @@
 import type { Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import idlFactory, { UserIndexService } from "api-canisters/user_index/src/canister/app/idl";
 import type {
     ConfirmPhoneNumberResponse,
@@ -7,6 +8,7 @@ import type {
     SetUsernameResponse,
     PhoneNumber,
     ResendCodeResponse,
+    UsersResponse,
 } from "../../domain/user";
 import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
@@ -16,6 +18,7 @@ import {
     submitPhoneNumberResponse,
     confirmPhoneNumber,
     resendCodeResponse,
+    usersResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -27,6 +30,22 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         this.userService = this.createServiceClient<UserIndexService>(
             idlFactory,
             "user_index_canister_id" // todo - where does this come from
+        );
+    }
+
+    getUsers(userIds: string[]): Promise<UsersResponse> {
+        if (userIds.length === 0) {
+            return Promise.resolve({
+                timestamp: BigInt(0),
+                users: [],
+            });
+        }
+        return this.handleResponse(
+            this.userService.users({
+                users: userIds.map(Principal.fromText),
+                updated_since: [],
+            }),
+            usersResponse
         );
     }
 

@@ -2,18 +2,21 @@
     import Panel from "../Panel.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SearchChats from "./SearchChats.svelte";
+    import type { UserLookup } from "../../domain/user";
     import type { User } from "../../domain/user";
-    import type { LeftPanelState } from "./LeftPanel.types";
+    import type { HomeState } from "./Home.types";
     import Loading from "../Loading.svelte";
     import type { ChatSummary as ChatSummaryType } from "../../domain/chat";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import { _ } from "svelte-i18n";
 
-    export let state: LeftPanelState;
+    export let state: HomeState;
     export let user: User;
+    export let users: UserLookup;
     export let chatSummaries: ChatSummaryType[] = [];
-    export let selectedChatId: string | undefined;
+    export let selectedChatId: bigint | undefined;
     export let hideLeft = false;
 
     function filterChats(event: { detail: string }) {}
@@ -29,9 +32,10 @@
             <div class="chat-summaries">
                 {#each chatSummaries as chatSummary}
                     <ChatSummary
-                        selected={chatSummary.chatId === selectedChatId}
-                        on:selectChat
-                        {chatSummary} />
+                        {users}
+                        {chatSummary}
+                        selected={selectedChatId === chatSummary.chatId}
+                        on:selectChat />
                 {/each}
             </div>
         {/if}
@@ -42,7 +46,6 @@
 {/if}
 
 <style type="text/scss">
-    @import "../../styles/mixins";
     .chat-summaries {
         overflow: auto;
     }

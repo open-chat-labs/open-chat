@@ -1,22 +1,31 @@
-import type { Principal } from "@dfinity/principal";
+export type UserSummary = {
+    userId: string;
+    username: string;
+    secondsSinceLastOnline: number;
+};
+
+export type UserLookup = Record<string, UserSummary>;
 
 export type User = {
-    userId: Principal;
+    userId: string;
     username: string;
     accountBalance: bigint;
 };
 
-export function avatarUrl(userId: string): string {
-    // todo - we will use a dummy avatar url for the time being
-    return "https://i.pravatar.cc/300";
-    const url = new URL(window.location.toString());
-    return `${url.protocol}//${userId}${url.host}/avatar`;
-}
+export type UsersArgs = {
+    users: string[];
+    updatedSince?: bigint;
+};
+
+export type UsersResponse = {
+    timestamp: bigint;
+    users: UserSummary[];
+};
 
 export enum UserStatus {
     Offline,
     Online,
-    Busy,
+    None,
 }
 
 export enum AvatarSize {
@@ -29,10 +38,6 @@ export type PhoneNumber = {
     countryCode: number;
     number: string;
 };
-
-export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {
-    return `(+${countryCode}) ${number}`;
-}
 
 export type CurrentUserResponse =
     | UpgradeInProgress
@@ -65,7 +70,7 @@ export type ConfirmedPendingUsername = {
 export type CreatedUser = {
     kind: "created_user";
     username: string;
-    userId: Principal;
+    userId: string;
     accountBalance: bigint;
     upgradeRequired: boolean;
 };

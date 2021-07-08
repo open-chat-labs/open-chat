@@ -1,5 +1,6 @@
 <script>
     import Button from "./Button.svelte";
+
     import { saveSeletedTheme } from "../theme/themes";
 
     function setDir(dir) {
@@ -8,10 +9,8 @@
 </script>
 
 <div class="theme">
-    <Button small={true} on:click={() => saveSeletedTheme("batman")}
-        >Batman</Button>
-    <Button small={true} on:click={() => saveSeletedTheme("light")}
-        >Light</Button>
+    <Button small={true} on:click={() => saveSeletedTheme("batman")}>Batman</Button>
+    <Button small={true} on:click={() => saveSeletedTheme("light")}>Light</Button>
 </div>
 <div class="locale">
     <Button small={true} on:click={() => setDir("rtl")}>RTL</Button>

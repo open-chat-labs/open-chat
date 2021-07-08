@@ -15,7 +15,6 @@
 </ModalPage>
 
 <style type="text/scss">
-    @import "../styles/mixins";
     .msg {
         font-weight: bold;
         font-size: 100px;

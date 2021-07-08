@@ -17,8 +17,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .wrapper {
         background-color: var(--currentChat-header-bg);
         color: var(--currentChat-header-txt);
@@ -28,7 +26,7 @@
         justify-content: center;
         align-items: center;
 
-        height: 100%;
+        @include fullHeight();
     }
 
     .subtitle {

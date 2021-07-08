@@ -7,8 +7,6 @@
 </a>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .underline {
         text-decoration: underline;
         text-decoration-color: var(--link-underline);

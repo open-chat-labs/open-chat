@@ -1,7 +1,7 @@
 <script lang="ts">
     import Home from "./Home.controller.svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { LoggedInMachine } from "../../fsm/loggedin.machine";
+    import type { HomeMachine } from "../../fsm/home.machine";
     import { identityService } from "../../fsm/identity.machine";
     const { state, send } = identityService;
 
@@ -11,7 +11,7 @@
         send({ type: "LOGOUT" });
     }
 
-    $: machine = $state.children.loggedInMachine as ActorRefFrom<LoggedInMachine>;
+    $: machine = $state.children.homeMachine as ActorRefFrom<HomeMachine>;
 </script>
 
 {#if $machine}

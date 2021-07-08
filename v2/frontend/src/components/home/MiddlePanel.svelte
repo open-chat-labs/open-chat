@@ -1,17 +1,17 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
-    import Button from "../Button.svelte";
     import Loading from "../Loading.svelte";
-    import { push } from "svelte-spa-router";
+    import { fade } from "svelte/transition";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
+    import type { UserLookup } from "../../domain/user";
     import NoChatSelected from "./NoChatSelected.svelte";
-    import type { MiddlePanelState } from "./MiddlePanel.types";
-    // import CurrentChat from "./CurrentChat.svelte";
-    // import UnexpectedError from "../unexpectedError/UnexpectedError.svelte";
-    // import Loading from "../Loading.svelte";
+    import type { HomeState } from "./Home.types";
+    import CurrentChat from "./CurrentChat.svelte";
+    import type { ChatSummary } from "../../domain/chat";
     export let hideLeft: boolean = false;
-    export let selectedChatId: string | undefined;
-    export let state: MiddlePanelState;
+    export let selectedChatSummary: ChatSummary | undefined;
+    export let state: HomeState;
+    export let users: UserLookup;
 </script>
 
 <Panel middle {hideLeft}>
@@ -21,31 +21,16 @@
         {:else}
             <Loading />
         {/if}
-    {:else if selectedChatId === undefined}
-        <NoChatSelected on:newchat />
-    {:else}
-        <div class="currentChat">
-            {#if $screenWidth === ScreenWidth.ExtraSmall}
-                <Button on:click={() => push("/")}>Back</Button>
-            {/if}
-            <p class="title">{selectedChatId}</p>
+    {:else if state === "noChatSelected" || selectedChatSummary === undefined}
+        <div in:fade>
+            <NoChatSelected on:newchat />
         </div>
+    {:else}
+        <CurrentChat {users} {state} on:clearSelection {selectedChatSummary} />
     {/if}
-
-    <!-- {#if $chatStore}
-        {#await $chatStore.chatDetails}
-            <Loading />
-        {:then chat}
-            <CurrentChat on:goback {chat} />
-        {:catch err}
-            <UnexpectedError error={err} />
-        {/await}
-    {/if} -->
 </Panel>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .currentChat {
         background-color: var(--currentChat-header-bg);
         color: var(--currentChat-header-txt);

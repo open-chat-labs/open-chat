@@ -39,8 +39,6 @@
     class={`textbox ${fontSize} ${align}`} />
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     .textbox {
         transition: border ease-in-out 300ms;
         display: block;

@@ -13,8 +13,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../styles/mixins";
-
     $size: 10px;
 
     .chat-message-wrapper {
@@ -26,8 +24,7 @@
         }
     }
     .chat-message {
-        transition: box-shadow ease-in-out 200ms,
-            background-color ease-in-out 200ms;
+        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms;
         position: relative;
         padding: 20px;
         border-radius: 20px;

@@ -53,6 +53,7 @@ export interface Theme {
     };
 
     avatar: {
+        bg: string;
         bd: string;
         sh: string;
     };
@@ -205,6 +206,7 @@ const defaultTheme = {
     },
 
     avatar: {
+        bg: "rgba(255, 255, 255,25%)",
         bd: "#cccccc",
         sh: "2px 2px 4px #e2e2e2",
     },
@@ -219,7 +221,7 @@ const defaultTheme = {
         bg: "#efefef",
         hv: "#e2e2e2",
         txt1: "#191919",
-        txt2: "#aaaaaa",
+        txt2: "#777777",
         bd: "transparent",
         "bd-selected": "#22a7f2",
     },
@@ -357,6 +359,7 @@ export const themes: Themes = {
         },
 
         avatar: {
+            bg: "rgba(255, 255, 255,25%)",
             bd: "transparent",
             sh: "none",
         },

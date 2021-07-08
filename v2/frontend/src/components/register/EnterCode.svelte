@@ -5,7 +5,7 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
-    import { phoneNumberToString } from "../../domain/user";
+    import { phoneNumberToString } from "../../domain/user.utils";
     import type { PhoneNumber } from "../../domain/user";
     import Link from "../Link.svelte";
 
@@ -61,8 +61,6 @@
 </div>
 
 <style type="text/scss">
-    @import "../../styles/mixins";
-
     .actions {
         display: flex;
         gap: 10px;
