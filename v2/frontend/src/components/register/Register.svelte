@@ -7,7 +7,7 @@
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
     import type { RegisterState } from "./Register.types";
-    import type { PhoneNumber } from "../../domain/user";
+    import type { PhoneNumber } from "../../domain/user/user";
     export let state: RegisterState;
     export let username: string = "";
     export let phoneNumber: PhoneNumber | undefined;

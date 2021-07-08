@@ -7,7 +7,7 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
-} from "../../domain/user";
+} from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
     ApiCurrentUserResponse,

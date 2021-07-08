@@ -11,7 +11,7 @@
     // import { rtlStore } from "../../stores/rtl";
     import type { HomeMachine } from "../../fsm/home.machine";
     import type { HomeState } from "./Home.types";
-    import type { ChatSummary } from "../../domain/chat";
+    import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };

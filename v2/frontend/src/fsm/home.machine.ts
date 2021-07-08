@@ -9,10 +9,10 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary } from "../domain/chat";
-import { userIdsFromChatSummaries } from "../domain/chat.utils";
-import type { User, UserLookup, UsersResponse } from "../domain/user";
-import { mergeUsers, missingUserIds } from "../domain/user.utils";
+import type { ChatSummary } from "../domain/chat/chat";
+import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import type { User, UserLookup, UsersResponse } from "../domain/user/user";
+import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 
@@ -138,7 +138,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         // todo - implementation required - this just does nothing at the moment
         loadMessages: async (ctx, _) => {
             if (ctx.selectedChat && ctx.selectedChat.kind === "group_chat") {
-                console.log("looking up users for group chat");
                 const userIds = userIdsFromChatSummaries([ctx.selectedChat], true);
                 const { users } = await ctx.serviceContainer!.getUsers(
                     missingUserIds(ctx.userLookup, userIds),

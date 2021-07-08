@@ -2,11 +2,10 @@
     import Panel from "../Panel.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SearchChats from "./SearchChats.svelte";
-    import type { UserLookup } from "../../domain/user";
-    import type { User } from "../../domain/user";
+    import type { UserLookup, User } from "../../domain/user/user";
     import type { HomeState } from "./Home.types";
     import Loading from "../Loading.svelte";
-    import type { ChatSummary as ChatSummaryType } from "../../domain/chat";
+    import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";

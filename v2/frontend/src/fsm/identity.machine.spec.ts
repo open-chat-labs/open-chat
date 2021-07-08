@@ -5,7 +5,7 @@ import type { Principal } from "@dfinity/principal";
 import type { MachineOptions } from "xstate";
 import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
-import type { CurrentUserResponse } from "../domain/user";
+import type { CurrentUserResponse } from "../domain/user/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;

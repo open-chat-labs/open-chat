@@ -15,10 +15,10 @@
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
-    import { AvatarSize, UserStatus } from "../../domain/user";
-    import { avatarUrl } from "../../domain/user.utils";
+    import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import { avatarUrl } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import type { User } from "../../domain/user";
+    import type { User } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 

@@ -6,7 +6,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
-} from "../../domain/user";
+} from "../../domain/user/user";
 
 export interface IUserIndexClient {
     createCanister: () => Promise<void>;

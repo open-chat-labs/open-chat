@@ -9,7 +9,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
-} from "../../domain/user";
+} from "../../domain/user/user";
 import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
 import {

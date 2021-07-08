@@ -6,7 +6,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
-} from "../../domain/user";
+} from "../../domain/user/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export const DELAY = 1000;

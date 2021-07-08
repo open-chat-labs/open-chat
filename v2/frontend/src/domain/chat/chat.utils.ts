@@ -40,9 +40,7 @@ export function userIdsFromChatSummaries(
             userIds.add(chat.them);
         }
         if (chat.kind === "group_chat" && includeGroupChats) {
-            for (const p in chat.participants) {
-                userIds.add(p);
-            }
+            chat.participants.forEach((p) => userIds.add(p));
         }
         return userIds;
     }, new Set<string>());

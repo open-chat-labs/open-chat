@@ -5,7 +5,7 @@ import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";
 import { ServiceContainer } from "../services/serviceContainer";
-import type { User, CurrentUserResponse } from "../domain/user";
+import type { User, CurrentUserResponse } from "../domain/user/user";
 import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";

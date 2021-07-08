@@ -21,7 +21,7 @@ import type {
     MessageContent,
     ReplyContext,
     TextContent,
-} from "../../domain/chat";
+} from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
 export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse {

@@ -5,8 +5,8 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { _ } from "svelte-i18n";
-    import { phoneNumberToString } from "../../domain/user.utils";
-    import type { PhoneNumber } from "../../domain/user";
+    import { phoneNumberToString } from "../../domain/user/user.utils";
+    import type { PhoneNumber } from "../../domain/user/user";
     import Link from "../Link.svelte";
 
     export let phoneNumber: PhoneNumber;

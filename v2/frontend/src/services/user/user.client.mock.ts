@@ -4,7 +4,7 @@ import type {
     GetChatsResponse,
     GroupChatSummary,
     Message,
-} from "../../domain/chat";
+} from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 
 const oneDay = 1000 * 60 * 60 * 24;
