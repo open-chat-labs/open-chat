@@ -4,7 +4,7 @@ use crate::queries::messages::Response::*;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
-use shared::types::{MessageId, UserId};
+use shared::types::{MessageIndex, UserId};
 
 pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
@@ -23,8 +23,8 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
 #[derive(Deserialize)]
 pub struct Args {
     user_id: UserId,
-    from_id: MessageId,
-    to_id: MessageId,
+    from_id: MessageIndex,
+    to_id: MessageIndex,
 }
 
 #[derive(CandidType)]

@@ -7,7 +7,7 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::reply_context::ReplyContext;
-use shared::types::{chat_id::DirectChatId, MessageId, UserId};
+use shared::types::{chat_id::DirectChatId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
@@ -38,8 +38,8 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
 
     let message_id = chat.next_message_id();
     let message = Message {
-        id: message_id,
-        client_message_id: args.client_message_id,
+        message_index: message_id,
+        message_id: args.client_message_id,
         timestamp: now,
         sent_by_me: args.sent_by_me,
         content: args.content,
@@ -69,7 +69,7 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct SuccessResult {
-    message_id: MessageId,
+    message_id: MessageIndex,
     timestamp: TimestampMillis,
 }
 

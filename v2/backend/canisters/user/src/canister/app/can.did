@@ -56,14 +56,14 @@ type MessageContent =
 type ReplyContext =
     record {
         user_id: UserId;
-        message_id: nat32;
+        message_id: nat;
         content: MessageContent;
     };
 
 type Message =
     record {
-        id: nat32;
-        client_message_id: text;
+        message_index: nat32;
+        message_id: nat;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
@@ -84,7 +84,7 @@ type DirectChatSummary =
         last_updated: TimestampMillis;
         last_read_by_us: nat32;
         last_read_by_them: nat32;
-        latest_message_id: nat32;
+        latest_message_index: nat32;
         latest_message: opt Message;
     };
 
@@ -94,18 +94,18 @@ type GroupChatSummary =
         subject: text;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
-        min_visible_message_id: nat32;
+        min_visible_message_index: nat32;
         participants: vec UserId;
         last_read_by_us: nat32;
         last_read_by_them: nat32;
-        latest_message_id: nat32;
+        latest_message_index: nat32;
         latest_message: opt Message;
     };
 
 type SendMessageArgs =
     record {
         recipient: UserId;
-        client_message_id: text;
+        message_id: text;
         content: MessageContent;
         replies_to: opt ReplyContext;
     };
@@ -114,7 +114,7 @@ type SendMessageResponse =
     variant {
         Success: record {
             chat_summary: ChatSummary;
-            message_id: nat32;
+            message_index: nat32;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -128,7 +128,7 @@ type SendMessageResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        up_to_message_id: nat32;
+        up_to_message_index: nat32;
     };
 
 type MarkReadResponse =
@@ -284,14 +284,14 @@ type GetChatsResponse =
 type GetMessagesArgs =
     record {
         user_id: UserId;
-        from_id: nat32;
-        to_id: nat32;
+        from_index: nat32;
+        to_index: nat32;
     };
 
 type GetMessagesSuccess =
     record {
         messages: vec Message;
-        latest_message_id: nat32;
+        latest_message_index: nat32;
     };
 
 type GetMessagesResponse =
@@ -300,13 +300,13 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIdArgs =
+type GetMessagesByIndexArgs =
     record {
         user_id: UserId;
         messages: vec nat32;
     };
 
-type GetMessagesByIdResponse =
+type GetMessagesByIndexResponse =
     variant {
         Success: GetMessagesSuccess;
         ChatNotFound;
@@ -384,7 +384,7 @@ service: {
 
     get_chats: (GetChatsArgs) -> (GetChatsResponse) query;
     get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
-    get_messages_by_id: (GetMessagesByIdArgs) -> (GetMessagesByIdResponse) query;
+    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
