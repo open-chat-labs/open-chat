@@ -112,8 +112,8 @@ export interface MarkReadArgs {
   'user_id' : UserId,
 };
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'NotAuthorise' : null } |
   { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface MediaContent {
   'height' : number,

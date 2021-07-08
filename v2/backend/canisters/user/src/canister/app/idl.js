@@ -170,8 +170,8 @@ export default ({ IDL }) => {
   });
   const MarkReadResponse = IDL.Variant({
     'SuccessNoChange' : IDL.Null,
-    'NotAuthorise' : IDL.Null,
     'ChatNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});

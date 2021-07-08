@@ -136,7 +136,7 @@ type MarkReadResponse =
         Success;
         SuccessNoChange;
         ChatNotFound;
-        NotAuthorise;
+        NotAuthorized;
     }; 
 
 type SetAvatarArgs =

@@ -52,6 +52,6 @@ fn messages(args: messages::Args) -> messages::Response {
 }
 
 #[query]
-fn messages_by_id(args: messages_by_index::Args) -> messages_by_index::Response {
+fn messages_by_index(args: messages_by_index::Args) -> messages_by_index::Response {
     RUNTIME_STATE.with(|state| messages_by_index::query(args, state.borrow().as_ref().unwrap()))
 }
