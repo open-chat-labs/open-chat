@@ -6,6 +6,7 @@ use crate::queries::search;
 use crate::queries::user;
 use crate::queries::users;
 use crate::updates::confirm_phone_number;
+use crate::updates::create_canister;
 use crate::updates::mark_as_online;
 use crate::updates::resend_code;
 use crate::updates::set_username;
@@ -36,6 +37,11 @@ fn set_username(args: set_username::Args) -> set_username::Response {
 #[update]
 fn mark_as_online(_args: mark_as_online::Args) {
     RUNTIME_STATE.with(|state| mark_as_online::update(state.borrow_mut().as_mut().unwrap()))
+}
+
+#[update]
+async fn create_canister(_args: create_canister::Args) -> create_canister::Response {
+    create_canister::update().await
 }
 
 #[query]

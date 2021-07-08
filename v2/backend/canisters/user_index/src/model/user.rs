@@ -74,6 +74,22 @@ impl User {
         }
         true
     }
+
+    pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatus) -> bool {
+        match self {
+            User::Confirmed(u) => u.canister_creation_status = canister_creation_status,
+            _ => return false,
+        }
+        true
+    }
+
+    pub fn set_user_id(&mut self, user_id: UserId) -> bool {
+        match self {
+            User::Confirmed(u) => u.user_id = Some(user_id),
+            _ => return false,
+        }
+        true
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

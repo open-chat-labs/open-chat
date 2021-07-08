@@ -6,7 +6,7 @@ use serde::Deserialize;
 pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if !runtime_state.env.sms_service_principals().contains(&caller) {
+    if !runtime_state.data.sms_service_principals.contains(&caller) {
         return Response::Unauthorized;
     }
 
