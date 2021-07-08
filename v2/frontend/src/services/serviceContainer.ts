@@ -36,8 +36,8 @@ export class ServiceContainer {
         return this;
     }
 
-    getUsers(userIds: string[]): Promise<UsersResponse> {
-        return this.userIndexClient.getUsers(userIds);
+    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
+        return this.userIndexClient.getUsers(userIds, since);
     }
 
     getChats(since: bigint): Promise<GetChatsResponse> {

@@ -29,21 +29,21 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         super(identity);
         this.userService = this.createServiceClient<UserIndexService>(
             idlFactory,
-            "user_index_canister_id" // todo - where does this come from
+            "user_index_canister_id" // todo - where does this come from - probably an env var
         );
     }
 
-    getUsers(userIds: string[]): Promise<UsersResponse> {
+    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
         if (userIds.length === 0) {
             return Promise.resolve({
-                timestamp: BigInt(0),
+                timestamp: BigInt(+new Date()),
                 users: [],
             });
         }
         return this.handleResponse(
             this.userService.users({
                 users: userIds.map(Principal.fromText),
-                updated_since: [],
+                updated_since: [since],
             }),
             usersResponse
         );

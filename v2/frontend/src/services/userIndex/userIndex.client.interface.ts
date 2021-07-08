@@ -16,5 +16,5 @@ export interface IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
-    getUsers(userIds: string[]): Promise<UsersResponse>;
+    getUsers(userIds: string[], since: bigint): Promise<UsersResponse>;
 }

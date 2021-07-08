@@ -11,7 +11,15 @@ describe("home machine transitions", () => {
         testTransition(
             homeMachine,
             "loading_chats",
-            { type: "done.invoke.getChats", data: { chats: [], users: [], timestamp: BigInt(0) } },
+            {
+                type: "done.invoke.getChats",
+                data: {
+                    chats: [],
+                    chatsTimestamp: BigInt(0),
+                    userLookup: {},
+                    usersTimestamp: BigInt(0),
+                },
+            },
             { loaded_chats: "no_chat_selected" }
         );
     });
@@ -33,6 +41,7 @@ describe("home machine transitions", () => {
                 ],
                 userLookup: {},
                 chatsTimestamp: BigInt(0),
+                usersTimestamp: BigInt(0),
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "LOAD_MESSAGES", data: BigInt(123) },
@@ -57,6 +66,7 @@ describe("home machine transitions", () => {
                 chats: [],
                 userLookup: {},
                 chatsTimestamp: BigInt(0),
+                usersTimestamp: BigInt(0),
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",

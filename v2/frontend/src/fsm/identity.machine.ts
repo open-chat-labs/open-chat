@@ -293,6 +293,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         chats: [],
                         userLookup: {},
                         chatsTimestamp: BigInt(0),
+                        usersTimestamp: BigInt(0),
                     }),
                     onDone: "login",
                     onError: {
