@@ -114,7 +114,7 @@ type SendMessageResponse =
     variant {
         Success: record {
             chat_summary: ChatSummary;
-            message_index: nat32;
+            message_id: nat32;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -128,16 +128,15 @@ type SendMessageResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        from_index: nat32;
-        to_index: nat32;
+        up_to_message_id: nat32;
     };
 
 type MarkReadResponse =
     variant {
-        Success: record {
-            unread_message_id_ranges: vec vec nat32;
-        };
+        Success;
+        SuccessNoChange;
         ChatNotFound;
+        NotAuthorise;
     }; 
 
 type SetAvatarArgs =
@@ -285,8 +284,8 @@ type GetChatsResponse =
 type GetMessagesArgs =
     record {
         user_id: UserId;
-        from_index: nat32;
-        to_index: nat32;
+        from_id: nat32;
+        to_id: nat32;
     };
 
 type GetMessagesSuccess =
@@ -301,13 +300,13 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexArgs =
+type GetMessagesByIdArgs =
     record {
         user_id: UserId;
         messages: vec nat32;
     };
 
-type GetMessagesByIndexResponse =
+type GetMessagesByIdResponse =
     variant {
         Success: GetMessagesSuccess;
         ChatNotFound;
@@ -385,7 +384,7 @@ service: {
 
     get_chats: (GetChatsArgs) -> (GetChatsResponse) query;
     get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
+    get_messages_by_id: (GetMessagesByIdArgs) -> (GetMessagesByIdResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;

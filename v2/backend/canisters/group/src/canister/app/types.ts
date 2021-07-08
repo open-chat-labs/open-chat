@@ -32,9 +32,9 @@ export type GetGroupResponse = {
       'unread_by_any_message_id_ranges' : Array<Array<number>>,
     }
   };
-export interface GetMessagesArgs { 'to_index' : number, 'from_index' : number };
-export interface GetMessagesByIndexArgs { 'messages' : Array<number> };
-export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
+export interface GetMessagesArgs { 'to_id' : number, 'from_id' : number };
+export interface GetMessagesByIdArgs { 'messages' : Array<number> };
+export type GetMessagesByIdResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export type GetMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
@@ -52,9 +52,9 @@ export type LeaveGroupResponse = { 'Success' : null };
 export type MakeAdminArgs = {};
 export type MakeAdminResponse = { 'Success' : null };
 export interface MarkReadArgs {
+  'to_id' : number,
+  'from_id' : number,
   'user_id' : UserId,
-  'to_index' : number,
-  'from_index' : number,
 };
 export type MarkReadResponse = { 'ChatNotFound' : null } |
   { 'Success' : { 'unread_message_id_ranges' : Array<Array<number>> } };
@@ -124,6 +124,7 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
+      'message_id' : number,
       'chat_summary' : {
         'last_updated' : TimestampMillis,
         'display_date' : TimestampMillis,
@@ -131,11 +132,10 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
         'unread_by_me_message_id_ranges' : Array<Array<number>>,
         'unread_by_any_message_id_ranges' : Array<Array<number>>,
       },
-      'message_index' : number,
     }
   } |
-  { 'InvalidRequest' : null } |
   { 'RecipientBlocked' : null } |
+  { 'InvalidRequest' : null } |
   { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
@@ -159,8 +159,8 @@ export default interface _SERVICE {
   'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
   'get_group' : (arg_0: GetGroupArgs) => Promise<GetGroupResponse>,
   'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
-  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
-      GetMessagesByIndexResponse
+  'get_messages_by_id' : (arg_0: GetMessagesByIdArgs) => Promise<
+      GetMessagesByIdResponse
     >,
   'invite_users' : (arg_0: InviteUsersArgs) => Promise<InviteUsersResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,

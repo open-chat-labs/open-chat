@@ -45,6 +45,25 @@ impl DirectChat {
         self.messages[from_index..=to_index].to_vec()
     }
 
+    pub fn get_messages_by_id(&self, ids: Vec<MessageId>) -> Vec<Message> {
+        if self.messages.is_empty() {
+            return Vec::new();
+        }
+
+        let earliest_id: u32 = self.messages.first().unwrap().id.into();
+
+        let calc_index = |id: MessageId| {
+            let as_u32: u32 = id.into();
+            (as_u32 - earliest_id) as usize
+        };
+
+        ids.into_iter()
+            .map(calc_index)
+            .filter_map(|index| self.messages.get(index))
+            .cloned()
+            .collect()
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.messages.last().map_or(self.date_created, |m| m.timestamp)
     }

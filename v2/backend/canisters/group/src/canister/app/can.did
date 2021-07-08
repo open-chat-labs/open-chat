@@ -75,7 +75,7 @@ type SendMessageResponse =
                 unread_by_me_message_id_ranges: vec vec nat32;
                 unread_by_any_message_id_ranges: vec vec nat32;
             };
-            message_index: nat32;
+            message_id: nat32;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -89,8 +89,8 @@ type SendMessageResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        from_index: nat32;
-        to_index: nat32;
+        from_id: nat32;
+        to_id: nat32;
     };
 
 type MarkReadResponse =
@@ -260,8 +260,8 @@ type GetChunkResponse =
 
 type GetMessagesArgs =
     record {
-        from_index: nat32;
-        to_index: nat32;
+        from_id: nat32;
+        to_id: nat32;
     };
 
 type GetMessagesSuccess =
@@ -276,12 +276,12 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexArgs =
+type GetMessagesByIdArgs =
     record {
         messages: vec nat32;
     };
 
-type GetMessagesByIndexResponse =
+type GetMessagesByIdResponse =
     variant {
         Success: GetMessagesSuccess;
         ChatNotFound;
@@ -361,7 +361,7 @@ service: {
     get_group: (GetGroupArgs) -> (GetGroupResponse) query;
         
     get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
+    get_messages_by_id: (GetMessagesByIdArgs) -> (GetMessagesByIdResponse) query;
 
     // Use Tantivy
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;

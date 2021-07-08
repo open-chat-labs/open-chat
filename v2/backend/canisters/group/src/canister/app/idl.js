@@ -64,8 +64,8 @@ export default ({ IDL }) => {
     }),
   });
   const GetMessagesArgs = IDL.Record({
-    'to_index' : IDL.Nat32,
-    'from_index' : IDL.Nat32,
+    'to_id' : IDL.Nat32,
+    'from_id' : IDL.Nat32,
   });
   const GetMessagesSuccess = IDL.Record({
     'messages' : IDL.Vec(Message),
@@ -75,10 +75,8 @@ export default ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
-  const GetMessagesByIndexArgs = IDL.Record({
-    'messages' : IDL.Vec(IDL.Nat32),
-  });
-  const GetMessagesByIndexResponse = IDL.Variant({
+  const GetMessagesByIdArgs = IDL.Record({ 'messages' : IDL.Vec(IDL.Nat32) });
+  const GetMessagesByIdResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
@@ -91,9 +89,9 @@ export default ({ IDL }) => {
   const MakeAdminArgs = IDL.Record({});
   const MakeAdminResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MarkReadArgs = IDL.Record({
+    'to_id' : IDL.Nat32,
+    'from_id' : IDL.Nat32,
     'user_id' : UserId,
-    'to_index' : IDL.Nat32,
-    'from_index' : IDL.Nat32,
   });
   const MarkReadResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -149,6 +147,7 @@ export default ({ IDL }) => {
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
+      'message_id' : IDL.Nat32,
       'chat_summary' : IDL.Record({
         'last_updated' : TimestampMillis,
         'display_date' : TimestampMillis,
@@ -156,10 +155,9 @@ export default ({ IDL }) => {
         'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
         'unread_by_any_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
       }),
-      'message_index' : IDL.Nat32,
     }),
-    'InvalidRequest' : IDL.Null,
     'RecipientBlocked' : IDL.Null,
+    'InvalidRequest' : IDL.Null,
     'SenderBlocked' : IDL.Null,
     'MessageTooLong' : IDL.Nat32,
     'RecipientNotFound' : IDL.Null,
@@ -189,9 +187,9 @@ export default ({ IDL }) => {
         [GetMessagesResponse],
         ['query'],
       ),
-    'get_messages_by_index' : IDL.Func(
-        [GetMessagesByIndexArgs],
-        [GetMessagesByIndexResponse],
+    'get_messages_by_id' : IDL.Func(
+        [GetMessagesByIdArgs],
+        [GetMessagesByIdResponse],
         ['query'],
       ),
     'invite_users' : IDL.Func([InviteUsersArgs], [InviteUsersResponse], []),

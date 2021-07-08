@@ -1,6 +1,6 @@
 use crate::model::message::Message;
 use crate::model::runtime_state::RuntimeState;
-use crate::queries::messages::Response::*;
+use crate::queries::messages_by_id::Response::*;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
@@ -10,7 +10,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &args.user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-            let messages = chat.get_messages(args.from_id, args.to_id);
+            let messages = chat.get_messages_by_id(args.message_ids);
             Success(SuccessResult { messages })
         } else {
             ChatNotFound
@@ -23,8 +23,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
 #[derive(Deserialize)]
 pub struct Args {
     user_id: UserId,
-    from_id: MessageId,
-    to_id: MessageId,
+    message_ids: Vec<MessageId>,
 }
 
 #[derive(CandidType)]
