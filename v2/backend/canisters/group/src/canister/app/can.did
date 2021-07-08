@@ -51,7 +51,7 @@ type ReplyContext =
 type Message =
     record {
         message_index: nat32;
-        message_id: text;
+        message_id: nat;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
@@ -272,12 +272,12 @@ type GetMessagesResponse =
         ChatNotFound;
     }; 
 
-type GetMessagesByIdArgs =
+type GetMessagesByIndexArgs =
     record {
         messages: vec nat32;
     };
 
-type GetMessagesByIdResponse =
+type GetMessagesByIndexResponse =
     variant {
         Success: GetMessagesSuccess;
         ChatNotFound;

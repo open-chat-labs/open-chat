@@ -22,10 +22,10 @@ export interface DirectChatSummary {
   'id' : ChatId,
   'last_read_by_us' : number,
   'them' : UserId,
+  'latest_message_index' : number,
   'last_updated' : TimestampMillis,
   'display_date' : TimestampMillis,
   'last_read_by_them' : number,
-  'latest_message_id' : number,
   'latest_message' : [] | [Message],
 };
 export interface FileContent {
@@ -45,32 +45,32 @@ export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number };
 export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
 export interface GetMessagesArgs {
-  'to_id' : number,
-  'from_id' : number,
   'user_id' : UserId,
+  'to_index' : number,
+  'from_index' : number,
 };
-export interface GetMessagesByIdArgs {
+export interface GetMessagesByIndexArgs {
   'messages' : Array<number>,
   'user_id' : UserId,
 };
-export type GetMessagesByIdResponse = { 'ChatNotFound' : null } |
+export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export type GetMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export interface GetMessagesSuccess {
   'messages' : Array<Message>,
-  'latest_message_id' : number,
+  'latest_message_index' : number,
 };
 export interface GroupChatSummary {
   'id' : ChatId,
   'last_read_by_us' : number,
   'participants' : Array<UserId>,
   'subject' : string,
+  'latest_message_index' : number,
   'last_updated' : TimestampMillis,
   'display_date' : TimestampMillis,
-  'min_visible_message_id' : number,
   'last_read_by_them' : number,
-  'latest_message_id' : number,
+  'min_visible_message_index' : number,
   'latest_message' : [] | [Message],
 };
 export type GroupId = CanisterId;
@@ -108,7 +108,7 @@ export type HandleMessageResponse = { 'Out' : null } |
   { 'SenderBlocked' : null };
 export interface HandleRemovedFromGroupArgs { 'group_id' : GroupId };
 export interface MarkReadArgs {
-  'up_to_message_id' : number,
+  'up_to_message_index' : number,
   'user_id' : UserId,
 };
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
@@ -124,12 +124,12 @@ export interface MediaContent {
   'width' : number,
 };
 export interface Message {
-  'id' : number,
   'content' : MessageContent,
   'sender' : UserId,
   'timestamp' : TimestampMillis,
+  'message_id' : bigint,
   'replies_to' : [] | [ReplyContext],
-  'client_message_id' : string,
+  'message_index' : number,
 };
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
@@ -162,7 +162,7 @@ export type PutChunkResponse = { 'Full' : null } |
 export interface ReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
-  'message_id' : number,
+  'message_id' : bigint,
 };
 export interface SearchAllMessagesArgs {
   'max_results' : number,
@@ -179,8 +179,8 @@ export type SearchAllMessagesResponse = {
 export interface SendMessageArgs {
   'content' : MessageContent,
   'recipient' : UserId,
+  'message_id' : string,
   'replies_to' : [] | [ReplyContext],
-  'client_message_id' : string,
 };
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
@@ -217,8 +217,8 @@ export default interface _SERVICE {
   'get_chats' : (arg_0: GetChatsArgs) => Promise<GetChatsResponse>,
   'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
   'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
-  'get_messages_by_id' : (arg_0: GetMessagesByIdArgs) => Promise<
-      GetMessagesByIdResponse
+  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
+      GetMessagesByIndexResponse
     >,
   'handle_added_to_group' : (arg_0: HandleAddedToGroupArgs) => Promise<
       HandleAddedToGroupResponse

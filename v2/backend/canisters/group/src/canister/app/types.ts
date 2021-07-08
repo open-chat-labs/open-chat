@@ -26,21 +26,21 @@ export type GetGroupResponse = {
       'subject' : string,
       'last_updated' : TimestampMillis,
       'display_date' : TimestampMillis,
-      'min_visible_message_id' : number,
       'latest_messages' : Array<Message>,
+      'min_visible_message_index' : number,
       'unread_by_me_message_id_ranges' : Array<Array<number>>,
       'unread_by_any_message_id_ranges' : Array<Array<number>>,
     }
   };
-export interface GetMessagesArgs { 'to_id' : number, 'from_id' : number };
-export interface GetMessagesByIdArgs { 'messages' : Array<number> };
-export type GetMessagesByIdResponse = { 'ChatNotFound' : null } |
+export interface GetMessagesArgs { 'to_index' : number, 'from_index' : number };
+export interface GetMessagesByIndexArgs { 'messages' : Array<number> };
+export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export type GetMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export interface GetMessagesSuccess {
   'messages' : Array<Message>,
-  'latest_message_id' : number,
+  'latest_message_index' : number,
 };
 export type GroupId = CanisterId;
 export type InviteUsersArgs = {};
@@ -51,13 +51,9 @@ export type LeaveGroupArgs = {};
 export type LeaveGroupResponse = { 'Success' : null };
 export type MakeAdminArgs = {};
 export type MakeAdminResponse = { 'Success' : null };
-export interface MarkReadArgs {
-  'to_id' : number,
-  'from_id' : number,
-  'user_id' : UserId,
-};
-export type MarkReadResponse = { 'ChatNotFound' : null } |
-  { 'Success' : { 'unread_message_id_ranges' : Array<Array<number>> } };
+export interface MarkReadArgs { 'up_to_message_index' : number };
+export type MarkReadResponse = { 'Success' : null } |
+  { 'NotInGroup' : null };
 export interface MediaContent {
   'height' : number,
   'mime_type' : string,
@@ -67,12 +63,12 @@ export interface MediaContent {
   'width' : number,
 };
 export interface Message {
-  'id' : number,
   'content' : MessageContent,
   'sender' : UserId,
   'timestamp' : TimestampMillis,
+  'message_id' : bigint,
   'replies_to' : [] | [ReplyContext],
-  'client_message_id' : string,
+  'message_index' : number,
 };
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
@@ -105,7 +101,7 @@ export type RemoveParticipantsResponse = { 'Success' : null };
 export interface ReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
-  'message_id' : number,
+  'message_id' : bigint,
 };
 export interface SearchMessagesArgs {
   'max_results' : number,
@@ -117,8 +113,8 @@ export type SearchMessagesResponse = {
   { 'Failure' : null };
 export interface SendMessageArgs {
   'content' : MessageContent,
+  'message_id' : bigint,
   'replies_to' : [] | [ReplyContext],
-  'client_message_id' : string,
 };
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
@@ -128,7 +124,7 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
       'chat_summary' : {
         'last_updated' : TimestampMillis,
         'display_date' : TimestampMillis,
-        'min_visible_message_id' : number,
+        'min_visible_message_index' : number,
         'unread_by_me_message_id_ranges' : Array<Array<number>>,
         'unread_by_any_message_id_ranges' : Array<Array<number>>,
       },
@@ -159,8 +155,8 @@ export default interface _SERVICE {
   'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
   'get_group' : (arg_0: GetGroupArgs) => Promise<GetGroupResponse>,
   'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
-  'get_messages_by_id' : (arg_0: GetMessagesByIdArgs) => Promise<
-      GetMessagesByIdResponse
+  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
+      GetMessagesByIndexResponse
     >,
   'invite_users' : (arg_0: InviteUsersArgs) => Promise<InviteUsersResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,

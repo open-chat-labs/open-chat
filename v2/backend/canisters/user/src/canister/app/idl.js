@@ -54,36 +54,36 @@ export default ({ IDL }) => {
   const ReplyContext = IDL.Record({
     'content' : MessageContent,
     'user_id' : UserId,
-    'message_id' : IDL.Nat32,
+    'message_id' : IDL.Nat,
   });
   const Message = IDL.Record({
-    'id' : IDL.Nat32,
     'content' : MessageContent,
     'sender' : UserId,
     'timestamp' : TimestampMillis,
+    'message_id' : IDL.Nat,
     'replies_to' : IDL.Opt(ReplyContext),
-    'client_message_id' : IDL.Text,
+    'message_index' : IDL.Nat32,
   });
   const GroupChatSummary = IDL.Record({
     'id' : ChatId,
     'last_read_by_us' : IDL.Nat32,
     'participants' : IDL.Vec(UserId),
     'subject' : IDL.Text,
+    'latest_message_index' : IDL.Nat32,
     'last_updated' : TimestampMillis,
     'display_date' : TimestampMillis,
-    'min_visible_message_id' : IDL.Nat32,
     'last_read_by_them' : IDL.Nat32,
-    'latest_message_id' : IDL.Nat32,
+    'min_visible_message_index' : IDL.Nat32,
     'latest_message' : IDL.Opt(Message),
   });
   const DirectChatSummary = IDL.Record({
     'id' : ChatId,
     'last_read_by_us' : IDL.Nat32,
     'them' : UserId,
+    'latest_message_index' : IDL.Nat32,
     'last_updated' : TimestampMillis,
     'display_date' : TimestampMillis,
     'last_read_by_them' : IDL.Nat32,
-    'latest_message_id' : IDL.Nat32,
     'latest_message' : IDL.Opt(Message),
   });
   const ChatSummary = IDL.Variant({
@@ -102,23 +102,23 @@ export default ({ IDL }) => {
     'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
   });
   const GetMessagesArgs = IDL.Record({
-    'to_id' : IDL.Nat32,
-    'from_id' : IDL.Nat32,
     'user_id' : UserId,
+    'to_index' : IDL.Nat32,
+    'from_index' : IDL.Nat32,
   });
   const GetMessagesSuccess = IDL.Record({
     'messages' : IDL.Vec(Message),
-    'latest_message_id' : IDL.Nat32,
+    'latest_message_index' : IDL.Nat32,
   });
   const GetMessagesResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
-  const GetMessagesByIdArgs = IDL.Record({
+  const GetMessagesByIndexArgs = IDL.Record({
     'messages' : IDL.Vec(IDL.Nat32),
     'user_id' : UserId,
   });
-  const GetMessagesByIdResponse = IDL.Variant({
+  const GetMessagesByIndexResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
@@ -165,7 +165,7 @@ export default ({ IDL }) => {
   });
   const HandleRemovedFromGroupArgs = IDL.Record({ 'group_id' : GroupId });
   const MarkReadArgs = IDL.Record({
-    'up_to_message_id' : IDL.Nat32,
+    'up_to_message_index' : IDL.Nat32,
     'user_id' : UserId,
   });
   const MarkReadResponse = IDL.Variant({
@@ -219,8 +219,8 @@ export default ({ IDL }) => {
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'recipient' : UserId,
+    'message_id' : IDL.Text,
     'replies_to' : IDL.Opt(ReplyContext),
-    'client_message_id' : IDL.Text,
   });
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,
@@ -255,9 +255,9 @@ export default ({ IDL }) => {
         [GetMessagesResponse],
         ['query'],
       ),
-    'get_messages_by_id' : IDL.Func(
-        [GetMessagesByIdArgs],
-        [GetMessagesByIdResponse],
+    'get_messages_by_index' : IDL.Func(
+        [GetMessagesByIndexArgs],
+        [GetMessagesByIndexResponse],
         ['query'],
       ),
     'handle_added_to_group' : IDL.Func(
