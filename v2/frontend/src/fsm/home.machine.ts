@@ -14,6 +14,7 @@ import { userIdsFromChatSummaries } from "../domain/chat.utils";
 import type { User, UserLookup, UsersResponse } from "../domain/user";
 import { mergeUsers, missingUserIds } from "../domain/user.utils";
 import { rollbar } from "../utils/logging";
+import { log } from "xstate/lib/actions";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -43,7 +44,7 @@ type ChatsResponse = {
     usersTimestamp: bigint;
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersTimestamp: bigint };
-type GroupChatUsersResponse = { userLookup: UserLookup };
+type LoadMessagesResponse = { userLookup: UserLookup };
 
 export type HomeEvents =
     | { type: "LOAD_MESSAGES"; data: bigint }
@@ -52,8 +53,8 @@ export type HomeEvents =
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
     | { type: "error.platform.getChats"; data: Error }
-    | { type: "done.invoke.loadGroupChatUsers"; data: GroupChatUsersResponse }
-    | { type: "error.platform.loadGroupChatUsers"; data: Error };
+    | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
+    | { type: "error.platform.loadMessages"; data: Error };
 
 async function getChats(
     serviceContainer: ServiceContainer,
@@ -134,23 +135,21 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
             };
         },
 
-        loadGroupChatUsers: async (ctx, _) => {
+        // todo - implementation required - this just does nothing at the moment
+        loadMessages: async (ctx, _) => {
             if (ctx.selectedChat && ctx.selectedChat.kind === "group_chat") {
+                console.log("looking up users for group chat");
                 const userIds = userIdsFromChatSummaries([ctx.selectedChat], true);
                 const { users } = await ctx.serviceContainer!.getUsers(
                     missingUserIds(ctx.userLookup, userIds),
                     BigInt(0) // timestamp irrelevant for missing users
                 );
+                // we might also load messages in here or we might use a spawned actor
+                // tbd next
                 return {
                     userLookup: mergeUsers(ctx.userLookup, users),
                 };
             }
-            return [];
-        },
-
-        // todo - implementation required - this just does nothing at the moment
-        loadMessages: (_ctx, _) => {
-            return new Promise((resolve) => setTimeout(resolve, 1000));
         },
     },
 };
@@ -170,20 +169,18 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             invoke: {
                 id: "getChats",
                 src: "getChats",
-                onDone: [
-                    {
-                        target: "loaded_chats",
-                        actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
-                            if (ev.type === "done.invoke.getChats") {
-                                return {
-                                    ...ev.data,
-                                    error: undefined,
-                                };
-                            }
-                            return ctx;
-                        }),
-                    },
-                ],
+                onDone: {
+                    target: "loaded_chats",
+                    actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
+                        if (ev.type === "done.invoke.getChats") {
+                            return {
+                                ...ev.data,
+                                error: undefined,
+                            };
+                        }
+                        return ctx;
+                    }),
+                },
                 onError: {
                     target: "unexpected_error",
                     actions: assign({
@@ -247,38 +244,28 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             return undefined;
                         },
                     }),
-                    invoke: [
-                        {
-                            id: "loadMessages",
-                            src: "loadMessages",
-                            onDone: [
-                                {
-                                    target: "chat_selected",
-                                },
-                            ],
+                    invoke: {
+                        id: "loadMessages",
+                        src: "loadMessages",
+                        onDone: {
+                            target: "chat_selected",
+                            actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
+                                console.log("assigning group chat users");
+                                return ev.type === "done.invoke.loadGroupChatUsers" ? ev.data : ctx;
+                            }),
                         },
-                        {
-                            // in parallel we load the users that are part of the group chat
-                            // (if this is a group chat)
-                            id: "loadGroupChatUsers",
-                            src: "loadGroupChatUsers",
-                            onDone: [
-                                {
-                                    target: "chat_selected",
-                                    actions: assign(
-                                        (ctx, ev: DoneInvokeEvent<GroupChatUsersResponse>) => {
-                                            return ev.type === "done.invoke.loadGroupChatUsers"
-                                                ? ev.data
-                                                : ctx;
-                                        }
-                                    ),
-                                },
-                            ],
+                        onError: {
+                            target: "unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
                         },
-                    ],
+                    },
                 },
                 no_chat_selected: {},
-                chat_selected: {},
+                chat_selected: {
+                    entry: log("entering the chat_selected state"),
+                },
             },
         },
         unexpected_error: {
