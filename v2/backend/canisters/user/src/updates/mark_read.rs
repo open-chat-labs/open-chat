@@ -9,8 +9,8 @@ pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &args.user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-            if chat.read_up_to < args.up_to_message_id {
-                chat.read_up_to = args.up_to_message_id;
+            if chat.read_up_to < args.up_to_message_index {
+                chat.read_up_to = args.up_to_message_index;
                 Success
             } else {
                 SuccessNoChange
@@ -26,7 +26,7 @@ pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
 #[derive(Deserialize)]
 pub struct Args {
     user_id: UserId,
-    up_to_message_id: MessageIndex,
+    up_to_message_index: MessageIndex,
 }
 
 #[derive(CandidType)]
@@ -55,8 +55,8 @@ pub mod c2c {
 
         let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &their_user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-            if chat.read_up_to_by_them < args.up_to_message_id {
-                chat.read_up_to_by_them = args.up_to_message_id;
+            if chat.read_up_to_by_them < args.up_to_message_index {
+                chat.read_up_to_by_them = args.up_to_message_index;
                 Response::Success
             } else {
                 Response::SuccessNoChange
@@ -68,7 +68,7 @@ pub mod c2c {
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
-        up_to_message_id: MessageIndex,
+        up_to_message_index: MessageIndex,
     }
 
     #[derive(CandidType, Deserialize)]
@@ -81,7 +81,7 @@ pub mod c2c {
     impl From<super::Args> for (CanisterId, Args) {
         fn from(args: super::Args) -> Self {
             let c2c_args = Args {
-                up_to_message_id: args.up_to_message_id,
+                up_to_message_index: args.up_to_message_index,
             };
 
             (args.user_id.into(), c2c_args)
