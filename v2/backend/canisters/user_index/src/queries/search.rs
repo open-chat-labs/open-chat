@@ -29,7 +29,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     let results = matches
         .iter()
         .take(args.max_results as usize)
-        .map(|u| UserSummary::new(u, Some(now)))
+        .map(|u| UserSummary::new(u, now))
         .collect();
 
     Response::Success(Result { users: results })
@@ -166,8 +166,28 @@ mod tests {
         assert_eq!(9, results.users.len());
     }
 
+    #[test]
+    fn all_fields_set_correctly() {
+        let runtime_state = setup_runtime_state();
+
+        let response = query(
+            Args {
+                max_results: 10,
+                search_term: "hamish".to_string(),
+            },
+            &runtime_state,
+        );
+
+        let Response::Success(results) = response;
+
+        let user = results.users.first().unwrap();
+        assert_eq!(user.user_id(), Principal::from_slice(&[4, 1]).into());
+        assert_eq!(user.username(), "hamish");
+        assert_eq!(user.seconds_since_last_online(), 5);
+    }
+
     fn setup_runtime_state() -> RuntimeState {
-        let env = TestEnv::default();
+        let mut env = TestEnv::default();
         let mut data = Data::default();
 
         let usernames = vec![
@@ -185,8 +205,10 @@ mod tests {
                 user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,
+                date_updated: env.now,
                 last_online: env.now,
             }));
+            env.now += 1000;
         }
 
         RuntimeState::new(Box::new(env), data)

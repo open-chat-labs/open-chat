@@ -145,6 +145,13 @@ type UserSummary =
         seconds_since_last_online: nat32;
     };
 
+type PartialUserSummary =
+    record {
+        user_id: UserId;
+        username: opt text;
+        seconds_since_last_online: nat32;
+    };
+
 type UserArgs = 
     record {
         user_id: opt UserId;
@@ -166,7 +173,7 @@ type UsersArgs =
 type UsersResponse =
     variant {
         Success: record {
-            users: vec UserSummary;
+            users: vec PartialUserSummary;
             timestamp: TimestampMillis;
         }
     };

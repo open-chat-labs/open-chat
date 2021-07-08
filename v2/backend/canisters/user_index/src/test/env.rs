@@ -34,7 +34,7 @@ impl Environment for TestEnv {
 impl Default for TestEnv {
     fn default() -> Self {
         TestEnv {
-            now: 1,
+            now: 10000,
             caller: Principal::from_slice(&[1]),
             random_u32: 1,
             sms_service_principals: Vec::new(),

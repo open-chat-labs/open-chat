@@ -50,6 +50,11 @@ export interface MetricsResponse {
 };
 export type Milliseconds = bigint;
 export interface NotifyBalanceArgs { 'balance' : bigint };
+export interface PartialUserSummary {
+  'username' : [] | [string],
+  'user_id' : UserId,
+  'seconds_since_last_online' : number,
+};
 export interface PhoneNumber { 'country_code' : number, 'number' : string };
 export type ResendCodeArgs = {};
 export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
@@ -98,7 +103,10 @@ export interface UsersArgs {
   'updated_since' : [] | [TimestampMillis],
 };
 export type UsersResponse = {
-    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'users' : Array<PartialUserSummary>,
+    }
   };
 export default interface _SERVICE {
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<

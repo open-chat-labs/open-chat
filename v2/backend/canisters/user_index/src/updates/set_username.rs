@@ -33,7 +33,7 @@ pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
             Response::UserUnconfirmed
         } else {
             let mut user = user.clone();
-            user.set_username(username);
+            user.set_username(username, now);
             match runtime_state.data.users.update(user) {
                 UpdateUserResult::Success => Response::Success,
                 UpdateUserResult::PhoneNumberTaken => panic!("PhoneNumberTaken returned when updating username"),
@@ -83,6 +83,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -108,6 +109,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -129,6 +131,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         data.users.add(User::Created(CreatedUser {
@@ -137,6 +140,7 @@ mod tests {
             user_id: Principal::from_slice(&[2]).into(),
             username: "xyz".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -178,6 +182,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -199,6 +204,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
@@ -220,6 +226,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);

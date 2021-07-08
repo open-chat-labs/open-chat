@@ -30,6 +30,7 @@ mod tests {
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
+            date_updated: env.now,
             last_online: env.now,
         }));
         env.now += 10000;

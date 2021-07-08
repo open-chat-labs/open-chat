@@ -119,10 +119,15 @@ export default ({ IDL }) => {
     'users' : IDL.Vec(UserId),
     'updated_since' : IDL.Opt(TimestampMillis),
   });
+  const PartialUserSummary = IDL.Record({
+    'username' : IDL.Opt(IDL.Text),
+    'user_id' : UserId,
+    'seconds_since_last_online' : IDL.Nat32,
+  });
   const UsersResponse = IDL.Variant({
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
-      'users' : IDL.Vec(UserSummary),
+      'users' : IDL.Vec(PartialUserSummary),
     }),
   });
   return IDL.Service({

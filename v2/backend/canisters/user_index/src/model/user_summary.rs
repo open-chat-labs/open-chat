@@ -11,13 +11,9 @@ pub struct UserSummary {
 }
 
 impl UserSummary {
-    // You can pass in now = None if you know that the user is online now
-    pub fn new(user: &CreatedUser, now: Option<TimestampMillis>) -> UserSummary {
-        let mut seconds_since_last_online: u32 = 0;
-        if let Some(t) = now {
-            let millis_since_last_online = t - user.last_online;
-            seconds_since_last_online = (millis_since_last_online / 1000) as u32;
-        }
+    pub fn new(user: &CreatedUser, now: TimestampMillis) -> UserSummary {
+        let millis_since_last_online = now - user.last_online;
+        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
 
         UserSummary {
             user_id: user.user_id,
@@ -26,8 +22,53 @@ impl UserSummary {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn username(&self) -> &str {
-        &self.username
+    #[cfg(test)]
+    pub fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    #[cfg(test)]
+    pub fn username(&self) -> String {
+        self.username.clone()
+    }
+
+    #[cfg(test)]
+    pub fn seconds_since_last_online(&self) -> u32 {
+        self.seconds_since_last_online
+    }
+}
+
+#[derive(CandidType)]
+pub struct PartialUserSummary {
+    user_id: UserId,
+    username: Option<String>,
+    seconds_since_last_online: u32,
+}
+
+impl PartialUserSummary {
+    pub fn new(user: &CreatedUser, include_username: bool, now: TimestampMillis) -> PartialUserSummary {
+        let millis_since_last_online = now - user.last_online;
+        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+
+        PartialUserSummary {
+            user_id: user.user_id,
+            username: if include_username { Some(user.username.clone()) } else { None },
+            seconds_since_last_online,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    #[cfg(test)]
+    pub fn username(&self) -> Option<String> {
+        self.username.as_ref().cloned()
+    }
+
+    #[cfg(test)]
+    pub fn seconds_since_last_online(&self) -> u32 {
+        self.seconds_since_last_online
     }
 }

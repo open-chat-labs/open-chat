@@ -213,6 +213,7 @@ mod tests {
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
+            date_updated: 3,
             last_online: 1,
         });
         user_map.add(created.clone());
@@ -350,7 +351,8 @@ mod tests {
             user_id: user_id2,
             username,
             date_created: 3,
-            last_online: 1,
+            date_updated: 3,
+            last_online: 3,
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -375,12 +377,13 @@ mod tests {
             user_id,
             username: username1.clone(),
             date_created: 1,
+            date_updated: 1,
             last_online: 1,
         });
 
         let mut updated = original.clone();
-        updated.set_username(username2.clone());
-        updated.set_phone_number(phone_number2.clone());
+        updated.set_username(username2.clone(), 4);
+        updated.set_phone_number(phone_number2.clone(), 4);
 
         user_map.add(original);
         assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
@@ -412,6 +415,7 @@ mod tests {
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
+            date_updated: 1,
             last_online: 1,
         });
 
@@ -420,12 +424,13 @@ mod tests {
             phone_number: phone_number2.clone(),
             user_id: user_id2,
             username: username2.clone(),
-            date_created: 1,
-            last_online: 1,
+            date_created: 2,
+            date_updated: 2,
+            last_online: 2,
         });
 
         let mut updated = original.clone();
-        updated.set_phone_number(phone_number2);
+        updated.set_phone_number(phone_number2, 4);
 
         user_map.add(original);
         user_map.add(other);
@@ -453,6 +458,7 @@ mod tests {
             user_id: user_id1,
             username: username1.clone(),
             date_created: 1,
+            date_updated: 1,
             last_online: 1,
         });
 
@@ -461,12 +467,13 @@ mod tests {
             phone_number: phone_number2.clone(),
             user_id: user_id2,
             username: username2.clone(),
-            date_created: 1,
-            last_online: 1,
+            date_created: 2,
+            date_updated: 2,
+            last_online: 2,
         });
 
         let mut updated = original.clone();
-        updated.set_phone_number(phone_number2);
+        updated.set_phone_number(phone_number2, 4);
 
         user_map.add(original);
         user_map.add(other);
@@ -515,7 +522,8 @@ mod tests {
             user_id: user_id3,
             username: username3.clone(),
             date_created: 3,
-            last_online: 1,
+            date_updated: 3,
+            last_online: 3,
         });
         user_map.add(created.clone());
 
