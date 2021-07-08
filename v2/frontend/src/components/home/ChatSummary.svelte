@@ -1,23 +1,29 @@
 <script lang="ts">
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import {
-        AvatarSize,
-        avatarUrl as getAvatarUrl,
-        getUserStatus,
-        UserStatus,
-    } from "../../domain/user";
+    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user.utils";
     import type { UserLookup } from "../../domain/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
-    import { getUnreadMessages, latestMessageText } from "../../domain/chat";
+    import { getUnreadMessages, latestMessageText } from "../../domain/chat.utils";
     import type { ChatSummary } from "../../domain/chat";
+    import { elasticOut } from "svelte/easing";
 
     export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
+
+    function pop(_node: any, { duration }: any) {
+        return {
+            duration,
+            css: (t: number) => {
+                return `transform: scale(${elasticOut(t)});`;
+            },
+        };
+    }
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -53,6 +59,7 @@
         <div class="chat-msg">{lastMessage}</div>
         {#if unreadMessages > 0}
             <div
+                in:pop={{ duration: 1500 }}
                 title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
                 class="unread-msgs">
                 {unreadMessages > 9 ? "9+" : unreadMessages}

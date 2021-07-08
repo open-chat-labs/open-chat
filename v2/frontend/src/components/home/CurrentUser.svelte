@@ -15,7 +15,8 @@
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
-    import { avatarUrl, AvatarSize, UserStatus } from "../../domain/user";
+    import { AvatarSize, UserStatus } from "../../domain/user";
+    import { avatarUrl } from "../../domain/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { User } from "../../domain/user";
     import { createEventDispatcher } from "svelte";

@@ -9,9 +9,10 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { ChatSummary, userIdsFromChatSummaries } from "../domain/chat";
+import type { ChatSummary } from "../domain/chat";
+import { mergeChats, userIdsFromChatSummaries } from "../domain/chat.utils";
 import type { User, UserLookup, UserSummary } from "../domain/user";
-import { log } from "xstate/lib/actions";
+import { mergeUsers, missingUserIds } from "../domain/user.utils";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -21,17 +22,6 @@ if (typeof window !== "undefined") {
 
 // const CHAT_UPDATE_INTERVAL = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 1000;
-
-function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
-    return Array.from(userIds).filter((userId) => userLookup[userId] === undefined);
-}
-
-function mergeUsers(userLookup: UserLookup, users: UserSummary[]): UserLookup {
-    return users.reduce<UserLookup>((lookup, user) => {
-        lookup[user.userId] = user;
-        return lookup;
-    }, userLookup);
-}
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
@@ -76,7 +66,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
         // todo - updateChats is virtually identical to the getChats.
         // We can probably do something about that but I'm not too worried about it at the moment
-        updateChats: (ctx, _ev) => (callback) => {
+        updateChatsPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
                 // todo - we need to handle any errors that may occur during polling
                 const { chats, timestamp } = await ctx.serviceContainer!.getChats(
@@ -96,7 +86,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 });
             }, CHAT_UPDATE_INTERVAL);
             return () => {
-                console.log("Stopping update chats poller");
                 clearInterval(id);
             };
         },
@@ -163,17 +152,18 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             initial: "no_chat_selected",
             id: "loaded_chats",
             invoke: {
-                id: "updateChats",
-                src: "updateChats",
+                id: "updateChatsPoller",
+                src: "updateChatsPoller",
             },
             on: {
                 CHATS_UPDATED: {
+                    internal: true,
                     actions: assign((ctx, ev) => {
                         // todo - this assign is actually a bit more complicated since we need to splice the
                         // new chats with the existing chats
                         if (ev.type === "CHATS_UPDATED") {
                             return {
-                                chats: ev.data.chats,
+                                chats: mergeChats(ctx.chats, ev.data.chats),
                                 chatsTimestamp: ev.data.timestamp,
                                 userLookup: mergeUsers(ctx.userLookup, ev.data.users),
                                 error: undefined,
@@ -183,11 +173,13 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     }),
                 },
                 LOAD_MESSAGES: {
-                    target: "loaded_chats.loading_messages",
+                    internal: true,
+                    target: ".loading_messages",
                     cond: "selectedChatIsValid",
                 },
                 CLEAR_SELECTED_CHAT: {
-                    target: "loaded_chats.no_chat_selected",
+                    internal: true,
+                    target: ".no_chat_selected",
                     actions: assign({
                         selectedChat: (_ctx, _) => undefined,
                     }),

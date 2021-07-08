@@ -8,7 +8,6 @@ import type {
 import type { IUserClient } from "./user.client.interface";
 
 const oneDay = 1000 * 60 * 60 * 24;
-let nextChatId = 0;
 let time = +new Date() + oneDay;
 
 function randomNum(min: number, max: number) {
@@ -21,12 +20,12 @@ function randomString() {
     );
 }
 
-function mockGroupChat(): GroupChatSummary {
+function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
     return {
         kind: "group_chat",
         subject: "Group chat subject",
-        chatId: BigInt(nextChatId++),
+        chatId: BigInt(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
         lastReadByUs: 0,
@@ -45,14 +44,14 @@ function mockGroupChat(): GroupChatSummary {
     };
 }
 
-function mockDirectChat(): DirectChatSummary {
+function mockDirectChat(i: number): DirectChatSummary {
     time -= oneDay;
     const latest = randomNum(10, 20);
     const us = randomNum(10, latest);
     return {
         kind: "direct_chat",
         them: randomString(),
-        chatId: BigInt(nextChatId++),
+        chatId: BigInt(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
         lastReadByUs: us,
@@ -75,19 +74,19 @@ function mockMessage(): Message {
     };
 }
 
-function createN<T>(n: number, factory: () => T, sofar: T[] = []): T[] {
+function createN<T>(seed: number, n: number, factory: (n: number) => T, sofar: T[] = []): T[] {
     if (n > 0) {
-        sofar.push(factory());
-        return createN(n - 1, factory, sofar);
+        sofar.push(factory(seed + n));
+        return createN(seed, n - 1, factory, sofar);
     }
     return sofar;
 }
 
 export class UserClientMock implements IUserClient {
     getChats(since: bigint): Promise<GetChatsResponse> {
-        const numChats = since === BigInt(0) ? 1 : 2;
-        const direct = createN(numChats, mockDirectChat);
-        const group = createN(1, mockGroupChat);
+        const numChats = since === BigInt(0) ? 2 : 4;
+        const direct = createN(0, numChats, mockDirectChat);
+        const group = createN(100, numChats, mockGroupChat);
         const chats = ([] as ChatSummary[]).concat(direct, group);
         return new Promise((res) => {
             setTimeout(() => {
