@@ -69,7 +69,7 @@ impl DirectChat {
         self.messages.last().map_or(self.date_created, |m| m.timestamp)
     }
 
-    pub fn next_message_id(&self) -> MessageIndex {
+    pub fn next_message_index(&self) -> MessageIndex {
         self.messages
             .last()
             .map_or(MessageIndex::default(), |m| m.message_index)

@@ -36,9 +36,9 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
         Vacant(e) => e.insert(DirectChat::new(chat_id, args.their_user_id, now)),
     };
 
-    let message_id = chat.next_message_id();
+    let message_index = chat.next_message_index();
     let message = Message {
-        message_index: message_id,
+        message_index,
         message_id: args.message_id,
         timestamp: now,
         sent_by_me: args.sent_by_me,
@@ -48,7 +48,7 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
     chat.messages.push(message);
 
     SuccessResult {
-        message_id,
+        message_index,
         timestamp: now,
     }
 }
@@ -69,7 +69,7 @@ pub enum Response {
 
 #[derive(CandidType)]
 pub struct SuccessResult {
-    message_id: MessageIndex,
+    message_index: MessageIndex,
     timestamp: TimestampMillis,
 }
 
