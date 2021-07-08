@@ -44,14 +44,14 @@ type MessageContent =
 type ReplyContext =
     record {
         user_id: UserId;
-        message_id: nat32;
+        message_id: nat;
         content: MessageContent;
     };
 
 type Message =
     record {
-        id: nat32;
-        client_message_id: text;
+        message_index: nat32;
+        message_id: nat;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
@@ -60,7 +60,7 @@ type Message =
 
 type SendMessageArgs =
     record {
-        client_message_id: text;
+        message_id: nat;
         content: MessageContent;
         replies_to: opt ReplyContext;
     };
@@ -71,11 +71,11 @@ type SendMessageResponse =
             chat_summary: record {
                 display_date: TimestampMillis;
                 last_updated: TimestampMillis;
-                min_visible_message_id: nat32;
+                min_visible_message_index: nat32;
                 unread_by_me_message_id_ranges: vec vec nat32;
                 unread_by_any_message_id_ranges: vec vec nat32;
             };
-            message_index: nat32;
+            message_id: nat32;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -88,18 +88,14 @@ type SendMessageResponse =
 
 type MarkReadArgs =
     record {
-        user_id: UserId;
-        from_index: nat32;
-        to_index: nat32;
+        up_to_message_index: nat32;
     };
 
 type MarkReadResponse =
     variant {
-        Success: record {
-            unread_message_id_ranges: vec vec nat32;
-        };
-        ChatNotFound;
-    }; 
+        Success;
+        NotInGroup;
+    };
 
 type SetAvatarArgs =
     record {
@@ -236,7 +232,7 @@ type GetGroupResponse =
             subject: text;
             display_date: TimestampMillis;
             last_updated: TimestampMillis;
-            min_visible_message_id: nat32;
+            min_visible_message_index: nat32;
             participants: vec UserId;
             unread_by_me_message_id_ranges: vec vec nat32;
             unread_by_any_message_id_ranges: vec vec nat32;
@@ -267,7 +263,7 @@ type GetMessagesArgs =
 type GetMessagesSuccess =
     record {
         messages: vec Message;
-        latest_message_id: nat32;
+        latest_message_index: nat32;
     };
 
 type GetMessagesResponse =
