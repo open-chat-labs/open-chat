@@ -6,7 +6,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
-} from "../../domain/user";
+} from "../../domain/user/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export const DELAY = 1000;
@@ -14,15 +14,17 @@ export const DELAY = 1000;
 export class UserIndexClientMock implements IUserIndexClient {
     private count = 0;
 
-    getUsers(userIds: string[]): Promise<UsersResponse> {
+    getUsers(userIds: string[], _since: bigint): Promise<UsersResponse> {
+        // this is just to inject a bit of randomness so we can see that the updates flow through the UI ok
+        const uppercase = +new Date() % 2 === 0;
         return new Promise((resolve) => {
             setTimeout(
                 () =>
                     resolve({
-                        timestamp: BigInt(0),
+                        timestamp: BigInt(+new Date()),
                         users: userIds.map((u, i) => ({
                             userId: u,
-                            username: "julian_jelfs",
+                            username: uppercase ? "JULIAN_JELFS" : "julian_jelfs",
                             secondsSinceLastOnline: 20 * i,
                         })),
                     }),

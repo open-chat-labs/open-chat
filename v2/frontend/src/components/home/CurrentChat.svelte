@@ -3,8 +3,8 @@
     import Loading from "../Loading.svelte";
     // import CurrentChatMessages from "../CurrentChatMessages.svelte";
     // import MessageEntry from "../MessageEntry.svelte";
-    import type { UserLookup } from "../../domain/user";
-    import type { ChatSummary } from "../../domain/chat";
+    import type { UserLookup } from "../../domain/user/user";
+    import type { ChatSummary } from "../../domain/chat/chat";
     import type { HomeState } from "./Home.types";
 
     export let users: UserLookup;

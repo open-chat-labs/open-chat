@@ -36,10 +36,11 @@ export function testTransition<TContext, TEvent extends EventObject>(
     ev: Event<TEvent>,
     to: StateValue,
     config: Config<TContext, TEvent> = {}
-): void {
+): TContext {
     const configured = machine.withConfig(config);
     const nextState = configured.transition(from, ev);
     expect(nextState.value).toStrictEqual(to);
+    return nextState.context;
 }
 
 export function testSequence<TContext, TEvent extends EventObject>(

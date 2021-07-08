@@ -3,11 +3,11 @@
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import type { UserLookup } from "../../domain/user";
+    import type { UserLookup } from "../../domain/user/user";
     import NoChatSelected from "./NoChatSelected.svelte";
     import type { HomeState } from "./Home.types";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { ChatSummary } from "../../domain/chat";
+    import type { ChatSummary } from "../../domain/chat/chat";
     export let hideLeft: boolean = false;
     export let selectedChatSummary: ChatSummary | undefined;
     export let state: HomeState;

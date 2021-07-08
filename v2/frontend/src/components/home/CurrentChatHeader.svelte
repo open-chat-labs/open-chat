@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../../domain/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user.utils";
+    import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import type { UserLookup } from "../../domain/user";
+    import type { UserLookup } from "../../domain/user/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
@@ -15,7 +15,7 @@
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { navStore } from "../../stores/nav";
-    import type { ChatSummary } from "../../domain/chat";
+    import type { ChatSummary } from "../../domain/chat/chat";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;

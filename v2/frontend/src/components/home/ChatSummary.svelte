@@ -1,15 +1,15 @@
 <script lang="ts">
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import { AvatarSize, UserStatus } from "../../domain/user";
-    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user.utils";
-    import type { UserLookup } from "../../domain/user";
+    import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import type { UserLookup } from "../../domain/user/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
-    import { getUnreadMessages, latestMessageText } from "../../domain/chat.utils";
-    import type { ChatSummary } from "../../domain/chat";
+    import { getUnreadMessages, latestMessageText } from "../../domain/chat/chat.utils";
+    import type { ChatSummary } from "../../domain/chat/chat";
     import { elasticOut } from "svelte/easing";
 
     export let users: UserLookup;

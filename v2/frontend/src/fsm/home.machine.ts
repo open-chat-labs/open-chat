@@ -9,10 +9,12 @@ import {
 } from "xstate";
 import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary } from "../domain/chat";
-import { mergeChats, userIdsFromChatSummaries } from "../domain/chat.utils";
-import type { User, UserLookup, UserSummary } from "../domain/user";
-import { mergeUsers, missingUserIds } from "../domain/user.utils";
+import type { ChatSummary } from "../domain/chat/chat";
+import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import type { User, UserLookup, UsersResponse } from "../domain/user/user";
+import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
+import { rollbar } from "../utils/logging";
+import { log } from "xstate/lib/actions";
 
 if (typeof window !== "undefined") {
     inspect({
@@ -20,7 +22,9 @@ if (typeof window !== "undefined") {
     });
 }
 
-const CHAT_UPDATE_INTERVAL = 60 * 1000;
+const ONE_MINUTE = 60 * 1000;
+const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
+const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
@@ -30,16 +34,55 @@ export interface HomeContext {
     error?: Error; // any error that might have occurred
     userLookup: UserLookup; // a lookup of user summaries
     chatsTimestamp: bigint;
+    usersTimestamp: bigint;
 }
 
-type ChatsResponse = { chats: ChatSummary[]; users: UserSummary[]; timestamp: bigint };
+type ChatsResponse = {
+    chats: ChatSummary[];
+    chatsTimestamp: bigint;
+    userLookup: UserLookup;
+    usersTimestamp: bigint;
+};
+type UserUpdateResponse = { userLookup: UserLookup; usersTimestamp: bigint };
+type LoadMessagesResponse = { userLookup: UserLookup };
 
 export type HomeEvents =
     | { type: "LOAD_MESSAGES"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
+    | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
-    | { type: "error.platform.getChats"; data: Error };
+    | { type: "error.platform.getChats"; data: Error }
+    | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
+    | { type: "error.platform.loadMessages"; data: Error };
+
+async function getChats(
+    serviceContainer: ServiceContainer,
+    userLookup: UserLookup,
+    since: bigint
+): Promise<ChatsResponse> {
+    // todo - for getting chats we also want to look up any (direct chat) users that we know nothing about
+    // since these users are completely unknown we can just pass 0 for the user's timestamp in this scenario.
+    // I *think* that's correct!
+    try {
+        const chatsResponse = await serviceContainer.getChats(since);
+        const userIds = userIdsFromChatSummaries(chatsResponse.chats, false);
+        const usersResponse = await serviceContainer.getUsers(
+            missingUserIds(userLookup, userIds),
+            BigInt(0)
+        );
+
+        return {
+            chats: chatsResponse.chats,
+            chatsTimestamp: chatsResponse.timestamp,
+            userLookup: mergeUsers(userLookup, usersResponse.users),
+            usersTimestamp: usersResponse.timestamp,
+        };
+    } catch (err) {
+        rollbar.error("Error getting chats", err);
+        throw err;
+    }
+}
 
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     guards: {
@@ -51,37 +94,14 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
     },
     services: {
-        getChats: async (ctx, _) => {
-            const { chats, timestamp } = await ctx.serviceContainer!.getChats(ctx.chatsTimestamp);
-            const userIds = userIdsFromChatSummaries(chats, false);
-            const { users } = await ctx.serviceContainer!.getUsers(
-                missingUserIds(ctx.userLookup, userIds)
-            );
-            return {
-                chats,
-                timestamp,
-                users,
-            };
-        },
-        // todo - updateChats is virtually identical to the getChats.
-        // We can probably do something about that but I'm not too worried about it at the moment
+        getChats: async (ctx, _) =>
+            getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatsTimestamp),
+
         updateChatsPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
-                // todo - we need to handle any errors that may occur during polling
-                const { chats, timestamp } = await ctx.serviceContainer!.getChats(
-                    ctx.chatsTimestamp
-                );
-                const userIds = userIdsFromChatSummaries(chats, false);
-                const { users } = await ctx.serviceContainer!.getUsers(
-                    missingUserIds(ctx.userLookup, userIds)
-                );
                 callback({
                     type: "CHATS_UPDATED",
-                    data: {
-                        chats,
-                        timestamp,
-                        users,
-                    },
+                    data: await getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatsTimestamp),
                 });
             }, CHAT_UPDATE_INTERVAL);
             return () => {
@@ -89,22 +109,46 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
             };
         },
 
-        // we need to run this periodically to make sure that our users are up to date
-        updateUsers: async (ctx, _) => ctx.serviceContainer!.getUsers(Object.keys(ctx.userLookup)),
+        updateUsersPoller: (ctx, _ev) => (callback) => {
+            const id = setInterval(async () => {
+                let usersResp: UsersResponse;
+                try {
+                    usersResp = await ctx.serviceContainer!.getUsers(
+                        Object.keys(ctx.userLookup),
+                        ctx.usersTimestamp
+                    );
+                    callback({
+                        type: "USERS_UPDATED",
+                        data: {
+                            userLookup: mergeUsers(ctx.userLookup, usersResp.users),
+                            usersTimestamp: usersResp.timestamp,
+                        },
+                    });
+                } catch (err) {
+                    // exceptions in a poller do not stop the poller, but we *do* want to know about it
+                    rollbar.error("Error updating users", err);
+                    throw err;
+                }
+            }, USER_UPDATE_INTERVAL);
+            return () => {
+                clearInterval(id);
+            };
+        },
 
-        // we will kick this off in parallel when we load a group chat
-        loadMissingUsers: async (ctx, _) => {
+        // todo - implementation required - this just does nothing at the moment
+        loadMessages: async (ctx, _) => {
             if (ctx.selectedChat && ctx.selectedChat.kind === "group_chat") {
                 const userIds = userIdsFromChatSummaries([ctx.selectedChat], true);
                 const { users } = await ctx.serviceContainer!.getUsers(
-                    missingUserIds(ctx.userLookup, userIds)
+                    missingUserIds(ctx.userLookup, userIds),
+                    BigInt(0) // timestamp irrelevant for missing users
                 );
-                return users;
+                // we might also load messages in here or we might use a spawned actor
+                // tbd next
+                return {
+                    userLookup: mergeUsers(ctx.userLookup, users),
+                };
             }
-            return [];
-        },
-        loadMessages: (_ctx, _) => {
-            return new Promise((resolve) => setTimeout(resolve, 1000));
         },
     },
 };
@@ -117,28 +161,25 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         chats: [],
         userLookup: {},
         chatsTimestamp: BigInt(0),
+        usersTimestamp: BigInt(0),
     },
     states: {
         loading_chats: {
             invoke: {
                 id: "getChats",
                 src: "getChats",
-                onDone: [
-                    {
-                        target: "loaded_chats",
-                        actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
-                            if (ev.type === "done.invoke.getChats") {
-                                return {
-                                    chats: ev.data.chats,
-                                    chatsTimestamp: ev.data.timestamp,
-                                    userLookup: mergeUsers(ctx.userLookup, ev.data.users),
-                                    error: undefined,
-                                };
-                            }
-                            return ctx;
-                        }),
-                    },
-                ],
+                onDone: {
+                    target: "loaded_chats",
+                    actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
+                        if (ev.type === "done.invoke.getChats") {
+                            return {
+                                ...ev.data,
+                                error: undefined,
+                            };
+                        }
+                        return ctx;
+                    }),
+                },
                 onError: {
                     target: "unexpected_error",
                     actions: assign({
@@ -150,23 +191,31 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         loaded_chats: {
             initial: "no_chat_selected",
             id: "loaded_chats",
-            invoke: {
-                id: "updateChatsPoller",
-                src: "updateChatsPoller",
-            },
+            invoke: [
+                {
+                    id: "updateChatsPoller",
+                    src: "updateChatsPoller",
+                },
+                {
+                    id: "updateUsersPoller",
+                    src: "updateUsersPoller",
+                },
+            ],
             on: {
+                USERS_UPDATED: {
+                    internal: true,
+                    actions: assign((ctx, ev) => {
+                        if (ev.type === "USERS_UPDATED") {
+                            return ev.data;
+                        }
+                        return ctx;
+                    }),
+                },
                 CHATS_UPDATED: {
                     internal: true,
                     actions: assign((ctx, ev) => {
-                        // todo - this assign is actually a bit more complicated since we need to splice the
-                        // new chats with the existing chats
                         if (ev.type === "CHATS_UPDATED") {
-                            return {
-                                chats: mergeChats(ctx.chats, ev.data.chats),
-                                chatsTimestamp: ev.data.timestamp,
-                                userLookup: mergeUsers(ctx.userLookup, ev.data.users),
-                                error: undefined,
-                            };
+                            return ev.data;
                         }
                         return ctx;
                     }),
@@ -197,15 +246,25 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     invoke: {
                         id: "loadMessages",
                         src: "loadMessages",
-                        onDone: [
-                            {
-                                target: "chat_selected",
-                            },
-                        ],
+                        onDone: {
+                            target: "chat_selected",
+                            actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
+                                console.log("assigning group chat users");
+                                return ev.type === "done.invoke.loadGroupChatUsers" ? ev.data : ctx;
+                            }),
+                        },
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
                     },
                 },
                 no_chat_selected: {},
-                chat_selected: {},
+                chat_selected: {
+                    entry: log("entering the chat_selected state"),
+                },
             },
         },
         unexpected_error: {

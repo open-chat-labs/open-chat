@@ -10,7 +10,7 @@ import type {
     CurrentUserResponse,
     PhoneNumber,
     ResendCodeResponse,
-} from "../domain/user";
+} from "../domain/user/user";
 
 const CANISTER_CREATION_INTERVAL = 1000;
 

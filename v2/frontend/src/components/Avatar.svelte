@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "../domain/user";
+    import { AvatarSize, UserStatus } from "../domain/user/user";
 
     export let url: string | undefined;
     export let status: UserStatus = UserStatus.Offline;

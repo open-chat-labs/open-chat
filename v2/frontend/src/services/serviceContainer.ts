@@ -7,11 +7,11 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
-} from "../domain/user";
+} from "../domain/user/user";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type { GetChatsResponse } from "../domain/chat";
+import type { GetChatsResponse } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
 
@@ -36,8 +36,8 @@ export class ServiceContainer {
         return this;
     }
 
-    getUsers(userIds: string[]): Promise<UsersResponse> {
-        return this.userIndexClient.getUsers(userIds);
+    getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
+        return this.userIndexClient.getUsers(userIds, since);
     }
 
     getChats(since: bigint): Promise<GetChatsResponse> {
