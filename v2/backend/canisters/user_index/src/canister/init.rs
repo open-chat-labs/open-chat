@@ -11,8 +11,8 @@ fn init(args: InitArgs) {
     ic_cdk::setup();
 
     RUNTIME_STATE.with(|state| {
-        let env = Box::new(CanisterEnv::new(args.sms_service_principals, args.user_canister_wasm));
-        let data = Data::default();
+        let env = Box::new(CanisterEnv::new());
+        let data = Data::new(args.sms_service_principals, args.user_wasm_module);
         let runtime_state = RuntimeState::new(env, data);
 
         *state.borrow_mut() = Some(runtime_state);
@@ -22,5 +22,7 @@ fn init(args: InitArgs) {
 #[derive(Deserialize)]
 struct InitArgs {
     sms_service_principals: Vec<Principal>,
-    user_canister_wasm: Vec<u8>,
+
+    #[serde(with = "serde_bytes")]
+    user_wasm_module: Vec<u8>,
 }

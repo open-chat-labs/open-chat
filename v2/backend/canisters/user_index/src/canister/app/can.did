@@ -71,7 +71,7 @@ type SetUsernameResponse =
 
 type UpdateWasmArgs =
     record {
-        wasm: vec nat8;
+        user_wasm_module: blob;
         version: text;
     };
 
@@ -210,7 +210,13 @@ type MetricsResponse =
         wasm_memory_used: nat64;
     };
 
-service : {
+type InitArgs = 
+    record {
+        sms_service_principals: vec principal;
+        user_wasm_module: blob;
+    };
+
+service : (InitArgs) {
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
     submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
@@ -230,7 +236,7 @@ service : {
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
 
-    // Update the WASM version for the user canisters - this doesn't actually upgrade any user canisters
+    // Update the stored user canister WASM module
     update_wasm: (UpdateWasmArgs) -> ();
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister

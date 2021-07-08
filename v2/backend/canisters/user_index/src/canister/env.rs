@@ -8,12 +8,10 @@ use shared::time::TimestampMillis;
 #[allow(dead_code)]
 pub struct CanisterEnv {
     rng: StdRng,
-    sms_service_principals: Vec<Principal>,
-    user_canister_wasm: Vec<u8>,
 }
 
 impl CanisterEnv {
-    pub fn new(sms_service_principals: Vec<Principal>, user_canister_wasm: Vec<u8>) -> Self {
+    pub fn new() -> Self {
         CanisterEnv {
             // Seed the PRNG with the current time.
             //
@@ -28,8 +26,6 @@ impl CanisterEnv {
                 seed[24..32].copy_from_slice(&now_millis.to_be_bytes());
                 StdRng::from_seed(seed)
             },
-            sms_service_principals,
-            user_canister_wasm,
         }
     }
 }
@@ -45,13 +41,5 @@ impl Environment for CanisterEnv {
 
     fn random_u32(&mut self) -> u32 {
         self.rng.next_u32()
-    }
-
-    fn sms_service_principals(&self) -> Vec<Principal> {
-        Vec::new()
-    }
-
-    fn user_canister_wasm(&self) -> &Vec<u8> {
-        &self.user_canister_wasm
     }
 }
