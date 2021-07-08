@@ -10,6 +10,9 @@ pub type CanisterId = Principal;
 #[derive(CandidType, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MessageIndex(u32);
 
+#[derive(CandidType, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MessageId(u128);
+
 #[derive(CandidType, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(Principal);
 

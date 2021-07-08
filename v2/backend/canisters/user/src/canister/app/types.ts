@@ -100,8 +100,8 @@ export type HandleLeftGroupResponse = { 'Success' : null } |
 export interface HandleMessageArgs {
   'content' : MessageContent,
   'sender' : UserId,
+  'message_id' : bigint,
   'replies_to' : [] | [ReplyContext],
-  'client_message_id' : string,
 };
 export type HandleMessageResponse = { 'Out' : null } |
   { 'Success' : null } |

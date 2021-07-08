@@ -196,7 +196,7 @@ type CreateGroupResponse =
 type HandleMessageArgs =
     record {
         sender: UserId;
-        client_message_id: text;
+        message_id: nat;
         content: MessageContent;
         replies_to: opt ReplyContext;
     };

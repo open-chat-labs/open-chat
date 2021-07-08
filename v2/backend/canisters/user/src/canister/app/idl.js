@@ -155,8 +155,8 @@ export default ({ IDL }) => {
   const HandleMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
+    'message_id' : IDL.Nat,
     'replies_to' : IDL.Opt(ReplyContext),
-    'client_message_id' : IDL.Text,
   });
   const HandleMessageResponse = IDL.Variant({
     'Out' : IDL.Null,

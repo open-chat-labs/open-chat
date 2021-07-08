@@ -7,13 +7,13 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::reply_context::ReplyContext;
-use shared::types::{chat_id::DirectChatId, MessageIndex, UserId};
+use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let append_message_args = AppendMessageArgs {
-            client_message_id: args.client_message_id,
+            message_id: args.message_id,
             their_user_id: args.recipient,
             sent_by_me: true,
             content: args.content.clone(),
@@ -39,7 +39,7 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
     let message_id = chat.next_message_id();
     let message = Message {
         message_index: message_id,
-        message_id: args.client_message_id,
+        message_id: args.message_id,
         timestamp: now,
         sent_by_me: args.sent_by_me,
         content: args.content,
@@ -55,7 +55,7 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
 
 #[derive(Deserialize)]
 pub struct Args {
-    client_message_id: u128,
+    message_id: MessageId,
     recipient: UserId,
     content: MessageContent,
     replies_to: Option<ReplyContext>,
@@ -76,7 +76,7 @@ pub struct SuccessResult {
 struct AppendMessageArgs {
     their_user_id: UserId,
     sent_by_me: bool,
-    client_message_id: u128,
+    message_id: MessageId,
     content: MessageContent,
     replies_to: Option<ReplyContext>,
 }
@@ -98,7 +98,7 @@ pub mod c2c {
         let sender_user_id = runtime_state.env.caller().into();
 
         let append_message_args = AppendMessageArgs {
-            client_message_id: args.client_message_id,
+            message_id: args.message_id,
             their_user_id: sender_user_id,
             sent_by_me: false,
             content: args.content,
@@ -112,7 +112,7 @@ pub mod c2c {
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
-        client_message_id: u128,
+        message_id: MessageId,
         content: MessageContent,
         replies_to: Option<ReplyContext>,
     }
@@ -125,7 +125,7 @@ pub mod c2c {
     impl From<super::Args> for (CanisterId, Args) {
         fn from(args: super::Args) -> Self {
             let c2c_args = Args {
-                client_message_id: args.client_message_id,
+                message_id: args.message_id,
                 content: args.content,
                 replies_to: args.replies_to,
             };
