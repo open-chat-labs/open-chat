@@ -20,8 +20,7 @@ if (typeof window !== "undefined") {
     });
 }
 
-// const CHAT_UPDATE_INTERVAL = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = 1000;
+const CHAT_UPDATE_INTERVAL = 60 * 1000;
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
