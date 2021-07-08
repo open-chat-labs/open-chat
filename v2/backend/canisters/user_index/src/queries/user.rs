@@ -15,7 +15,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
 
     if let Some(User::Created(user)) = user {
         let now = runtime_state.env.now();
-        return Response::Success(UserSummary::new(user, true, Some(now)));
+        return Response::Success(UserSummary::new(user, now));
     }
 
     Response::UserNotFound
