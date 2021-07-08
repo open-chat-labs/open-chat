@@ -255,7 +255,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             }),
                         },
                         onError: {
-                            target: "unexpected_error",
+                            target: "..unexpected_error",
                             actions: assign({
                                 error: (_, { data }) => data,
                             }),
