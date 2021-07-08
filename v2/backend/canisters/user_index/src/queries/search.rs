@@ -1,13 +1,36 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::CreatedUser;
 use crate::model::user_summary::UserSummary;
 use candid::CandidType;
 use core::cmp::Ordering;
+use ic_cdk_macros::query;
 use serde::Deserialize;
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
-pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
+#[derive(Deserialize)]
+pub struct Args {
+    search_term: String,
+    max_results: u8,
+}
+
+#[derive(CandidType)]
+pub enum Response {
+    Success(Result),
+}
+
+#[derive(CandidType)]
+pub struct Result {
+    users: Vec<UserSummary>,
+}
+
+#[query]
+fn search(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| search_impl(args, state.borrow().as_ref().unwrap()))
+}
+
+fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let caller = runtime_state.env.caller();
     let users = &runtime_state.data.users;
@@ -58,22 +81,6 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
     }
 }
 
-#[derive(Deserialize)]
-pub struct Args {
-    search_term: String,
-    max_results: u8,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success(Result),
-}
-
-#[derive(CandidType)]
-pub struct Result {
-    users: Vec<UserSummary>,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -88,7 +95,7 @@ mod tests {
     fn search_results_constrained_by_max_results() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 3,
                 search_term: "ma".to_string(),
@@ -104,7 +111,7 @@ mod tests {
     fn search_matches_both_cases() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "mA".to_string(),
@@ -120,7 +127,7 @@ mod tests {
     fn search_returns_shorter_matches_first() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 2,
                 search_term: "ma".to_string(),
@@ -137,7 +144,7 @@ mod tests {
     fn search_returns_case_sensitive_matches_first() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 2,
                 search_term: "jU".to_string(),
@@ -154,7 +161,7 @@ mod tests {
     fn search_with_zero_length_term_matches_all_users() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "".to_string(),
@@ -170,7 +177,7 @@ mod tests {
     fn all_fields_set_correctly() {
         let runtime_state = setup_runtime_state();
 
-        let response = query(
+        let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "hamish".to_string(),

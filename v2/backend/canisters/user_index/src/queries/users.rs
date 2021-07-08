@@ -1,26 +1,12 @@
 use self::Response::*;
+use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user_summary::PartialUserSummary;
 use candid::CandidType;
+use ic_cdk_macros::query;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
-
-pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
-    let updated_since = args.updated_since.unwrap_or(0);
-
-    let users = args
-        .users
-        .iter()
-        .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
-        .filter_map(|u| u.created_user())
-        .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
-        .map(|u| PartialUserSummary::new(&u, u.date_updated > updated_since, now))
-        .collect();
-
-    Success(Result { users, timestamp: now })
-}
 
 #[derive(Deserialize)]
 pub struct Args {
@@ -37,6 +23,27 @@ pub enum Response {
 pub struct Result {
     users: Vec<PartialUserSummary>,
     timestamp: TimestampMillis,
+}
+
+#[query]
+fn users(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| users_impl(args, state.borrow().as_ref().unwrap()))
+}
+
+fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+    let now = runtime_state.env.now();
+    let updated_since = args.updated_since.unwrap_or(0);
+
+    let users = args
+        .users
+        .iter()
+        .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
+        .filter_map(|u| u.created_user())
+        .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
+        .map(|u| PartialUserSummary::new(&u, u.date_updated > updated_since, now))
+        .collect();
+
+    Success(Result { users, timestamp: now })
 }
 
 #[cfg(test)]
@@ -96,7 +103,7 @@ mod tests {
             updated_since: None,
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
 
@@ -158,7 +165,7 @@ mod tests {
             updated_since: Some(now - 1500),
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users;
 
@@ -218,7 +225,7 @@ mod tests {
             updated_since: Some(start),
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
 

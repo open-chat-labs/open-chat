@@ -1,6 +1,8 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use candid::{CandidType, Principal};
+use ic_cdk_macros::query;
 use serde::Deserialize;
 use shared::memory;
 use shared::time::TimestampMillis;
@@ -8,7 +10,30 @@ use shared::time::TimestampMillis;
 const ONLINE_WINDOW_IN_MS: u64 = 2 * 60 * 1000; // 2 minutes
 const ACTIVE_WINDOW_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 1 week
 
-pub fn query(runtime_state: &RuntimeState) -> Response {
+#[derive(Deserialize)]
+pub struct Args {}
+
+#[derive(CandidType)]
+pub struct Response {
+    unconfirmed_user_count: u64,
+    confirmed_user_count: u64,
+    created_user_count: u64,
+    active_user_count: u64,
+    online_user_count: u64,
+    cycles_transferred: u128,
+    cycles_balance: u64,
+    bytes_used: u64,
+    timestamp: TimestampMillis,
+    caller_id: Principal,
+    wasm_memory_used: u64,
+}
+
+#[query]
+fn metrics(_args: Args) -> Response {
+    RUNTIME_STATE.with(|state| metrics_impl(state.borrow().as_ref().unwrap()))
+}
+
+fn metrics_impl(runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     let mut response = Response {
@@ -43,22 +68,4 @@ pub fn query(runtime_state: &RuntimeState) -> Response {
     }
 
     response
-}
-
-#[derive(Deserialize)]
-pub struct Args {}
-
-#[derive(CandidType)]
-pub struct Response {
-    unconfirmed_user_count: u64,
-    confirmed_user_count: u64,
-    created_user_count: u64,
-    active_user_count: u64,
-    online_user_count: u64,
-    cycles_transferred: u128,
-    cycles_balance: u64,
-    bytes_used: u64,
-    timestamp: TimestampMillis,
-    caller_id: Principal,
-    wasm_memory_used: u64,
 }
