@@ -1,14 +1,39 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::data::{append_sms_to_queue, CONFIRMATION_CODE_EXPIRY_MILLIS};
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use candid::CandidType;
+use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
-use shared::time::Milliseconds;
 use std::str::FromStr;
 
-pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
+#[derive(Deserialize)]
+pub struct Args {
+    phone_number: UnvalidatedPhoneNumber,
+}
+
+#[derive(Deserialize)]
+pub struct UnvalidatedPhoneNumber {
+    country_code: u16,
+    number: String,
+}
+
+#[derive(CandidType)]
+pub enum Response {
+    Success,
+    AlreadyRegistered,
+    AlreadyRegisteredByOther,
+    InvalidPhoneNumber,
+}
+
+#[update]
+fn submit_phone_number(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| submit_phone_number_impl(args, state.borrow_mut().as_mut().unwrap()))
+}
+
+fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
@@ -65,30 +90,6 @@ pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-#[derive(Deserialize)]
-pub struct Args {
-    phone_number: UnvalidatedPhoneNumber,
-}
-
-#[derive(Deserialize)]
-pub struct UnvalidatedPhoneNumber {
-    country_code: u16,
-    number: String,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success,
-    AlreadyRegistered,
-    AlreadyRegisteredByOther,
-    InvalidPhoneNumber,
-}
-
-#[derive(CandidType)]
-pub struct AlreadyRegisteredButUnclaimedResult {
-    time_until_resend_code_permitted: Option<Milliseconds>,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,7 +110,7 @@ mod tests {
                 number: "1111 111 111".to_string(),
             },
         };
-        let result = update(args, &mut runtime_state);
+        let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state
@@ -131,7 +132,7 @@ mod tests {
                 number: "1111 111 111".to_string(),
             },
         };
-        let result1 = update(args1, &mut runtime_state);
+        let result1 = submit_phone_number_impl(args1, &mut runtime_state);
         assert!(matches!(result1, Response::Success));
 
         let args2 = Args {
@@ -140,7 +141,7 @@ mod tests {
                 number: "2222 222 222".to_string(),
             },
         };
-        let result2 = update(args2, &mut runtime_state);
+        let result2 = submit_phone_number_impl(args2, &mut runtime_state);
         assert!(matches!(result2, Response::Success));
 
         let user = runtime_state
@@ -172,7 +173,7 @@ mod tests {
                 number: "2222 222 222".to_string(),
             },
         };
-        let result = update(args, &mut runtime_state);
+        let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegistered));
     }
 
@@ -196,7 +197,7 @@ mod tests {
                 number: "1111 111 111".to_string(),
             },
         };
-        let result = update(args, &mut runtime_state);
+        let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyRegisteredByOther));
     }
 
@@ -211,7 +212,7 @@ mod tests {
                 number: "_".to_string(),
             },
         };
-        let result = update(args, &mut runtime_state);
+        let result = submit_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::InvalidPhoneNumber));
     }
 }

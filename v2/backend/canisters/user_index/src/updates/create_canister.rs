@@ -3,6 +3,7 @@ use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use ic_cdk::export::candid::CandidType;
+use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
 use shared::canisters::create::CreateCanisterError;
@@ -23,7 +24,8 @@ pub enum Response {
     InternalError,
 }
 
-pub async fn update() -> Response {
+#[update]
+async fn create_canister(_args: Args) -> Response {
     // Confirm the user needs a canister to be created.
     // Extract the user canister_id and wasm module from the runtime state.
     // Set the user's CanisterCreationStatus to InProgress.
@@ -97,22 +99,6 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn rollback(runtime_state: &mut RuntimeState, canister_id: Option<CanisterId>) {
-    let caller = runtime_state.env.caller();
-    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-        if let User::Confirmed(confirmed_user) = user {
-            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status {
-                let mut user = user.clone();
-                user.set_canister_creation_status(CanisterCreationStatus::Pending);
-                if let Some(canister_id) = canister_id {
-                    user.set_user_id(canister_id.into());
-                }
-                runtime_state.data.users.update(user);
-            }
-        }
-    }
-}
-
 fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
@@ -140,6 +126,22 @@ fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
                     }
                 };
                 runtime_state.data.users.update(user_to_update);
+            }
+        }
+    }
+}
+
+fn rollback(runtime_state: &mut RuntimeState, canister_id: Option<CanisterId>) {
+    let caller = runtime_state.env.caller();
+    if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
+        if let User::Confirmed(confirmed_user) = user {
+            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status {
+                let mut user = user.clone();
+                user.set_canister_creation_status(CanisterCreationStatus::Pending);
+                if let Some(canister_id) = canister_id {
+                    user.set_user_id(canister_id.into());
+                }
+                runtime_state.data.users.update(user);
             }
         }
     }
