@@ -70,6 +70,9 @@ impl DirectChat {
     }
 
     pub fn next_message_id(&self) -> MessageIndex {
-        self.messages.last().map_or(MessageIndex::default(), |m| m.message_index).incr()
+        self.messages
+            .last()
+            .map_or(MessageIndex::default(), |m| m.message_index)
+            .incr()
     }
 }
