@@ -21,7 +21,7 @@
             <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
-    <h4>Participants</h4>
+    <h4>{$_("participants")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={"1.2em"} color={"#aaa"} />

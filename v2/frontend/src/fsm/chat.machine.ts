@@ -3,7 +3,7 @@ import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "x
 import { assign, log } from "xstate/lib/actions";
 import type { ChatSummary } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
-import type { UserLookup } from "../domain/user/user";
+import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 
@@ -11,6 +11,7 @@ export interface ChatContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
     userLookup: UserLookup;
+    user?: UserSummary;
     error?: Error;
 }
 
@@ -21,9 +22,12 @@ export type ChatEvents =
     | { type: "error.platform.loadMessages"; data: Error }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
+    | { type: "DISMISS_AS_ADMIN"; data: string }
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "done.invoke.removeParticipant"; data: LoadMessagesResponse }
-    | { type: "error.platform.removeParticipant"; data: Error };
+    | { type: "error.platform.removeParticipant"; data: Error }
+    | { type: "done.invoke.dismissAsAdmin"; data: LoadMessagesResponse }
+    | { type: "error.platform.dismissAsAdmin"; data: Error };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -63,6 +67,16 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             };
         },
         removeParticipant: (_ctx, _ev) => {
+            // todo - what do we do if this fails given that we have already optimistically removed it?
+            // perhaps we have to keep track of the participant that we are trying to delete so that we can
+            // re-insert if it fails
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
+        },
+        dismissAsAdmin: (_ctx, _ev) => {
             return new Promise<void>((resolve) => {
                 setTimeout(() => {
                     resolve();
@@ -100,34 +114,59 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             },
         },
         showing_participants: {
+            entry: log("entering showing_particitants"),
             on: {
                 HIDE_PARTICIPANTS: "loaded_messages",
-                REMOVE_PARTICIPANT: "removing_participant",
+                REMOVE_PARTICIPANT: ".removing_participant",
+                DISMISS_AS_ADMIN: ".dismissing_participant",
             },
-        },
-        removing_participant: {
-            entry: assign((ctx, ev) => {
-                if (ctx.chatSummary.kind === "group_chat" && ev.type === "REMOVE_PARTICIPANT") {
-                    return {
-                        chatSummary: {
-                            ...ctx.chatSummary,
-                            participants: ctx.chatSummary.participants.filter((p) => p !== ev.data),
+            states: {
+                idle: {},
+                dismissing_participant: {
+                    invoke: {
+                        id: "dismissAsAdmin",
+                        src: "dismissAsAdmin",
+                        onDone: {
+                            target: "idle",
                         },
-                    };
-                }
-                return {};
-            }),
-            invoke: {
-                id: "removeParticipant",
-                src: "removeParticipant",
-                onDone: {
-                    target: "showing_participants",
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
                 },
-                onError: {
-                    target: "unexpected_error",
-                    actions: assign({
-                        error: (_, { data }) => data,
+                removing_participant: {
+                    entry: assign((ctx, ev) => {
+                        if (
+                            ctx.chatSummary.kind === "group_chat" &&
+                            ev.type === "REMOVE_PARTICIPANT"
+                        ) {
+                            return {
+                                chatSummary: {
+                                    ...ctx.chatSummary,
+                                    participants: ctx.chatSummary.participants.filter(
+                                        (p) => p !== ev.data
+                                    ),
+                                },
+                            };
+                        }
+                        return {};
                     }),
+                    invoke: {
+                        id: "removeParticipant",
+                        src: "removeParticipant",
+                        onDone: {
+                            target: "idle",
+                        },
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
                 },
             },
         },

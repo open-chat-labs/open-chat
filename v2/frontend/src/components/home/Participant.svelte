@@ -25,19 +25,23 @@
     }
 
     function dismissAsAdmin() {
-        dispatch("dismissAsAdmin", participant);
+        machine.send({ type: "DISMISS_AS_ADMIN", data: participant.userId });
     }
 
     function participantSelected(e: MouseEvent) {
-        dispatch("selectParticipant", participant);
+        if (!you) {
+            dispatch("selectParticipant", participant);
+        }
     }
 
     function blockUser() {
         dispatch("blockUser", { userId: participant.userId });
     }
+
+    $: you = $machine.context.user === participant;
 </script>
 
-<div class="participant" on:click={participantSelected}>
+<div class="participant" class:you on:click={participantSelected}>
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant.userId)}
@@ -45,40 +49,41 @@
             size={AvatarSize.Small} />
     </span>
     <h4 class="details">
-        {participant.username}
+        {you ? $_("you") : participant.username}
     </h4>
-    <span class="menu">
-        <MenuIcon>
-            <span slot="icon">
-                <HoverIcon>
-                    <ChevronDown size={"1.2em"} color={"#aaa"} />
-                </HoverIcon>
-            </span>
-            <span slot="menu">
-                <!-- TODO this menu depends on knowing whether I am an admin and whether the other user is an admin -->
-                <Menu>
-                    <MenuItem on:click={removeUser}>
-                        <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <div slot="text">{$_("remove")}</div>
-                    </MenuItem>
-                    <MenuItem on:click={dismissAsAdmin}>
-                        <AccountRemoveOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <div slot="text">{$_("dismissAsAdmin")}</div>
-                    </MenuItem>
-                    <!-- TODO need to know if the participant is blocked or not -->
-                    <MenuItem on:click={blockUser}>
-                        <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <div slot="text">{$_("blockUser")}</div>
-                    </MenuItem>
-                </Menu>
-            </span>
-        </MenuIcon>
-    </span>
+    {#if !you}
+        <span class="menu">
+            <MenuIcon>
+                <span slot="icon">
+                    <HoverIcon>
+                        <ChevronDown size={"1.2em"} color={"#aaa"} />
+                    </HoverIcon>
+                </span>
+                <span slot="menu">
+                    <!-- TODO this menu depends on knowing whether I am an admin and whether the other user is an admin -->
+                    <Menu>
+                        <MenuItem on:click={removeUser}>
+                            <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("remove")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={dismissAsAdmin}>
+                            <AccountRemoveOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("dismissAsAdmin")}</div>
+                        </MenuItem>
+                        <!-- TODO need to know if the participant is blocked or not -->
+                        <MenuItem on:click={blockUser}>
+                            <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("blockUser")}</div>
+                        </MenuItem>
+                    </Menu>
+                </span>
+            </MenuIcon>
+        </span>
+    {/if}
 </div>
 
 <style type="text/scss">
     .participant {
-        cursor: pointer;
         display: flex;
         margin-left: $sp3;
         margin-right: $sp3;
@@ -91,7 +96,11 @@
         margin-bottom: $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
-        &:hover {
+        &:not(.you) {
+            cursor: pointer;
+        }
+
+        &:not(.you):hover {
             background-color: var(--participants-hv);
         }
     }
@@ -101,11 +110,5 @@
     .details {
         flex: 1;
         padding: 0 5px;
-    }
-    .menu {
-        display: none;
-        .participant:hover & {
-            display: block;
-        }
     }
 </style>

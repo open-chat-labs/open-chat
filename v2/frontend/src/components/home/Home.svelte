@@ -65,10 +65,6 @@
         console.log("block user clicked");
     }
 
-    function dismissUserAsAdmin() {
-        console.log("dismiss user as admin");
-    }
-
     function addParticipant() {
         console.log("add participant");
     }
@@ -121,7 +117,6 @@
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel
                     machine={selectedChatActor}
-                    on:dismissAsAdmin={dismissUserAsAdmin}
                     on:addParticipant={addParticipant}
                     on:selectParticipant={selectParticipant}
                     on:blockUser={blockUser} />

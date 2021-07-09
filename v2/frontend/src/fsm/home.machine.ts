@@ -203,6 +203,13 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         const chatSummary = ctx.chatSummaries.find((c) => c.chatId === ev.data);
                         if (!ctx.chatsIndex[key]) {
                             if (chatSummary) {
+                                // todo - is there actually any benefit to mantaining a dictionary of
+                                // chat actors? It allows us to preserve state within each actor but are
+                                // we actually going to do that?
+                                // An alternative would be to just have one selected chat machine that is
+                                // stateless i.e. it loads its messages each time it is activated. That
+                                // doesn't mean that those messages can't still be cached - they would
+                                // just not be cached in the actor's memory.
                                 return {
                                     selectedChat: chatSummary,
                                     chatsIndex: {
@@ -212,6 +219,13 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 serviceContainer: ctx.serviceContainer!,
                                                 chatSummary,
                                                 userLookup: ctx.userLookup,
+                                                user: ctx.user
+                                                    ? {
+                                                          userId: ctx.user.userId,
+                                                          username: ctx.user.username,
+                                                          secondsSinceLastOnline: 0,
+                                                      }
+                                                    : undefined,
                                             }),
                                             `chat-${key}`
                                         ),

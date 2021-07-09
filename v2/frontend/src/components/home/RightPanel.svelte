@@ -7,5 +7,5 @@
 </script>
 
 <Panel right>
-    <Participants {machine} on:dismissAsAdmin on:addParticipant on:blockUser on:selectParticipant />
+    <Participants {machine} on:addParticipant on:blockUser on:selectParticipant />
 </Panel>

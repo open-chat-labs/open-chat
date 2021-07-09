@@ -90,7 +90,7 @@
         <div class="chat-name" title={chat.name}>
             {chat.name}
         </div>
-        <div class="chat-subtext">
+        <div class="chat-subtext" title={chat.subtext}>
             {chat.subtext}
         </div>
     </div>
@@ -147,6 +147,7 @@
 
     .chat-subtext {
         @include font(light, normal, fs-100);
+        @include ellipsis();
     }
 
     .avatar {
