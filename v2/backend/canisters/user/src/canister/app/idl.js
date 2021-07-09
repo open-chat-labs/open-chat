@@ -51,10 +51,15 @@ export default ({ IDL }) => {
     'Media' : MediaContent,
     'Cycles' : CyclesContent,
   });
-  const ReplyContext = IDL.Record({
+  const GroupId = CanisterId;
+  const PrivateReplyDetails = IDL.Record({
     'content' : MessageContent,
+    'group_chat_id' : GroupId,
     'user_id' : UserId,
+  });
+  const ReplyContext = IDL.Record({
     'message_id' : IDL.Nat,
+    'private_reply_details' : IDL.Opt(PrivateReplyDetails),
   });
   const Message = IDL.Record({
     'content' : MessageContent,
@@ -122,7 +127,6 @@ export default ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : GetMessagesSuccess,
   });
-  const GroupId = CanisterId;
   const HandleAddedToGroupArgs = IDL.Record({
     'added_by' : UserId,
     'group_id' : GroupId,

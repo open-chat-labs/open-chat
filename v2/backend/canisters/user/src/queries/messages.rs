@@ -10,7 +10,7 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &args.user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-            let messages = chat.get_messages(args.from_index, args.to_index);
+            let messages = chat.messages.get_range(args.from_index, args.to_index);
             Success(SuccessResult { messages })
         } else {
             ChatNotFound

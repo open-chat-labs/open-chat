@@ -152,6 +152,11 @@ export interface MetricsResponse {
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
 };
+export interface PrivateReplyDetails {
+  'content' : MessageContent,
+  'group_chat_id' : GroupId,
+  'user_id' : UserId,
+};
 export interface PutChunkArgs {
   'blob_id' : bigint,
   'bytes' : Array<number>,
@@ -160,9 +165,8 @@ export interface PutChunkArgs {
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null };
 export interface ReplyContext {
-  'content' : MessageContent,
-  'user_id' : UserId,
   'message_id' : bigint,
+  'private_reply_details' : [] | [PrivateReplyDetails],
 };
 export interface SearchAllMessagesArgs {
   'max_results' : number,

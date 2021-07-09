@@ -2,7 +2,7 @@
   "canisters": {
     "chats": {
       "type": "custom",
-      "candid": "backend/chats/chats.did",
+      "candid": "backend/canisters/chats.did",
       "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
       "build": "./generate-wasm.sh chats"
     },

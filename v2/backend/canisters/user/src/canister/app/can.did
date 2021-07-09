@@ -53,11 +53,17 @@ type MessageContent =
         Cycles: CyclesContent;
     };
 
+type PrivateReplyDetails =
+    record {
+        group_chat_id: GroupId;
+        user_id: UserId;
+        content: MessageContent;
+    };
+
 type ReplyContext =
     record {
-        user_id: UserId;
         message_id: nat;
-        content: MessageContent;
+        private_reply_details: opt PrivateReplyDetails;
     };
 
 type Message =

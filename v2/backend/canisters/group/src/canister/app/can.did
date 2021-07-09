@@ -41,10 +41,10 @@ type MessageContent =
         File: FileContent;
     };
 
-type ReplyContext =
+type ReplyDetails =
     record {
-        user_id: UserId;
         message_id: nat;
+        user_id: UserId;
         content: MessageContent;
     };
 
@@ -55,14 +55,14 @@ type Message =
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
-        replies_to: opt ReplyContext;
+        replies_to: opt ReplyDetails;
     };
 
 type SendMessageArgs =
     record {
         message_id: nat;
         content: MessageContent;
-        replies_to: opt ReplyContext;
+        replies_to: opt nat;
     };
 
 type SendMessageResponse =
