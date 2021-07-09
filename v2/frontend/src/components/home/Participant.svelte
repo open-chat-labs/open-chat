@@ -1,19 +1,35 @@
 <script lang="ts">
-    import type { Participant } from "../services/chats";
-    import { AvatarSize, UserStatus } from "../services/user";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import Avatar from "./Avatar.svelte";
-    import MenuIcon from "./MenuIcon.svelte";
-    import HoverIcon from "./HoverIcon.svelte";
-    import Menu from "./Menu.svelte";
-    import MenuItem from "./MenuItem.svelte";
+    import { AvatarSize } from "../../domain/user/user";
+    import type { UserLookup } from "../../domain/user/user";
+    import Avatar from "../Avatar.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import type { UserSummary } from "../../domain/user/user";
+    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
-    export let participant: Participant;
+    export let participant: UserSummary;
+    export let users: UserLookup;
+
+    function removeUser() {
+        dispatch("removeUser", participant);
+    }
+
+    function dismissAsAdmin() {
+        dispatch("dismissAsAdmin", participant);
+    }
 </script>
 
 <div class="participant">
     <span class="avatar">
-        <Avatar url={participant.avatar} status={UserStatus.Online} size={AvatarSize.Small} />
+        <Avatar
+            url={avatarUrl(participant.userId)}
+            status={getUserStatus(users, participant.userId)}
+            size={AvatarSize.Small} />
     </span>
     <h4 class="details">
         {participant.username}
@@ -27,8 +43,8 @@
             </span>
             <span slot="menu">
                 <Menu>
-                    <MenuItem text="Remove" on:click={() => console.log("one")} />
-                    <MenuItem text="Dismiss as admin" on:click={() => console.log("two")} />
+                    <MenuItem text="Remove" on:click={removeUser} />
+                    <MenuItem text="Dismiss as admin" on:click={dismissAsAdmin} />
                 </Menu>
             </span>
         </MenuIcon>

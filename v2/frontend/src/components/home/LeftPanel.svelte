@@ -2,38 +2,33 @@
     import Panel from "../Panel.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import SearchChats from "./SearchChats.svelte";
-    import type { UserLookup, User } from "../../domain/user/user";
-    import type { HomeState } from "./Home.types";
     import Loading from "../Loading.svelte";
-    import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import { _ } from "svelte-i18n";
+    import type { ActorRefFrom } from "xstate";
+    import type { HomeMachine } from "../../fsm/home.machine";
 
-    export let state: HomeState;
-    export let user: User;
-    export let users: UserLookup;
-    export let chatSummaries: ChatSummaryType[] = [];
-    export let selectedChatId: bigint | undefined;
+    export let machine: ActorRefFrom<HomeMachine>;
     export let hideLeft = false;
 
     function filterChats(event: { detail: string }) {}
 </script>
 
-{#if user}
+{#if $machine.context.user}
     <Panel left {hideLeft}>
-        <CurrentUser on:logout {user} on:newchat />
+        <CurrentUser on:logout user={$machine.context.user} on:newchat />
         <SearchChats on:filter={filterChats} />
-        {#if state === "loadingChats"}
+        {#if $machine.matches("loading_chats")}
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#each chatSummaries as chatSummary}
+                {#each $machine.context.chatSummaries as chatSummary}
                     <ChatSummary
-                        {users}
+                        users={$machine.context.userLookup}
                         {chatSummary}
-                        selected={selectedChatId === chatSummary.chatId}
+                        selected={$machine.context.selectedChat?.chatId === chatSummary.chatId}
                         on:selectChat />
                 {/each}
             </div>

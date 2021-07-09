@@ -1,4 +1,6 @@
-import type { ChatSummary, MediaContent, MessageContent } from "./chat";
+import type { UserLookup } from "../user/user";
+import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
+import type { ChatSummary, GroupChatSummary, MediaContent, MessageContent } from "./chat";
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -70,4 +72,22 @@ export function mergeChats(
         {}
     );
     return Object.values(dict).sort(compareByDate);
+}
+
+export function getParticipantsString(
+    userLookup: UserLookup,
+    { participants }: GroupChatSummary,
+    unknownUser: string,
+    you: string
+): string {
+    if (participants.length > 5) {
+        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p)).length;
+        return `${participants.length + 1} members (${numberOnline + 1} online)`;
+    }
+    return participants
+        .map((p) => userLookup[p] ?? nullUser(unknownUser))
+        .sort(compareUsersOnlineFirst)
+        .map((p) => p.username)
+        .concat([you])
+        .join(", ");
 }

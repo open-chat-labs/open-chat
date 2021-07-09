@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+    ActorRefFrom,
     assign,
     createMachine,
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,
     sendParent,
+    spawn,
 } from "xstate";
-import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ChatSummary } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
@@ -15,12 +16,7 @@ import type { User, UserLookup, UsersResponse } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
-
-if (typeof window !== "undefined") {
-    inspect({
-        iframe: false,
-    });
-}
+import { chatMachine, ChatMachine } from "./chat.machine";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
@@ -29,32 +25,32 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE;
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
     user?: User; // currently signed in user
-    chats: ChatSummary[]; // the list of chats
+    chatSummaries: ChatSummary[]; // the list of chatSummaries
     selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
     userLookup: UserLookup; // a lookup of user summaries
-    chatsTimestamp: bigint;
-    usersTimestamp: bigint;
+    chatSummariesLastUpdate: bigint;
+    usersLastUpdate: bigint;
+    chatsIndex: ChatsIndex; //an index of all chat actors
 }
 
-type ChatsResponse = {
-    chats: ChatSummary[];
-    chatsTimestamp: bigint;
-    userLookup: UserLookup;
-    usersTimestamp: bigint;
-};
-type UserUpdateResponse = { userLookup: UserLookup; usersTimestamp: bigint };
-type LoadMessagesResponse = { userLookup: UserLookup };
-
 export type HomeEvents =
-    | { type: "LOAD_MESSAGES"; data: bigint }
+    | { type: "SELECT_CHAT"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
-    | { type: "error.platform.getChats"; data: Error }
-    | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
-    | { type: "error.platform.loadMessages"; data: Error };
+    | { type: "error.platform.getChats"; data: Error };
+
+type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
+
+type ChatsResponse = {
+    chatSummaries: ChatSummary[];
+    chatSummariesLastUpdate: bigint;
+    userLookup: UserLookup;
+    usersLastUpdate: bigint;
+};
+type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
 async function getChats(
     serviceContainer: ServiceContainer,
@@ -73,10 +69,10 @@ async function getChats(
         );
 
         return {
-            chats: chatsResponse.chats,
-            chatsTimestamp: chatsResponse.timestamp,
+            chatSummaries: chatsResponse.chats,
+            chatSummariesLastUpdate: chatsResponse.timestamp,
             userLookup: mergeUsers(userLookup, usersResponse.users),
-            usersTimestamp: usersResponse.timestamp,
+            usersLastUpdate: usersResponse.timestamp,
         };
     } catch (err) {
         rollbar.error("Error getting chats", err);
@@ -87,21 +83,25 @@ async function getChats(
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     guards: {
         selectedChatIsValid: (ctx, ev) => {
-            if (ev.type === "LOAD_MESSAGES") {
-                return ctx.chats.findIndex((c) => c.chatId === ev.data) >= 0;
+            if (ev.type === "SELECT_CHAT") {
+                return ctx.chatSummaries.findIndex((c) => c.chatId === ev.data) >= 0;
             }
             return false;
         },
     },
     services: {
         getChats: async (ctx, _) =>
-            getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatsTimestamp),
+            getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatSummariesLastUpdate),
 
         updateChatsPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
                 callback({
                     type: "CHATS_UPDATED",
-                    data: await getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatsTimestamp),
+                    data: await getChats(
+                        ctx.serviceContainer!,
+                        ctx.userLookup,
+                        ctx.chatSummariesLastUpdate
+                    ),
                 });
             }, CHAT_UPDATE_INTERVAL);
             return () => {
@@ -115,13 +115,13 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 try {
                     usersResp = await ctx.serviceContainer!.getUsers(
                         Object.keys(ctx.userLookup),
-                        ctx.usersTimestamp
+                        ctx.usersLastUpdate
                     );
                     callback({
                         type: "USERS_UPDATED",
                         data: {
                             userLookup: mergeUsers(ctx.userLookup, usersResp.users),
-                            usersTimestamp: usersResp.timestamp,
+                            usersLastUpdate: usersResp.timestamp,
                         },
                     });
                 } catch (err) {
@@ -136,32 +136,19 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
 
         // todo - implementation required - this just does nothing at the moment
-        loadMessages: async (ctx, _) => {
-            if (ctx.selectedChat && ctx.selectedChat.kind === "group_chat") {
-                const userIds = userIdsFromChatSummaries([ctx.selectedChat], true);
-                const { users } = await ctx.serviceContainer!.getUsers(
-                    missingUserIds(ctx.userLookup, userIds),
-                    BigInt(0) // timestamp irrelevant for missing users
-                );
-                // we might also load messages in here or we might use a spawned actor
-                // tbd next
-                return {
-                    userLookup: mergeUsers(ctx.userLookup, users),
-                };
-            }
-        },
     },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
-    id: "logged_in_machine",
+    id: "home_machine",
     initial: "loading_chats",
     context: {
-        chats: [],
+        chatSummaries: [],
         userLookup: {},
-        chatsTimestamp: BigInt(0),
-        usersTimestamp: BigInt(0),
+        chatSummariesLastUpdate: BigInt(0),
+        usersLastUpdate: BigInt(0),
+        chatsIndex: {},
     },
     states: {
         loading_chats: {
@@ -171,13 +158,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 onDone: {
                     target: "loaded_chats",
                     actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
-                        if (ev.type === "done.invoke.getChats") {
-                            return {
-                                ...ev.data,
-                                error: undefined,
-                            };
-                        }
-                        return ctx;
+                        return {
+                            ...ev.data,
+                            error: undefined,
+                        };
                     }),
                 },
                 onError: {
@@ -204,26 +188,44 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             on: {
                 USERS_UPDATED: {
                     internal: true,
-                    actions: assign((ctx, ev) => {
-                        if (ev.type === "USERS_UPDATED") {
-                            return ev.data;
-                        }
-                        return ctx;
-                    }),
+                    actions: assign((ctx, ev) => ev.data),
                 },
                 CHATS_UPDATED: {
                     internal: true,
-                    actions: assign((ctx, ev) => {
-                        if (ev.type === "CHATS_UPDATED") {
-                            return ev.data;
-                        }
-                        return ctx;
-                    }),
+                    actions: assign((_, ev) => ev.data),
                 },
-                LOAD_MESSAGES: {
+                // SELECT_CHAT: {
+                //     internal: true,
+                //     target: ".loading_messages",
+                //     cond: "selectedChatIsValid",
+                // },
+                SELECT_CHAT: {
                     internal: true,
-                    target: ".loading_messages",
                     cond: "selectedChatIsValid",
+                    target: ".chat_selected",
+                    actions: assign((ctx, ev) => {
+                        const key = ev.data.toString();
+                        const chatSummary = ctx.chatSummaries.find((c) => c.chatId === ev.data);
+                        if (!ctx.chatsIndex[key]) {
+                            if (chatSummary) {
+                                return {
+                                    selectedChat: chatSummary,
+                                    chatsIndex: {
+                                        ...ctx.chatsIndex,
+                                        [key]: spawn(
+                                            chatMachine.withContext({
+                                                serviceContainer: ctx.serviceContainer!,
+                                                chatSummary,
+                                                userLookup: ctx.userLookup,
+                                            }),
+                                            `chat-${key}`
+                                        ),
+                                    },
+                                };
+                            }
+                        }
+                        return { selectedChat: chatSummary };
+                    }),
                 },
                 CLEAR_SELECTED_CHAT: {
                     internal: true,
@@ -234,33 +236,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             },
             states: {
-                loading_messages: {
-                    entry: assign({
-                        selectedChat: (ctx, ev) => {
-                            if (ev.type === "LOAD_MESSAGES") {
-                                return ctx.chats.find((c) => c.chatId === ev.data);
-                            }
-                            return undefined;
-                        },
-                    }),
-                    invoke: {
-                        id: "loadMessages",
-                        src: "loadMessages",
-                        onDone: {
-                            target: "chat_selected",
-                            actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
-                                console.log("assigning group chat users");
-                                return ev.type === "done.invoke.loadGroupChatUsers" ? ev.data : ctx;
-                            }),
-                        },
-                        onError: {
-                            target: "..unexpected_error",
-                            actions: assign({
-                                error: (_, { data }) => data,
-                            }),
-                        },
-                    },
-                },
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),

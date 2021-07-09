@@ -13,7 +13,7 @@ import { homeMachine } from "./home.machine";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && Boolean(process.env.SHOW_XSTATE_INSPECTOR)) {
     inspect({
         iframe: false,
     });
@@ -290,10 +290,11 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     data: (ctx, _ev) => ({
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
-                        chats: [],
+                        chatSummaries: [],
                         userLookup: {},
-                        chatsTimestamp: BigInt(0),
-                        usersTimestamp: BigInt(0),
+                        chatSummariesLastUpdate: BigInt(0),
+                        usersLastUpdate: BigInt(0),
+                        chatsIndex: {},
                     }),
                     onDone: "login",
                     onError: {
@@ -344,5 +345,5 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
 
 export const identityMachine = createMachine<IdentityContext, IdentityEvents>(schema, liveConfig);
 export const identityService = useMachine(identityMachine, {
-    devTools: process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "ci",
+    devTools: Boolean(process.env.SHOW_XSTATE_INSPECTOR),
 });

@@ -61,6 +61,7 @@
             <div
                 in:pop={{ duration: 1500 }}
                 title={$_("chatSummary.unread", { values: { count: unreadMessages.toString() } })}
+                class:rtl={$rtlStore}
                 class="unread-msgs">
                 {unreadMessages > 9 ? "9+" : unreadMessages}
             </div>
@@ -165,6 +166,13 @@
         width: 18px;
         height: 18px;
         bottom: 5px;
-        left: 35px;
+
+        &:not(.rtl) {
+            left: 35px;
+        }
+
+        &.rtl {
+            right: 35px;
+        }
     }
 </style>

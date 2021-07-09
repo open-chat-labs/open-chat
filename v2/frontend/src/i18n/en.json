@@ -12,6 +12,12 @@
     "noChatSelected": "No chat currently selected",
     "selectAChat": "Please select a chat or start a new one.",
     "newChat": "New chat",
+    "unknownUser": "Unknown User",
+    "you": "You",
+    "blockUser": "Block user",
+    "unblockUser": "Unblock user",
+    "participants": "Participants",
+    "leaveGroup": "Leave group",
     "chatSummary": {
         "unread": "{count} unread message(s)"
     },

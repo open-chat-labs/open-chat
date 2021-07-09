@@ -4,18 +4,24 @@
     // import CurrentChatMessages from "../CurrentChatMessages.svelte";
     // import MessageEntry from "../MessageEntry.svelte";
     import type { UserLookup } from "../../domain/user/user";
-    import type { ChatSummary } from "../../domain/chat/chat";
-    import type { HomeState } from "./Home.types";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
 
-    export let users: UserLookup;
-    export let state: HomeState;
-    export let selectedChatSummary: ChatSummary;
+    export let machine: ActorRefFrom<ChatMachine>;
+
+    $: console.log("ChatMachineState: ", $machine.value);
 </script>
 
 <div class="wrapper">
-    <CurrentChatHeader {users} on:clearSelection {selectedChatSummary} />
+    <CurrentChatHeader
+        users={$machine.context.userLookup}
+        on:clearSelection
+        on:blockUser
+        on:showParticipants
+        on:leaveGroup
+        selectedChatSummary={$machine.context.chatSummary} />
 
-    {#if state === "loadingMessages"}
+    {#if $machine.matches("loading_messages")}
         <Loading />
     {/if}
     <!-- <CurrentChatMessages {chat} />

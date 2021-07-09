@@ -1,21 +1,24 @@
 <script lang="ts">
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
+    import RightPanel from "./RightPanel.svelte";
     import TestModeModal from "../TestModeModal.svelte";
     import ThemePicker from "../ThemePicker.svelte";
+    import { fly } from "svelte/transition";
     import type { ActorRefFrom } from "xstate";
     import { modalStore, ModalType } from "../../stores/modal";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
-    // import { rtlStore } from "../../stores/rtl";
+    import { rtlStore } from "../../stores/rtl";
     import type { HomeMachine } from "../../fsm/home.machine";
-    import type { HomeState } from "./Home.types";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
+    import { select_options } from "svelte/internal";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
-    let homeState: HomeState = "loadingChats";
+
+    let rightPanelState: "closed" | "participants" = "closed";
 
     function logout() {
         dispatch("logout");
@@ -31,13 +34,14 @@
             ) {
                 // if we have an unknown chat in the param, then redirect to home
                 if (
-                    $machine.context.chats.findIndex((c) => c.chatId.toString() === params.chatId) <
-                    0
+                    $machine.context.chatSummaries.findIndex(
+                        (c) => c.chatId.toString() === params.chatId
+                    ) < 0
                 ) {
                     replace("/");
                 } else {
                     // otherwise tell the machine to load messages for this chat
-                    machine.send({ type: "LOAD_MESSAGES", data: BigInt(params.chatId) });
+                    machine.send({ type: "SELECT_CHAT", data: BigInt(params.chatId) });
                 }
             }
 
@@ -60,48 +64,72 @@
         console.log("new chat clicked");
     }
 
-    $: {
-        // todo - not too thrilled about this
-        if ($machine.matches("loading_chats")) {
-            homeState = "loadingChats";
-        } else if ($machine.matches({ loaded_chats: "loading_messages" })) {
-            homeState = "loadingMessages";
-        } else if ($machine.matches({ loaded_chats: "chat_selected" })) {
-            homeState = "chatSelected";
-        } else if ($machine.matches({ loaded_chats: "no_chat_selected" })) {
-            homeState = "noChatSelected";
-        } else if ($machine.matches("unexpected_error")) {
-            homeState = { error: $machine.context.error?.message ?? "" };
-        }
+    function blockUser() {
+        console.log("block user clicked");
     }
 
-    $: console.log("Home machine state:", $machine.value);
+    function showParticipants() {
+        rightPanelState = "participants";
+    }
+
+    function hideParticipants() {
+        rightPanelState = "closed";
+    }
+
+    function dismissUserAsAdmin() {
+        console.log("dismiss user as admin");
+    }
+
+    function removeUserFromGroup() {
+        console.log("remove user from group");
+    }
+
+    function leaveGroup() {
+        console.log("leave group");
+    }
+
+    $: selectedChat = $machine.context.selectedChat;
+
+    $: groupChat = selectedChat
+        ? selectedChat.kind === "group_chat"
+            ? selectedChat
+            : undefined
+        : undefined;
+
+    $: actorKey = $machine.context.selectedChat?.chatId.toString();
+
+    $: selectedChatActor = actorKey ? $machine.context.chatsIndex[actorKey] : undefined;
+
+    $: x = $rtlStore ? -300 : 300;
 </script>
 
 {#if $machine.context.user}
     <main>
         <LeftPanel
-            users={$machine.context.userLookup}
+            {machine}
             hideLeft={params.chatId !== null}
-            chatSummaries={$machine.context.chats}
-            selectedChatId={$machine.context.selectedChat?.chatId}
-            state={homeState}
             on:logout={logout}
             on:newchat={newChat}
-            on:selectChat={selectChat}
-            user={$machine.context.user} />
+            on:selectChat={selectChat} />
         <MiddlePanel
-            users={$machine.context.userLookup}
-            state={homeState}
+            loadingChats={$machine.matches("loading_chats")}
             on:newchat={newChat}
             on:clearSelection={clearSelectedChat}
+            on:blockUser={blockUser}
+            on:leaveGroup={leaveGroup}
+            on:showParticipants={showParticipants}
             hideLeft={params.chatId !== null}
-            selectedChatSummary={$machine.context.selectedChat} />
-        <!-- {#if $navStore}
+            machine={selectedChatActor} />
+        {#if rightPanelState !== "closed" && groupChat !== undefined}
             <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
-                <RightPanel />
+                <RightPanel
+                    on:close={hideParticipants}
+                    on:dismissAsAdmin={dismissUserAsAdmin}
+                    on:removeUser={removeUserFromGroup}
+                    {groupChat}
+                    users={$machine.context.userLookup} />
             </div>
-        {/if} -->
+        {/if}
     </main>
 {/if}
 

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assign, createMachine, MachineConfig, MachineOptions, sendParent } from "xstate";
-import { inspect } from "@xstate/inspect";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { Principal } from "@dfinity/principal";
 import type {
@@ -13,12 +12,6 @@ import type {
 } from "../domain/user/user";
 
 const CANISTER_CREATION_INTERVAL = 1000;
-
-if (typeof window !== "undefined") {
-    inspect({
-        iframe: false,
-    });
-}
 
 export interface RegisterContext {
     currentUser?: CurrentUserResponse;

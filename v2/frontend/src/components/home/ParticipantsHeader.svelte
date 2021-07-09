@@ -1,19 +1,22 @@
 <script lang="ts">
-    import type { Participant } from "../services/chats";
-    import HoverIcon from "./HoverIcon.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import { navStore } from "../stores/nav";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+    function close() {
+        dispatch("close");
+    }
 </script>
 
 <div class="participants-header">
-    <span title="add participant" class="add" on:click={navStore.hideRight}>
+    <span title="add participant" class="add" on:click={close}>
         <HoverIcon>
             <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
     <h4>Participants</h4>
-    <span title="close" class="close" on:click={navStore.hideRight}>
+    <span title="close" class="close" on:click={close}>
         <HoverIcon>
             <Close size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
