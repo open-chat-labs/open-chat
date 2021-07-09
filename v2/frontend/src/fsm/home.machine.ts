@@ -194,11 +194,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     actions: assign((_, ev) => ev.data),
                 },
-                // SELECT_CHAT: {
-                //     internal: true,
-                //     target: ".loading_messages",
-                //     cond: "selectedChatIsValid",
-                // },
                 SELECT_CHAT: {
                     internal: true,
                     cond: "selectedChatIsValid",

@@ -23,7 +23,10 @@
     </span>
 
     {#if pos}
-        <span class="menu" style={`top: ${pos.y}px; left: ${pos.x}px`}>
+        <span
+            class="menu"
+            style={`top: ${pos.y}px; left: ${pos.x}px`}
+            on:click|stopPropagation={closeMenu}>
             <slot name="menu" />
         </span>
     {/if}

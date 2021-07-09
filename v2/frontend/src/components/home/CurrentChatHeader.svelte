@@ -136,6 +136,7 @@
         background-color: var(--currentChat-header-bg);
         color: var(--currentChat-header-txt);
         border: 1px solid var(--currentChat-header-bd);
+        height: 65px;
     }
 
     .chat-name {

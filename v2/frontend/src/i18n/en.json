@@ -17,7 +17,11 @@
     "blockUser": "Block user",
     "unblockUser": "Unblock user",
     "participants": "Participants",
+    "addParticipant": "add participant",
     "leaveGroup": "Leave group",
+    "remove": "Remove",
+    "close": "close",
+    "dismissAsAdmin": "Dismiss as admin",
     "chatSummary": {
         "unread": "{count} unread message(s)"
     },

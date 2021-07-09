@@ -84,6 +84,14 @@
         console.log("remove user from group");
     }
 
+    function addParticipant() {
+        console.log("add participant");
+    }
+
+    function selectParticipant() {
+        console.log("select participant");
+    }
+
     function leaveGroup() {
         console.log("leave group");
     }
@@ -120,16 +128,24 @@
             on:showParticipants={showParticipants}
             hideLeft={params.chatId !== null}
             machine={selectedChatActor} />
-        {#if rightPanelState !== "closed" && groupChat !== undefined}
-            <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
-                <RightPanel
-                    on:close={hideParticipants}
-                    on:dismissAsAdmin={dismissUserAsAdmin}
-                    on:removeUser={removeUserFromGroup}
-                    {groupChat}
-                    users={$machine.context.userLookup} />
-            </div>
-        {/if}
+        <Overlay active={rightPanelState !== "closed" && groupChat !== undefined}>
+            {#if rightPanelState !== "closed" && groupChat !== undefined}
+                <div
+                    transition:fly={{ x, duration: 400 }}
+                    class="right-wrapper"
+                    class:rtl={$rtlStore}>
+                    <RightPanel
+                        on:close={hideParticipants}
+                        on:dismissAsAdmin={dismissUserAsAdmin}
+                        on:removeUser={removeUserFromGroup}
+                        on:addParticipant={addParticipant}
+                        on:selectParticipant={selectParticipant}
+                        on:blockUser={blockUser}
+                        {groupChat}
+                        users={$machine.context.userLookup} />
+                </div>
+            {/if}
+        </Overlay>
     </main>
 {/if}
 

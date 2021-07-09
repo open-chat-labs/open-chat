@@ -8,5 +8,13 @@
 </script>
 
 <Panel right>
-    <Participants {groupChat} {users} on:close on:dismissAsAdmin on:removeUser />
+    <Participants
+        {groupChat}
+        {users}
+        on:close
+        on:dismissAsAdmin
+        on:removeUser
+        on:addParticipant
+        on:blockUser
+        on:selectParticipant />
 </Panel>

@@ -1,5 +1,8 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
+    import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
@@ -8,6 +11,7 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import type { UserSummary } from "../../domain/user/user";
+    import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -22,9 +26,17 @@
     function dismissAsAdmin() {
         dispatch("dismissAsAdmin", participant);
     }
+
+    function participantSelected(e: MouseEvent) {
+        dispatch("selectParticipant", participant);
+    }
+
+    function blockUser() {
+        dispatch("blockUser", { userId: participant.userId });
+    }
 </script>
 
-<div class="participant">
+<div class="participant" on:click={participantSelected}>
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant.userId)}
@@ -42,9 +54,21 @@
                 </HoverIcon>
             </span>
             <span slot="menu">
+                <!-- TODO this menu depends on knowing whether I am an admin and whether the other user is an admin -->
                 <Menu>
-                    <MenuItem text="Remove" on:click={removeUser} />
-                    <MenuItem text="Dismiss as admin" on:click={dismissAsAdmin} />
+                    <MenuItem on:click={removeUser}>
+                        <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <div slot="text">{$_("remove")}</div>
+                    </MenuItem>
+                    <MenuItem on:click={dismissAsAdmin}>
+                        <AccountRemoveOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <div slot="text">{$_("dismissAsAdmin")}</div>
+                    </MenuItem>
+                    <!-- TODO need to know if the participant is blocked or not -->
+                    <MenuItem on:click={blockUser}>
+                        <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <div slot="text">{$_("blockUser")}</div>
+                    </MenuItem>
                 </Menu>
             </span>
         </MenuIcon>
@@ -53,20 +77,20 @@
 
 <style type="text/scss">
     .participant {
+        cursor: pointer;
         display: flex;
-        margin-left: 10px;
-        margin-right: 10px;
+        margin-left: $sp3;
+        margin-right: $sp3;
         justify-content: center;
         align-items: center;
         border: 1px solid var(--participants-bd);
         background-color: var(--participants-bg);
         color: var(--participants-txt);
-        padding: 10px;
-        margin-bottom: 8px;
+        padding: $sp3;
+        margin-bottom: $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
-        &:hover,
-        &.selected {
+        &:hover {
             background-color: var(--participants-hv);
         }
     }

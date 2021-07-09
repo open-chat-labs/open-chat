@@ -6,12 +6,20 @@
 
     export let groupChat: GroupChatSummary;
     export let users: UserLookup;
+
+    $: console.log(users);
 </script>
 
-<ParticipantsHeader on:close />
+<ParticipantsHeader on:close on:addParticipant />
 
 {#each groupChat.participants as userId}
     {#if users[userId] !== undefined}
-        <Participant {users} participant={users[userId]} on:dismissAsAdmin on:removeUser />
+        <Participant
+            {users}
+            participant={users[userId]}
+            on:dismissAsAdmin
+            on:removeUser
+            on:blockUser
+            on:selectParticipant />
     {/if}
 {/each}
