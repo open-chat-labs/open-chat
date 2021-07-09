@@ -14,11 +14,8 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
-    import { select_options } from "svelte/internal";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
-
-    let rightPanelState: "closed" | "participants" = "closed";
 
     function logout() {
         dispatch("logout");
@@ -68,20 +65,8 @@
         console.log("block user clicked");
     }
 
-    function showParticipants() {
-        rightPanelState = "participants";
-    }
-
-    function hideParticipants() {
-        rightPanelState = "closed";
-    }
-
     function dismissUserAsAdmin() {
         console.log("dismiss user as admin");
-    }
-
-    function removeUserFromGroup() {
-        console.log("remove user from group");
     }
 
     function addParticipant() {
@@ -125,28 +110,24 @@
             on:clearSelection={clearSelectedChat}
             on:blockUser={blockUser}
             on:leaveGroup={leaveGroup}
-            on:showParticipants={showParticipants}
             hideLeft={params.chatId !== null}
             machine={selectedChatActor} />
-        <Overlay active={rightPanelState !== "closed" && groupChat !== undefined}>
-            {#if rightPanelState !== "closed" && groupChat !== undefined}
-                <div
-                    transition:fly={{ x, duration: 400 }}
-                    class="right-wrapper"
-                    class:rtl={$rtlStore}>
-                    <RightPanel
-                        on:close={hideParticipants}
-                        on:dismissAsAdmin={dismissUserAsAdmin}
-                        on:removeUser={removeUserFromGroup}
-                        on:addParticipant={addParticipant}
-                        on:selectParticipant={selectParticipant}
-                        on:blockUser={blockUser}
-                        {groupChat}
-                        users={$machine.context.userLookup} />
-                </div>
-            {/if}
-        </Overlay>
     </main>
+{/if}
+
+{#if selectedChatActor !== undefined}
+    <Overlay active={$selectedChatActor.matches("showing_participants")}>
+        {#if $selectedChatActor.matches("showing_participants") && groupChat !== undefined}
+            <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
+                <RightPanel
+                    machine={selectedChatActor}
+                    on:dismissAsAdmin={dismissUserAsAdmin}
+                    on:addParticipant={addParticipant}
+                    on:selectParticipant={selectParticipant}
+                    on:blockUser={blockUser} />
+            </div>
+        {/if}
+    </Overlay>
 {/if}
 
 <Overlay active={$modalStore !== ModalType.NoModal}>

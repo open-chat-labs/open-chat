@@ -1,25 +1,26 @@
 <script lang="ts">
     import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import Participant from "./Participant.svelte";
-    import type { GroupChatSummary } from "../../domain/chat/chat";
-    import type { UserLookup } from "../../domain/user/user";
+    import type { ActorRefFrom } from "xstate";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    export let machine: ActorRefFrom<ChatMachine>;
 
-    export let groupChat: GroupChatSummary;
-    export let users: UserLookup;
-
-    $: console.log(users);
+    function close() {
+        machine.send({ type: "HIDE_PARTICIPANTS" });
+    }
 </script>
 
-<ParticipantsHeader on:close on:addParticipant />
+<ParticipantsHeader on:close={close} on:addParticipant />
 
-{#each groupChat.participants as userId}
-    {#if users[userId] !== undefined}
-        <Participant
-            {users}
-            participant={users[userId]}
-            on:dismissAsAdmin
-            on:removeUser
-            on:blockUser
-            on:selectParticipant />
-    {/if}
-{/each}
+{#if $machine.context.chatSummary.kind === "group_chat"}
+    {#each $machine.context.chatSummary.participants as userId}
+        {#if $machine.context.userLookup[userId] !== undefined}
+            <Participant
+                {machine}
+                participant={$machine.context.userLookup[userId]}
+                on:dismissAsAdmin
+                on:blockUser
+                on:selectParticipant />
+        {/if}
+    {/each}
+{/if}

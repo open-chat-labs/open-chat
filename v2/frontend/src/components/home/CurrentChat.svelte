@@ -3,11 +3,14 @@
     import Loading from "../Loading.svelte";
     // import CurrentChatMessages from "../CurrentChatMessages.svelte";
     // import MessageEntry from "../MessageEntry.svelte";
-    import type { UserLookup } from "../../domain/user/user";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
 
     export let machine: ActorRefFrom<ChatMachine>;
+
+    function showParticipants() {
+        machine.send({ type: "SHOW_PARTICIPANTS" });
+    }
 
     $: console.log("ChatMachineState: ", $machine.value);
 </script>
@@ -17,7 +20,7 @@
         users={$machine.context.userLookup}
         on:clearSelection
         on:blockUser
-        on:showParticipants
+        on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
 

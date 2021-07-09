@@ -18,7 +18,12 @@ type LoadMessagesResponse = { userLookup: UserLookup; messages: unknown[] };
 
 export type ChatEvents =
     | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
-    | { type: "error.platform.loadMessages"; data: Error };
+    | { type: "error.platform.loadMessages"; data: Error }
+    | { type: "SHOW_PARTICIPANTS" }
+    | { type: "REMOVE_PARTICIPANT"; data: string }
+    | { type: "HIDE_PARTICIPANTS" }
+    | { type: "done.invoke.removeParticipant"; data: LoadMessagesResponse }
+    | { type: "error.platform.removeParticipant"; data: Error };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -57,6 +62,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 messages,
             };
         },
+        removeParticipant: (_ctx, _ev) => {
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
+        },
     },
 };
 
@@ -87,8 +99,47 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
             },
         },
-        loaded_messages: {},
-        unexpected_error: {},
+        showing_participants: {
+            on: {
+                HIDE_PARTICIPANTS: "loaded_messages",
+                REMOVE_PARTICIPANT: "removing_participant",
+            },
+        },
+        removing_participant: {
+            entry: assign((ctx, ev) => {
+                if (ctx.chatSummary.kind === "group_chat" && ev.type === "REMOVE_PARTICIPANT") {
+                    return {
+                        chatSummary: {
+                            ...ctx.chatSummary,
+                            participants: ctx.chatSummary.participants.filter((p) => p !== ev.data),
+                        },
+                    };
+                }
+                return {};
+            }),
+            invoke: {
+                id: "removeParticipant",
+                src: "removeParticipant",
+                onDone: {
+                    target: "showing_participants",
+                },
+                onError: {
+                    target: "unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
+            },
+        },
+        loaded_messages: {
+            on: {
+                SHOW_PARTICIPANTS: "showing_participants",
+            },
+        },
+        unexpected_error: {
+            // todo - not sure what we do when we end up here?
+            // log the error I suppose at least
+        },
     },
 };
 

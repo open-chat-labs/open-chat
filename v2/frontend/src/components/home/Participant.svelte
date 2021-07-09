@@ -4,7 +4,6 @@
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import { AvatarSize } from "../../domain/user/user";
-    import type { UserLookup } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -14,13 +13,15 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
+    import type { ActorRefFrom } from "xstate";
+    import type { ChatMachine } from "../../fsm/chat.machine";
     const dispatch = createEventDispatcher();
 
+    export let machine: ActorRefFrom<ChatMachine>;
     export let participant: UserSummary;
-    export let users: UserLookup;
 
     function removeUser() {
-        dispatch("removeUser", participant);
+        machine.send({ type: "REMOVE_PARTICIPANT", data: participant.userId });
     }
 
     function dismissAsAdmin() {
@@ -40,7 +41,7 @@
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant.userId)}
-            status={getUserStatus(users, participant.userId)}
+            status={getUserStatus($machine.context.userLookup, participant.userId)}
             size={AvatarSize.Small} />
     </span>
     <h4 class="details">
