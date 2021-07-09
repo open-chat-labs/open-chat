@@ -38,7 +38,7 @@
             on:selectParticipant />
     {/if}
     {#each knownUsers as user, i (user)}
-        <div animate:flip={{ duration: 500, easing: elasticOut }} out:fade>
+        <div animate:flip={{ duration: 600, easing: elasticOut }} out:fade={{ duration: 150 }}>
             <Participant {machine} participant={user} on:blockUser on:selectParticipant />
         </div>
     {/each}

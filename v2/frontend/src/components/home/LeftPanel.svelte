@@ -28,7 +28,9 @@
         {:else}
             <div class="chat-summaries">
                 {#each $machine.context.chatSummaries as chatSummary, i (chatSummary)}
-                    <div animate:flip={{ duration: 500, easing: elasticOut }} out:fade>
+                    <div
+                        animate:flip={{ duration: 600, easing: elasticOut }}
+                        out:fade={{ duration: 150 }}>
                         <ChatSummary
                             users={$machine.context.userLookup}
                             {chatSummary}
