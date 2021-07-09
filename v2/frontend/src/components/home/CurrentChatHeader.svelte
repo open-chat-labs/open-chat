@@ -42,7 +42,7 @@
 
     function leaveGroup() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("leaveGroup");
+            dispatch("leaveGroup", selectedChatSummary.chatId);
         }
     }
 

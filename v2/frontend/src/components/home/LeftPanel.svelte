@@ -5,6 +5,9 @@
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
+    import { fade } from "svelte/transition";
+    import { flip } from "svelte/animate";
+    import { elasticOut } from "svelte/easing";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import { _ } from "svelte-i18n";
     import type { ActorRefFrom } from "xstate";
@@ -24,12 +27,14 @@
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#each $machine.context.chatSummaries as chatSummary}
-                    <ChatSummary
-                        users={$machine.context.userLookup}
-                        {chatSummary}
-                        selected={$machine.context.selectedChat?.chatId === chatSummary.chatId}
-                        on:selectChat />
+                {#each $machine.context.chatSummaries as chatSummary, i (chatSummary)}
+                    <div animate:flip={{ duration: 500, easing: elasticOut }} out:fade>
+                        <ChatSummary
+                            users={$machine.context.userLookup}
+                            {chatSummary}
+                            selected={$machine.context.selectedChat?.chatId === chatSummary.chatId}
+                            on:selectChat />
+                    </div>
                 {/each}
             </div>
         {/if}

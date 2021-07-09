@@ -38,6 +38,7 @@ export type HomeEvents =
     | { type: "SELECT_CHAT"; data: bigint }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
+    | { type: "LEAVE_GROUP"; data: bigint }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
     | { type: "error.platform.getChats"; data: Error };
@@ -186,6 +187,16 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                // todo - obviously we need to invoke some api call here as well ...
+                LEAVE_GROUP: {
+                    internal: true,
+                    actions: assign((ctx, ev) => {
+                        return {
+                            chatSummaries: ctx.chatSummaries.filter((c) => c.chatId !== ev.data),
+                            selectedChat: undefined,
+                        };
+                    }),
+                },
                 USERS_UPDATED: {
                     internal: true,
                     actions: assign((ctx, ev) => ev.data),

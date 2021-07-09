@@ -73,8 +73,8 @@
         console.log("select participant");
     }
 
-    function leaveGroup() {
-        console.log("leave group");
+    function leaveGroup(ev: CustomEvent<bigint>) {
+        machine.send({ type: "LEAVE_GROUP", data: ev.detail });
     }
 
     $: selectedChat = $machine.context.selectedChat;
