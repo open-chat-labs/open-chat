@@ -22,6 +22,7 @@ function randomString() {
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
+    const participants = new Array(randomNum(0, 500)).fill("").map(randomString);
     return {
         kind: "group_chat",
         subject: "Group chat subject",
@@ -32,15 +33,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         lastReadByThem: 0,
         lastestMessageId: 500,
         latestMessage: mockMessage(),
-        participants: [
-            randomString(),
-            randomString(),
-            randomString(),
-            randomString(),
-            randomString(),
-            randomString(),
-            randomString(),
-        ],
+        participants,
     };
 }
 

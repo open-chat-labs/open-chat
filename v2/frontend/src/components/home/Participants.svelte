@@ -7,6 +7,8 @@
     import { flip } from "svelte/animate";
     import type { UserSummary } from "../../domain/user/user";
     import { elasticOut } from "svelte/easing";
+    // import VirtualList from "../VirtualList.svelte";
+
     export let machine: ActorRefFrom<ChatMachine>;
 
     function close() {
@@ -37,6 +39,9 @@
             on:blockUser
             on:selectParticipant />
     {/if}
+    <!-- <VirtualList items={knownUsers} let:item height="100vh">
+        <Participant {machine} participant={item} on:blockUser on:selectParticipant />
+    </VirtualList> -->
     {#each knownUsers as user, i (user)}
         <div animate:flip={{ duration: 600, easing: elasticOut }} out:fade={{ duration: 150 }}>
             <Participant {machine} participant={user} on:blockUser on:selectParticipant />

@@ -114,7 +114,7 @@
 {#if selectedChatActor !== undefined}
     <Overlay active={$selectedChatActor.matches("showing_participants")}>
         {#if $selectedChatActor.matches("showing_participants") && groupChat !== undefined}
-            <div transition:fly={{ x, duration: 400 }} class="right-wrapper" class:rtl={$rtlStore}>
+            <div transition:fly={{ x, duration: 200 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel
                     machine={selectedChatActor}
                     on:addParticipant={addParticipant}
