@@ -65,10 +65,6 @@
         console.log("block user clicked");
     }
 
-    function addParticipant() {
-        console.log("add participant");
-    }
-
     function selectParticipant() {
         console.log("select participant");
     }
@@ -117,7 +113,6 @@
             <div transition:fly={{ x, duration: 200 }} class="right-wrapper" class:rtl={$rtlStore}>
                 <RightPanel
                     machine={selectedChatActor}
-                    on:addParticipant={addParticipant}
                     on:selectParticipant={selectParticipant}
                     on:blockUser={blockUser} />
             </div>

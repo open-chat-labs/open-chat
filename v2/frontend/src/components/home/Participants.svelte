@@ -15,6 +15,10 @@
         machine.send({ type: "HIDE_PARTICIPANTS" });
     }
 
+    function addParticipant() {
+        machine.send({ type: "ADD_PARTICIPANT" });
+    }
+
     $: knownUsers =
         $machine.context.chatSummary.kind === "group_chat"
             ? $machine.context.chatSummary.participants.reduce<UserSummary[]>((users, p) => {
@@ -29,7 +33,7 @@
     $: busy = $machine.matches({ showing_participants: "removing_participant" });
 </script>
 
-<ParticipantsHeader on:close={close} on:addParticipant />
+<ParticipantsHeader on:close={close} on:addParticipant={addParticipant} />
 
 <div class="wrapper" class:busy>
     {#if $machine.context.user !== undefined}

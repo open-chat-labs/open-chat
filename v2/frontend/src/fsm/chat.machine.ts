@@ -21,6 +21,8 @@ export type ChatEvents =
     | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
     | { type: "error.platform.loadMessages"; data: Error }
     | { type: "SHOW_PARTICIPANTS" }
+    | { type: "ADD_PARTICIPANT" }
+    | { type: "NEW_PARTICIPANT_SELECTED"; data: UserSummary }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "DISMISS_AS_ADMIN"; data: string }
     | { type: "HIDE_PARTICIPANTS" }
@@ -119,9 +121,36 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 HIDE_PARTICIPANTS: "loaded_messages",
                 REMOVE_PARTICIPANT: ".removing_participant",
                 DISMISS_AS_ADMIN: ".dismissing_participant",
+                ADD_PARTICIPANT: ".adding_participant",
             },
             states: {
                 idle: {},
+                adding_participant: {
+                    on: {
+                        // todo - this will need to make some api call
+                        NEW_PARTICIPANT_SELECTED: {
+                            target: "idle",
+                            actions: assign((ctx, ev) => {
+                                if (ctx.chatSummary.kind === "group_chat") {
+                                    return {
+                                        userLookup: {
+                                            ...ctx.userLookup,
+                                            [ev.data.userId]: ev.data,
+                                        },
+                                        chatSummary: {
+                                            ...ctx.chatSummary,
+                                            participants: [
+                                                ev.data.userId,
+                                                ...ctx.chatSummary.participants,
+                                            ],
+                                        },
+                                    };
+                                }
+                                return {};
+                            }),
+                        },
+                    },
+                },
                 dismissing_participant: {
                     invoke: {
                         id: "dismissAsAdmin",
