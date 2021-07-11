@@ -4,6 +4,8 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { UserLookup } from "../../domain/user/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -37,6 +39,18 @@
     function showParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
             dispatch("showParticipants");
+        }
+    }
+
+    function addParticipant() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("addParticipant");
+        }
+    }
+
+    function copyCode() {
+        if (selectedChatSummary.kind === "group_chat") {
+            console.log("copy the group chat invite code to the clipboard");
         }
     }
 
@@ -118,6 +132,14 @@
                         <MenuItem on:click={leaveGroup}>
                             <LocationExit size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={copyCode}>
+                            <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("copyInviteCode")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={addParticipant}>
+                            <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("addParticipant")}</div>
                         </MenuItem>
                     </Menu>
                 {/if}

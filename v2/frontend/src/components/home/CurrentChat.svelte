@@ -12,6 +12,10 @@
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
+    function addParticipant() {
+        machine.send({ type: "ADD_PARTICIPANT" });
+    }
+
     $: console.log("ChatMachineState: ", $machine.value);
 </script>
 
@@ -20,6 +24,7 @@
         users={$machine.context.userLookup}
         on:clearSelection
         on:blockUser
+        on:addParticipant={addParticipant}
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />

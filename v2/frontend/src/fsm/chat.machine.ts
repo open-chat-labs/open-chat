@@ -202,6 +202,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
         loaded_messages: {
             on: {
                 SHOW_PARTICIPANTS: "showing_participants",
+                ADD_PARTICIPANT: "showing_participants.adding_participant",
             },
         },
         unexpected_error: {
