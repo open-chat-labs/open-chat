@@ -1,3 +1,4 @@
+use crate::canisters::error::Error;
 use crate::consts;
 use crate::types::CanisterId;
 use ic_cdk::api;
@@ -7,8 +8,8 @@ use log::error;
 use serde::Deserialize;
 
 pub enum CreateCanisterError {
-    CreateFailed(CallError),
-    InstallFailed((CallError, CanisterId)),
+    CreateFailed(Error),
+    InstallFailed((Error, CanisterId)),
 }
 
 pub async fn call(
@@ -36,12 +37,7 @@ pub async fn call(
     }
 }
 
-pub struct CallError {
-    pub code: u8,
-    pub msg: String,
-}
-
-async fn create() -> Result<Principal, CallError> {
+async fn create() -> Result<Principal, Error> {
     #[derive(CandidType, Clone, Deserialize)]
     struct CanisterSettings {
         controller: Option<Principal>,
@@ -79,14 +75,14 @@ async fn create() -> Result<Principal, CallError> {
     {
         Ok(x) => x,
         Err((code, msg)) => {
-            return Err(CallError { code: code as u8, msg });
+            return Err(Error { code: code as u8, msg });
         }
     };
 
     Ok(create_result.canister_id)
 }
 
-async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), CallError> {
+async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), Error> {
     #[derive(CandidType, Deserialize)]
     enum InstallMode {
         #[serde(rename = "install")]
@@ -103,6 +99,7 @@ async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8
         canister_id: Principal,
         #[serde(with = "serde_bytes")]
         wasm_module: Vec<u8>,
+        #[serde(with = "serde_bytes")]
         arg: Vec<u8>,
     }
 
@@ -116,7 +113,7 @@ async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8
     let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
-            return Err(CallError { code: code as u8, msg });
+            return Err(Error { code: code as u8, msg });
         }
     };
 

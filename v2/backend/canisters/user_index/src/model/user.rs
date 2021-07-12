@@ -2,6 +2,8 @@ use candid::{CandidType, Principal};
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
+#[cfg(test)]
+use std::str::FromStr;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -83,6 +85,19 @@ impl User {
         true
     }
 
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<semver::Version>) -> bool {
+        match self {
+            User::Created(u) => {
+                u.upgrade_in_progress = upgrade_in_progress;
+                if let Some(version) = new_version {
+                    u.wasm_version = version;
+                }
+            }
+            _ => return false,
+        }
+        true
+    }
+
     pub fn set_user_id(&mut self, user_id: UserId) -> bool {
         match self {
             User::Confirmed(u) => u.user_id = Some(user_id),
@@ -121,6 +136,7 @@ pub struct CreatedUser {
     pub date_updated: TimestampMillis,
     pub last_online: TimestampMillis,
     pub wasm_version: semver::Version,
+    pub upgrade_in_progress: bool,
 }
 
 #[allow(dead_code)]
@@ -129,4 +145,21 @@ pub enum CanisterCreationStatus {
     Pending,
     InProgress,
     Created,
+}
+
+#[cfg(test)]
+impl Default for CreatedUser {
+    fn default() -> Self {
+        CreatedUser {
+            principal: Principal::from_slice(&[0]),
+            phone_number: PhoneNumber::from_str("+441111111111").unwrap(),
+            user_id: Principal::from_slice(&[0]).into(),
+            username: "user".to_string(),
+            date_created: 0,
+            date_updated: 0,
+            last_online: 0,
+            wasm_version: semver::Version::new(0, 0, 0),
+            upgrade_in_progress: false,
+        }
+    }
 }
