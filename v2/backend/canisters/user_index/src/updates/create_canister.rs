@@ -2,6 +2,7 @@ use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
+use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
@@ -37,7 +38,8 @@ async fn create_canister(_args: Args) -> Response {
     // Make async calls to the management canister to create and install a user canister
     // If the create previously succeeded but the install failed then pass in the canister_id
     // and skip canister creation
-    match canisters::create::call(init_ok.canister_id, init_ok.user_wasm_module).await {
+    let wasm_arg = init_ok.user_principal.as_slice().to_vec();
+    match canisters::create::call(init_ok.canister_id, init_ok.user_wasm_module, wasm_arg).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
@@ -62,6 +64,7 @@ async fn create_canister(_args: Args) -> Response {
 struct InitOk {
     canister_id: Option<CanisterId>,
     user_wasm_module: Vec<u8>,
+    user_principal: Principal,
 }
 
 fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
@@ -76,6 +79,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
                 CanisterCreationStatus::Pending => {
                     let canister_id = confirmed_user.user_id.map(|u| u.into());
+                    let user_principal = confirmed_user.principal;
                     let mut user = user.clone();
                     user.set_canister_creation_status(CanisterCreationStatus::InProgress);
                     match runtime_state.data.users.update(user) {
@@ -83,6 +87,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                             return Ok(InitOk {
                                 canister_id,
                                 user_wasm_module,
+                                user_principal,
                             });
                         }
                         _ => Response::InternalError,
