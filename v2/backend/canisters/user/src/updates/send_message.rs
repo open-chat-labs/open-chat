@@ -1,6 +1,6 @@
 use super::send_message::Response::*;
 use crate::model::direct_chat::DirectChat;
-use crate::model::messages::{PushMessageArgs, ReplyContextArgs};
+use crate::model::messages::PushMessageArgs;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
 use serde::Deserialize;
@@ -8,6 +8,7 @@ use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use crate::model::reply_context::ReplyContextInternal;
 
 pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
@@ -50,7 +51,7 @@ pub struct Args {
     message_id: MessageId,
     recipient: UserId,
     content: MessageContent,
-    replies_to: Option<ReplyContextArgs>,
+    replies_to: Option<ReplyContextInternal>,
 }
 
 #[derive(CandidType)]
@@ -68,6 +69,7 @@ pub struct SuccessResult {
 pub mod c2c {
     use super::*;
     use shared::types::CanisterId;
+    use crate::model::reply_context::ReplyContextInternal;
 
     pub async fn call(canister_id: CanisterId, args: Args) -> Result<Response, String> {
         let (res,): (Response,) = ic_cdk::call(canister_id, "handle_message_received", (args,))
@@ -100,7 +102,7 @@ pub mod c2c {
     pub struct Args {
         message_id: MessageId,
         content: MessageContent,
-        replies_to: Option<ReplyContextArgs>,
+        replies_to: Option<ReplyContextInternal>,
     }
 
     #[derive(CandidType, Deserialize)]

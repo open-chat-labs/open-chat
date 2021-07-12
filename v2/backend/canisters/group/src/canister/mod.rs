@@ -1,4 +1,3 @@
-mod api;
 mod env;
 mod init;
 

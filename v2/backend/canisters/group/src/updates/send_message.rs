@@ -8,6 +8,7 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex};
+use crate::model::reply_context::ReplyContextInternal;
 
 #[update]
 fn send_message(args: Args) -> Response {
@@ -41,7 +42,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 pub struct Args {
     message_id: MessageId,
     content: MessageContent,
-    replies_to: Option<MessageId>,
+    replies_to: Option<ReplyContextInternal>,
 }
 
 #[derive(CandidType)]

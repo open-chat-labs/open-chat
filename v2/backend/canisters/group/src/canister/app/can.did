@@ -2,6 +2,8 @@ type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
 type GroupId = CanisterId;
+type MessageIndex = nat32;
+type MessageId = nat;
 
 type TextContent =
     record {
@@ -41,28 +43,33 @@ type MessageContent =
         File: FileContent;
     };
 
-type ReplyDetails =
+type ReplyContext =
     record {
-        message_id: nat;
+        message_id: MessageId;
         user_id: UserId;
         content: MessageContent;
     };
 
 type Message =
     record {
-        message_index: nat32;
-        message_id: nat;
+        message_index: MessageIndex;
+        message_id: MessageId;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
-        replies_to: opt ReplyDetails;
+        replies_to: opt ReplyContext;
+    };
+
+type ReplyContextArgs =
+    record {
+        message_id: MessageId;
     };
 
 type SendMessageArgs =
     record {
-        message_id: nat;
+        message_id: MessageId;
         content: MessageContent;
-        replies_to: opt nat;
+        replies_to: opt ReplyContextArgs;
     };
 
 type SendMessageResponse =
@@ -71,11 +78,11 @@ type SendMessageResponse =
             chat_summary: record {
                 display_date: TimestampMillis;
                 last_updated: TimestampMillis;
-                min_visible_message_index: nat32;
+                min_visible_message_index: MessageIndex;
                 unread_by_me_message_id_ranges: vec vec nat32;
                 unread_by_any_message_id_ranges: vec vec nat32;
             };
-            message_id: nat32;
+            message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -88,7 +95,7 @@ type SendMessageResponse =
 
 type MarkReadArgs =
     record {
-        up_to_message_index: nat32;
+        up_to_message_index: MessageIndex;
     };
 
 type MarkReadResponse =
@@ -232,10 +239,10 @@ type GetGroupResponse =
             subject: text;
             display_date: TimestampMillis;
             last_updated: TimestampMillis;
-            min_visible_message_index: nat32;
+            min_visible_message_index: MessageIndex;
             participants: vec UserId;
-            unread_by_me_message_id_ranges: vec vec nat32;
-            unread_by_any_message_id_ranges: vec vec nat32;
+            unread_by_me_message_id_ranges: vec vec MessageIndex;
+            unread_by_any_message_id_ranges: vec vec MessageIndex;
             latest_messages: vec Message;
         };
     };
@@ -256,14 +263,14 @@ type GetChunkResponse =
 
 type GetMessagesArgs =
     record {
-        from_index: nat32;
-        to_index: nat32;
+        from_index: MessageIndex;
+        to_index: MessageIndex;
     };
 
 type GetMessagesSuccess =
     record {
         messages: vec Message;
-        latest_message_index: nat32;
+        latest_message_index: MessageIndex;
     };
 
 type GetMessagesResponse =
@@ -274,7 +281,7 @@ type GetMessagesResponse =
 
 type GetMessagesByIndexArgs =
     record {
-        messages: vec nat32;
+        messages: vec MessageIndex;
     };
 
 type GetMessagesByIndexResponse =

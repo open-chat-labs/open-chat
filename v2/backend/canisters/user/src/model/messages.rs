@@ -1,62 +1,42 @@
-use crate::model::message::Message;
-use crate::model::reply_context::ReplyContext;
-use candid::CandidType;
-use serde::Deserialize;
+use crate::model::message::{Message, MessageInternal};
+use crate::model::reply_context::{ReplyContext, ReplyContextInternal};
 use shared::time::TimestampMillis;
-use shared::types::chat_id::GroupChatId;
 use shared::types::message_content::MessageContent;
-use shared::types::reply_details::{PrivateReplyDetails, ReplyDetails};
 use shared::types::{MessageId, MessageIndex, UserId};
 use std::cmp::{max, min};
-use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct Messages {
-    messages: Vec<Message>,
-    message_id_map: HashMap<MessageId, MessageIndex>,
+    messages: Vec<MessageInternal>,
 }
 
 pub struct PushMessageArgs {
     pub sent_by_me: bool,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextArgs>,
+    pub replies_to: Option<ReplyContextInternal>,
     pub now: TimestampMillis,
     pub my_user_id: UserId,
     pub their_user_id: UserId,
 }
 
-#[derive(CandidType, Deserialize, Clone)]
-pub struct ReplyContextArgs {
-    message_id: MessageId,
-    private_reply_details: Option<PrivateReplyArgs>,
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct PrivateReplyArgs {
-    group_chat_id: GroupChatId,
-    user_id: UserId,
-    content: MessageContent,
-}
-
 impl Messages {
     pub fn push_message(&mut self, args: PushMessageArgs) -> MessageIndex {
         let message_index = self.next_message_index();
-        let replies_to = self.convert_reply_context(args.replies_to, args.my_user_id, args.their_user_id);
 
-        let message = Message {
+        let message = MessageInternal {
             message_index,
             message_id: args.message_id,
             timestamp: args.now,
             sent_by_me: args.sent_by_me,
             content: args.content,
-            replies_to,
+            replies_to: args.replies_to,
         };
         self.messages.push(message);
         message_index
     }
 
-    pub fn get(&self, message_index: MessageIndex) -> Option<&Message> {
+    pub fn get(&self, message_index: MessageIndex) -> Option<&MessageInternal> {
         if self.messages.is_empty() {
             return None;
         }
@@ -68,7 +48,18 @@ impl Messages {
         self.messages.get(index)
     }
 
-    pub fn get_range(&self, from_message_index: MessageIndex, to_message_index: MessageIndex) -> Vec<Message> {
+    pub fn hydrate_message(&self, message: &MessageInternal, my_user_id: &UserId, their_user_id: &UserId) -> Message {
+        Message {
+            message_index: message.message_index,
+            message_id: message.message_id,
+            timestamp: message.timestamp,
+            sent_by_me: message.sent_by_me,
+            content: message.content.clone(),
+            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i, *my_user_id, *their_user_id)).flatten(),
+        }
+    }
+
+    pub fn get_range(&self, from_message_index: MessageIndex, to_message_index: MessageIndex) -> Vec<&MessageInternal> {
         if self.messages.is_empty() {
             return Vec::new();
         }
@@ -86,10 +77,10 @@ impl Messages {
         let from_index = (from_message_index - earliest_message_index) as usize;
         let to_index = (to_message_index - earliest_message_index) as usize;
 
-        self.messages[from_index..=to_index].to_vec()
+        self.messages[from_index..=to_index].iter().collect()
     }
 
-    pub fn get_by_index(&self, indexes: Vec<MessageIndex>) -> Vec<Message> {
+    pub fn get_by_index(&self, indexes: Vec<MessageIndex>) -> Vec<&MessageInternal> {
         if self.messages.is_empty() {
             return Vec::new();
         }
@@ -105,11 +96,10 @@ impl Messages {
             .into_iter()
             .map(calc_index)
             .filter_map(|index| self.messages.get(index))
-            .cloned()
             .collect()
     }
 
-    pub fn last(&self) -> Option<&Message> {
+    pub fn last(&self) -> Option<&MessageInternal> {
         self.messages.last()
     }
 
@@ -120,34 +110,16 @@ impl Messages {
             .incr()
     }
 
-    fn convert_reply_context(
-        &self,
-        reply_context: Option<ReplyContextArgs>,
-        my_user_id: UserId,
-        their_user_id: UserId,
-    ) -> Option<ReplyContext> {
-        if let Some(reply_context) = reply_context {
-            if let Some(private_reply_details) = reply_context.private_reply_details {
-                return Some(ReplyContext::PrivateReply(PrivateReplyDetails {
-                    chat_id: private_reply_details.group_chat_id,
-                    message_id: reply_context.message_id,
-                    user_id: private_reply_details.user_id,
-                    content: private_reply_details.content,
-                }));
-            } else if let Some(message_index) = self.get_message_index(&reply_context.message_id) {
-                if let Some(message) = self.get(message_index) {
-                    return Some(ReplyContext::Reply(ReplyDetails {
-                        message_index,
-                        user_id: if message.sent_by_me { my_user_id } else { their_user_id },
-                        content: message.content.clone(),
-                    }));
-                }
-            }
+    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal, my_user_id: UserId, their_user_id: UserId) -> Option<ReplyContext> {
+        if let Some(_) = reply_context.chat_id_if_other {
+            None
+        } else {
+            self.get(reply_context.message_index).map(|m| ReplyContext {
+                chat_id_if_other: None,
+                message_index: m.message_index,
+                user_id: if m.sent_by_me { my_user_id } else { their_user_id },
+                content: m.content.clone(),
+            })
         }
-        None
-    }
-
-    fn get_message_index(&self, message_id: &MessageId) -> Option<MessageIndex> {
-        self.message_id_map.get(message_id).cloned()
     }
 }

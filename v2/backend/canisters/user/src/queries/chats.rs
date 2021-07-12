@@ -10,6 +10,7 @@ use shared::types::UserId;
 
 pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
+        let my_user_id = runtime_state.env.owner_user_id();
         let direct_chats = runtime_state
             .data
             .direct_chats
@@ -24,10 +25,11 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
                 },
             )
             .map(|c| {
+                let their_user_id = &c.them;
                 ChatSummary::Direct(DirectChatSummary {
                     chat_id: c.chat_id,
                     them: c.them,
-                    latest_message: c.messages.last().unwrap().clone(),
+                    latest_message: c.messages.hydrate_message(c.messages.last().unwrap(), &my_user_id, their_user_id),
                     date_created: c.date_created,
                 })
             })
