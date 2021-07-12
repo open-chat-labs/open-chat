@@ -74,6 +74,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -84,6 +85,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -94,6 +96,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);
@@ -135,6 +138,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -145,6 +149,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -155,6 +160,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         let now = env.now;
@@ -196,6 +202,7 @@ mod tests {
             date_created: start,
             date_updated: start,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -206,6 +213,7 @@ mod tests {
             date_created: start,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -216,6 +224,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);

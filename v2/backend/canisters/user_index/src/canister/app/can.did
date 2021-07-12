@@ -212,6 +212,7 @@ type MetricsResponse =
 
 type InitArgs = 
     record {
+        service_principals: vec principal;
         sms_service_principals: vec principal;
         user_wasm_module: blob;
     };

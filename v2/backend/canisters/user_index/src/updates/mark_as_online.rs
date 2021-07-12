@@ -39,6 +39,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         env.now += 10000;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
