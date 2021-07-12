@@ -54,6 +54,16 @@ type CreateCanisterArgs =
     record {
     };
 
+type CreateCanisterResponse =
+    variant {
+        Success: CanisterId;
+        UserNotFound;
+        UserUnconfirmed;
+        UserAlreadyCreated;
+        CreationInProgress;
+        InternalError;
+    };
+
 type SetUsernameArgs =
     record {
         username: text;
@@ -75,8 +85,26 @@ type UpdateWasmArgs =
         version: text;
     };
 
+type UpdateWasmResponse = 
+    variant {
+        Success;
+        NotAuthorized;
+        InvalidVersion;
+        ExistingWasmHasHigherVersion;
+    };
+
 type UpgradeCanisterArgs =
     record {
+    };
+
+type UpgradeCanisterResponse =
+    variant {
+        Success;
+        UserNotFound;
+        UserNotCreated;
+        UpgradeNotRequired;
+        UpgradeInProgress;
+        InternalError;
     };
 
 type MarkAsOnlineArgs = 
@@ -217,7 +245,7 @@ type InitArgs =
         user_wasm_module: blob;
     };
 
-service : (InitArgs) {
+service : (InitArgs) -> {
     // If the current user does not exist, the phone number is valid, and not already in use 
     // then send an SMS with a confirmation code to this phone number
     submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
@@ -232,17 +260,17 @@ service : (InitArgs) {
 
     // Once the confirm_phone_number call has succeeded (user is in one of the "confirmed" states)
     // then call this to create a canister for the user
-    create_canister: (CreateCanisterArgs) -> ();
+    create_canister: (CreateCanisterArgs) -> (CreateCanisterResponse);
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
 
     // Update the stored user canister WASM module
-    update_wasm: (UpdateWasmArgs) -> ();
+    update_wasm: (UpdateWasmArgs) -> (UpdateWasmResponse);
 
     // If the current user is "upgrade_required" then call this to upgrade the user canister
     // Will need to block in the app until this has completed
-    upgrade_canister: (UpgradeCanisterArgs) -> ();
+    upgrade_canister: (UpgradeCanisterArgs) -> (UpgradeCanisterResponse);
 
     // Call this regularly to maintain the online status of the user
     mark_as_online: (MarkAsOnlineArgs) -> ();

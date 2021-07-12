@@ -22,7 +22,6 @@ pub enum Response {
     UserUnconfirmed,
     UserAlreadyCreated,
     CreationInProgress,
-    UpgradeInProgress,
     InternalError,
 }
 
@@ -124,6 +123,7 @@ fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId, wasm_versio
                             date_updated: now,
                             last_online: now,
                             wasm_version,
+                            upgrade_in_progress: false,
                         };
                         User::Created(created_user)
                     }
