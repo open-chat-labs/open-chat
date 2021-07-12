@@ -68,6 +68,8 @@
         &.right {
             padding: 0px;
             width: $right-width;
+            display: flex;
+            flex-direction: column;
             @include size-below(xs) {
                 width: 100%;
             }

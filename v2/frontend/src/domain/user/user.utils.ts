@@ -1,4 +1,11 @@
-import { PhoneNumber, UserLookup, UserStatus, UserSummary } from "./user";
+import {
+    PartialUserSummary,
+    PhoneNumber,
+    UserLastOnline,
+    UserLookup,
+    UserStatus,
+    UserSummary,
+} from "./user";
 
 const ONLINE_THRESHOLD = 120;
 
@@ -13,17 +20,21 @@ export function phoneNumberToString({ countryCode, number }: PhoneNumber): strin
     return `(+${countryCode}) ${number}`;
 }
 
-export function getUserStatus(users: UserLookup, userId: string): UserStatus {
-    return (users[userId]?.secondsSinceLastOnline ?? Number.MAX_VALUE) < ONLINE_THRESHOLD
+export function userStatus(user: UserLastOnline): UserStatus {
+    return (user?.secondsSinceLastOnline ?? Number.MAX_VALUE) < ONLINE_THRESHOLD
         ? UserStatus.Online
         : UserStatus.Offline;
+}
+
+export function getUserStatus(users: UserLookup, userId: string): UserStatus {
+    return userStatus(users[userId]);
 }
 
 export function userIsOnline(users: UserLookup, userId: string): boolean {
     return getUserStatus(users, userId) === UserStatus.Online;
 }
 
-export function mergeUsers(userLookup: UserLookup, users: UserSummary[]): UserLookup {
+export function mergeUsers(userLookup: UserLookup, users: PartialUserSummary[]): UserLookup {
     return users.reduce<UserLookup>((lookup, user) => {
         lookup[user.userId] = user;
         return lookup;

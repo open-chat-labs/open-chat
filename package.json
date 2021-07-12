@@ -7,9 +7,12 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@dfinity/auth-client": "^0.8.9",
-    "@dfinity/authentication": "^0.8.9",
-    "@dfinity/identity": "^0.8.9",
+    "@dfinity/agent": "^0.9.0",
+    "@dfinity/auth-client": "^0.9.0",
+    "@dfinity/authentication": "^0.9.0",
+    "@dfinity/candid": "^0.9.1",
+    "@dfinity/identity": "^0.9.0",
+    "@dfinity/principal": "^0.9.1",
     "@emotion/react": "^11.1.5",
     "@emotion/styled": "^11.1.5",
     "@material-ui/core": "5.0.0-alpha.26",

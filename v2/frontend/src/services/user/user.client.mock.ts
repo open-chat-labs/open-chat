@@ -22,7 +22,7 @@ function randomString() {
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
-    const participants = new Array(randomNum(0, 500)).fill("").map(randomString);
+    const participants = new Array(randomNum(0, 200)).fill("").map(randomString);
     return {
         kind: "group_chat",
         subject: "Group chat subject",

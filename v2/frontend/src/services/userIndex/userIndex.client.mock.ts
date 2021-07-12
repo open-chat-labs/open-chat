@@ -6,6 +6,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
+    UserSummary,
 } from "../../domain/user/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -13,6 +14,14 @@ export const DELAY = 1000;
 
 export class UserIndexClientMock implements IUserIndexClient {
     private count = 0;
+
+    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+        return fetch("https://my.api.mockaroo.com/user_search.json?key=02f66dd0")
+            .then((res) => res.json() as Promise<UserSummary[]>)
+            .then((users) =>
+                users.filter((u) => u.username.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0)
+            );
+    }
 
     getUsers(userIds: string[], _since: bigint): Promise<UsersResponse> {
         // this is just to inject a bit of randomness so we can see that the updates flow through the UI ok

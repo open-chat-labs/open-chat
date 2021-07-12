@@ -9,6 +9,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
+    UserSummary,
 } from "../../domain/user/user";
 import { identity } from "../../utils/mapping";
 import { CandidService } from "../candidService";
@@ -19,6 +20,7 @@ import {
     confirmPhoneNumber,
     resendCodeResponse,
     usersResponse,
+    userSearchResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -33,6 +35,16 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
+    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+        return this.handleResponse(
+            this.userService.search({
+                search_term: searchTerm,
+                max_results: 20,
+            }),
+            userSearchResponse
+        );
+    }
+
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
         if (userIds.length === 0) {
             return Promise.resolve({
@@ -42,7 +54,9 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         }
         return this.handleResponse(
             this.userService.users({
-                users: userIds.map(Principal.fromText),
+                users: userIds.map((u) => {
+                    return Principal.fromText(u);
+                }),
                 updated_since: [since],
             }),
             usersResponse

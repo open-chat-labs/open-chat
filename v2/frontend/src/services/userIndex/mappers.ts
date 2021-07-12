@@ -7,26 +7,45 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    PartialUserSummary,
 } from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
     ApiCurrentUserResponse,
+    ApiPartialUserSummary,
     ApiPhoneNumber,
     ApiResendCodeResponse,
+    ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "api-canisters/user_index/src/canister/app/idl";
+import { identity, optional } from "../../utils/mapping";
+
+export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
+    if ("Success" in candid) {
+        return candid.Success.users.map(userSummary);
+    }
+    throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
+}
 
 export function usersResponse(candid: ApiUsersResponse): UsersResponse {
     if ("Success" in candid) {
         return {
             timestamp: candid.Success.timestamp,
-            users: candid.Success.users.map(userSummary),
+            users: candid.Success.users.map(partialUserSummary),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
+}
+
+export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSummary {
+    return {
+        userId: candid.user_id.toString(),
+        username: optional(candid.username, identity),
+        secondsSinceLastOnline: candid.seconds_since_last_online,
+    };
 }
 
 export function userSummary(candid: ApiUserSummary): UserSummary {
@@ -114,7 +133,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Created" in candid) {
         return {
             kind: "created_user",
-            userId: candid.Created.user_id,
+            userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
             accountBalance: candid.Created.account_balance,
             upgradeRequired: candid.Created.upgrade_required,

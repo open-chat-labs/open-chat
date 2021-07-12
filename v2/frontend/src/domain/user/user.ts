@@ -1,10 +1,17 @@
-export type UserSummary = {
+export type UserLastOnline = {
     userId: string;
-    username: string;
     secondsSinceLastOnline: number;
 };
 
-export type UserLookup = Record<string, UserSummary>;
+export type UserSummary = UserLastOnline & {
+    username: string;
+};
+
+export type PartialUserSummary = UserLastOnline & {
+    username?: string;
+};
+
+export type UserLookup = Record<string, PartialUserSummary>;
 
 export type User = {
     userId: string;
@@ -19,7 +26,7 @@ export type UsersArgs = {
 
 export type UsersResponse = {
     timestamp: bigint;
-    users: UserSummary[];
+    users: PartialUserSummary[];
 };
 
 export enum UserStatus {

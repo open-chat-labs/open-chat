@@ -9,7 +9,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
@@ -18,7 +18,7 @@
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
-    export let participant: UserSummary;
+    export let participant: PartialUserSummary;
 
     function removeUser() {
         machine.send({ type: "REMOVE_PARTICIPANT", data: participant.userId });
@@ -49,7 +49,7 @@
             size={AvatarSize.Small} />
     </span>
     <h4 class="details">
-        {you ? $_("you") : participant.username}
+        {you ? $_("you") : participant.username ?? $_("unknownUser")}
     </h4>
     {#if !you}
         <span class="menu">

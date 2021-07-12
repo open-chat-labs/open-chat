@@ -41,12 +41,12 @@
         top: 0;
         align-items: center;
         width: 100%;
-        padding: 10px;
+        padding: $sp3;
         height: 65px;
         background-color: var(--participants-header-bg);
         border: 1px solid var(--participants-header-bd);
         color: var(--participants-header-txt);
-        margin-bottom: 10px;
+        margin-bottom: $sp3;
         @include z-index("participants-header");
         @include box-shadow(1);
         cursor: pointer;

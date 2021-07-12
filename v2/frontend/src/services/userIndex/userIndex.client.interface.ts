@@ -6,6 +6,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
+    UserSummary,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
@@ -17,4 +18,5 @@ export interface IUserIndexClient {
     resendRegistrationCode(): Promise<ResendCodeResponse>;
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse>;
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse>;
+    searchUsers(searchTerm: string): Promise<UserSummary[]>;
 }

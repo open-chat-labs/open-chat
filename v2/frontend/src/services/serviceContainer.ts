@@ -7,6 +7,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
+    UserSummary,
 } from "../domain/user/user";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
@@ -34,6 +35,10 @@ export class ServiceContainer {
         this._userClient = new UserClientMock();
         // this._userClient = new UserClient(this.identity, userId);
         return this;
+    }
+
+    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+        return this.userIndexClient.searchUsers(searchTerm);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {

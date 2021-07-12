@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, log } from "xstate/lib/actions";
+import { assign, escalate, log } from "xstate/lib/actions";
 import type { ChatSummary } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { userSearchMachine } from "./userSearch.machine";
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
@@ -22,14 +23,16 @@ export type ChatEvents =
     | { type: "error.platform.loadMessages"; data: Error }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "ADD_PARTICIPANT" }
-    | { type: "NEW_PARTICIPANT_SELECTED"; data: UserSummary }
+    | { type: "CANCEL_ADD_PARTICIPANT" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "DISMISS_AS_ADMIN"; data: string }
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "done.invoke.removeParticipant"; data: LoadMessagesResponse }
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin"; data: LoadMessagesResponse }
-    | { type: "error.platform.dismissAsAdmin"; data: Error };
+    | { type: "error.platform.dismissAsAdmin"; data: Error }
+    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
+    | { type: "error.platform.userSearchMachine"; data: Error };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -126,12 +129,34 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             states: {
                 idle: {},
                 adding_participant: {
+                    initial: "in_progress",
                     on: {
-                        // todo - this will need to make some api call
-                        NEW_PARTICIPANT_SELECTED: {
+                        CANCEL_ADD_PARTICIPANT: "idle",
+                        "error.platform.userSearchMachine": "..unexpected_error",
+                    },
+                    states: {
+                        in_progress: {},
+                        unexpected_error: {
+                            entry: log("in the error state"),
+                        },
+                    },
+                    invoke: {
+                        id: "userSearchMachine",
+                        src: userSearchMachine,
+                        data: (ctx, _) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                                searchTerm: "",
+                                users: [],
+                                error: undefined,
+                            };
+                        },
+                        onDone: {
                             target: "idle",
-                            actions: assign((ctx, ev) => {
-                                if (ctx.chatSummary.kind === "group_chat") {
+                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
+                                    // todo - we will need to make some subsequent call to actually add the user to the group properly
+                                    console.log("selected user from search machine: ", ev.data);
                                     return {
                                         userLookup: {
                                             ...ctx.userLookup,
@@ -148,6 +173,15 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 }
                                 return {};
                             }),
+                        },
+                        onError: {
+                            internal: true,
+                            target: ".unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
                         },
                     },
                 },
