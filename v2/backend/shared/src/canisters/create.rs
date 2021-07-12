@@ -11,7 +11,11 @@ pub enum CreateCanisterError {
     InstallFailed((CallError, CanisterId)),
 }
 
-pub async fn call(existing_canister_id: Option<CanisterId>, wasm_module: Vec<u8>) -> Result<CanisterId, CreateCanisterError> {
+pub async fn call(
+    existing_canister_id: Option<CanisterId>,
+    wasm_module: Vec<u8>,
+    wasm_arg: Vec<u8>,
+) -> Result<CanisterId, CreateCanisterError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create().await {
@@ -23,7 +27,7 @@ pub async fn call(existing_canister_id: Option<CanisterId>, wasm_module: Vec<u8>
         },
     };
 
-    match install(canister_id, wasm_module).await {
+    match install(canister_id, wasm_module, wasm_arg).await {
         Err(error) => {
             error!("Error calling install_code: {}: {}", error.code, error.msg);
             Err(CreateCanisterError::InstallFailed((error, canister_id)))
@@ -82,7 +86,7 @@ async fn create() -> Result<Principal, CallError> {
     Ok(create_result.canister_id)
 }
 
-async fn install(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), CallError> {
+async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), CallError> {
     #[derive(CandidType, Deserialize)]
     enum InstallMode {
         #[serde(rename = "install")]
@@ -106,7 +110,7 @@ async fn install(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), Ca
         mode: InstallMode::Install,
         canister_id,
         wasm_module,
-        arg: b" ".to_vec(),
+        arg: wasm_arg,
     };
 
     let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
