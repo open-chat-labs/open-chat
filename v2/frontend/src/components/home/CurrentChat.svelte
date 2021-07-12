@@ -1,7 +1,7 @@
 <script lang="ts">
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import Loading from "../Loading.svelte";
-    // import CurrentChatMessages from "../CurrentChatMessages.svelte";
+    import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
@@ -32,7 +32,7 @@
     {#if $machine.matches("loading_messages")}
         <Loading />
     {/if}
-    <!-- <CurrentChatMessages {chat} /> -->
+    <CurrentChatMessages {machine} />
     <MessageEntry />
 </div>
 

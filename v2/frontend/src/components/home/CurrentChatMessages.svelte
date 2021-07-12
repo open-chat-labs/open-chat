@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    // import ChatMessage from "./ChatMessage.svelte";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
 
-    import type { ChatDetails } from "../services/chats";
-    import ChatMessage from "./ChatMessage.svelte";
-    export let chat: ChatDetails;
+    export let machine: ActorRefFrom<ChatMachine>;
 
     let div: HTMLDivElement;
     function scrollBottom() {
@@ -17,9 +18,9 @@
 </script>
 
 <div bind:this={div} class="chat-messages">
-    {#each chat.messages as msg, i}
+    <!-- {#each chat.messages as msg, i}
         <ChatMessage me={i % 2 === 0} {msg} />
-    {/each}
+    {/each} -->
 </div>
 
 <style type="text/scss">
