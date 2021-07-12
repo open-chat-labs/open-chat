@@ -1,16 +1,32 @@
 use super::send_message::Response::*;
+use crate::canister::RUNTIME_STATE;
 use crate::model::direct_chat::DirectChat;
 use crate::model::messages::PushMessageArgs;
 use crate::model::reply_context::ReplyContextInternal;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
+use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
-pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
+#[update]
+async fn send_message(args: Args) -> Response {
+    let response = RUNTIME_STATE.with(|state| send_message_impl(&args, state.borrow_mut().as_mut().unwrap()));
+
+    if matches!(response, Response::Success(_)) {
+        let (canister_id, send_message_c2c_args) = args.into();
+        if let Err(e) = c2c::call(canister_id, send_message_c2c_args).await {
+            panic!("{}", e);
+        }
+    }
+
+    response
+}
+
+fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
@@ -47,7 +63,7 @@ fn append_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &
 }
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     message_id: MessageId,
     recipient: UserId,
     content: MessageContent,
@@ -55,18 +71,18 @@ pub struct Args {
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(SuccessResult),
     NotAuthorised,
 }
 
 #[derive(CandidType)]
-pub struct SuccessResult {
+struct SuccessResult {
     message_index: MessageIndex,
     timestamp: TimestampMillis,
 }
 
-pub mod c2c {
+mod c2c {
     use super::*;
     use crate::model::reply_context::ReplyContextInternal;
     use shared::types::CanisterId;
@@ -79,7 +95,12 @@ pub mod c2c {
         Ok(res)
     }
 
-    pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    #[update]
+    fn handle_message_received(args: Args) -> Response {
+        RUNTIME_STATE.with(|state| handle_message_received_impl(args, state.borrow_mut().as_mut().unwrap()))
+    }
+
+    fn handle_message_received_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         // TODO validate that this request came from an OpenChat canister
         let sender_user_id = runtime_state.env.caller().into();
 

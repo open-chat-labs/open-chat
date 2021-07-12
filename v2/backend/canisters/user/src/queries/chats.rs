@@ -1,14 +1,21 @@
 use super::chats::Response::*;
+use crate::canister::RUNTIME_STATE;
 use crate::model::message::Message;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
+use ic_cdk_macros::query;
 use itertools::Itertools;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::chat_id::{DirectChatId, GroupChatId};
 use shared::types::UserId;
 
-pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
+#[query]
+fn chats(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| chats_impl(args, state.borrow().as_ref().unwrap()))
+}
+
+fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let my_user_id = runtime_state.env.owner_user_id();
         let direct_chats = runtime_state
@@ -48,25 +55,25 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     updated_since: Option<TimestampMillis>,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(SuccessResult),
     NotAuthorised,
 }
 
 #[derive(CandidType)]
-pub struct SuccessResult {
+struct SuccessResult {
     chats: Vec<ChatSummary>,
     timestamp: TimestampMillis,
 }
 
 #[allow(dead_code)]
 #[derive(CandidType)]
-pub enum ChatSummary {
+enum ChatSummary {
     Direct(DirectChatSummary),
     Group(GroupChatSummary),
 }
@@ -81,7 +88,7 @@ impl ChatSummary {
 }
 
 #[derive(CandidType)]
-pub struct DirectChatSummary {
+struct DirectChatSummary {
     pub them: UserId,
     pub chat_id: DirectChatId,
     pub latest_message: Message,
@@ -95,7 +102,7 @@ impl DirectChatSummary {
 }
 
 #[derive(CandidType)]
-pub struct GroupChatSummary {
+struct GroupChatSummary {
     pub name: String,
     pub chat_id: GroupChatId,
     pub latest_message: Option<Message>,
