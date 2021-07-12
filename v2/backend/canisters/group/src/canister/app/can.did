@@ -101,6 +101,7 @@ type MarkReadArgs =
 type MarkReadResponse =
     variant {
         Success;
+        SuccessNoChange;
         NotInGroup;
     };
 
