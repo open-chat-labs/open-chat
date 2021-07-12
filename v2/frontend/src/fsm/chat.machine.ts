@@ -242,6 +242,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
         unexpected_error: {
             // todo - not sure what we do when we end up here?
             // log the error I suppose at least
+            // error handling in general needs a bit of thought.
+            // It doesn't feel quite right at the moment.
+            // should be anything unexpected bubbles all the way to the top
+            // and we see the generic error UI.
+            // currently we will only see the generic UI if the identity machine is in the unexpected_error state
+            // I don't think errors will bubble like that. We need to handle them a lot more carefully.
         },
     },
 };
