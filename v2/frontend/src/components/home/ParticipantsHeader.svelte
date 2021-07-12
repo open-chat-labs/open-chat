@@ -42,7 +42,7 @@
         align-items: center;
         width: 100%;
         padding: $sp3;
-        height: 65px;
+        height: 60px;
         background-color: var(--participants-header-bg);
         border: 1px solid var(--participants-header-bd);
         color: var(--participants-header-txt);

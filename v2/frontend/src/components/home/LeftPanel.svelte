@@ -1,6 +1,7 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
+    import NewChat from "./NewChat.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
 
@@ -13,5 +14,9 @@
 </script>
 
 <Panel left {hideLeft}>
-    <ChatList on:newchat on:selectChat {machine} />
+    {#if $machine.matches({ loaded_chats: "new_chat" })}
+        <NewChat {machine} />
+    {:else}
+        <ChatList on:newchat on:selectChat {machine} />
+    {/if}
 </Panel>

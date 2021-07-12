@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
-import { escalate } from "xstate/lib/actions";
+import { escalate, log } from "xstate/lib/actions";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 
@@ -52,7 +52,9 @@ export const schema: MachineConfig<UserSearchContext, any, UserSearchEvents> = {
         SELECT_USER: "selected_user",
     },
     states: {
-        idle: {},
+        idle: {
+            entry: log("entering user search idle state"),
+        },
         searching_users: {
             invoke: {
                 id: "usersSearch",

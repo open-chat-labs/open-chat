@@ -43,7 +43,7 @@
             }
 
             // if there is no chatId param, tell the machine to clear the selection
-            if (params.chatId === null) {
+            if (params.chatId === null && $machine.context.selectedChat !== undefined) {
                 machine.send({ type: "CLEAR_SELECTED_CHAT" });
             }
         }
@@ -58,7 +58,7 @@
     }
 
     function newChat() {
-        console.log("new chat clicked");
+        machine.send({ type: "NEW_CHAT" });
     }
 
     function blockUser() {
@@ -72,6 +72,8 @@
     function leaveGroup(ev: CustomEvent<bigint>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
     }
+
+    $: console.log("home machine state: ", $machine.value);
 
     $: selectedChat = $machine.context.selectedChat;
 

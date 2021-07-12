@@ -44,7 +44,12 @@
 
 <div class="search-form">
     <span class="icon"><Magnify color={"#ccc"} /></span>
-    <input bind:this={inp} type="text" on:input={onInput} placeholder={$_("searchForUsername")} />
+    <input
+        bind:this={inp}
+        value={$machine.context.searchTerm}
+        type="text"
+        on:input={onInput}
+        placeholder={$_("searchForUsername")} />
     {#if $machine.matches("searching_users")}
         <span class="loading" />
     {:else if $machine.context.searchTerm !== ""}
@@ -75,8 +80,6 @@
     .search-form {
         background-color: var(--chatSearch-bg);
         display: flex;
-        margin-left: $sp3;
-        margin-right: $sp3;
         margin-bottom: $sp3;
         align-items: center;
         position: relative;
@@ -129,7 +132,6 @@
     .results {
         position: relative;
         overflow: auto;
-        margin: 0 $sp3;
         flex: 1;
     }
 </style>

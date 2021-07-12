@@ -10,13 +10,15 @@ import {
     spawn,
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary } from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
-import type { User, UserLookup, UsersResponse } from "../domain/user/user";
+import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
+import { userSearchMachine } from "./userSearch.machine";
+import { push } from "svelte-spa-router";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
@@ -36,12 +38,16 @@ export interface HomeContext {
 
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: bigint }
+    | { type: "NEW_CHAT" }
+    | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: bigint }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
-    | { type: "error.platform.getChats"; data: Error };
+    | { type: "error.platform.getChats"; data: Error }
+    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
+    | { type: "error.platform.userSearchMachine"; data: Error };
 
 type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 
@@ -178,6 +184,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             },
         },
         loaded_chats: {
+            entry: log("entering loaded_chats"),
             initial: "no_chat_selected",
             id: "loaded_chats",
             invoke: [
@@ -258,16 +265,82 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         selectedChat: (_ctx, _) => undefined,
                     }),
                 },
+                NEW_CHAT: {
+                    internal: true,
+                    target: ".new_chat",
+                    actions: log("received new chat"),
+                },
             },
             states: {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
                 },
+                new_chat: {
+                    entry: log("entering new chat"),
+                    exit: assign((_, ev) => {
+                        console.log("exiting new chat: ", ev);
+                        return {};
+                    }),
+                    on: {
+                        // todo - actually we would like to go back to where we were
+                        CANCEL_NEW_CHAT: "no_chat_selected",
+                        "error.platform.userSearchMachine": "..unexpected_error",
+                    },
+                    invoke: {
+                        id: "userSearchMachine",
+                        src: userSearchMachine,
+                        data: (ctx, _) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                                searchTerm: "",
+                                users: [],
+                                error: undefined,
+                            };
+                        },
+                        onDone: {
+                            target: "chat_selected",
+                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                const dummyChat: DirectChatSummary = {
+                                    kind: "direct_chat",
+                                    them: ev.data.userId,
+                                    chatId: BigInt(ctx.chatSummaries.length + 1),
+                                    lastUpdated: BigInt(+new Date()),
+                                    displayDate: BigInt(+new Date()),
+                                    lastReadByUs: 0,
+                                    lastReadByThem: 0,
+                                    lastestMessageId: 0,
+                                    latestMessage: undefined,
+                                };
+                                // todo - if we want to select this chat, we actually want to
+                                // push its id into the route
+                                push(`/${dummyChat.chatId}`);
+                                return {
+                                    chatSummaries: [dummyChat, ...ctx.chatSummaries],
+                                    userLookup: {
+                                        ...ctx.userLookup,
+                                        [ev.data.userId]: ev.data,
+                                    },
+                                };
+                            }),
+                        },
+                        onError: {
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                log("an error occurred"),
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
+                    },
+                },
             },
         },
         unexpected_error: {
             type: "final",
+            // todo - perhaps we should be using "escalate" here
             entry: sendParent((ctx, _) => ({
                 type: "error.platform.homeMachine",
                 data: ctx.error,
