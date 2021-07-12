@@ -2,6 +2,7 @@ use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
+use crate::model::user_wasm::UserWasm;
 use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
@@ -38,13 +39,15 @@ async fn create_canister(_args: Args) -> Response {
     // Make async calls to the management canister to create and install a user canister
     // If the create previously succeeded but the install failed then pass in the canister_id
     // and skip canister creation
+    let wasm_module = init_ok.user_wasm.module;
+    let wasm_version = init_ok.user_wasm.version;
     let wasm_arg = init_ok.user_principal.as_slice().to_vec();
-    match canisters::create::call(init_ok.canister_id, init_ok.user_wasm_module, wasm_arg).await {
+    match canisters::create::call(init_ok.canister_id, wasm_module, wasm_arg).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
-            RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap(), canister_id));
+            RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap(), canister_id, wasm_version));
             Response::Success(canister_id)
         }
         Err(error) => {
@@ -63,14 +66,14 @@ async fn create_canister(_args: Args) -> Response {
 
 struct InitOk {
     canister_id: Option<CanisterId>,
-    user_wasm_module: Vec<u8>,
+    user_wasm: UserWasm,
     user_principal: Principal,
 }
 
 fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     let caller = runtime_state.env.caller();
     // Can we do better than cloning here?
-    let user_wasm_module = runtime_state.data.user_wasm_module.clone();
+    let user_wasm = runtime_state.data.user_wasm.clone();
     let response;
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         response = match user {
@@ -86,7 +89,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                         UpdateUserResult::Success => {
                             return Ok(InitOk {
                                 canister_id,
-                                user_wasm_module,
+                                user_wasm,
                                 user_principal,
                             });
                         }
@@ -104,7 +107,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
+fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId, wasm_version: semver::Version) {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
@@ -120,6 +123,7 @@ fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
                             date_created: now,
                             date_updated: now,
                             last_online: now,
+                            wasm_version,
                         };
                         User::Created(created_user)
                     }

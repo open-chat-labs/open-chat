@@ -215,6 +215,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 1,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
         user_map.add(created.clone());
 
@@ -353,6 +354,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 3,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -379,6 +381,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
 
         let mut updated = original.clone();
@@ -417,6 +420,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
 
         let other = User::Created(CreatedUser {
@@ -427,6 +431,7 @@ mod tests {
             date_created: 2,
             date_updated: 2,
             last_online: 2,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
 
         let mut updated = original.clone();
@@ -460,6 +465,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
 
         let other = User::Created(CreatedUser {
@@ -470,6 +476,7 @@ mod tests {
             date_created: 2,
             date_updated: 2,
             last_online: 2,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
 
         let mut updated = original.clone();
@@ -524,6 +531,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 3,
+            wasm_version: semver::Version::new(0, 0, 0),
         });
         user_map.add(created.clone());
 

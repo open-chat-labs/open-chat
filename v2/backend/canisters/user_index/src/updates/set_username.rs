@@ -92,6 +92,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -118,6 +119,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -140,6 +142,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
@@ -149,6 +152,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -191,6 +195,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -213,6 +218,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -235,6 +241,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            wasm_version: semver::Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

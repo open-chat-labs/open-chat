@@ -120,6 +120,7 @@ pub struct CreatedUser {
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
     pub last_online: TimestampMillis,
+    pub wasm_version: semver::Version,
 }
 
 #[allow(dead_code)]
