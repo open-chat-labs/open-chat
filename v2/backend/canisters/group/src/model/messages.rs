@@ -97,6 +97,10 @@ impl Messages {
             .collect()
     }
 
+    pub fn last(&self) -> Option<&MessageInternal> {
+        self.messages.last()
+    }
+
     fn next_message_index(&self) -> MessageIndex {
         self.messages
             .last()

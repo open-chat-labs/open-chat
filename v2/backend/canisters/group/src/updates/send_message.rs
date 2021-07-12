@@ -16,7 +16,8 @@ fn send_message(args: Args) -> Response {
 }
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Some(participant) = runtime_state.get_current_participant() {
+    let caller = runtime_state.env.caller();
+    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
 
         let push_message_args = PushMessageArgs {
@@ -39,20 +40,20 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 }
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     message_id: MessageId,
     content: MessageContent,
     replies_to: Option<ReplyContextInternal>,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(SuccessResult),
     NotInGroup,
 }
 
 #[derive(CandidType)]
-pub struct SuccessResult {
+struct SuccessResult {
     message_index: MessageIndex,
     timestamp: TimestampMillis,
 }

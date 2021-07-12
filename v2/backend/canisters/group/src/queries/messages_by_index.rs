@@ -13,7 +13,7 @@ fn messages_by_index(args: Args) -> Response {
 }
 
 fn messages_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.get_current_participant().is_some() {
+    if runtime_state.is_caller_participant() {
         let chat_messages = &runtime_state.data.messages;
 
         let messages = chat_messages

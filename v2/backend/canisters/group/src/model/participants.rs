@@ -11,4 +11,8 @@ impl Participants {
     pub fn get_by_principal(&self, principal: &Principal) -> Option<&Participant> {
         self.by_principal.get(principal)
     }
+
+    pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut Participant> {
+        self.by_principal.get_mut(principal)
+    }
 }
