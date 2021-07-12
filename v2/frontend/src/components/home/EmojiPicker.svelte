@@ -7,7 +7,7 @@
     import { define } from "remount/es5";
     import data from "emoji-mart/data/all.json";
     import "emoji-mart/css/emoji-mart.css";
-    import { emojiStore } from "../stores/emoji";
+    import { emojiStore } from "../../stores/emoji";
 
     let wrapper: HTMLDivElement;
 
