@@ -55,7 +55,11 @@ impl Messages {
             timestamp: message.timestamp,
             sent_by_me: message.sent_by_me,
             content: message.content.clone(),
-            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i, *my_user_id, *their_user_id)).flatten(),
+            replies_to: message
+                .replies_to
+                .as_ref()
+                .map(|i| self.hydrate_reply_context(i, *my_user_id, *their_user_id))
+                .flatten(),
         }
     }
 
@@ -110,8 +114,13 @@ impl Messages {
             .incr()
     }
 
-    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal, my_user_id: UserId, their_user_id: UserId) -> Option<ReplyContext> {
-        if let Some(_) = reply_context.chat_id_if_other {
+    fn hydrate_reply_context(
+        &self,
+        reply_context: &ReplyContextInternal,
+        my_user_id: UserId,
+        their_user_id: UserId,
+    ) -> Option<ReplyContext> {
+        if reply_context.chat_id_if_other.is_some() {
             None
         } else {
             self.get(reply_context.message_index).map(|m| ReplyContext {

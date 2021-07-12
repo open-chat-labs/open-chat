@@ -1,5 +1,5 @@
 use crate::model::message::{Message, MessageInternal};
-use crate::model::reply_context::{ReplyContextInternal, ReplyContext};
+use crate::model::reply_context::{ReplyContext, ReplyContextInternal};
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex, UserId};

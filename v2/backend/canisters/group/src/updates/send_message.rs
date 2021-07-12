@@ -1,6 +1,7 @@
 use super::send_message::Response::*;
 use crate::canister::RUNTIME_STATE;
 use crate::model::messages::PushMessageArgs;
+use crate::model::reply_context::ReplyContextInternal;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
 use ic_cdk_macros::update;
@@ -8,7 +9,6 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex};
-use crate::model::reply_context::ReplyContextInternal;
 
 #[update]
 fn send_message(args: Args) -> Response {

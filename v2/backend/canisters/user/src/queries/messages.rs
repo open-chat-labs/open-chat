@@ -12,7 +12,8 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
         let their_user_id = args.user_id;
         let chat_id = DirectChatId::from((&my_user_id, &their_user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-            let messages = chat.messages
+            let messages = chat
+                .messages
                 .get_range(args.from_index, args.to_index)
                 .into_iter()
                 .map(|m| chat.messages.hydrate_message(m, &my_user_id, &their_user_id))

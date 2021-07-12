@@ -1,11 +1,11 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::message::Message;
 use crate::model::runtime_state::RuntimeState;
 use crate::queries::messages_by_index::Response::*;
 use candid::CandidType;
+use ic_cdk_macros::query;
 use serde::Deserialize;
 use shared::types::MessageIndex;
-use crate::canister::RUNTIME_STATE;
-use ic_cdk_macros::query;
 
 #[query]
 fn messages_by_index(args: Args) -> Response {

@@ -1,8 +1,8 @@
 use candid::CandidType;
 use serde::Deserialize;
 use shared::types::chat_id::GroupChatId;
-use shared::types::{MessageIndex, UserId};
 use shared::types::message_content::MessageContent;
+use shared::types::{MessageIndex, UserId};
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct ReplyContextInternal {
