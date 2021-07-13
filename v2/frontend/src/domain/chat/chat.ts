@@ -38,16 +38,25 @@ export interface BlobReference {
     chunkSize: number;
 }
 
-export type ReplyContext = StandardReplyContext | PrivateReplyContext;
+export type GroupChatReplyContext = {
+    kind: "group_reply_context";
+    content: MessageContent;
+    userId: string;
+    messageId: bigint;
+};
+
+export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
+
+export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
 
 export interface PrivateReplyContext {
-    kind: "private_reply_context";
+    kind: "direct_private_reply_context";
     chatId: string;
     messageIndex: number;
 }
 
 export interface StandardReplyContext {
-    kind: "standard_reply_context";
+    kind: "direct_standard_reply_context";
     content: MessageContent;
     sentByMe: boolean;
     messageIndex: number;

@@ -1,22 +1,16 @@
 import type {
     ApiBlobReference,
-    ApiChatSummary,
-    ApiCyclesContent,
     ApiFileContent,
-    ApiGetChatsResponse,
     ApiGetMessagesResponse,
     ApiMediaContent,
     ApiMessage,
     ApiMessageContent,
     ApiReplyContext,
     ApiTextContent,
-} from "api-canisters/user/src/canister/app/idl";
+} from "api-canisters/group/src/canister/app/idl";
 import type {
     BlobReference,
-    ChatSummary,
-    CyclesContent,
     FileContent,
-    GetChatsResponse,
     GetMessagesResponse,
     MediaContent,
     Message,
@@ -25,6 +19,10 @@ import type {
     TextContent,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+
+// todo - these message data types look very similar to the direct chat counterparts but they are logically separate and in
+// some aspects actually different so we will map them independently for the time being
+// this means that we may not be able to just have a /domain/chat module - it might not be that simple
 
 export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessagesResponse {
     if ("Success" in candid) {
@@ -37,47 +35,6 @@ export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessages
         return "chat_not_found";
     }
     throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
-}
-
-export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse {
-    if ("Success" in candid) {
-        return {
-            chats: candid.Success.chats.map(chatSummary),
-            timestamp: candid.Success.timestamp,
-        };
-    }
-    throw new Error(`Unexpected GetChatsResponse type received: ${candid}`);
-}
-
-function chatSummary(candid: ApiChatSummary): ChatSummary {
-    if ("Group" in candid) {
-        return {
-            kind: "group_chat",
-            subject: candid.Group.subject,
-            chatId: candid.Group.id.toString(),
-            lastUpdated: candid.Group.last_updated,
-            displayDate: candid.Group.display_date,
-            lastReadByUs: candid.Group.last_read_by_us,
-            lastReadByThem: candid.Group.last_read_by_them,
-            lastestMessageIndex: candid.Group.latest_message_index,
-            latestMessage: optional(candid.Group.latest_message, message),
-            participants: candid.Group.participants.map((p) => p.toString()),
-        };
-    }
-    if ("Direct" in candid) {
-        return {
-            kind: "direct_chat",
-            chatId: candid.Direct.id.toString(),
-            them: candid.Direct.them.toString(),
-            lastUpdated: candid.Direct.last_updated,
-            displayDate: candid.Direct.display_date,
-            lastReadByUs: candid.Direct.last_read_by_us,
-            lastReadByThem: candid.Direct.last_read_by_them,
-            lastestMessageIndex: candid.Direct.latest_message_index,
-            latestMessage: optional(candid.Direct.latest_message, message),
-        };
-    }
-    throw new Error(`Unexpected ChatSummary type received: ${candid}`);
 }
 
 function message(candid: ApiMessage): Message {
@@ -101,18 +58,7 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Media" in candid) {
         return mediaContent(candid.Media);
     }
-    if ("Cycles" in candid) {
-        return cyclesContent(candid.Cycles);
-    }
     throw new Error(`Unexpected MessageContent received: ${candid}`);
-}
-
-function cyclesContent(candid: ApiCyclesContent): CyclesContent {
-    return {
-        kind: "cycles_content",
-        caption: optional(candid.caption, identity),
-        amount: candid.amount,
-    };
 }
 
 function mediaContent(candid: ApiMediaContent): MediaContent {
@@ -154,22 +100,10 @@ function blobReference(candid: ApiBlobReference): BlobReference {
 }
 
 function replyContext(candid: ApiReplyContext): ReplyContext {
-    if ("Private" in candid) {
-        return {
-            kind: "direct_private_reply_context",
-            chatId: candid.Private.chat_id.toString(),
-            messageIndex: candid.Private.message_index,
-        };
-    }
-
-    if ("Standard" in candid) {
-        return {
-            kind: "direct_standard_reply_context",
-            content: messageContent(candid.Standard.content),
-            sentByMe: candid.Standard.sent_by_me,
-            messageIndex: candid.Standard.message_index,
-        };
-    }
-
-    throw new Error(`Unexpected ReplyContext received: ${candid}`);
+    return {
+        kind: "group_reply_context",
+        content: messageContent(candid.content),
+        userId: candid.user_id.toString(),
+        messageId: candid.message_id,
+    };
 }

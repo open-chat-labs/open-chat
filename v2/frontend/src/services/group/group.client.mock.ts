@@ -6,7 +6,7 @@ import type {
     GroupChatSummary,
     Message,
 } from "../../domain/chat/chat";
-import type { IUserClient } from "./user.client.interface";
+import type { IGroupClient } from "./group.client.interface";
 
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
@@ -76,12 +76,8 @@ function createN<T>(seed: number, n: number, factory: (n: number) => T, sofar: T
     return sofar;
 }
 
-export class UserClientMock implements IUserClient {
-    chatMessages(
-        _userId: string,
-        _fromIndex: number,
-        _toIndex: number
-    ): Promise<GetMessagesResponse> {
+export class UserClientMock implements IGroupClient {
+    chatMessages(_fromIndex: number, _toIndex: number): Promise<GetMessagesResponse> {
         throw new Error("Method not implemented.");
     }
 

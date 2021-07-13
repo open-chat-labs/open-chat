@@ -14,11 +14,7 @@ export class UserClient extends CandidService implements IUserClient {
         this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
     }
 
-    directChatMessages(
-        userId: string,
-        fromIndex: number,
-        toIndex: number
-    ): Promise<GetMessagesResponse> {
+    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<GetMessagesResponse> {
         return this.handleResponse(
             this.userService.get_messages({
                 user_id: Principal.fromText(userId),
@@ -28,6 +24,7 @@ export class UserClient extends CandidService implements IUserClient {
             getMessagesResponse
         );
     }
+
     getChats(since: bigint): Promise<GetChatsResponse> {
         return this.handleResponse(
             this.userService.get_chats({
