@@ -10,6 +10,8 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 import { toVoid } from "../../utils/mapping";
 import { CandidService } from "../candidService";
@@ -21,6 +23,8 @@ import {
     resendCodeResponse,
     usersResponse,
     userSearchResponse,
+    upgradeCanisterResponse,
+    createCanisterResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -63,14 +67,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    upgradeUser(): Promise<void> {
-        // todo - these have all sorts of error conditions that we should be handling
-        return this.handleResponse(this.userService.upgrade_canister({}), toVoid);
+    upgradeUser(): Promise<UpgradeCanisterResponse> {
+        return this.handleResponse(this.userService.upgrade_canister({}), upgradeCanisterResponse);
     }
 
-    createCanister(): Promise<void> {
-        // todo - these have all sorts of error conditions that we should be handling
-        return this.handleResponse(this.userService.create_canister({}), toVoid);
+    createCanister(): Promise<CreateCanisterResponse> {
+        return this.handleResponse(this.userService.create_canister({}), createCanisterResponse);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

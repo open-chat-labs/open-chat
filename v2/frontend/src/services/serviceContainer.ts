@@ -8,6 +8,8 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../domain/user/user";
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
@@ -53,7 +55,7 @@ export class ServiceContainer {
         return this.userIndexClient.getCurrentUser();
     }
 
-    upgradeUser(): Promise<void> {
+    upgradeUser(): Promise<UpgradeCanisterResponse> {
         return this.userIndexClient.upgradeUser();
     }
 
@@ -73,7 +75,7 @@ export class ServiceContainer {
         return this.userIndexClient.setUsername(username);
     }
 
-    createCanister(): Promise<void> {
+    createCanister(): Promise<CreateCanisterResponse> {
         return this.userIndexClient.createCanister();
     }
 }

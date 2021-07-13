@@ -7,6 +7,8 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -42,15 +44,15 @@ export class UserIndexClientMock implements IUserIndexClient {
         });
     }
 
-    createCanister(): Promise<void> {
+    createCanister(): Promise<CreateCanisterResponse> {
         return new Promise((resolve) => {
-            setTimeout(() => resolve(), DELAY);
+            setTimeout(() => resolve("success"), DELAY);
         });
     }
 
-    upgradeUser(): Promise<void> {
+    upgradeUser(): Promise<UpgradeCanisterResponse> {
         return new Promise((resolve) => {
-            setTimeout(() => resolve(), DELAY);
+            setTimeout(() => resolve("success"), DELAY);
         });
     }
 
@@ -140,8 +142,8 @@ export class UserIndexClientMock implements IUserIndexClient {
         // return this.confirmedUserScenario();
         // return this.uncomfirmedUserScenario();
         // return this.confirmedUserPendingCanister();
-        return this.normalUserScenario();
-        return this.unknownUserScenario();
+        // return this.normalUserScenario();
+        // return this.unknownUserScenario();
         return this.requiredUpgradeScenario();
     }
 

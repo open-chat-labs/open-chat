@@ -8,9 +8,12 @@ import type {
     UsersResponse,
     UserSummary,
     PartialUserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
+    ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
     ApiPartialUserSummary,
     ApiPhoneNumber,
@@ -18,6 +21,7 @@ import type {
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiUpgradeCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "api-canisters/user_index/src/canister/app/idl";
@@ -92,6 +96,30 @@ export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
         countryCode: candid.country_code,
         number: candid.number,
     };
+}
+
+export function createCanisterResponse(candid: ApiCreateCanisterResponse): CreateCanisterResponse {
+    if ("Success" in candid) return "success";
+    if ("UserAlreadyCreated" in candid) return "user_already_created";
+    if ("CreationInProgress" in candid) return "creation_in_progress";
+    if ("InternalError" in candid) return "internal_error";
+    if ("UserUnconfirmed" in candid) return "user_unconfirmed";
+    if ("UserNotFound" in candid) return "user_not_found";
+
+    throw new Error(`Unknown UserIndex.CreateCanisterResponse of ${candid}`);
+}
+
+export function upgradeCanisterResponse(
+    candid: ApiUpgradeCanisterResponse
+): UpgradeCanisterResponse {
+    if ("Success" in candid) return "success";
+    if ("UpgradeInProgress" in candid) return "upgrade_in_progress";
+    if ("UserNotCreated" in candid) return "user_not_created";
+    if ("UpgradeNotRequired" in candid) return "upgrade_not_required";
+    if ("InternalError" in candid) return "internal_error";
+    if ("UserNotFound" in candid) return "user_not_found";
+
+    throw new Error(`Unknown UserIndex.UpgradeCanisterResponse of ${candid}`);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {

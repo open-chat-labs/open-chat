@@ -46,6 +46,22 @@ export type PhoneNumber = {
     number: string;
 };
 
+export type CreateCanisterResponse =
+    | "success"
+    | "user_already_created"
+    | "creation_in_progress"
+    | "internal_error"
+    | "user_unconfirmed"
+    | "user_not_found";
+
+export type UpgradeCanisterResponse =
+    | "upgrade_in_progress"
+    | "user_not_created"
+    | "success"
+    | "upgrade_not_required"
+    | "internal_error"
+    | "user_not_found";
+
 export type CurrentUserResponse =
     | UpgradeInProgress
     | UnconfirmedUser

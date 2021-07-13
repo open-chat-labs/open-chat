@@ -7,11 +7,13 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 
 export interface IUserIndexClient {
-    createCanister: () => Promise<void>;
-    upgradeUser: () => Promise<void>;
+    createCanister: () => Promise<CreateCanisterResponse>;
+    upgradeUser: () => Promise<UpgradeCanisterResponse>;
     getCurrentUser: () => Promise<CurrentUserResponse>;
     setUsername(username: string): Promise<SetUsernameResponse>;
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse>;
