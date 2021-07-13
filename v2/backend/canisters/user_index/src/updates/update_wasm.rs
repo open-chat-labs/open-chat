@@ -5,14 +5,14 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     #[serde(with = "serde_bytes")]
     user_wasm_module: Vec<u8>,
     version: String,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     NotAuthorized,
     InvalidVersion,

@@ -139,7 +139,6 @@ pub struct CreatedUser {
     pub upgrade_in_progress: bool,
 }
 
-#[allow(dead_code)]
 #[derive(CandidType, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CanisterCreationStatus {
     Pending,

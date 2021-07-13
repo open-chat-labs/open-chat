@@ -11,11 +11,11 @@ use shared::canisters;
 use shared::types::CanisterId;
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[allow(dead_code)]
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     UserNotFound,
     UserNotCreated,

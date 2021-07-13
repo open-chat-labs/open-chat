@@ -1,8 +1,10 @@
 use super::send_message::Response::*;
+use crate::canister::RUNTIME_STATE;
 use crate::model::direct_chat::DirectChat;
 use crate::model::message::Message;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
+use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
@@ -10,7 +12,42 @@ use shared::types::reply_context::ReplyContext;
 use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
-pub fn update(args: &Args, runtime_state: &mut RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {
+    message_id: MessageId,
+    recipient: UserId,
+    content: MessageContent,
+    replies_to: Option<ReplyContext>,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    NotAuthorised,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    message_index: MessageIndex,
+    timestamp: TimestampMillis,
+}
+
+#[update]
+async fn send_message(args: Args) -> Response {
+    let response = RUNTIME_STATE.with(|state| send_message_impl(&args, state.borrow_mut().as_mut().unwrap()));
+
+    // Now call "handle_message_received" on the recipient's canister
+    if matches!(response, Response::Success(_)) {
+        let (canister_id, send_message_c2c_args) = args.into();
+        if let Err(e) = c2c::call(canister_id, send_message_c2c_args).await {
+            panic!("{}", e);
+        }
+    }
+
+    response
+}
+
+fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let append_message_args = AppendMessageArgs {
             message_id: args.message_id,
@@ -53,26 +90,6 @@ fn append_message(args: AppendMessageArgs, runtime_state: &mut RuntimeState) -> 
     }
 }
 
-#[derive(Deserialize)]
-pub struct Args {
-    message_id: MessageId,
-    recipient: UserId,
-    content: MessageContent,
-    replies_to: Option<ReplyContext>,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success(SuccessResult),
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-pub struct SuccessResult {
-    message_index: MessageIndex,
-    timestamp: TimestampMillis,
-}
-
 struct AppendMessageArgs {
     their_user_id: UserId,
     sent_by_me: bool,
@@ -81,7 +98,7 @@ struct AppendMessageArgs {
     replies_to: Option<ReplyContext>,
 }
 
-pub mod c2c {
+mod c2c {
     use super::*;
     use shared::types::CanisterId;
 
@@ -93,7 +110,24 @@ pub mod c2c {
         Ok(res)
     }
 
-    pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    #[derive(CandidType, Deserialize)]
+    pub struct Args {
+        message_id: MessageId,
+        content: MessageContent,
+        replies_to: Option<ReplyContext>,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub enum Response {
+        Success,
+    }
+
+    #[update]
+    fn handle_message_received(args: Args) -> Response {
+        RUNTIME_STATE.with(|state| handle_message_received_impl(args, state.borrow_mut().as_mut().unwrap()))
+    }
+
+    fn handle_message_received_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         // TODO validate that this request came from an OpenChat canister
         let sender_user_id = runtime_state.env.caller().into();
 
@@ -108,18 +142,6 @@ pub mod c2c {
         let _ = append_message(append_message_args, runtime_state);
 
         Response::Success
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        message_id: MessageId,
-        content: MessageContent,
-        replies_to: Option<ReplyContext>,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Response {
-        Success,
     }
 
     impl From<super::Args> for (CanisterId, Args) {

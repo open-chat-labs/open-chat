@@ -8,12 +8,12 @@ use phonenumber::PhoneNumber;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     confirmation_code: String,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     ConfirmationCodeIncorrect,
     ConfirmationCodeExpired,

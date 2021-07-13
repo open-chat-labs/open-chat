@@ -11,13 +11,13 @@ const MIN_USERNAME_LENGTH: u16 = 2;
 const INVALID_CHARS: [char; 2] = [' ', ','];
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     username: String,
 }
 
 #[allow(dead_code)]
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     UsernameTaken,
     UserUnconfirmed,
