@@ -14,16 +14,30 @@ import type {
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type { GetChatsResponse } from "../domain/chat/chat";
+import type { GetChatsResponse, GetMessagesResponse } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
+import type { IGroupClient } from "./group/group.client.interface";
+// import { GroupClient } from "./group/group.client";
+// import { Principal } from "@dfinity/principal";
+import { GroupClientMock } from "./group/group.client.mock";
 
 export class ServiceContainer {
     private userIndexClient: IUserIndexClient;
     private _userClient?: IUserClient;
+    private _groupClients: Record<string, IGroupClient>;
 
     constructor(private identity: Identity) {
         this.userIndexClient = new UserIndexClientMock();
+        this._groupClients = {};
+    }
+
+    private getGroupClient(chatId: string): IGroupClient {
+        if (!this._groupClients[chatId]) {
+            // this._groupClients[chatId] = new GroupClient(this.identity, Principal.fromText(chatId));
+            this._groupClients[chatId] = new GroupClientMock();
+        }
+        return this._groupClients[chatId];
     }
 
     private get userClient(): IUserClient {
@@ -31,6 +45,22 @@ export class ServiceContainer {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    directChatMessages(
+        userId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<GetMessagesResponse> {
+        return this.userClient.chatMessages(userId, fromIndex, toIndex);
+    }
+
+    groupChatMessages(
+        chatId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<GetMessagesResponse> {
+        return this.getGroupClient(chatId).chatMessages(fromIndex, toIndex);
     }
 
     createUserClient(_userId: string): ServiceContainer {
