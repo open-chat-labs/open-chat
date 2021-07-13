@@ -7,12 +7,12 @@ import { testTransition } from "./machine.spec.utils";
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
-    chatId: BigInt(123),
+    chatId: "abcdefg",
     lastUpdated: BigInt(0),
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageId: 5,
+    lastestMessageIndex: 5,
     latestMessage: undefined,
 };
 
@@ -46,7 +46,7 @@ describe("home machine transitions", () => {
                 chatsIndex: {},
             }),
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: BigInt(123) },
+            { type: "SELECT_CHAT", data: "abcdefg" },
             {
                 loaded_chats: "chat_selected",
             }
@@ -56,7 +56,7 @@ describe("home machine transitions", () => {
         testTransition(
             homeMachine,
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: BigInt(999) },
+            { type: "SELECT_CHAT", data: "qwxyz" },
             {
                 loaded_chats: "no_chat_selected",
             }

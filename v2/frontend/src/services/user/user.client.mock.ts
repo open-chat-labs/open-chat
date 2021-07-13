@@ -2,6 +2,7 @@ import type {
     ChatSummary,
     DirectChatSummary,
     GetChatsResponse,
+    GetMessagesResponse,
     GroupChatSummary,
     Message,
 } from "../../domain/chat/chat";
@@ -26,12 +27,12 @@ function mockGroupChat(i: number): GroupChatSummary {
     return {
         kind: "group_chat",
         subject: "Group chat subject",
-        chatId: BigInt(i),
+        chatId: String(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
         lastReadByUs: 0,
         lastReadByThem: 0,
-        lastestMessageId: 500,
+        lastestMessageIndex: 500,
         latestMessage: mockMessage(),
         participants,
     };
@@ -44,26 +45,26 @@ function mockDirectChat(i: number): DirectChatSummary {
     return {
         kind: "direct_chat",
         them: randomString(),
-        chatId: BigInt(i),
+        chatId: String(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
         lastReadByUs: us,
         lastReadByThem: 0,
-        lastestMessageId: latest,
+        lastestMessageIndex: latest,
         latestMessage: mockMessage(),
     };
 }
 
 function mockMessage(): Message {
     return {
-        id: 123,
+        messageId: BigInt(123),
+        messageIndex: 456,
         content: {
             kind: "text_content",
             text: "This is the test message",
         },
         sender: "",
         timestamp: BigInt(+new Date()),
-        clientMessageId: "",
     };
 }
 
@@ -76,6 +77,14 @@ function createN<T>(seed: number, n: number, factory: (n: number) => T, sofar: T
 }
 
 export class UserClientMock implements IUserClient {
+    directChatMessages(
+        _userId: string,
+        _fromIndex: number,
+        _toIndex: number
+    ): Promise<GetMessagesResponse> {
+        throw new Error("Method not implemented.");
+    }
+
     getChats(since: bigint): Promise<GetChatsResponse> {
         const numChats = since === BigInt(0) ? 2 : 4;
         const direct = createN(0, numChats, mockDirectChat);

@@ -5,12 +5,12 @@ import { getParticipantsString, mergeChats, userIdsFromChatSummaries } from "./c
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
-    chatId: BigInt(123),
+    chatId: "abc",
     lastUpdated: BigInt(0),
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageId: 5,
+    lastestMessageIndex: 5,
     latestMessage: undefined,
 };
 
@@ -18,19 +18,19 @@ const defaultGroupChat: GroupChatSummary = {
     kind: "group_chat",
     subject: "whatever",
     participants: [],
-    chatId: BigInt(123),
+    chatId: "abc",
     lastUpdated: BigInt(0),
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageId: 5,
+    lastestMessageIndex: 5,
     latestMessage: undefined,
 };
 
 function directChatId(id: number): DirectChatSummary {
     return {
         ...defaultDirectChat,
-        chatId: BigInt(id),
+        chatId: String(id),
     };
 }
 
@@ -77,7 +77,7 @@ describe("merging chat summaries", () => {
         const incoming = [directChatId(2), directChatId(3), directChatId(4)];
         const merged = mergeChats(existing, incoming);
         [0, 1, 2, 3, 4].forEach((n) =>
-            expect(merged.find((c) => c.chatId === BigInt(n))).not.toBe(undefined)
+            expect(merged.find((c) => c.chatId === String(n))).not.toBe(undefined)
         );
         expect(merged.length).toEqual(5);
     });

@@ -8,12 +8,12 @@ import { testTransition } from "./machine.spec.utils";
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
-    chatId: BigInt(123),
+    chatId: "abcdefg",
     lastUpdated: BigInt(0),
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageId: 5,
+    lastestMessageIndex: 5,
     latestMessage: undefined,
 };
 

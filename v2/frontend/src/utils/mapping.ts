@@ -9,3 +9,8 @@ export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undef
 export function identity<T>(x: T): T {
     return x;
 }
+
+// todo - this maps *any* response to void and should only be used temporarily
+export function toVoid(_x: unknown): void {
+    return;
+}

@@ -11,7 +11,7 @@ import type {
     UsersResponse,
     UserSummary,
 } from "../../domain/user/user";
-import { identity } from "../../utils/mapping";
+import { identity, toVoid } from "../../utils/mapping";
 import { CandidService } from "../candidService";
 import {
     setUsernameResponse,
@@ -64,11 +64,13 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     upgradeUser(): Promise<void> {
-        return this.handleResponse(this.userService.upgrade_canister({}), identity);
+        // todo - these have all sorts of error conditions that we should be handling
+        return this.handleResponse(this.userService.upgrade_canister({}), toVoid);
     }
 
     createCanister(): Promise<void> {
-        return this.handleResponse(this.userService.create_canister({}), identity);
+        // todo - these have all sorts of error conditions that we should be handling
+        return this.handleResponse(this.userService.create_canister({}), toVoid);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

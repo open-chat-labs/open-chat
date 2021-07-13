@@ -4,6 +4,7 @@ import type {
     ApiCyclesContent,
     ApiFileContent,
     ApiGetChatsResponse,
+    ApiGetMessagesResponse,
     ApiMediaContent,
     ApiMessage,
     ApiMessageContent,
@@ -16,6 +17,7 @@ import type {
     CyclesContent,
     FileContent,
     GetChatsResponse,
+    GetMessagesResponse,
     MediaContent,
     Message,
     MessageContent,
@@ -23,6 +25,19 @@ import type {
     TextContent,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+
+export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessagesResponse {
+    if ("Success" in candid) {
+        return {
+            messages: candid.Success.messages.map(message),
+            lastestMessageIndex: candid.Success.latest_message_index,
+        };
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
+}
 
 export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse {
     if ("Success" in candid) {
@@ -39,26 +54,26 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
         return {
             kind: "group_chat",
             subject: candid.Group.subject,
-            chatId: candid.Group.id,
+            chatId: candid.Group.id.toString(),
             lastUpdated: candid.Group.last_updated,
             displayDate: candid.Group.display_date,
             lastReadByUs: candid.Group.last_read_by_us,
             lastReadByThem: candid.Group.last_read_by_them,
-            lastestMessageId: candid.Group.latest_message_id,
+            lastestMessageIndex: candid.Group.latest_message_index,
             latestMessage: optional(candid.Group.latest_message, message),
-            participants: candid.Group.participants,
+            participants: candid.Group.participants.map((p) => p.toString()),
         };
     }
     if ("Direct" in candid) {
         return {
             kind: "direct_chat",
-            chatId: candid.Direct.id,
-            them: candid.Direct.them,
+            chatId: candid.Direct.id.toString(),
+            them: candid.Direct.them.toString(),
             lastUpdated: candid.Direct.last_updated,
             displayDate: candid.Direct.display_date,
             lastReadByUs: candid.Direct.last_read_by_us,
             lastReadByThem: candid.Direct.last_read_by_them,
-            lastestMessageId: candid.Direct.latest_message_id,
+            lastestMessageIndex: candid.Direct.latest_message_index,
             latestMessage: optional(candid.Direct.latest_message, message),
         };
     }
@@ -67,12 +82,12 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
 
 function message(candid: ApiMessage): Message {
     return {
-        id: candid.id,
+        messageId: candid.message_id,
         content: messageContent(candid.content),
-        sender: candid.sender,
+        sender: candid.sender.toString(),
         timestamp: candid.timestamp,
         repliesTo: optional(candid.replies_to, replyContext),
-        clientMessageId: candid.client_message_id,
+        messageIndex: candid.message_index,
     };
 }
 
@@ -139,9 +154,22 @@ function blobReference(candid: ApiBlobReference): BlobReference {
 }
 
 function replyContext(candid: ApiReplyContext): ReplyContext {
-    return {
-        content: messageContent(candid.content),
-        userId: candid.user_id,
-        messageId: candid.message_id,
-    };
+    if ("Private" in candid) {
+        return {
+            kind: "private_reply_context",
+            chatId: candid.Private.chat_id.toString(),
+            messageIndex: candid.Private.message_index,
+        };
+    }
+
+    if ("Standard" in candid) {
+        return {
+            kind: "standard_reply_context",
+            content: messageContent(candid.Standard.content),
+            sentByMe: candid.Standard.sent_by_me,
+            messageIndex: candid.Standard.message_index,
+        };
+    }
+
+    throw new Error(`Unexpected ReplyContext received: ${candid}`);
 }

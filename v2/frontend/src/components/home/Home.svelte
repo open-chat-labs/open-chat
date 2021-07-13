@@ -14,7 +14,7 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
-    import { elasticInOut, sineIn, sineInOut } from "svelte/easing";
+    import { sineInOut } from "svelte/easing";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
 
@@ -39,7 +39,7 @@
                     replace("/");
                 } else {
                     // otherwise tell the machine to load messages for this chat
-                    machine.send({ type: "SELECT_CHAT", data: BigInt(params.chatId) });
+                    machine.send({ type: "SELECT_CHAT", data: params.chatId });
                 }
             }
 
@@ -70,7 +70,7 @@
         console.log("select participant");
     }
 
-    function leaveGroup(ev: CustomEvent<bigint>) {
+    function leaveGroup(ev: CustomEvent<string>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
     }
 

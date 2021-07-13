@@ -48,7 +48,10 @@ export function userIdsFromChatSummaries(
     }, new Set<string>());
 }
 
-export function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
+export function getUnreadMessages({
+    lastestMessageIndex: lastestMessageId,
+    lastReadByUs,
+}: ChatSummary): number {
     return lastestMessageId - lastReadByUs;
 }
 

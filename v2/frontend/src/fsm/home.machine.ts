@@ -37,12 +37,12 @@ export interface HomeContext {
 }
 
 export type HomeEvents =
-    | { type: "SELECT_CHAT"; data: bigint }
+    | { type: "SELECT_CHAT"; data: string }
     | { type: "NEW_CHAT" }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
-    | { type: "LEAVE_GROUP"; data: bigint }
+    | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getChats"; data: ChatsResponse }
     | { type: "error.platform.getChats"; data: Error }
@@ -305,12 +305,12 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 const dummyChat: DirectChatSummary = {
                                     kind: "direct_chat",
                                     them: ev.data.userId,
-                                    chatId: BigInt(ctx.chatSummaries.length + 1),
+                                    chatId: String(ctx.chatSummaries.length + 1),
                                     lastUpdated: BigInt(+new Date()),
                                     displayDate: BigInt(+new Date()),
                                     lastReadByUs: 0,
                                     lastReadByThem: 0,
-                                    lastestMessageId: 0,
+                                    lastestMessageIndex: 0,
                                     latestMessage: undefined,
                                 };
                                 // todo - if we want to select this chat, we actually want to
