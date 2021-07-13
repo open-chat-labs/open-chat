@@ -55,8 +55,6 @@ fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response 
             content: args.content.clone(),
             replies_to: args.replies_to.clone(),
             now: runtime_state.env.now(),
-            my_user_id: runtime_state.env.owner_user_id(),
-            their_user_id: args.recipient,
         };
 
         let result = push_message(args.recipient, push_message_args, runtime_state);
@@ -123,8 +121,6 @@ mod c2c {
             content: args.content,
             replies_to: args.replies_to,
             now: runtime_state.env.now(),
-            my_user_id: runtime_state.env.owner_user_id(),
-            their_user_id: sender_user_id,
         };
 
         let _ = push_message(sender_user_id, push_message_args, runtime_state);
