@@ -7,6 +7,23 @@ use ic_cdk_macros::query;
 use serde::Deserialize;
 use shared::types::MessageIndex;
 
+#[derive(Deserialize)]
+struct Args {
+    from_index: MessageIndex,
+    to_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    NotAuthorised,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    messages: Vec<Message>,
+}
+
 #[query]
 fn messages(args: Args) -> Response {
     RUNTIME_STATE.with(|state| messages_impl(args, state.borrow().as_ref().unwrap()))
@@ -26,21 +43,4 @@ fn messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     } else {
         NotAuthorised
     }
-}
-
-#[derive(Deserialize)]
-pub struct Args {
-    from_index: MessageIndex,
-    to_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success(SuccessResult),
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-pub struct SuccessResult {
-    messages: Vec<Message>,
 }

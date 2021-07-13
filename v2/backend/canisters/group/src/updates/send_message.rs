@@ -10,6 +10,25 @@ use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex};
 
+#[derive(Deserialize)]
+struct Args {
+    message_id: MessageId,
+    content: MessageContent,
+    replies_to: Option<ReplyContextInternal>,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    NotInGroup,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    message_index: MessageIndex,
+    timestamp: TimestampMillis,
+}
+
 #[update]
 fn send_message(args: Args) -> Response {
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
@@ -37,23 +56,4 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     } else {
         NotInGroup
     }
-}
-
-#[derive(Deserialize)]
-struct Args {
-    message_id: MessageId,
-    content: MessageContent,
-    replies_to: Option<ReplyContextInternal>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NotInGroup,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    message_index: MessageIndex,
-    timestamp: TimestampMillis,
 }

@@ -7,6 +7,18 @@ use serde::Deserialize;
 use shared::types::MessageIndex;
 use std::cmp::min;
 
+#[derive(Deserialize)]
+struct Args {
+    up_to_message_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success,
+    SuccessNoChange,
+    NotInChat,
+}
+
 #[update]
 fn mark_read(args: Args) -> Response {
     RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
@@ -31,16 +43,4 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     } else {
         NotInChat
     }
-}
-
-#[derive(Deserialize)]
-struct Args {
-    up_to_message_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-    SuccessNoChange,
-    NotInChat,
 }
