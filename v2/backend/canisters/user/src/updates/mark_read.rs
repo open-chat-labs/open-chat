@@ -81,7 +81,7 @@ mod c2c {
 
     #[update]
     fn handle_mark_read(args: c2c::Args) -> c2c::Response {
-        RUNTIME_STATE.with(|state| c2c::handle_mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
+        RUNTIME_STATE.with(|state| handle_mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
     }
 
     fn handle_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

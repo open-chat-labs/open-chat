@@ -5,8 +5,10 @@
 type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
+type DirectChatId = principal;
 type GroupId = CanisterId;
-type ChatId = nat;
+type MessageIndex = nat32;
+type MessageId = nat;
 
 type TextContent =
     record {
@@ -53,17 +55,30 @@ type MessageContent =
         Cycles: CyclesContent;
     };
 
-type ReplyContext =
+type PrivateReplyDetails =
     record {
+        group_chat_id: GroupId;
         user_id: UserId;
-        message_id: nat;
         content: MessageContent;
+    };
+
+type ReplyContext =
+    variant {
+        Standard: record {
+            message_index: MessageIndex;
+            sent_by_me: bool;
+            content: MessageContent;
+        };
+        Private: record {
+            chat_id: GroupId;
+            message_index: MessageIndex;
+        };
     };
 
 type Message =
     record {
-        message_index: nat32;
-        message_id: nat;
+        message_index: MessageIndex;
+        message_id: MessageId;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
@@ -78,43 +93,49 @@ type ChatSummary =
 
 type DirectChatSummary =
     record {
-        id: ChatId;
+        id: DirectChatId;
         them: UserId;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
-        last_read_by_us: nat32;
-        last_read_by_them: nat32;
-        latest_message_index: nat32;
+        last_read_by_us: MessageIndex;
+        last_read_by_them: MessageIndex;
+        latest_message_index: MessageIndex;
         latest_message: opt Message;
     };
 
 type GroupChatSummary =
     record {
-        id: ChatId;
+        id: GroupId;
         subject: text;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
-        min_visible_message_index: nat32;
+        min_visible_message_index: MessageIndex;
         participants: vec UserId;
-        last_read_by_us: nat32;
-        last_read_by_them: nat32;
-        latest_message_index: nat32;
+        last_read_by_us: MessageIndex;
+        last_read_by_them: MessageIndex;
+        latest_message_index: MessageIndex;
         latest_message: opt Message;
+    };
+
+type ReplyContextArgs =
+    record {
+        chat_id_if_other: opt GroupId;
+        message_index: MessageIndex;
     };
 
 type SendMessageArgs =
     record {
         recipient: UserId;
-        message_id: text;
+        message_id: MessageId;
         content: MessageContent;
-        replies_to: opt ReplyContext;
+        replies_to: opt ReplyContextArgs;
     };
 
 type SendMessageResponse =
     variant {
         Success: record {
             chat_summary: ChatSummary;
-            message_index: nat32;
+            message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;
@@ -128,7 +149,7 @@ type SendMessageResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        up_to_message_index: nat32;
+        up_to_message_index: MessageIndex;
     };
 
 type MarkReadResponse =
@@ -196,7 +217,7 @@ type CreateGroupResponse =
 type HandleMessageArgs =
     record {
         sender: UserId;
-        message_id: nat;
+        message_id: MessageId;
         content: MessageContent;
         replies_to: opt ReplyContext;
     };
@@ -284,14 +305,14 @@ type GetChatsResponse =
 type GetMessagesArgs =
     record {
         user_id: UserId;
-        from_index: nat32;
-        to_index: nat32;
+        from_index: MessageIndex;
+        to_index: MessageIndex;
     };
 
 type GetMessagesSuccess =
     record {
         messages: vec Message;
-        latest_message_index: nat32;
+        latest_message_index: MessageIndex;
     };
 
 type GetMessagesResponse =
@@ -303,7 +324,7 @@ type GetMessagesResponse =
 type GetMessagesByIndexArgs =
     record {
         user_id: UserId;
-        messages: vec nat32;
+        messages: vec MessageIndex;
     };
 
 type GetMessagesByIndexResponse =

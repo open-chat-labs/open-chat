@@ -1,4 +1,4 @@
-import type { Principal } from '@dfinity/agent';
+import type { Principal } from '@dfinity/principal';
 export type AddParticipantsArgs = {};
 export type AddParticipantsResponse = { 'Success' : null };
 export interface BlobReference {
@@ -6,7 +6,7 @@ export interface BlobReference {
   'blob_id' : string,
   'canister_id' : CanisterId,
   'chunk_size' : number,
-};
+}
 export type BlockUserArgs = {};
 export type BlockUserResponse = { 'Success' : null };
 export type CanisterId = Principal;
@@ -15,8 +15,8 @@ export interface FileContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
-};
-export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number };
+}
+export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number }
 export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
 export type GetGroupArgs = {};
@@ -27,21 +27,24 @@ export type GetGroupResponse = {
       'last_updated' : TimestampMillis,
       'display_date' : TimestampMillis,
       'latest_messages' : Array<Message>,
-      'min_visible_message_index' : number,
-      'unread_by_me_message_id_ranges' : Array<Array<number>>,
-      'unread_by_any_message_id_ranges' : Array<Array<number>>,
+      'min_visible_message_index' : MessageIndex,
+      'unread_by_me_message_id_ranges' : Array<Array<MessageIndex>>,
+      'unread_by_any_message_id_ranges' : Array<Array<MessageIndex>>,
     }
   };
-export interface GetMessagesArgs { 'to_index' : number, 'from_index' : number };
-export interface GetMessagesByIndexArgs { 'messages' : Array<number> };
+export interface GetMessagesArgs {
+  'to_index' : MessageIndex,
+  'from_index' : MessageIndex,
+}
+export interface GetMessagesByIndexArgs { 'messages' : Array<MessageIndex> }
 export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export type GetMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesSuccess };
 export interface GetMessagesSuccess {
   'messages' : Array<Message>,
-  'latest_message_index' : number,
-};
+  'latest_message_index' : MessageIndex,
+}
 export type GroupId = CanisterId;
 export type InviteUsersArgs = {};
 export type InviteUsersResponse = { 'Success' : null };
@@ -51,8 +54,9 @@ export type LeaveGroupArgs = {};
 export type LeaveGroupResponse = { 'Success' : null };
 export type MakeAdminArgs = {};
 export type MakeAdminResponse = { 'Success' : null };
-export interface MarkReadArgs { 'up_to_message_index' : number };
-export type MarkReadResponse = { 'Success' : null } |
+export interface MarkReadArgs { 'up_to_message_index' : MessageIndex }
+export type MarkReadResponse = { 'SuccessNoChange' : null } |
+  { 'Success' : null } |
   { 'NotInGroup' : null };
 export interface MediaContent {
   'height' : number,
@@ -61,18 +65,20 @@ export interface MediaContent {
   'thumbnail_data' : string,
   'caption' : [] | [string],
   'width' : number,
-};
+}
 export interface Message {
   'content' : MessageContent,
   'sender' : UserId,
   'timestamp' : TimestampMillis,
-  'message_id' : bigint,
+  'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
-  'message_index' : number,
-};
+  'message_index' : MessageIndex,
+}
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Media' : MediaContent };
+export type MessageId = bigint;
+export type MessageIndex = number;
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -86,12 +92,12 @@ export interface MetricsResponse {
   'text_message_count' : bigint,
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
-};
+}
 export interface PutChunkArgs {
   'blob_id' : bigint,
   'bytes' : Array<number>,
   'index' : number,
-};
+}
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null };
 export type RemoveAdminArgs = {};
@@ -101,33 +107,34 @@ export type RemoveParticipantsResponse = { 'Success' : null };
 export interface ReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
-  'message_id' : bigint,
-};
+  'message_id' : MessageId,
+}
+export interface ReplyContextArgs { 'message_id' : MessageId }
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
-};
+}
 export type SearchMessagesResponse = {
     'Success' : { 'matches' : Array<{ 'score' : number, 'message' : Message }> }
   } |
   { 'Failure' : null };
 export interface SendMessageArgs {
   'content' : MessageContent,
-  'message_id' : bigint,
-  'replies_to' : [] | [ReplyContext],
-};
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContextArgs],
+}
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
-      'message_id' : number,
       'chat_summary' : {
         'last_updated' : TimestampMillis,
         'display_date' : TimestampMillis,
-        'min_visible_message_index' : number,
+        'min_visible_message_index' : MessageIndex,
         'unread_by_me_message_id_ranges' : Array<Array<number>>,
         'unread_by_any_message_id_ranges' : Array<Array<number>>,
       },
+      'message_index' : MessageIndex,
     }
   } |
   { 'RecipientBlocked' : null } |
@@ -135,19 +142,16 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
   { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
-export interface SetAvatarArgs {
-  'mime_type' : string,
-  'bytes' : Array<number>,
-};
+export interface SetAvatarArgs { 'mime_type' : string, 'bytes' : Array<number> }
 export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'FileTooBig' : number } |
   { 'Success' : null };
-export interface TextContent { 'text' : string };
+export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type UnblockUserArgs = {};
 export type UnblockUserResponse = { 'Success' : null };
 export type UserId = CanisterId;
-export default interface _SERVICE {
+export interface _SERVICE {
   'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
       AddParticipantsResponse
     >,
@@ -175,4 +179,4 @@ export default interface _SERVICE {
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
-};
+}

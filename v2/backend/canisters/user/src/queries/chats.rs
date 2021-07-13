@@ -51,7 +51,7 @@ fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 ChatSummary::Direct(DirectChatSummary {
                     chat_id: c.chat_id,
                     them: c.them,
-                    latest_message: c.messages.last().unwrap().clone(),
+                    latest_message: c.messages.hydrate_message(c.messages.last().unwrap()),
                     date_created: c.date_created,
                 })
             })
