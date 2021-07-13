@@ -59,14 +59,14 @@ fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response 
             their_user_id: args.recipient,
         };
 
-        let result = append_message(args.recipient, push_message_args, runtime_state);
+        let result = push_message(args.recipient, push_message_args, runtime_state);
         Success(result)
     } else {
         NotAuthorised
     }
 }
 
-fn append_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> SuccessResult {
+fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> SuccessResult {
     let now = runtime_state.env.now();
     let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &their_user_id));
 
@@ -117,7 +117,7 @@ mod c2c {
         // TODO validate that this request came from an OpenChat canister
         let sender_user_id = runtime_state.env.caller().into();
 
-        let append_message_args = PushMessageArgs {
+        let push_message_args = PushMessageArgs {
             message_id: args.message_id,
             sent_by_me: false,
             content: args.content,
@@ -127,7 +127,7 @@ mod c2c {
             their_user_id: sender_user_id,
         };
 
-        let _ = append_message(sender_user_id, append_message_args, runtime_state);
+        let _ = push_message(sender_user_id, push_message_args, runtime_state);
 
         Response::Success
     }
