@@ -5,7 +5,8 @@ use shared::time::TimestampMillis;
 #[derive(Default)]
 pub struct Data {
     pub is_public: bool,
-    pub subject: String,
+    pub name: String,
+    pub description: Option<String>,
     pub participants: Participants,
     pub messages: Messages,
     pub date_created: TimestampMillis,
