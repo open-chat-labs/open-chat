@@ -7,7 +7,7 @@
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import type { ActorRefFrom } from "xstate";
     import type { UserSearchMachine } from "../fsm/userSearch.machine";
     export let machine: ActorRefFrom<UserSearchMachine>;
@@ -15,7 +15,9 @@
     let inp: HTMLInputElement;
     let timer: NodeJS.Timeout | undefined = undefined;
     onMount(() => {
-        inp.focus();
+        // this focus seems to cause a problem with the animation of the right panel without
+        // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
+        setTimeout(() => inp.focus(), 300);
     });
 
     /**

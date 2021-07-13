@@ -19,8 +19,8 @@ export type UserSearchEvents =
     | { type: "ON_INPUT"; data: string }
     | { type: "CLEAR" }
     | { type: "SELECT_USER"; data: UserSummary }
-    | { type: "done.invoke.userSearch"; data: UserSummary[] }
-    | { type: "error.platform.userSearch"; data: Error };
+    | { type: "done.invoke.usersSearch"; data: UserSummary[] }
+    | { type: "error.platform.usersSearch"; data: Error };
 
 const liveConfig: Partial<MachineOptions<UserSearchContext, UserSearchEvents>> = {
     guards: {},

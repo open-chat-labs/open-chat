@@ -14,6 +14,7 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
+    import { elasticInOut, sineIn, sineInOut } from "svelte/easing";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
 
@@ -88,6 +89,8 @@
     $: selectedChatActor = actorKey ? $machine.context.chatsIndex[actorKey] : undefined;
 
     $: x = $rtlStore ? -300 : 300;
+
+    $: showRight = selectedChatActor && $selectedChatActor.matches("showing_participants");
 </script>
 
 {#if $machine.context.user}
@@ -110,9 +113,12 @@
 {/if}
 
 {#if selectedChatActor !== undefined}
-    <Overlay active={$selectedChatActor.matches("showing_participants")}>
-        {#if $selectedChatActor.matches("showing_participants") && groupChat !== undefined}
-            <div transition:fly={{ x, duration: 200 }} class="right-wrapper" class:rtl={$rtlStore}>
+    <Overlay active={showRight === true}>
+        {#if showRight === true && groupChat !== undefined}
+            <div
+                transition:fly={{ x, duration: 200, easing: sineInOut }}
+                class="right-wrapper"
+                class:rtl={$rtlStore}>
                 <RightPanel
                     machine={selectedChatActor}
                     on:selectParticipant={selectParticipant}

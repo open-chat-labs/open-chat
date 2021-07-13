@@ -18,7 +18,7 @@ import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
-import { push } from "svelte-spa-router";
+// import { push } from "svelte-spa-router";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
@@ -241,6 +241,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 serviceContainer: ctx.serviceContainer!,
                                                 chatSummary,
                                                 userLookup: ctx.userLookup,
+                                                messages: [],
                                                 user: ctx.user
                                                     ? {
                                                           userId: ctx.user.userId,
@@ -314,7 +315,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 };
                                 // todo - if we want to select this chat, we actually want to
                                 // push its id into the route
-                                push(`/${dummyChat.chatId}`);
+                                // todo - got to come back to this as it makes jest blow up
+                                // push(`/${dummyChat.chatId}`);
                                 return {
                                     chatSummaries: [dummyChat, ...ctx.chatSummaries],
                                     userLookup: {

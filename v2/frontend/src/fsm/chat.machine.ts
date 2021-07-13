@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, log } from "xstate/lib/actions";
+import { assign, escalate, log } from "xstate/lib/actions";
 import type { ChatSummary } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -14,13 +14,14 @@ export interface ChatContext {
     userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
+    messages: unknown[];
 }
 
 type LoadMessagesResponse = { userLookup: UserLookup; messages: unknown[] };
 
 export type ChatEvents =
-    | { type: "done.invoke.loadMessages"; data: LoadMessagesResponse }
-    | { type: "error.platform.loadMessages"; data: Error }
+    | { type: "done.invoke.loadMessagesAndUsers"; data: LoadMessagesResponse }
+    | { type: "error.platform.loadMessagesAndUsers"; data: Error }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CANCEL_ADD_PARTICIPANT" }
@@ -120,6 +121,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
         },
         showing_participants: {
             entry: log("entering showing_particitants"),
+            initial: "idle",
             on: {
                 HIDE_PARTICIPANTS: "loaded_messages",
                 REMOVE_PARTICIPANT: ".removing_participant",
@@ -129,16 +131,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             states: {
                 idle: {},
                 adding_participant: {
-                    initial: "in_progress",
                     on: {
                         CANCEL_ADD_PARTICIPANT: "idle",
                         "error.platform.userSearchMachine": "..unexpected_error",
-                    },
-                    states: {
-                        in_progress: {},
-                        unexpected_error: {
-                            entry: log("in the error state"),
-                        },
                     },
                     invoke: {
                         id: "userSearchMachine",
@@ -176,7 +171,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         },
                         onError: {
                             internal: true,
-                            target: ".unexpected_error",
+                            target: "..unexpected_error",
                             actions: [
                                 assign({
                                     error: (_, { data }) => data,
@@ -224,10 +219,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             target: "idle",
                         },
                         onError: {
-                            target: "..unexpected_error",
-                            actions: assign({
-                                error: (_, { data }) => data,
-                            }),
+                            // todo - need to make sure that this actually works - I'm not sure it does
+                            actions: escalate((_, { data }) => data),
                         },
                     },
                 },

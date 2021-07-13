@@ -25,7 +25,7 @@
 
         &.middle {
             width: 100%;
-            padding-left: calc(#{$left-width});
+            padding-left: calc(#{$left-width + $sp3});
             &.rtl {
                 padding-right: calc(#{$left-width});
                 padding-left: $sp3;
@@ -63,6 +63,7 @@
                     }
                 }
             }
+            // background: rgba(255, 255, 255, 0.03);
         }
 
         &.right {
