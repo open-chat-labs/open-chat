@@ -11,7 +11,7 @@ import type {
     UsersResponse,
     UserSummary,
 } from "../../domain/user/user";
-import { identity, toVoid } from "../../utils/mapping";
+import { toVoid } from "../../utils/mapping";
 import { CandidService } from "../candidService";
 import {
     setUsernameResponse,
