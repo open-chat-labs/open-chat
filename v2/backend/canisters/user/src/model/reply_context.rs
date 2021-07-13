@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::types::chat_id::GroupChatId;
 use shared::types::message_content::MessageContent;
-use shared::types::{MessageIndex, UserId};
+use shared::types::MessageIndex;
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct ReplyContextInternal {
@@ -11,9 +11,20 @@ pub struct ReplyContextInternal {
 }
 
 #[derive(CandidType)]
-pub struct ReplyContext {
-    pub chat_id_if_other: Option<GroupChatId>,
+pub enum ReplyContext {
+    Standard(StandardReplyContext),
+    Private(PrivateReplyContext),
+}
+
+#[derive(CandidType)]
+pub struct StandardReplyContext {
     pub message_index: MessageIndex,
-    pub user_id: UserId,
+    pub sent_by_me: bool,
     pub content: MessageContent,
+}
+
+#[derive(CandidType)]
+pub struct PrivateReplyContext {
+    pub chat_id: GroupChatId,
+    pub message_index: MessageIndex,
 }

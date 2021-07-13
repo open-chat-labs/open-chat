@@ -23,7 +23,7 @@ fn messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .messages
                 .get_range(args.from_index, args.to_index)
                 .into_iter()
-                .map(|m| chat.messages.hydrate_message(m, &my_user_id, &their_user_id))
+                .map(|m| chat.messages.hydrate_message(m))
                 .collect();
 
             Success(SuccessResult { messages })

@@ -1,5 +1,5 @@
 use crate::model::message::{Message, MessageInternal};
-use crate::model::reply_context::{ReplyContext, ReplyContextInternal};
+use crate::model::reply_context::{PrivateReplyContext, ReplyContext, ReplyContextInternal, StandardReplyContext};
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex, UserId};
@@ -48,18 +48,14 @@ impl Messages {
         self.messages.get(index)
     }
 
-    pub fn hydrate_message(&self, message: &MessageInternal, my_user_id: &UserId, their_user_id: &UserId) -> Message {
+    pub fn hydrate_message(&self, message: &MessageInternal) -> Message {
         Message {
             message_index: message.message_index,
             message_id: message.message_id,
             timestamp: message.timestamp,
             sent_by_me: message.sent_by_me,
             content: message.content.clone(),
-            replies_to: message
-                .replies_to
-                .as_ref()
-                .map(|i| self.hydrate_reply_context(i, *my_user_id, *their_user_id))
-                .flatten(),
+            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
         }
     }
 
@@ -114,20 +110,19 @@ impl Messages {
             .incr()
     }
 
-    fn hydrate_reply_context(
-        &self,
-        reply_context: &ReplyContextInternal,
-        my_user_id: UserId,
-        their_user_id: UserId,
-    ) -> Option<ReplyContext> {
-        if reply_context.chat_id_if_other.is_some() {
-            None
+    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
+        if let Some(chat_id) = reply_context.chat_id_if_other {
+            Some(ReplyContext::Private(PrivateReplyContext {
+                chat_id,
+                message_index: reply_context.message_index,
+            }))
         } else {
-            self.get(reply_context.message_index).map(|m| ReplyContext {
-                chat_id_if_other: None,
-                message_index: m.message_index,
-                user_id: if m.sent_by_me { my_user_id } else { their_user_id },
-                content: m.content.clone(),
+            self.get(reply_context.message_index).map(|m| {
+                ReplyContext::Standard(StandardReplyContext {
+                    message_index: m.message_index,
+                    sent_by_me: m.sent_by_me,
+                    content: m.content.clone(),
+                })
             })
         }
     }

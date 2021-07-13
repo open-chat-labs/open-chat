@@ -5,6 +5,7 @@
 type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
+type DirectChatId = principal;
 type GroupId = CanisterId;
 type MessageIndex = nat32;
 type MessageId = nat;
@@ -62,11 +63,16 @@ type PrivateReplyDetails =
     };
 
 type ReplyContext =
-    record {
-        chat_id_if_other: opt GroupId;
-        message_index: MessageIndex;
-        user_id: UserId;
-        content: MessageContent;
+    variant {
+        Standard: record {
+            message_index: MessageIndex;
+            sent_by_me: bool;
+            content: MessageContent;
+        };
+        Private: record {
+            chat_id: GroupId;
+            message_index: MessageIndex;
+        };
     };
 
 type Message =
@@ -87,7 +93,7 @@ type ChatSummary =
 
 type DirectChatSummary =
     record {
-        id: ChatId;
+        id: DirectChatId;
         them: UserId;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
@@ -99,7 +105,7 @@ type DirectChatSummary =
 
 type GroupChatSummary =
     record {
-        id: ChatId;
+        id: GroupId;
         subject: text;
         display_date: TimestampMillis;
         last_updated: TimestampMillis;
