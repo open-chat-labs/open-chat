@@ -10,18 +10,18 @@ use serde::Deserialize;
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     search_term: String,
     max_results: u8,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(Result),
 }
 
 #[derive(CandidType)]
-pub struct Result {
+struct Result {
     users: Vec<UserSummary>,
 }
 
@@ -214,6 +214,7 @@ mod tests {
                 date_created: env.now,
                 date_updated: env.now,
                 last_online: env.now,
+                ..Default::default()
             }));
             env.now += 1000;
         }

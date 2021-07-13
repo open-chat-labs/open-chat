@@ -1,7 +1,9 @@
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::user_map::UserMap;
+use crate::model::user_wasm::UserWasm;
 use candid::Principal;
 use phonenumber::PhoneNumber;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 
 pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
@@ -9,20 +11,23 @@ pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 #[derive(Default)]
 pub struct Data {
     pub users: UserMap,
+    pub service_principals: HashSet<Principal>,
+    pub user_wasm: UserWasm,
+    pub sms_service_principals: HashSet<Principal>,
     pub sms_queue: VecDeque<ConfirmationCodeSms>,
-    pub sms_service_principals: Vec<Principal>,
-
-    // Don't forget #[serde(with = "serde_bytes")]
-    pub user_wasm_module: Vec<u8>,
 }
 
 impl Data {
-    pub fn new(sms_service_principals: Vec<Principal>, user_wasm_module: Vec<u8>) -> Self {
+    pub fn new(service_principals: Vec<Principal>, sms_service_principals: Vec<Principal>, user_wasm_module: Vec<u8>) -> Self {
         Data {
             users: UserMap::default(),
+            service_principals: service_principals.into_iter().collect(),
+            user_wasm: UserWasm {
+                module: user_wasm_module,
+                version: semver::Version::new(0, 0, 0),
+            },
+            sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_queue: VecDeque::default(),
-            sms_service_principals,
-            user_wasm_module,
         }
     }
 }

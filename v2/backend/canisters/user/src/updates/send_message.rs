@@ -12,10 +12,31 @@ use shared::types::message_content::MessageContent;
 use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
+#[derive(Deserialize)]
+struct Args {
+    message_id: MessageId,
+    recipient: UserId,
+    content: MessageContent,
+    replies_to: Option<ReplyContextInternal>,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    NotAuthorised,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    message_index: MessageIndex,
+    timestamp: TimestampMillis,
+}
+
 #[update]
 async fn send_message(args: Args) -> Response {
     let response = RUNTIME_STATE.with(|state| send_message_impl(&args, state.borrow_mut().as_mut().unwrap()));
 
+    // Now call "handle_message_received" on the recipient's canister
     if matches!(response, Response::Success(_)) {
         let (canister_id, send_message_c2c_args) = args.into();
         if let Err(e) = c2c::call(canister_id, send_message_c2c_args).await {
@@ -62,26 +83,6 @@ fn append_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &
     }
 }
 
-#[derive(Deserialize)]
-struct Args {
-    message_id: MessageId,
-    recipient: UserId,
-    content: MessageContent,
-    replies_to: Option<ReplyContextInternal>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    message_index: MessageIndex,
-    timestamp: TimestampMillis,
-}
-
 mod c2c {
     use super::*;
     use crate::model::reply_context::ReplyContextInternal;
@@ -93,6 +94,18 @@ mod c2c {
             .map_err(|e| e.1)?;
 
         Ok(res)
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub struct Args {
+        message_id: MessageId,
+        content: MessageContent,
+        replies_to: Option<ReplyContextInternal>,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub enum Response {
+        Success,
     }
 
     #[update]
@@ -117,18 +130,6 @@ mod c2c {
         let _ = append_message(sender_user_id, append_message_args, runtime_state);
 
         Response::Success
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        message_id: MessageId,
-        content: MessageContent,
-        replies_to: Option<ReplyContextInternal>,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Response {
-        Success,
     }
 
     impl From<super::Args> for (CanisterId, Args) {

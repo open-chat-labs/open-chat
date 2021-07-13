@@ -4,7 +4,7 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[update]
 fn mark_as_online(_args: Args) {
@@ -39,6 +39,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 10000;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);

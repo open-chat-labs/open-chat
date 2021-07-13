@@ -7,10 +7,25 @@ use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
 use shared::types::{MessageIndex, UserId};
 
+#[derive(Deserialize)]
+struct Args {
+    user_id: UserId,
+    up_to_message_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success,
+    SuccessNoChange,
+    ChatNotFound,
+    NotAuthorised,
+}
+
 #[update]
 async fn mark_read(args: Args) -> Response {
     let response = RUNTIME_STATE.with(|state| mark_read_impl(&args, state.borrow_mut().as_mut().unwrap()));
 
+    // Now call "handle_mark_read" on the recipient's canister
     if matches!(response, Response::Success) {
         let (canister_id, mark_read_c2c_args) = args.into();
         if let Err(e) = c2c::call(canister_id, mark_read_c2c_args).await {
@@ -39,21 +54,7 @@ fn mark_read_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-#[derive(Deserialize)]
-struct Args {
-    user_id: UserId,
-    up_to_message_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-    SuccessNoChange,
-    ChatNotFound,
-    NotAuthorised,
-}
-
-pub mod c2c {
+mod c2c {
     use super::*;
     use crate::model::runtime_state::RuntimeState;
     use shared::types::{CanisterId, MessageIndex};
@@ -66,8 +67,20 @@ pub mod c2c {
         Ok(res)
     }
 
+    #[derive(CandidType, Deserialize)]
+    pub struct Args {
+        up_to_message_index: MessageIndex,
+    }
+
+    #[derive(CandidType, Deserialize)]
+    pub enum Response {
+        Success,
+        SuccessNoChange,
+        ChatNotFound,
+    }
+
     #[update]
-    fn handle_mark_read(args: Args) -> Response {
+    fn handle_mark_read(args: c2c::Args) -> c2c::Response {
         RUNTIME_STATE.with(|state| handle_mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
     }
 
@@ -85,18 +98,6 @@ pub mod c2c {
         } else {
             Response::ChatNotFound
         }
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        up_to_message_index: MessageIndex,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Response {
-        Success,
-        SuccessNoChange,
-        ChatNotFound,
     }
 
     impl From<super::Args> for (CanisterId, Args) {

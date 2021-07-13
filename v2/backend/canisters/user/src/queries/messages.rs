@@ -8,6 +8,25 @@ use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
 use shared::types::{MessageIndex, UserId};
 
+#[derive(Deserialize)]
+struct Args {
+    user_id: UserId,
+    from_index: MessageIndex,
+    to_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    ChatNotFound,
+    NotAuthorised,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    messages: Vec<Message>,
+}
+
 #[query]
 fn messages(args: Args) -> Response {
     RUNTIME_STATE.with(|state| messages_impl(args, state.borrow().as_ref().unwrap()))
@@ -33,23 +52,4 @@ fn messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     } else {
         NotAuthorised
     }
-}
-
-#[derive(Deserialize)]
-struct Args {
-    user_id: UserId,
-    from_index: MessageIndex,
-    to_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    ChatNotFound,
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    messages: Vec<Message>,
 }

@@ -7,10 +7,10 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     AlreadyClaimed,
     UserNotFound,

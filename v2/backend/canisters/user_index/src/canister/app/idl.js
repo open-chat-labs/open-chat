@@ -1,4 +1,9 @@
 export default ({ IDL }) => {
+  const InitArgs = IDL.Record({
+    'user_wasm_module' : IDL.Vec(IDL.Nat8),
+    'sms_service_principals' : IDL.Vec(IDL.Principal),
+    'service_principals' : IDL.Vec(IDL.Principal),
+  });
   const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
   const ConfirmPhoneNumberResponse = IDL.Variant({
     'AlreadyClaimed' : IDL.Null,
@@ -8,12 +13,20 @@ export default ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   const CreateCanisterArgs = IDL.Record({});
+  const CanisterId = IDL.Principal;
+  const CreateCanisterResponse = IDL.Variant({
+    'UserAlreadyCreated' : IDL.Null,
+    'Success' : CanisterId,
+    'CreationInProgress' : IDL.Null,
+    'InternalError' : IDL.Null,
+    'UserUnconfirmed' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
   const CurrentUserArgs = IDL.Record({});
   const PhoneNumber = IDL.Record({
     'country_code' : IDL.Nat16,
     'number' : IDL.Text,
   });
-  const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const CurrentUserResponse = IDL.Variant({
     'UpgradeInProgress' : IDL.Null,
@@ -103,10 +116,24 @@ export default ({ IDL }) => {
     'RecipientNotFound' : IDL.Null,
   });
   const UpdateWasmArgs = IDL.Record({
-    'wasm' : IDL.Vec(IDL.Nat8),
+    'user_wasm_module' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
   });
+  const UpdateWasmResponse = IDL.Variant({
+    'ExistingWasmHasHigherVersion' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InvalidVersion' : IDL.Null,
+  });
   const UpgradeCanisterArgs = IDL.Record({});
+  const UpgradeCanisterResponse = IDL.Variant({
+    'UpgradeInProgress' : IDL.Null,
+    'UserNotCreated' : IDL.Null,
+    'Success' : IDL.Null,
+    'UpgradeNotRequired' : IDL.Null,
+    'InternalError' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
   const UserArgs = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : IDL.Opt(UserId),
@@ -136,7 +163,11 @@ export default ({ IDL }) => {
         [ConfirmPhoneNumberResponse],
         [],
       ),
-    'create_canister' : IDL.Func([CreateCanisterArgs], [], []),
+    'create_canister' : IDL.Func(
+        [CreateCanisterArgs],
+        [CreateCanisterResponse],
+        [],
+      ),
     'current_user' : IDL.Func(
         [CurrentUserArgs],
         [CurrentUserResponse],
@@ -158,10 +189,21 @@ export default ({ IDL }) => {
         [TransferCyclesResponse],
         [],
       ),
-    'update_wasm' : IDL.Func([UpdateWasmArgs], [], []),
-    'upgrade_canister' : IDL.Func([UpgradeCanisterArgs], [], []),
+    'update_wasm' : IDL.Func([UpdateWasmArgs], [UpdateWasmResponse], []),
+    'upgrade_canister' : IDL.Func(
+        [UpgradeCanisterArgs],
+        [UpgradeCanisterResponse],
+        [],
+      ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const InitArgs = IDL.Record({
+    'user_wasm_module' : IDL.Vec(IDL.Nat8),
+    'sms_service_principals' : IDL.Vec(IDL.Principal),
+    'service_principals' : IDL.Vec(IDL.Principal),
+  });
+  return [InitArgs];
+};

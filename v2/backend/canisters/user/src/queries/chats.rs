@@ -10,6 +10,23 @@ use shared::time::TimestampMillis;
 use shared::types::chat_id::{DirectChatId, GroupChatId};
 use shared::types::UserId;
 
+#[derive(Deserialize)]
+struct Args {
+    updated_since: Option<TimestampMillis>,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    NotAuthorised,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    chats: Vec<ChatSummary>,
+    timestamp: TimestampMillis,
+}
+
 #[query]
 fn chats(args: Args) -> Response {
     RUNTIME_STATE.with(|state| chats_impl(args, state.borrow().as_ref().unwrap()))
@@ -50,23 +67,6 @@ fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 }
 
-#[derive(Deserialize)]
-struct Args {
-    updated_since: Option<TimestampMillis>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    chats: Vec<ChatSummary>,
-    timestamp: TimestampMillis,
-}
-
 #[allow(dead_code)]
 #[derive(CandidType)]
 enum ChatSummary {
@@ -75,7 +75,7 @@ enum ChatSummary {
 }
 
 impl ChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
+    fn display_date(&self) -> TimestampMillis {
         match self {
             ChatSummary::Direct(d) => d.display_date(),
             ChatSummary::Group(g) => g.display_date(),
@@ -85,28 +85,28 @@ impl ChatSummary {
 
 #[derive(CandidType)]
 struct DirectChatSummary {
-    pub them: UserId,
-    pub chat_id: DirectChatId,
-    pub latest_message: Message,
-    pub date_created: TimestampMillis,
+    them: UserId,
+    chat_id: DirectChatId,
+    latest_message: Message,
+    date_created: TimestampMillis,
 }
 
 impl DirectChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
+    fn display_date(&self) -> TimestampMillis {
         self.latest_message.timestamp
     }
 }
 
 #[derive(CandidType)]
 struct GroupChatSummary {
-    pub name: String,
-    pub chat_id: GroupChatId,
-    pub latest_message: Option<Message>,
-    pub date_added: TimestampMillis,
+    name: String,
+    chat_id: GroupChatId,
+    latest_message: Option<Message>,
+    date_added: TimestampMillis,
 }
 
 impl GroupChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
+    fn display_date(&self) -> TimestampMillis {
         self.latest_message.as_ref().map_or(self.date_added, |m| m.timestamp)
     }
 }
