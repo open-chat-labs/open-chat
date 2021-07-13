@@ -4,7 +4,7 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[update]
 fn mark_as_online(_args: Args) {

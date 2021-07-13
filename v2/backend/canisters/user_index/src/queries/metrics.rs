@@ -11,10 +11,10 @@ const ONLINE_WINDOW_IN_MS: u64 = 2 * 60 * 1000; // 2 minutes
 const ACTIVE_WINDOW_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[derive(CandidType)]
-pub struct Response {
+struct Response {
     unconfirmed_user_count: u64,
     confirmed_user_count: u64,
     created_user_count: u64,

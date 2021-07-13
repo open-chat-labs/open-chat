@@ -6,19 +6,19 @@ use ic_cdk_macros::query;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     from_index: u64,
     max_results: u64,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(SuccessResult),
     Unauthorized,
 }
 
 #[derive(CandidType)]
-pub struct SuccessResult {
+struct SuccessResult {
     messages: Vec<ConfirmationCodeSms>,
 }
 

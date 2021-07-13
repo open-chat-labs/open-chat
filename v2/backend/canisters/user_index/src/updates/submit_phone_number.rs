@@ -10,18 +10,18 @@ use serde::Deserialize;
 use std::str::FromStr;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     phone_number: UnvalidatedPhoneNumber,
 }
 
 #[derive(Deserialize)]
-pub struct UnvalidatedPhoneNumber {
+struct UnvalidatedPhoneNumber {
     country_code: u16,
     number: String,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success,
     AlreadyRegistered,
     AlreadyRegisteredByOther,

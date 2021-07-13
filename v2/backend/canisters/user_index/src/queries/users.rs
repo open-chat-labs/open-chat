@@ -9,18 +9,18 @@ use shared::time::TimestampMillis;
 use shared::types::UserId;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     users: Vec<UserId>,
     updated_since: Option<TimestampMillis>,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     Success(Result),
 }
 
 #[derive(CandidType)]
-pub struct Result {
+struct Result {
     users: Vec<PartialUserSummary>,
     timestamp: TimestampMillis,
 }

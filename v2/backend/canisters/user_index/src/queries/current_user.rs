@@ -8,11 +8,11 @@ use serde::Deserialize;
 use shared::types::UserId;
 
 #[derive(Deserialize)]
-pub struct Args {}
+struct Args {}
 
 #[allow(dead_code)]
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     UserNotFound,
     Unconfirmed(UnconfirmedResult),
     ConfirmedPendingUsername(ConfirmedPendingUsernameResult),
@@ -22,29 +22,29 @@ pub enum Response {
 }
 
 #[derive(CandidType)]
-pub struct PhoneNumber {
+struct PhoneNumber {
     country_code: u16,
     number: String,
 }
 
 #[derive(CandidType)]
-pub struct UnconfirmedResult {
+struct UnconfirmedResult {
     phone_number: PhoneNumber,
 }
 
 #[derive(CandidType)]
-pub struct ConfirmedPendingUsernameResult {
+struct ConfirmedPendingUsernameResult {
     canister_creation_status: CanisterCreationStatus,
 }
 
 #[derive(CandidType)]
-pub struct ConfirmedResult {
+struct ConfirmedResult {
     username: String,
     canister_creation_status: CanisterCreationStatus,
 }
 
 #[derive(CandidType)]
-pub struct CreatedResult {
+struct CreatedResult {
     user_id: UserId,
     username: String,
     account_balance: u128,

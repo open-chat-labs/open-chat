@@ -8,13 +8,13 @@ use serde::Deserialize;
 use shared::types::UserId;
 
 #[derive(Deserialize)]
-pub struct Args {
+struct Args {
     user_id: Option<UserId>,
     username: Option<String>,
 }
 
 #[derive(CandidType)]
-pub enum Response {
+enum Response {
     UserNotFound,
     Success(UserSummary),
 }
