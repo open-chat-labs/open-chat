@@ -1,14 +1,38 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use candid::CandidType;
+use ic_cdk_macros::update;
 use serde::Deserialize;
 
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
 const INVALID_CHARS: [char; 2] = [' ', ','];
 
-pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {
+    username: String,
+}
+
+#[allow(dead_code)]
+#[derive(CandidType)]
+enum Response {
+    Success,
+    UsernameTaken,
+    UserUnconfirmed,
+    UserNotFound,
+    UsernameInvalid,
+    UsernameTooShort(u16),
+    UsernameTooLong(u16),
+}
+
+#[update]
+fn set_username(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| set_username_impl(args, state.borrow_mut().as_mut().unwrap()))
+}
+
+fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     let now = runtime_state.env.now();
 
@@ -46,23 +70,6 @@ pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-#[derive(Deserialize)]
-pub struct Args {
-    username: String,
-}
-
-#[allow(dead_code)]
-#[derive(CandidType)]
-pub enum Response {
-    Success,
-    UsernameTaken,
-    UserUnconfirmed,
-    UserNotFound,
-    UsernameInvalid,
-    UsernameTooShort(u16),
-    UsernameTooLong(u16),
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,13 +92,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "xyz".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state.data.users.get_by_username("xyz").unwrap();
@@ -111,13 +119,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "abc".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
     }
 
@@ -133,6 +142,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
@@ -142,13 +152,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "xyz".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTaken));
     }
 
@@ -168,7 +179,7 @@ mod tests {
         let args = Args {
             username: "abc".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UserUnconfirmed));
     }
 
@@ -184,13 +195,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "a a".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameInvalid));
     }
 
@@ -206,13 +218,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "a".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooShort(2)));
     }
 
@@ -228,13 +241,14 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             username: "abcdefghijklmnopqrstuvwxyz".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooLong(25)));
     }
 }

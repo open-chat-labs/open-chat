@@ -3,7 +3,6 @@ use serde::Deserialize;
 
 pub mod chat_id;
 pub mod message_content;
-pub mod reply_context;
 
 pub type CanisterId = Principal;
 
@@ -14,7 +13,7 @@ pub struct MessageIndex(u32);
 pub struct MessageId(u128);
 
 #[derive(CandidType, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UserId(Principal);
+pub struct UserId(CanisterId);
 
 impl From<Principal> for UserId {
     fn from(principal: Principal) -> Self {
@@ -22,7 +21,7 @@ impl From<Principal> for UserId {
     }
 }
 
-impl From<UserId> for Principal {
+impl From<UserId> for CanisterId {
     fn from(user_id: UserId) -> Self {
         user_id.0
     }

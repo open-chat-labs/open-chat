@@ -1,12 +1,36 @@
 use self::Response::*;
+use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user_summary::PartialUserSummary;
 use candid::CandidType;
+use ic_cdk_macros::query;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
 
-pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {
+    users: Vec<UserId>,
+    updated_since: Option<TimestampMillis>,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(Result),
+}
+
+#[derive(CandidType)]
+struct Result {
+    users: Vec<PartialUserSummary>,
+    timestamp: TimestampMillis,
+}
+
+#[query]
+fn users(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| users_impl(args, state.borrow().as_ref().unwrap()))
+}
+
+fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let updated_since = args.updated_since.unwrap_or(0);
 
@@ -20,23 +44,6 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
         .collect();
 
     Success(Result { users, timestamp: now })
-}
-
-#[derive(Deserialize)]
-pub struct Args {
-    users: Vec<UserId>,
-    updated_since: Option<TimestampMillis>,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success(Result),
-}
-
-#[derive(CandidType)]
-pub struct Result {
-    users: Vec<PartialUserSummary>,
-    timestamp: TimestampMillis,
 }
 
 #[cfg(test)]
@@ -67,6 +74,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -77,6 +85,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -87,6 +96,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);
@@ -96,7 +106,7 @@ mod tests {
             updated_since: None,
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
 
@@ -128,6 +138,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -138,6 +149,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -148,6 +160,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         let now = env.now;
@@ -158,7 +171,7 @@ mod tests {
             updated_since: Some(now - 1500),
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users;
 
@@ -189,6 +202,7 @@ mod tests {
             date_created: start,
             date_updated: start,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -199,6 +213,7 @@ mod tests {
             date_created: start,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         data.users.add(User::Created(CreatedUser {
@@ -209,6 +224,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
+            ..Default::default()
         }));
         env.now += 1000;
         let runtime_state = RuntimeState::new(Box::new(env), data);
@@ -218,7 +234,7 @@ mod tests {
             updated_since: Some(start),
         };
 
-        let Success(result) = query(args, &runtime_state);
+        let Success(result) = users_impl(args, &runtime_state);
 
         let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
 

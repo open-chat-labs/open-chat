@@ -10,4 +10,8 @@ impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
     }
+
+    pub fn is_caller_participant(&self) -> bool {
+        self.data.participants.get_by_principal(&self.env.caller()).is_some()
+    }
 }

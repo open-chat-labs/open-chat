@@ -7,6 +7,12 @@ export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'ConfirmationCodeIncorrect' : null } |
   { 'UserNotFound' : null };
 export type CreateCanisterArgs = {};
+export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
+  { 'Success' : CanisterId } |
+  { 'CreationInProgress' : null } |
+  { 'InternalError' : null } |
+  { 'UserUnconfirmed' : null } |
+  { 'UserNotFound' : null };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = { 'UpgradeInProgress' : null } |
   { 'Unconfirmed' : { 'phone_number' : PhoneNumber } } |
@@ -33,6 +39,11 @@ export type CurrentUserResponse = { 'UpgradeInProgress' : null } |
     }
   } |
   { 'UserNotFound' : null };
+export interface InitArgs {
+  'user_wasm_module' : Array<number>,
+  'sms_service_principals' : Array<Principal>,
+  'service_principals' : Array<Principal>,
+};
 export type MarkAsOnlineArgs = {};
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -84,8 +95,21 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
-export interface UpdateWasmArgs { 'wasm' : Array<number>, 'version' : string };
+export interface UpdateWasmArgs {
+  'user_wasm_module' : Array<number>,
+  'version' : string,
+};
+export type UpdateWasmResponse = { 'ExistingWasmHasHigherVersion' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InvalidVersion' : null };
 export type UpgradeCanisterArgs = {};
+export type UpgradeCanisterResponse = { 'UpgradeInProgress' : null } |
+  { 'UserNotCreated' : null } |
+  { 'Success' : null } |
+  { 'UpgradeNotRequired' : null } |
+  { 'InternalError' : null } |
+  { 'UserNotFound' : null };
 export interface UserArgs {
   'username' : [] | [string],
   'user_id' : [] | [UserId],
@@ -112,7 +136,9 @@ export default interface _SERVICE {
   'confirm_phone_number' : (arg_0: ConfirmPhoneNumberArgs) => Promise<
       ConfirmPhoneNumberResponse
     >,
-  'create_canister' : (arg_0: CreateCanisterArgs) => Promise<undefined>,
+  'create_canister' : (arg_0: CreateCanisterArgs) => Promise<
+      CreateCanisterResponse
+    >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
   'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<undefined>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
@@ -126,8 +152,10 @@ export default interface _SERVICE {
   'transfer_cycles' : (arg_0: TransferCyclesArgs) => Promise<
       TransferCyclesResponse
     >,
-  'update_wasm' : (arg_0: UpdateWasmArgs) => Promise<undefined>,
-  'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<undefined>,
+  'update_wasm' : (arg_0: UpdateWasmArgs) => Promise<UpdateWasmResponse>,
+  'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
+      UpgradeCanisterResponse
+    >,
   'user' : (arg_0: UserArgs) => Promise<UserResponse>,
   'users' : (arg_0: UsersArgs) => Promise<UsersResponse>,
 };

@@ -1,10 +1,27 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::data::append_sms_to_queue;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use candid::CandidType;
+use ic_cdk_macros::update;
 use serde::Deserialize;
 
-pub fn update(runtime_state: &mut RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {}
+
+#[derive(CandidType)]
+enum Response {
+    Success,
+    AlreadyClaimed,
+    UserNotFound,
+}
+
+#[update]
+fn resend_code(_: Args) -> Response {
+    RUNTIME_STATE.with(|state| resend_code_impl(state.borrow_mut().as_mut().unwrap()))
+}
+
+fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
@@ -22,16 +39,6 @@ pub fn update(runtime_state: &mut RuntimeState) -> Response {
     } else {
         Response::UserNotFound
     }
-}
-
-#[derive(Deserialize)]
-pub struct Args {}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success,
-    AlreadyClaimed,
-    UserNotFound,
 }
 
 #[cfg(test)]
@@ -57,7 +64,7 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let result = update(&mut runtime_state);
+        let result = resend_code_impl(&mut runtime_state);
         assert!(matches!(result, Response::Success));
         assert_eq!(runtime_state.data.sms_queue.len(), 1);
     }
@@ -76,7 +83,7 @@ mod tests {
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let result = update(&mut runtime_state);
+        let result = resend_code_impl(&mut runtime_state);
         assert!(matches!(result, Response::AlreadyClaimed));
     }
 
@@ -86,7 +93,7 @@ mod tests {
         let data = Data::default();
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        let result = update(&mut runtime_state);
+        let result = resend_code_impl(&mut runtime_state);
         assert!(matches!(result, Response::UserNotFound));
     }
 }

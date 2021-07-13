@@ -1,11 +1,32 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::data::CONFIRMATION_CODE_EXPIRY_MILLIS;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, ConfirmedUser, User};
 use candid::CandidType;
+use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
 
-pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {
+    confirmation_code: String,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success,
+    ConfirmationCodeIncorrect,
+    ConfirmationCodeExpired,
+    AlreadyClaimed,
+    UserNotFound,
+}
+
+#[update]
+fn confirm_phone_number(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| confirm_phone_number_impl(args, state.borrow_mut().as_mut().unwrap()))
+}
+
+fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
@@ -42,20 +63,6 @@ pub fn update(args: Args, runtime_state: &mut RuntimeState) -> Response {
     Response::Success
 }
 
-#[derive(Deserialize)]
-pub struct Args {
-    confirmation_code: String,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success,
-    ConfirmationCodeIncorrect,
-    ConfirmationCodeExpired,
-    AlreadyClaimed,
-    UserNotFound,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,7 +87,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args { confirmation_code };
-        let result = update(args, &mut runtime_state);
+        let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::Success));
 
         let user = runtime_state
@@ -107,7 +114,7 @@ mod tests {
         let args = Args {
             confirmation_code: "123457".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeIncorrect));
     }
 
@@ -127,7 +134,7 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args { confirmation_code };
-        let result = update(args, &mut runtime_state);
+        let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::ConfirmationCodeExpired));
     }
 
@@ -148,7 +155,7 @@ mod tests {
         let args = Args {
             confirmation_code: "123456".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::AlreadyClaimed));
     }
 
@@ -161,7 +168,7 @@ mod tests {
         let args = Args {
             confirmation_code: "123456".to_string(),
         };
-        let result = update(args, &mut runtime_state);
+        let result = confirm_phone_number_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UserNotFound));
     }
 }

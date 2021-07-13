@@ -1,12 +1,36 @@
+use crate::canister::RUNTIME_STATE;
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
+use ic_cdk_macros::query;
 use serde::Deserialize;
 
-pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
+#[derive(Deserialize)]
+struct Args {
+    from_index: u64,
+    max_results: u64,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success(SuccessResult),
+    Unauthorized,
+}
+
+#[derive(CandidType)]
+struct SuccessResult {
+    messages: Vec<ConfirmationCodeSms>,
+}
+
+#[query]
+fn pending_sms_messages(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| pending_sms_messages_impl(args, state.borrow().as_ref().unwrap()))
+}
+
+fn pending_sms_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if !runtime_state.env.sms_service_principals().contains(&caller) {
+    if !runtime_state.data.sms_service_principals.contains(&caller) {
         return Response::Unauthorized;
     }
 
@@ -23,21 +47,4 @@ pub fn query(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     Response::Success(SuccessResult { messages })
-}
-
-#[derive(Deserialize)]
-pub struct Args {
-    from_index: u64,
-    max_results: u64,
-}
-
-#[derive(CandidType)]
-pub enum Response {
-    Success(SuccessResult),
-    Unauthorized,
-}
-
-#[derive(CandidType)]
-pub struct SuccessResult {
-    messages: Vec<ConfirmationCodeSms>,
 }
