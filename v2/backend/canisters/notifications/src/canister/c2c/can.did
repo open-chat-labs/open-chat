@@ -1,0 +1,92 @@
+type GroupId = CanisterId;
+type MessageIndex = nat32;
+type UserId = CanisterId;
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type BlobReference =
+    record {
+        canister_id: CanisterId;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type MediaContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type MessageContent =
+    variant {
+        Text: TextContent;
+        Media: MediaContent;
+        File: FileContent;
+        Cycles: CyclesContent;
+    };
+
+type PushSubscriptionArgs =
+    record {
+        user_id: UserId,
+        subscription: text,
+    };
+
+type PushSubscriptionResponse =
+    variant {
+        Success;
+    };
+
+type PushDirectMessageNotificationArgs =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        message_index: MessageIndex;
+        content: MessageContent;
+    };
+
+type PushDirectMessageNotificationResponse =
+    variant {
+        Success;
+    };
+
+type PushGroupMessageNotificationArgs =
+    record {
+        chat_id: GroupId;
+        sender: UserId;
+        recipients: vec UserId;
+        message_index: MessageIndex;
+        content: MessageContent;
+    };
+
+type PushGroupMessageNotificationResponse =
+    variant {
+        Success;
+    };
+
+service: {
+    push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
+    push_direct_message_notification: (PushDirectMessageNotificationArgs) -> (PushDirectMessageNotificationResponse);
+    push_group_message_notification: (PushGroupMessageNotificationArgs) -> (PushGroupMessageNotificationResponse);
+}

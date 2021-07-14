@@ -10,4 +10,5 @@ pub struct Participant {
     pub date_added: TimestampMillis,
     pub role: Role,
     pub read_up_to: MessageIndex,
+    pub mute_notifications: bool,
 }

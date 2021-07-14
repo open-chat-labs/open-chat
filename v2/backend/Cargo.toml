@@ -2,6 +2,7 @@
 members = [
     "canisters/group",
     "canisters/group_index",
+    "canisters/notifications",
     "canisters/user",
     "canisters/user_index",
     "shared",
