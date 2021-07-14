@@ -26,10 +26,7 @@ impl Events {
             let start_index = (from_event_index - earliest_event_index) as usize;
             let end_index = min(start_index + (max_events as usize), self.events.len());
 
-            (start_index..end_index)
-                .filter_map(|i| self.events.get(i))
-                .cloned()
-                .collect()
+            (start_index..end_index).filter_map(|i| self.events.get(i)).cloned().collect()
         } else {
             Vec::new()
         }
@@ -54,7 +51,7 @@ impl Events {
             if earliest_event_index <= up_to_event_index {
                 let count_to_remove = (up_to_event_index + 1 - earliest_event_index) as usize;
 
-                return self.events.drain(0..count_to_remove).len() as u32
+                return self.events.drain(0..count_to_remove).len() as u32;
             }
         }
         0
