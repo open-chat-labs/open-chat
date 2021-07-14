@@ -1,14 +1,24 @@
 <script lang="ts">
-    import type { ChatMessage } from "../services/chats";
-    import { rtlStore } from "../stores/rtl";
-    export let msg: ChatMessage;
-    export let me: boolean;
+    import type { Message } from "../../domain/chat/chat";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
+    import { rtlStore } from "../../stores/rtl";
+    import { getContentAsText } from "../../domain/chat/chat.utils";
+
+    export let machine: ActorRefFrom<ChatMachine>;
+    export let msg: Message;
+
+    $: me = $machine.context.user?.userId === msg.sender;
+    $: username = me
+        ? $machine.context.user?.username
+        : $machine.context.userLookup[msg.sender]?.username;
+    $: textContent = getContentAsText(msg.content);
 </script>
 
 <div class="chat-message-wrapper" class:me>
     <div class="chat-message" class:me class:rtl={$rtlStore}>
-        <h4 class="username">{msg.username}</h4>
-        {msg.message}
+        <h4 class="username">{`${username} (${msg.messageIndex})`}</h4>
+        {textContent}
     </div>
 </div>
 

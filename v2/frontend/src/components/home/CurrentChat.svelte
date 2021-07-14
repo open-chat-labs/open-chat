@@ -1,6 +1,5 @@
 <script lang="ts">
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
-    import Loading from "../Loading.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
@@ -29,9 +28,6 @@
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
 
-    {#if $machine.matches("loading_messages")}
-        <Loading />
-    {/if}
     <CurrentChatMessages {machine} />
     <MessageEntry />
 </div>

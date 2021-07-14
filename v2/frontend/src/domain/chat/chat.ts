@@ -91,7 +91,7 @@ type ChatSummaryCommon = {
     displayDate: bigint;
     lastReadByUs: number;
     lastReadByThem: number;
-    lastestMessageIndex: number;
+    latestMessageIndex: number;
     latestMessage?: Message;
 };
 

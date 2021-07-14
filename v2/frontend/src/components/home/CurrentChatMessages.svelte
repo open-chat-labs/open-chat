@@ -1,29 +1,77 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    // import ChatMessage from "./ChatMessage.svelte";
+    import { tick } from "svelte";
+    import ChatMessage from "./ChatMessage.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
+    import VirtualList from "../VirtualList.svelte";
+    import Loading from "../Loading.svelte";
+
+    const MESSAGE_LOAD_THRESHOLD = 300;
 
     export let machine: ActorRefFrom<ChatMachine>;
 
-    let div: HTMLDivElement;
+    let messagesDiv: HTMLDivElement;
+    let initialised = false;
+    let start: number;
+    let end: number;
+    let scrollHeight = 0;
+
     function scrollBottom() {
-        if (div) {
-            div.scrollTop = div.scrollHeight;
+        if (messagesDiv) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
     }
-    onMount(() => {
-        scrollBottom();
-    });
+
+    function resetScroll() {
+        if (initialised) {
+            const extraHeight = messagesDiv.scrollHeight - scrollHeight;
+            messagesDiv.scrollTop = messagesDiv.scrollTop + extraHeight - 100; // 100 is the height of the spinner
+        } else {
+            scrollBottom();
+            initialised = true;
+        }
+    }
+
+    $: {
+        if ($machine.matches("loaded_messages") && $machine.history?.matches("loading_messages")) {
+            tick().then(resetScroll);
+        }
+    }
+
+    function onScroll() {
+        if ($machine.matches("loaded_messages")) {
+            if (messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD) {
+                machine.send({ type: "LOAD_MORE_MESSAGES" });
+
+                // capture the current scrollheight
+                scrollHeight = messagesDiv.scrollHeight;
+            }
+        }
+    }
+
+    $: if (start < 2) {
+        machine.send({ type: "LOAD_MORE_MESSAGES" });
+    }
 </script>
 
-<div bind:this={div} class="chat-messages">
-    <!-- {#each chat.messages as msg, i}
-        <ChatMessage me={i % 2 === 0} {msg} />
-    {/each} -->
+<div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
+    {#if $machine.matches("loading_messages")}
+        <div class="spinner">
+            <Loading />
+        </div>
+    {/if}
+    {#each $machine.context.messages as msg, i}
+        <ChatMessage {machine} {msg} />
+    {/each}
+    <!-- <VirtualList bind:start bind:end items={$machine.context.messages} let:item>
+        <ChatMessage {machine} msg={item} />
+    </VirtualList> -->
 </div>
 
 <style type="text/scss">
+    .spinner {
+        height: 100px;
+    }
     .chat-messages {
         flex: 1;
         background-color: var(--currentChat-msgs-bg);

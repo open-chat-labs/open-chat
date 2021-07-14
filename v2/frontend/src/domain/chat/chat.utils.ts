@@ -49,7 +49,7 @@ export function userIdsFromChatSummaries(
 }
 
 export function getUnreadMessages({
-    lastestMessageIndex: lastestMessageId,
+    latestMessageIndex: lastestMessageId,
     lastReadByUs,
 }: ChatSummary): number {
     return lastestMessageId - lastReadByUs;

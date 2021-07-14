@@ -59,7 +59,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             displayDate: candid.Group.display_date,
             lastReadByUs: candid.Group.last_read_by_us,
             lastReadByThem: candid.Group.last_read_by_them,
-            lastestMessageIndex: candid.Group.latest_message_index,
+            latestMessageIndex: candid.Group.latest_message_index,
             latestMessage: optional(candid.Group.latest_message, message),
             participants: candid.Group.participants.map((p) => p.toString()),
         };
@@ -73,7 +73,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             displayDate: candid.Direct.display_date,
             lastReadByUs: candid.Direct.last_read_by_us,
             lastReadByThem: candid.Direct.last_read_by_them,
-            lastestMessageIndex: candid.Direct.latest_message_index,
+            latestMessageIndex: candid.Direct.latest_message_index,
             latestMessage: optional(candid.Direct.latest_message, message),
         };
     }

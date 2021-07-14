@@ -13,7 +13,7 @@ const directChat: DirectChatSummary = {
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageIndex: 5,
+    latestMessageIndex: 5,
     latestMessage: undefined,
 };
 

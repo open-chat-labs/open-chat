@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { assign, escalate, log } from "xstate/lib/actions";
-import type { ChatSummary } from "../domain/chat/chat";
+import type { ChatSummary, GetMessagesResponse, Message } from "../domain/chat/chat";
 import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { userSearchMachine } from "./userSearch.machine";
+
+const PAGE_SIZE = 20;
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
@@ -14,16 +16,22 @@ export interface ChatContext {
     userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
-    messages: unknown[];
+    messages: Message[];
+    latestMessageIndex?: number;
 }
 
-type LoadMessagesResponse = { userLookup: UserLookup; messages: unknown[] };
+type LoadMessagesResponse = {
+    userLookup: UserLookup;
+    messages: Message[];
+    latestMessageIndex: number;
+};
 
 export type ChatEvents =
     | { type: "done.invoke.loadMessagesAndUsers"; data: LoadMessagesResponse }
     | { type: "error.platform.loadMessagesAndUsers"; data: Error }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "ADD_PARTICIPANT" }
+    | { type: "LOAD_MORE_MESSAGES" }
     | { type: "CANCEL_ADD_PARTICIPANT" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "DISMISS_AS_ADMIN"; data: string }
@@ -51,25 +59,43 @@ async function loadUsersForChat(
     return Promise.resolve(userLookup);
 }
 
-function loadMessages(): Promise<unknown[]> {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve([]);
-        }, 1000);
-    });
+function loadMessages(
+    serviceContainer: ServiceContainer,
+    chatSummary: ChatSummary,
+    earliestLoadedMessageIndex: number
+): Promise<GetMessagesResponse> {
+    if (chatSummary.kind === "direct_chat") {
+        return serviceContainer.directChatMessages(
+            chatSummary.them,
+            earliestLoadedMessageIndex - PAGE_SIZE,
+            earliestLoadedMessageIndex
+        );
+    }
+    return serviceContainer.groupChatMessages(
+        chatSummary.chatId,
+        earliestLoadedMessageIndex - PAGE_SIZE,
+        earliestLoadedMessageIndex
+    );
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {},
     services: {
         loadMessagesAndUsers: async (ctx, _) => {
-            const [userLookup, messages] = await Promise.all([
+            const earliestLoadedMessageIndex =
+                ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessageIndex;
+
+            const [userLookup, messagesResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                loadMessages(),
+                loadMessages(ctx.serviceContainer!, ctx.chatSummary, earliestLoadedMessageIndex),
             ]);
             return {
                 userLookup,
-                messages,
+                messages: messagesResponse === "chat_not_found" ? [] : messagesResponse.messages,
+                latestMessageIndex:
+                    messagesResponse === "chat_not_found"
+                        ? ctx.chatSummary.latestMessageIndex
+                        : messagesResponse.lastestMessageIndex,
             };
         },
         removeParticipant: (_ctx, _ev) => {
@@ -106,9 +132,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 src: "loadMessagesAndUsers",
                 onDone: {
                     target: "loaded_messages",
-                    actions: assign((_ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
-                        console.log("finished loading messages", ev.data);
-                        return ev.data;
+                    actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
+                        return {
+                            userLookup: ev.data.userLookup,
+                            messages: ev.data.messages.concat(ctx.messages),
+                            latestMessageIndex: ev.data.latestMessageIndex,
+                        };
                     }),
                 },
                 onError: {
@@ -230,6 +259,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 SHOW_PARTICIPANTS: "showing_participants",
                 ADD_PARTICIPANT: "showing_participants.adding_participant",
+                LOAD_MORE_MESSAGES: "loading_messages",
             },
         },
         unexpected_error: {

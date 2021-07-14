@@ -241,7 +241,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 serviceContainer: ctx.serviceContainer!,
                                                 chatSummary,
                                                 userLookup: ctx.userLookup,
-                                                messages: [],
                                                 user: ctx.user
                                                     ? {
                                                           userId: ctx.user.userId,
@@ -249,6 +248,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                           secondsSinceLastOnline: 0,
                                                       }
                                                     : undefined,
+                                                messages: [],
+                                                latestMessageIndex: chatSummary.latestMessageIndex,
                                             }),
                                             `chat-${key}`
                                         ),
@@ -310,7 +311,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     displayDate: BigInt(+new Date()),
                                     lastReadByUs: 0,
                                     lastReadByThem: 0,
-                                    lastestMessageIndex: 0,
+                                    latestMessageIndex: 0,
                                     latestMessage: undefined,
                                 };
                                 // todo - if we want to select this chat, we actually want to
