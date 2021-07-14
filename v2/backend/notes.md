@@ -3,6 +3,7 @@ Canisters
 Controller
 UserIndex
 GroupIndex
+Notifications
 User
 Group
 Website
