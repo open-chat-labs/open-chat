@@ -1,5 +1,6 @@
 use crate::env::Environment;
 use candid::Principal;
+use shared::types::chat_id::GroupChatId;
 
 pub struct TestEnv {
     pub now: u64,
@@ -13,6 +14,10 @@ impl Environment for TestEnv {
 
     fn caller(&self) -> Principal {
         self.caller
+    }
+
+    fn group_chat_id(&self) -> GroupChatId {
+        Principal::from_slice(&[1, 2, 3]).into()
     }
 }
 

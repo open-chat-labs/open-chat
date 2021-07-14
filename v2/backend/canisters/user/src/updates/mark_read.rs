@@ -22,30 +22,27 @@ enum Response {
 }
 
 #[update]
-async fn mark_read(args: Args) -> Response {
-    let response = RUNTIME_STATE.with(|state| mark_read_impl(&args, state.borrow_mut().as_mut().unwrap()));
-
-    // Now call "handle_mark_read" on the recipient's canister
-    if matches!(response, Response::Success) {
-        let (canister_id, mark_read_c2c_args) = args.into();
-        if let Err(e) = c2c::call(canister_id, mark_read_c2c_args).await {
-            panic!("{}", e);
-        }
-    }
-
-    response
+fn mark_read(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn mark_read_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response {
+fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &args.user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+            let result: Response;
             if chat.read_up_to < args.up_to_message_index {
                 chat.read_up_to = args.up_to_message_index;
-                Success
+                result = Success;
             } else {
-                SuccessNoChange
+                result = SuccessNoChange;
             }
+
+            let (canister_id, mark_read_c2c_args) = args.into();
+            let send_to_recipient_canister_future = c2c::call(canister_id, mark_read_c2c_args);
+            ic_cdk::block_on(send_to_recipient_canister_future);
+
+            result
         } else {
             ChatNotFound
         }
@@ -59,12 +56,8 @@ mod c2c {
     use crate::model::runtime_state::RuntimeState;
     use shared::types::{CanisterId, MessageIndex};
 
-    pub async fn call(canister_id: CanisterId, args: Args) -> Result<Response, String> {
-        let (res,): (Response,) = ic_cdk::call(canister_id, "handle_mark_read", (args,))
-            .await
-            .map_err(|e| e.1)?;
-
-        Ok(res)
+    pub async fn call(canister_id: CanisterId, args: Args) {
+        let _: Result<(Response,), String> = ic_cdk::call(canister_id, "handle_mark_read", (args,)).await.map_err(|e| e.1);
     }
 
     #[derive(CandidType, Deserialize)]

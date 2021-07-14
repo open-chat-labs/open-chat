@@ -1,8 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::chat_id::GroupChatId;
-use shared::types::message_content::MessageContent;
-use shared::types::{MessageIndex, UserId};
+use shared::types::message_notifications::{DirectMessageNotification, GroupMessageNotification};
+use shared::types::UserId;
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 
@@ -69,23 +68,6 @@ pub enum Event {
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
     Subscription(Subscription),
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct DirectMessageNotification {
-    pub sender: UserId,
-    pub recipient: UserId,
-    pub message_index: MessageIndex,
-    pub content: MessageContent,
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct GroupMessageNotification {
-    pub chat_id: GroupChatId,
-    pub sender: UserId,
-    pub recipients: Vec<UserId>,
-    pub message_index: MessageIndex,
-    pub content: MessageContent,
 }
 
 #[derive(CandidType, Deserialize, Clone)]
