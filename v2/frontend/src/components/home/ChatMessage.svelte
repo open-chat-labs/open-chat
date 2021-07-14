@@ -1,3 +1,5 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
     import type { Message } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
@@ -8,11 +10,11 @@
     export let machine: ActorRefFrom<ChatMachine>;
     export let msg: Message;
 
-    $: me = $machine.context.user?.userId === msg.sender;
-    $: username = me
+    const me = $machine.context.user?.userId === msg.sender;
+    const username = me
         ? $machine.context.user?.username
         : $machine.context.userLookup[msg.sender]?.username;
-    $: textContent = getContentAsText(msg.content);
+    const textContent = getContentAsText(msg.content);
 </script>
 
 <div class="chat-message-wrapper" class:me>

@@ -12,9 +12,10 @@
 
     let messagesDiv: HTMLDivElement;
     let initialised = false;
-    let start: number;
-    let end: number;
+    // let start: number;
+    // let end: number;
     let scrollHeight = 0;
+    let currentChatId = "";
 
     function scrollBottom() {
         if (messagesDiv) {
@@ -32,12 +33,6 @@
         }
     }
 
-    $: {
-        if ($machine.matches("loaded_messages") && $machine.history?.matches("loading_messages")) {
-            tick().then(resetScroll);
-        }
-    }
-
     function onScroll() {
         if ($machine.matches("loaded_messages")) {
             if (messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD) {
@@ -49,8 +44,16 @@
         }
     }
 
-    $: if (start < 2) {
-        machine.send({ type: "LOAD_MORE_MESSAGES" });
+    $: {
+        if ($machine.matches("loaded_messages") && $machine.history?.matches("loading_messages")) {
+            tick().then(resetScroll);
+        }
+    }
+
+    // when the selected chat changes we need to set initialised to false and resetScroll
+    $: if ($machine.context.chatSummary.chatId !== currentChatId) {
+        currentChatId = $machine.context.chatSummary.chatId;
+        initialised = false;
     }
 </script>
 

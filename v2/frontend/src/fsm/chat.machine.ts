@@ -135,7 +135,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
                         return {
                             userLookup: ev.data.userLookup,
-                            messages: ev.data.messages.concat(ctx.messages),
+                            messages: [...ev.data.messages, ...ctx.messages],
                             latestMessageIndex: ev.data.latestMessageIndex,
                         };
                     }),
