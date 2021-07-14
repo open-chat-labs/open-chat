@@ -30,7 +30,7 @@ fn events(args: Args) -> Response {
 }
 
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.is_caller_consumer() {
+    if runtime_state.is_caller_push_service() {
         let events = runtime_state.data.events.get(args.from_event_index, MAX_EVENTS_PER_BATCH);
         Success(SuccessResult { events })
     } else {

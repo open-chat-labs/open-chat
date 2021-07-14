@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct InitArgs {
-    consumer_principals: Vec<Principal>,
+    push_service_principals: Vec<Principal>,
 }
 
 #[init]
@@ -17,7 +17,7 @@ fn init(args: InitArgs) {
 
     RUNTIME_STATE.with(|state| {
         let env = Box::new(CanisterEnv::new());
-        let data = Data::new(args.consumer_principals);
+        let data = Data::new(args.push_service_principals);
         let runtime_state = RuntimeState::new(env, data);
 
         *state.borrow_mut() = Some(runtime_state);

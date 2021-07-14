@@ -22,7 +22,7 @@ fn remove_events(args: Args) -> Response {
 }
 
 fn remove_events_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.is_caller_consumer() {
+    if runtime_state.is_caller_push_service() {
         runtime_state.data.events.remove(args.up_to_event_index);
         Success
     } else {

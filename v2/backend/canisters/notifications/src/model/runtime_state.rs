@@ -11,7 +11,7 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_consumer(&self) -> bool {
-        self.data.consumer_principals.contains(&self.env.caller())
+    pub fn is_caller_push_service(&self) -> bool {
+        self.data.push_service_principals.contains(&self.env.caller())
     }
 }

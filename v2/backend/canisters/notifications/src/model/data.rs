@@ -5,14 +5,14 @@ use std::collections::HashSet;
 
 #[derive(CandidType, Deserialize)]
 pub struct Data {
-    pub consumer_principals: HashSet<Principal>,
+    pub push_service_principals: HashSet<Principal>,
     pub events: Events,
 }
 
 impl Data {
-    pub fn new(consumer_principals: Vec<Principal>) -> Data {
+    pub fn new(push_service_principals: Vec<Principal>) -> Data {
         Data {
-            consumer_principals: consumer_principals.into_iter().collect(),
+            push_service_principals: push_service_principals.into_iter().collect(),
             events: Events::default(),
         }
     }
