@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const InitArgs = IDL.Record({ 'owner' : IDL.Principal });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -315,4 +316,7 @@ export const idlFactory = ({ IDL }) => {
     'unblock_user' : IDL.Func([UnblockUserArgs], [], []),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const InitArgs = IDL.Record({ 'owner' : IDL.Principal });
+  return [InitArgs];
+};

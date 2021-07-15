@@ -16,7 +16,7 @@ enum Response {
     Success,
     NotAuthorized,
     InvalidVersion,
-    ExistingWasmHasHigherVersion,
+    VersionNotHigher,
 }
 
 #[update]
@@ -36,7 +36,7 @@ fn update_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         Err(_) => Response::InvalidVersion,
         Ok(new_version) => {
             if new_version <= runtime_state.data.user_wasm.version {
-                Response::ExistingWasmHasHigherVersion
+                Response::VersionNotHigher
             } else {
                 runtime_state.data.user_wasm.version = new_version;
                 runtime_state.data.user_wasm.module = args.user_wasm_module;

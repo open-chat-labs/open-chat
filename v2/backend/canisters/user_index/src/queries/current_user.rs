@@ -1,6 +1,6 @@
 use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
-use crate::model::user::{CanisterCreationStatus, User};
+use crate::model::user::{CanisterCreationStatus, CanisterUpgradeStatus, User};
 use candid::CandidType;
 use ic_cdk_macros::query;
 use phonenumber::Mode;
@@ -10,7 +10,6 @@ use shared::types::UserId;
 #[derive(Deserialize)]
 struct Args {}
 
-#[allow(dead_code)]
 #[derive(CandidType)]
 enum Response {
     UserNotFound,
@@ -18,7 +17,6 @@ enum Response {
     ConfirmedPendingUsername(ConfirmedPendingUsernameResult),
     Confirmed(ConfirmedResult),
     Created(CreatedResult),
-    UpgradeInProgress,
 }
 
 #[derive(CandidType)]
@@ -48,7 +46,7 @@ struct CreatedResult {
     user_id: UserId,
     username: String,
     account_balance: u128,
-    upgrade_required: bool,
+    canister_upgrade_status: CanisterUpgradeStatus,
 }
 
 #[query]
@@ -80,12 +78,22 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     })
                 }
             }
-            User::Created(u) => Response::Created(CreatedResult {
-                user_id: u.user_id,
-                username: u.username.clone(),
-                account_balance: 0,
-                upgrade_required: &u.wasm_version < latest_wasm_version,
-            }),
+            User::Created(u) => {
+                let canister_upgrade_status = if u.upgrade_in_progress {
+                    CanisterUpgradeStatus::InProgress
+                } else if &u.wasm_version < latest_wasm_version {
+                    CanisterUpgradeStatus::Required
+                } else {
+                    CanisterUpgradeStatus::NotRequired
+                };
+
+                Response::Created(CreatedResult {
+                    user_id: u.user_id,
+                    username: u.username.clone(),
+                    account_balance: 0,
+                    canister_upgrade_status,
+                })
+            }
         }
     } else {
         Response::UserNotFound

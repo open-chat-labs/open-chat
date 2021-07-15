@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "backend/canisters/group",
+    "backend/canisters/group_index",
+    "backend/canisters/notifications",
+    "backend/canisters/user",
+    "backend/canisters/user_index",
+    "backend/shared",
+]
+
+[profile.release]
+lto = true
+opt-level = "z"
+codegen-units = 1

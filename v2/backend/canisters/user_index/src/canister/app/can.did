@@ -13,7 +13,7 @@ type PhoneNumber =
 
 type SubmitPhoneNumberArgs = 
     record {
-        number: PhoneNumber;
+        phone_number: PhoneNumber;
     };
 
 type SubmitPhoneNumberResponse = 
@@ -73,6 +73,7 @@ type SetUsernameResponse =
     variant {
         Success;
         UsernameTaken;
+        UserUnconfirmed;
         UserNotFound;
         UsernameInvalid;
         UsernameTooShort: nat16;
@@ -81,7 +82,7 @@ type SetUsernameResponse =
 
 type UpdateWasmArgs =
     record {
-        user_wasm_module: blob;
+        user_wasm_module: vec nat8;
         version: text;
     };
 
@@ -90,7 +91,7 @@ type UpdateWasmResponse =
         Success;
         NotAuthorized;
         InvalidVersion;
-        ExistingWasmHasHigherVersion;
+        VersionNotHigher;
     };
 
 type UpgradeCanisterArgs =
@@ -155,15 +156,19 @@ type CurrentUserResponse =
             canister_creation_status: variant {
                 Pending;
                 InProgress;
+                Created;
             };
         };
         Created: record {
             user_id: UserId;
             username: text;
             account_balance: nat;
-            upgrade_required: bool;
+            canister_upgrade_status: variant {
+                Required;
+                InProgress;
+                NotRequired;
+            };
         };
-        UpgradeInProgress;
     };
 
 type UserSummary =
@@ -243,6 +248,7 @@ type InitArgs =
         service_principals: vec principal;
         sms_service_principals: vec principal;
         user_wasm_module: blob;
+        test_mode: bool;
     };
 
 service : (InitArgs) -> {

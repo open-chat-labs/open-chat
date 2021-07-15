@@ -8,10 +8,11 @@ use shared::time::TimestampMillis;
 #[allow(dead_code)]
 pub struct CanisterEnv {
     rng: StdRng,
+    test_mode: bool,
 }
 
 impl CanisterEnv {
-    pub fn new() -> Self {
+    pub fn new(test_mode: bool) -> Self {
         CanisterEnv {
             // Seed the PRNG with the current time.
             //
@@ -26,6 +27,7 @@ impl CanisterEnv {
                 seed[24..32].copy_from_slice(&now_millis.to_be_bytes());
                 StdRng::from_seed(seed)
             },
+            test_mode,
         }
     }
 }
@@ -41,5 +43,9 @@ impl Environment for CanisterEnv {
 
     fn random_u32(&mut self) -> u32 {
         self.rng.next_u32()
+    }
+
+    fn test_mode(&self) -> bool {
+        self.test_mode
     }
 }
