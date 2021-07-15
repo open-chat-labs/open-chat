@@ -8,6 +8,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::c2c::call_with_logging;
+use shared::rand::get_random_item;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::message_notifications::*;
@@ -54,7 +55,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let random = runtime_state.env.random_u32() as usize;
 
-        if let Some(canister_id) = get_notification_canister(runtime_state, random) {
+        if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
             let notification = GroupMessageNotification {
                 chat_id: runtime_state.env.canister_id().into(),
                 sender: participant.user_id,
@@ -63,7 +64,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 content: args.content,
             };
 
-            let push_notification_future = push_notification(canister_id, notification);
+            let push_notification_future = push_notification(*canister_id, notification);
             ic_cdk::block_on(push_notification_future);
         }
 
@@ -73,16 +74,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         })
     } else {
         NotInGroup
-    }
-}
-
-fn get_notification_canister(runtime_state: &RuntimeState, random: usize) -> Option<CanisterId> {
-    if runtime_state.data.notification_canister_ids.is_empty() {
-        None
-    } else {
-        let index = random % runtime_state.data.notification_canister_ids.len();
-
-        runtime_state.data.notification_canister_ids.get(index).cloned()
     }
 }
 
