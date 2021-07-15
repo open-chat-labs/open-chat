@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 candid = "0.6.21"
+getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = "0.3.0"
 ic-types = "0.1.2"
 log = "0.4.14"

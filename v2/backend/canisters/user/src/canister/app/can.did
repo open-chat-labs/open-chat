@@ -390,6 +390,7 @@ type MetricsResponse =
 type InitArgs = 
     record {
         owner: principal;
+        notification_canister_ids: vec CanisterId;
     };
 
 service: (InitArgs) -> {
