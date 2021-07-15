@@ -1,11 +1,12 @@
 use crate::env::Environment;
+use crate::types::CanisterId;
 use candid::Principal;
-use shared::types::UserId;
 
 pub struct TestEnv {
     pub now: u64,
     pub caller: Principal,
-    pub owner_user_id: UserId,
+    pub canister_id: Principal,
+    pub random_u32: u32,
 }
 
 impl Environment for TestEnv {
@@ -17,17 +18,26 @@ impl Environment for TestEnv {
         self.caller
     }
 
-    fn owner_user_id(&self) -> UserId {
-        self.owner_user_id
+    fn canister_id(&self) -> CanisterId {
+        self.canister_id
+    }
+
+    fn random_u32(&mut self) -> u32 {
+        self.random_u32
+    }
+
+    fn test_mode(&self) -> bool {
+        true
     }
 }
 
 impl Default for TestEnv {
     fn default() -> Self {
         TestEnv {
-            now: 1,
+            now: 10000,
             caller: Principal::from_slice(&[1]),
-            owner_user_id: Principal::from_slice(&[1]).into(),
+            canister_id: Principal::from_slice(&[1, 2, 3]),
+            random_u32: 1,
         }
     }
 }

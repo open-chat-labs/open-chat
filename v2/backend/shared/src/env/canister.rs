@@ -1,11 +1,11 @@
 use crate::env::Environment;
+use crate::time;
+use crate::time::TimestampMillis;
+use crate::types::CanisterId;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use shared::time;
-use shared::time::TimestampMillis;
 
-#[allow(dead_code)]
 pub struct CanisterEnv {
     rng: StdRng,
     test_mode: bool,
@@ -39,6 +39,10 @@ impl Environment for CanisterEnv {
 
     fn caller(&self) -> Principal {
         ic_cdk::caller()
+    }
+
+    fn canister_id(&self) -> CanisterId {
+        ic_cdk::id()
     }
 
     fn random_u32(&mut self) -> u32 {

@@ -1,5 +1,5 @@
-use crate::env::Environment;
 use crate::model::data::Data;
+use shared::env::Environment;
 
 pub struct RuntimeState {
     pub env: Box<dyn Environment>,

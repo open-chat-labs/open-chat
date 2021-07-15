@@ -33,21 +33,11 @@ struct SuccessResult {
 }
 
 #[update]
-async fn send_message(args: Args) -> Response {
-    let response = RUNTIME_STATE.with(|state| send_message_impl(&args, state.borrow_mut().as_mut().unwrap()));
-
-    // Now call "handle_message_received" on the recipient's canister
-    if matches!(response, Response::Success(_)) {
-        let (canister_id, send_message_c2c_args) = args.into();
-        if let Err(e) = c2c::call(canister_id, send_message_c2c_args).await {
-            panic!("{}", e);
-        }
-    }
-
-    response
+fn send_message(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response {
+fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
@@ -58,6 +48,11 @@ fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response 
         };
 
         let result = push_message(args.recipient, push_message_args, runtime_state);
+
+        let (canister_id, send_message_c2c_args) = args.into();
+        let send_to_recipient_canister_future = c2c::call(canister_id, send_message_c2c_args);
+        ic_cdk::block_on(send_to_recipient_canister_future);
+
         Success(result)
     } else {
         NotAuthorised
@@ -66,7 +61,7 @@ fn send_message_impl(args: &Args, runtime_state: &mut RuntimeState) -> Response 
 
 fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> SuccessResult {
     let now = runtime_state.env.now();
-    let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &their_user_id));
+    let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &their_user_id));
 
     let chat: &mut DirectChat = match runtime_state.data.direct_chats.entry(chat_id) {
         Occupied(e) => e.into_mut(),
@@ -84,14 +79,14 @@ fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mu
 mod c2c {
     use super::*;
     use crate::model::reply_context::ReplyContextInternal;
+    use ic_cdk::api::call::CallResult;
+    use shared::c2c::call_with_logging;
+    use shared::rand::get_random_item;
+    use shared::types::message_notifications::*;
     use shared::types::CanisterId;
 
-    pub async fn call(canister_id: CanisterId, args: Args) -> Result<Response, String> {
-        let (res,): (Response,) = ic_cdk::call(canister_id, "handle_message_received", (args,))
-            .await
-            .map_err(|e| e.1)?;
-
-        Ok(res)
+    pub async fn call(canister_id: CanisterId, args: Args) {
+        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_message_received", (args,)).await;
     }
 
     #[derive(CandidType, Deserialize)]
@@ -118,14 +113,33 @@ mod c2c {
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
             sent_by_me: false,
-            content: args.content,
+            content: args.content.clone(),
             replies_to: args.replies_to,
             now: runtime_state.env.now(),
         };
 
-        let _ = push_message(sender_user_id, push_message_args, runtime_state);
+        let result = push_message(sender_user_id, push_message_args, runtime_state);
+
+        let random = runtime_state.env.random_u32() as usize;
+
+        if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
+            let notification = DirectMessageNotification {
+                sender: sender_user_id,
+                recipient: runtime_state.env.canister_id().into(),
+                message_index: result.message_index,
+                content: args.content,
+            };
+
+            let push_notification_future = push_notification(*canister_id, notification);
+            ic_cdk::block_on(push_notification_future);
+        }
 
         Response::Success
+    }
+
+    async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
+        let _: CallResult<(PushDirectMessageNotificationResponse,)> =
+            call_with_logging(canister_id, "push_direct_message_notification", (notification,)).await;
     }
 
     impl From<super::Args> for (CanisterId, Args) {
