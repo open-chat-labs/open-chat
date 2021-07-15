@@ -119,7 +119,9 @@ mod c2c {
 
         let result = push_message(sender_user_id, push_message_args, runtime_state);
 
-        if let Some(canister_id) = runtime_state.data.notification_canister_ids.first() {
+        let random = runtime_state.env.random_u32() as usize;
+
+        if let Some(canister_id) = get_notification_canister(runtime_state, random) {
             let notification = DirectMessageNotification {
                 sender: sender_user_id,
                 recipient: runtime_state.env.canister_id().into(),
@@ -127,11 +129,21 @@ mod c2c {
                 content: args.content,
             };
 
-            let push_notification_future = push_notification(*canister_id, notification);
+            let push_notification_future = push_notification(canister_id, notification);
             ic_cdk::block_on(push_notification_future);
         }
 
         Response::Success
+    }
+
+    fn get_notification_canister(runtime_state: &RuntimeState, random: usize) -> Option<CanisterId> {
+        if runtime_state.data.notification_canister_ids.is_empty() {
+            None
+        } else {
+            let index = random % runtime_state.data.notification_canister_ids.len();
+
+            runtime_state.data.notification_canister_ids.get(index).cloned()
+        }
     }
 
     async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
