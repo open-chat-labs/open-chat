@@ -70,7 +70,7 @@ mod tests {
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::UnconfirmedUser;
-    use crate::test::env::TestEnv;
+    use shared::env::test::TestEnv;
     use std::str::FromStr;
 
     #[test]
