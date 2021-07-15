@@ -4,8 +4,10 @@ use crate::model::messages::PushMessageArgs;
 use crate::model::reply_context::ReplyContextInternal;
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
+use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use serde::Deserialize;
+use shared::c2c::call_with_logging;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::message_notifications::*;
@@ -85,8 +87,6 @@ fn get_notification_canister(runtime_state: &RuntimeState, random: usize) -> Opt
 }
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
-    let _: Result<(PushGroupMessageNotificationResponse,), String> =
-        ic_cdk::call(canister_id, "push_group_message_notification", (notification,))
-            .await
-            .map_err(|e| e.1);
+    let _: CallResult<(PushGroupMessageNotificationResponse,)> =
+        call_with_logging(canister_id, "push_group_message_notification", (notification,)).await;
 }

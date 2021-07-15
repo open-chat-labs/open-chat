@@ -1,3 +1,4 @@
+pub mod c2c;
 pub mod canisters;
 pub mod consts;
 pub mod env;

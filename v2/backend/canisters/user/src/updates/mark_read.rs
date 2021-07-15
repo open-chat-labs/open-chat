@@ -54,10 +54,12 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 mod c2c {
     use super::*;
     use crate::model::runtime_state::RuntimeState;
+    use ic_cdk::api::call::CallResult;
+    use shared::c2c::call_with_logging;
     use shared::types::{CanisterId, MessageIndex};
 
     pub async fn call(canister_id: CanisterId, args: Args) {
-        let _: Result<(Response,), String> = ic_cdk::call(canister_id, "handle_mark_read", (args,)).await.map_err(|e| e.1);
+        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_mark_read", (args,)).await;
     }
 
     #[derive(CandidType, Deserialize)]

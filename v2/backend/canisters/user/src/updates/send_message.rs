@@ -79,13 +79,13 @@ fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mu
 mod c2c {
     use super::*;
     use crate::model::reply_context::ReplyContextInternal;
+    use ic_cdk::api::call::CallResult;
+    use shared::c2c::call_with_logging;
     use shared::types::message_notifications::*;
     use shared::types::CanisterId;
 
     pub async fn call(canister_id: CanisterId, args: Args) {
-        let _: Result<(Response,), String> = ic_cdk::call(canister_id, "handle_message_received", (args,))
-            .await
-            .map_err(|e| e.1);
+        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_message_received", (args,)).await;
     }
 
     #[derive(CandidType, Deserialize)]
@@ -147,10 +147,8 @@ mod c2c {
     }
 
     async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
-        let _: Result<(PushDirectMessageNotificationResponse,), String> =
-            ic_cdk::call(canister_id, "push_direct_message_notification", (notification,))
-                .await
-                .map_err(|e| e.1);
+        let _: CallResult<(PushDirectMessageNotificationResponse,)> =
+            call_with_logging(canister_id, "push_direct_message_notification", (notification,)).await;
     }
 
     impl From<super::Args> for (CanisterId, Args) {
