@@ -1,6 +1,9 @@
 export const idlFactory = ({ IDL }) => {
-  const InitArgs = IDL.Record({ 'owner' : IDL.Principal });
   const CanisterId = IDL.Principal;
+  const InitArgs = IDL.Record({
+    'owner' : IDL.Principal,
+    'notification_canister_ids' : IDL.Vec(CanisterId),
+  });
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const CreateGroupArgs = IDL.Record({
@@ -317,6 +320,10 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
-  const InitArgs = IDL.Record({ 'owner' : IDL.Principal });
+  const CanisterId = IDL.Principal;
+  const InitArgs = IDL.Record({
+    'owner' : IDL.Principal,
+    'notification_canister_ids' : IDL.Vec(CanisterId),
+  });
   return [InitArgs];
 };
