@@ -19,6 +19,10 @@ impl Environment for TestEnv {
     fn random_u32(&mut self) -> u32 {
         self.random_u32
     }
+
+    fn test_mode(&self) -> bool {
+        true
+    }
 }
 
 impl Default for TestEnv {
