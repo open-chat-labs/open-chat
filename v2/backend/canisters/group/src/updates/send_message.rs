@@ -52,7 +52,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         if let Some(canister_id) = runtime_state.data.notification_canister_ids.first() {
             let notification = GroupMessageNotification {
-                chat_id: runtime_state.env.group_chat_id(),
+                chat_id: runtime_state.env.canister_id().into(),
                 sender: participant.user_id,
                 recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
                 message_index,

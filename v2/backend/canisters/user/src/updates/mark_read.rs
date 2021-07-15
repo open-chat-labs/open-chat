@@ -28,7 +28,7 @@ fn mark_read(args: Args) -> Response {
 
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
-        let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &args.user_id));
+        let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &args.user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
             let result: Response;
             if chat.read_up_to < args.up_to_message_index {
@@ -80,7 +80,7 @@ mod c2c {
     fn handle_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let their_user_id = runtime_state.env.caller().into();
 
-        let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &their_user_id));
+        let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &their_user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
             if chat.read_up_to_by_them < args.up_to_message_index {
                 chat.read_up_to_by_them = args.up_to_message_index;

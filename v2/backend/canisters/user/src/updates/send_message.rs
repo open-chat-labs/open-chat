@@ -61,7 +61,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> SuccessResult {
     let now = runtime_state.env.now();
-    let chat_id = DirectChatId::from((&runtime_state.env.owner_user_id(), &their_user_id));
+    let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &their_user_id));
 
     let chat: &mut DirectChat = match runtime_state.data.direct_chats.entry(chat_id) {
         Occupied(e) => e.into_mut(),
@@ -122,7 +122,7 @@ mod c2c {
         if let Some(canister_id) = runtime_state.data.notification_canister_ids.first() {
             let notification = DirectMessageNotification {
                 sender: sender_user_id,
-                recipient: runtime_state.env.owner_user_id(),
+                recipient: runtime_state.env.canister_id().into(),
                 message_index: result.message_index,
                 content: args.content,
             };
