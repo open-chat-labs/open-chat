@@ -43,7 +43,7 @@
     <!-- <VirtualList items={knownUsers} let:item height="100vh">
         <Participant {machine} participant={item} on:blockUser on:selectParticipant />
     </VirtualList> -->
-    {#each knownUsers as user, i (user)}
+    {#each knownUsers as user, i (user.userId)}
         <div
             animate:flip={{ duration: 600, easing: elasticOut }}
             out:fade|local={{ duration: 150 }}>

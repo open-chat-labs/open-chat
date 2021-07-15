@@ -62,7 +62,7 @@
     {#if $machine.matches("searching_users")}
         <Loading />
     {:else}
-        {#each $machine.context.users as user}
+        {#each $machine.context.users as user, i (user.userId)}
             <div class="user" on:click={() => onSelect(user)}>
                 <span class="avatar">
                     <Avatar

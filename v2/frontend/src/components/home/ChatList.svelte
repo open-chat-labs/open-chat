@@ -24,7 +24,7 @@
         <Loading />
     {:else}
         <div class="chat-summaries">
-            {#each $machine.context.chatSummaries as chatSummary, i (chatSummary)}
+            {#each $machine.context.chatSummaries as chatSummary, i (chatSummary.chatId)}
                 <div
                     animate:flip={{ duration: 600, easing: elasticOut }}
                     out:fade|local={{ duration: 150 }}>

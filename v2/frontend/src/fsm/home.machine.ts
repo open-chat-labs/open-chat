@@ -18,9 +18,10 @@ import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
+import { claim_text } from "svelte/internal";
 // import { push } from "svelte-spa-router";
 
-const ONE_MINUTE = 60 * 1000;
+const ONE_MINUTE = 5 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
@@ -125,6 +126,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         Object.keys(ctx.userLookup),
                         ctx.usersLastUpdate
                     );
+                    console.log("sending updated users");
                     callback({
                         type: "USERS_UPDATED",
                         data: {
@@ -212,7 +214,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 CHATS_UPDATED: {
                     internal: true,
-                    actions: assign((_, ev) => ev.data),
+                    actions: assign((ctx, ev) => {
+                        const selectedChat = ev.data.chatSummaries.find(
+                            (c) => c.chatId === ctx.selectedChat?.chatId
+                        );
+                        return {
+                            ...ev.data,
+                            selectedChat,
+                        };
+                    }),
                 },
                 SELECT_CHAT: {
                     internal: true,
@@ -230,6 +240,11 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 // stateless i.e. it loads its messages each time it is activated. That
                                 // doesn't mean that those messages can't still be cached - they would
                                 // just not be cached in the actor's memory.
+
+                                // todo - when chats are updated, the details of the selected chat may
+                                // have changed. Currently if that chat is selected, the chat actor will have
+                                // stale data and may show the wrong thing. We need to send an update message to the
+                                // selected chat actor in that case to keep things in sync
                                 return {
                                     selectedChat: chatSummary,
                                     chatsIndex: {
