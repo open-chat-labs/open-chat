@@ -44,16 +44,24 @@
         }
     }
 
+    // this is a horrible hack but I can't find any other solution to this problem
+    let previous: any;
     $: {
-        if ($machine.matches("loaded_messages") && $machine.history?.matches("loading_messages")) {
-            tick().then(resetScroll);
-        }
-    }
+        if ($machine !== previous) {
+            if ($machine.context.chatSummary.chatId !== currentChatId) {
+                currentChatId = $machine.context.chatSummary.chatId;
+                initialised = false;
+            }
 
-    // when the selected chat changes we need to set initialised to false and resetScroll
-    $: if ($machine.context.chatSummary.chatId !== currentChatId) {
-        currentChatId = $machine.context.chatSummary.chatId;
-        initialised = false;
+            if (
+                $machine.matches("loaded_messages") &&
+                $machine.history?.matches("loading_messages")
+            ) {
+                tick().then(resetScroll);
+            }
+
+            previous = $machine;
+        }
     }
 </script>
 

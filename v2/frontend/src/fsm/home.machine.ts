@@ -102,7 +102,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 
         updateChatsPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
-                console.log("checking for updated chats");
                 callback({
                     type: "CHATS_UPDATED",
                     data: await getChats(
@@ -120,7 +119,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 
         updateUsersPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
-                console.log("checking for updated users");
                 let usersResp: UsersResponse;
                 try {
                     usersResp = await ctx.serviceContainer!.getUsers(

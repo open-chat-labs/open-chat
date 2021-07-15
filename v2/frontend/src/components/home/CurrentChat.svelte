@@ -14,8 +14,6 @@
     function addParticipant() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
-
-    $: console.log("ChatMachineState: ", $machine.value);
 </script>
 
 <div class="wrapper">

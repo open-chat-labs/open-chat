@@ -74,8 +74,6 @@
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
     }
 
-    $: console.log("home machine state: ", $machine.value);
-
     $: selectedChat = $machine.context.selectedChat;
 
     $: groupChat = selectedChat
