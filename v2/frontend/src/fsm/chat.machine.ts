@@ -18,6 +18,7 @@ export interface ChatContext {
     error?: Error;
     messages: Message[];
     latestMessageIndex?: number;
+    focusIndex?: number;
 }
 
 type LoadMessagesResponse = {
@@ -29,7 +30,9 @@ type LoadMessagesResponse = {
 export type ChatEvents =
     | { type: "done.invoke.loadMessagesAndUsers"; data: LoadMessagesResponse }
     | { type: "error.platform.loadMessagesAndUsers"; data: Error }
+    | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
+    | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "LOAD_MORE_MESSAGES" }
     | { type: "CANCEL_ADD_PARTICIPANT" }
@@ -62,18 +65,19 @@ async function loadUsersForChat(
 function loadMessages(
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
+    earliestRequiredMessageIndex: number,
     earliestLoadedMessageIndex: number
 ): Promise<GetMessagesResponse> {
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatMessages(
             chatSummary.them,
-            earliestLoadedMessageIndex - PAGE_SIZE,
+            earliestRequiredMessageIndex,
             earliestLoadedMessageIndex
         );
     }
     return serviceContainer.groupChatMessages(
         chatSummary.chatId,
-        earliestLoadedMessageIndex - PAGE_SIZE,
+        earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );
 }
@@ -97,13 +101,25 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         moreMessagesAvailable,
     },
     services: {
-        loadMessagesAndUsers: async (ctx, _) => {
+        loadMessagesAndUsers: async (ctx, ev) => {
             const earliestLoaded = earliestLoadedMessageIndex(ctx);
+            const earliestRequired =
+                ev.type === "GO_TO_MESSAGE_INDEX"
+                    ? ev.data - PAGE_SIZE
+                    : earliestLoaded - PAGE_SIZE;
+
+            // we may not actually *need* to look up any messages
+            const lookupRequired = earliestRequired < earliestLoaded && moreMessagesAvailable(ctx);
 
             const [userLookup, messagesResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                moreMessagesAvailable(ctx)
-                    ? loadMessages(ctx.serviceContainer!, ctx.chatSummary, earliestLoaded)
+                lookupRequired
+                    ? loadMessages(
+                          ctx.serviceContainer!,
+                          ctx.chatSummary,
+                          earliestRequired,
+                          earliestLoaded
+                      )
                     : { messages: [], latestMessageIndex: 0 },
             ]);
             return {
@@ -277,6 +293,17 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 SHOW_PARTICIPANTS: "showing_participants",
                 ADD_PARTICIPANT: "showing_participants.adding_participant",
                 LOAD_MORE_MESSAGES: "loading_messages",
+                CLEAR_FOCUS_INDEX: {
+                    actions: assign((_, ev) => ({ focusIndex: undefined })),
+                },
+                GO_TO_MESSAGE_INDEX: {
+                    target: "loading_messages",
+                    actions: assign((_, ev) => {
+                        return {
+                            focusIndex: ev.data,
+                        };
+                    }),
+                },
             },
         },
         unexpected_error: {

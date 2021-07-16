@@ -25,23 +25,29 @@
     }
 </script>
 
-<div class="chat-message-wrapper" class:me>
+<div class="chat-message-wrapper" class:me id={`message-${msg.messageIndex}`}>
     <div class="chat-message" class:me class:rtl={$rtlStore}>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
-                <h4 class="username">{`${username} (${msg.messageIndex})`}</h4>
+                <h4 class="username">{username}</h4>
             </Link>
         {/if}
         {#if msg.repliesTo !== undefined}
             <RepliesTo {machine} repliesTo={msg.repliesTo} />
         {/if}
         {textContent}
+
+        <pre class="debug">({msg.messageIndex})</pre>
     </div>
 </div>
 
 <style type="text/scss">
     $size: 10px;
     $stem-offset: 30px;
+
+    .debug {
+        margin-top: 10px;
+    }
 
     .chat-message-wrapper {
         display: flex;
@@ -62,7 +68,7 @@
         min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        @include font(light, normal, fs-90);
+        @include font(light, normal, fs-100);
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);

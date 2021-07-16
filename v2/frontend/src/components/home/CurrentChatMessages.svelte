@@ -11,6 +11,7 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
 
+    // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
     let initialised = false;
     // let start: number;
@@ -27,8 +28,15 @@
 
     function resetScroll() {
         if (initialised) {
-            const extraHeight = messagesDiv.scrollHeight - scrollHeight;
-            messagesDiv.scrollTop = scrollTop + extraHeight;
+            if ($machine.context.focusIndex) {
+                document
+                    .getElementById(`message-${$machine.context.focusIndex}`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                machine.send({ type: "CLEAR_FOCUS_INDEX" });
+            } else {
+                const extraHeight = messagesDiv.scrollHeight - scrollHeight;
+                messagesDiv.scrollTop = scrollTop + extraHeight;
+            }
         } else {
             scrollBottom();
             initialised = true;
@@ -60,8 +68,10 @@
                 $machine.history?.matches("loading_messages")
             ) {
                 // capture the current scrollheight and scrollTop just before the new messages get rendered
-                scrollHeight = messagesDiv.scrollHeight;
-                scrollTop = messagesDiv.scrollTop;
+                if (messagesDiv) {
+                    scrollHeight = messagesDiv.scrollHeight;
+                    scrollTop = messagesDiv.scrollTop;
+                }
                 tick().then(resetScroll);
             }
 

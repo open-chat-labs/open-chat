@@ -5,6 +5,7 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import { rtlStore } from "../../stores/rtl";
     import type { ActorRefFrom } from "xstate";
+    import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import { getContentAsText } from "../../domain/chat/chat.utils";
 
@@ -13,6 +14,30 @@
 
     function sentByMe(replyContext: ReplyContext): boolean {
         return replyContext.kind === "direct_standard_reply_context" && replyContext.sentByMe;
+    }
+
+    function zoomToMessage() {
+        console.log("zoom to message");
+
+        if (repliesTo.kind === "direct_standard_reply_context") {
+            // how to get trigger a scroll *after* the effects of this event are complete
+            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
+        }
+
+        if (repliesTo.kind === "direct_private_reply_context") {
+            console.log("select chat: ", repliesTo.chatId);
+            console.log("and then zoom to message: ", repliesTo.messageIndex);
+        }
+
+        if (repliesTo.kind === "group_reply_context") {
+            // we don't have a messageIndex in this scenario - need to double check why that is
+            console.log("group chat reply clicked");
+        }
+    }
+
+    function getMessageIndex(replyContext: ReplyContext): number {
+        if (replyContext.kind === "group_reply_context") return 0;
+        return replyContext.messageIndex;
     }
 
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
@@ -32,12 +57,16 @@
     }
 </script>
 
-<div class="reply-wrapper" class:me={sentByMe(repliesTo)} class:rtl={$rtlStore}>
-    <h4 class="username">{getUsernameFromReplyContext(repliesTo)}</h4>
-    {#if repliesTo.kind === "direct_standard_reply_context"}
-        {getContentAsText(repliesTo.content)}
-    {/if}
-</div>
+<Link on:click={zoomToMessage}>
+    <div class="reply-wrapper" class:me={sentByMe(repliesTo)} class:rtl={$rtlStore}>
+        <h4 class="username">
+            {getUsernameFromReplyContext(repliesTo)} ({getMessageIndex(repliesTo)})
+        </h4>
+        {#if repliesTo.kind === "direct_standard_reply_context"}
+            {getContentAsText(repliesTo.content)}
+        {/if}
+    </div>
+</Link>
 
 <style type="text/scss">
     .reply-wrapper {
