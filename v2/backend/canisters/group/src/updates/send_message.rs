@@ -46,7 +46,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let push_message_args = PushMessageArgs {
             sender: participant.user_id,
             message_id: args.message_id,
-            content: args.content.clone(),
+            content: args.content,
             replies_to: args.replies_to,
             now,
         };
@@ -61,7 +61,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 sender: participant.user_id,
                 recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
                 message_index,
-                content: args.content,
             };
 
             let push_notification_future = push_notification(*canister_id, notification);

@@ -113,7 +113,7 @@ mod c2c {
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
             sent_by_me: false,
-            content: args.content.clone(),
+            content: args.content,
             replies_to: args.replies_to,
             now: runtime_state.env.now(),
         };
@@ -127,7 +127,6 @@ mod c2c {
                 sender: sender_user_id,
                 recipient: runtime_state.env.canister_id().into(),
                 message_index: result.message_index,
-                content: args.content,
             };
 
             let push_notification_future = push_notification(*canister_id, notification);
