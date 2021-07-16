@@ -99,7 +99,7 @@ async fn handle_events(events: Vec<IndexedEvent>, dynamodb_client: &Client) -> R
                 };
             }
             Vacant(e) => {
-                e.insert([(chat_id, vec![message_index])].into_iter().cloned().collect());
+                e.insert([(chat_id, vec![message_index])].iter().cloned().collect());
             }
         };
     }
