@@ -3,7 +3,8 @@
 <script lang="ts">
     import type { Message } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
+    import type { ActorRefFrom, mapState } from "xstate";
+    import RepliesTo from "./RepliesTo.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
 
@@ -20,6 +21,9 @@
 <div class="chat-message-wrapper" class:me>
     <div class="chat-message" class:me class:rtl={$rtlStore}>
         <h4 class="username">{`${username} (${msg.messageIndex})`}</h4>
+        {#if msg.repliesTo !== undefined}
+            <RepliesTo {machine} repliesTo={msg.repliesTo} />
+        {/if}
         {textContent}
     </div>
 </div>
@@ -38,14 +42,14 @@
     .chat-message {
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms;
         position: relative;
-        padding: 20px;
-        border-radius: 20px;
+        padding: $sp4;
+        border-radius: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
-        margin-bottom: 20px;
-        font-size: 14px;
+        margin-bottom: $sp4;
         width: 80%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
+        @include font(light, normal, fs-90);
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -124,6 +128,7 @@
 
     .username {
         margin: 0;
-        margin-bottom: 5px;
+        margin-bottom: $sp2;
+        @include font(bold, normal, fs-100);
     }
 </style>

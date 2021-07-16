@@ -5,6 +5,7 @@ import type {
     GetMessagesResponse,
     GroupChatSummary,
     Message,
+    ReplyContext,
 } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
@@ -45,7 +46,21 @@ function mockDirectChat(i: number): DirectChatSummary {
     };
 }
 
+function mockRepliesTo(index: number): ReplyContext {
+    const sentByMe = index % 4 === 0;
+    return {
+        kind: "direct_standard_reply_context",
+        content: {
+            kind: "text_content",
+            text: randomPara(),
+        },
+        sentByMe,
+        messageIndex: index - 100,
+    };
+}
+
 function mockTextMessage(index: number): Message {
+    const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
         messageId: BigInt(index),
@@ -56,6 +71,7 @@ function mockTextMessage(index: number): Message {
         },
         sender,
         timestamp: BigInt(+new Date()),
+        repliesTo,
     };
 }
 

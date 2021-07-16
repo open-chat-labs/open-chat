@@ -16,6 +16,7 @@
     // let start: number;
     // let end: number;
     let scrollHeight = 0;
+    let scrollTop = 0;
     let currentChatId = "";
 
     function scrollBottom() {
@@ -27,7 +28,7 @@
     function resetScroll() {
         if (initialised) {
             const extraHeight = messagesDiv.scrollHeight - scrollHeight;
-            messagesDiv.scrollTop = messagesDiv.scrollTop + extraHeight - 100; // 100 is the height of the spinner
+            messagesDiv.scrollTop = scrollTop + extraHeight;
         } else {
             scrollBottom();
             initialised = true;
@@ -41,9 +42,6 @@
                 moreMessagesAvailable($machine.context)
             ) {
                 machine.send({ type: "LOAD_MORE_MESSAGES" });
-
-                // capture the current scrollheight
-                scrollHeight = messagesDiv.scrollHeight;
             }
         }
     }
@@ -61,6 +59,9 @@
                 $machine.matches("loaded_messages") &&
                 $machine.history?.matches("loading_messages")
             ) {
+                // capture the current scrollheight and scrollTop just before the new messages get rendered
+                scrollHeight = messagesDiv.scrollHeight;
+                scrollTop = messagesDiv.scrollTop;
                 tick().then(resetScroll);
             }
 
@@ -69,6 +70,9 @@
     }
 
     // OK - tomorrow we need to figure out jumping to a distant message
+    // replies:
+    // private reply context
+
     // then we need to figure out adding messages
     // then we need to figure out side loading new messages via polling
     // then we need to figure out loading new messages when we see the index has increased
