@@ -17,8 +17,6 @@
     }
 
     function zoomToMessage() {
-        console.log("zoom to message");
-
         if (repliesTo.kind === "direct_standard_reply_context") {
             // how to get trigger a scroll *after* the effects of this event are complete
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });

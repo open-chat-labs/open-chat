@@ -32,7 +32,7 @@
                 document
                     .getElementById(`message-${$machine.context.focusIndex}`)
                     ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                machine.send({ type: "CLEAR_FOCUS_INDEX" });
+                setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 1000);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
@@ -63,10 +63,7 @@
                 initialised = false;
             }
 
-            if (
-                $machine.matches("loaded_messages") &&
-                $machine.history?.matches("loading_messages")
-            ) {
+            if ($machine.matches("loaded_messages")) {
                 // capture the current scrollheight and scrollTop just before the new messages get rendered
                 if (messagesDiv) {
                     scrollHeight = messagesDiv.scrollHeight;
@@ -112,7 +109,8 @@
         flex: 1;
         background-color: var(--currentChat-msgs-bg);
         padding: 10px 0;
-        overflow: scroll;
+        overflow-y: scroll;
+        overflow-x: hidden;
         @include size-below(xs) {
             padding: 10px;
         }

@@ -26,7 +26,7 @@
 </script>
 
 <div class="chat-message-wrapper" class:me id={`message-${msg.messageIndex}`}>
-    <div class="chat-message" class:me class:rtl={$rtlStore}>
+    <div class="chat-message" class:me class:rtl={$rtlStore} class:focus>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
                 <h4 class="username">{username}</h4>
@@ -57,18 +57,24 @@
             justify-content: flex-end;
         }
     }
+
     .chat-message {
-        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms;
+        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
+            border ease-in-out 500ms;
         position: relative;
         padding: $sp4;
-        border-radius: $sp4;
+        border-radius: $sp4 $sp4 $sp4 0;
         border: 1px solid var(--currentChat-msg-bd);
         margin-bottom: $sp4;
         max-width: 80%;
         min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        @include font(light, normal, fs-100);
+        @include font(book, normal, fs-100);
+
+        &.rtl {
+            border-radius: $sp4 $sp4 0 $sp4;
+        }
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -78,6 +84,11 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
+            border-radius: $sp4 $sp4 0 $sp4;
+
+            &.rtl {
+                border-radius: $sp4 $sp4 $sp4 0;
+            }
             &:hover {
                 background-color: var(--currentChat-msg-me-hv);
             }
@@ -92,28 +103,37 @@
             display: block;
             width: 0;
             @include z-index("bubble-stem");
-            bottom: -$size;
-            margin-left: -$size;
-            // left: 15%;
-            left: $stem-offset;
+            bottom: -1px;
+            transform: rotate(135deg) translateX(9px);
+            left: 0;
         }
 
         &.rtl:after {
-            margin-left: 0;
-            margin-right: -$size;
-            // right: 15%;
-            right: $stem-offset;
+            right: -13px;
+            bottom: -14px;
+            transform: rotate(225deg) translateX(9px);
+            left: unset;
         }
 
         &.me {
             &:after {
+                transition: border-color ease-in-out 200ms;
                 border-color: var(--currentChat-msg-me-bd) transparent;
-                right: $stem-offset;
+                right: -13px;
+                bottom: -14px;
+                transform: rotate(225deg) translateX(9px);
                 left: unset;
             }
             &.rtl:after {
-                left: $stem-offset;
+                left: 0;
+                bottom: -1px;
+                transform: rotate(135deg) translateX(9px);
                 right: unset;
+            }
+            &:hover {
+                &:after {
+                    border-color: var(--currentChat-msg-me-hv) transparent;
+                }
             }
         }
 
@@ -126,25 +146,30 @@
             display: block;
             width: 0;
             @include z-index("bubble-stem");
-            margin-left: -$size;
-            bottom: -11px;
-            left: $stem-offset;
+            transform: rotate(135deg) scale(1.2) translateX($size);
+            bottom: -1px;
+            left: 0;
         }
 
         &.rtl:before {
-            margin-left: 0;
-            margin-right: -$size;
-            right: $stem-offset;
+            right: -15px;
+            left: unset;
+            bottom: -17px;
+            transform: rotate(225deg) scale(1.1) translateX($size);
         }
 
         &.me {
             &:before {
-                right: $stem-offset;
+                right: -15px;
                 left: unset;
                 border-color: var(--currentChat-msg-me-bd) transparent;
+                bottom: -17px;
+                transform: rotate(225deg) scale(1.1) translateX($size);
             }
             &.rtl:before {
-                left: $stem-offset;
+                left: 0;
+                bottom: -1px;
+                transform: rotate(135deg) scale(1.2) translateX($size);
                 right: unset;
             }
         }

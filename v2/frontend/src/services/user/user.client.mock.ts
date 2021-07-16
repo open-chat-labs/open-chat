@@ -47,6 +47,7 @@ function mockDirectChat(i: number): DirectChatSummary {
 }
 
 function mockRepliesTo(index: number): ReplyContext {
+    const jumpTo = randomNum(index - 100, index - 1);
     const sentByMe = index % 4 === 0;
     return {
         kind: "direct_standard_reply_context",
@@ -55,7 +56,7 @@ function mockRepliesTo(index: number): ReplyContext {
             text: randomPara(),
         },
         sentByMe,
-        messageIndex: index - 100,
+        messageIndex: jumpTo,
     };
 }
 
