@@ -1,26 +1,26 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::events::IndexedEvent;
 use crate::model::runtime_state::RuntimeState;
 use crate::queries::events::Response::*;
 use candid::CandidType;
 use ic_cdk_macros::query;
 use serde::Deserialize;
+use shared::types::notifications::IndexedEvent;
 
 const MAX_EVENTS_PER_BATCH: u32 = 100;
 
-#[derive(Deserialize)]
-struct Args {
+#[derive(CandidType, Deserialize)]
+pub struct Args {
     from_event_index: u64,
 }
 
-#[derive(CandidType)]
-enum Response {
+#[derive(CandidType, Deserialize)]
+pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
 }
 
-#[derive(CandidType)]
-struct SuccessResult {
+#[derive(CandidType, Deserialize)]
+pub struct SuccessResult {
     events: Vec<IndexedEvent>,
 }
 

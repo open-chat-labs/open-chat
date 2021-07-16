@@ -82,7 +82,7 @@ mod c2c {
     use ic_cdk::api::call::CallResult;
     use shared::c2c::call_with_logging;
     use shared::rand::get_random_item;
-    use shared::types::message_notifications::*;
+    use shared::types::notifications::*;
     use shared::types::CanisterId;
 
     pub async fn call(canister_id: CanisterId, args: Args) {

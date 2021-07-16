@@ -1,8 +1,7 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::events::Event;
 use crate::model::runtime_state::RuntimeState;
 use ic_cdk_macros::update;
-use shared::types::message_notifications::*;
+use shared::types::notifications::*;
 
 type Args = DirectMessageNotification;
 type Response = PushDirectMessageNotificationResponse;

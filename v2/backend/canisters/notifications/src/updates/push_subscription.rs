@@ -1,9 +1,9 @@
 use super::push_subscription::Response::*;
 use crate::canister::RUNTIME_STATE;
-use crate::model::events::{Event, Subscription};
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
 use ic_cdk_macros::update;
+use shared::types::notifications::{Event, Subscription};
 
 type Args = Subscription;
 

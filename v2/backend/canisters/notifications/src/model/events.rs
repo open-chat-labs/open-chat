@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::message_notifications::{DirectMessageNotification, GroupMessageNotification};
-use shared::types::UserId;
+use shared::types::notifications::{Event, IndexedEvent};
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 
@@ -57,29 +56,11 @@ impl Events {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone)]
-pub struct IndexedEvent {
-    index: u64,
-    event: Event,
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub enum Event {
-    DirectMessageNotification(DirectMessageNotification),
-    GroupMessageNotification(GroupMessageNotification),
-    Subscription(Subscription),
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct Subscription {
-    pub user_id: UserId,
-    pub subscription: String,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use candid::Principal;
+    use shared::types::notifications::Subscription;
 
     #[test]
     fn add() {

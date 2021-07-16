@@ -11,7 +11,7 @@ use shared::c2c::call_with_logging;
 use shared::rand::get_random_item;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
-use shared::types::message_notifications::*;
+use shared::types::notifications::*;
 use shared::types::{CanisterId, MessageId, MessageIndex};
 
 #[derive(Deserialize)]
