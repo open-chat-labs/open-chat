@@ -17,6 +17,6 @@
     {#if $machine.matches({ loaded_chats: "new_chat" })}
         <NewChat {machine} />
     {:else}
-        <ChatList on:newchat on:selectChat {machine} />
+        <ChatList on:newchat {machine} />
     {/if}
 </Panel>

@@ -38,6 +38,7 @@ export interface HomeContext {
 
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: string }
+    | { type: "CHAT_WITH"; data: string }
     | { type: "NEW_CHAT" }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
@@ -197,6 +198,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                CHAT_WITH: {
+                    actions: log((ctx, ev) => `chat with ${ev.data}`),
+                },
                 // todo - obviously we need to invoke some api call here as well ...
                 LEAVE_GROUP: {
                     internal: true,
@@ -328,6 +332,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 };
                                 // todo - if we want to select this chat, we actually want to
                                 // push its id into the route
+
                                 // todo - got to come back to this as it makes jest blow up
                                 // push(`/${dummyChat.chatId}`);
                                 return {

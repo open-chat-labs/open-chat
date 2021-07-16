@@ -73,6 +73,7 @@
     // replies:
     // private reply context
 
+    // annotating the timeline with dates and times
     // then we need to figure out adding messages
     // then we need to figure out side loading new messages via polling
     // then we need to figure out loading new messages when we see the index has increased
@@ -86,7 +87,7 @@
         </div>
     {/if}
     {#each $machine.context.messages as msg, i (msg.messageId)}
-        <ChatMessage {machine} {msg} />
+        <ChatMessage on:chatWith {machine} {msg} />
     {/each}
     <!-- <VirtualList bind:start bind:end items={$machine.context.messages} let:item>
         <ChatMessage {machine} msg={item} />

@@ -54,10 +54,6 @@
         push("/");
     }
 
-    function selectChat(ev: CustomEvent<ChatSummary>) {
-        push(`/chat/${ev.detail.chatId}`);
-    }
-
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
@@ -72,6 +68,18 @@
 
     function leaveGroup(ev: CustomEvent<string>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
+    }
+
+    function chatWith(ev: CustomEvent<string>) {
+        const chat = $machine.context.chatSummaries.find((c) => {
+            return c.kind === "direct_chat" && c.them === ev.detail;
+        });
+        if (chat) {
+            push(`/${chat.chatId}`);
+        } else {
+            // todo - this is a user that we don't have a chat with so we need to create one
+            console.log("create and select a chat with user: ", ev.detail);
+        }
     }
 
     $: selectedChat = $machine.context.selectedChat;
@@ -97,14 +105,14 @@
             {machine}
             hideLeft={params.chatId !== null}
             on:logout={logout}
-            on:newchat={newChat}
-            on:selectChat={selectChat} />
+            on:newchat={newChat} />
         <MiddlePanel
             loadingChats={$machine.matches("loading_chats")}
             on:newchat={newChat}
             on:clearSelection={clearSelectedChat}
             on:blockUser={blockUser}
             on:leaveGroup={leaveGroup}
+            on:chatWith={chatWith}
             hideLeft={params.chatId !== null}
             machine={selectedChatActor} />
     </main>

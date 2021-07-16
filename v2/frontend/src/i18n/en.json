@@ -25,6 +25,7 @@
     "dismissAsAdmin": "Dismiss as admin",
     "searchForUsername": "Search for a username",
     "startNewChat": "Start a new chat",
+    "chatWith": "Chat with {username}",
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
     "chatSummary": {
         "unread": "{count} unread message(s)"

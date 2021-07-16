@@ -1,26 +1,37 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import Link from "../Link.svelte";
     import type { Message } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom, mapState } from "xstate";
+    import type { ActorRefFrom } from "xstate";
     import RepliesTo from "./RepliesTo.svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let msg: Message;
 
-    const me = $machine.context.user?.userId === msg.sender;
-    const username = me
-        ? $machine.context.user?.username
-        : $machine.context.userLookup[msg.sender]?.username;
-    const textContent = getContentAsText(msg.content);
+    $: me = $machine.context.user?.userId === msg.sender;
+    $: username = $machine.context.userLookup[msg.sender]?.username;
+    $: textContent = getContentAsText(msg.content);
+    $: groupChat = $machine.context.chatSummary.kind === "group_chat";
+
+    function chatWithUser() {
+        dispatch("chatWith", msg.sender);
+    }
 </script>
 
 <div class="chat-message-wrapper" class:me>
     <div class="chat-message" class:me class:rtl={$rtlStore}>
-        <h4 class="username">{`${username} (${msg.messageIndex})`}</h4>
+        {#if groupChat && !me}
+            <Link on:click={chatWithUser} underline="hover">
+                <h4 class="username">{`${username} (${msg.messageIndex})`}</h4>
+            </Link>
+        {/if}
         {#if msg.repliesTo !== undefined}
             <RepliesTo {machine} repliesTo={msg.repliesTo} />
         {/if}
@@ -30,6 +41,7 @@
 
 <style type="text/scss">
     $size: 10px;
+    $stem-offset: 30px;
 
     .chat-message-wrapper {
         display: flex;
@@ -46,7 +58,8 @@
         border-radius: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
         margin-bottom: $sp4;
-        width: 80%;
+        max-width: 80%;
+        min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(light, normal, fs-90);
@@ -75,22 +88,26 @@
             @include z-index("bubble-stem");
             bottom: -$size;
             margin-left: -$size;
-            left: 15%;
+            // left: 15%;
+            left: $stem-offset;
         }
 
         &.rtl:after {
             margin-left: 0;
             margin-right: -$size;
-            right: 15%;
+            // right: 15%;
+            right: $stem-offset;
         }
 
         &.me {
             &:after {
                 border-color: var(--currentChat-msg-me-bd) transparent;
-                left: 85%;
+                right: $stem-offset;
+                left: unset;
             }
             &.rtl:after {
-                right: 85%;
+                left: $stem-offset;
+                right: unset;
             }
         }
 
@@ -105,23 +122,24 @@
             @include z-index("bubble-stem");
             margin-left: -$size;
             bottom: -11px;
-            left: 15%;
+            left: $stem-offset;
         }
 
         &.rtl:before {
             margin-left: 0;
             margin-right: -$size;
-            right: 15%;
+            right: $stem-offset;
         }
 
         &.me {
             &:before {
-                left: 85%;
-                right: unset;
+                right: $stem-offset;
+                left: unset;
                 border-color: var(--currentChat-msg-me-bd) transparent;
             }
             &.rtl:before {
-                right: 85%;
+                left: $stem-offset;
+                right: unset;
             }
         }
     }

@@ -31,8 +31,7 @@
                     <ChatSummary
                         users={$machine.context.userLookup}
                         {chatSummary}
-                        selected={$machine.context.selectedChat?.chatId === chatSummary.chatId}
-                        on:selectChat />
+                        selected={$machine.context.selectedChat?.chatId === chatSummary.chatId} />
                 </div>
             {/each}
         </div>

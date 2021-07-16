@@ -13,7 +13,7 @@ export function fill<T>(
 }
 
 export function randomPara(numWords?: number): string {
-    return fill(numWords ?? randomNum(4, 50), () => {
+    return fill(numWords ?? randomNum(1, 50), () => {
         return randomWord(randomNum(3, 12));
     }).join(" ");
 }
