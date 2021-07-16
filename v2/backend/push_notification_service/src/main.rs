@@ -37,8 +37,10 @@ async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
     let event_index = get_event_index(&dynamodb_client, request.canister_id).await?;
     let events = get_events(&ic_agent, request.canister_id, event_index).await?;
 
-    if !events.is_empty() {
+    if let Some(last_event_index) = events.last().map(|e| e.index) {
         handle_events(events, &dynamodb_client).await?;
+
+        set_event_index(&dynamodb_client, request.canister_id, last_event_index).await?;
     }
 
     Ok(())
@@ -62,6 +64,18 @@ async fn get_event_index(dynamodb_client: &Client, canister_id: CanisterId) -> R
         }
         Err(error) => Err(error.into()),
     }
+}
+
+async fn set_event_index(dynamodb_client: &Client, canister_id: CanisterId, event_index: u64) -> Result<(), Error> {
+    dynamodb_client
+        .put_item()
+        .table_name("push_notification_stream_indexes")
+        .item("canister_id", AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())))
+        .item("index", AttributeValue::N(event_index.to_string()))
+        .send()
+        .await
+        .map(|_| ())
+        .map_err(|e| e.into())
 }
 
 async fn get_events(ic_agent: &Agent, canister_id: CanisterId, from_event_index: u64) -> Result<Vec<IndexedEvent>, Error> {
