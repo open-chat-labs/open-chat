@@ -78,16 +78,33 @@ function loadMessages(
     );
 }
 
+export function earliestAvailableMessageIndex(ctx: ChatContext): number {
+    return ctx.chatSummary.kind === "group_chat"
+        ? 0 // todo - replace with a prop on the group chat summary type
+        : 0;
+}
+
+export function earliestLoadedMessageIndex(ctx: ChatContext): number {
+    return ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessageIndex;
+}
+
+export function moreMessagesAvailable(ctx: ChatContext): boolean {
+    return earliestLoadedMessageIndex(ctx) > earliestAvailableMessageIndex(ctx);
+}
+
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
-    guards: {},
+    guards: {
+        moreMessagesAvailable,
+    },
     services: {
         loadMessagesAndUsers: async (ctx, _) => {
-            const earliestLoadedMessageIndex =
-                ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessageIndex;
+            const earliestLoaded = earliestLoadedMessageIndex(ctx);
 
             const [userLookup, messagesResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                loadMessages(ctx.serviceContainer!, ctx.chatSummary, earliestLoadedMessageIndex),
+                moreMessagesAvailable(ctx)
+                    ? loadMessages(ctx.serviceContainer!, ctx.chatSummary, earliestLoaded)
+                    : { messages: [], latestMessageIndex: 0 },
             ]);
             return {
                 userLookup,
@@ -95,7 +112,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 latestMessageIndex:
                     messagesResponse === "chat_not_found"
                         ? ctx.chatSummary.latestMessageIndex
-                        : messagesResponse.lastestMessageIndex,
+                        : messagesResponse.latestMessageIndex,
             };
         },
         removeParticipant: (_ctx, _ev) => {

@@ -71,7 +71,7 @@ export class UserClientMock implements IUserClient {
             setTimeout(() => {
                 res({
                     messages,
-                    lastestMessageIndex: 1000,
+                    latestMessageIndex: 1000,
                 });
             }, 300);
         });

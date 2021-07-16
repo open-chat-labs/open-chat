@@ -18,10 +18,9 @@ import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
-import { claim_text } from "svelte/internal";
 // import { push } from "svelte-spa-router";
 
-const ONE_MINUTE = 5 * 1000;
+const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 

@@ -80,7 +80,7 @@ export type GetMessagesResponse = "chat_not_found" | GetMessagesSuccess;
 
 export type GetMessagesSuccess = {
     messages: Message[];
-    lastestMessageIndex: number;
+    latestMessageIndex: number;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
