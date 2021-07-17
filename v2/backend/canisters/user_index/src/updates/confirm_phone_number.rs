@@ -29,6 +29,7 @@ fn confirm_phone_number(args: Args) -> Response {
 fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
+    let test_mode = runtime_state.env.test_mode();
 
     let phone_number: PhoneNumber;
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
@@ -38,10 +39,10 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
                 let has_code_expired = now > code_expires_at;
                 if has_code_expired {
                     return Response::ConfirmationCodeExpired;
-                } else if args.confirmation_code != u.confirmation_code {
-                    return Response::ConfirmationCodeIncorrect;
-                } else {
+                } else if (args.confirmation_code == u.confirmation_code) || (test_mode && args.confirmation_code == "123456") {
                     phone_number = u.phone_number.clone();
+                } else {
+                    return Response::ConfirmationCodeIncorrect;
                 }
             }
             _ => return Response::AlreadyClaimed,
@@ -69,7 +70,7 @@ mod tests {
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::UnconfirmedUser;
-    use crate::test::env::TestEnv;
+    use shared::env::test::TestEnv;
     use std::str::FromStr;
 
     #[test]

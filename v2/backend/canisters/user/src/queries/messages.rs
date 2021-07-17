@@ -34,7 +34,7 @@ fn messages(args: Args) -> Response {
 
 fn messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
-        let my_user_id = runtime_state.env.owner_user_id();
+        let my_user_id = runtime_state.env.canister_id().into();
         let their_user_id = args.user_id;
         let chat_id = DirectChatId::from((&my_user_id, &their_user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {

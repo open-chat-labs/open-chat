@@ -69,7 +69,7 @@ async fn create() -> Result<Principal, Error> {
         Principal::management_canister(),
         "create_canister",
         (in_arg,),
-        consts::CANISTER_INITIAL_PAYMENT as i64,
+        consts::CANISTER_INITIAL_PAYMENT,
     )
     .await
     {

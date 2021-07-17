@@ -146,6 +146,13 @@ pub enum CanisterCreationStatus {
     Created,
 }
 
+#[derive(CandidType, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CanisterUpgradeStatus {
+    Required,
+    InProgress,
+    NotRequired,
+}
+
 #[cfg(test)]
 impl Default for CreatedUser {
     fn default() -> Self {
