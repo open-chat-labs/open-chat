@@ -62,10 +62,6 @@
         console.log("block user clicked");
     }
 
-    function selectParticipant() {
-        console.log("select participant");
-    }
-
     function leaveGroup(ev: CustomEvent<string>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
     }
@@ -77,8 +73,7 @@
         if (chat) {
             push(`/${chat.chatId}`);
         } else {
-            // todo - this is a user that we don't have a chat with so we need to create one
-            console.log("create and select a chat with user: ", ev.detail);
+            machine.send({ type: "CREATE_DIRECT_CHAT", data: ev.detail });
         }
     }
 
@@ -127,7 +122,7 @@
                 class:rtl={$rtlStore}>
                 <RightPanel
                     machine={selectedChatActor}
-                    on:selectParticipant={selectParticipant}
+                    on:chatWith={chatWith}
                     on:blockUser={blockUser} />
             </div>
         {/if}

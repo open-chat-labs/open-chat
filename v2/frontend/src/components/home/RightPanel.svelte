@@ -11,6 +11,6 @@
     {#if $machine.matches({ showing_participants: "adding_participant" })}
         <AddParticipant {machine} />
     {:else}
-        <Participants {machine} on:blockUser on:selectParticipant />
+        <Participants {machine} on:blockUser on:chatWith />
     {/if}
 </Panel>

@@ -63,6 +63,9 @@
         {#if repliesTo.kind === "direct_standard_reply_context"}
             {getContentAsText(repliesTo.content)}
         {/if}
+        {#if repliesTo.kind === "direct_private_reply_context"}
+            {"TODO - private context - no content to display"}
+        {/if}
     </div>
 </Link>
 

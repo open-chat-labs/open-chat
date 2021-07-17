@@ -30,7 +30,8 @@
 
     function participantSelected(e: MouseEvent) {
         if (!you) {
-            dispatch("selectParticipant", participant);
+            dispatch("chatWith", participant.userId);
+            dispatch("close");
         }
     }
 

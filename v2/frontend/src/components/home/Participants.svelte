@@ -36,7 +36,7 @@
 <ParticipantsHeader on:close={close} on:addParticipant={addParticipant} />
 
 {#if $machine.context.user !== undefined}
-    <Participant {machine} participant={$machine.context.user} on:blockUser on:selectParticipant />
+    <Participant {machine} participant={$machine.context.user} on:blockUser on:chatWith />
 {/if}
 
 <div class="wrapper" class:busy>
@@ -47,7 +47,7 @@
         <div
             animate:flip={{ duration: 600, easing: elasticOut }}
             out:fade|local={{ duration: 150 }}>
-            <Participant {machine} participant={user} on:blockUser on:selectParticipant />
+            <Participant {machine} participant={user} on:blockUser on:chatWith on:close={close} />
         </div>
     {/each}
 </div>

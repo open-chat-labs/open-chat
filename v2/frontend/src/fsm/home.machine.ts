@@ -18,7 +18,7 @@ import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
-// import { push } from "svelte-spa-router";
+import { push } from "svelte-spa-router";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
@@ -38,8 +38,8 @@ export interface HomeContext {
 
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: string }
-    | { type: "CHAT_WITH"; data: string }
     | { type: "NEW_CHAT" }
+    | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
@@ -198,9 +198,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
-                CHAT_WITH: {
-                    actions: log((ctx, ev) => `chat with ${ev.data}`),
-                },
                 // todo - obviously we need to invoke some api call here as well ...
                 LEAVE_GROUP: {
                     internal: true,
@@ -287,6 +284,26 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     target: ".new_chat",
                     actions: log("received new chat"),
+                },
+                CREATE_DIRECT_CHAT: {
+                    internal: true,
+                    actions: assign((ctx, ev) => {
+                        const dummyChat: DirectChatSummary = {
+                            kind: "direct_chat",
+                            them: ev.data,
+                            chatId: String(ctx.chatSummaries.length + 1),
+                            lastUpdated: BigInt(+new Date()),
+                            displayDate: BigInt(+new Date()),
+                            lastReadByUs: 0,
+                            lastReadByThem: 0,
+                            latestMessageIndex: 0,
+                            latestMessage: undefined,
+                        };
+                        push(`/${dummyChat.chatId}`);
+                        return {
+                            chatSummaries: [dummyChat, ...ctx.chatSummaries],
+                        };
+                    }),
                 },
             },
             states: {

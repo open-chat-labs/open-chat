@@ -49,6 +49,15 @@ function mockDirectChat(i: number): DirectChatSummary {
 function mockRepliesTo(index: number): ReplyContext {
     const jumpTo = randomNum(index - 100, index - 1);
     const sentByMe = index % 4 === 0;
+    const privateReply = index % 3 === 0;
+    if (privateReply) {
+        // todo - private reply context does not contain content so what are we supposed to display?
+        return {
+            kind: "direct_private_reply_context",
+            messageIndex: jumpTo,
+            chatId: "1000",
+        };
+    }
     return {
         kind: "direct_standard_reply_context",
         content: {
