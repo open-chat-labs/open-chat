@@ -63,7 +63,6 @@ export type UpgradeCanisterResponse =
     | "user_not_found";
 
 export type CurrentUserResponse =
-    | UpgradeInProgress
     | UnconfirmedUser
     | ConfirmedUser
     | ConfirmedPendingUsername
@@ -95,7 +94,7 @@ export type CreatedUser = {
     username: string;
     userId: string;
     accountBalance: bigint;
-    upgradeRequired: boolean;
+    canisterUpgradeStatus: "required" | "not_required" | "in_progress";
 };
 
 export type UserNotFound = {

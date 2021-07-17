@@ -123,11 +123,6 @@ export function upgradeCanisterResponse(
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    if ("UpgradeInProgress" in candid) {
-        return {
-            kind: "upgrade_in_progress",
-        };
-    }
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
@@ -164,7 +159,12 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
             accountBalance: candid.Created.account_balance,
-            upgradeRequired: candid.Created.upgrade_required,
+            canisterUpgradeStatus:
+                "Required" in candid.Created.canister_upgrade_status
+                    ? "required"
+                    : "NotRequired" in candid.Created.canister_upgrade_status
+                    ? "not_required"
+                    : "in_progress",
         };
     }
 

@@ -74,7 +74,7 @@ export class UserIndexClientMock implements IUserIndexClient {
             userId: "abcdefg",
             username: "julian_jelfs",
             accountBalance: BigInt(10000),
-            upgradeRequired: false,
+            canisterUpgradeStatus: "not_required",
         });
     }
 
@@ -86,12 +86,16 @@ export class UserIndexClientMock implements IUserIndexClient {
                 userId: "abcdefg",
                 username: "julian_jelfs",
                 accountBalance: BigInt(10000),
-                upgradeRequired: true,
+                canisterUpgradeStatus: "required",
             });
         } else if (this.count === 1) {
             this.count += 1;
             return Promise.resolve({
-                kind: "upgrade_in_progress",
+                kind: "created_user",
+                userId: "abcdefg",
+                username: "julian_jelfs",
+                accountBalance: BigInt(10000),
+                canisterUpgradeStatus: "in_progress",
             });
         } else {
             return this.normalUserScenario();

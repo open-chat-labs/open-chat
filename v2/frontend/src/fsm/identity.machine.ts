@@ -64,7 +64,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         userRequiresUpgrade: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
                 if (ev.data.kind === "created_user") {
-                    return ev.data.upgradeRequired;
+                    return ev.data.canisterUpgradeStatus === "required";
                 }
                 return false;
             }
@@ -72,13 +72,16 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         },
         userUpgradeInProgress: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind === "upgrade_in_progress";
+                return (
+                    ev.data.kind === "created_user" &&
+                    ev.data.canisterUpgradeStatus === "in_progress"
+                );
             }
             throw new Error(`Unexpected event type for userUpgradeInProgress guard: ${ev.type}`);
         },
         userIsRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind == "upgrade_in_progress" || ev.data.kind == "created_user";
+                return ev.data.kind == "created_user";
             }
             throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
         },
