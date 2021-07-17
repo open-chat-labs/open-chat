@@ -107,6 +107,10 @@ export type HandleMessageResponse = { 'Out' : null } |
   { 'Success' : null } |
   { 'SenderBlocked' : null };
 export interface HandleRemovedFromGroupArgs { 'group_id' : GroupId }
+export interface InitArgs {
+  'owner' : Principal,
+  'notification_canister_ids' : Array<CanisterId>,
+}
 export interface MarkReadArgs {
   'up_to_message_index' : MessageIndex,
   'user_id' : UserId,

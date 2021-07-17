@@ -1,5 +1,4 @@
 mod api;
-mod env;
 mod init;
 
 use crate::model::runtime_state::RuntimeState;

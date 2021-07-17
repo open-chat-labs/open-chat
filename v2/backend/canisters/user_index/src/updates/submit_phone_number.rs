@@ -96,8 +96,8 @@ mod tests {
     use crate::model::data::Data;
     use crate::model::runtime_state::RuntimeState;
     use crate::model::user::{CanisterCreationStatus, ConfirmedUser};
-    use crate::test::env::TestEnv;
     use candid::Principal;
+    use shared::env::test::TestEnv;
 
     #[test]
     fn new_user_succeeds() {

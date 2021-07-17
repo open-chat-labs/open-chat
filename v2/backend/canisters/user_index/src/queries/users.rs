@@ -51,10 +51,10 @@ mod tests {
     use super::*;
     use crate::model::data::Data;
     use crate::model::user::{CreatedUser, User};
-    use crate::test::env::TestEnv;
     use candid::Principal;
     use itertools::Itertools;
     use phonenumber::PhoneNumber;
+    use shared::env::test::TestEnv;
     use std::str::FromStr;
 
     #[test]

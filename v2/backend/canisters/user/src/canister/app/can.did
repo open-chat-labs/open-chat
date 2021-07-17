@@ -387,7 +387,13 @@ type MetricsResponse =
         wasm_memory_used: nat64;
     };
 
-service: {
+type InitArgs = 
+    record {
+        owner: principal;
+        notification_canister_ids: vec CanisterId;
+    };
+
+service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);

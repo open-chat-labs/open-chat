@@ -1,5 +1,6 @@
-export default ({ IDL }) => {
+export const idlFactory = ({ IDL }) => {
   const InitArgs = IDL.Record({
+    'test_mode' : IDL.Bool,
     'user_wasm_module' : IDL.Vec(IDL.Nat8),
     'sms_service_principals' : IDL.Vec(IDL.Principal),
     'service_principals' : IDL.Vec(IDL.Principal),
@@ -29,12 +30,12 @@ export default ({ IDL }) => {
   });
   const UserId = CanisterId;
   const CurrentUserResponse = IDL.Variant({
-    'UpgradeInProgress' : IDL.Null,
     'Unconfirmed' : IDL.Record({ 'phone_number' : PhoneNumber }),
     'Confirmed' : IDL.Record({
       'username' : IDL.Text,
       'canister_creation_status' : IDL.Variant({
         'InProgress' : IDL.Null,
+        'Created' : IDL.Null,
         'Pending' : IDL.Null,
       }),
     }),
@@ -48,8 +49,12 @@ export default ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
+      'canister_upgrade_status' : IDL.Variant({
+        'Required' : IDL.Null,
+        'NotRequired' : IDL.Null,
+        'InProgress' : IDL.Null,
+      }),
       'account_balance' : IDL.Nat,
-      'upgrade_required' : IDL.Bool,
     }),
     'UserNotFound' : IDL.Null,
   });
@@ -95,9 +100,10 @@ export default ({ IDL }) => {
     'UsernameInvalid' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
+    'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
-  const SubmitPhoneNumberArgs = IDL.Record({ 'number' : PhoneNumber });
+  const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
     'Success' : IDL.Null,
@@ -120,9 +126,9 @@ export default ({ IDL }) => {
     'version' : IDL.Text,
   });
   const UpdateWasmResponse = IDL.Variant({
-    'ExistingWasmHasHigherVersion' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'VersionNotHigher' : IDL.Null,
     'InvalidVersion' : IDL.Null,
   });
   const UpgradeCanisterArgs = IDL.Record({});
@@ -201,6 +207,7 @@ export default ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const InitArgs = IDL.Record({
+    'test_mode' : IDL.Bool,
     'user_wasm_module' : IDL.Vec(IDL.Nat8),
     'sms_service_principals' : IDL.Vec(IDL.Principal),
     'service_principals' : IDL.Vec(IDL.Principal),

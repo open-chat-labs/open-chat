@@ -1,28 +1,20 @@
 {
   "canisters": {
-    "chats": {
+    "user_index": {
       "type": "custom",
-      "candid": "backend/canisters/chats.did",
-      "wasm": "target/wasm32-unknown-unknown/release/chats-opt.wasm",
-      "build": "./generate-wasm.sh chats"
+      "candid": "backend/canisters/user_index/src/canister/app/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user_index-opt.wasm",
+      "build": "./generate-wasm.sh user_index"
     },
-    "p2p": {
+    "user": {
       "type": "custom",
-      "candid": "backend/p2p/p2p.did",
-      "wasm": "target/wasm32-unknown-unknown/release/p2p-opt.wasm",
-      "build": "./generate-wasm.sh p2p"
-    },
-    "user_mgmt": {
-      "type": "custom",
-      "candid": "backend/user_mgmt/user_mgmt.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user_mgmt-opt.wasm",
-      "build": "./generate-wasm.sh user_mgmt"
+      "candid": "backend/canisters/user/src/canister/app/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/user-opt.wasm",
+      "build": "./generate-wasm.sh user"
     },
     "website": {
       "dependencies": [
-        "chats",
-        "p2p",
-        "user_mgmt"
+        "user_index"
       ],
       "frontend": {
         "entrypoint": "./frontend/public/index.html"
@@ -40,7 +32,6 @@
       "packtool": ""
     }
   },
-  "dfx": "0.7.1",
   "networks": {
     "local": {
       "bind": "127.0.0.1:8000",
