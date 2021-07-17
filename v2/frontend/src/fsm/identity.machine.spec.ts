@@ -15,7 +15,7 @@ const fakeUser: CurrentUserResponse = {
     userId: "abcdefg",
     username: "julian_jelfs",
     accountBalance: BigInt(10000),
-    upgradeRequired: false,
+    canisterUpgradeStatus: "not_required",
 };
 
 const fakeIdentity: Identity = {
@@ -281,7 +281,7 @@ describe("identity machine transitions", () => {
                     userId: "abcdefg",
                     username: "julian_jelfs",
                     accountBalance: BigInt(10000),
-                    upgradeRequired: true,
+                    canisterUpgradeStatus: "required",
                 },
             },
             "upgrade_user",
@@ -298,7 +298,11 @@ describe("identity machine transitions", () => {
             {
                 type: "done.invoke.getUser",
                 data: {
-                    kind: "upgrade_in_progress",
+                    kind: "created_user",
+                    userId: "abcdefg",
+                    username: "julian_jelfs",
+                    accountBalance: BigInt(10000),
+                    canisterUpgradeStatus: "in_progress",
                 },
             },
             "upgrading_user",
