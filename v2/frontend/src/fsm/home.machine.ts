@@ -39,6 +39,8 @@ export interface HomeContext {
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: string }
     | { type: "NEW_CHAT" }
+    | { type: "JOIN_GROUP" }
+    | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
@@ -285,6 +287,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_chat",
                     actions: log("received new chat"),
                 },
+                JOIN_GROUP: {
+                    internal: true,
+                    target: ".join_group",
+                },
                 CREATE_DIRECT_CHAT: {
                     internal: true,
                     actions: assign((ctx, ev) => {
@@ -310,6 +316,12 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
+                },
+                join_group: {
+                    entry: log("entering join group"),
+                    on: {
+                        CANCEL_JOIN_GROUP: "no_chat_selected",
+                    },
                 },
                 new_chat: {
                     entry: log("entering new chat"),

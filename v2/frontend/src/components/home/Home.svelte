@@ -58,6 +58,10 @@
         machine.send({ type: "NEW_CHAT" });
     }
 
+    function joinGroup() {
+        machine.send({ type: "JOIN_GROUP" });
+    }
+
     function blockUser() {
         console.log("block user clicked");
     }
@@ -100,6 +104,7 @@
             {machine}
             hideLeft={params.chatId !== null}
             on:logout={logout}
+            on:joinGroup={joinGroup}
             on:newchat={newChat} />
         <MiddlePanel
             loadingChats={$machine.matches("loading_chats")}

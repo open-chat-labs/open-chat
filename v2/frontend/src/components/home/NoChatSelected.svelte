@@ -25,8 +25,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-
-        @include fullHeight();
+        height: 100%;
     }
 
     .subtitle {

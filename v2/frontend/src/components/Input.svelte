@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     let inp: HTMLInputElement;
+    export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string | number = "";
     export let autofocus: boolean = false;
@@ -29,6 +30,7 @@
 <input
     class:invalid
     spellcheck="false"
+    {disabled}
     {type}
     {minlength}
     {maxlength}

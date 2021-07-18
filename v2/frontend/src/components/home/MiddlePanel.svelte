@@ -20,7 +20,7 @@
             <Loading />
         {/if}
     {:else if machine === undefined}
-        <div in:fade>
+        <div class="no-chat" in:fade>
             <NoChatSelected on:newchat />
         </div>
     {:else}
@@ -29,21 +29,7 @@
 </Panel>
 
 <style type="text/scss">
-    .currentChat {
-        background-color: var(--currentChat-header-bg);
-        color: var(--currentChat-header-txt);
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-
+    .no-chat {
         height: 100%;
-    }
-
-    .title {
-        @include font(bold, normal, fs-180);
-        text-align: center;
-        margin-bottom: $sp3;
     }
 </style>

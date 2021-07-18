@@ -104,6 +104,30 @@ describe("home machine transitions", () => {
         expect(ctx.userLookup["123"].username).toBe("me");
     });
 
+    test("new chat clicked", () => {
+        testTransition(homeMachine, { loaded_chats: "no_chat_selected" }, "NEW_CHAT", {
+            loaded_chats: "new_chat",
+        });
+    });
+
+    test("cancel new chat", () => {
+        testTransition(homeMachine, { loaded_chats: "new_chat" }, "CANCEL_NEW_CHAT", {
+            loaded_chats: "no_chat_selected",
+        });
+    });
+
+    test("join group clicked", () => {
+        testTransition(homeMachine, { loaded_chats: "no_chat_selected" }, "JOIN_GROUP", {
+            loaded_chats: "join_group",
+        });
+    });
+
+    test("cancel join group", () => {
+        testTransition(homeMachine, { loaded_chats: "join_group" }, "CANCEL_JOIN_GROUP", {
+            loaded_chats: "no_chat_selected",
+        });
+    });
+
     test("chats updated - updates context", () => {
         const ctx = testTransition(
             homeMachine,
