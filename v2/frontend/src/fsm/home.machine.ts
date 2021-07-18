@@ -347,11 +347,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     latestMessageIndex: 0,
                                     latestMessage: undefined,
                                 };
-                                // todo - if we want to select this chat, we actually want to
-                                // push its id into the route
-
-                                // todo - got to come back to this as it makes jest blow up
-                                // push(`/${dummyChat.chatId}`);
+                                push(`/${dummyChat.chatId}`);
                                 return {
                                     chatSummaries: [dummyChat, ...ctx.chatSummaries],
                                     userLookup: {

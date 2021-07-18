@@ -115,7 +115,8 @@
             "svelte"
         ],
         "moduleNameMapper": {
-            "api-canisters/*": "<rootDir>/../backend/canisters/*"
+            "api-canisters/*": "<rootDir>/../backend/canisters/*",
+            "svelte-spa-router": "<rootDir>/src/dummyRouter.js"
         }
     }
 }

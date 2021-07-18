@@ -29,7 +29,10 @@ describe("chat machine transitions", () => {
         testTransition(
             chatMachine.withContext(testContext),
             "loading_messages",
-            "done.invoke.loadMessagesAndUsers",
+            {
+                type: "done.invoke.loadMessagesAndUsers",
+                data: { userLookup: {}, messages: [], latestMessageIndex: 0 },
+            },
             "loaded_messages"
         );
     });
@@ -119,5 +122,34 @@ describe("chat machine transitions", () => {
             "ADD_PARTICIPANT",
             { showing_participants: "adding_participant" }
         );
+    });
+
+    test("load more messages", () => {
+        testTransition(
+            chatMachine.withContext(testContext),
+            "loaded_messages",
+            "LOAD_MORE_MESSAGES",
+            "loading_messages"
+        );
+    });
+
+    test("go to message index", () => {
+        const ctx = testTransition(
+            chatMachine.withContext(testContext),
+            "loaded_messages",
+            { type: "GO_TO_MESSAGE_INDEX", data: 123 },
+            "loading_messages"
+        );
+        expect(ctx.focusIndex).toEqual(123);
+    });
+
+    test("clear focus index", () => {
+        const ctx = testTransition(
+            chatMachine.withContext({ ...testContext, focusIndex: 123 }),
+            "loaded_messages",
+            "CLEAR_FOCUS_INDEX",
+            "loaded_messages"
+        );
+        expect(ctx.focusIndex).toBe(undefined);
     });
 });
