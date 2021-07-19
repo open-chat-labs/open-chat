@@ -1,7 +1,6 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
     import { menuStore } from "../stores/menu";
-    export let index: number = 0;
 
     let pos: { x: number; y: number } | undefined;
     let menu: HTMLElement;
@@ -19,12 +18,10 @@
         pos = undefined;
         menuStore.hideMenu();
     }
-
-    $: console.log($menuStore?.getAttribute("data-index"));
 </script>
 
 <div class="menu-icon">
-    <span data-index={index} bind:this={menu} on:click|stopPropagation={showMenu}>
+    <span bind:this={menu} on:click|stopPropagation={showMenu}>
         <slot name="icon" />
     </span>
 

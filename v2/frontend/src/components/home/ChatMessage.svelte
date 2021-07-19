@@ -77,7 +77,7 @@
 
         <pre class="debug">({msg.messageIndex})</pre>
         <div class="menu" class:rtl={$rtlStore}>
-            <MenuIcon index={msg.messageIndex}>
+            <MenuIcon>
                 <div class="menu-icon" slot="icon">
                     <HoverIcon>
                         <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
