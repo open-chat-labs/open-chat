@@ -1,0 +1,20 @@
+<div class="fab" on:click>
+    <slot />
+</div>
+
+<style type="text/scss">
+    .fab {
+        transition: background-color ease-in-out 200ms;
+        width: $sp7;
+        height: $sp7;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--button-bg);
+        cursor: hand;
+        &:hover {
+            background-color: var(--button-hv);
+        }
+    }
+</style>

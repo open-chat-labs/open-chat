@@ -20,6 +20,10 @@ $font-weights: (
 // The purpose of the key-numbers is to have them ordered relative to their font-size.
 // The key-numbers are not related in any other way to the font-size or line-height.
 $font-sizes: (
+    fs-60: (
+        font-size: 12px,
+        line-height: 135%,
+    ),
     fs-70: (
         font-size: 13px,
         line-height: 140%,

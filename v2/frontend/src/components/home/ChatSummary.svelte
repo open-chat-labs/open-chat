@@ -126,7 +126,7 @@
                 flex: auto;
             }
             .chat-date {
-                @include font(light, normal, fs-70);
+                @include font(light, normal, fs-60);
                 color: var(--chatSummary-txt2);
             }
         }

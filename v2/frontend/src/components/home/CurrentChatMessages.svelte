@@ -1,27 +1,35 @@
 <script lang="ts">
     import { tick } from "svelte";
     import ChatMessage from "./ChatMessage.svelte";
+    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
+    import { fade } from "svelte/transition";
     import { moreMessagesAvailable } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import Loading from "../Loading.svelte";
+    import type { Message } from "../../domain/chat/chat";
+    import Fab from "../Fab.svelte";
+    import { rtlStore } from "../../stores/rtl";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
+    const FROM_BOTTOM_THRESHOLD = 600;
 
     export let machine: ActorRefFrom<ChatMachine>;
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
     let initialised = false;
-    // let start: number;
-    // let end: number;
     let scrollHeight = 0;
     let scrollTop = 0;
     let currentChatId = "";
+    let fromBottom = 0;
 
-    function scrollBottom() {
+    function scrollBottom(behavior: ScrollBehavior = "auto") {
         if (messagesDiv) {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            messagesDiv.scrollTo({
+                top: messagesDiv.scrollHeight,
+                behavior,
+            });
         }
     }
 
@@ -50,11 +58,16 @@
             ) {
                 machine.send({ type: "LOAD_MORE_MESSAGES" });
             }
+            fromBottom =
+                messagesDiv.scrollHeight -
+                Math.abs(messagesDiv.scrollTop) -
+                messagesDiv.clientHeight;
         }
     }
 
     // this is a horrible hack but I can't find any other solution to this problem
     let previous: any;
+    let messages: Message[];
     $: {
         if ($machine !== previous) {
             if ($machine.context.chatSummary.chatId !== currentChatId) {
@@ -72,6 +85,8 @@
             }
 
             previous = $machine;
+
+            messages = $machine.context.messages;
         }
     }
 
@@ -92,21 +107,42 @@
             <Loading />
         </div>
     {/if}
-    {#each $machine.context.messages as msg, i (msg.messageIndex)}
+    {#each messages as msg, i (msg.messageIndex)}
         <ChatMessage on:chatWith {machine} {msg} />
     {/each}
 </div>
+
+{#if fromBottom > FROM_BOTTOM_THRESHOLD}
+    <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
+        <Fab on:click={() => scrollBottom("smooth")}>
+            <ArrowDown size={"1.2em"} color={"#fff"} />
+        </Fab>
+    </div>
+{/if}
 
 <style type="text/scss">
     .spinner {
         height: 100px;
     }
+
+    .to-bottom {
+        position: absolute;
+        bottom: 80px;
+        right: 20px;
+
+        &.rtl {
+            left: $sp6;
+            right: unset;
+        }
+    }
+
     .chat-messages {
         flex: 1;
         background-color: var(--currentChat-msgs-bg);
         padding: 10px 0;
         overflow-y: scroll;
         overflow-x: hidden;
+        position: relative;
         @include size-below(xs) {
             padding: 10px;
         }

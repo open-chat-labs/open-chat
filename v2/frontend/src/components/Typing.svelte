@@ -24,12 +24,15 @@
             @keyframes pulse {
                 0% {
                     opacity: 1;
+                    transform: scale(1);
                 }
                 50% {
                     opacity: 0;
+                    transform: scale(1.2);
                 }
                 100% {
                     opacity: 1;
+                    transform: scale(1);
                 }
             }
         }

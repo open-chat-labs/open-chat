@@ -22,10 +22,15 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
+    import { toShortTimeString } from "../../utils/date";
+    import Tick from "./Tick.svelte";
+    import DoubleTick from "./DoubleTick.svelte";
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let msg: Message;
+    let confirmed: boolean = true; // todo - where does this come from
+    let read: boolean = true; // todo - where does this come from
 
     $: me = $machine.context.user?.userId === msg.sender;
     $: username = $machine.context.userLookup[msg.sender]?.username;
@@ -57,7 +62,18 @@
         {/if}
         <SvelteMarkdown source={textContent} />
 
-        <div class="time">10:23</div>
+        <div class="time-and-ticks">
+            <span class="time">
+                {toShortTimeString(new Date(Number(msg.timestamp)))}
+            </span>
+            {#if me && confirmed}
+                {#if read}
+                    <DoubleTick />
+                {:else}
+                    <Tick />
+                {/if}
+            {/if}
+        </div>
 
         <pre class="debug">({msg.messageIndex})</pre>
         <div class="menu" class:rtl={$rtlStore}>
@@ -110,6 +126,23 @@
         position: absolute;
         top: 13px;
         left: 14px;
+    }
+
+    :global(.time-and-ticks > svg) {
+        width: 16px;
+        height: 16px;
+    }
+
+    .time-and-ticks {
+        position: absolute;
+        bottom: $sp2;
+        right: $sp3;
+        display: flex;
+        @include font(light, normal, fs-60);
+
+        .time {
+            margin: 0 $sp3;
+        }
     }
 
     .menu {
