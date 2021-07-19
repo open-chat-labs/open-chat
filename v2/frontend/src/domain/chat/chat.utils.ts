@@ -1,6 +1,6 @@
 import type { UserLookup } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
-import type { ChatSummary, GroupChatSummary, MediaContent, MessageContent } from "./chat";
+import type { ChatSummary, GroupChatSummary, MediaContent, Message, MessageContent } from "./chat";
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -93,4 +93,18 @@ export function getParticipantsString(
         .map((p) => p.username)
         .concat([you])
         .join(", ");
+}
+
+export function textMessage(userId: string, content: string): Message {
+    return {
+        messageId: BigInt(0),
+        messageIndex: 0,
+        content: {
+            kind: "text_content",
+            text: content,
+        },
+        sender: userId,
+        timestamp: BigInt(+new Date()),
+        repliesTo: undefined,
+    };
 }

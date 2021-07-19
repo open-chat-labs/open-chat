@@ -7,6 +7,10 @@
     import { onMount } from "svelte";
     import Lazy from "../Lazy.svelte";
     import { emojiStore } from "../../stores/emoji";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
+
+    export let machine: ActorRefFrom<ChatMachine>;
 
     const EmojiPicker = () => import("./EmojiPicker.svelte");
 
@@ -21,7 +25,6 @@
     function checkEnter(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             sendMessage();
-            inp.textContent = "";
             e.preventDefault();
         }
     }
@@ -35,7 +38,11 @@
 
     function sendMessage() {
         if (inp.textContent) {
-            console.log("send message", inp.textContent);
+            machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
+
+            // todo - this is not good enough
+            // machine.send({ type: "GO_TO_MESSAGE_INDEX", data: lastMessageIndex + 1 });
+            inp.textContent = "";
         }
     }
 
@@ -60,6 +67,9 @@
         selection.removeAllRanges();
         selection.addRange(selectedRange);
     }
+
+    $: lastMessageIndex =
+        $machine.context.messages[$machine.context.messages.length - 1]?.messageIndex;
 
     $: {
         if ($emojiStore !== undefined) {

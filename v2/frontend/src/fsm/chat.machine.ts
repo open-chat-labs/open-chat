@@ -2,7 +2,7 @@
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { assign, escalate, log } from "xstate/lib/actions";
 import type { ChatSummary, GetMessagesResponse, Message } from "../domain/chat/chat";
-import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import { textMessage, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
@@ -32,6 +32,7 @@ export type ChatEvents =
     | { type: "error.platform.loadMessagesAndUsers"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
+    | { type: "SEND_MESSAGE"; data: string }
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "LOAD_MORE_MESSAGES" }
@@ -290,6 +291,21 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
         },
         loaded_messages: {
             on: {
+                SEND_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        // todo - this is obvious a huge simplification at the moment
+                        return {
+                            messages: [
+                                ...ctx.messages,
+                                {
+                                    ...textMessage(ctx.user!.userId, ev.data),
+                                    messageIndex:
+                                        ctx.messages[ctx.messages.length - 1].messageIndex + 1,
+                                },
+                            ],
+                        };
+                    }),
+                },
                 SHOW_PARTICIPANTS: "showing_participants",
                 ADD_PARTICIPANT: "showing_participants.adding_participant",
                 LOAD_MORE_MESSAGES: "loading_messages",

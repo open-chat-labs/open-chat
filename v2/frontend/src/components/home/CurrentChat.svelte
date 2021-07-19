@@ -27,7 +27,7 @@
         selectedChatSummary={$machine.context.chatSummary} />
 
     <CurrentChatMessages on:chatWith {machine} />
-    <MessageEntry />
+    <MessageEntry {machine} />
 </div>
 
 <style type="text/scss">

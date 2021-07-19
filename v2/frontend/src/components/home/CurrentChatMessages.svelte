@@ -93,7 +93,7 @@
             <Loading />
         </div>
     {/if}
-    {#each $machine.context.messages as msg, i (msg.messageId)}
+    {#each $machine.context.messages as msg, i (msg.messageIndex)}
         <ChatMessage on:chatWith {machine} {msg} />
     {/each}
     <!-- <VirtualList bind:start bind:end items={$machine.context.messages} let:item>

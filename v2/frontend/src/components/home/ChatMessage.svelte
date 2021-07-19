@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
+    import SvelteMarkdown from "svelte-markdown";
     import type { Message } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
@@ -35,7 +36,7 @@
         {#if msg.repliesTo !== undefined}
             <RepliesTo {machine} repliesTo={msg.repliesTo} />
         {/if}
-        {textContent}
+        <SvelteMarkdown source={textContent} />
 
         <pre class="debug">({msg.messageIndex})</pre>
     </div>

@@ -15,6 +15,8 @@
     import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
+    import JoinGroup from "./JoinGroup.svelte";
+    import ModalContent from "../ModalContent.svelte";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null } = { chatId: null };
 
@@ -60,6 +62,7 @@
 
     function joinGroup() {
         machine.send({ type: "JOIN_GROUP" });
+        // modalStore.showModal(ModalType.JoinGroup);
     }
 
     function blockUser() {
@@ -139,6 +142,12 @@
         <TestModeModal />
     {:else if $modalStore === ModalType.ThemeSelection}
         <ThemePicker />
+    {:else if $modalStore === ModalType.JoinGroup}
+        <ModalContent>
+            <span slot="body">
+                <JoinGroup {machine} />
+            </span>
+        </ModalContent>
     {/if}
 </Overlay>
 
