@@ -38,19 +38,37 @@ export interface BlobReference {
     chunkSize: number;
 }
 
-export interface ReplyContext {
+export type GroupChatReplyContext = {
+    kind: "group_reply_context";
     content: MessageContent;
-    userId: Principal;
-    messageId: number;
+    userId: string;
+    messageId: bigint;
+};
+
+export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
+
+export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
+
+export interface PrivateReplyContext {
+    kind: "direct_private_reply_context";
+    chatId: string;
+    messageIndex: number;
+}
+
+export interface StandardReplyContext {
+    kind: "direct_standard_reply_context";
+    content: MessageContent;
+    sentByMe: boolean;
+    messageIndex: number;
 }
 
 export interface Message {
-    id: number;
+    messageId: bigint;
+    messageIndex: number;
     content: MessageContent;
     sender: string;
     timestamp: bigint;
     repliesTo?: ReplyContext;
-    clientMessageId: string;
 }
 
 export type GetChatsResponse = {
@@ -58,15 +76,22 @@ export type GetChatsResponse = {
     timestamp: bigint;
 };
 
+export type GetMessagesResponse = "chat_not_found" | GetMessagesSuccess;
+
+export type GetMessagesSuccess = {
+    messages: Message[];
+    latestMessageIndex: number;
+};
+
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
 type ChatSummaryCommon = {
-    chatId: bigint;
+    chatId: string; // this represents a Principal
     lastUpdated: bigint;
     displayDate: bigint;
     lastReadByUs: number;
     lastReadByThem: number;
-    lastestMessageId: number;
+    latestMessageIndex: number;
     latestMessage?: Message;
 };
 

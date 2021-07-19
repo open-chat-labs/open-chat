@@ -123,6 +123,7 @@ export default {
             "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
             "process.env.NODE_ENV": process.env.NODE_ENV,
             "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
+            "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
         }),
 
         // In dev mode, call `npm run start` once

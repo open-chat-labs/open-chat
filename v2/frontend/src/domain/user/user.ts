@@ -1,10 +1,17 @@
-export type UserSummary = {
+export type UserLastOnline = {
     userId: string;
-    username: string;
     secondsSinceLastOnline: number;
 };
 
-export type UserLookup = Record<string, UserSummary>;
+export type UserSummary = UserLastOnline & {
+    username: string;
+};
+
+export type PartialUserSummary = UserLastOnline & {
+    username?: string;
+};
+
+export type UserLookup = Record<string, PartialUserSummary>;
 
 export type User = {
     userId: string;
@@ -19,7 +26,7 @@ export type UsersArgs = {
 
 export type UsersResponse = {
     timestamp: bigint;
-    users: UserSummary[];
+    users: PartialUserSummary[];
 };
 
 export enum UserStatus {
@@ -39,8 +46,23 @@ export type PhoneNumber = {
     number: string;
 };
 
+export type CreateCanisterResponse =
+    | "success"
+    | "user_already_created"
+    | "creation_in_progress"
+    | "internal_error"
+    | "user_unconfirmed"
+    | "user_not_found";
+
+export type UpgradeCanisterResponse =
+    | "upgrade_in_progress"
+    | "user_not_created"
+    | "success"
+    | "upgrade_not_required"
+    | "internal_error"
+    | "user_not_found";
+
 export type CurrentUserResponse =
-    | UpgradeInProgress
     | UnconfirmedUser
     | ConfirmedUser
     | ConfirmedPendingUsername
@@ -72,7 +94,7 @@ export type CreatedUser = {
     username: string;
     userId: string;
     accountBalance: bigint;
-    upgradeRequired: boolean;
+    canisterUpgradeStatus: "required" | "not_required" | "in_progress";
 };
 
 export type UserNotFound = {

@@ -1,19 +1,54 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
-    import type { ChatMessage } from "../services/chats";
-    import { rtlStore } from "../stores/rtl";
-    export let msg: ChatMessage;
-    export let me: boolean;
+    import Link from "../Link.svelte";
+    import SvelteMarkdown from "svelte-markdown";
+    import type { Message } from "../../domain/chat/chat";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
+    import RepliesTo from "./RepliesTo.svelte";
+    import { _ } from "svelte-i18n";
+    import { rtlStore } from "../../stores/rtl";
+    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+
+    export let machine: ActorRefFrom<ChatMachine>;
+    export let msg: Message;
+
+    $: me = $machine.context.user?.userId === msg.sender;
+    $: username = $machine.context.userLookup[msg.sender]?.username;
+    $: textContent = getContentAsText(msg.content);
+    $: groupChat = $machine.context.chatSummary.kind === "group_chat";
+
+    function chatWithUser() {
+        dispatch("chatWith", msg.sender);
+    }
 </script>
 
-<div class="chat-message-wrapper" class:me>
-    <div class="chat-message" class:me class:rtl={$rtlStore}>
-        <h4 class="username">{msg.username}</h4>
-        {msg.message}
+<div class="chat-message-wrapper" class:me id={`message-${msg.messageIndex}`}>
+    <div class="chat-message" class:me class:rtl={$rtlStore} class:focus>
+        {#if groupChat && !me}
+            <Link on:click={chatWithUser} underline="hover">
+                <h4 class="username">{username}</h4>
+            </Link>
+        {/if}
+        {#if msg.repliesTo !== undefined}
+            <RepliesTo {machine} repliesTo={msg.repliesTo} />
+        {/if}
+        <SvelteMarkdown source={textContent} />
+
+        <pre class="debug">({msg.messageIndex})</pre>
     </div>
 </div>
 
 <style type="text/scss">
     $size: 10px;
+    $stem-offset: 30px;
+
+    .debug {
+        margin-top: 10px;
+    }
 
     .chat-message-wrapper {
         display: flex;
@@ -23,17 +58,24 @@
             justify-content: flex-end;
         }
     }
+
     .chat-message {
-        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms;
+        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
+            border ease-in-out 500ms;
         position: relative;
-        padding: 20px;
-        border-radius: 20px;
+        padding: $sp4;
+        border-radius: $sp4 $sp4 $sp4 0;
         border: 1px solid var(--currentChat-msg-bd);
-        margin-bottom: 20px;
-        font-size: 14px;
-        width: 80%;
+        margin-bottom: $sp4;
+        max-width: 80%;
+        min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
+        @include font(book, normal, fs-100);
+
+        &.rtl {
+            border-radius: $sp4 $sp4 0 $sp4;
+        }
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -43,6 +85,11 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
+            border-radius: $sp4 $sp4 0 $sp4;
+
+            &.rtl {
+                border-radius: $sp4 $sp4 $sp4 0;
+            }
             &:hover {
                 background-color: var(--currentChat-msg-me-hv);
             }
@@ -57,24 +104,37 @@
             display: block;
             width: 0;
             @include z-index("bubble-stem");
-            bottom: -$size;
-            margin-left: -$size;
-            left: 15%;
+            bottom: -1px;
+            transform: rotate(135deg) translateX(9px);
+            left: 0;
         }
 
         &.rtl:after {
-            margin-left: 0;
-            margin-right: -$size;
-            right: 15%;
+            right: -13px;
+            bottom: -14px;
+            transform: rotate(225deg) translateX(9px);
+            left: unset;
         }
 
         &.me {
             &:after {
+                transition: border-color ease-in-out 200ms;
                 border-color: var(--currentChat-msg-me-bd) transparent;
-                left: 85%;
+                right: -13px;
+                bottom: -14px;
+                transform: rotate(225deg) translateX(9px);
+                left: unset;
             }
             &.rtl:after {
-                right: 85%;
+                left: 0;
+                bottom: -1px;
+                transform: rotate(135deg) translateX(9px);
+                right: unset;
+            }
+            &:hover {
+                &:after {
+                    border-color: var(--currentChat-msg-me-hv) transparent;
+                }
             }
         }
 
@@ -87,31 +147,38 @@
             display: block;
             width: 0;
             @include z-index("bubble-stem");
-            margin-left: -$size;
-            bottom: -11px;
-            left: 15%;
+            transform: rotate(135deg) scale(1.2) translateX($size);
+            bottom: -1px;
+            left: 0;
         }
 
         &.rtl:before {
-            margin-left: 0;
-            margin-right: -$size;
-            right: 15%;
+            right: -15px;
+            left: unset;
+            bottom: -17px;
+            transform: rotate(225deg) scale(1.1) translateX($size);
         }
 
         &.me {
             &:before {
-                left: 85%;
-                right: unset;
+                right: -15px;
+                left: unset;
                 border-color: var(--currentChat-msg-me-bd) transparent;
+                bottom: -17px;
+                transform: rotate(225deg) scale(1.1) translateX($size);
             }
             &.rtl:before {
-                right: 85%;
+                left: 0;
+                bottom: -1px;
+                transform: rotate(135deg) scale(1.2) translateX($size);
+                right: unset;
             }
         }
     }
 
     .username {
         margin: 0;
-        margin-bottom: 5px;
+        margin-bottom: $sp2;
+        @include font(bold, normal, fs-100);
     }
 </style>

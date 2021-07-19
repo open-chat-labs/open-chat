@@ -7,12 +7,12 @@ import { testTransition } from "./machine.spec.utils";
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
-    chatId: BigInt(123),
+    chatId: "abcdefg",
     lastUpdated: BigInt(0),
     displayDate: BigInt(0),
     lastReadByUs: 0,
     lastReadByThem: 0,
-    lastestMessageId: 5,
+    latestMessageIndex: 5,
     latestMessage: undefined,
 };
 
@@ -27,10 +27,10 @@ describe("home machine transitions", () => {
             {
                 type: "done.invoke.getChats",
                 data: {
-                    chats: [],
-                    chatsTimestamp: BigInt(0),
+                    chatSummaries: [],
+                    chatSummariesLastUpdate: BigInt(0),
                     userLookup: {},
-                    usersTimestamp: BigInt(0),
+                    usersLastUpdate: BigInt(0),
                 },
             },
             { loaded_chats: "no_chat_selected" }
@@ -39,15 +39,16 @@ describe("home machine transitions", () => {
     test("trigger load messages", () => {
         testTransition(
             homeMachine.withContext({
-                chats: [directChat],
+                chatSummaries: [directChat],
                 userLookup: {},
-                chatsTimestamp: BigInt(0),
-                usersTimestamp: BigInt(0),
+                chatSummariesLastUpdate: BigInt(0),
+                usersLastUpdate: BigInt(0),
+                chatsIndex: {},
             }),
             { loaded_chats: "no_chat_selected" },
-            { type: "LOAD_MESSAGES", data: BigInt(123) },
+            { type: "SELECT_CHAT", data: "abcdefg" },
             {
-                loaded_chats: "loading_messages",
+                loaded_chats: "chat_selected",
             }
         );
     });
@@ -55,7 +56,7 @@ describe("home machine transitions", () => {
         testTransition(
             homeMachine,
             { loaded_chats: "no_chat_selected" },
-            { type: "LOAD_MESSAGES", data: BigInt(999) },
+            { type: "SELECT_CHAT", data: "qwxyz" },
             {
                 loaded_chats: "no_chat_selected",
             }
@@ -64,11 +65,12 @@ describe("home machine transitions", () => {
     test("clear selected chat", () => {
         const ctx = testTransition(
             homeMachine.withContext({
-                chats: [directChat],
+                chatSummaries: [directChat],
                 userLookup: {},
-                chatsTimestamp: BigInt(0),
-                usersTimestamp: BigInt(0),
+                chatSummariesLastUpdate: BigInt(0),
+                usersLastUpdate: BigInt(0),
                 selectedChat: directChat,
+                chatsIndex: {},
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",
@@ -90,7 +92,7 @@ describe("home machine transitions", () => {
                     userLookup: {
                         "123": { userId: "123", username: "me", secondsSinceLastOnline: 10 },
                     },
-                    usersTimestamp: BigInt(100),
+                    usersLastUpdate: BigInt(100),
                 },
             },
             {
@@ -98,8 +100,32 @@ describe("home machine transitions", () => {
             }
         );
 
-        expect(ctx.usersTimestamp).toBe(BigInt(100));
+        expect(ctx.usersLastUpdate).toBe(BigInt(100));
         expect(ctx.userLookup["123"].username).toBe("me");
+    });
+
+    test("new chat clicked", () => {
+        testTransition(homeMachine, { loaded_chats: "no_chat_selected" }, "NEW_CHAT", {
+            loaded_chats: "new_chat",
+        });
+    });
+
+    test("cancel new chat", () => {
+        testTransition(homeMachine, { loaded_chats: "new_chat" }, "CANCEL_NEW_CHAT", {
+            loaded_chats: "no_chat_selected",
+        });
+    });
+
+    test("join group clicked", () => {
+        testTransition(homeMachine, { loaded_chats: "no_chat_selected" }, "JOIN_GROUP", {
+            loaded_chats: "join_group",
+        });
+    });
+
+    test("cancel join group", () => {
+        testTransition(homeMachine, { loaded_chats: "join_group" }, "CANCEL_JOIN_GROUP", {
+            loaded_chats: "no_chat_selected",
+        });
     });
 
     test("chats updated - updates context", () => {
@@ -109,12 +135,12 @@ describe("home machine transitions", () => {
             {
                 type: "CHATS_UPDATED",
                 data: {
-                    chats: [directChat],
-                    chatsTimestamp: BigInt(200),
+                    chatSummaries: [directChat],
+                    chatSummariesLastUpdate: BigInt(200),
                     userLookup: {
                         "123": { userId: "123", username: "me", secondsSinceLastOnline: 10 },
                     },
-                    usersTimestamp: BigInt(100),
+                    usersLastUpdate: BigInt(100),
                 },
             },
             {
@@ -122,9 +148,9 @@ describe("home machine transitions", () => {
             }
         );
 
-        expect(ctx.usersTimestamp).toBe(BigInt(100));
+        expect(ctx.usersLastUpdate).toBe(BigInt(100));
         expect(ctx.userLookup["123"].username).toBe("me");
-        expect(ctx.chats[0]).toEqual(directChat);
-        expect(ctx.chatsTimestamp).toBe(BigInt(200));
+        expect(ctx.chatSummaries[0]).toEqual(directChat);
+        expect(ctx.chatSummariesLastUpdate).toBe(BigInt(200));
     });
 });

@@ -1,4 +1,6 @@
-import type { ChatSummary, MediaContent, MessageContent } from "./chat";
+import type { UserLookup } from "../user/user";
+import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
+import type { ChatSummary, GroupChatSummary, MediaContent, Message, MessageContent } from "./chat";
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -46,7 +48,10 @@ export function userIdsFromChatSummaries(
     }, new Set<string>());
 }
 
-export function getUnreadMessages({ lastestMessageId, lastReadByUs }: ChatSummary): number {
+export function getUnreadMessages({
+    latestMessageIndex: lastestMessageId,
+    lastReadByUs,
+}: ChatSummary): number {
     return lastestMessageId - lastReadByUs;
 }
 
@@ -70,4 +75,36 @@ export function mergeChats(
         {}
     );
     return Object.values(dict).sort(compareByDate);
+}
+
+export function getParticipantsString(
+    userLookup: UserLookup,
+    { participants }: GroupChatSummary,
+    unknownUser: string,
+    you: string
+): string {
+    if (participants.length > 5) {
+        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p)).length;
+        return `${participants.length + 1} members (${numberOnline + 1} online)`;
+    }
+    return participants
+        .map((p) => userLookup[p] ?? nullUser(unknownUser))
+        .sort(compareUsersOnlineFirst)
+        .map((p) => p.username)
+        .concat([you])
+        .join(", ");
+}
+
+export function textMessage(userId: string, content: string): Message {
+    return {
+        messageId: BigInt(0),
+        messageIndex: 0,
+        content: {
+            kind: "text_content",
+            text: content,
+        },
+        sender: userId,
+        timestamp: BigInt(+new Date()),
+        repliesTo: undefined,
+    };
 }

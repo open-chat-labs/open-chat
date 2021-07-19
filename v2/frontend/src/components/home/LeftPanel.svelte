@@ -1,51 +1,25 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
-    import CurrentUser from "./CurrentUser.svelte";
-    import SearchChats from "./SearchChats.svelte";
-    import type { UserLookup, User } from "../../domain/user/user";
-    import type { HomeState } from "./Home.types";
-    import Loading from "../Loading.svelte";
-    import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
-    import ChatSummary from "./ChatSummary.svelte";
-    import NewMessageFab from "./NewMessageFab.svelte";
-    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import { _ } from "svelte-i18n";
+    import ChatList from "./ChatList.svelte";
+    import NewChat from "./NewChat.svelte";
+    import JoinGroup from "./JoinGroup.svelte";
+    import type { ActorRefFrom } from "xstate";
+    import type { HomeMachine } from "../../fsm/home.machine";
 
-    export let state: HomeState;
-    export let user: User;
-    export let users: UserLookup;
-    export let chatSummaries: ChatSummaryType[] = [];
-    export let selectedChatId: bigint | undefined;
+    export let machine: ActorRefFrom<HomeMachine>;
     export let hideLeft = false;
 
-    function filterChats(event: { detail: string }) {}
+    // todo - next up we need to handle some other left panel states e.g. new chat
+    // hence separating ChatList into a self-contained component
+    // we will branch here on home.machine state
 </script>
 
-{#if user}
-    <Panel left {hideLeft}>
-        <CurrentUser on:logout {user} on:newchat />
-        <SearchChats on:filter={filterChats} />
-        {#if state === "loadingChats"}
-            <Loading />
-        {:else}
-            <div class="chat-summaries">
-                {#each chatSummaries as chatSummary}
-                    <ChatSummary
-                        {users}
-                        {chatSummary}
-                        selected={selectedChatId === chatSummary.chatId}
-                        on:selectChat />
-                {/each}
-            </div>
-        {/if}
-        {#if $screenWidth === ScreenWidth.ExtraSmall}
-            <NewMessageFab on:newchat />
-        {/if}
-    </Panel>
-{/if}
-
-<style type="text/scss">
-    .chat-summaries {
-        overflow: auto;
-    }
-</style>
+<Panel left {hideLeft}>
+    {#if $machine.matches({ loaded_chats: "new_chat" })}
+        <NewChat {machine} />
+    {:else if $machine.matches({ loaded_chats: "join_group" })}
+        <JoinGroup {machine} />
+    {:else}
+        <ChatList on:newchat on:joinGroup {machine} />
+    {/if}
+</Panel>

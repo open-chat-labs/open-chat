@@ -27,6 +27,22 @@
     function newChat() {
         dispatch("newchat");
     }
+
+    function newGroup() {
+        dispatch("newGroup");
+    }
+
+    function joinGroup() {
+        dispatch("joinGroup");
+    }
+
+    function internetIdentity() {
+        dispatch("internetIdentity");
+    }
+
+    function showSettings() {
+        dispatch("showSettings");
+    }
 </script>
 
 <div class="current-user-box">
@@ -57,11 +73,11 @@
                         <MessagePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">{$_("newChat")}</span>
                     </MenuItem>
-                    <MenuItem on:click={newChat}>
+                    <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">New group</span>
                     </MenuItem>
-                    <MenuItem on:click={newChat}>
+                    <MenuItem on:click={joinGroup}>
                         <AccountMultiplePlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">Join group</span>
                     </MenuItem>
@@ -69,7 +85,7 @@
                         <Palette size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">Change theme</span>
                     </MenuItem>
-                    <MenuItem on:click={newChat}>
+                    <MenuItem on:click={internetIdentity}>
                         <ShieldLock size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">Internet identity</span>
                     </MenuItem>
@@ -77,7 +93,7 @@
                         <TestTube size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">Test mode</span>
                     </MenuItem>
-                    <MenuItem on:click={newChat}>
+                    <MenuItem on:click={showSettings}>
                         <Cog size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">Settings</span>
                     </MenuItem>

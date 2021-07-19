@@ -7,26 +7,49 @@ import type {
     ResendCodeResponse,
     UsersResponse,
     UserSummary,
+    PartialUserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 import type {
     ApiConfirmPhoneNumberResponse,
+    ApiCreateCanisterResponse,
     ApiCurrentUserResponse,
+    ApiPartialUserSummary,
     ApiPhoneNumber,
     ApiResendCodeResponse,
+    ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSubmitPhoneNumberResponse,
+    ApiUpgradeCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "api-canisters/user_index/src/canister/app/idl";
+import { identity, optional } from "../../utils/mapping";
+
+export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
+    if ("Success" in candid) {
+        return candid.Success.users.map(userSummary);
+    }
+    throw new Error(`Unknown UserIndex.SearchResponse of ${candid}`);
+}
 
 export function usersResponse(candid: ApiUsersResponse): UsersResponse {
     if ("Success" in candid) {
         return {
             timestamp: candid.Success.timestamp,
-            users: candid.Success.users.map(userSummary),
+            users: candid.Success.users.map(partialUserSummary),
         };
     }
     throw new Error(`Unknown UserIndex.UsersResponse of ${candid}`);
+}
+
+export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSummary {
+    return {
+        userId: candid.user_id.toString(),
+        username: optional(candid.username, identity),
+        secondsSinceLastOnline: candid.seconds_since_last_online,
+    };
 }
 
 export function userSummary(candid: ApiUserSummary): UserSummary {
@@ -75,12 +98,31 @@ export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
     };
 }
 
+export function createCanisterResponse(candid: ApiCreateCanisterResponse): CreateCanisterResponse {
+    if ("Success" in candid) return "success";
+    if ("UserAlreadyCreated" in candid) return "user_already_created";
+    if ("CreationInProgress" in candid) return "creation_in_progress";
+    if ("InternalError" in candid) return "internal_error";
+    if ("UserUnconfirmed" in candid) return "user_unconfirmed";
+    if ("UserNotFound" in candid) return "user_not_found";
+
+    throw new Error(`Unknown UserIndex.CreateCanisterResponse of ${candid}`);
+}
+
+export function upgradeCanisterResponse(
+    candid: ApiUpgradeCanisterResponse
+): UpgradeCanisterResponse {
+    if ("Success" in candid) return "success";
+    if ("UpgradeInProgress" in candid) return "upgrade_in_progress";
+    if ("UserNotCreated" in candid) return "user_not_created";
+    if ("UpgradeNotRequired" in candid) return "upgrade_not_required";
+    if ("InternalError" in candid) return "internal_error";
+    if ("UserNotFound" in candid) return "user_not_found";
+
+    throw new Error(`Unknown UserIndex.UpgradeCanisterResponse of ${candid}`);
+}
+
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
-    if ("UpgradeInProgress" in candid) {
-        return {
-            kind: "upgrade_in_progress",
-        };
-    }
     if ("Unconfirmed" in candid) {
         return {
             kind: "unconfirmed_user",
@@ -114,10 +156,15 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     if ("Created" in candid) {
         return {
             kind: "created_user",
-            userId: candid.Created.user_id,
+            userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
             accountBalance: candid.Created.account_balance,
-            upgradeRequired: candid.Created.upgrade_required,
+            canisterUpgradeStatus:
+                "Required" in candid.Created.canister_upgrade_status
+                    ? "required"
+                    : "NotRequired" in candid.Created.canister_upgrade_status
+                    ? "not_required"
+                    : "in_progress",
         };
     }
 

@@ -4,6 +4,7 @@ export enum ModalType {
     NoModal,
     TestMode,
     ThemeSelection,
+    JoinGroup,
 }
 
 const { subscribe, update } = writable<ModalType>(ModalType.NoModal);

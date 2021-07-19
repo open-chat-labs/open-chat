@@ -1,6 +1,5 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import Button from "./Button.svelte";
     import Link from "./Link.svelte";
     import { modalStore } from "../stores/modal";
     import { rtlStore } from "../stores/rtl";

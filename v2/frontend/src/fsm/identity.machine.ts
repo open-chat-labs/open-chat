@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { createMachine, assign, MachineConfig, MachineOptions, DoneInvokeEvent } from "xstate";
+import {
+    createMachine,
+    assign,
+    MachineConfig,
+    MachineOptions,
+    DoneInvokeEvent,
+    send,
+} from "xstate";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";
@@ -13,7 +20,7 @@ import { homeMachine } from "./home.machine";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && Boolean(process.env.SHOW_XSTATE_INSPECTOR)) {
     inspect({
         iframe: false,
     });
@@ -57,7 +64,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         userRequiresUpgrade: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
                 if (ev.data.kind === "created_user") {
-                    return ev.data.upgradeRequired;
+                    return ev.data.canisterUpgradeStatus === "required";
                 }
                 return false;
             }
@@ -65,13 +72,16 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         },
         userUpgradeInProgress: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind === "upgrade_in_progress";
+                return (
+                    ev.data.kind === "created_user" &&
+                    ev.data.canisterUpgradeStatus === "in_progress"
+                );
             }
             throw new Error(`Unexpected event type for userUpgradeInProgress guard: ${ev.type}`);
         },
         userIsRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                return ev.data.kind == "upgrade_in_progress" || ev.data.kind == "created_user";
+                return ev.data.kind == "created_user";
             }
             throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
         },
@@ -290,10 +300,11 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                     data: (ctx, _ev) => ({
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
-                        chats: [],
+                        chatSummaries: [],
                         userLookup: {},
-                        chatsTimestamp: BigInt(0),
-                        usersTimestamp: BigInt(0),
+                        chatSummariesLastUpdate: BigInt(0),
+                        usersLastUpdate: BigInt(0),
+                        chatsIndex: {},
                     }),
                     onDone: "login",
                     onError: {
@@ -344,5 +355,5 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
 
 export const identityMachine = createMachine<IdentityContext, IdentityEvents>(schema, liveConfig);
 export const identityService = useMachine(identityMachine, {
-    devTools: process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "ci",
+    devTools: Boolean(process.env.SHOW_XSTATE_INSPECTOR),
 });

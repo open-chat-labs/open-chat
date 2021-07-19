@@ -15,6 +15,9 @@ import UserService, {
   CyclesContent,
   TimestampMillis,
   BlobReference,
+  GetMessagesArgs,
+  GetMessagesResponse,
+  GetMessagesSuccess,
 } from "./types";
 export {
   UserService,
@@ -33,6 +36,9 @@ export {
   CyclesContent as ApiCyclesContent,
   TimestampMillis as ApiTimestampMillis,
   BlobReference as ApiBlobReference,
+  GetMessagesArgs as ApiGetMessageArgs,
+  GetMessagesResponse as ApiGetMessagesResponse,
+  GetMessagesSuccess as ApiGetMessagesSuccess,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

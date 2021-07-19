@@ -13,6 +13,11 @@ import UserIndexService, {
   UsersArgs,
   UsersResponse,
   UserSummary,
+  PartialUserSummary,
+  SearchArgs,
+  SearchResponse,
+  UpgradeCanisterResponse,
+  CreateCanisterResponse,
 } from "./types";
 export {
   UserIndexService,
@@ -29,6 +34,11 @@ export {
   UsersArgs as ApiUsersArgs,
   UsersResponse as ApiUsersResponse,
   UserSummary as ApiUserSummary,
+  PartialUserSummary as ApiPartialUserSummary,
+  SearchArgs as ApiSearchArgs,
+  SearchResponse as ApiSearchResponse,
+  UpgradeCanisterResponse as ApiUpgradeCanisterResponse,
+  CreateCanisterResponse as ApiCreateCanisterResponse,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

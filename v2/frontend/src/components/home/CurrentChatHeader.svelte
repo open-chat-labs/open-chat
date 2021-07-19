@@ -4,6 +4,10 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { UserLookup } from "../../domain/user/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
@@ -13,9 +17,10 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher } from "svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { navStore } from "../../stores/nav";
     import type { ChatSummary } from "../../domain/chat/chat";
+    import { getParticipantsString } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
@@ -25,18 +30,50 @@
         dispatch("clearSelection");
     }
 
+    function blockUser() {
+        if (selectedChatSummary.kind === "direct_chat") {
+            dispatch("blockUser", { userId: selectedChatSummary.them });
+        }
+    }
+
+    function showParticipants() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("showParticipants");
+        }
+    }
+
+    function addParticipant() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("addParticipant");
+        }
+    }
+
+    function copyCode() {
+        if (selectedChatSummary.kind === "group_chat") {
+            console.log("copy the group chat invite code to the clipboard");
+        }
+    }
+
+    function leaveGroup() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("leaveGroup", selectedChatSummary.chatId);
+        }
+    }
+
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: users[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl(chatSummary.them),
                 userStatus: getUserStatus(users, chatSummary.them),
+                subtext: "When user was last online | typing",
             };
         }
         return {
             name: chatSummary.subject,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
+            subtext: getParticipantsString(users, chatSummary, $_("unknownUser"), $_("you")),
         };
     }
 
@@ -50,7 +87,7 @@
 
 <div class="chat-header">
     {#if $screenWidth === ScreenWidth.ExtraSmall}
-        <span class="back" class:rtl={$rtlStore} on:click={clearSelection}>
+        <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
                     <ArrowRight size={"1.2em"} color={"#aaa"} />
@@ -58,29 +95,57 @@
                     <ArrowLeft size={"1.2em"} color={"#aaa"} />
                 {/if}
             </HoverIcon>
-        </span>
+        </div>
     {/if}
-    <span class="avatar">
+    <div class="avatar">
         <Avatar status={chat.userStatus} url={chat.avatarUrl} size={AvatarSize.Small} />
-    </span>
-    <span class="chat-details">{chat.name}</span>
-    <span class="menu">
+    </div>
+    <div class="chat-details">
+        <div class="chat-name" title={chat.name}>
+            {chat.name}
+        </div>
+        <div class="chat-subtext" title={chat.subtext}>
+            {chat.subtext}
+        </div>
+    </div>
+    <div class="menu">
         <MenuIcon>
-            <span slot="icon">
+            <div slot="icon">
                 <HoverIcon>
                     <DotsVertical size={"1.2em"} color={"#aaa"} />
                 </HoverIcon>
-            </span>
-            <span slot="menu">
-                <Menu>
-                    <MenuItem on:click={() => console.log("one")}>
-                        <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Participants</span>
-                    </MenuItem>
-                </Menu>
-            </span>
+            </div>
+            <div slot="menu">
+                {#if selectedChatSummary.kind === "direct_chat"}
+                    <Menu>
+                        <MenuItem on:click={blockUser}>
+                            <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("blockUser")}</div>
+                        </MenuItem>
+                    </Menu>
+                {:else if selectedChatSummary.kind === "group_chat"}
+                    <Menu>
+                        <MenuItem on:click={showParticipants}>
+                            <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("participants")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={leaveGroup}>
+                            <LocationExit size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("leaveGroup")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={copyCode}>
+                            <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("copyInviteCode")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={addParticipant}>
+                            <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("addParticipant")}</div>
+                        </MenuItem>
+                    </Menu>
+                {/if}
+            </div>
         </MenuIcon>
-    </span>
+    </div>
 </div>
 
 <style type="text/scss">
@@ -93,6 +158,18 @@
         background-color: var(--currentChat-header-bg);
         color: var(--currentChat-header-txt);
         border: 1px solid var(--currentChat-header-bd);
+        height: 60px;
+    }
+
+    .chat-name {
+        @include font(bold, normal, fs-120);
+        @include ellipsis();
+        margin-bottom: $sp2;
+    }
+
+    .chat-subtext {
+        @include font(light, normal, fs-100);
+        @include ellipsis();
     }
 
     .avatar {
@@ -101,6 +178,7 @@
 
     .chat-details {
         flex: 1;
+        overflow: auto;
     }
 
     .menu {
@@ -108,12 +186,12 @@
     }
 
     .back {
-        flex: 0 0 20px;
-        margin-right: 10px;
+        flex: 0 0 10px;
+        margin-right: 5px;
 
         &.rtl {
             margin-right: 0;
-            margin-left: 10px;
+            margin-left: 5px;
         }
     }
 </style>

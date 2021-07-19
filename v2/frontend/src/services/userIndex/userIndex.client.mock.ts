@@ -6,6 +6,9 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
     UsersResponse,
+    UserSummary,
+    UpgradeCanisterResponse,
+    CreateCanisterResponse,
 } from "../../domain/user/user";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
@@ -13,6 +16,14 @@ export const DELAY = 1000;
 
 export class UserIndexClientMock implements IUserIndexClient {
     private count = 0;
+
+    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+        return fetch("https://my.api.mockaroo.com/user_search.json?key=02f66dd0")
+            .then((res) => res.json() as Promise<UserSummary[]>)
+            .then((users) =>
+                users.filter((u) => u.username.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0)
+            );
+    }
 
     getUsers(userIds: string[], _since: bigint): Promise<UsersResponse> {
         // this is just to inject a bit of randomness so we can see that the updates flow through the UI ok
@@ -33,15 +44,15 @@ export class UserIndexClientMock implements IUserIndexClient {
         });
     }
 
-    createCanister(): Promise<void> {
+    createCanister(): Promise<CreateCanisterResponse> {
         return new Promise((resolve) => {
-            setTimeout(() => resolve(), DELAY);
+            setTimeout(() => resolve("success"), DELAY);
         });
     }
 
-    upgradeUser(): Promise<void> {
+    upgradeUser(): Promise<UpgradeCanisterResponse> {
         return new Promise((resolve) => {
-            setTimeout(() => resolve(), DELAY);
+            setTimeout(() => resolve("success"), DELAY);
         });
     }
 
@@ -63,7 +74,7 @@ export class UserIndexClientMock implements IUserIndexClient {
             userId: "abcdefg",
             username: "julian_jelfs",
             accountBalance: BigInt(10000),
-            upgradeRequired: false,
+            canisterUpgradeStatus: "not_required",
         });
     }
 
@@ -75,12 +86,16 @@ export class UserIndexClientMock implements IUserIndexClient {
                 userId: "abcdefg",
                 username: "julian_jelfs",
                 accountBalance: BigInt(10000),
-                upgradeRequired: true,
+                canisterUpgradeStatus: "required",
             });
         } else if (this.count === 1) {
             this.count += 1;
             return Promise.resolve({
-                kind: "upgrade_in_progress",
+                kind: "created_user",
+                userId: "abcdefg",
+                username: "julian_jelfs",
+                accountBalance: BigInt(10000),
+                canisterUpgradeStatus: "in_progress",
             });
         } else {
             return this.normalUserScenario();
@@ -132,7 +147,7 @@ export class UserIndexClientMock implements IUserIndexClient {
         // return this.uncomfirmedUserScenario();
         // return this.confirmedUserPendingCanister();
         return this.normalUserScenario();
-        return this.unknownUserScenario();
+        // return this.unknownUserScenario();
         return this.requiredUpgradeScenario();
     }
 

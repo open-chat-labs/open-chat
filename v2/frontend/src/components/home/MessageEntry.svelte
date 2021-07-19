@@ -3,13 +3,16 @@
     import EmoticonHappyOutline from "svelte-material-icons/EmoticonHappyOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
-    import HoverIcon from "./HoverIcon.svelte";
-    import { chatStore } from "../stores/chats";
+    import HoverIcon from "../HoverIcon.svelte";
     import { onMount } from "svelte";
-    import Lazy from "./Lazy.svelte";
-    import { emojiStore } from "../stores/emoji";
+    import Lazy from "../Lazy.svelte";
+    import { emojiStore } from "../../stores/emoji";
+    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ActorRefFrom } from "xstate";
 
-    const EmojiPicker = () => import("./middlePanel/EmojiPicker.svelte");
+    export let machine: ActorRefFrom<ChatMachine>;
+
+    const EmojiPicker = () => import("./EmojiPicker.svelte");
 
     let inp: HTMLDivElement;
     let showEmojiPicker = false;
@@ -22,7 +25,6 @@
     function checkEnter(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             sendMessage();
-            inp.textContent = "";
             e.preventDefault();
         }
     }
@@ -36,7 +38,11 @@
 
     function sendMessage() {
         if (inp.textContent) {
-            chatStore.sendMessage(inp.textContent);
+            machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
+
+            // todo - this is not good enough
+            // machine.send({ type: "GO_TO_MESSAGE_INDEX", data: lastMessageIndex + 1 });
+            inp.textContent = "";
         }
     }
 
@@ -61,6 +67,9 @@
         selection.removeAllRanges();
         selection.addRange(selectedRange);
     }
+
+    $: lastMessageIndex =
+        $machine.context.messages[$machine.context.messages.length - 1]?.messageIndex;
 
     $: {
         if ($emojiStore !== undefined) {
@@ -121,7 +130,7 @@
         align-items: center;
         background-color: var(--entry-bg);
         border-top: 1px solid var(--entry-bd);
-        padding: 10px;
+        padding: $sp3;
     }
     .emoji,
     .attach,
@@ -130,8 +139,8 @@
     }
     .textbox {
         flex: 1;
-        margin: 0 10px;
-        padding: 6px 12px;
+        margin: 0 $sp3;
+        padding: $sp3 $sp4;
         background-color: var(--entry-input-bg);
         color: var(--entry-input-txt);
         border-radius: 20px;
@@ -141,10 +150,9 @@
         min-height: 30px;
         overflow-x: hidden;
         overflow-y: auto;
-        font-weight: 400;
-        line-height: 20px;
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        @include font(book, normal, fs-100);
     }
 </style>

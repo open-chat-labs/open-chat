@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Home from "./Home.controller.svelte";
+    import Home from "./Home.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
     import { identityService } from "../../fsm/identity.machine";
