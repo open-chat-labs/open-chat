@@ -1,28 +1,34 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
+    import { menuStore } from "../stores/menu";
+    export let index: number = 0;
 
     let pos: { x: number; y: number } | undefined;
     let menu: HTMLElement;
 
-    function showMenu(e: MouseEvent): void {
+    async function showMenu(e: MouseEvent): Promise<void> {
         if (pos) {
-            return closeMenu();
+            closeMenu();
         }
         const l = $rtlStore ? 150 : -150;
         pos = { x: menu.offsetLeft + l, y: menu.offsetTop + 40 };
+        menuStore.showMenu(menu);
     }
 
     function closeMenu() {
         pos = undefined;
+        menuStore.hideMenu();
     }
+
+    $: console.log($menuStore?.getAttribute("data-index"));
 </script>
 
 <div class="menu-icon">
-    <span bind:this={menu} on:click|stopPropagation={showMenu}>
+    <span data-index={index} bind:this={menu} on:click|stopPropagation={showMenu}>
         <slot name="icon" />
     </span>
 
-    {#if pos}
+    {#if pos && $menuStore === menu}
         <span
             class="menu"
             style={`top: ${pos.y}px; left: ${pos.x}px`}

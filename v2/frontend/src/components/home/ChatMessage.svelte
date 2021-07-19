@@ -3,6 +3,13 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import SvelteMarkdown from "svelte-markdown";
+    import { AvatarSize } from "../../domain/user/user";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Typing from "../Typing.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import Avatar from "../Avatar.svelte";
     import type { Message } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
@@ -11,6 +18,10 @@
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
     import { createEventDispatcher } from "svelte";
+    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
+    import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
@@ -23,6 +34,14 @@
 
     function chatWithUser() {
         dispatch("chatWith", msg.sender);
+    }
+
+    function reply() {
+        console.log("reply");
+    }
+
+    function replyPrivately() {
+        console.log("reply privately");
     }
 </script>
 
@@ -38,8 +57,45 @@
         {/if}
         <SvelteMarkdown source={textContent} />
 
+        <div class="time">10:23</div>
+
         <pre class="debug">({msg.messageIndex})</pre>
+        <div class="menu" class:rtl={$rtlStore}>
+            <MenuIcon index={msg.messageIndex}>
+                <div class="menu-icon" slot="icon">
+                    <HoverIcon>
+                        <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                    </HoverIcon>
+                </div>
+                <div slot="menu">
+                    <Menu>
+                        <MenuItem on:click={reply}>
+                            <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("reply")}</div>
+                        </MenuItem>
+                        {#if groupChat && !me}
+                            <MenuItem on:click={replyPrivately}>
+                                <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("replyPrivately")}</div>
+                            </MenuItem>
+                        {/if}
+                    </Menu>
+                </div>
+            </MenuIcon>
+        </div>
     </div>
+    {#if groupChat && !me}
+        <span class="avatar">
+            <Avatar
+                url={avatarUrl(msg.sender)}
+                status={getUserStatus($machine.context.userLookup, msg.sender)}
+                size={AvatarSize.Small} />
+
+            <div class="typing">
+                <Typing />
+            </div>
+        </span>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -48,6 +104,33 @@
 
     .debug {
         margin-top: 10px;
+    }
+
+    .typing {
+        position: absolute;
+        top: 13px;
+        left: 14px;
+    }
+
+    .menu {
+        position: absolute;
+        top: $sp1;
+        right: $sp1;
+
+        &.rtl {
+            left: $sp1;
+            right: unset;
+        }
+    }
+
+    .menu-icon {
+        transition: opacity ease-in-out 200ms;
+        opacity: 0;
+    }
+
+    .avatar {
+        margin: 0 $sp3;
+        position: relative;
     }
 
     .chat-message-wrapper {
@@ -79,6 +162,9 @@
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
+            .menu-icon {
+                opacity: 0.6;
+            }
         }
 
         &.me {

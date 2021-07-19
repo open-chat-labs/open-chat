@@ -28,6 +28,8 @@
     "startNewChat": "Start a new chat",
     "chatWith": "Chat with {username}",
     "joinGroup": "Join group",
+    "reply": "Reply",
+    "replyPrivately": "Reply privately",
     "enterInviteCode": "Enter your invite code",
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
     "chatSummary": {

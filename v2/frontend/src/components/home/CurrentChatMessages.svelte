@@ -4,7 +4,6 @@
     import { moreMessagesAvailable } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
-    import VirtualList from "../VirtualList.svelte";
     import Loading from "../Loading.svelte";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -96,9 +95,6 @@
     {#each $machine.context.messages as msg, i (msg.messageIndex)}
         <ChatMessage on:chatWith {machine} {msg} />
     {/each}
-    <!-- <VirtualList bind:start bind:end items={$machine.context.messages} let:item>
-        <ChatMessage {machine} msg={item} />
-    </VirtualList> -->
 </div>
 
 <style type="text/scss">
