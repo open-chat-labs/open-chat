@@ -3,6 +3,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
+use std::cmp::min;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -14,7 +15,7 @@ pub struct Subscriptions {
 
 impl Subscriptions {
     pub fn get(&self, user_id: &UserId, max_age: Duration, now: TimestampMillis) -> Option<Vec<String>> {
-        let max_age_millis = max_age.as_millis() as u64;
+        let max_age_millis = min(max_age.as_millis() as u64, now);
 
         self.subscriptions.get(user_id).map(|subscriptions| {
             subscriptions
@@ -48,7 +49,7 @@ mod tests {
     use candid::Principal;
 
     #[test]
-    fn push() {
+    fn push_new_subscriptions() {
         let mut subscriptions_collection = Subscriptions::default();
 
         let user_id = Principal::from_slice(&[1]).into();
@@ -60,6 +61,29 @@ mod tests {
 
         let values = subscriptions_collection.subscriptions.get(&user_id).unwrap();
         let expected: Vec<_> = subscriptions.into_iter().map(|s| Subscription::new(s, 100)).collect();
+
+        assert_eq!(*values, expected);
+    }
+
+    #[test]
+    fn push_existing_subscription_updates_last_active() {
+        let mut subscriptions_collection = Subscriptions::default();
+
+        let user_id = Principal::from_slice(&[1]).into();
+        let subscriptions: Vec<_> = (0..10).map(|i| i.to_string()).collect();
+
+        for s in subscriptions.iter() {
+            subscriptions_collection.push(user_id, s.clone(), 100);
+        }
+
+        subscriptions_collection.push(user_id, "2".to_string(), 200);
+
+        let values = subscriptions_collection.subscriptions.get(&user_id).unwrap();
+        let expected: Vec<_> = subscriptions
+            .into_iter()
+            .enumerate()
+            .map(|(index, s)| Subscription::new(s, if index == 2 { 200 } else { 100 }))
+            .collect();
 
         assert_eq!(*values, expected);
     }
