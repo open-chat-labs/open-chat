@@ -1,6 +1,6 @@
-use crate::model::notification::{IndexedNotification, Notification};
 use candid::CandidType;
 use serde::Deserialize;
+use shared::types::push_notifications::{IndexedNotification, Notification};
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 
@@ -62,8 +62,8 @@ impl Notifications {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::notification::DirectMessageNotification;
     use candid::Principal;
+    use shared::types::push_notifications::DirectMessageNotification;
 
     #[test]
     fn add() {

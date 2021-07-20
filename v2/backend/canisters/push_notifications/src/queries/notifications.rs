@@ -1,10 +1,10 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::notification::{IndexedNotification, Notification};
 use crate::model::runtime_state::RuntimeState;
 use crate::queries::notifications::Response::*;
 use candid::CandidType;
 use ic_cdk_macros::query;
 use serde::Deserialize;
+use shared::types::push_notifications::{IndexedNotification, Notification};
 use shared::types::UserId;
 use std::collections::HashMap;
 use std::time::Duration;

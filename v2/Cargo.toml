@@ -5,6 +5,7 @@ members = [
     "backend/canisters/push_notifications",
     "backend/canisters/user",
     "backend/canisters/user_index",
+    "backend/push_notification_service",
     "backend/shared",
 ]
 

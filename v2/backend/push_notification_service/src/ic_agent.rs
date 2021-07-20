@@ -4,8 +4,9 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use serde::Deserialize;
-use shared::types::notifications::IndexedEvent;
-use shared::types::CanisterId;
+use shared::types::push_notifications::IndexedNotification;
+use shared::types::{CanisterId, UserId};
+use std::collections::HashMap;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -27,19 +28,23 @@ impl IcAgent {
         Ok(IcAgent { agent })
     }
 
-    pub async fn get_events(&self, canister_id: CanisterId, from_event_index: u64) -> Result<Vec<IndexedEvent>, Error> {
-        let args = GetEventsArgs { from_event_index };
+    pub async fn get_notifications(
+        &self,
+        canister_id: CanisterId,
+        from_notification_index: u64,
+    ) -> Result<GetNotificationsSuccessResult, Error> {
+        let args = GetNotificationsArgs { from_notification_index };
 
         let response = self
             .agent
-            .query(&canister_id, "get_events")
+            .query(&canister_id, "get_notifications")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
-        match Decode!(&response, GetEventsResponse)? {
-            GetEventsResponse::Success(result) => Ok(result.events),
-            GetEventsResponse::NotAuthorized => Err("not authorized".into()),
+        match Decode!(&response, GetNotificationsResponse)? {
+            GetNotificationsResponse::Success(result) => Ok(result),
+            GetNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
@@ -60,17 +65,18 @@ impl IcAgent {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct GetEventsArgs {
-    from_event_index: u64,
+pub struct GetNotificationsArgs {
+    from_notification_index: u64,
 }
 
 #[derive(CandidType, Deserialize)]
-pub enum GetEventsResponse {
-    Success(GetEventsSuccessResult),
+pub enum GetNotificationsResponse {
+    Success(GetNotificationsSuccessResult),
     NotAuthorized,
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct GetEventsSuccessResult {
-    events: Vec<IndexedEvent>,
+pub struct GetNotificationsSuccessResult {
+    pub notifications: Vec<IndexedNotification>,
+    pub subscriptions: HashMap<UserId, Vec<String>>,
 }

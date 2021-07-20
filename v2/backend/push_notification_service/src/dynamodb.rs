@@ -1,7 +1,6 @@
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::{Blob, Client};
 use lambda_runtime::Error;
-use shared::types::notifications::Subscription;
 use shared::types::CanisterId;
 use std::str::FromStr;
 
@@ -18,7 +17,7 @@ impl DynamoDbClient {
         DynamoDbClient { client }
     }
 
-    pub async fn get_event_index_processed_up_to(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
+    pub async fn get_notification_index_processed_up_to(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
         let response = self
             .client
             .get_item()
@@ -35,19 +34,19 @@ impl DynamoDbClient {
         }
     }
 
-    pub async fn set_event_index_processed_up_to(&self, canister_id: CanisterId, event_index: u64) -> Result<(), Error> {
+    pub async fn set_notification_index_processed_up_to(
+        &self,
+        canister_id: CanisterId,
+        notification_index: u64,
+    ) -> Result<(), Error> {
         self.client
             .put_item()
             .table_name("push_notification_stream_indexes")
             .item("canister_id", AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())))
-            .item("index", AttributeValue::N(event_index.to_string()))
+            .item("index", AttributeValue::N(notification_index.to_string()))
             .send()
             .await?;
 
         Ok(())
-    }
-
-    pub async fn update_subscriptions(&self, _subscriptions: Vec<Subscription>) -> Result<(), Error> {
-        unimplemented!()
     }
 }

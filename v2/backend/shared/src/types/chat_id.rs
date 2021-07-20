@@ -4,12 +4,6 @@ use serde::Deserialize;
 
 const DIRECT_CHAT_ID_LENGTH_BYTES: usize = 29; // Same length as Principal
 
-#[derive(CandidType, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ChatId {
-    Direct(DirectChatId),
-    Group(GroupChatId),
-}
-
 #[derive(CandidType, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DirectChatId([u8; DIRECT_CHAT_ID_LENGTH_BYTES]);
 

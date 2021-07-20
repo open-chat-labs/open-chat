@@ -1,9 +1,9 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::notification::{DirectMessageNotification, Notification};
 use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
+use shared::types::push_notifications::{DirectMessageNotification, Notification};
 
 #[derive(Deserialize)]
 struct Args {

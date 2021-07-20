@@ -3,12 +3,11 @@ mod ic_agent;
 
 use crate::dynamodb::DynamoDbClient;
 use crate::ic_agent::IcAgent;
+use futures::future;
 use lambda_runtime::{handler_fn, Context, Error};
 use serde::Deserialize;
-use shared::types::chat_id::{ChatId, DirectChatId};
-use shared::types::notifications::Event::*;
-use shared::types::notifications::IndexedEvent;
-use shared::types::{CanisterId, MessageIndex, UserId};
+use shared::types::push_notifications::{IndexedNotification, Notification};
+use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::env;
@@ -31,70 +30,75 @@ async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let ic_agent = IcAgent::build(&ic_identity_pem)?;
 
-    let from_event_index = dynamodb_client.get_event_index_processed_up_to(request.canister_id).await?.map_or(0, |i| i + 1);
-    let events = ic_agent.get_events(request.canister_id, from_event_index).await?;
+    let from_notification_index = dynamodb_client
+        .get_notification_index_processed_up_to(request.canister_id)
+        .await?
+        .map_or(0, |i| i + 1);
+    let get_notifications_response = ic_agent
+        .get_notifications(request.canister_id, from_notification_index)
+        .await?;
 
-    if let Some(latest_event_index) = events.last().map(|e| e.index) {
-        push_notifications(events, &dynamodb_client).await?;
+    if let Some(latest_notification_index) = get_notifications_response.notifications.last().map(|e| e.index) {
+        handle_notifications(
+            get_notifications_response.notifications,
+            get_notifications_response.subscriptions,
+        )
+        .await?;
 
-        dynamodb_client.set_event_index_processed_up_to(request.canister_id, latest_event_index).await?;
+        dynamodb_client
+            .set_notification_index_processed_up_to(request.canister_id, latest_notification_index)
+            .await?;
     }
 
     Ok(())
 }
 
-async fn push_notifications(events: Vec<IndexedEvent>, dynamodb_client: &DynamoDbClient) -> Result<(), Error> {
-    let mut notifications: HashMap<UserId, HashMap<ChatId, Vec<MessageIndex>>> = HashMap::new();
+async fn handle_notifications(
+    notifications: Vec<IndexedNotification>,
+    mut subscriptions: HashMap<UserId, Vec<String>>,
+) -> Result<(), Error> {
+    let grouped_by_user = group_notifications_by_user(notifications);
 
-    fn add_notification(
-        map: &mut HashMap<UserId, HashMap<ChatId, Vec<MessageIndex>>>,
-        user_id: UserId,
-        chat_id: ChatId,
-        message_index: MessageIndex,
-    ) {
+    let mut futures = Vec::new();
+    for (user_id, notifications) in grouped_by_user.into_iter() {
+        if let Some(s) = subscriptions.remove(&user_id) {
+            futures.push(push_notifications_to_user(notifications, s));
+        }
+    }
+    future::join_all(futures).await;
+    Ok(())
+}
+
+fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashMap<UserId, Vec<Notification>> {
+    let mut grouped_by_user: HashMap<UserId, Vec<Notification>> = HashMap::new();
+
+    fn assign_notification_to_user(map: &mut HashMap<UserId, Vec<Notification>>, user_id: UserId, notification: Notification) {
         match map.entry(user_id) {
-            Occupied(e) => {
-                match e.into_mut().entry(chat_id) {
-                    Occupied(c) => c.into_mut().push(message_index),
-                    Vacant(c) => {
-                        c.insert(vec![message_index]);
-                    }
-                };
-            }
+            Occupied(e) => e.into_mut().push(notification),
             Vacant(e) => {
-                e.insert([(chat_id, vec![message_index])].iter().cloned().collect());
+                e.insert(vec![notification]);
             }
         };
     }
 
-    for event in events.into_iter().map(|e| e.event) {
-        match event {
-            Subscription(s) => subscriptions.push(s),
-            DirectMessageNotification(n) => {
-                let chat_id = ChatId::Direct(DirectChatId::from((&n.sender, &n.recipient)));
-                add_notification(&mut notifications, n.recipient, chat_id, n.message_index);
+    for n in notifications.into_iter() {
+        match &n.notification {
+            Notification::DirectMessageNotification(d) => {
+                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.notification.clone());
             }
-            GroupMessageNotification(n) => {
-                for user_id in n.recipients.into_iter() {
-                    let chat_id = ChatId::Group(n.chat_id);
-                    add_notification(&mut notifications, user_id, chat_id, n.message_index);
+            Notification::GroupMessageNotification(g) => {
+                for u in g.recipients.iter() {
+                    assign_notification_to_user(&mut grouped_by_user, *u, n.notification.clone());
                 }
             }
-        };
+        }
     }
 
-    if !subscriptions.is_empty() {
-        dynamodb_client.update_subscriptions(subscriptions).await?;
-    }
-
-    if !notifications.is_empty() {
-        handle_notifications(notifications).await?;
-    }
-
-    Ok(())
+    grouped_by_user
 }
 
-async fn handle_notifications(_notifications: HashMap<UserId, HashMap<ChatId, Vec<MessageIndex>>>) -> Result<(), Error> {
+async fn push_notifications_to_user(_notifications: Vec<Notification>, _subscriptions: Vec<String>) {
+    // TODO
     unimplemented!()
 }
 
