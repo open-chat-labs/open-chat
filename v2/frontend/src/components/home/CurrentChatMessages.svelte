@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tick } from "svelte";
     import ChatMessage from "./ChatMessage.svelte";
+    import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
     import { moreMessagesAvailable } from "../../fsm/chat.machine";
@@ -83,11 +84,11 @@
 
         const startOfToday = getStartOfToday();
         if (date >= startOfToday) {
-            return "Today";
+            return $_("today");
         }
         const startOfYesterday = addDays(startOfToday, -1);
         if (date >= startOfYesterday) {
-            return "Yesterday";
+            return $_("yesterday");
         }
         const useDayNameOnly = date >= addDays(startOfToday, -6);
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
