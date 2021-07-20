@@ -2,7 +2,13 @@ import type { GetMessagesResponse, Message } from "../../domain/chat/chat";
 import { fill, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
+const numMessages = 1000;
+const interval = 1000 * 60 * 60 * 8; // 8 hours
+
 function mockTextMessage(index: number): Message {
+    const now = +new Date();
+    const numIntervals = numMessages - index;
+    const timeDiff = interval * numIntervals;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
         messageId: BigInt(index),
@@ -12,7 +18,7 @@ function mockTextMessage(index: number): Message {
             text: randomPara(),
         },
         sender,
-        timestamp: BigInt(+new Date()),
+        timestamp: BigInt(+new Date(now - timeDiff)),
     };
 }
 

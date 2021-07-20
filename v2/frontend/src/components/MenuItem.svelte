@@ -8,11 +8,11 @@
 <style type="text/scss">
     .menu-item {
         display: flex;
-        padding: 10px;
+        padding: $sp3;
         cursor: pointer;
         border-bottom: 1px solid var(--menu-bd);
         color: var(--menu-txt);
-        font-size: 14px;
+        @include font(book, normal, fs-90);
 
         &:last-child {
             border-bottom: none;

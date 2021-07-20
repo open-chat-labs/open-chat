@@ -28,7 +28,11 @@
     "startNewChat": "Start a new chat",
     "chatWith": "Chat with {username}",
     "joinGroup": "Join group",
+    "reply": "Reply",
+    "replyPrivately": "Reply privately",
     "enterInviteCode": "Enter your invite code",
+    "today": "Today",
+    "yesterday": "Yesterday",
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
     "chatSummary": {
         "unread": "{count} unread message(s)"

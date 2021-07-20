@@ -4,7 +4,7 @@
 
 <style type="text/scss">
     .wrapper {
-        padding: 10px;
+        padding: $sp3;
         border-radius: 50%;
         display: flex;
         justify-content: center;

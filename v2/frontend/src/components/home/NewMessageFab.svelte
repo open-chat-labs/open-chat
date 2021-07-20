@@ -1,5 +1,6 @@
 <script lang="ts">
     import MessagePlus from "svelte-material-icons/MessagePlus.svelte";
+    import Fab from "../Fab.svelte";
     import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     const dispatch = createEventDispatcher();
@@ -10,24 +11,19 @@
 </script>
 
 <div class="new-chat" on:click={newChat} class:rtl={$rtlStore}>
-    <MessagePlus size={"1.2em"} color={"#fff"} />
+    <Fab on:click={newChat}>
+        <MessagePlus size={"1.2em"} color={"#fff"} />
+    </Fab>
 </div>
 
 <style type="text/scss">
     .new-chat {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--button-bg);
         position: absolute;
-        bottom: 30px;
-        right: 30px;
+        bottom: $sp6;
+        right: $sp6;
 
         &.rtl {
-            left: 30px;
+            left: $sp6;
             right: unset;
         }
     }
