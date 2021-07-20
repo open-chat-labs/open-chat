@@ -31,13 +31,13 @@ async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let ic_agent = IcAgent::build(&ic_identity_pem)?;
 
-    let event_index = dynamodb_client.get_event_index(request.canister_id).await?;
-    let events = ic_agent.get_events(request.canister_id, event_index).await?;
+    let from_event_index = dynamodb_client.get_event_index_processed_up_to(request.canister_id).await?.map_or(0, |i| i + 1);
+    let events = ic_agent.get_events(request.canister_id, from_event_index).await?;
 
-    if let Some(last_event_index) = events.last().map(|e| e.index) {
+    if let Some(latest_event_index) = events.last().map(|e| e.index) {
         handle_events(events, &dynamodb_client).await?;
 
-        dynamodb_client.set_event_index(request.canister_id, last_event_index).await?;
+        dynamodb_client.set_event_index_processed_up_to(request.canister_id, latest_event_index).await?;
     }
 
     Ok(())

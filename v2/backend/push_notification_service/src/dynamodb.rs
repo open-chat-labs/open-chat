@@ -18,37 +18,33 @@ impl DynamoDbClient {
         DynamoDbClient { client }
     }
 
-    pub async fn get_event_index(&self, canister_id: CanisterId) -> Result<u64, Error> {
-        match self
+    pub async fn get_event_index_processed_up_to(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
+        let response = self
             .client
             .get_item()
             .table_name("push_notification_stream_indexes")
             .key("canister_id", AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())))
             .send()
-            .await
-        {
-            Ok(response) => {
-                if let Some(item) = response.item {
-                    let value = item.get("index").unwrap().as_n().unwrap();
-                    Ok(u64::from_str(value).unwrap())
-                } else {
-                    Ok(0)
-                }
-            }
-            Err(error) => Err(error.into()),
+            .await?;
+
+        if let Some(item) = response.item {
+            let value = item.get("index").unwrap().as_n().unwrap();
+            Ok(Some(u64::from_str(value).unwrap()))
+        } else {
+            Ok(None)
         }
     }
 
-    pub async fn set_event_index(&self, canister_id: CanisterId, event_index: u64) -> Result<(), Error> {
+    pub async fn set_event_index_processed_up_to(&self, canister_id: CanisterId, event_index: u64) -> Result<(), Error> {
         self.client
             .put_item()
             .table_name("push_notification_stream_indexes")
             .item("canister_id", AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())))
             .item("index", AttributeValue::N(event_index.to_string()))
             .send()
-            .await
-            .map(|_| ())
-            .map_err(|e| e.into())
+            .await?;
+
+        Ok(())
     }
 
     pub async fn update_subscriptions(&self, _subscriptions: Vec<Subscription>) -> Result<(), Error> {
