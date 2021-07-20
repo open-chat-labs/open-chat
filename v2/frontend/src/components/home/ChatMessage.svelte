@@ -29,6 +29,7 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let msg: Message;
+    export let showStem: boolean;
     let confirmed: boolean = true; // todo - where does this come from
     let read: boolean = true; // todo - where does this come from
 
@@ -51,7 +52,7 @@
 </script>
 
 <div class="chat-message-wrapper" class:me id={`message-${msg.messageIndex}`}>
-    <div class="chat-message" class:me class:rtl={$rtlStore} class:focus>
+    <div class="chat-message" class:me class:showStem class:rtl={$rtlStore} class:focus>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
                 <h4 class="username">{username}</h4>
@@ -180,16 +181,21 @@
             border ease-in-out 500ms;
         position: relative;
         padding: $sp4;
-        border-radius: $sp4 $sp4 $sp4 0;
         border: 1px solid var(--currentChat-msg-bd);
-        margin-bottom: $sp4;
         max-width: 80%;
         min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
+        margin-bottom: $sp2;
+        border-radius: $sp4;
 
-        &.rtl {
+        &.showStem {
+            margin-bottom: $sp4;
+            border-radius: $sp4 $sp4 $sp4 0;
+        }
+
+        &.rtl.showStem {
             border-radius: $sp4 $sp4 0 $sp4;
         }
 
@@ -204,9 +210,13 @@
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
-            border-radius: $sp4 $sp4 0 $sp4;
+            border-radius: $sp4;
 
-            &.rtl {
+            &.showStem {
+                border-radius: $sp4 $sp4 0 $sp4;
+            }
+
+            &.rtl.showStem {
                 border-radius: $sp4 $sp4 $sp4 0;
             }
             &:hover {
@@ -214,7 +224,7 @@
             }
         }
 
-        &:after {
+        &.showStem:after {
             content: "";
             position: absolute;
             border-style: solid;
@@ -228,14 +238,14 @@
             left: 0;
         }
 
-        &.rtl:after {
+        &.showStem.rtl:after {
             right: -13px;
             bottom: -14px;
             transform: rotate(225deg) translateX(9px);
             left: unset;
         }
 
-        &.me {
+        &.showStem.me {
             &:after {
                 transition: border-color ease-in-out 200ms;
                 border-color: var(--currentChat-msg-me-bd) transparent;
@@ -257,7 +267,7 @@
             }
         }
 
-        &:before {
+        &.showStem:before {
             content: "";
             position: absolute;
             border-style: solid;
@@ -271,14 +281,14 @@
             left: 0;
         }
 
-        &.rtl:before {
+        &.showStem.rtl:before {
             right: -15px;
             left: unset;
             bottom: -17px;
             transform: rotate(225deg) scale(1.1) translateX($size);
         }
 
-        &.me {
+        &.showStem.me {
             &:before {
                 right: -15px;
                 left: unset;

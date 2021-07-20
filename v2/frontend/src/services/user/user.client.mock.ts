@@ -10,8 +10,10 @@ import type {
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
+const numMessages = 1000;
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
+const interval = 1000 * 60 * 60 * 8; // 8 hours
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
@@ -24,8 +26,8 @@ function mockGroupChat(i: number): GroupChatSummary {
         displayDate: BigInt(time),
         lastReadByUs: 0,
         lastReadByThem: 0,
-        latestMessageIndex: 1000,
-        latestMessage: mockTextMessage(1000),
+        latestMessageIndex: numMessages,
+        latestMessage: mockTextMessage(numMessages),
         participants,
     };
 }
@@ -41,8 +43,8 @@ function mockDirectChat(i: number): DirectChatSummary {
         displayDate: BigInt(time),
         lastReadByUs: us,
         lastReadByThem: 0,
-        latestMessageIndex: 1000,
-        latestMessage: mockTextMessage(1000),
+        latestMessageIndex: numMessages,
+        latestMessage: mockTextMessage(numMessages),
     };
 }
 
@@ -70,6 +72,10 @@ function mockRepliesTo(index: number): ReplyContext {
 }
 
 function mockTextMessage(index: number): Message {
+    const now = +new Date();
+    const numIntervals = numMessages - index;
+    const timeDiff = interval * numIntervals;
+
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
@@ -80,7 +86,7 @@ function mockTextMessage(index: number): Message {
             text: randomPara(),
         },
         sender,
-        timestamp: BigInt(+new Date()),
+        timestamp: BigInt(+new Date(now - timeDiff)),
         repliesTo,
     };
 }
@@ -97,7 +103,7 @@ export class UserClientMock implements IUserClient {
             setTimeout(() => {
                 res({
                     messages,
-                    latestMessageIndex: 1000,
+                    latestMessageIndex: numMessages,
                 });
             }, 300);
         });

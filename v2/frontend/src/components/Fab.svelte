@@ -12,7 +12,7 @@
         justify-content: center;
         align-items: center;
         background-color: var(--button-bg);
-        cursor: hand;
+        cursor: pointer;
         &:hover {
             background-color: var(--button-hv);
         }

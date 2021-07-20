@@ -10,6 +10,15 @@
     import type { Message } from "../../domain/chat/chat";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
+    import { groupWhile } from "../../utils/list";
+    import {
+        addDays,
+        areOnSameDay,
+        formatMessageDate,
+        getStartOfToday,
+        toDayOfWeekString,
+        toLongDateString,
+    } from "../../utils/date";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -65,9 +74,41 @@
         }
     }
 
+    function sameDate(a: Message, b: Message): boolean {
+        return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
+    }
+
+    function formatDate(timestamp: bigint): string {
+        const date = new Date(Number(timestamp));
+
+        const startOfToday = getStartOfToday();
+        if (date >= startOfToday) {
+            return "Today";
+        }
+        const startOfYesterday = addDays(startOfToday, -1);
+        if (date >= startOfYesterday) {
+            return "Yesterday";
+        }
+        const useDayNameOnly = date >= addDays(startOfToday, -6);
+        return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
+    }
+
+    function sameUser(a: Message, b: Message): boolean {
+        return a.sender === b.sender;
+    }
+
+    function groupBySender(messages: Message[]): Message[][] {
+        return groupWhile(sameUser, messages);
+    }
+
+    function groupMessages(messages: Message[]): Message[][][] {
+        return groupWhile(sameDate, messages).map(groupBySender);
+    }
+
+    $: groupedMessages = groupMessages($machine.context.messages);
+
     // this is a horrible hack but I can't find any other solution to this problem
     let previous: any;
-    let messages: Message[];
     $: {
         if ($machine !== previous) {
             if ($machine.context.chatSummary.chatId !== currentChatId) {
@@ -85,20 +126,15 @@
             }
 
             previous = $machine;
-
-            messages = $machine.context.messages;
         }
     }
 
-    // OK - tomorrow we need to figure out jumping to a distant message
-    // replies:
-    // private reply context
-
-    // annotating the timeline with dates and times
-    // then we need to figure out adding messages
+    // message grouping by date and user
     // then we need to figure out side loading new messages via polling
     // then we need to figure out loading new messages when we see the index has increased
     // then we need to integrate web rtc
+    // message replies
+    // jump to private reply from a group chat
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
@@ -107,8 +143,21 @@
             <Loading />
         </div>
     {/if}
-    {#each messages as msg, i (msg.messageIndex)}
-        <ChatMessage on:chatWith {machine} {msg} />
+    {#each groupedMessages as dayGroup}
+        <div class="day-group">
+            <div class="date-label">{formatDate(dayGroup[0][0]?.timestamp)}</div>
+            {#each dayGroup as userGroup}
+                <div class="user-group">
+                    {#each userGroup as msg, i (msg.messageIndex)}
+                        <ChatMessage
+                            showStem={i + 1 === userGroup.length}
+                            on:chatWith
+                            {machine}
+                            {msg} />
+                    {/each}
+                </div>
+            {/each}
+        </div>
     {/each}
 </div>
 
@@ -121,6 +170,25 @@
 {/if}
 
 <style type="text/scss">
+    .day-group {
+        position: relative;
+
+        .date-label {
+            padding: $sp2;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            width: 200px;
+            opacity: 70%;
+            margin: auto;
+            border-radius: $sp4;
+            @include z-index("date-label");
+            @include font(book, normal, fs-70);
+            text-align: center;
+            margin-bottom: $sp4;
+        }
+    }
+
     .spinner {
         height: 100px;
     }
