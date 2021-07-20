@@ -2,6 +2,11 @@ type GroupId = CanisterId;
 type MessageIndex = nat32;
 type UserId = CanisterId;
 
+type PushSubscriptionArgs =
+    record {
+        subscription: text;
+    };
+
 type PushSubscriptionResponse =
     variant {
         Success;

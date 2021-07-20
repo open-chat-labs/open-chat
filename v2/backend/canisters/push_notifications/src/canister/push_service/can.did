@@ -17,53 +17,47 @@ type GroupMessageNotification =
         message_index: MessageIndex;
     };
 
-type Subscription =
-    record {
-        user_id: UserId;
-        subscription: text;
-    };
-
-type Event =
+type Notification =
     variant {
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
-        Subscription: Subscription;
     };
 
-type IndexedEvent =
+type IndexedNotification =
     record {
         index: nat64;
-        event: Event;
+        notification: Notification;
     };
 
-type GetEventsSuccessResult =
+type GetNotificationsSuccessResult =
     record {
-        events: vec IndexedEvent;
+        notifications: vec IndexedNotification;
+        subscriptions: vec { UserId, vec text; }
     };
 
-type GetEventsArgs =
+type GetNotificationsArgs =
     record {
-        from_event_index: nat64;
+        from_notification_index: nat64;
     };
 
-type GetEventsResponse =
+type GetNotificationsResponse =
     variant {
         Success(SuccessResult);
         NotAuthorized;
     };
 
-type RemoveEventsArgs =
+type RemoveNotificationsArgs =
     record {
-        up_to_event_index: nat64;
+        up_to_notification_index: nat64;
     };
 
-type RemoveEventsResponse =
+type RemoveNotificationsResponse =
     variant {
         Success;
         NotAuthorized;
     };
 
 service: {
-    get_events: (GetEventsArgs) -> (GetEventsResponse);
-    remove_events: (RemoveEventsArgs) -> (RemoveEventsResponse);
+    get_notifications: (GetNotificationsArgs) -> (GetNotificationsResponse);
+    remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
 }
