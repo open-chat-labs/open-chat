@@ -14,6 +14,7 @@
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
+    import { toastStore, ToastType } from "../../stores/toast";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher } from "svelte";
@@ -51,6 +52,10 @@
     function copyCode() {
         if (selectedChatSummary.kind === "group_chat") {
             console.log("copy the group chat invite code to the clipboard");
+            toastStore.showToast({
+                type: ToastType.Success,
+                text: "inviteCodeCopied",
+            });
         }
     }
 

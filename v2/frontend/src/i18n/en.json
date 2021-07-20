@@ -33,6 +33,9 @@
     "enterInviteCode": "Enter your invite code",
     "today": "Today",
     "yesterday": "Yesterday",
+    "leftGroup": "You have successfully left the group",
+    "failedToLeaveGroup": "There was an error typing to remove you from the group",
+    "inviteCodeCopied": "Invite code copied to your clipboard",
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
     "chatSummary": {
         "unread": "{count} unread message(s)"

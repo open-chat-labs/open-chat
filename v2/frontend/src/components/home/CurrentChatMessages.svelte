@@ -152,15 +152,13 @@
         <div class="day-group">
             <div class="date-label">{formatDate(dayGroup[0][0]?.timestamp)}</div>
             {#each dayGroup as userGroup}
-                <div class="user-group">
-                    {#each userGroup as msg, i (msg.messageIndex)}
-                        <ChatMessage
-                            showStem={i + 1 === userGroup.length}
-                            on:chatWith
-                            {machine}
-                            {msg} />
-                    {/each}
-                </div>
+                {#each userGroup as msg, i (msg.messageIndex)}
+                    <ChatMessage
+                        showStem={i + 1 === userGroup.length}
+                        on:chatWith
+                        {machine}
+                        {msg} />
+                {/each}
             {/each}
         </div>
     {/each}

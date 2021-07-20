@@ -14,6 +14,17 @@ export interface Theme {
 
     error: string;
 
+    toast: {
+        failure: {
+            bg: string;
+            txt: string;
+        };
+        success: {
+            bg: string;
+            txt: string;
+        };
+    };
+
     input: {
         bg: string;
         txt: string;
@@ -166,6 +177,17 @@ const defaultTheme = {
     txt: "#191919",
     // error: "#ff0000",
     error: "#CF6679",
+
+    toast: {
+        failure: {
+            bg: "#c71f1f",
+            txt: "#ffffff",
+        },
+        success: {
+            bg: "limegreen",
+            txt: "#ffffff",
+        },
+    },
 
     input: {
         bg: "#ffffff",
