@@ -63,8 +63,6 @@
         }
     }
 
-    $: console.log("Params", params);
-
     function clearSelectedChat() {
         push("/");
     }
