@@ -16,13 +16,13 @@ impl Subscriptions {
     pub fn get(&self, user_id: &UserId, max_age: Duration, now: TimestampMillis) -> Option<Vec<String>> {
         let max_age_millis = max_age.as_millis() as u64;
 
-        self.subscriptions
-            .get(user_id)
-            .map(|subscriptions| subscriptions
+        self.subscriptions.get(user_id).map(|subscriptions| {
+            subscriptions
                 .iter()
                 .filter(|s| s.get_last_active() > now - max_age_millis)
                 .map(|s| s.get_connection_string().to_string())
-                .collect())
+                .collect()
+        })
     }
 
     pub fn push(&mut self, user_id: UserId, subscription: String, now: TimestampMillis) {
