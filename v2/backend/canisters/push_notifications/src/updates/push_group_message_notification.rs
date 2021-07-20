@@ -25,5 +25,6 @@ fn push_group_message_notification_impl(args: Args, runtime_state: &mut RuntimeS
         .data
         .notifications
         .add(Notification::GroupMessageNotification(args.notification));
+
     Response::Success
 }

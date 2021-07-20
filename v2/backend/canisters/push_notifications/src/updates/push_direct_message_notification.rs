@@ -25,5 +25,6 @@ fn push_direct_message_notification_impl(args: Args, runtime_state: &mut Runtime
         .data
         .notifications
         .add(Notification::DirectMessageNotification(args.notification));
+
     Response::Success
 }

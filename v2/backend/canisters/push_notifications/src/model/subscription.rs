@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug, Eq, PartialEq)]
 pub struct Subscription {
     connection_string: String,
     last_active: TimestampMillis,
