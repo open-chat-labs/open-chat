@@ -104,9 +104,10 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     services: {
         loadMessagesAndUsers: async (ctx, ev) => {
             const earliestLoaded = earliestLoadedMessageIndex(ctx);
+            console.log("FocusIndex", ctx.focusIndex);
             const earliestRequired =
-                ev.type === "GO_TO_MESSAGE_INDEX"
-                    ? ev.data - PAGE_SIZE
+                ctx.focusIndex !== undefined
+                    ? ctx.focusIndex - PAGE_SIZE
                     : earliestLoaded - PAGE_SIZE;
 
             // we may not actually *need* to look up any messages

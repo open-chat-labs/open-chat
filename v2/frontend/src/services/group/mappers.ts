@@ -105,5 +105,6 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
         content: messageContent(candid.content),
         userId: candid.user_id.toString(),
         messageId: candid.message_id,
+        messageIndex: candid.message_index,
     };
 }

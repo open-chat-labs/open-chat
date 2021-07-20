@@ -8,6 +8,7 @@
     import { fly } from "svelte/transition";
     import type { ActorRefFrom } from "xstate";
     import { modalStore, ModalType } from "../../stores/modal";
+    import { toastStore, ToastType } from "../../stores/toast";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -18,7 +19,10 @@
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     export let machine: ActorRefFrom<HomeMachine>;
-    export let params: { chatId: string | null } = { chatId: null };
+    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+        chatId: null,
+        messageIndex: undefined,
+    };
 
     function logout() {
         dispatch("logout");
@@ -41,7 +45,14 @@
                     replace("/");
                 } else {
                     // otherwise tell the machine to load messages for this chat
-                    machine.send({ type: "SELECT_CHAT", data: params.chatId });
+                    machine.send({
+                        type: "SELECT_CHAT",
+                        data: {
+                            chatId: params.chatId,
+                            messageIndex:
+                                params.messageIndex == null ? undefined : params.messageIndex,
+                        },
+                    });
                 }
             }
 
@@ -51,6 +62,8 @@
             }
         }
     }
+
+    $: console.log("Params", params);
 
     function clearSelectedChat() {
         push("/");
@@ -81,6 +94,17 @@
             push(`/${chat.chatId}`);
         } else {
             machine.send({ type: "CREATE_DIRECT_CHAT", data: ev.detail });
+        }
+    }
+
+    function selectChat(ev: CustomEvent<{ chatId: string; messageIndex: number }>) {
+        const chat = $machine.context.chatSummaries.find((c) => {
+            return c.chatId === ev.detail.chatId;
+        });
+        if (chat) {
+            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
+        } else {
+            toastStore.showFailureToast("chatNotFound");
         }
     }
 
@@ -116,6 +140,7 @@
             on:blockUser={blockUser}
             on:leaveGroup={leaveGroup}
             on:chatWith={chatWith}
+            on:selectChat={selectChat}
             hideLeft={params.chatId !== null}
             machine={selectedChatActor} />
     </main>

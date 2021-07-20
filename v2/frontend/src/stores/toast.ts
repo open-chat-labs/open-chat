@@ -14,11 +14,18 @@ const { subscribe, update } = writable<Toast | undefined>(undefined);
 
 export const toastStore = {
     subscribe,
-    showToast: (toast: Toast): void => {
-        if (toast.type === ToastType.Success) {
-            setTimeout(() => update(() => undefined), 2500);
-        }
-        return update(() => toast);
+    showFailureToast: (text: string): void => {
+        return update(() => ({
+            text,
+            type: ToastType.Failure,
+        }));
+    },
+    showSuccessToast: (text: string): void => {
+        setTimeout(() => update(() => undefined), 2500);
+        return update(() => ({
+            type: ToastType.Success,
+            text,
+        }));
     },
     hideToast: (): void => update(() => undefined),
 };

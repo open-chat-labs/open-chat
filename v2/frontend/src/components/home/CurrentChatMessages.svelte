@@ -15,7 +15,6 @@
     import {
         addDays,
         areOnSameDay,
-        formatMessageDate,
         getStartOfToday,
         toDayOfWeekString,
         toLongDateString,
@@ -44,19 +43,27 @@
         }
     }
 
+    function scrollToIndex(index: number) {
+        document
+            .getElementById(`message-${index}`)
+            ?.scrollIntoView({ behavior: "auto", block: "center" });
+        setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 100);
+    }
+
     function resetScroll() {
         if (initialised) {
             if ($machine.context.focusIndex) {
-                document
-                    .getElementById(`message-${$machine.context.focusIndex}`)
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 1000);
+                scrollToIndex($machine.context.focusIndex);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
         } else {
-            scrollBottom();
+            if ($machine.context.focusIndex) {
+                scrollToIndex($machine.context.focusIndex);
+            } else {
+                scrollBottom();
+            }
             initialised = true;
         }
     }
@@ -156,6 +163,7 @@
                     <ChatMessage
                         showStem={i + 1 === userGroup.length}
                         on:chatWith
+                        on:selectChat
                         {machine}
                         {msg} />
                 {/each}

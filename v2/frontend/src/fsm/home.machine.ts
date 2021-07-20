@@ -16,7 +16,7 @@ import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/use
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
-import { toastStore, ToastType } from "../stores/toast";
+import { toastStore } from "../stores/toast";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
@@ -38,7 +38,7 @@ export interface HomeContext {
 }
 
 export type HomeEvents =
-    | { type: "SELECT_CHAT"; data: string }
+    | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
@@ -93,21 +93,13 @@ async function getChats(
 
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     actions: {
-        notifyLeftGroup: (_, _ev) =>
-            toastStore.showToast({
-                text: "leftGroup",
-                type: ToastType.Success,
-            }),
-        failedToLeaveGroup: (_, _ev) =>
-            toastStore.showToast({
-                text: "failedToLeaveGroup",
-                type: ToastType.Failure,
-            }),
+        notifyLeftGroup: (_, _ev) => toastStore.showSuccessToast("leftGroup"),
+        failedToLeaveGroup: (_, _ev) => toastStore.showFailureToast("failedToLeaveGroup"),
     },
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
-                return ctx.chatSummaries.findIndex((c) => c.chatId === ev.data) >= 0;
+                return ctx.chatSummaries.findIndex((c) => c.chatId === ev.data.chatId) >= 0;
             }
             return false;
         },
@@ -250,10 +242,13 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
                     actions: assign((ctx, ev) => {
-                        const key = ev.data.toString();
-                        const chatSummary = ctx.chatSummaries.find((c) => c.chatId === ev.data);
-                        if (!ctx.chatsIndex[key]) {
-                            if (chatSummary) {
+                        const key = ev.data.chatId.toString();
+                        const chatSummary = ctx.chatSummaries.find(
+                            (c) => c.chatId === ev.data.chatId
+                        );
+                        const chatActor = ctx.chatsIndex[key];
+                        if (chatSummary) {
+                            if (!chatActor) {
                                 // todo - is there actually any benefit to mantaining a dictionary of
                                 // chat actors? It allows us to preserve state within each actor but are
                                 // we actually going to do that?
@@ -284,11 +279,23 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     : undefined,
                                                 messages: [],
                                                 latestMessageIndex: chatSummary.latestMessageIndex,
+                                                focusIndex: ev.data.messageIndex
+                                                    ? Number(ev.data.messageIndex)
+                                                    : undefined,
                                             }),
                                             `chat-${key}`
                                         ),
                                     },
                                 };
+                            } else {
+                                // if we *have* got a chat actor already then we still need to tell it if
+                                // we want to focus a particular message index
+                                if (ev.data.messageIndex) {
+                                    chatActor.send({
+                                        type: "GO_TO_MESSAGE_INDEX",
+                                        data: Number(ev.data.messageIndex),
+                                    });
+                                }
                             }
                         }
                         return { selectedChat: chatSummary };

@@ -43,6 +43,7 @@ export type GroupChatReplyContext = {
     content: MessageContent;
     userId: string;
     messageId: bigint;
+    messageIndex: number;
 };
 
 export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;

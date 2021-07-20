@@ -20,6 +20,6 @@
     {:else if $machine.matches({ loaded_chats: "join_group" })}
         <JoinGroup {machine} />
     {:else}
-        <ChatList on:newchat on:joinGroup {machine} />
+        <ChatList on:newchat on:joinGroup on:logout {machine} />
     {/if}
 </Panel>

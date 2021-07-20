@@ -59,15 +59,13 @@
         }
 
         .text {
+            text-align: center;
             flex: auto;
         }
 
         &.success {
             background-color: var(--toast-success-bg);
             color: var(--toast-success-txt);
-            .text {
-                text-align: center;
-            }
         }
 
         .close {

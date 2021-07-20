@@ -24,7 +24,13 @@
             <NoChatSelected on:newchat />
         </div>
     {:else}
-        <CurrentChat {machine} on:clearSelection on:blockUser on:leaveGroup on:chatWith />
+        <CurrentChat
+            {machine}
+            on:clearSelection
+            on:blockUser
+            on:leaveGroup
+            on:chatWith
+            on:selectChat />
     {/if}
 </Panel>
 
