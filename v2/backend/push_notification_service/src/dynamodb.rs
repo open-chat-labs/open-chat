@@ -1,5 +1,5 @@
 use aws_sdk_dynamodb::model::AttributeValue;
-use aws_sdk_dynamodb::{Blob, Client, Credentials, Region};
+use aws_sdk_dynamodb::{Blob, Client};
 use lambda_runtime::Error;
 use shared::types::notifications::Subscription;
 use shared::types::CanisterId;
@@ -9,20 +9,11 @@ pub struct DynamoDbClient {
     client: Client,
 }
 
-pub struct DynamoDbClientConfig {
-    pub region: Region,
-    pub access_key_id: String,
-    pub secret_key: String,
-}
-
 impl DynamoDbClient {
-    pub fn build(config: DynamoDbClientConfig) -> DynamoDbClient {
-        let conf = aws_sdk_dynamodb::Config::builder()
-            .region(config.region)
-            .credentials_provider(Credentials::from_keys(config.access_key_id, config.secret_key, None))
-            .build();
+    pub fn build() -> DynamoDbClient {
+        let config = aws_sdk_dynamodb::Config::builder().build();
 
-        let client = Client::from_conf(conf);
+        let client = Client::from_conf(config);
 
         DynamoDbClient { client }
     }
@@ -41,7 +32,7 @@ impl DynamoDbClient {
                     let value = item.get("index").unwrap().as_n().unwrap();
                     Ok(u64::from_str(value).unwrap())
                 } else {
-                    Err("Value not found".into())
+                    Ok(0)
                 }
             }
             Err(error) => Err(error.into()),

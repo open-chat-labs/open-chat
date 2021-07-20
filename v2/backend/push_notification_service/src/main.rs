@@ -1,9 +1,8 @@
 mod dynamodb;
 mod ic_agent;
 
-use crate::dynamodb::{DynamoDbClient, DynamoDbClientConfig};
+use crate::dynamodb::DynamoDbClient;
 use crate::ic_agent::IcAgent;
-use aws_sdk_dynamodb::Region;
 use lambda_runtime::{handler_fn, Context, Error};
 use serde::Deserialize;
 use shared::types::chat_id::{ChatId, DirectChatId};
@@ -27,14 +26,9 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
-    let dynamodb_client_config = DynamoDbClientConfig {
-        region: Region::new(env::var("AWS_REGION")?),
-        access_key_id: env::var("AWS_ACCESS_KEY_ID")?,
-        secret_key: env::var("AWS_SECRET_KEY")?,
-    };
-    let dynamodb_client = DynamoDbClient::build(dynamodb_client_config);
+    let dynamodb_client = DynamoDbClient::build();
 
-    let ic_identity_pem = env::var("IC_IDENTITY_PEM")?;
+    let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let ic_agent = IcAgent::build(&ic_identity_pem)?;
 
     let event_index = dynamodb_client.get_event_index(request.canister_id).await?;
@@ -103,4 +97,8 @@ async fn handle_events(events: Vec<IndexedEvent>, dynamodb_client: &DynamoDbClie
 
 async fn handle_notifications(_notifications: HashMap<UserId, HashMap<ChatId, Vec<MessageIndex>>>) -> Result<(), Error> {
     unimplemented!()
+}
+
+fn read_env_var(name: &str) -> Result<String, Error> {
+    env::var(name).map_err(|e| format!("Unable to read environment variable: {}. Error: {}", name, e).into())
 }

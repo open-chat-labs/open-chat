@@ -1,6 +1,6 @@
 use candid::{CandidType, Decode, Encode};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
-use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
+use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use serde::Deserialize;
@@ -45,15 +45,16 @@ impl IcAgent {
 
     /// Returns an identity derived from the private key.
     fn get_identity(pem: &str) -> Box<dyn Identity + Sync + Send> {
-        match Secp256k1Identity::from_pem(pem.as_bytes()) {
+        match BasicIdentity::from_pem(pem.as_bytes()) {
             Ok(identity) => Box::new(identity),
-            Err(_) => match BasicIdentity::from_pem(pem.as_bytes()) {
-                Ok(identity) => Box::new(identity),
-                Err(_) => {
-                    eprintln!("Couldn't load identity from PEM file");
-                    std::process::exit(1);
-                }
-            },
+            Err(error) => {
+                eprintln!(
+                    "Couldn't load identity from PEM file. {:?}. Input: {:?}",
+                    error,
+                    pem.as_bytes()
+                );
+                std::process::exit(1);
+            }
         }
     }
 }
