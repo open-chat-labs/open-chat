@@ -1,0 +1,78 @@
+<script lang="ts">
+    import { sineIn } from "svelte/easing";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { _ } from "svelte-i18n";
+
+    import { fly } from "svelte/transition";
+    import { toastStore, ToastType } from "../stores/toast";
+</script>
+
+{#if $toastStore}
+    <div class="toast" transition:fly={{ y: 200, duration: 200, easing: sineIn }}>
+        <div
+            class="message"
+            class:failure={$toastStore.type === ToastType.Failure}
+            class:success={$toastStore.type === ToastType.Success}>
+            <div class="text">{$_($toastStore.text)}</div>
+            {#if $toastStore.type === ToastType.Failure}
+                <div class="close" on:click={toastStore.hideToast}>
+                    <Close size={"1.2em"} color={"var(--button-txt)"} />
+                </div>
+            {/if}
+        </div>
+    </div>
+{/if}
+
+<style type="text/scss">
+    .toast {
+        position: fixed;
+        bottom: $sp7;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        @include z-index("toast");
+    }
+
+    .message {
+        transition: background-color 200ms ease-in-out;
+        background-color: var(--button-bg);
+        border-radius: $sp5;
+        padding: $sp4;
+        width: 50%;
+        margin: 0 $sp4;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--button-txt);
+        @include size-below(xs) {
+            width: 100%;
+        }
+
+        &:hover {
+            background-color: var(--button-hv);
+        }
+
+        &.failure {
+            background-color: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
+        }
+
+        .text {
+            flex: auto;
+        }
+
+        &.success {
+            background-color: var(--toast-success-bg);
+            color: var(--toast-success-txt);
+            .text {
+                text-align: center;
+            }
+        }
+
+        .close {
+            flex: 0 0 30px;
+            cursor: pointer;
+        }
+    }
+</style>

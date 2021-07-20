@@ -1,5 +1,6 @@
 <script lang="ts">
     import LeftPanel from "./LeftPanel.svelte";
+    import Toast from "../Toast.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
     import TestModeModal from "../TestModeModal.svelte";
@@ -12,7 +13,6 @@
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import type { HomeMachine } from "../../fsm/home.machine";
-    import type { ChatSummary } from "../../domain/chat/chat";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import JoinGroup from "./JoinGroup.svelte";
@@ -150,6 +150,8 @@
         </ModalContent>
     {/if}
 </Overlay>
+
+<Toast />
 
 <style type="text/scss">
     main {

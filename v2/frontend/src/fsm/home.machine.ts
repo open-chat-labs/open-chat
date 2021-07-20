@@ -16,6 +16,7 @@ import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/use
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log } from "xstate/lib/actions";
+import { toastStore, ToastType } from "../stores/toast";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
@@ -91,6 +92,18 @@ async function getChats(
 }
 
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
+    actions: {
+        notifyLeftGroup: (_, _ev) =>
+            toastStore.showToast({
+                text: "leftGroup",
+                type: ToastType.Success,
+            }),
+        failedToLeaveGroup: (_, _ev) =>
+            toastStore.showToast({
+                text: "failedToLeaveGroup",
+                type: ToastType.Failure,
+            }),
+    },
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
@@ -203,12 +216,18 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 // todo - obviously we need to invoke some api call here as well ...
                 LEAVE_GROUP: {
                     internal: true,
-                    actions: assign((ctx, ev) => {
-                        return {
-                            chatSummaries: ctx.chatSummaries.filter((c) => c.chatId !== ev.data),
-                            selectedChat: undefined,
-                        };
-                    }),
+                    actions: [
+                        "notifyLeftGroup",
+                        // "failedToLeaveGroup",
+                        assign((ctx, ev) => {
+                            return {
+                                chatSummaries: ctx.chatSummaries.filter(
+                                    (c) => c.chatId !== ev.data
+                                ),
+                                selectedChat: undefined,
+                            };
+                        }),
+                    ],
                 },
                 USERS_UPDATED: {
                     internal: true,
