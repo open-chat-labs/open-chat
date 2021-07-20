@@ -3,7 +3,6 @@ use serde::Deserialize;
 
 pub mod chat_id;
 pub mod message_content;
-pub mod notifications;
 
 pub type CanisterId = Principal;
 

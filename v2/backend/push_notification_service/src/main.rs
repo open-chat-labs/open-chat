@@ -35,7 +35,7 @@ async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
     let events = ic_agent.get_events(request.canister_id, from_event_index).await?;
 
     if let Some(latest_event_index) = events.last().map(|e| e.index) {
-        handle_events(events, &dynamodb_client).await?;
+        push_notifications(events, &dynamodb_client).await?;
 
         dynamodb_client.set_event_index_processed_up_to(request.canister_id, latest_event_index).await?;
     }
@@ -43,8 +43,7 @@ async fn my_handler(request: Request, _ctx: Context) -> Result<(), Error> {
     Ok(())
 }
 
-async fn handle_events(events: Vec<IndexedEvent>, dynamodb_client: &DynamoDbClient) -> Result<(), Error> {
-    let mut subscriptions = Vec::new();
+async fn push_notifications(events: Vec<IndexedEvent>, dynamodb_client: &DynamoDbClient) -> Result<(), Error> {
     let mut notifications: HashMap<UserId, HashMap<ChatId, Vec<MessageIndex>>> = HashMap::new();
 
     fn add_notification(

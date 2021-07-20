@@ -2,10 +2,9 @@
 members = [
     "backend/canisters/group",
     "backend/canisters/group_index",
-    "backend/canisters/notifications",
+    "backend/canisters/push_notifications",
     "backend/canisters/user",
     "backend/canisters/user_index",
-    "backend/push_notification_service",
     "backend/shared",
 ]
 

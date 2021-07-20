@@ -1,10 +1,19 @@
 use crate::canister::RUNTIME_STATE;
+use crate::model::notification::{GroupMessageNotification, Notification};
 use crate::model::runtime_state::RuntimeState;
+use candid::CandidType;
 use ic_cdk_macros::update;
-use shared::types::notifications::*;
+use serde::Deserialize;
 
-type Args = GroupMessageNotification;
-type Response = PushGroupMessageNotificationResponse;
+#[derive(Deserialize)]
+struct Args {
+    notification: GroupMessageNotification,
+}
+
+#[derive(CandidType)]
+enum Response {
+    Success,
+}
 
 #[update]
 fn push_group_message_notification(args: Args) -> Response {
@@ -12,6 +21,9 @@ fn push_group_message_notification(args: Args) -> Response {
 }
 
 fn push_group_message_notification_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.events.add(Event::GroupMessageNotification(args));
+    runtime_state
+        .data
+        .notifications
+        .add(Notification::GroupMessageNotification(args.notification));
     Response::Success
 }
