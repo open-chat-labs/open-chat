@@ -64,7 +64,6 @@ mod tests {
     use super::*;
     use crate::model::notification::DirectMessageNotification;
     use candid::Principal;
-    use shared::types::notifications::Subscription;
 
     #[test]
     fn add() {
@@ -74,7 +73,7 @@ mod tests {
             let notification = DirectMessageNotification {
                 sender: Principal::from_slice(&[i]).into(),
                 recipient: Principal::from_slice(&[i + 1]).into(),
-                message_index: i.into(),
+                message_index: (i as u32).into(),
             };
             notifications_collection.add(Notification::DirectMessageNotification(notification));
         }
@@ -85,7 +84,7 @@ mod tests {
             let indexed_notification = &notifications_collection.notifications[i];
             assert_eq!(indexed_notification.index, i as u64);
             if let Notification::DirectMessageNotification(n) = &indexed_notification.notification {
-                assert_eq!(n.message_index.into(), i);
+                assert_eq!(u32::from(n.message_index), i as u32);
             } else {
                 panic!();
             }
@@ -100,7 +99,7 @@ mod tests {
             let notification = DirectMessageNotification {
                 sender: Principal::from_slice(&[i]).into(),
                 recipient: Principal::from_slice(&[i + 1]).into(),
-                message_index: i.into(),
+                message_index: (i as u32).into(),
             };
             notifications_collection.add(Notification::DirectMessageNotification(notification));
         }
@@ -113,7 +112,7 @@ mod tests {
             let indexed_notification = &notifications[i];
             assert_eq!(indexed_notification.index, i as u64);
             if let Notification::DirectMessageNotification(n) = &indexed_notification.notification {
-                assert_eq!(n.message_index.into(), i);
+                assert_eq!(u32::from(n.message_index), i as u32);
             } else {
                 panic!();
             }
@@ -128,7 +127,7 @@ mod tests {
             let notification = DirectMessageNotification {
                 sender: Principal::from_slice(&[i]).into(),
                 recipient: Principal::from_slice(&[i + 1]).into(),
-                message_index: i.into(),
+                message_index: (i as u32).into(),
             };
             notifications_collection.add(Notification::DirectMessageNotification(notification));
         }
@@ -141,7 +140,7 @@ mod tests {
             let indexed_notification = &notifications[i - 5];
             assert_eq!(indexed_notification.index, i as u64);
             if let Notification::DirectMessageNotification(n) = &indexed_notification.notification {
-                assert_eq!(n.message_index.into(), i);
+                assert_eq!(u32::from(n.message_index), i as u32);
             } else {
                 panic!();
             }
@@ -156,7 +155,7 @@ mod tests {
             let notification = DirectMessageNotification {
                 sender: Principal::from_slice(&[i]).into(),
                 recipient: Principal::from_slice(&[i + 1]).into(),
-                message_index: i.into(),
+                message_index: (i as u32).into(),
             };
             notifications_collection.add(Notification::DirectMessageNotification(notification));
         }
@@ -169,7 +168,7 @@ mod tests {
             let indexed_notification = &notifications[i - 5];
             assert_eq!(indexed_notification.index, i as u64);
             if let Notification::DirectMessageNotification(n) = &indexed_notification.notification {
-                assert_eq!(n.message_index.into(), i);
+                assert_eq!(u32::from(n.message_index), i as u32);
             } else {
                 panic!();
             }
@@ -184,7 +183,7 @@ mod tests {
             let notification = DirectMessageNotification {
                 sender: Principal::from_slice(&[i]).into(),
                 recipient: Principal::from_slice(&[i + 1]).into(),
-                message_index: i.into(),
+                message_index: (i as u32).into(),
             };
             notifications_collection.add(Notification::DirectMessageNotification(notification));
         }
@@ -199,7 +198,7 @@ mod tests {
             let indexed_notification = &notifications[i - 5];
             assert_eq!(indexed_notification.index, i as u64);
             if let Notification::DirectMessageNotification(n) = &indexed_notification.notification {
-                assert_eq!(n.message_index.into(), i);
+                assert_eq!(u32::from(n.message_index), i as u32);
             } else {
                 panic!();
             }
