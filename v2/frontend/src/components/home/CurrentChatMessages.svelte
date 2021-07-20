@@ -23,6 +23,7 @@
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
+    const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -95,7 +96,10 @@
     }
 
     function sameUser(a: Message, b: Message): boolean {
-        return a.sender === b.sender;
+        return (
+            a.sender === b.sender &&
+            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+        );
     }
 
     function groupBySender(messages: Message[]): Message[][] {
