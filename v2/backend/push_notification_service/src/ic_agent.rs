@@ -48,6 +48,24 @@ impl IcAgent {
         }
     }
 
+    pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
+        let args = RemoveNotificationsArgs {
+            up_to_notification_index,
+        };
+
+        let response = self
+            .agent
+            .query(&canister_id, "remove_notifications")
+            .with_arg(Encode!(&args)?)
+            .call()
+            .await?;
+
+        match Decode!(&response, RemoveNotificationsResponse)? {
+            RemoveNotificationsResponse::Success => Ok(()),
+            RemoveNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
+        }
+    }
+
     /// Returns an identity derived from the private key.
     fn get_identity(pem: &str) -> Box<dyn Identity + Sync + Send> {
         match BasicIdentity::from_pem(pem.as_bytes()) {
@@ -79,4 +97,15 @@ pub enum GetNotificationsResponse {
 pub struct GetNotificationsSuccessResult {
     pub notifications: Vec<IndexedNotification>,
     pub subscriptions: HashMap<UserId, Vec<String>>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct RemoveNotificationsArgs {
+    up_to_notification_index: u64,
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum RemoveNotificationsResponse {
+    Success,
+    NotAuthorized,
 }
