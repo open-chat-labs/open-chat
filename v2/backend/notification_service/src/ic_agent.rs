@@ -4,7 +4,7 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use serde::Deserialize;
-use shared::types::push_notifications::IndexedNotification;
+use shared::types::notifications::IndexedNotification;
 use shared::types::{CanisterId, UserId};
 use std::collections::HashMap;
 

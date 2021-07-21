@@ -3,7 +3,7 @@ use crate::ic_agent::IcAgent;
 use crate::read_env_var;
 use futures::future;
 use lambda_runtime::Error;
-use shared::types::push_notifications::{IndexedNotification, Notification};
+use shared::types::notifications::{IndexedNotification, Notification};
 use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;

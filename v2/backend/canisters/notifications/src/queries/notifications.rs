@@ -4,7 +4,7 @@ use crate::queries::notifications::Response::*;
 use candid::CandidType;
 use ic_cdk_macros::query;
 use serde::Deserialize;
-use shared::types::push_notifications::{IndexedNotification, Notification};
+use shared::types::notifications::{IndexedNotification, Notification};
 use shared::types::UserId;
 use std::collections::HashMap;
 use std::time::Duration;

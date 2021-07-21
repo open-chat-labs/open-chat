@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::push_notifications::{IndexedNotification, Notification};
+use shared::types::notifications::{IndexedNotification, Notification};
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 
@@ -63,7 +63,7 @@ impl Notifications {
 mod tests {
     use super::*;
     use candid::Principal;
-    use shared::types::push_notifications::DirectMessageNotification;
+    use shared::types::notifications::DirectMessageNotification;
 
     #[test]
     fn add() {
