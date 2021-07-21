@@ -42,7 +42,7 @@ type GetNotificationsArgs =
 
 type GetNotificationsResponse =
     variant {
-        Success(SuccessResult);
+        Success(GetNotificationsSuccessResult);
         NotAuthorized;
     };
 
