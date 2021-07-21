@@ -3,7 +3,6 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
-use std::cmp::min;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -15,12 +14,12 @@ pub struct Subscriptions {
 
 impl Subscriptions {
     pub fn get(&self, user_id: &UserId, max_age: Duration, now: TimestampMillis) -> Option<Vec<String>> {
-        let max_age_millis = min(max_age.as_millis() as u64, now);
+        let active_since = now.saturating_sub(max_age.as_millis() as u64);
 
         self.subscriptions.get(user_id).map(|subscriptions| {
             subscriptions
                 .iter()
-                .filter(|s| s.last_active() >= now - max_age_millis)
+                .filter(|s| s.last_active() >= active_since)
                 .map(|s| s.json().to_string())
                 .collect()
         })
