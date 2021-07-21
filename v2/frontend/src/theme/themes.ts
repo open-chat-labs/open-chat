@@ -342,6 +342,17 @@ export const themes: Themes = {
         // error: "#800000",
         error: "#CF6679",
 
+        toast: {
+            failure: {
+                bg: "darkred",
+                txt: "#ffffff",
+            },
+            success: {
+                bg: "seagreen",
+                txt: "#ffffff",
+            },
+        },
+
         input: {
             bg: "#555555",
             txt: dark60,

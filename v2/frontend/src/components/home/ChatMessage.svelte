@@ -61,7 +61,9 @@
         {#if msg.repliesTo !== undefined}
             <RepliesTo {machine} repliesTo={msg.repliesTo} />
         {/if}
-        <SvelteMarkdown source={textContent} />
+        <div class="content">
+            <SvelteMarkdown source={textContent} />
+        </div>
 
         <div class="time-and-ticks">
             <span class="time">
@@ -134,6 +136,14 @@
         height: 16px;
     }
 
+    :global(.chat-message .content a) {
+        text-decoration: underline;
+    }
+
+    :global(.chat-message .content ul) {
+        margin: 0 $sp4;
+    }
+
     .time-and-ticks {
         position: absolute;
         bottom: $sp2;
@@ -182,7 +192,7 @@
         position: relative;
         padding: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
-        max-width: 80%;
+        max-width: 90%;
         min-width: 25%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);

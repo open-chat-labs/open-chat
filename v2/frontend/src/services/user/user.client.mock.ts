@@ -14,7 +14,6 @@ const numMessages = 1000;
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
 const interval = 1000 * 60 * 60 * 8; // 8 hours
-const tinyInterval = 1000 * 30; // 30 seconds
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
@@ -75,7 +74,6 @@ function mockRepliesTo(index: number): ReplyContext {
 function mockTextMessage(index: number): Message {
     const now = +new Date();
     const numIntervals = numMessages - index;
-    // const timeDiff = tinyInterval * numIntervals;
     const timeDiff = interval * numIntervals;
 
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;

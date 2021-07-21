@@ -13,17 +13,10 @@
       "build": "./generate-wasm.sh user"
     },
     "website": {
-      "dependencies": [
-        "user_index"
-      ],
       "frontend": {
-        "entrypoint": "./frontend/public/index.html"
+        "entrypoint": "frontend/public/index.html"
       },
-      "source": [
-        "./frontend/public/assets",
-        "./frontend/public/build",
-        "./frontend/public"
-      ],
+      "source": ["frontend/public"],
       "type": "assets"
     }
   },

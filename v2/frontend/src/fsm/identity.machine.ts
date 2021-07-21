@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import {
-    createMachine,
-    assign,
-    MachineConfig,
-    MachineOptions,
-    DoneInvokeEvent,
-    send,
-} from "xstate";
+import { createMachine, assign, MachineConfig, MachineOptions, DoneInvokeEvent } from "xstate";
 import { getIdentity, login, logout, startSession } from "../services/auth";
 import { useMachine } from "@xstate/svelte";
 import { inspect } from "@xstate/inspect";

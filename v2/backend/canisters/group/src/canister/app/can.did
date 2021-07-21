@@ -46,6 +46,7 @@ type MessageContent =
 type ReplyContext =
     record {
         message_id: MessageId;
+        message_index: MessageIndex;
         user_id: UserId;
         content: MessageContent;
     };

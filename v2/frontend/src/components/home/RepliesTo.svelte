@@ -8,6 +8,7 @@
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { push } from "svelte-spa-router";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let repliesTo: ReplyContext;
@@ -18,23 +19,19 @@
 
     function zoomToMessage() {
         if (repliesTo.kind === "direct_standard_reply_context") {
-            // how to get trigger a scroll *after* the effects of this event are complete
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
         }
 
         if (repliesTo.kind === "direct_private_reply_context") {
-            console.log("select chat: ", repliesTo.chatId);
-            console.log("and then zoom to message: ", repliesTo.messageIndex);
+            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
 
         if (repliesTo.kind === "group_reply_context") {
-            // we don't have a messageIndex in this scenario - need to double check why that is
-            console.log("group chat reply clicked");
+            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
         }
     }
 
     function getMessageIndex(replyContext: ReplyContext): number {
-        if (replyContext.kind === "group_reply_context") return 0;
         return replyContext.messageIndex;
     }
 
@@ -51,6 +48,10 @@
                 }
             }
         }
+        if (replyContext.kind === "group_reply_context") {
+            return $machine.context.userLookup[replyContext.userId]?.username ?? $_("unknownUser");
+        }
+        // for the private reply context - we do not currently have the message content or the userId - we need them both
         return "todo - someone else";
     }
 </script>
@@ -64,7 +65,7 @@
             {getContentAsText(repliesTo.content)}
         {/if}
         {#if repliesTo.kind === "direct_private_reply_context"}
-            {"TODO - private context - no content to display"}
+            {`Private reply to message from chatId ${repliesTo.chatId}`}
         {/if}
     </div>
 </Link>

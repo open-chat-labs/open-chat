@@ -52,10 +52,7 @@
     function copyCode() {
         if (selectedChatSummary.kind === "group_chat") {
             console.log("copy the group chat invite code to the clipboard");
-            toastStore.showToast({
-                type: ToastType.Success,
-                text: "inviteCodeCopied",
-            });
+            toastStore.showSuccessToast("inviteCodeCopied");
         }
     }
 

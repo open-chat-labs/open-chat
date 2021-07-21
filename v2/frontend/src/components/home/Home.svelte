@@ -18,7 +18,10 @@
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     export let machine: ActorRefFrom<HomeMachine>;
-    export let params: { chatId: string | null } = { chatId: null };
+    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+        chatId: null,
+        messageIndex: undefined,
+    };
 
     function logout() {
         dispatch("logout");
@@ -41,7 +44,14 @@
                     replace("/");
                 } else {
                     // otherwise tell the machine to load messages for this chat
-                    machine.send({ type: "SELECT_CHAT", data: params.chatId });
+                    machine.send({
+                        type: "SELECT_CHAT",
+                        data: {
+                            chatId: params.chatId,
+                            messageIndex:
+                                params.messageIndex == null ? undefined : params.messageIndex,
+                        },
+                    });
                 }
             }
 
