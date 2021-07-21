@@ -13,7 +13,6 @@ import type {
     UpgradeCanisterResponse,
     CreateCanisterResponse,
 } from "../../domain/user/user";
-import { toVoid } from "../../utils/mapping";
 import { CandidService } from "../candidService";
 import {
     setUsernameResponse,
