@@ -35,7 +35,6 @@
                 params.chatId &&
                 params.chatId !== $machine.context.selectedChat?.chatId?.toString()
             ) {
-                console.log("we should end up here");
                 // if we have an unknown chat in the param, then redirect to home
                 if (
                     $machine.context.chatSummaries.findIndex(
