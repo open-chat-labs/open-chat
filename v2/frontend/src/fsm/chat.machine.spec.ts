@@ -22,6 +22,11 @@ const testContext: ChatContext = {
     chatSummary: directChat,
     userLookup: {},
     messages: [],
+    user: {
+        userId: "abcdef",
+        username: "julian_jelfs",
+        secondsSinceLastOnline: 10,
+    },
 };
 
 describe("chat machine transitions", () => {
@@ -151,5 +156,14 @@ describe("chat machine transitions", () => {
             "loaded_messages"
         );
         expect(ctx.focusIndex).toBe(undefined);
+    });
+
+    test("send message", () => {
+        testTransition(
+            chatMachine.withContext(testContext),
+            "loaded_messages",
+            "SEND_MESSAGE",
+            "sending_message"
+        );
     });
 });
