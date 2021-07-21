@@ -10,9 +10,9 @@ use serde::Deserialize;
 use shared::c2c::call_with_logging;
 use shared::rand::get_random_item;
 use shared::time::TimestampMillis;
+use shared::types::chat_id::GroupChatId;
 use shared::types::message_content::MessageContent;
-use shared::types::message_notifications::*;
-use shared::types::{CanisterId, MessageId, MessageIndex};
+use shared::types::{CanisterId, MessageId, MessageIndex, UserId};
 
 #[derive(Deserialize)]
 struct Args {
@@ -46,7 +46,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let push_message_args = PushMessageArgs {
             sender: participant.user_id,
             message_id: args.message_id,
-            content: args.content.clone(),
+            content: args.content,
             replies_to: args.replies_to,
             now,
         };
@@ -61,7 +61,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 sender: participant.user_id,
                 recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
                 message_index,
-                content: args.content,
             };
 
             let push_notification_future = push_notification(*canister_id, notification);
@@ -78,6 +77,26 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 }
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
+    let args = PushGroupMessageNotificationArgs { notification };
+
     let _: CallResult<(PushGroupMessageNotificationResponse,)> =
-        call_with_logging(canister_id, "push_group_message_notification", (notification,)).await;
+        call_with_logging(canister_id, "push_group_message_notification", (args,)).await;
+}
+
+#[derive(CandidType)]
+struct GroupMessageNotification {
+    chat_id: GroupChatId,
+    sender: UserId,
+    recipients: Vec<UserId>,
+    message_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+struct PushGroupMessageNotificationArgs {
+    notification: GroupMessageNotification,
+}
+
+#[derive(Deserialize)]
+enum PushGroupMessageNotificationResponse {
+    Success,
 }

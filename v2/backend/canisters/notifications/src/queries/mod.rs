@@ -1,1 +1,1 @@
-mod events;
+mod notifications;
