@@ -2,57 +2,11 @@ type GroupId = CanisterId;
 type MessageIndex = nat32;
 type UserId = CanisterId;
 
-type TextContent =
-    record {
-        text: text;
-    };
-
-type BlobReference =
-    record {
-        canister_id: CanisterId;
-        blob_id: text;
-        blob_size: nat32;
-        chunk_size: nat32;
-    };
-
-type MediaContent =
-    record {
-        width: nat32;
-        height: nat32;
-        thumbnail_data: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type FileContent =
-    record {
-        name: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type CyclesContent =
-    record {
-        amount: nat;
-        caption: opt text;
-    };
-
-type MessageContent =
-    variant {
-        Text: TextContent;
-        Media: MediaContent;
-        File: FileContent;
-        Cycles: CyclesContent;
-    };
-
 type DirectMessageNotification =
     record {
         sender: UserId;
         recipient: UserId;
         message_index: MessageIndex;
-        content: MessageContent;
     };
 
 type GroupMessageNotification =
@@ -61,56 +15,49 @@ type GroupMessageNotification =
         sender: UserId;
         recipients: vec UserId;
         message_index: MessageIndex;
-        content: MessageContent;
     };
 
-type Subscription =
-    record {
-        user_id: UserId;
-        subscription: text;
-    };
-
-type Event =
+type Notification =
     variant {
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
-        Subscription: Subscription;
     };
 
-type IndexedEvent =
+type IndexedNotification =
     record {
         index: nat64;
-        event: Event;
+        notification: Notification;
     };
 
-type GetEventsSuccessResult =
+type GetNotificationsSuccessResult =
     record {
-        events: vec IndexedEvent;
+        notifications: vec IndexedNotification;
+        subscriptions: vec { UserId, vec text; }
     };
 
-type GetEventsArgs =
+type GetNotificationsArgs =
     record {
-        from_event_index: nat64;
+        from_notification_index: nat64;
     };
 
-type GetEventsResponse =
+type GetNotificationsResponse =
     variant {
-        Success(SuccessResult);
+        Success(GetNotificationsSuccessResult);
         NotAuthorized;
     };
 
-type RemoveEventsArgs =
+type RemoveNotificationsArgs =
     record {
-        up_to_event_index: nat64;
+        up_to_notification_index: nat64;
     };
 
-type RemoveEventsResponse =
+type RemoveNotificationsResponse =
     variant {
         Success;
         NotAuthorized;
     };
 
 service: {
-    get_events: (GetEventsArgs) -> (GetEventsResponse);
-    remove_events: (RemoveEventsArgs) -> (RemoveEventsResponse);
+    get_notifications: (GetNotificationsArgs) -> (GetNotificationsResponse);
+    remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
 }

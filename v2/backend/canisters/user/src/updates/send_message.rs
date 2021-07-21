@@ -82,7 +82,6 @@ mod c2c {
     use ic_cdk::api::call::CallResult;
     use shared::c2c::call_with_logging;
     use shared::rand::get_random_item;
-    use shared::types::message_notifications::*;
     use shared::types::CanisterId;
 
     pub async fn call(canister_id: CanisterId, args: Args) {
@@ -113,7 +112,7 @@ mod c2c {
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
             sent_by_me: false,
-            content: args.content.clone(),
+            content: args.content,
             replies_to: args.replies_to,
             now: runtime_state.env.now(),
         };
@@ -127,7 +126,6 @@ mod c2c {
                 sender: sender_user_id,
                 recipient: runtime_state.env.canister_id().into(),
                 message_index: result.message_index,
-                content: args.content,
             };
 
             let push_notification_future = push_notification(*canister_id, notification);
@@ -138,8 +136,10 @@ mod c2c {
     }
 
     async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
+        let args = PushDirectMessageNotificationArgs { notification };
+
         let _: CallResult<(PushDirectMessageNotificationResponse,)> =
-            call_with_logging(canister_id, "push_direct_message_notification", (notification,)).await;
+            call_with_logging(canister_id, "push_direct_message_notification", (args,)).await;
     }
 
     impl From<super::Args> for (CanisterId, Args) {
@@ -153,4 +153,21 @@ mod c2c {
             (args.recipient.into(), c2c_args)
         }
     }
+}
+
+#[derive(CandidType)]
+pub struct DirectMessageNotification {
+    sender: UserId,
+    recipient: UserId,
+    message_index: MessageIndex,
+}
+
+#[derive(CandidType)]
+struct PushDirectMessageNotificationArgs {
+    notification: DirectMessageNotification,
+}
+
+#[derive(Deserialize)]
+enum PushDirectMessageNotificationResponse {
+    Success,
 }
