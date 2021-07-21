@@ -4,23 +4,20 @@ use shared::time::TimestampMillis;
 
 #[derive(CandidType, Deserialize, Debug, Eq, PartialEq)]
 pub struct Subscription {
-    connection_string: String,
+    json: String,
     last_active: TimestampMillis,
 }
 
 impl Subscription {
-    pub fn new(connection_string: String, now: TimestampMillis) -> Subscription {
-        Subscription {
-            connection_string,
-            last_active: now,
-        }
+    pub fn new(json: String, now: TimestampMillis) -> Subscription {
+        Subscription { json, last_active: now }
     }
 
-    pub fn get_connection_string(&self) -> &str {
-        &self.connection_string
+    pub fn json(&self) -> &str {
+        &self.json
     }
 
-    pub fn get_last_active(&self) -> TimestampMillis {
+    pub fn last_active(&self) -> TimestampMillis {
         self.last_active
     }
 

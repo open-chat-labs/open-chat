@@ -20,8 +20,8 @@ impl Subscriptions {
         self.subscriptions.get(user_id).map(|subscriptions| {
             subscriptions
                 .iter()
-                .filter(|s| s.get_last_active() >= now - max_age_millis)
-                .map(|s| s.get_connection_string().to_string())
+                .filter(|s| s.last_active() >= now - max_age_millis)
+                .map(|s| s.json().to_string())
                 .collect()
         })
     }
@@ -30,7 +30,7 @@ impl Subscriptions {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if let Some(s) = subscriptions.iter_mut().find(|s| s.get_connection_string() == subscription) {
+                if let Some(s) = subscriptions.iter_mut().find(|s| s.json() == subscription) {
                     s.set_last_active(now);
                 } else {
                     subscriptions.push(Subscription::new(subscription, now));
