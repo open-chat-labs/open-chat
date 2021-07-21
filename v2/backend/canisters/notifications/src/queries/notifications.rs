@@ -40,8 +40,8 @@ fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             .data
             .notifications
             .get(args.from_notification_index, MAX_NOTIFICATIONS_PER_BATCH);
-        let result = add_subscriptions(notifications, runtime_state);
 
+        let result = add_subscriptions(notifications, runtime_state);
         Success(result)
     } else {
         NotAuthorized
