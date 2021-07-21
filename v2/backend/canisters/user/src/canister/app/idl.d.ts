@@ -1,7 +1,7 @@
 import type { IDL } from "@dfinity/candid";
 import UserService, {
-  GetChatsArgs,
-  GetChatsResponse,
+  UpdatesArgs,
+  UpdatesResponse,
   ChatSummary,
   GroupChatSummary,
   DirectChatSummary,
@@ -15,14 +15,14 @@ import UserService, {
   CyclesContent,
   TimestampMillis,
   BlobReference,
-  GetMessagesArgs,
-  GetMessagesResponse,
-  GetMessagesSuccess,
+  MessagesArgs,
+  MessagesResponse,
+  MessagesSuccess,
 } from "./types";
 export {
   UserService,
-  GetChatsArgs as ApiGetChatsArgs,
-  GetChatsResponse as ApiGetChatsResponse,
+  UpdatesArgs as ApiUpdatesArgs,
+  UpdatesResponse as ApiUpdatesResponse,
   ChatSummary as ApiChatSummary,
   GroupChatSummary as ApiGroupChatSummary,
   DirectChatSummary as ApiDirectChatSummary,
@@ -36,9 +36,9 @@ export {
   CyclesContent as ApiCyclesContent,
   TimestampMillis as ApiTimestampMillis,
   BlobReference as ApiBlobReference,
-  GetMessagesArgs as ApiGetMessageArgs,
-  GetMessagesResponse as ApiGetMessagesResponse,
-  GetMessagesSuccess as ApiGetMessagesSuccess,
+  MessagesArgs as ApiMessageArgs,
+  MessagesResponse as ApiMessagesResponse,
+  MessagesSuccess as ApiMessagesSuccess,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

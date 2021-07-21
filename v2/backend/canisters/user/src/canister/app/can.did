@@ -85,38 +85,6 @@ type Message =
         replies_to: opt ReplyContext;
     };
 
-type ChatSummary =
-    variant {
-        Direct: DirectChatSummary;
-        Group: GroupChatSummary;
-    }; 
-
-type DirectChatSummary =
-    record {
-        id: DirectChatId;
-        them: UserId;
-        display_date: TimestampMillis;
-        last_updated: TimestampMillis;
-        last_read_by_us: MessageIndex;
-        last_read_by_them: MessageIndex;
-        latest_message_index: MessageIndex;
-        latest_message: opt Message;
-    };
-
-type GroupChatSummary =
-    record {
-        id: GroupId;
-        subject: text;
-        display_date: TimestampMillis;
-        last_updated: TimestampMillis;
-        min_visible_message_index: MessageIndex;
-        participants: vec UserId;
-        last_read_by_us: MessageIndex;
-        last_read_by_them: MessageIndex;
-        latest_message_index: MessageIndex;
-        latest_message: opt Message;
-    };
-
 type ReplyContextArgs =
     record {
         chat_id_if_other: opt GroupId;
@@ -134,9 +102,10 @@ type SendMessageArgs =
 type SendMessageResponse =
     variant {
         Success: record {
-            chat_summary: ChatSummary;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            latest_read_by_me: MessageIndex;
+            latest_read_by_them: MessageIndex;
         };
         RecipientNotFound;
         BalanceExceeded;
@@ -214,122 +183,125 @@ type CreateGroupResponse =
         UnknownError;
     }; 
 
-type HandleMessageArgs =
-    record {
-        sender: UserId;
-        message_id: MessageId;
-        content: MessageContent;
-        replies_to: opt ReplyContext;
-    };
-
-type HandleMessageResponse =
-    variant {
-        Success;
-        SenderBlocked;
-        Out
-    }; 
-
-type HandleAddedToGroupArgs =
-    record {
-        added_by: UserId;
-        group_id: GroupId;
-    };
-
-type HandleAddedToGroupResponse =
-    variant {
-        Success;
-        Blocked;        
-    }; 
-
-type HandleRemovedFromGroupArgs =
-    record {
-        group_id: GroupId;
-    };
-
-type HandleInvitedToGroupArgs =
-    record {
-        invited_by: UserId;
-        group_id: GroupId;
-    };
-
-type HandleInvitedToGroupResponse =
-    variant {
-        Success;
-    }; 
-
-type HandleJoinedGroupArgs =
-    record {
-        user_principal: principal;
-        group_id: GroupId;
-    };
-
-type HandleJoinedGroupResponse =
-    variant {
-        Success;
-        Unauthorized;
-    }; 
-
-type HandleLeftGroupArgs =
-    record {
-        user_principal: principal;
-        group_id: GroupId;
-    };
-
-type HandleLeftGroupResponse =
-    variant {
-        Success;
-        Unauthorized;
-    }; 
-
-type GetChatsArgs =
-    record {
-        updated_since: opt TimestampMillis;
-        message_count_for_top_chat: opt nat16;
-    };
-
-type User = 
-    record {
-        user_id: UserId;
-        username: text; 
-        last_online: TimestampMillis;
-    };
-
-type GetChatsResponse =
-    variant {
-        Success: record {
-            chats: vec ChatSummary;
-            timestamp: TimestampMillis;
-        }; 
-    }; 
-
-type GetMessagesArgs =
+type MessagesArgs =
     record {
         user_id: UserId;
         from_index: MessageIndex;
         to_index: MessageIndex;
     };
 
-type GetMessagesSuccess =
+type UpdatesArgs = 
+    record {
+        last_updated: opt TimestampMillis;
+        groups: vec record {
+            chat_id: GroupId;
+            last_updated: TimestampMillis;
+        };
+    };
+
+type Participant =
+    record {
+        user_id: UserId;
+        role: variant {
+            Standard;
+            Admin;
+        };
+    };
+
+type ChatSummary =
+    variant {
+        Direct: DirectChatSummary;
+        Group: GroupChatSummary;
+    };
+
+type UpdatedChatSummary =
+    variant {
+        Direct: UpdatedDirectChatSummary;
+        Group: UpdatedGroupChatSummary;
+    };
+
+type DirectChatSummary =
+    record {
+        id: DirectChatId;
+        them: UserId;
+        last_updated: TimestampMillis;
+        latest_read_by_me: MessageIndex;
+        latest_read_by_them: MessageIndex;
+        latest_message: Message;
+    };
+
+type GroupChatSummary =
+    record {
+        id: GroupId;
+        name: text;
+        description: text;
+        public: bool;
+        joined: TimestampMillis;
+        last_updated: TimestampMillis;
+        min_visible_message_index: MessageIndex;
+        participants: vec Participant;
+        latest_read_by_me: MessageIndex;
+        latest_message: opt Message;
+    };
+
+type UpdatedDirectChatSummary =
+    record {
+        chat_id: DirectChatId;
+        last_updated: TimestampMillis;
+        latest_read_by_me: opt MessageIndex;
+        latest_read_by_them: opt MessageIndex;
+        latest_message: opt Message;
+    };
+
+type UpdatedGroupChatSummary =
+    record {
+        chat_id: GroupId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        latest_read_by_me: opt MessageIndex;
+        latest_message: opt Message;
+        participants_removed: vec UserId;
+        participants_added: vec Participant;
+        participants_updated: vec Participant;
+    };
+
+type ChatId = 
+    variant { 
+        DirectChatId; 
+        GroupId; 
+    };
+
+type UpdatesResponse =
+    variant {
+        Success: record {
+            chats_added: vec ChatSummary;
+            chats_updated: vec UpdatedChatSummary;
+            chats_removed: vec ChatId;         
+        }
+    };
+
+type MessagesSuccess =
     record {
         messages: vec Message;
         latest_message_index: MessageIndex;
     };
 
-type GetMessagesResponse =
+type MessagesResponse =
     variant {
-        Success: GetMessagesSuccess;
+        Success: MessagesSuccess;
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexArgs =
+type MessagesByIndexArgs =
     record {
         user_id: UserId;
         messages: vec MessageIndex;
     };
 
-type GetMessagesByIndexResponse =
+type MessagesByIndexResponse =
     variant {
-        Success: GetMessagesSuccess;
+        Success: MessagesSuccess;
         ChatNotFound;
     }; 
 
@@ -351,13 +323,13 @@ type SearchAllMessagesResponse =
         Failure;
     }; 
 
-type GetChunkArgs =
+type ChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
     };
 
-type GetChunkResponse =
+type ChunkResponse =
     variant {
         Success: record {
             bytes: vec nat8;
@@ -402,19 +374,12 @@ service: (InitArgs) -> {
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     
-    handle_message_received: (HandleMessageArgs) -> (HandleMessageResponse);
-    handle_added_to_group: (HandleAddedToGroupArgs) -> (HandleAddedToGroupResponse);
-    handle_removed_from_group: (HandleRemovedFromGroupArgs) -> ();
-    handle_invited_to_group: (HandleInvitedToGroupArgs) -> (HandleInvitedToGroupResponse);
-    handle_joined_group: (HandleJoinedGroupArgs) -> (HandleJoinedGroupResponse);
-    handle_left_group: (HandleLeftGroupArgs) -> (HandleLeftGroupResponse);
-
-    get_chats: (GetChatsArgs) -> (GetChatsResponse) query;
-    get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
+    messages: (MessagesArgs) -> (MessagesResponse) query;
+    messages_by_index: (MessagesByIndexArgs) -> (MessagesByIndexResponse) query;
+    updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
-    get_chunk: (GetChunkArgs) -> (GetChunkResponse) query;
+    chunk: (ChunkArgs) -> (ChunkResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }
