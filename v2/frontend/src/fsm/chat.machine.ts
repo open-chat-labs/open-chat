@@ -311,7 +311,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 ADD_PARTICIPANT: "showing_participants.adding_participant",
                 LOAD_MORE_MESSAGES: "loading_messages",
                 CLEAR_FOCUS_INDEX: {
-                    actions: assign((_, ev) => ({ focusIndex: undefined })),
+                    actions: assign((_, _ev) => ({ focusIndex: undefined })),
                 },
                 GO_TO_MESSAGE_INDEX: {
                     target: "loading_messages",
