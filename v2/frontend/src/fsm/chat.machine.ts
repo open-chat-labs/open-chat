@@ -102,7 +102,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         moreMessagesAvailable,
     },
     services: {
-        loadMessagesAndUsers: async (ctx, ev) => {
+        loadMessagesAndUsers: async (ctx, _) => {
             const earliestLoaded = earliestLoadedMessageIndex(ctx);
             console.log("FocusIndex", ctx.focusIndex);
             const earliestRequired =
