@@ -8,8 +8,7 @@
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import { getContentAsText } from "../../domain/chat/chat.utils";
-    import { createEventDispatcher } from "svelte";
-    const dispatch = createEventDispatcher();
+    import { push } from "svelte-spa-router";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let repliesTo: ReplyContext;
@@ -18,17 +17,13 @@
         return replyContext.kind === "direct_standard_reply_context" && replyContext.sentByMe;
     }
 
-    function selectChat(chatId: string, messageIndex: number): void {
-        dispatch("selectChat", { chatId, messageIndex });
-    }
-
     function zoomToMessage() {
         if (repliesTo.kind === "direct_standard_reply_context") {
             machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
         }
 
         if (repliesTo.kind === "direct_private_reply_context") {
-            selectChat(repliesTo.chatId, repliesTo.messageIndex);
+            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
 
         if (repliesTo.kind === "group_reply_context") {

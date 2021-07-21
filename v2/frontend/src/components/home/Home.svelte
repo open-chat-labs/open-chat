@@ -8,7 +8,6 @@
     import { fly } from "svelte/transition";
     import type { ActorRefFrom } from "xstate";
     import { modalStore, ModalType } from "../../stores/modal";
-    import { toastStore, ToastType } from "../../stores/toast";
     import Overlay from "../Overlay.svelte";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -36,6 +35,7 @@
                 params.chatId &&
                 params.chatId !== $machine.context.selectedChat?.chatId?.toString()
             ) {
+                console.log("we should end up here");
                 // if we have an unknown chat in the param, then redirect to home
                 if (
                     $machine.context.chatSummaries.findIndex(
@@ -95,17 +95,6 @@
         }
     }
 
-    function selectChat(ev: CustomEvent<{ chatId: string; messageIndex: number }>) {
-        const chat = $machine.context.chatSummaries.find((c) => {
-            return c.chatId === ev.detail.chatId;
-        });
-        if (chat) {
-            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
-        } else {
-            toastStore.showFailureToast("chatNotFound");
-        }
-    }
-
     $: selectedChat = $machine.context.selectedChat;
 
     $: groupChat = selectedChat
@@ -138,7 +127,6 @@
             on:blockUser={blockUser}
             on:leaveGroup={leaveGroup}
             on:chatWith={chatWith}
-            on:selectChat={selectChat}
             hideLeft={params.chatId !== null}
             machine={selectedChatActor} />
     </main>

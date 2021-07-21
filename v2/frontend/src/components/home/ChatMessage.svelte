@@ -59,7 +59,7 @@
             </Link>
         {/if}
         {#if msg.repliesTo !== undefined}
-            <RepliesTo {machine} repliesTo={msg.repliesTo} on:selectChat />
+            <RepliesTo {machine} repliesTo={msg.repliesTo} />
         {/if}
         <div class="content">
             <SvelteMarkdown source={textContent} />

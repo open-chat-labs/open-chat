@@ -37,7 +37,7 @@ describe("home machine transitions", () => {
         );
     });
     test("trigger load messages", () => {
-        testTransition(
+        const ctx = testTransition(
             homeMachine.withContext({
                 chatSummaries: [directChat],
                 userLookup: {},
@@ -46,21 +46,23 @@ describe("home machine transitions", () => {
                 chatsIndex: {},
             }),
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: "abcdefg" },
+            { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
             {
                 loaded_chats: "chat_selected",
             }
         );
+        expect(ctx.chatsIndex["abcdefg"]).not.toBe(undefined);
     });
     test("trigger load messages - does nothing for invalid chat", () => {
-        testTransition(
+        const ctx = testTransition(
             homeMachine,
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: "qwxyz" },
+            { type: "SELECT_CHAT", data: { chatId: "qwxyz", messageIndex: undefined } },
             {
                 loaded_chats: "no_chat_selected",
             }
         );
+        expect(ctx.chatsIndex["qwxyz"]).toBe(undefined);
     });
     test("clear selected chat", () => {
         const ctx = testTransition(

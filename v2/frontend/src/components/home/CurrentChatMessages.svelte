@@ -163,7 +163,6 @@
                     <ChatMessage
                         showStem={i + 1 === userGroup.length}
                         on:chatWith
-                        on:selectChat
                         {machine}
                         {msg} />
                 {/each}

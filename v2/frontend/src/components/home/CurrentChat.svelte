@@ -26,7 +26,7 @@
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
 
-    <CurrentChatMessages on:selectChat on:chatWith {machine} />
+    <CurrentChatMessages on:chatWith {machine} />
     <MessageEntry {machine} />
 </div>
 
