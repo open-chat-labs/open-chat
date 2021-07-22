@@ -1,8 +1,8 @@
 import type {
     ChatSummary,
     DirectChatSummary,
-    GetChatsResponse,
-    GetMessagesResponse,
+    UpdatesResponse,
+    MessagesResponse,
     GroupChatSummary,
     Message,
     ReplyContext,
@@ -92,11 +92,7 @@ function mockTextMessage(index: number): Message {
 }
 
 export class UserClientMock implements IUserClient {
-    chatMessages(
-        _userId: string,
-        fromIndex: number,
-        toIndex: number
-    ): Promise<GetMessagesResponse> {
+    chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
         const messages = fill(n, mockTextMessage, (i: number) => fromIndex + i);
         return new Promise((res) => {
@@ -109,7 +105,7 @@ export class UserClientMock implements IUserClient {
         });
     }
 
-    getChats(since: bigint): Promise<GetChatsResponse> {
+    getChats(since: bigint): Promise<UpdatesResponse> {
         const numChats = since === BigInt(0) ? 2 : 4;
         const direct = fill(numChats, mockDirectChat);
         const group = fill(numChats, mockGroupChat, (i: number) => i + 1000);

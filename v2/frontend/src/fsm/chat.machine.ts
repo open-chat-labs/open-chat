@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { assign, escalate, log, send } from "xstate/lib/actions";
-import type { ChatSummary, GetMessagesResponse, Message } from "../domain/chat/chat";
+import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
 import { textMessage, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -68,7 +68,7 @@ function loadMessages(
     chatSummary: ChatSummary,
     earliestRequiredMessageIndex: number,
     earliestLoadedMessageIndex: number
-): Promise<GetMessagesResponse> {
+): Promise<MessagesResponse> {
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatMessages(
             chatSummary.them,

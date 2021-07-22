@@ -3,21 +3,21 @@ import type {
     ApiChatSummary,
     ApiCyclesContent,
     ApiFileContent,
-    ApiGetChatsResponse,
-    ApiGetMessagesResponse,
+    ApiMessagesResponse,
     ApiMediaContent,
     ApiMessage,
     ApiMessageContent,
     ApiReplyContext,
     ApiTextContent,
+    ApiUpdatesResponse,
 } from "api-canisters/user/src/canister/app/idl";
 import type {
     BlobReference,
     ChatSummary,
     CyclesContent,
     FileContent,
-    GetChatsResponse,
-    GetMessagesResponse,
+    UpdatesResponse,
+    MessagesResponse,
     MediaContent,
     Message,
     MessageContent,
@@ -26,7 +26,7 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
-export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessagesResponse {
+export function getMessagesResponse(candid: ApiMessagesResponse): MessagesResponse {
     if ("Success" in candid) {
         return {
             messages: candid.Success.messages.map(message),
@@ -39,7 +39,7 @@ export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessages
     throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
 }
 
-export function getChatsResponse(candid: ApiGetChatsResponse): GetChatsResponse {
+export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
             chats: candid.Success.chats.map(chatSummary),

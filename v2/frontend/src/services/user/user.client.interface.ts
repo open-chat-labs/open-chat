@@ -1,7 +1,7 @@
-import type { ChatSummary, GetChatsResponse, GetMessagesResponse } from "../../domain/chat/chat";
+import type { ChatSummary, UpdatesResponse, MessagesResponse } from "../../domain/chat/chat";
 
 export interface IUserClient {
-    getChats(since: bigint): Promise<GetChatsResponse>;
-    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<GetMessagesResponse>;
-    updateChats(chats: ChatSummary[]): Promise<GetChatsResponse>;
+    getChats(since: bigint): Promise<UpdatesResponse>;
+    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse>;
+    updateChats(chats: ChatSummary[]): Promise<UpdatesResponse>;
 }

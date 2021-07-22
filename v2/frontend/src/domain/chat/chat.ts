@@ -72,12 +72,13 @@ export interface Message {
     repliesTo?: ReplyContext;
 }
 
-export type GetChatsResponse = {
-    chats: ChatSummary[];
-    timestamp: bigint;
+export type UpdatesResponse = {
+    chatsUpdated: UpdatedChatSummary[];
+    chatsAdded: ChatSummary[];
+    chatsRemoved: string[];
 };
 
-export type GetMessagesResponse = "chat_not_found" | GetMessagesSuccess;
+export type MessagesResponse = "chat_not_found" | GetMessagesSuccess;
 
 export type GetMessagesSuccess = {
     messages: Message[];
