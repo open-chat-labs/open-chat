@@ -1,4 +1,4 @@
-use crate::model::subscription::Subscription;
+use crate::model::subscription::{Subscription, SubscriptionInfo};
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
@@ -13,23 +13,24 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn get(&self, user_id: &UserId, max_age: Duration, now: TimestampMillis) -> Option<Vec<String>> {
+    pub fn get(&self, user_id: &UserId, max_age: Duration, now: TimestampMillis) -> Option<Vec<SubscriptionInfo>> {
         let active_since = now.saturating_sub(max_age.as_millis() as u64);
 
         self.subscriptions.get(user_id).map(|subscriptions| {
             subscriptions
                 .iter()
                 .filter(|s| s.last_active() >= active_since)
-                .map(|s| s.json().to_string())
+                .map(|s| s.value())
+                .cloned()
                 .collect()
         })
     }
 
-    pub fn push(&mut self, user_id: UserId, subscription: String, now: TimestampMillis) {
+    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo, now: TimestampMillis) {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if let Some(s) = subscriptions.iter_mut().find(|s| s.json() == subscription) {
+                if let Some(s) = subscriptions.iter_mut().find(|s| *s.value() == subscription) {
                     s.set_last_active(now);
                 } else {
                     subscriptions.push(Subscription::new(subscription, now));
@@ -45,6 +46,7 @@ impl Subscriptions {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::subscription::SubscriptionKeys;
     use candid::Principal;
 
     #[test]
@@ -52,7 +54,7 @@ mod tests {
         let mut subscriptions_collection = Subscriptions::default();
 
         let user_id = Principal::from_slice(&[1]).into();
-        let subscriptions: Vec<_> = (0..10).map(|i| i.to_string()).collect();
+        let subscriptions: Vec<_> = (0..10).map(|i| build_subscription(i.to_string())).collect();
 
         for s in subscriptions.iter() {
             subscriptions_collection.push(user_id, s.clone(), 100);
@@ -69,13 +71,13 @@ mod tests {
         let mut subscriptions_collection = Subscriptions::default();
 
         let user_id = Principal::from_slice(&[1]).into();
-        let subscriptions: Vec<_> = (0..10).map(|i| i.to_string()).collect();
+        let subscriptions: Vec<_> = (0..10).map(|i| build_subscription(i.to_string())).collect();
 
         for s in subscriptions.iter() {
             subscriptions_collection.push(user_id, s.clone(), 100);
         }
 
-        subscriptions_collection.push(user_id, "2".to_string(), 200);
+        subscriptions_collection.push(user_id, build_subscription("2".to_string()), 200);
 
         let values = subscriptions_collection.subscriptions.get(&user_id).unwrap();
         let expected: Vec<_> = subscriptions
@@ -92,7 +94,7 @@ mod tests {
         let mut subscriptions_collection = Subscriptions::default();
 
         let user_id = Principal::from_slice(&[1]).into();
-        let subscriptions: Vec<_> = (0..10).map(|i| i.to_string()).collect();
+        let subscriptions: Vec<_> = (0..10).map(|i| build_subscription(i.to_string())).collect();
 
         for s in subscriptions.iter() {
             subscriptions_collection.push(user_id, s.clone(), 100);
@@ -110,7 +112,7 @@ mod tests {
         let mut subscriptions_collection = Subscriptions::default();
 
         let user_id = Principal::from_slice(&[1]).into();
-        let subscriptions: Vec<_> = (0..10).map(|i| i.to_string()).collect();
+        let subscriptions: Vec<_> = (0..10).map(|i| build_subscription(i.to_string())).collect();
 
         for (index, s) in subscriptions.iter().enumerate() {
             subscriptions_collection.push(user_id, s.clone(), (index as u64) * 1000);
@@ -120,5 +122,15 @@ mod tests {
         let expected: Vec<_> = subscriptions.into_iter().skip(5).collect();
 
         assert_eq!(*values, expected);
+    }
+
+    fn build_subscription(value: String) -> SubscriptionInfo {
+        SubscriptionInfo {
+            endpoint: value.clone(),
+            keys: SubscriptionKeys {
+                p256dh: value.clone(),
+                auth: value,
+            },
+        }
     }
 }

@@ -1,13 +1,16 @@
 use super::push_subscription::Response::*;
 use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
+use crate::model::subscription::SubscriptionInfo;
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
+use shared::types::UserId;
 
 #[derive(Deserialize)]
 struct Args {
-    subscription: String,
+    user_id: UserId,
+    subscription: SubscriptionInfo,
 }
 
 #[derive(CandidType)]
@@ -21,8 +24,7 @@ fn push_subscription(args: Args) -> Response {
 }
 
 fn push_subscription_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
-    runtime_state.data.subscriptions.push(user_id, args.subscription, now);
+    runtime_state.data.subscriptions.push(args.user_id, args.subscription, now);
     Success
 }

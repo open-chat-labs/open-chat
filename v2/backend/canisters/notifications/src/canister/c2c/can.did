@@ -5,8 +5,13 @@ type UserId = CanisterId;
 
 type PushSubscriptionArgs =
     record {
-        user_id: UserId;
-        subscription: text;
+        subscription: record {
+            endpoint: text;
+            keys: record {
+                p256dh: text;
+                auth: text;
+            };
+        };
     };
 
 type PushSubscriptionResponse =

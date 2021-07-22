@@ -7,12 +7,15 @@ use shared::types::notifications::{IndexedNotification, Notification};
 use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use web_push::{ContentEncoding, SubscriptionInfo, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
 
 pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let dynamodb_client = DynamoDbClient::build();
 
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let ic_agent = IcAgent::build(&ic_identity_pem)?;
+
+    let vapid_private_key = read_env_var("VAPID_PRIVATE_KEY")?;
 
     let from_notification_index = dynamodb_client
         .get_notification_index_processed_up_to(canister_id)
@@ -22,7 +25,12 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let ic_response = ic_agent.get_notifications(canister_id, from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
-        handle_notifications(ic_response.notifications, ic_response.subscriptions).await?;
+        handle_notifications(
+            ic_response.notifications,
+            ic_response.subscriptions,
+            vapid_private_key.as_bytes(),
+        )
+        .await?;
 
         dynamodb_client
             .set_notification_index_processed_up_to(canister_id, latest_notification_index)
@@ -34,14 +42,17 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
 
 async fn handle_notifications(
     notifications: Vec<IndexedNotification>,
-    mut subscriptions: HashMap<UserId, Vec<String>>,
+    mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
+    vapid_private_key: &[u8],
 ) -> Result<(), Error> {
     let grouped_by_user = group_notifications_by_user(notifications);
+
+    let client = WebPushClient::new();
 
     let mut futures = Vec::new();
     for (user_id, notifications) in grouped_by_user.into_iter() {
         if let Some(s) = subscriptions.remove(&user_id) {
-            futures.push(push_notifications_to_user(notifications, s));
+            futures.push(push_notifications_to_user(&client, vapid_private_key, notifications, s));
         }
     }
     future::join_all(futures).await;
@@ -76,7 +87,27 @@ fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashM
     grouped_by_user
 }
 
-async fn push_notifications_to_user(_notifications: Vec<Notification>, _subscriptions: Vec<String>) {
-    // TODO
-    unimplemented!()
+async fn push_notifications_to_user(
+    client: &WebPushClient,
+    vapid_private_key: &[u8],
+    notifications: Vec<Notification>,
+    subscriptions: Vec<SubscriptionInfo>,
+) -> Result<(), Error> {
+    let serialized = serde_json::to_string(&notifications)?;
+
+    let mut messages = Vec::with_capacity(subscriptions.len());
+    for subscription in subscriptions.into_iter() {
+        let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_key, &subscription)?;
+
+        let mut builder = WebPushMessageBuilder::new(&subscription)?;
+        builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
+        builder.set_vapid_signature(sig_builder.build()?);
+        messages.push(builder.build()?);
+    }
+
+    let futures: Vec<_> = messages.into_iter().map(|m| client.send(m)).collect();
+
+    futures::future::join_all(futures).await;
+
+    Ok(())
 }
