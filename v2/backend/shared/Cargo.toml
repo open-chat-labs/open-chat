@@ -12,6 +12,6 @@ getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = "0.3.0"
 ic-types = "0.1.2"
 log = "0.4.14"
-rand = "0.8.4"
+rand = "0.7.3"
 serde = "1.0.126"
 serde_bytes = "0.11.5"
