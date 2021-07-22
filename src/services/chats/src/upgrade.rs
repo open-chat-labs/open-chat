@@ -1,3 +1,4 @@
+use crate::domain::user_notifications_status::UserNotificationsStatusMap;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::*;
 use serde::Deserialize;
@@ -13,6 +14,7 @@ fn pre_upgrade() {
         chats: storage::take_from_storage(),
         blobs: storage::take_from_storage(),
         blocked_users: storage::take_from_storage(),
+        user_notifications_status: storage::take_from_storage(),
     };
     storage::stable_save(to_save);
 }
@@ -24,20 +26,23 @@ fn post_upgrade() {
     storage::put_in_storage(saved.chats);
     storage::put_in_storage(saved.blobs);
     storage::put_in_storage(saved.blocked_users);
+    storage::put_in_storage(saved.user_notifications_status);
 }
 
 #[derive(Default)]
 struct StableStateOuter {
     chats: ChatList,
     blobs: BlobStorage,
-    blocked_users: BlockedUsers
+    blocked_users: BlockedUsers,
+    user_notifications_status: UserNotificationsStatusMap,
 }
 
 #[derive(CandidType, Deserialize)]
 struct StableStateInner {
     chats: ChatListState,
     blobs: BlobStorage,
-    blocked_users: BlockedUsers
+    blocked_users: BlockedUsers,
+    user_notifications_status: UserNotificationsStatusMap,
 }
 
 impl StableState for StableStateOuter {
@@ -47,7 +52,8 @@ impl StableState for StableStateOuter {
         StableStateInner {
             chats: self.chats.drain(),
             blobs: self.blobs,
-            blocked_users: self.blocked_users
+            blocked_users: self.blocked_users,
+            user_notifications_status: self.user_notifications_status,
         }
     }
 
@@ -55,7 +61,8 @@ impl StableState for StableStateOuter {
         StableStateOuter {
             chats: ChatList::fill(source.chats),
             blobs: source.blobs,
-            blocked_users: source.blocked_users
+            blocked_users: source.blocked_users,
+            user_notifications_status: source.user_notifications_status,
         }
     }
 }
