@@ -7,30 +7,33 @@ import { testTransition } from "./machine.spec.utils";
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
-    id: "abcdefg",
+    chatId: "abcdefg",
     lastUpdated: BigInt(0),
-    displayDate: BigInt(0),
     latestReadByMe: 0,
     latestReadByThem: 0,
-    latestMessageIndex: 5,
     latestMessage: undefined,
 };
 
 describe("home machine transitions", () => {
-    test("getChats fails", () => {
-        testTransition(homeMachine, "loading_chats", "error.platform.getChats", "unexpected_error");
+    test("getUpdates fails", () => {
+        testTransition(
+            homeMachine,
+            "loading_chats",
+            "error.platform.getUpdates",
+            "unexpected_error"
+        );
     });
     test("getChats succeeds", () => {
         testTransition(
             homeMachine,
             "loading_chats",
             {
-                type: "done.invoke.getChats",
+                type: "done.invoke.getUpdates",
                 data: {
                     chatSummaries: [],
-                    chatSummariesLastUpdate: BigInt(0),
                     userLookup: {},
                     usersLastUpdate: BigInt(0),
+                    directChatsLastUpdate: BigInt(0),
                 },
             },
             { loaded_chats: "no_chat_selected" }
@@ -41,7 +44,6 @@ describe("home machine transitions", () => {
             homeMachine.withContext({
                 chatSummaries: [directChat],
                 userLookup: {},
-                chatSummariesLastUpdate: BigInt(0),
                 usersLastUpdate: BigInt(0),
                 chatsIndex: {},
             }),
@@ -69,7 +71,6 @@ describe("home machine transitions", () => {
             homeMachine.withContext({
                 chatSummaries: [directChat],
                 userLookup: {},
-                chatSummariesLastUpdate: BigInt(0),
                 usersLastUpdate: BigInt(0),
                 selectedChat: directChat,
                 chatsIndex: {},
@@ -138,7 +139,7 @@ describe("home machine transitions", () => {
                 type: "CHATS_UPDATED",
                 data: {
                     chatSummaries: [directChat],
-                    chatSummariesLastUpdate: BigInt(200),
+                    directChatsLastUpdate: BigInt(200),
                     userLookup: {
                         "123": { userId: "123", username: "me", secondsSinceLastOnline: 10 },
                     },
@@ -153,6 +154,6 @@ describe("home machine transitions", () => {
         expect(ctx.usersLastUpdate).toBe(BigInt(100));
         expect(ctx.userLookup["123"].username).toBe("me");
         expect(ctx.chatSummaries[0]).toEqual(directChat);
-        expect(ctx.chatSummariesLastUpdate).toBe(BigInt(200));
+        expect(ctx.directChatsLastUpdate).toBe(BigInt(200));
     });
 });

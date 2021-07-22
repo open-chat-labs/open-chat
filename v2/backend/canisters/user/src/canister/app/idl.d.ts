@@ -1,5 +1,6 @@
 import type { IDL } from "@dfinity/candid";
-import UserService, {
+import {
+  _SERVICE,
   UpdatesArgs,
   UpdatesResponse,
   ChatSummary,
@@ -22,7 +23,7 @@ import UserService, {
   UpdatedChatSummary,
 } from "./types";
 export {
-  UserService,
+  _SERVICE as UserService,
   UpdatesArgs as ApiUpdatesArgs,
   UpdatesResponse as ApiUpdatesResponse,
   ChatSummary as ApiChatSummary,

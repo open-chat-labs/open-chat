@@ -79,10 +79,15 @@ export type GetMessagesSuccess = {
     latestMessageIndex: number;
 };
 
+export type UpdateArgs = {
+    groups: { lastUpdated: bigint; chatId: string }[];
+    lastUpdated?: bigint;
+};
+
 export type UpdatesResponse = {
     chatsUpdated: UpdatedChatSummary[];
     chatsAdded: ChatSummary[];
-    chatsRemoved: string[];
+    chatsRemoved: Set<string>;
     timestamp: bigint;
 };
 
@@ -96,12 +101,12 @@ type UpdatedChatSummaryCommon = {
 };
 
 export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
-    kind: "updated_direct_chat";
+    kind: "direct_chat";
     latestReadByThem?: number;
 };
 
 export type UpdatedGroupChatSummary = UpdatedChatSummaryCommon & {
-    kind: "updated_group_chat";
+    kind: "group_chat";
     participantsAdded: Participant[];
     participantsRemoved: string[];
     participantsUpdated: Participant[];
@@ -126,7 +131,7 @@ type ChatSummaryCommon = {
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    latestreadbythem: number;
+    latestReadByThem: number;
 };
 
 export type GroupChatSummary = ChatSummaryCommon & {

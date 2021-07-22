@@ -1,9 +1,14 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import idlFactory, { UserService } from "api-canisters/user/src/canister/app/idl";
-import type { ChatSummary, UpdatesResponse, MessagesResponse } from "../../domain/chat/chat";
+import type {
+    ChatSummary,
+    UpdatesResponse,
+    MessagesResponse,
+    UpdateArgs,
+} from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { getChatsResponse, getMessagesResponse } from "./mappers";
+import { getMessagesResponse, getUpdatesResponse } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -16,7 +21,7 @@ export class UserClient extends CandidService implements IUserClient {
 
     chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         return this.handleResponse(
-            this.userService.get_messages({
+            this.userService.messages({
                 user_id: Principal.fromText(userId),
                 to_index: toIndex,
                 from_index: fromIndex,
@@ -25,25 +30,16 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    getChats(since: bigint): Promise<UpdatesResponse> {
+    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
         return this.handleResponse(
-            this.userService.get_chats({
-                message_count_for_top_chat: [],
-                updated_since: [since],
+            this.userService.updates({
+                groups: args.groups.map((g) => ({
+                    last_updated: g.lastUpdated,
+                    chat_id: Principal.fromText(g.chatId),
+                })),
+                last_updated: args.lastUpdated ? [args.lastUpdated] : [],
             }),
-            getChatsResponse
-        );
-    }
-
-    // todo - this is not actually going to look like this but we need a stub in the meantime that does the job
-    updateChats(chats: ChatSummary[]): Promise<UpdatesResponse> {
-        const _req = chats.map((c) => ({ chatId: c.id, lastUpdated: c.lastUpdated }));
-        return this.handleResponse(
-            this.userService.get_chats({
-                message_count_for_top_chat: [],
-                updated_since: [BigInt(0)],
-            }),
-            getChatsResponse
+            getUpdatesResponse
         );
     }
 }

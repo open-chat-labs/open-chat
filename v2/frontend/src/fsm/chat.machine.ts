@@ -77,7 +77,7 @@ function loadMessages(
         );
     }
     return serviceContainer.groupChatMessages(
-        chatSummary.id,
+        chatSummary.chatId,
         earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );
@@ -90,7 +90,7 @@ export function earliestAvailableMessageIndex(ctx: ChatContext): number {
 }
 
 export function earliestLoadedMessageIndex(ctx: ChatContext): number {
-    return ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessageIndex;
+    return ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessage?.messageIndex ?? 0;
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
@@ -129,7 +129,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 messages: messagesResponse === "chat_not_found" ? [] : messagesResponse.messages,
                 latestMessageIndex:
                     messagesResponse === "chat_not_found"
-                        ? ctx.chatSummary.latestMessageIndex
+                        ? ctx.chatSummary.latestMessage?.messageIndex ?? 0
                         : messagesResponse.latestMessageIndex,
             };
         },
@@ -224,7 +224,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         chatSummary: {
                                             ...ctx.chatSummary,
                                             participants: [
-                                                ev.data.userId,
+                                                { userId: ev.data.userId, role: "standard" },
                                                 ...ctx.chatSummary.participants,
                                             ],
                                         },
@@ -269,7 +269,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 chatSummary: {
                                     ...ctx.chatSummary,
                                     participants: ctx.chatSummary.participants.filter(
-                                        (p) => p !== ev.data
+                                        (p) => p.userId !== ev.data
                                     ),
                                 },
                             };

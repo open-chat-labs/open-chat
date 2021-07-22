@@ -48,7 +48,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
         return {
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
-            chatsRemoved: candid.Success.chats_removed.map((p) => p.toString()),
+            chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
             timestamp: candid.Success.timestamp,
         };
     }
@@ -58,7 +58,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
 function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
     if ("Group" in candid) {
         return {
-            kind: "updated_group_chat",
+            kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
             latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
@@ -72,7 +72,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
     }
     if ("Direct" in candid) {
         return {
-            kind: "updated_direct_chat",
+            kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),
             lastUpdated: candid.Direct.last_updated,
             latestReadByMe: optional(candid.Direct.latest_read_by_me, identity),
@@ -107,7 +107,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             latestReadByMe: candid.Direct.latest_read_by_me,
             latestMessage: message(candid.Direct.latest_message),
             them: candid.Direct.them.toString(),
-            latestreadbythem: candid.Direct.latest_read_by_them,
+            latestReadByThem: candid.Direct.latest_read_by_them,
         };
     }
     throw new Error(`Unexpected ChatSummary type received: ${candid}`);

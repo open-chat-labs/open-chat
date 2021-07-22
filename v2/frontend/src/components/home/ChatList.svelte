@@ -15,6 +15,8 @@
     export let machine: ActorRefFrom<HomeMachine>;
 
     function filterChats(event: { detail: string }) {}
+
+    $: console.log("chats", $machine.context.chatSummaries);
 </script>
 
 {#if $machine.context.user}

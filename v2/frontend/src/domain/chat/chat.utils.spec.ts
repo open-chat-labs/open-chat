@@ -1,36 +1,49 @@
 import type { UserLookup } from "../user/user";
-import type { DirectChatSummary, GroupChatSummary } from "./chat";
-import { getParticipantsString, mergeChats, userIdsFromChatSummaries } from "./chat.utils";
+import type {
+    DirectChatSummary,
+    GroupChatSummary,
+    Participant,
+    UpdatedChatSummary,
+    UpdatedDirectChatSummary,
+    UpdatedGroupChatSummary,
+} from "./chat";
+import { getParticipantsString, mergeChatUpdates, userIdsFromChatSummaries } from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
-    id: "abc",
+    chatId: "abc",
     lastUpdated: BigInt(0),
-    displayDate: BigInt(0),
     latestReadByMe: 0,
     latestReadByThem: 0,
-    latestMessageIndex: 5,
     latestMessage: undefined,
 };
 
 const defaultGroupChat: GroupChatSummary = {
     kind: "group_chat",
     name: "whatever",
-    participants: [],
-    id: "abc",
+    description: "whatever",
+    participants: [participant("1"), participant("2"), participant("3")],
+    chatId: "abc",
     lastUpdated: BigInt(0),
-    displayDate: BigInt(0),
     latestReadByMe: 0,
-    lastReadByThem: 0,
-    latestMessageIndex: 5,
     latestMessage: undefined,
+    public: true,
+    joined: BigInt(0),
+    minVisibleMessageIndex: 0,
 };
 
 function directChatId(id: number): DirectChatSummary {
     return {
         ...defaultDirectChat,
-        id: String(id),
+        chatId: String(id),
+    };
+}
+
+function groupChatId(id: number): GroupChatSummary {
+    return {
+        ...defaultGroupChat,
+        chatId: String(id),
     };
 }
 
@@ -44,7 +57,14 @@ function directChatWith(them: string): DirectChatSummary {
 function groupChatWith(id: string): GroupChatSummary {
     return {
         ...defaultGroupChat,
-        participants: [id, id, id],
+        participants: [participant(id), participant(id), participant(id)],
+    };
+}
+
+function participant(id: string): Participant {
+    return {
+        role: "admin",
+        userId: id,
     };
 }
 
@@ -71,30 +91,38 @@ describe("extract userids from chat summaries", () => {
     });
 });
 
-describe("merging chat summaries", () => {
-    test("it works", () => {
-        const existing = [directChatId(0), directChatId(1), directChatId(2)];
-        const incoming = [directChatId(2), directChatId(3), directChatId(4)];
-        const merged = mergeChats(existing, incoming);
-        [0, 1, 2, 3, 4].forEach((n) =>
-            expect(merged.find((c) => c.id === String(n))).not.toBe(undefined)
-        );
-        expect(merged.length).toEqual(5);
-    });
-});
-
 describe("get participants string for group chat", () => {
     const withFewerThanSix = {
         ...defaultGroupChat,
-        participants: ["a", "b", "c", "d", "e"],
+        participants: [
+            participant("a"),
+            participant("b"),
+            participant("c"),
+            participant("d"),
+            participant("e"),
+        ],
     };
     const withUnknown = {
         ...defaultGroupChat,
-        participants: ["a", "b", "z", "d", "e"],
+        participants: [
+            participant("a"),
+            participant("b"),
+            participant("z"),
+            participant("d"),
+            participant("e"),
+        ],
     };
     const withMoreThanSix = {
         ...defaultGroupChat,
-        participants: ["a", "b", "c", "d", "e", "f", "g"],
+        participants: [
+            participant("a"),
+            participant("b"),
+            participant("c"),
+            participant("d"),
+            participant("e"),
+            participant("f"),
+            participant("g"),
+        ],
     };
     const lookup: UserLookup = {
         a: { userId: "a", username: "Mr A", secondsSinceLastOnline: 200 },
@@ -117,4 +145,137 @@ describe("get participants string for group chat", () => {
         const participants = getParticipantsString(lookup, withMoreThanSix, "Unknown User", "You");
         expect(participants).toEqual("8 members (7 online)");
     });
+});
+
+describe("merging updates", () => {
+    const initialChats = [
+        groupChatId(1),
+        groupChatId(2),
+        groupChatId(3),
+        directChatId(4),
+        directChatId(5),
+    ];
+
+    test("removed chats get removed", () => {
+        const updatesResponse = {
+            chatsUpdated: [],
+            chatsRemoved: new Set(["1", "3", "5"]),
+            chatsAdded: [],
+            timestamp: BigInt(0),
+        };
+        const merged = mergeChatUpdates(initialChats, updatesResponse);
+        expect(merged.length).toEqual(2);
+        expect(merged[0].chatId).toEqual("2");
+        expect(merged[1].chatId).toEqual("4");
+    });
+
+    test("added chats get added", () => {
+        const updatesResponse = {
+            chatsUpdated: [],
+            chatsRemoved: new Set([]),
+            chatsAdded: [directChatId(6), directChatId(7)],
+            timestamp: BigInt(0),
+        };
+        const merged = mergeChatUpdates(initialChats, updatesResponse);
+        expect(merged.length).toEqual(7);
+        expect(merged[6].chatId).toEqual("7");
+    });
+
+    describe("updated chats get merged correctly", () => {
+        const updatedDirect: UpdatedDirectChatSummary = {
+            kind: "direct_chat",
+            latestReadByThem: 100,
+            chatId: "4",
+            lastUpdated: BigInt(1000),
+            latestReadByMe: 200,
+            latestMessage: {
+                messageId: BigInt(100),
+                messageIndex: 300,
+                content: {
+                    kind: "text_content",
+                    text: "test message",
+                },
+                sender: "2",
+                timestamp: BigInt(400),
+                repliesTo: undefined,
+            },
+        };
+
+        const updatedGroup: UpdatedGroupChatSummary = {
+            kind: "group_chat",
+            chatId: "2",
+            lastUpdated: BigInt(1000),
+            latestReadByMe: 200,
+            latestMessage: {
+                messageId: BigInt(100),
+                messageIndex: 300,
+                content: {
+                    kind: "text_content",
+                    text: "test message",
+                },
+                sender: "2",
+                timestamp: BigInt(400),
+                repliesTo: undefined,
+            },
+            participantsAdded: [participant("4"), participant("5")],
+            participantsRemoved: ["2"],
+            participantsUpdated: [{ ...participant("1"), role: "standard" }],
+            name: "stuff",
+            description: "stuff",
+        };
+
+        test("attempting to update with a mismatched kind throws error", () => {
+            const updatesResponse = {
+                chatsUpdated: [{ ...updatedDirect, chatId: "1" }],
+                chatsRemoved: new Set([]),
+                chatsAdded: [],
+                timestamp: BigInt(0),
+            };
+            expect(() => mergeChatUpdates(initialChats, updatesResponse)).toThrow();
+        });
+
+        test("direct chats get merged correctly", () => {
+            const updatesResponse = {
+                chatsUpdated: [updatedDirect],
+                chatsRemoved: new Set([]),
+                chatsAdded: [],
+                timestamp: BigInt(0),
+            };
+            const merged = mergeChatUpdates(initialChats, updatesResponse);
+            const updated = merged.find((c) => c.chatId === "4");
+            if (updated && updated.kind === "direct_chat") {
+                expect(merged.length).toEqual(5);
+                expect(updated?.latestReadByThem).toEqual(100);
+                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated?.lastUpdated).toEqual(BigInt(1000));
+                expect(updated?.latestMessage).not.toBe(undefined);
+            } else {
+                fail("updated chat not found or was not a direct chat");
+            }
+        });
+
+        test("updated group chats get merged correctly", () => {
+            const updatesResponse = {
+                chatsUpdated: [updatedGroup],
+                chatsRemoved: new Set([]),
+                chatsAdded: [],
+                timestamp: BigInt(0),
+            };
+            const merged = mergeChatUpdates(initialChats, updatesResponse);
+            const updated = merged.find((c) => c.chatId === "2");
+            if (updated && updated.kind === "group_chat") {
+                expect(merged.length).toEqual(5);
+                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated?.lastUpdated).toEqual(BigInt(1000));
+                expect(updated?.latestMessage).not.toBe(undefined);
+
+                // todo - this fails because the code is not done yet. Get me with my TDD
+                expect(updated.participants.length).toEqual(4);
+            } else {
+                fail("updated chat not found or was not a group chat");
+            }
+        });
+    });
+
+    test.todo("chats end up in the right order");
 });

@@ -6,6 +6,9 @@ import type {
     GroupChatSummary,
     Message,
     ReplyContext,
+    UpdateArgs,
+    Participant,
+    UpdatedChatSummary,
 } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
@@ -17,16 +20,20 @@ const interval = 1000 * 60 * 60 * 8; // 8 hours
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
-    const participants = fill(randomNum(0, 200), (i: number) => `${randomWord(5)}_${i}`);
+    const participants: Participant[] = fill(randomNum(0, 200), (i: number) => ({
+        role: "admin",
+        userId: `${randomWord(5)}_${i}`,
+    }));
     return {
         kind: "group_chat",
         name: randomPara(4),
-        id: String(i),
+        description: randomPara(20),
+        public: true,
+        joined: BigInt(time),
+        minVisibleMessageIndex: 0,
+        chatId: String(i),
         lastUpdated: BigInt(time),
-        displayDate: BigInt(time),
         latestReadByMe: 0,
-        lastReadByThem: 0,
-        latestMessageIndex: numMessages,
         latestMessage: mockTextMessage(numMessages),
         participants,
     };
@@ -38,12 +45,10 @@ function mockDirectChat(i: number): DirectChatSummary {
     return {
         kind: "direct_chat",
         them: "qwxyz",
-        id: String(i),
+        chatId: String(i),
         lastUpdated: BigInt(time),
-        displayDate: BigInt(time),
         latestReadByMe: us,
         latestReadByThem: 0,
-        latestMessageIndex: numMessages,
         latestMessage: mockTextMessage(numMessages),
     };
 }
@@ -91,6 +96,34 @@ function mockTextMessage(index: number): Message {
     };
 }
 
+// todo - initially just keep things mostly the same
+function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
+    const uppercase = i % 2 === 0;
+
+    if (chat.kind === "group_chat") {
+        return {
+            chatId: chat.chatId,
+            lastUpdated: BigInt(+new Date()),
+            latestReadByMe: chat.latestReadByMe,
+            latestMessage: chat.latestMessage,
+            kind: "group_chat",
+            participantsAdded: [],
+            participantsRemoved: [],
+            participantsUpdated: [],
+            name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
+            description: chat.description,
+        };
+    }
+    return {
+        chatId: chat.chatId,
+        lastUpdated: BigInt(+new Date()),
+        latestReadByMe: chat.latestReadByMe,
+        latestMessage: chat.latestMessage,
+        kind: "direct_chat",
+        latestReadByThem: chat.latestReadByThem,
+    };
+}
+
 export class UserClientMock implements IUserClient {
     chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
@@ -105,15 +138,22 @@ export class UserClientMock implements IUserClient {
         });
     }
 
-    getChats(since: bigint): Promise<UpdatesResponse> {
-        const numChats = since === BigInt(0) ? 2 : 4;
-        const direct = fill(numChats, mockDirectChat);
-        const group = fill(numChats, mockGroupChat, (i: number) => i + 1000);
+    private updateCycles = -1;
+
+    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
+        console.log("Args", args);
+        this.updateCycles += 1;
+        const direct = fill(3, mockDirectChat);
+        const group = fill(3, mockGroupChat, (i: number) => i + 1000);
         const chats = ([] as ChatSummary[]).concat(direct, group);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
-                    chats,
+                    chatsUpdated: args.lastUpdated
+                        ? chats.map((c) => updateChat(c, this.updateCycles))
+                        : [],
+                    chatsAdded: args.lastUpdated ? [] : chats,
+                    chatsRemoved: new Set([]),
                     timestamp: BigInt(+new Date()),
                 });
             }, 1000);
