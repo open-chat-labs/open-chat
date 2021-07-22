@@ -247,6 +247,7 @@ export const idlFactory = ({ IDL }) => {
       'chats_updated' : IDL.Vec(UpdatedChatSummary),
       'chats_added' : IDL.Vec(ChatSummary),
       'chats_removed' : IDL.Vec(ChatId),
+      'timestamp' : TimestampMillis,
     }),
   });
   return IDL.Service({

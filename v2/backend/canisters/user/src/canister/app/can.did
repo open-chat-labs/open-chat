@@ -275,6 +275,7 @@ type ChatId =
 type UpdatesResponse =
     variant {
         Success: record {
+            timestamp: TimestampMillis;
             chats_added: vec ChatSummary;
             chats_updated: vec UpdatedChatSummary;
             chats_removed: vec ChatId;         
