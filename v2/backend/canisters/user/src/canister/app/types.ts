@@ -7,8 +7,8 @@ export interface BlobReference {
 }
 export interface BlockUserArgs { 'user_id' : UserId }
 export type CanisterId = Principal;
-export type ChatId = { 'DirectChatId' : null } |
-  { 'GroupId' : null };
+export type ChatId = { 'Group' : GroupId } |
+  { 'Direct' : DirectChatId };
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }

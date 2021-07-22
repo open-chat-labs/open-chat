@@ -241,10 +241,7 @@ export const idlFactory = ({ IDL }) => {
     'Group' : GroupChatSummary,
     'Direct' : DirectChatSummary,
   });
-  const ChatId = IDL.Variant({
-    'DirectChatId' : IDL.Null,
-    'GroupId' : IDL.Null,
-  });
+  const ChatId = IDL.Variant({ 'Group' : GroupId, 'Direct' : DirectChatId });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'chats_updated' : IDL.Vec(UpdatedChatSummary),

@@ -268,8 +268,8 @@ type UpdatedGroupChatSummary =
 
 type ChatId = 
     variant { 
-        DirectChatId; 
-        GroupId; 
+        Direct: DirectChatId; 
+        Group: GroupId; 
     };
 
 type UpdatesResponse =
