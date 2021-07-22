@@ -1,5 +1,6 @@
 use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
+use crate::model::subscription::SubscriptionInfo;
 use crate::queries::notifications::Response::*;
 use candid::CandidType;
 use ic_cdk_macros::query;
@@ -26,7 +27,7 @@ pub enum Response {
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
     notifications: Vec<IndexedNotification>,
-    subscriptions: HashMap<UserId, Vec<String>>,
+    subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
 }
 
 #[query]
@@ -52,7 +53,7 @@ fn add_subscriptions(notifications: Vec<IndexedNotification>, runtime_state: &Ru
     let now = runtime_state.env.now();
 
     let mut active_notifications: Vec<IndexedNotification> = Vec::new();
-    let mut subscriptions: HashMap<UserId, Vec<String>> = HashMap::new();
+    let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
     for n in notifications.into_iter() {
         let mut has_subscriptions = false;

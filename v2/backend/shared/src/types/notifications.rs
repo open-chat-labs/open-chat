@@ -1,7 +1,7 @@
 use crate::types::chat_id::GroupChatId;
 use crate::types::{MessageIndex, UserId};
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct IndexedNotification {
@@ -9,20 +9,20 @@ pub struct IndexedNotification {
     pub notification: Notification,
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub enum Notification {
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct DirectMessageNotification {
     pub sender: UserId,
     pub recipient: UserId,
     pub message_index: MessageIndex,
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct GroupMessageNotification {
     pub chat_id: GroupChatId,
     pub sender: UserId,
