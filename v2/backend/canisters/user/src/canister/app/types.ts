@@ -7,8 +7,13 @@ export interface BlobReference {
 }
 export interface BlockUserArgs { 'user_id' : UserId }
 export type CanisterId = Principal;
+export type ChatId = { 'Group' : GroupId } |
+  { 'Direct' : DirectChatId };
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
+export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
+export type ChunkResponse = { 'NotFound' : null } |
+  { 'Success' : { 'bytes' : Array<number> } };
 export interface CreateGroupArgs { 'is_public' : boolean, 'name' : string }
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'UnknownError' : null } |
@@ -20,13 +25,11 @@ export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export type DirectChatId = Principal;
 export interface DirectChatSummary {
   'id' : DirectChatId,
-  'last_read_by_us' : MessageIndex,
   'them' : UserId,
-  'latest_message_index' : MessageIndex,
   'last_updated' : TimestampMillis,
-  'display_date' : TimestampMillis,
-  'last_read_by_them' : MessageIndex,
-  'latest_message' : [] | [Message],
+  'latest_read_by_me' : MessageIndex,
+  'latest_read_by_them' : MessageIndex,
+  'latest_message' : Message,
 }
 export interface FileContent {
   'name' : string,
@@ -34,79 +37,19 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface GetChatsArgs {
-  'message_count_for_top_chat' : [] | [number],
-  'updated_since' : [] | [TimestampMillis],
-}
-export type GetChatsResponse = {
-    'Success' : { 'chats' : Array<ChatSummary>, 'timestamp' : TimestampMillis }
-  };
-export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number }
-export type GetChunkResponse = { 'NotFound' : null } |
-  { 'Success' : { 'bytes' : Array<number> } };
-export interface GetMessagesArgs {
-  'user_id' : UserId,
-  'to_index' : MessageIndex,
-  'from_index' : MessageIndex,
-}
-export interface GetMessagesByIndexArgs {
-  'messages' : Array<MessageIndex>,
-  'user_id' : UserId,
-}
-export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
-  { 'Success' : GetMessagesSuccess };
-export type GetMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : GetMessagesSuccess };
-export interface GetMessagesSuccess {
-  'messages' : Array<Message>,
-  'latest_message_index' : MessageIndex,
-}
 export interface GroupChatSummary {
   'id' : GroupId,
-  'last_read_by_us' : MessageIndex,
-  'participants' : Array<UserId>,
-  'subject' : string,
-  'latest_message_index' : MessageIndex,
+  'participants' : Array<Participant>,
+  'name' : string,
+  'description' : string,
   'last_updated' : TimestampMillis,
-  'display_date' : TimestampMillis,
-  'last_read_by_them' : MessageIndex,
+  'public' : boolean,
+  'latest_read_by_me' : MessageIndex,
+  'joined' : TimestampMillis,
   'min_visible_message_index' : MessageIndex,
   'latest_message' : [] | [Message],
 }
 export type GroupId = CanisterId;
-export interface HandleAddedToGroupArgs {
-  'added_by' : UserId,
-  'group_id' : GroupId,
-}
-export type HandleAddedToGroupResponse = { 'Blocked' : null } |
-  { 'Success' : null };
-export interface HandleInvitedToGroupArgs {
-  'group_id' : GroupId,
-  'invited_by' : UserId,
-}
-export type HandleInvitedToGroupResponse = { 'Success' : null };
-export interface HandleJoinedGroupArgs {
-  'user_principal' : Principal,
-  'group_id' : GroupId,
-}
-export type HandleJoinedGroupResponse = { 'Success' : null } |
-  { 'Unauthorized' : null };
-export interface HandleLeftGroupArgs {
-  'user_principal' : Principal,
-  'group_id' : GroupId,
-}
-export type HandleLeftGroupResponse = { 'Success' : null } |
-  { 'Unauthorized' : null };
-export interface HandleMessageArgs {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-}
-export type HandleMessageResponse = { 'Out' : null } |
-  { 'Success' : null } |
-  { 'SenderBlocked' : null };
-export interface HandleRemovedFromGroupArgs { 'group_id' : GroupId }
 export interface InitArgs {
   'owner' : Principal,
   'notification_canister_ids' : Array<CanisterId>,
@@ -141,6 +84,23 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessagesArgs {
+  'user_id' : UserId,
+  'to_index' : MessageIndex,
+  'from_index' : MessageIndex,
+}
+export interface MessagesByIndexArgs {
+  'messages' : Array<MessageIndex>,
+  'user_id' : UserId,
+}
+export type MessagesByIndexResponse = { 'ChatNotFound' : null } |
+  { 'Success' : MessagesSuccess };
+export type MessagesResponse = { 'ChatNotFound' : null } |
+  { 'Success' : MessagesSuccess };
+export interface MessagesSuccess {
+  'messages' : Array<Message>,
+  'latest_message_index' : MessageIndex,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -157,6 +117,11 @@ export interface MetricsResponse {
   'text_message_count' : bigint,
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
+}
+export interface Participant {
+  'role' : { 'Admin' : null } |
+    { 'Standard' : null },
+  'user_id' : UserId,
 }
 export interface PrivateReplyDetails {
   'content' : MessageContent,
@@ -205,8 +170,9 @@ export interface SendMessageArgs {
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
+      'latest_read_by_me' : MessageIndex,
       'timestamp' : TimestampMillis,
-      'chat_summary' : ChatSummary,
+      'latest_read_by_them' : MessageIndex,
       'message_index' : MessageIndex,
     }
   } |
@@ -222,40 +188,47 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
-export interface User {
-  'username' : string,
-  'last_online' : TimestampMillis,
-  'user_id' : UserId,
+export type UpdatedChatSummary = { 'Group' : UpdatedGroupChatSummary } |
+  { 'Direct' : UpdatedDirectChatSummary };
+export interface UpdatedDirectChatSummary {
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : [] | [MessageIndex],
+  'chat_id' : DirectChatId,
+  'latest_read_by_them' : [] | [MessageIndex],
+  'latest_message' : [] | [Message],
 }
+export interface UpdatedGroupChatSummary {
+  'participants_added' : Array<Participant>,
+  'participants_removed' : Array<UserId>,
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : [] | [MessageIndex],
+  'chat_id' : GroupId,
+  'participants_updated' : Array<Participant>,
+  'latest_message' : [] | [Message],
+}
+export interface UpdatesArgs {
+  'groups' : Array<{ 'last_updated' : TimestampMillis, 'chat_id' : GroupId }>,
+  'last_updated' : [] | [TimestampMillis],
+}
+export type UpdatesResponse = {
+    'Success' : {
+      'chats_updated' : Array<UpdatedChatSummary>,
+      'chats_added' : Array<ChatSummary>,
+      'chats_removed' : Array<ChatId>,
+    }
+  };
 export type UserId = CanisterId;
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,
+  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
-  'get_chats' : (arg_0: GetChatsArgs) => Promise<GetChatsResponse>,
-  'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
-  'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
-  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
-      GetMessagesByIndexResponse
-    >,
-  'handle_added_to_group' : (arg_0: HandleAddedToGroupArgs) => Promise<
-      HandleAddedToGroupResponse
-    >,
-  'handle_invited_to_group' : (arg_0: HandleInvitedToGroupArgs) => Promise<
-      HandleInvitedToGroupResponse
-    >,
-  'handle_joined_group' : (arg_0: HandleJoinedGroupArgs) => Promise<
-      HandleJoinedGroupResponse
-    >,
-  'handle_left_group' : (arg_0: HandleLeftGroupArgs) => Promise<
-      HandleLeftGroupResponse
-    >,
-  'handle_message_received' : (arg_0: HandleMessageArgs) => Promise<
-      HandleMessageResponse
-    >,
-  'handle_removed_from_group' : (arg_0: HandleRemovedFromGroupArgs) => Promise<
-      undefined
-    >,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
+  'messages' : (arg_0: MessagesArgs) => Promise<MessagesResponse>,
+  'messages_by_index' : (arg_0: MessagesByIndexArgs) => Promise<
+      MessagesByIndexResponse
+    >,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
@@ -264,4 +237,5 @@ export interface _SERVICE {
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<undefined>,
+  'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

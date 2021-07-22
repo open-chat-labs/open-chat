@@ -137,6 +137,10 @@
                 tick().then(resetScroll);
             }
 
+            if ($machine.matches("sending_message")) {
+                tick().then(() => scrollBottom());
+            }
+
             previous = $machine;
         }
     }

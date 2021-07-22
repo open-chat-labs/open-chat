@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, escalate, log } from "xstate/lib/actions";
+import { assign, escalate, log, send } from "xstate/lib/actions";
 import type { ChatSummary, GetMessagesResponse, Message } from "../domain/chat/chat";
 import { textMessage, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -290,23 +290,34 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
             },
         },
+        sending_message: {
+            entry: assign((ctx, ev) => {
+                if (ev.type === "SEND_MESSAGE") {
+                    // todo - this is obvious a huge simplification at the moment
+                    const messageIndex =
+                        ctx.messages.length === 0
+                            ? 0
+                            : ctx.messages[ctx.messages.length - 1].messageIndex + 1;
+                    return {
+                        messages: [
+                            ...ctx.messages,
+                            {
+                                ...textMessage(ctx.user!.userId, ev.data),
+                                messageIndex,
+                            },
+                        ],
+                    };
+                }
+                return {};
+            }),
+            after: {
+                // simulate the actual api call delay
+                2000: "loaded_messages",
+            },
+        },
         loaded_messages: {
             on: {
-                SEND_MESSAGE: {
-                    actions: assign((ctx, ev) => {
-                        // todo - this is obvious a huge simplification at the moment
-                        return {
-                            messages: [
-                                ...ctx.messages,
-                                {
-                                    ...textMessage(ctx.user!.userId, ev.data),
-                                    messageIndex:
-                                        ctx.messages[ctx.messages.length - 1].messageIndex + 1,
-                                },
-                            ],
-                        };
-                    }),
-                },
+                SEND_MESSAGE: "sending_message",
                 SHOW_PARTICIPANTS: "showing_participants",
                 ADD_PARTICIPANT: "showing_participants.adding_participant",
                 LOAD_MORE_MESSAGES: "loading_messages",
