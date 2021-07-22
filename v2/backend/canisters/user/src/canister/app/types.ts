@@ -217,6 +217,7 @@ export type UpdatesResponse = {
       'chats_updated' : Array<UpdatedChatSummary>,
       'chats_added' : Array<ChatSummary>,
       'chats_removed' : Array<ChatId>,
+      'timestamp' : TimestampMillis,
     }
   };
 export type UserId = CanisterId;
