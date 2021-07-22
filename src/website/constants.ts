@@ -1,5 +1,6 @@
 export const APP_TITLE = "OpenChat";
 
+export const APP_SERVICE_WORKER_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
 export const MAX_IMAGE_SIZE = 1024 * 1024;
 export const MAX_AVATAR_SIZE = 1024 * 256;
 export const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
