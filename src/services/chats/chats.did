@@ -247,7 +247,15 @@ type GetUpdatesResponse =
 type GetUpdatesResult =
     record {
         chats: vec ChatSummary;
-        blocked_users: vec UserId
+        blocked_users: vec UserId;
+        notification_status: NotificationStatus;
+    };
+
+type NotificationStatus =
+    variant {
+        Unknown;
+        Disabled;
+        Enabled;
     };
 
 type GetMessagesResult =
@@ -315,6 +323,7 @@ service : {
     join_group: (ChatId) -> (JoinGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
     block_user: (UserId, bool) -> ();
+    set_user_notification_status: (bool) -> ();
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_updates: (GetUpdatesRequest) -> (GetUpdatesResponse) query;

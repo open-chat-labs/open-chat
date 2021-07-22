@@ -56,6 +56,11 @@ fn put_chunk(blob_id: String, chunk_index: u32, data: ByteBuf) -> bool {
 }
 
 #[update]
+fn set_user_notification_status(enabled: bool) {
+    set_user_notification_status::update(enabled);
+}
+
+#[update]
 fn block_user(user: UserId, unblock: bool) {
     block_user::update(user, unblock);
 }
