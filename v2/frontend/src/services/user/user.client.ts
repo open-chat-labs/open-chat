@@ -37,7 +37,7 @@ export class UserClient extends CandidService implements IUserClient {
 
     // todo - this is not actually going to look like this but we need a stub in the meantime that does the job
     updateChats(chats: ChatSummary[]): Promise<UpdatesResponse> {
-        const _req = chats.map((c) => ({ chatId: c.chatId, lastUpdated: c.lastUpdated }));
+        const _req = chats.map((c) => ({ chatId: c.id, lastUpdated: c.lastUpdated }));
         return this.handleResponse(
             this.userService.get_chats({
                 message_count_for_top_chat: [],

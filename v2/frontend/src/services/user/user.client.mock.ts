@@ -20,11 +20,11 @@ function mockGroupChat(i: number): GroupChatSummary {
     const participants = fill(randomNum(0, 200), (i: number) => `${randomWord(5)}_${i}`);
     return {
         kind: "group_chat",
-        subject: randomPara(4),
-        chatId: String(i),
+        name: randomPara(4),
+        id: String(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
-        lastReadByUs: 0,
+        latestReadByMe: 0,
         lastReadByThem: 0,
         latestMessageIndex: numMessages,
         latestMessage: mockTextMessage(numMessages),
@@ -38,11 +38,11 @@ function mockDirectChat(i: number): DirectChatSummary {
     return {
         kind: "direct_chat",
         them: "qwxyz",
-        chatId: String(i),
+        id: String(i),
         lastUpdated: BigInt(time),
         displayDate: BigInt(time),
-        lastReadByUs: us,
-        lastReadByThem: 0,
+        latestReadByMe: us,
+        latestReadByThem: 0,
         latestMessageIndex: numMessages,
         latestMessage: mockTextMessage(numMessages),
     };

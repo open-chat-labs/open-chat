@@ -50,7 +50,7 @@ export function userIdsFromChatSummaries(
 
 export function getUnreadMessages({
     latestMessageIndex: lastestMessageId,
-    lastReadByUs,
+    latestReadByMe: lastReadByUs,
 }: ChatSummary): number {
     return lastestMessageId - lastReadByUs;
 }
@@ -69,7 +69,7 @@ export function mergeChats(
 ): ChatSummary[] {
     const dict = [...existingChats, ...incomingChats].reduce<Record<string, ChatSummary>>(
         (chats, chat) => {
-            chats[chat.chatId.toString()] = chat;
+            chats[chat.id.toString()] = chat;
             return chats;
         },
         {}

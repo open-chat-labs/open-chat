@@ -77,7 +77,7 @@ function loadMessages(
         );
     }
     return serviceContainer.groupChatMessages(
-        chatSummary.chatId,
+        chatSummary.id,
         earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );

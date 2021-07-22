@@ -99,7 +99,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
-                return ctx.chatSummaries.findIndex((c) => c.chatId === ev.data.chatId) >= 0;
+                return ctx.chatSummaries.findIndex((c) => c.id === ev.data.chatId) >= 0;
             }
             return false;
         },
@@ -213,9 +213,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         // "failedToLeaveGroup",
                         assign((ctx, ev) => {
                             return {
-                                chatSummaries: ctx.chatSummaries.filter(
-                                    (c) => c.chatId !== ev.data
-                                ),
+                                chatSummaries: ctx.chatSummaries.filter((c) => c.id !== ev.data),
                                 selectedChat: undefined,
                             };
                         }),
@@ -229,7 +227,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     actions: assign((ctx, ev) => {
                         const selectedChat = ev.data.chatSummaries.find(
-                            (c) => c.chatId === ctx.selectedChat?.chatId
+                            (c) => c.id === ctx.selectedChat?.id
                         );
                         return {
                             ...ev.data,
@@ -243,9 +241,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".chat_selected",
                     actions: assign((ctx, ev) => {
                         const key = ev.data.chatId.toString();
-                        const chatSummary = ctx.chatSummaries.find(
-                            (c) => c.chatId === ev.data.chatId
-                        );
+                        const chatSummary = ctx.chatSummaries.find((c) => c.id === ev.data.chatId);
                         const chatActor = ctx.chatsIndex[key];
                         if (chatSummary) {
                             if (!chatActor) {
@@ -323,15 +319,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         const dummyChat: DirectChatSummary = {
                             kind: "direct_chat",
                             them: ev.data,
-                            chatId: String(ctx.chatSummaries.length + 1),
+                            id: String(ctx.chatSummaries.length + 1),
                             lastUpdated: BigInt(+new Date()),
                             displayDate: BigInt(+new Date()),
-                            lastReadByUs: 0,
-                            lastReadByThem: 0,
+                            latestReadByMe: 0,
+                            latestReadByThem: 0,
                             latestMessageIndex: 0,
                             latestMessage: undefined,
                         };
-                        push(`/${dummyChat.chatId}`);
+                        push(`/${dummyChat.id}`);
                         return {
                             chatSummaries: [dummyChat, ...ctx.chatSummaries],
                         };
@@ -377,15 +373,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 const dummyChat: DirectChatSummary = {
                                     kind: "direct_chat",
                                     them: ev.data.userId,
-                                    chatId: String(ctx.chatSummaries.length + 1),
+                                    id: String(ctx.chatSummaries.length + 1),
                                     lastUpdated: BigInt(+new Date()),
                                     displayDate: BigInt(+new Date()),
-                                    lastReadByUs: 0,
-                                    lastReadByThem: 0,
+                                    latestReadByMe: 0,
+                                    latestReadByThem: 0,
                                     latestMessageIndex: 0,
                                     latestMessage: undefined,
                                 };
-                                push(`/${dummyChat.chatId}`);
+                                push(`/${dummyChat.id}`);
                                 return {
                                     chatSummaries: [dummyChat, ...ctx.chatSummaries],
                                     userLookup: {

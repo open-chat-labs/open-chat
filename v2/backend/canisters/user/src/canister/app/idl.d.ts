@@ -18,6 +18,8 @@ import UserService, {
   MessagesArgs,
   MessagesResponse,
   MessagesSuccess,
+  Participant,
+  UpdatedChatSummary,
 } from "./types";
 export {
   UserService,
@@ -39,6 +41,8 @@ export {
   MessagesArgs as ApiMessageArgs,
   MessagesResponse as ApiMessagesResponse,
   MessagesSuccess as ApiMessagesSuccess,
+  Participant as ApiParticipant,
+  UpdatedChatSummary as ApiUpdatedChatSummary,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;
