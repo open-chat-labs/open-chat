@@ -15,6 +15,7 @@ import { closeAlertDialog } from "../actions/app/showAlertDialog";
 import aboutUs from "../actions/app/aboutUs";
 import { LeftPanelType, MiddlePanelType, RightPanelType } from "../domain/model/panels";
 import { ViewMode } from "../domain/model/viewMode";
+import { registerServiceWorker } from "../webpush/subscribe";
 
 export default App;
 
