@@ -1,5 +1,6 @@
 import type { IDL } from "@dfinity/candid";
-import UserService, {
+import {
+  _SERVICE,
   UpdatesArgs,
   UpdatesResponse,
   ChatSummary,
@@ -18,9 +19,11 @@ import UserService, {
   MessagesArgs,
   MessagesResponse,
   MessagesSuccess,
+  Participant,
+  UpdatedChatSummary,
 } from "./types";
 export {
-  UserService,
+  _SERVICE as UserService,
   UpdatesArgs as ApiUpdatesArgs,
   UpdatesResponse as ApiUpdatesResponse,
   ChatSummary as ApiChatSummary,
@@ -39,6 +42,8 @@ export {
   MessagesArgs as ApiMessageArgs,
   MessagesResponse as ApiMessagesResponse,
   MessagesSuccess as ApiMessagesSuccess,
+  Participant as ApiParticipant,
+  UpdatedChatSummary as ApiUpdatedChatSummary,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

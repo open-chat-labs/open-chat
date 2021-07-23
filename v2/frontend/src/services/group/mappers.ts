@@ -11,7 +11,7 @@ import type {
 import type {
     BlobReference,
     FileContent,
-    GetMessagesResponse,
+    MessagesResponse,
     MediaContent,
     Message,
     MessageContent,
@@ -24,7 +24,7 @@ import { identity, optional } from "../../utils/mapping";
 // some aspects actually different so we will map them independently for the time being
 // this means that we may not be able to just have a /domain/chat module - it might not be that simple
 
-export function getMessagesResponse(candid: ApiGetMessagesResponse): GetMessagesResponse {
+export function getMessagesResponse(candid: ApiGetMessagesResponse): MessagesResponse {
     if ("Success" in candid) {
         return {
             messages: candid.Success.messages.map(message),

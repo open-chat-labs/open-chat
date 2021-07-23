@@ -295,7 +295,6 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         user: ctx.user,
                         chatSummaries: [],
                         userLookup: {},
-                        chatSummariesLastUpdate: BigInt(0),
                         usersLastUpdate: BigInt(0),
                         chatsIndex: {},
                     }),

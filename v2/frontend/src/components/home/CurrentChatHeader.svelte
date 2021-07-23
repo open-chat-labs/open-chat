@@ -72,7 +72,7 @@
             };
         }
         return {
-            name: chatSummary.subject,
+            name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
             subtext: getParticipantsString(users, chatSummary, $_("unknownUser"), $_("you")),

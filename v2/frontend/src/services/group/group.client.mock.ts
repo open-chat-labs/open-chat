@@ -1,4 +1,4 @@
-import type { GetMessagesResponse, Message, ReplyContext } from "../../domain/chat/chat";
+import type { MessagesResponse, Message, ReplyContext } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
@@ -40,7 +40,7 @@ function mockTextMessage(index: number): Message {
 }
 
 export class GroupClientMock implements IGroupClient {
-    chatMessages(fromIndex: number, toIndex: number): Promise<GetMessagesResponse> {
+    chatMessages(fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
         const messages = fill(n, mockTextMessage, (i: number) => fromIndex + i);
         return new Promise((res) => {

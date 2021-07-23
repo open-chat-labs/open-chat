@@ -1,4 +1,4 @@
-<div class="menu-item" on:click>
+<div class="menu-item" on:click role="menuitem">
     <span class="icon">
         <slot name="icon" />
     </span>

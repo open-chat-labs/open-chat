@@ -14,7 +14,7 @@ import type {
 import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
-import type { GetChatsResponse, GetMessagesResponse } from "../domain/chat/chat";
+import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
 import type { IGroupClient } from "./group/group.client.interface";
@@ -51,7 +51,7 @@ export class ServiceContainer {
         userId: string,
         fromIndex: number,
         toIndex: number
-    ): Promise<GetMessagesResponse> {
+    ): Promise<MessagesResponse> {
         return this.userClient.chatMessages(userId, fromIndex, toIndex);
     }
 
@@ -59,7 +59,7 @@ export class ServiceContainer {
         chatId: string,
         fromIndex: number,
         toIndex: number
-    ): Promise<GetMessagesResponse> {
+    ): Promise<MessagesResponse> {
         return this.getGroupClient(chatId).chatMessages(fromIndex, toIndex);
     }
 
@@ -77,8 +77,8 @@ export class ServiceContainer {
         return this.userIndexClient.getUsers(userIds, since);
     }
 
-    getChats(since: bigint): Promise<GetChatsResponse> {
-        return this.userClient.getChats(since);
+    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
+        return this.userClient.getUpdates(args);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

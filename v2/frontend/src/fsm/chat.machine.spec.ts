@@ -10,10 +10,8 @@ const directChat: DirectChatSummary = {
     them: "abcdefg",
     chatId: "abcdefg",
     lastUpdated: BigInt(0),
-    displayDate: BigInt(0),
-    lastReadByUs: 0,
-    lastReadByThem: 0,
-    latestMessageIndex: 5,
+    latestReadByMe: 0,
+    latestReadByThem: 0,
     latestMessage: undefined,
 };
 

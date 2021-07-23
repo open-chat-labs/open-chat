@@ -8,7 +8,11 @@
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
     import { _ } from "svelte-i18n";
-    import { getUnreadMessages, latestMessageText } from "../../domain/chat/chat.utils";
+    import {
+        getDisplayDate,
+        getUnreadMessages,
+        latestMessageText,
+    } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { elasticOut } from "svelte/easing";
 
@@ -34,7 +38,7 @@
             };
         }
         return {
-            name: chatSummary.subject,
+            name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
         };
@@ -43,6 +47,7 @@
     $: chat = normaliseChatSummary(chatSummary);
     $: lastMessage = latestMessageText(chatSummary);
     $: unreadMessages = getUnreadMessages(chatSummary);
+    $: displayDate = getDisplayDate(chatSummary);
 </script>
 
 <a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
@@ -54,7 +59,7 @@
             <h4 class="chat-name">{chat.name}</h4>
             <!-- this date formatting is OK for now but we might want to use something like this: 
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-            <p class="chat-date">{formatMessageDate(new Date(Number(chatSummary.displayDate)))}</p>
+            <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
         <div class="chat-msg">{lastMessage}</div>
         {#if unreadMessages > 0}

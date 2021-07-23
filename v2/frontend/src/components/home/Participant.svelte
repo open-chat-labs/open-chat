@@ -42,7 +42,7 @@
     $: you = $machine.context.user === participant;
 </script>
 
-<div class="participant" class:you on:click={participantSelected}>
+<div class="participant" class:you on:click={participantSelected} role="button">
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant.userId)}

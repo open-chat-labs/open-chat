@@ -1,9 +1,14 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import idlFactory, { UserService } from "api-canisters/user/src/canister/app/idl";
-import type { GetChatsResponse, GetMessagesResponse } from "../../domain/chat/chat";
+import type {
+    ChatSummary,
+    UpdatesResponse,
+    MessagesResponse,
+    UpdateArgs,
+} from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { getChatsResponse, getMessagesResponse } from "./mappers";
+import { getMessagesResponse, getUpdatesResponse } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -14,9 +19,9 @@ export class UserClient extends CandidService implements IUserClient {
         this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
     }
 
-    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<GetMessagesResponse> {
+    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         return this.handleResponse(
-            this.userService.get_messages({
+            this.userService.messages({
                 user_id: Principal.fromText(userId),
                 to_index: toIndex,
                 from_index: fromIndex,
@@ -25,13 +30,16 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    getChats(since: bigint): Promise<GetChatsResponse> {
+    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
         return this.handleResponse(
-            this.userService.get_chats({
-                message_count_for_top_chat: [],
-                updated_since: [since],
+            this.userService.updates({
+                groups: args.groups.map((g) => ({
+                    last_updated: g.lastUpdated,
+                    chat_id: Principal.fromText(g.chatId),
+                })),
+                last_updated: args.lastUpdated ? [args.lastUpdated] : [],
             }),
-            getChatsResponse
+            getUpdatesResponse
         );
     }
 }

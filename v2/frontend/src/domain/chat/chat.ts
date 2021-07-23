@@ -72,16 +72,51 @@ export interface Message {
     repliesTo?: ReplyContext;
 }
 
-export type GetChatsResponse = {
-    chats: ChatSummary[];
-    timestamp: bigint;
-};
-
-export type GetMessagesResponse = "chat_not_found" | GetMessagesSuccess;
+export type MessagesResponse = "chat_not_found" | GetMessagesSuccess;
 
 export type GetMessagesSuccess = {
     messages: Message[];
     latestMessageIndex: number;
+};
+
+export type UpdateArgs = {
+    groups: { lastUpdated: bigint; chatId: string }[];
+    lastUpdated?: bigint;
+};
+
+export type UpdatesResponse = {
+    chatsUpdated: UpdatedChatSummary[];
+    chatsAdded: ChatSummary[];
+    chatsRemoved: Set<string>;
+    timestamp: bigint;
+};
+
+export type UpdatedChatSummary = UpdatedDirectChatSummary | UpdatedGroupChatSummary;
+
+type UpdatedChatSummaryCommon = {
+    chatId: string;
+    lastUpdated: bigint;
+    latestReadByMe?: number;
+    latestMessage?: Message;
+};
+
+export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
+    kind: "direct_chat";
+    latestReadByThem?: number;
+};
+
+export type UpdatedGroupChatSummary = UpdatedChatSummaryCommon & {
+    kind: "group_chat";
+    participantsAdded: Participant[];
+    participantsRemoved: Set<string>;
+    participantsUpdated: Participant[];
+    name?: string;
+    description?: string;
+};
+
+export type Participant = {
+    role: "admin" | "standard";
+    userId: string;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -89,70 +124,22 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
     lastUpdated: bigint;
-    displayDate: bigint;
-    lastReadByUs: number;
-    lastReadByThem: number;
-    latestMessageIndex: number;
+    latestReadByMe: number;
     latestMessage?: Message;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
+    latestReadByThem: number;
 };
 
 export type GroupChatSummary = ChatSummaryCommon & {
     kind: "group_chat";
-    subject: string;
-    participants: string[];
-};
-
-// ================================================================
-// below here is the chat detail stuff which we may or may not need
-// ================================================================
-type ChatCommon = {
-    chatId: bigint;
-    scrollTop?: number;
-    scrollBottom?: number;
-    draftMessage: string;
-    replyContext?: ReplyContext;
-};
-
-type ConfirmedChatCommon = ChatCommon & {
-    displayDate: Date;
-    lastUpdated: Date;
-    messages: Message[];
-    messagesToDownload: number[];
-    messagesDownloading: number[];
-    minLocalMessageId?: number;
-    maxLocalMessageId?: number;
-    minimumUnconfirmedMessageIndex: number;
-
-    // If the messageId is known, add to unreadMessageIds, otherwise add to unreadClientMessageIds, never add to both
-    unreadMessageIds: number[];
-    unreadClientMessageIds: string[];
-
-    // If the messageId is known, add to markAsReadPending, otherwise add to markAsReadByClientIdPending, never add to both
-    markAsReadPending: number[];
-    markAsReadByClientIdPending: string[];
-
-    messageToSelect?: number;
-};
-
-export type ConfirmedDirectChat = ConfirmedChatCommon & {
-    kind: "confirmed_direct_chat";
-    them: Principal;
-    themTyping: boolean;
-    unreadByThemMessageIds: number[];
-    markAsReadByThemPendingSync: number[];
-    markAsReadByThemByClientIdPendingSync: string[];
-};
-
-export type ConfirmedGroupChat = ConfirmedChatCommon & {
-    kind: "confirmed_group_chat";
-    subject: string;
-    minMessageIdOnServer: number;
-    participants: Principal[];
-    participantsTyping: Principal[];
-    unreadByAnyMessageIds: number[];
+    name: string;
+    description: string;
+    participants: Participant[];
+    public: boolean;
+    joined: bigint;
+    minVisibleMessageIndex: number;
 };

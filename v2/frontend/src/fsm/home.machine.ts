@@ -11,7 +11,7 @@ import {
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { ChatSummary, DirectChatSummary } from "../domain/chat/chat";
-import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
@@ -22,7 +22,7 @@ import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 
 const ONE_MINUTE = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
+const CHAT_UPDATE_INTERVAL = 5000;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
 export interface HomeContext {
@@ -32,9 +32,9 @@ export interface HomeContext {
     selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
     userLookup: UserLookup; // a lookup of user summaries
-    chatSummariesLastUpdate: bigint;
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
+    directChatsLastUpdate?: bigint;
 }
 
 export type HomeEvents =
@@ -48,8 +48,8 @@ export type HomeEvents =
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
-    | { type: "done.invoke.getChats"; data: ChatsResponse }
-    | { type: "error.platform.getChats"; data: Error }
+    | { type: "done.invoke.getUpdates"; data: ChatsResponse }
+    | { type: "error.platform.getUpdates"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
@@ -57,31 +57,34 @@ type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 
 type ChatsResponse = {
     chatSummaries: ChatSummary[];
-    chatSummariesLastUpdate: bigint;
+    directChatsLastUpdate: bigint;
     userLookup: UserLookup;
     usersLastUpdate: bigint;
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
-async function getChats(
+async function getUpdates(
     serviceContainer: ServiceContainer,
     userLookup: UserLookup,
-    since: bigint
+    chatSummaries: ChatSummary[],
+    directChatsLastUpdate?: bigint
 ): Promise<ChatsResponse> {
-    // todo - for getting chats we also want to look up any (direct chat) users that we know nothing about
-    // since these users are completely unknown we can just pass 0 for the user's timestamp in this scenario.
-    // I *think* that's correct!
     try {
-        const chatsResponse = await serviceContainer.getChats(since);
-        const userIds = userIdsFromChatSummaries(chatsResponse.chats, false);
+        const chatsResponse = await serviceContainer.getUpdates({
+            lastUpdated: directChatsLastUpdate,
+            groups: chatSummaries
+                .filter((c) => c.kind === "group_chat")
+                .map((g) => ({ chatId: g.chatId, lastUpdated: g.lastUpdated })),
+        });
+        const userIds = userIdsFromChatSummaries(chatsResponse.chatsAdded, false);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),
             BigInt(0)
         );
 
         return {
-            chatSummaries: chatsResponse.chats,
-            chatSummariesLastUpdate: chatsResponse.timestamp,
+            chatSummaries: mergeChatUpdates(chatSummaries, chatsResponse),
+            directChatsLastUpdate: chatsResponse.timestamp,
             userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
         };
@@ -105,17 +108,25 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
     },
     services: {
-        getChats: async (ctx, _) =>
-            getChats(ctx.serviceContainer!, ctx.userLookup, ctx.chatSummariesLastUpdate),
+        getUpdates: async (ctx, _) =>
+            getUpdates(
+                ctx.serviceContainer!,
+                ctx.userLookup,
+                ctx.chatSummaries,
+                ctx.directChatsLastUpdate
+            ),
 
         updateChatsPoller: (ctx, _ev) => (callback) => {
             const id = setInterval(async () => {
+                // todo - not sure it's safe to use ctx for everything here
+                // might have to capture the timestamp
                 callback({
                     type: "CHATS_UPDATED",
-                    data: await getChats(
+                    data: await getUpdates(
                         ctx.serviceContainer!,
                         ctx.userLookup,
-                        ctx.chatSummariesLastUpdate
+                        ctx.chatSummaries,
+                        ctx.directChatsLastUpdate
                     ),
                 });
             }, CHAT_UPDATE_INTERVAL);
@@ -164,15 +175,14 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
     context: {
         chatSummaries: [],
         userLookup: {},
-        chatSummariesLastUpdate: BigInt(0),
         usersLastUpdate: BigInt(0),
         chatsIndex: {},
     },
     states: {
         loading_chats: {
             invoke: {
-                id: "getChats",
-                src: "getChats",
+                id: "getUpdates",
+                src: "getUpdates",
                 onDone: {
                     target: "loaded_chats",
                     actions: assign((ctx, ev: DoneInvokeEvent<ChatsResponse>) => {
@@ -278,7 +288,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                       }
                                                     : undefined,
                                                 messages: [],
-                                                latestMessageIndex: chatSummary.latestMessageIndex,
+                                                latestMessageIndex:
+                                                    chatSummary.latestMessage?.messageIndex ?? 0,
                                                 focusIndex: ev.data.messageIndex
                                                     ? Number(ev.data.messageIndex)
                                                     : undefined,
@@ -325,10 +336,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             them: ev.data,
                             chatId: String(ctx.chatSummaries.length + 1),
                             lastUpdated: BigInt(+new Date()),
-                            displayDate: BigInt(+new Date()),
-                            lastReadByUs: 0,
-                            lastReadByThem: 0,
-                            latestMessageIndex: 0,
+                            latestReadByMe: 0,
+                            latestReadByThem: 0,
                             latestMessage: undefined,
                         };
                         push(`/${dummyChat.chatId}`);
@@ -379,10 +388,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     them: ev.data.userId,
                                     chatId: String(ctx.chatSummaries.length + 1),
                                     lastUpdated: BigInt(+new Date()),
-                                    displayDate: BigInt(+new Date()),
-                                    lastReadByUs: 0,
-                                    lastReadByThem: 0,
-                                    latestMessageIndex: 0,
+                                    latestReadByMe: 0,
+                                    latestReadByThem: 0,
                                     latestMessage: undefined,
                                 };
                                 push(`/${dummyChat.chatId}`);

@@ -1,6 +1,18 @@
 import type { UserLookup } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
-import type { ChatSummary, GroupChatSummary, MediaContent, Message, MessageContent } from "./chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    GroupChatSummary,
+    MediaContent,
+    Message,
+    MessageContent,
+    Participant,
+    UpdatedChatSummary,
+    UpdatedDirectChatSummary,
+    UpdatedGroupChatSummary,
+    UpdatesResponse,
+} from "./chat";
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -42,17 +54,14 @@ export function userIdsFromChatSummaries(
             userIds.add(chat.them);
         }
         if (chat.kind === "group_chat" && includeGroupChats) {
-            chat.participants.forEach((p) => userIds.add(p));
+            chat.participants.forEach((p) => userIds.add(p.userId));
         }
         return userIds;
     }, new Set<string>());
 }
 
-export function getUnreadMessages({
-    latestMessageIndex: lastestMessageId,
-    lastReadByUs,
-}: ChatSummary): number {
-    return lastestMessageId - lastReadByUs;
+export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary): number {
+    return latestMessage?.messageIndex ?? 0 - latestReadByMe;
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
@@ -60,21 +69,9 @@ export function latestMessageText({ latestMessage }: ChatSummary): string {
 }
 
 export function compareByDate(a: ChatSummary, b: ChatSummary): number {
-    return Number(b.displayDate - a.displayDate);
-}
-
-export function mergeChats(
-    existingChats: ChatSummary[],
-    incomingChats: ChatSummary[]
-): ChatSummary[] {
-    const dict = [...existingChats, ...incomingChats].reduce<Record<string, ChatSummary>>(
-        (chats, chat) => {
-            chats[chat.chatId.toString()] = chat;
-            return chats;
-        },
-        {}
-    );
-    return Object.values(dict).sort(compareByDate);
+    const dateA = getDisplayDate(a);
+    const dateB = getDisplayDate(b);
+    return Number(dateB - dateA);
 }
 
 export function getParticipantsString(
@@ -84,11 +81,11 @@ export function getParticipantsString(
     you: string
 ): string {
     if (participants.length > 5) {
-        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p)).length;
+        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p.userId)).length;
         return `${participants.length + 1} members (${numberOnline + 1} online)`;
     }
     return participants
-        .map((p) => userLookup[p] ?? nullUser(unknownUser))
+        .map((p) => userLookup[p.userId] ?? nullUser(unknownUser))
         .sort(compareUsersOnlineFirst)
         .map((p) => p.username)
         .concat([you])
@@ -107,4 +104,98 @@ export function textMessage(userId: string, content: string): Message {
         timestamp: BigInt(+new Date()),
         repliesTo: undefined,
     };
+}
+
+export function getDisplayDate(chat: ChatSummary): bigint {
+    return (
+        chat.latestMessage?.timestamp ??
+        (chat.kind === "group_chat" ? chat.joined : BigInt(+new Date()))
+    );
+}
+
+function mergeUpdatedDirectChat(
+    chat: DirectChatSummary,
+    updatedChat: UpdatedDirectChatSummary
+): DirectChatSummary {
+    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.latestReadByThem = updatedChat.latestReadByThem ?? chat.latestReadByThem;
+    chat.lastUpdated = updatedChat.lastUpdated;
+    return chat;
+}
+
+export function mergeUpdated(chat: ChatSummary, updatedChat: UpdatedChatSummary): ChatSummary {
+    if (chat.chatId !== updatedChat.chatId) {
+        throw new Error("Cannot update chat from a chat with a different chat id");
+    }
+
+    if (chat.kind === "group_chat" && updatedChat.kind === "group_chat") {
+        return mergeUpdatedGroupChat(chat, updatedChat);
+    }
+
+    if (chat.kind === "direct_chat" && updatedChat.kind === "direct_chat") {
+        return mergeUpdatedDirectChat(chat, updatedChat);
+    }
+
+    throw new Error("Cannot update chat with a chat of a different kind");
+}
+
+export function mergeChatUpdates(
+    chatSummaries: ChatSummary[],
+    updateResponse: UpdatesResponse
+): ChatSummary[] {
+    return mergeThings((c) => c.chatId, mergeUpdated, chatSummaries, {
+        added: updateResponse.chatsAdded,
+        updated: updateResponse.chatsUpdated,
+        removed: updateResponse.chatsRemoved,
+    });
+}
+
+function mergeParticipants(existing: Participant, updated: Participant) {
+    existing.role = updated.role;
+    return existing;
+}
+
+function mergeUpdatedGroupChat(
+    chat: GroupChatSummary,
+    updatedChat: UpdatedGroupChatSummary
+): GroupChatSummary {
+    chat.name = updatedChat.name ?? chat.name;
+    chat.description = updatedChat.description ?? chat.description;
+    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.lastUpdated = updatedChat.lastUpdated;
+    chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
+        added: updatedChat.participantsAdded,
+        updated: updatedChat.participantsUpdated,
+        removed: updatedChat.participantsRemoved,
+    });
+    return chat;
+}
+
+function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
+    return things.reduce<Record<string, T>>((agg, thing) => {
+        agg[keyFn(thing)] = thing;
+        return agg;
+    }, {});
+}
+
+// this is used to merge both the overall list of chats with updates and also the list of participants
+// within a group chat
+function mergeThings<A, U>(
+    keyFn: (a: A | U) => string,
+    mergeFn: (existing: A, updated: U) => A,
+    things: A[],
+    updates: { added: A[]; updated: U[]; removed: Set<string> }
+): A[] {
+    const remaining = things.filter((t) => !updates.removed.has(keyFn(t)));
+    const dict = toLookup(keyFn, remaining);
+    const updated = updates.updated.reduce((dict, updated) => {
+        const key = keyFn(updated);
+        if (dict[key]) {
+            dict[key] = mergeFn(dict[key], updated);
+        }
+        return dict;
+    }, dict);
+    return [...Object.values(updated), ...updates.added];
 }

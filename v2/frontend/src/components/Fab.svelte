@@ -1,4 +1,4 @@
-<div class="fab" on:click>
+<div class="fab" on:click role="button">
     <slot />
 </div>
 
