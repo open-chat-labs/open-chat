@@ -7,6 +7,7 @@ use serde::Deserialize;
 use shared::types::notifications::IndexedNotification;
 use shared::types::{CanisterId, UserId};
 use std::collections::HashMap;
+use web_push::SubscriptionInfo;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -82,29 +83,29 @@ impl IcAgent {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType)]
 pub struct GetNotificationsArgs {
     from_notification_index: u64,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(Deserialize)]
 pub enum GetNotificationsResponse {
     Success(GetNotificationsSuccessResult),
     NotAuthorized,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(Deserialize)]
 pub struct GetNotificationsSuccessResult {
     pub notifications: Vec<IndexedNotification>,
-    pub subscriptions: HashMap<UserId, Vec<String>>,
+    pub subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType)]
 pub struct RemoveNotificationsArgs {
     up_to_notification_index: u64,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(Deserialize)]
 pub enum RemoveNotificationsResponse {
     Success,
     NotAuthorized,

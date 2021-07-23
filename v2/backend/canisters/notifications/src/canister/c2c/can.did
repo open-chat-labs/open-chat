@@ -1,10 +1,17 @@
+type CanisterId = principal;
 type GroupId = CanisterId;
 type MessageIndex = nat32;
 type UserId = CanisterId;
 
 type PushSubscriptionArgs =
     record {
-        subscription: text;
+        subscription: record {
+            endpoint: text;
+            keys: record {
+                p256dh: text;
+                auth: text;
+            };
+        };
     };
 
 type PushSubscriptionResponse =
@@ -37,7 +44,12 @@ type PushGroupMessageNotificationResponse =
         Success;
     };
 
-service: {
+type InitArgs = 
+    record {
+        push_service_principals: vec principal;
+    };
+
+service: (InitArgs) -> {
     push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
     push_direct_message_notification: (PushDirectMessageNotificationArgs) -> (PushDirectMessageNotificationResponse);
     push_group_message_notification: (PushGroupMessageNotificationArgs) -> (PushGroupMessageNotificationResponse);

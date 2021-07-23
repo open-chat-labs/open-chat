@@ -2,19 +2,31 @@ use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 
-#[derive(CandidType, Deserialize, Debug, Eq, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Subscription {
-    json: String,
+    value: SubscriptionInfo,
     last_active: TimestampMillis,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct SubscriptionInfo {
+    pub endpoint: String,
+    pub keys: SubscriptionKeys,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct SubscriptionKeys {
+    pub p256dh: String,
+    pub auth: String,
+}
+
 impl Subscription {
-    pub fn new(json: String, now: TimestampMillis) -> Subscription {
-        Subscription { json, last_active: now }
+    pub fn new(value: SubscriptionInfo, now: TimestampMillis) -> Subscription {
+        Subscription { value, last_active: now }
     }
 
-    pub fn json(&self) -> &str {
-        &self.json
+    pub fn value(&self) -> &SubscriptionInfo {
+        &self.value
     }
 
     pub fn last_active(&self) -> TimestampMillis {
