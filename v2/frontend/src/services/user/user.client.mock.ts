@@ -101,6 +101,7 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
     const uppercase = i % 2 === 0;
 
     if (chat.kind === "group_chat") {
+        const removeParticipant = randomNum(0, chat.participants.length - 1);
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
@@ -108,7 +109,7 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
             latestMessage: chat.latestMessage,
             kind: "group_chat",
             participantsAdded: [],
-            participantsRemoved: new Set([]),
+            participantsRemoved: new Set([chat.participants[removeParticipant].userId]),
             participantsUpdated: [],
             name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
             description: chat.description,

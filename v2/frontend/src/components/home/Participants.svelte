@@ -22,7 +22,7 @@
     $: knownUsers =
         $machine.context.chatSummary.kind === "group_chat"
             ? $machine.context.chatSummary.participants.reduce<PartialUserSummary[]>((users, p) => {
-                  const user = $machine.context.userLookup[p];
+                  const user = $machine.context.userLookup[p.userId];
                   if (user) {
                       users.push(user);
                   }
