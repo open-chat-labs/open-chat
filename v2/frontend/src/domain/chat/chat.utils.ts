@@ -107,10 +107,10 @@ export function textMessage(userId: string, content: string): Message {
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    if (chat.kind === "group_chat") {
-        return chat.latestMessage?.timestamp ?? chat.joined;
-    }
-    return chat.latestMessage?.timestamp ?? BigInt(+new Date());
+    return (
+        chat.latestMessage?.timestamp ??
+        (chat.kind === "group_chat" ? chat.joined : BigInt(+new Date()))
+    );
 }
 
 function mergeUpdatedDirectChat(
