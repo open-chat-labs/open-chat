@@ -1,12 +1,12 @@
 #[derive(Clone)]
-pub struct UserWasm {
+pub struct CanisterWasm {
     pub module: Vec<u8>,
     pub version: semver::Version,
 }
 
-impl Default for UserWasm {
+impl Default for CanisterWasm {
     fn default() -> Self {
-        UserWasm {
+        CanisterWasm {
             module: Vec::default(),
             version: semver::Version::new(0, 0, 0),
         }
