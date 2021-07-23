@@ -188,8 +188,8 @@ function mergeThings<A, U>(
     things: A[],
     updates: { added: A[]; updated: U[]; removed: Set<string> }
 ): A[] {
-    const removed = things.filter((t) => !updates.removed.has(keyFn(t)));
-    const dict = toLookup(keyFn, removed);
+    const remaining = things.filter((t) => !updates.removed.has(keyFn(t)));
+    const dict = toLookup(keyFn, remaining);
     const updated = updates.updated.reduce((dict, updated) => {
         const key = keyFn(updated);
         if (dict[key]) {
