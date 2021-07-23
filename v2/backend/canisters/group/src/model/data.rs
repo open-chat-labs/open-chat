@@ -1,3 +1,4 @@
+use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::messages::Messages;
 use crate::model::participants::Participants;
 use candid::Principal;
@@ -11,7 +12,9 @@ pub struct Data {
     pub participants: Participants,
     pub messages: Messages,
     pub date_created: TimestampMillis,
+    pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
+    pub activity_notification_state: ActivityNotificationState,
 }
 
 impl Data {
@@ -21,6 +24,7 @@ impl Data {
         creator_principal: Principal,
         creator_user_id: UserId,
         now: TimestampMillis,
+        group_index_canister_id: CanisterId,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
 
@@ -31,7 +35,9 @@ impl Data {
             participants,
             messages: Messages::default(),
             date_created: now,
+            group_index_canister_id,
             notification_canister_ids: Vec::new(),
+            activity_notification_state: ActivityNotificationState::new(now),
         }
     }
 }

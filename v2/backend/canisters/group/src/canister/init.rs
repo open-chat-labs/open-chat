@@ -22,12 +22,15 @@ fn init(args: InitArgs) {
 
     RUNTIME_STATE.with(|state| {
         let env = Box::new(CanisterEnv::new(false));
+        let group_index_canister_id = env.caller();
+
         let data = Data::new(
             args.is_public,
             args.name,
             args.created_by_principal,
             args.created_by_user_id,
             env.now(),
+            group_index_canister_id,
         );
         let runtime_state = RuntimeState::new(env, data);
 

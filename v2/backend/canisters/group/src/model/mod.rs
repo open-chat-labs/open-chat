@@ -1,3 +1,4 @@
+pub mod activity_notification_state;
 pub mod data;
 pub mod message;
 pub mod messages;
