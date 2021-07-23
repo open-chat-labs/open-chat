@@ -2,12 +2,12 @@ use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
-use crate::model::user_wasm::UserWasm;
 use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
+use shared::canisters::canister_wasm::CanisterWasm;
 use shared::canisters::create::CreateCanisterError;
 use shared::types::CanisterId;
 
@@ -65,7 +65,7 @@ async fn create_canister(_args: Args) -> Response {
 
 struct InitOk {
     canister_id: Option<CanisterId>,
-    user_wasm: UserWasm,
+    user_wasm: CanisterWasm,
     user_principal: Principal,
 }
 

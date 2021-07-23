@@ -1,8 +1,8 @@
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::user_map::UserMap;
-use crate::model::user_wasm::UserWasm;
 use candid::Principal;
 use phonenumber::PhoneNumber;
+use shared::canisters::canister_wasm::CanisterWasm;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
@@ -12,7 +12,7 @@ pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 pub struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
-    pub user_wasm: UserWasm,
+    pub user_wasm: CanisterWasm,
     pub sms_service_principals: HashSet<Principal>,
     pub sms_queue: VecDeque<ConfirmationCodeSms>,
 }
@@ -22,7 +22,7 @@ impl Data {
         Data {
             users: UserMap::default(),
             service_principals: service_principals.into_iter().collect(),
-            user_wasm: UserWasm {
+            user_wasm: CanisterWasm {
                 module: user_wasm_module,
                 version: semver::Version::new(0, 0, 0),
             },

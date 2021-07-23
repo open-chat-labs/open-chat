@@ -1,6 +1,8 @@
 use crate::model::participant::Participant;
+use crate::model::role::Role;
 use candid::Principal;
-use shared::types::UserId;
+use shared::time::TimestampMillis;
+use shared::types::{MessageIndex, UserId};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -9,6 +11,20 @@ pub struct Participants {
 }
 
 impl Participants {
+    pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
+        let participant = Participant {
+            user_id: creator_user_id,
+            date_added: now,
+            role: Role::Admin,
+            read_up_to: MessageIndex::default(),
+            mute_notifications: false,
+        };
+
+        Participants {
+            by_principal: vec![(creator_principal, participant)].into_iter().collect(),
+        }
+    }
+
     pub fn get_by_principal(&self, principal: &Principal) -> Option<&Participant> {
         self.by_principal.get(principal)
     }

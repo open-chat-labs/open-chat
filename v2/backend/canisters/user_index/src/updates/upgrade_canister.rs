@@ -2,12 +2,12 @@ use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
-use crate::model::user_wasm::UserWasm;
 use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
+use shared::canisters::canister_wasm::CanisterWasm;
 use shared::types::CanisterId;
 
 #[derive(Deserialize)]
@@ -56,7 +56,7 @@ async fn upgrade_canister(_args: Args) -> Response {
 struct InitOk {
     canister_id: CanisterId,
     principal: Principal,
-    user_wasm: UserWasm,
+    user_wasm: CanisterWasm,
 }
 
 fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
