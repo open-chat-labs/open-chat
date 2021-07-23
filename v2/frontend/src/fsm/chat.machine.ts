@@ -35,6 +35,7 @@ export type ChatEvents =
     | { type: "SEND_MESSAGE"; data: string }
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "ADD_PARTICIPANT" }
+    | { type: "CHAT_UPDATED"; data: ChatSummary }
     | { type: "LOAD_MORE_MESSAGES" }
     | { type: "CANCEL_ADD_PARTICIPANT" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
@@ -157,6 +158,15 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
 export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
     id: "chat_machine",
     initial: "loading_messages",
+    on: {
+        CHAT_UPDATED: {
+            // todo - we may find at this point that the incoming chat has a higher latestIndex than the one
+            // we have. If that's the case, then we should load the missing messages
+            actions: assign((_, ev) => ({
+                chatSummary: ev.data,
+            })),
+        },
+    },
     states: {
         idle: {
             entry: log("entering the chat machine"),

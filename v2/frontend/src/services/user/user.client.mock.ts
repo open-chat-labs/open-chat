@@ -140,23 +140,32 @@ export class UserClientMock implements IUserClient {
 
     private updateCycles = -1;
 
+    private previousChats: ChatSummary[] = [];
+
     getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
-        console.log("Args", args);
         this.updateCycles += 1;
         const direct = fill(3, mockDirectChat);
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);
-        const chats = ([] as ChatSummary[]).concat(direct, group);
+
+        const add = args.lastUpdated
+            ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
+            : ([] as ChatSummary[]).concat(direct, group);
+
+        const resp = {
+            chatsUpdated: args.lastUpdated
+                ? this.previousChats.map((c) => updateChat(c, this.updateCycles))
+                : [],
+            chatsAdded: add,
+            chatsRemoved: new Set([]),
+            timestamp: BigInt(+new Date()),
+        };
+
+        this.previousChats = [...this.previousChats, ...add];
+
         return new Promise((res) => {
             setTimeout(() => {
-                res({
-                    chatsUpdated: args.lastUpdated
-                        ? chats.map((c) => updateChat(c, this.updateCycles))
-                        : [],
-                    chatsAdded: args.lastUpdated ? [] : chats,
-                    chatsRemoved: new Set([]),
-                    timestamp: BigInt(+new Date()),
-                });
-            }, 1000);
+                res(resp);
+            }, 500);
         });
     }
 }

@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+    ActionObject,
     ActorRefFrom,
     assign,
     createMachine,
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,
+    SendAction,
     sendParent,
     spawn,
 } from "xstate";
@@ -15,14 +17,16 @@ import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
-import { log } from "xstate/lib/actions";
+import { log, pure, send } from "xstate/lib/actions";
 import { toastStore } from "../stores/toast";
-import { chatMachine, ChatMachine } from "./chat.machine";
+import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
+import { background } from "../stores/background";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
+const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
 export interface HomeContext {
@@ -45,6 +49,7 @@ export type HomeEvents =
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
+    | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
@@ -116,23 +121,43 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 ctx.directChatsLastUpdate
             ),
 
-        updateChatsPoller: (ctx, _ev) => (callback) => {
-            const id = setInterval(async () => {
-                // todo - not sure it's safe to use ctx for everything here
-                // might have to capture the timestamp
-                callback({
-                    type: "CHATS_UPDATED",
-                    data: await getUpdates(
-                        ctx.serviceContainer!,
-                        ctx.userLookup,
-                        ctx.chatSummaries,
-                        ctx.directChatsLastUpdate
-                    ),
-                });
-            }, CHAT_UPDATE_INTERVAL);
+        updateChatsPoller: (ctx, _ev) => (callback, receive) => {
+            let { userLookup, chatSummaries, directChatsLastUpdate } = ctx;
+            let intervalId: NodeJS.Timeout | undefined;
+
+            const unsubBackground = background.subscribe((hidden) => {
+                intervalId = poll(hidden ? CHAT_UPDATE_IDLE_INTERVAL : CHAT_UPDATE_INTERVAL);
+            });
+
+            receive((ev) => {
+                // we need to capture the latest state of the parent machine whenever it changes
+                // still feel a bit uneasy about this
+                if (ev.type === "SYNC_WITH_POLLER") {
+                    userLookup = ev.data.userLookup;
+                    chatSummaries = ev.data.chatSummaries;
+                    directChatsLastUpdate = ev.data.directChatsLastUpdate;
+                }
+            });
+
+            function poll(interval: number): NodeJS.Timeout {
+                intervalId && clearInterval(intervalId);
+                return setInterval(async () => {
+                    callback({
+                        type: "CHATS_UPDATED",
+                        data: await getUpdates(
+                            ctx.serviceContainer!,
+                            userLookup,
+                            chatSummaries,
+                            directChatsLastUpdate
+                        ),
+                    });
+                }, interval);
+            }
+
             return () => {
                 console.log("stopping the chats polller");
-                clearInterval(id);
+                intervalId && clearInterval(intervalId);
+                unsubBackground();
             };
         },
 
@@ -163,8 +188,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 clearInterval(id);
             };
         },
-
-        // todo - implementation required - this just does nothing at the moment
     },
 };
 
@@ -237,40 +260,45 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 CHATS_UPDATED: {
                     internal: true,
-                    actions: assign((ctx, ev) => {
-                        const selectedChat = ev.data.chatSummaries.find(
-                            (c) => c.chatId === ctx.selectedChat?.chatId
-                        );
-                        return {
-                            ...ev.data,
-                            selectedChat,
-                        };
-                    }),
+                    actions: [
+                        assign((_, ev) => ev.data),
+                        send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                            to: "updateChatsPoller",
+                        }),
+                        pure((ctx, ev) => {
+                            // ping any chat actors with the latest copy of the chat
+                            return ev.data.chatSummaries.reduce<
+                                ActionObject<HomeContext, HomeEvents>[]
+                            >((sends, chat) => {
+                                const actor = ctx.chatsIndex[chat.chatId];
+                                if (actor) {
+                                    sends.push(
+                                        send(
+                                            {
+                                                type: "CHAT_UPDATED",
+                                                data: chat,
+                                            },
+                                            { to: actor.id }
+                                        )
+                                    );
+                                }
+                                return sends;
+                            }, []);
+                        }),
+                    ],
                 },
                 SELECT_CHAT: {
                     internal: true,
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
                     actions: assign((ctx, ev) => {
-                        const key = ev.data.chatId.toString();
+                        const key = ev.data.chatId;
                         const chatSummary = ctx.chatSummaries.find(
                             (c) => c.chatId === ev.data.chatId
                         );
                         const chatActor = ctx.chatsIndex[key];
                         if (chatSummary) {
                             if (!chatActor) {
-                                // todo - is there actually any benefit to mantaining a dictionary of
-                                // chat actors? It allows us to preserve state within each actor but are
-                                // we actually going to do that?
-                                // An alternative would be to just have one selected chat machine that is
-                                // stateless i.e. it loads its messages each time it is activated. That
-                                // doesn't mean that those messages can't still be cached - they would
-                                // just not be cached in the actor's memory.
-
-                                // todo - when chats are updated, the details of the selected chat may
-                                // have changed. Currently if that chat is selected, the chat actor will have
-                                // stale data and may show the wrong thing. We need to send an update message to the
-                                // selected chat actor in that case to keep things in sync
                                 return {
                                     selectedChat: chatSummary,
                                     chatsIndex: {
@@ -278,7 +306,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         [key]: spawn(
                                             chatMachine.withContext({
                                                 serviceContainer: ctx.serviceContainer!,
-                                                chatSummary,
+                                                chatSummary: { ...chatSummary }, //clone
                                                 userLookup: ctx.userLookup,
                                                 user: ctx.user
                                                     ? {
