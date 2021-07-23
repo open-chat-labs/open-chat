@@ -67,7 +67,9 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             description: optional(candid.Group.description, identity),
             participantsAdded: candid.Group.participants_added.map(participant),
             participantsUpdated: candid.Group.participants_updated.map(participant),
-            participantsRemoved: candid.Group.participants_removed.map((p) => p.toString()),
+            participantsRemoved: new Set(
+                candid.Group.participants_removed.map((p) => p.toString())
+            ),
         };
     }
     if ("Direct" in candid) {

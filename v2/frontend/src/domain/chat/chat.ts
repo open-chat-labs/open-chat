@@ -108,7 +108,7 @@ export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
 export type UpdatedGroupChatSummary = UpdatedChatSummaryCommon & {
     kind: "group_chat";
     participantsAdded: Participant[];
-    participantsRemoved: string[];
+    participantsRemoved: Set<string>;
     participantsUpdated: Participant[];
     name?: string;
     description?: string;

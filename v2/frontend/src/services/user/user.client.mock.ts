@@ -108,7 +108,7 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
             latestMessage: chat.latestMessage,
             kind: "group_chat",
             participantsAdded: [],
-            participantsRemoved: [],
+            participantsRemoved: new Set([]),
             participantsUpdated: [],
             name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
             description: chat.description,

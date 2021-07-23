@@ -2,11 +2,15 @@ import type { UserLookup } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
 import type {
     ChatSummary,
+    DirectChatSummary,
     GroupChatSummary,
     MediaContent,
     Message,
     MessageContent,
+    Participant,
     UpdatedChatSummary,
+    UpdatedDirectChatSummary,
+    UpdatedGroupChatSummary,
     UpdatesResponse,
 } from "./chat";
 
@@ -109,11 +113,15 @@ export function getDisplayDate(chat: ChatSummary): bigint {
     return chat.latestMessage?.timestamp ?? BigInt(+new Date());
 }
 
-export function toLookup(chats: ChatSummary[]): Record<string, ChatSummary> {
-    return chats.reduce<Record<string, ChatSummary>>((agg, chat) => {
-        agg[chat.chatId] = chat;
-        return agg;
-    }, {});
+function mergeUpdatedDirectChat(
+    chat: DirectChatSummary,
+    updatedChat: UpdatedDirectChatSummary
+): DirectChatSummary {
+    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.latestReadByThem = updatedChat.latestReadByThem ?? chat.latestReadByThem;
+    chat.lastUpdated = updatedChat.lastUpdated;
+    return chat;
 }
 
 export function mergeUpdated(chat: ChatSummary, updatedChat: UpdatedChatSummary): ChatSummary {
@@ -122,17 +130,11 @@ export function mergeUpdated(chat: ChatSummary, updatedChat: UpdatedChatSummary)
     }
 
     if (chat.kind === "group_chat" && updatedChat.kind === "group_chat") {
-        return {
-            ...chat,
-            ...updatedChat,
-        };
+        return mergeUpdatedGroupChat(chat, updatedChat);
     }
 
     if (chat.kind === "direct_chat" && updatedChat.kind === "direct_chat") {
-        return {
-            ...chat,
-            ...updatedChat,
-        };
+        return mergeUpdatedDirectChat(chat, updatedChat);
     }
 
     throw new Error("Cannot update chat with a chat of a different kind");
@@ -142,14 +144,58 @@ export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
 ): ChatSummary[] {
-    const chatsDict = toLookup(
-        chatSummaries.filter((c) => !updateResponse.chatsRemoved.has(c.chatId))
-    );
-    const updated = updateResponse.chatsUpdated.reduce((dict, updated) => {
-        if (dict[updated.chatId]) {
-            dict[updated.chatId] = mergeUpdated(dict[updated.chatId], updated);
+    return mergeThings((c) => c.chatId, mergeUpdated, chatSummaries, {
+        added: updateResponse.chatsAdded,
+        updated: updateResponse.chatsUpdated,
+        removed: updateResponse.chatsRemoved,
+    });
+}
+
+function mergeParticipants(existing: Participant, updated: Participant) {
+    existing.role = updated.role;
+    return existing;
+}
+
+function mergeUpdatedGroupChat(
+    chat: GroupChatSummary,
+    updatedChat: UpdatedGroupChatSummary
+): GroupChatSummary {
+    chat.name = updatedChat.name ?? chat.name;
+    chat.description = updatedChat.description ?? chat.description;
+    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
+    chat.lastUpdated = updatedChat.lastUpdated;
+    chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
+        added: updatedChat.participantsAdded,
+        updated: updatedChat.participantsUpdated,
+        removed: updatedChat.participantsRemoved,
+    });
+    return chat;
+}
+
+function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
+    return things.reduce<Record<string, T>>((agg, thing) => {
+        agg[keyFn(thing)] = thing;
+        return agg;
+    }, {});
+}
+
+// this is used to merge both the overall list of chats with updates and also the list of participants
+// within a group chat
+function mergeThings<A, U>(
+    keyFn: (a: A | U) => string,
+    mergeFn: (existing: A, updated: U) => A,
+    things: A[],
+    updates: { added: A[]; updated: U[]; removed: Set<string> }
+): A[] {
+    const removed = things.filter((t) => !updates.removed.has(keyFn(t)));
+    const dict = toLookup(keyFn, removed);
+    const updated = updates.updated.reduce((dict, updated) => {
+        const key = keyFn(updated);
+        if (dict[key]) {
+            dict[key] = mergeFn(dict[key], updated);
         }
         return dict;
-    }, chatsDict);
-    return [...Object.values(updated), ...updateResponse.chatsAdded];
+    }, dict);
+    return [...Object.values(updated), ...updates.added];
 }

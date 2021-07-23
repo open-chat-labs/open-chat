@@ -218,7 +218,7 @@ describe("merging updates", () => {
                 repliesTo: undefined,
             },
             participantsAdded: [participant("4"), participant("5")],
-            participantsRemoved: ["2"],
+            participantsRemoved: new Set(["2"]),
             participantsUpdated: [{ ...participant("1"), role: "standard" }],
             name: "stuff",
             description: "stuff",
@@ -268,9 +268,12 @@ describe("merging updates", () => {
                 expect(updated?.latestReadByMe).toEqual(200);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
-
-                // todo - this fails because the code is not done yet. Get me with my TDD
                 expect(updated.participants.length).toEqual(4);
+                expect(updated.participants[0].userId).toEqual("1");
+                expect(updated.participants[1].userId).toEqual("3");
+                expect(updated.participants[2].userId).toEqual("4");
+                expect(updated.participants[3].userId).toEqual("5");
+                expect(updated.participants[0].role).toEqual("standard");
             } else {
                 fail("updated chat not found or was not a group chat");
             }
