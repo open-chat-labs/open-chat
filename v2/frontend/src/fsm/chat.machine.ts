@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, escalate, log, send } from "xstate/lib/actions";
+import { assign, escalate, log, pure, send } from "xstate/lib/actions";
 import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
 import { textMessage, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -17,7 +17,7 @@ export interface ChatContext {
     user?: UserSummary;
     error?: Error;
     messages: Message[];
-    latestMessageIndex?: number;
+    latestMessageIndex: number;
     focusIndex?: number;
 }
 
@@ -70,6 +70,12 @@ function loadMessages(
     earliestRequiredMessageIndex: number,
     earliestLoadedMessageIndex: number
 ): Promise<MessagesResponse> {
+    console.log(
+        "loading messages from ",
+        earliestRequiredMessageIndex,
+        " to ",
+        earliestLoadedMessageIndex
+    );
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatMessages(
             chatSummary.them,
@@ -85,17 +91,35 @@ function loadMessages(
 }
 
 export function earliestAvailableMessageIndex(ctx: ChatContext): number {
-    return ctx.chatSummary.kind === "group_chat"
-        ? 0 // todo - replace with a prop on the group chat summary type
-        : 0;
+    return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleMessageIndex : 0;
 }
 
 export function earliestLoadedMessageIndex(ctx: ChatContext): number {
     return ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessage?.messageIndex ?? 0;
 }
 
+export function lastLoadedMessageIndex(ctx: ChatContext): number | undefined {
+    return ctx.messages[ctx.messages.length - 1]?.messageIndex + 1;
+}
+
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
     return earliestLoadedMessageIndex(ctx) > earliestAvailableMessageIndex(ctx);
+}
+
+export function requiredMessageRange(
+    ctx: ChatContext,
+    ev: ChatEvents
+): [number, number] | undefined {
+    if (ev.type === "CHAT_UPDATED") {
+        const from = lastLoadedMessageIndex(ctx) ?? ctx.latestMessageIndex - PAGE_SIZE;
+        const to = ctx.latestMessageIndex;
+        return from === to ? undefined : [from, to];
+    }
+    const earliestLoaded = earliestLoadedMessageIndex(ctx);
+    const earliestRequired =
+        ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : earliestLoaded - PAGE_SIZE;
+    const lookupRequired = earliestRequired < earliestLoaded && moreMessagesAvailable(ctx);
+    return lookupRequired ? [earliestRequired, earliestLoaded] : undefined;
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
@@ -103,34 +127,21 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         moreMessagesAvailable,
     },
     services: {
-        loadMessagesAndUsers: async (ctx, _) => {
-            const earliestLoaded = earliestLoadedMessageIndex(ctx);
-            console.log("FocusIndex", ctx.focusIndex);
-            const earliestRequired =
-                ctx.focusIndex !== undefined
-                    ? ctx.focusIndex - PAGE_SIZE
-                    : earliestLoaded - PAGE_SIZE;
-
-            // we may not actually *need* to look up any messages
-            const lookupRequired = earliestRequired < earliestLoaded && moreMessagesAvailable(ctx);
+        loadMessagesAndUsers: async (ctx, ev) => {
+            const range = requiredMessageRange(ctx, ev);
 
             const [userLookup, messagesResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                lookupRequired
-                    ? loadMessages(
-                          ctx.serviceContainer!,
-                          ctx.chatSummary,
-                          earliestRequired,
-                          earliestLoaded
-                      )
-                    : { messages: [], latestMessageIndex: 0 },
+                range
+                    ? loadMessages(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
+                    : { messages: [], latestMessageIndex: ctx.latestMessageIndex },
             ]);
             return {
                 userLookup,
                 messages: messagesResponse === "chat_not_found" ? [] : messagesResponse.messages,
                 latestMessageIndex:
                     messagesResponse === "chat_not_found"
-                        ? ctx.chatSummary.latestMessage?.messageIndex ?? 0
+                        ? ctx.latestMessageIndex
                         : messagesResponse.latestMessageIndex,
             };
         },
@@ -159,19 +170,30 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
     id: "chat_machine",
     initial: "loading_messages",
     on: {
-        CHAT_UPDATED: {
-            // todo - we may find at this point that the incoming chat has a higher latestIndex than the one
-            // we have. If that's the case, then we should load the missing messages
-            actions: assign((_, ev) => ({
-                chatSummary: ev.data,
-            })),
-        },
+        CHAT_UPDATED: [
+            {
+                // todo problem - this is going to disrupt the UI if we are viewing participants
+                // we probably need another state sideloading_messages or something
+                target: "loading_messages",
+                actions: assign((_, ev) => {
+                    console.log("assigning latest stuff: ", ev.data.latestMessage?.messageIndex);
+                    return {
+                        chatSummary: ev.data,
+                        latestMessageIndex: ev.data.latestMessage?.messageIndex ?? 0,
+                    };
+                }),
+            },
+        ],
     },
     states: {
         idle: {
             entry: log("entering the chat machine"),
         },
         loading_messages: {
+            entry: log(
+                (ctx) =>
+                    `entering the loading_messages state: ${ctx.chatSummary.latestMessage?.messageIndex} / ${ctx.latestMessageIndex}`
+            ),
             invoke: {
                 id: "loadMessagesAndUsers",
                 src: "loadMessagesAndUsers",
@@ -180,7 +202,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
                         return {
                             userLookup: ev.data.userLookup,
-                            messages: [...ev.data.messages, ...ctx.messages],
+                            messages: [...ev.data.messages, ...ctx.messages].sort(
+                                (a, b) => a.messageIndex - b.messageIndex
+                            ),
                             latestMessageIndex: ev.data.latestMessageIndex,
                         };
                     }),
@@ -322,6 +346,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             }),
             after: {
                 // simulate the actual api call delay
+                // todo - this will cause us to skip messages that are entered if they are < 2000 ms since the last
+                // one. Don't worry about that for now.
                 2000: "loaded_messages",
             },
         },

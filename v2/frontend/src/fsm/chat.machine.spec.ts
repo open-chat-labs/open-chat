@@ -20,6 +20,7 @@ const testContext: ChatContext = {
     chatSummary: directChat,
     userLookup: {},
     messages: [],
+    latestMessageIndex: 0,
     user: {
         userId: "abcdef",
         username: "julian_jelfs",

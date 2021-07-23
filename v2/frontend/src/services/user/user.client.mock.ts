@@ -20,7 +20,7 @@ const interval = 1000 * 60 * 60 * 8; // 8 hours
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
-    const participants: Participant[] = fill(randomNum(0, 200), (i: number) => ({
+    const participants: Participant[] = fill(randomNum(10, 200), (i: number) => ({
         role: "admin",
         userId: `${randomWord(5)}_${i}`,
     }));
@@ -101,15 +101,22 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
     const uppercase = i % 2 === 0;
 
     if (chat.kind === "group_chat") {
-        const removeParticipant = randomNum(0, chat.participants.length - 1);
+        const removeParticipant = chat.participants[randomNum(0, chat.participants.length - 1)];
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
-            latestMessage: chat.latestMessage,
+            latestMessage: chat.latestMessage
+                ? {
+                      ...chat.latestMessage,
+                      messageIndex: chat.latestMessage.messageIndex + 2, // simulate new messages
+                  }
+                : undefined,
             kind: "group_chat",
             participantsAdded: [],
-            participantsRemoved: new Set([chat.participants[removeParticipant].userId]),
+            participantsRemoved: removeParticipant
+                ? new Set([removeParticipant.userId])
+                : new Set([]),
             participantsUpdated: [],
             name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
             description: chat.description,
@@ -149,7 +156,9 @@ export class UserClientMock implements IUserClient {
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);
 
         const add = args.lastUpdated
-            ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
+            ? this.updateCycles % 5 === 0
+                ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
+                : []
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {

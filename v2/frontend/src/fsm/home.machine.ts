@@ -7,7 +7,6 @@ import {
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,
-    SendAction,
     sendParent,
     spawn,
 } from "xstate";
@@ -19,7 +18,7 @@ import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
 import { toastStore } from "../stores/toast";
-import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
+import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
