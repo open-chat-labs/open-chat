@@ -3,19 +3,19 @@ use crate::model::runtime_state::RuntimeState;
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
+use shared::types::Version;
 
 #[derive(Deserialize)]
 struct Args {
     #[serde(with = "serde_bytes")]
     user_wasm_module: Vec<u8>,
-    version: String,
+    version: Version,
 }
 
 #[derive(CandidType)]
 enum Response {
     Success,
     NotAuthorized,
-    InvalidVersion,
     VersionNotHigher,
 }
 
@@ -32,16 +32,11 @@ fn update_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         return Response::NotAuthorized;
     }
 
-    match semver::Version::parse(&args.version) {
-        Err(_) => Response::InvalidVersion,
-        Ok(new_version) => {
-            if new_version <= runtime_state.data.user_wasm.version {
-                Response::VersionNotHigher
-            } else {
-                runtime_state.data.user_wasm.version = new_version;
-                runtime_state.data.user_wasm.module = args.user_wasm_module;
-                Response::Success
-            }
-        }
+    if args.version <= runtime_state.data.user_wasm.version {
+        Response::VersionNotHigher
+    } else {
+        runtime_state.data.user_wasm.version = args.version;
+        runtime_state.data.user_wasm.module = args.user_wasm_module;
+        Response::Success
     }
 }

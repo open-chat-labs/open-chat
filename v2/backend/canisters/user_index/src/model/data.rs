@@ -3,6 +3,7 @@ use crate::model::user_map::UserMap;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use shared::canisters::canister_wasm::CanisterWasm;
+use shared::types::Version;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
@@ -24,7 +25,7 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             user_wasm: CanisterWasm {
                 module: user_wasm_module,
-                version: semver::Version::new(0, 0, 0),
+                version: Version::new(0, 0, 0),
             },
             sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_queue: VecDeque::default(),

@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
 use shared::types::chat_id::GroupChatId;
-use shared::types::UserId;
+use shared::types::{UserId, Version};
 
 #[derive(Deserialize)]
 struct Args {
@@ -59,7 +59,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
         name: args.name.clone(),
         created_by_principal: args.creator_principal,
         created_by_user_id: user_id,
-        wasm_version: canister_wasm.version.to_string(),
+        wasm_version: canister_wasm.version,
     };
 
     Ok(CreateCanisterArgs {
@@ -79,5 +79,5 @@ struct InitGroupCanisterArgs {
     name: String,
     created_by_principal: Principal,
     created_by_user_id: UserId,
-    wasm_version: String,
+    wasm_version: Version,
 }

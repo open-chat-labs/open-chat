@@ -8,7 +8,7 @@ use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
 use shared::canisters::canister_wasm::CanisterWasm;
-use shared::types::CanisterId;
+use shared::types::{CanisterId, Version};
 
 #[derive(Deserialize)]
 struct Args {}
@@ -96,7 +96,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn commit(runtime_state: &mut RuntimeState, principal: Principal, wasm_version: semver::Version) {
+fn commit(runtime_state: &mut RuntimeState, principal: Principal, wasm_version: Version) {
     if let Some(user) = runtime_state.data.users.get_by_principal(&principal) {
         if let User::Created(created_user) = user {
             if created_user.upgrade_in_progress {

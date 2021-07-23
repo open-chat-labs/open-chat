@@ -6,7 +6,7 @@ use ic_cdk_macros::init;
 use serde::Deserialize;
 use shared::env::canister::CanisterEnv;
 use shared::env::Environment;
-use shared::types::UserId;
+use shared::types::{UserId, Version};
 
 #[derive(Deserialize)]
 struct InitArgs {
@@ -14,6 +14,7 @@ struct InitArgs {
     name: String,
     created_by_principal: Principal,
     created_by_user_id: UserId,
+    wasm_version: Version,
 }
 
 #[init]
@@ -31,6 +32,7 @@ fn init(args: InitArgs) {
             args.created_by_user_id,
             env.now(),
             group_index_canister_id,
+            args.wasm_version,
         );
         let runtime_state = RuntimeState::new(env, data);
 

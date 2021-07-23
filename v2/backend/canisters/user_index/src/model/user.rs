@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use phonenumber::PhoneNumber;
 use shared::time::TimestampMillis;
-use shared::types::UserId;
+use shared::types::{UserId, Version};
 #[cfg(test)]
 use std::str::FromStr;
 
@@ -85,7 +85,7 @@ impl User {
         true
     }
 
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<semver::Version>) -> bool {
+    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<Version>) -> bool {
         match self {
             User::Created(u) => {
                 u.upgrade_in_progress = upgrade_in_progress;
@@ -135,7 +135,7 @@ pub struct CreatedUser {
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
     pub last_online: TimestampMillis,
-    pub wasm_version: semver::Version,
+    pub wasm_version: Version,
     pub upgrade_in_progress: bool,
 }
 
@@ -164,7 +164,7 @@ impl Default for CreatedUser {
             date_created: 0,
             date_updated: 0,
             last_online: 0,
-            wasm_version: semver::Version::new(0, 0, 0),
+            wasm_version: Version::new(0, 0, 0),
             upgrade_in_progress: false,
         }
     }
