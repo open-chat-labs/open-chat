@@ -21,8 +21,8 @@ import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 
-const ONE_MINUTE = 10 * 1000;
-const CHAT_UPDATE_INTERVAL = ONE_MINUTE;
+const ONE_MINUTE = 60 * 1000;
+const CHAT_UPDATE_INTERVAL = 5000;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
 export interface HomeContext {
