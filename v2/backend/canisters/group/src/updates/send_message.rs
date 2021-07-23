@@ -3,6 +3,7 @@ use crate::canister::RUNTIME_STATE;
 use crate::model::messages::PushMessageArgs;
 use crate::model::reply_context::ReplyContextInternal;
 use crate::model::runtime_state::RuntimeState;
+use crate::updates::handle_activity_notification;
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
@@ -35,7 +36,11 @@ struct SuccessResult {
 
 #[update]
 fn send_message(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
+    let response = RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()));
+
+    handle_activity_notification();
+
+    response
 }
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
