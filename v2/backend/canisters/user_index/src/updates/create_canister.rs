@@ -1,7 +1,9 @@
+use super::create_canister::Response::*;
 use crate::canister::RUNTIME_STATE;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{CanisterCreationStatus, CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
+use crate::{MIN_CYCLES_BALANCE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
@@ -9,6 +11,7 @@ use serde::Deserialize;
 use shared::canisters;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::canisters::create::CreateCanisterError;
+use shared::consts::CREATE_CANISTER_CYCLES_FEE;
 use shared::types::{CanisterId, Version};
 
 #[derive(Deserialize)]
@@ -22,6 +25,7 @@ enum Response {
     UserUnconfirmed,
     UserAlreadyCreated,
     CreationInProgress,
+    CyclesBalanceTooLow,
     InternalError,
 }
 
@@ -39,14 +43,15 @@ async fn create_canister(_args: Args) -> Response {
     // If the create previously succeeded but the install failed then pass in the canister_id
     // and skip canister creation
     let wasm_arg = candid::encode_one(init_ok.init_canister_args).unwrap();
-    match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg).await {
+    let cycles = CREATE_CANISTER_CYCLES_FEE + USER_CANISTER_INITIAL_CYCLES_BALANCE;
+    match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
             let wasm_version = init_ok.canister_wasm.version;
             RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap(), canister_id, wasm_version));
-            Response::Success(canister_id)
+            Success(canister_id)
         }
         Err(error) => {
             let mut canister_id = None;
@@ -57,7 +62,7 @@ async fn create_canister(_args: Args) -> Response {
             // If the create succeeded but the install failed then set the user_id (aka canister_id)
             // on the user record.
             RUNTIME_STATE.with(|state| rollback(state.borrow_mut().as_mut().unwrap(), canister_id));
-            Response::InternalError
+            InternalError
         }
     }
 }
@@ -73,10 +78,16 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     let response;
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         response = match user {
-            User::Unconfirmed(_) => Response::UserUnconfirmed,
-            User::Created(_) => Response::UserAlreadyCreated,
+            User::Unconfirmed(_) => UserUnconfirmed,
+            User::Created(_) => UserAlreadyCreated,
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
                 CanisterCreationStatus::Pending => {
+                    let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+                    let current_cycles_balance = ic_cdk::api::canister_balance();
+                    if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
+                        return Err(CyclesBalanceTooLow);
+                    }
+
                     let canister_id = confirmed_user.user_id.map(|u| u.into());
                     let user_principal = confirmed_user.principal;
                     let mut user = user.clone();
@@ -95,15 +106,15 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                                 init_canister_args,
                             });
                         }
-                        _ => Response::InternalError,
+                        _ => InternalError,
                     }
                 }
-                CanisterCreationStatus::InProgress => Response::CreationInProgress,
-                CanisterCreationStatus::Created => Response::UserAlreadyCreated,
+                CanisterCreationStatus::InProgress => CreationInProgress,
+                CanisterCreationStatus::Created => UserAlreadyCreated,
             },
         };
     } else {
-        response = Response::UserNotFound;
+        response = UserNotFound;
     }
 
     Err(response)
