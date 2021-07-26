@@ -1,3 +1,4 @@
+use super::sms_messages::Response::*;
 use crate::canister::RUNTIME_STATE;
 use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::runtime_state::RuntimeState;
@@ -30,14 +31,14 @@ fn sms_messages(args: Args) -> Response {
 }
 
 fn sms_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if !runtime_state.is_caller_sms_service() {
-        return Response::NotAuthorized;
+    if runtime_state.is_caller_sms_service() {
+        let messages = runtime_state
+            .data
+            .sms_messages
+            .get(args.from_index, MAX_SMS_MESSAGES_PER_BATCH);
+
+        Success(SuccessResult { messages })
+    } else {
+        NotAuthorized
     }
-
-    let messages = runtime_state
-        .data
-        .sms_messages
-        .get(args.from_index, MAX_SMS_MESSAGES_PER_BATCH);
-
-    Response::Success(SuccessResult { messages })
 }
