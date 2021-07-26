@@ -54,6 +54,14 @@ impl<T: CandidType + Clone> EventStream<T> {
         }
         0
     }
+
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.events.is_empty()
+    }
 }
 
 impl<T: CandidType + Clone> Default for EventStream<T> {
