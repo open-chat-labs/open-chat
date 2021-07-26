@@ -1,4 +1,4 @@
-use crate::model::group_info::PublicGroupInfo;
+use crate::model::GROUP_CHAT_ACTIVE_WINDOW_MILLIS;
 use shared::time::TimestampMillis;
 use shared::types::chat_id::GroupChatId;
 use shared::types::Version;
@@ -55,5 +55,38 @@ impl PublicGroups {
 
     pub fn handle_group_creation_failed(&mut self, name: &str) {
         self.groups_pending.remove(name);
+    }
+}
+
+#[allow(dead_code)]
+pub struct PublicGroupInfo {
+    id: GroupChatId,
+    name: String,
+    created: TimestampMillis,
+    last_notification_of_activity: TimestampMillis,
+    wasm_version: Version,
+}
+
+impl PublicGroupInfo {
+    pub fn new(id: GroupChatId, name: String, now: TimestampMillis, wasm_version: Version) -> PublicGroupInfo {
+        PublicGroupInfo {
+            id,
+            name,
+            created: now,
+            last_notification_of_activity: now,
+            wasm_version,
+        }
+    }
+
+    pub fn id(&self) -> GroupChatId {
+        self.id
+    }
+
+    pub fn notify_activity(&mut self, now: TimestampMillis) {
+        self.last_notification_of_activity = now;
+    }
+
+    pub fn is_active(&self, now: TimestampMillis) -> bool {
+        now.saturating_sub(self.last_notification_of_activity) < GROUP_CHAT_ACTIVE_WINDOW_MILLIS
     }
 }

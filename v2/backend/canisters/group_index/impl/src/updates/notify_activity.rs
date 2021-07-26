@@ -1,19 +1,7 @@
-use super::notify_activity::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
-use candid::CandidType;
+use crate::{RuntimeState, RUNTIME_STATE};
+use group_index_canister::updates::notify_activity::{Response::*, *};
 use ic_cdk_macros::update;
-use serde::Deserialize;
 use shared::types::chat_id::GroupChatId;
-
-#[derive(Deserialize)]
-struct Args {}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-    ChatNotFound,
-}
 
 #[update]
 fn notify_activity(_: Args) -> Response {

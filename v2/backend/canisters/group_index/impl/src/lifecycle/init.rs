@@ -1,6 +1,4 @@
-use crate::canister::RUNTIME_STATE;
-use crate::model::data::Data;
-use crate::model::runtime_state::RuntimeState;
+use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
 use shared::env::canister::CanisterEnv;
 

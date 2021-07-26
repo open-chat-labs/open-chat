@@ -1,25 +1,6 @@
-use super::active_groups::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
-use candid::CandidType;
+use crate::{RuntimeState, RUNTIME_STATE};
+use group_index_canister::queries::active_groups::{Response::*, *};
 use ic_cdk_macros::query;
-use serde::Deserialize;
-use shared::types::chat_id::GroupChatId;
-
-#[derive(Deserialize)]
-struct Args {
-    group_ids: Vec<GroupChatId>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    active_groups: Vec<GroupChatId>,
-}
 
 #[query]
 fn active_groups(args: Args) -> Response {

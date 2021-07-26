@@ -1,5 +1,5 @@
 [package]
-name = "group_canister"
+name = "group_index_canister"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 candid = "0.6.21"
 ic-cdk = "0.3.0"
+ic-cdk-macros = "0.3.0"
 serde = "1.0.126"
 shared = { path = "../../../shared" }

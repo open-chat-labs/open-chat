@@ -1,38 +1,15 @@
-use super::create_group::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
-use crate::{GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE};
+use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use candid::{CandidType, Principal};
+use group_index_canister::updates::create_group::{Response::*, *};
 use ic_cdk_macros::update;
-use serde::Deserialize;
 use shared::canisters;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
 use shared::types::chat_id::GroupChatId;
 use shared::types::{UserId, Version};
 
-#[derive(Deserialize)]
-struct Args {
-    is_public: bool,
-    creator_principal: Principal,
-    name: String,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NameTaken,
-    CyclesBalanceTooLow,
-    InternalError,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    group_id: GroupChatId,
-}
-
 #[update]
-async fn create_public_group(args: Args) -> Response {
+async fn create_group(args: Args) -> Response {
     let canister_args = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow_mut().as_mut().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,
