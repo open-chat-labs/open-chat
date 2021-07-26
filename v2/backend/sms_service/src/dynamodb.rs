@@ -32,12 +32,12 @@ impl DynamoDbClient {
         }
     }
 
-    pub async fn set_sms_index_processed_up_to(&self, canister_id: CanisterId, notification_index: u64) -> Result<(), Error> {
+    pub async fn set_sms_index_processed_up_to(&self, canister_id: CanisterId, sms_index: u64) -> Result<(), Error> {
         self.client
             .put_item()
             .table_name("sms_stream_indexes")
             .item("canister_id", AttributeValue::B(Blob::new(canister_id.as_slice().to_vec())))
-            .item("index", AttributeValue::N(notification_index.to_string()))
+            .item("index", AttributeValue::N(sms_index.to_string()))
             .send()
             .await?;
 
