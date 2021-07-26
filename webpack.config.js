@@ -2,7 +2,48 @@ const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
+
+const isDevelopment = process.env.NODE_ENV 
+  ? (process.env.NODE_ENV !== "production") 
+  : (process.env.DFX_NETWORK !== "ic");
+
+const mode = isDevelopment ? "development" : "production";
+
+function initCanisterIds() {
+    let localCanisters, prodCanisters;
+
+    try {
+        localCanisters = require(path.resolve(".dfx", "local", "canister_ids.json"));
+    } catch (error) {
+        console.log("No local canister_ids.json found. Continuing production");
+    }
+    
+    try {
+        prodCanisters = require(path.resolve("canister_ids.json"));
+    } catch (error) {
+        console.log("No production canister_ids.json found. Continuing with local");
+    }
+
+    const network = process.env.DFX_NETWORK || (isDevelopment ? "local" : "ic");
+
+    let canisters = network === "local" ? localCanisters : prodCanisters;
+
+    let canisterIds = {};
+
+    for (const canister in canisters) {
+        canisterIds[canister] = canisters[canister][network];
+    }  
+
+    return canisterIds;
+}
+
+let canisterIds = initCanisterIds();
+
+let IDP_URL = isDevelopment 
+  ? "http://s55qq-oqaaa-aaaaa-aaakq-cai.localhost:8000"
+  : "https://identity.ic0.app/";
 
 // List of all aliases for canisters. This creates the module alias for
 // the `import ... from "@dfinity/ic/canisters/xyz"` where xyz is the name of a
@@ -21,7 +62,7 @@ const aliases = Object.entries(dfxJson.canisters).reduce(
 
       return {
         ...acc,
-        ["dfx-generated/" + name]: path.join(outputRoot, name + ".js"),
+        ["dfx-generated/" + name]: path.join(outputRoot, "index.js"),
       };
     },
     {}
@@ -38,7 +79,7 @@ function generateWebpackConfigForCanister(name, info) {
   const sourceDir = path.join(__dirname, info.frontend.sourceDir);
 
   return {
-    mode: "production",
+    mode,
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint)
     },
@@ -96,6 +137,21 @@ function generateWebpackConfigForCanister(name, info) {
         filename: 'index.html',
         chunks: ['index'],
       }),
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.join(__dirname, "src", "website", "assets"),
+            to: path.join(__dirname, "dist", "website"),
+          },
+        ],
+      }),      
+      new webpack.EnvironmentPlugin({
+        NODE_ENV: mode,
+        CHATS_CANISTER_ID: canisterIds["chats"],
+        P2P_CANISTER_ID: canisterIds["p2p"],
+        USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
+        IDP_URL,
+      }),  
       new webpack.ProvidePlugin({
         Buffer: [require.resolve('buffer/'), 'Buffer'],
         process: require.resolve('process/browser'),

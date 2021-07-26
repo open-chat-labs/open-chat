@@ -1,12 +1,12 @@
-import { Actor, Agent, HttpAgent, Identity, Principal } from "@dfinity/agent";
-import { idlFactory as chats_idl } from "dfx-generated/chats";
-import { idlFactory as p2p_idl } from "dfx-generated/p2p";
-import { idlFactory as user_mgmt_idl } from "dfx-generated/user_mgmt";
+import { Actor, Agent, HttpAgent, Identity } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import { Option } from "../domain/model/common";
-import ChatsService from "./chats/chats";
-import P2pService from "./p2p/p2p";
-import UserMgmtService from "./userMgmt/user_mgmt";
-import { getCanisterIds } from "../utils/canisterFunctions";
+import { _SERVICE as ChatsService } from "./chats/candid/types";
+import { _SERVICE as P2pService } from "./p2p/candid/types";
+import { _SERVICE as UserMgmtService } from "./userMgmt/candid/types";
+import { idlFactory as chatsIdlFactory } from "./chats/candid/idl";
+import { idlFactory as p2pIdlFactory } from "./p2p/candid/idl";
+import { idlFactory as userMgmtIdlFactory } from "./userMgmt/candid/idl";
 
 export default class CanisterClientFactory {
     private readonly _chatsActor: ChatsService;
@@ -18,19 +18,24 @@ export default class CanisterClientFactory {
             throw new Error("Cannot use the anonymous identity");
         }
 
-        const agent = new HttpAgent({
-            identity,
-        });
-        // await agent.fetchRootKey();
+        const agent = new HttpAgent({ identity });
+
+        // Fetch root key for certificate validation during development
+        if (process.env.NODE_ENV !== "production") {
+            agent.fetchRootKey();
+        }
 
         CanisterClientFactory.current = new CanisterClientFactory(agent);
     }
 
     private constructor(agent: HttpAgent) {
-        const canisterIds = getCanisterIds();
-        this._chatsActor = this.createActor<ChatsService>(agent, canisterIds.chats, chats_idl);
-        this._p2pActor = this.createActor<P2pService>(agent, canisterIds.p2p, p2p_idl);
-        this._userMgmtActor = this.createActor<UserMgmtService>(agent, canisterIds.userMgmt, user_mgmt_idl);
+        let chatsId = Principal.fromText(process.env.CHATS_CANISTER_ID!);
+        let p2pId = Principal.fromText(process.env.P2P_CANISTER_ID!);
+        let userMgmtId = Principal.fromText(process.env.USER_MGMT_CANISTER_ID!);
+    
+        this._chatsActor = this.createActor<ChatsService>(agent, chatsId, chatsIdlFactory);
+        this._p2pActor = this.createActor<P2pService>(agent, p2pId, p2pIdlFactory);
+        this._userMgmtActor = this.createActor<UserMgmtService>(agent, userMgmtId, userMgmtIdlFactory);
     }
 
     public get chatsClient() : ChatsService {
