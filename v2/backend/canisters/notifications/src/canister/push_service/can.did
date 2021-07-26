@@ -58,6 +58,6 @@ type RemoveNotificationsResponse =
     };
 
 service: {
-    get_notifications: (NotificationsArgs) -> (NotificationsResponse);
+    notifications: (NotificationsArgs) -> (NotificationsResponse);
     remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
 }
