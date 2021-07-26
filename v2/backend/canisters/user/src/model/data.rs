@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use candid::Principal;
 use serde_bytes::ByteBuf;
 use shared::types::chat_id::{DirectChatId, GroupChatId};
-use shared::types::{CanisterId, UserId};
+use shared::types::{CanisterId, UserId, Version};
 use std::collections::{HashMap, HashSet};
 
 pub struct Data {
@@ -13,10 +13,11 @@ pub struct Data {
     pub blobs: HashMap<String, Vec<ByteBuf>>,
     pub blocked_users: HashSet<UserId>,
     pub notification_canister_ids: Vec<CanisterId>,
+    pub wasm_version: Version,
 }
 
 impl Data {
-    pub fn new(owner: Principal, notification_canister_ids: Vec<CanisterId>) -> Data {
+    pub fn new(owner: Principal, notification_canister_ids: Vec<CanisterId>, wasm_version: Version) -> Data {
         Data {
             owner,
             direct_chats: HashMap::new(),
@@ -24,6 +25,7 @@ impl Data {
             blobs: HashMap::new(),
             blocked_users: HashSet::new(),
             notification_canister_ids,
+            wasm_version,
         }
     }
 }

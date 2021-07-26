@@ -1,5 +1,6 @@
 use shared::time::TimestampMillis;
 use shared::types::chat_id::GroupChatId;
+use shared::types::Version;
 
 const GROUP_CHAT_ACTIVE_WINDOW_MILLIS: u64 = 11 * 60 * 1000; // 11 minutes (group chats push activity notifications every 5 minutes)
 
@@ -9,6 +10,7 @@ pub struct PublicGroupInfo {
     name: String,
     created: TimestampMillis,
     last_notification_of_activity: TimestampMillis,
+    wasm_version: Version,
 }
 
 #[allow(dead_code)]
@@ -16,15 +18,17 @@ pub struct PrivateGroupInfo {
     id: GroupChatId,
     created: TimestampMillis,
     last_notification_of_activity: TimestampMillis,
+    wasm_version: Version,
 }
 
 impl PublicGroupInfo {
-    pub fn new(id: GroupChatId, name: String, now: TimestampMillis) -> PublicGroupInfo {
+    pub fn new(id: GroupChatId, name: String, now: TimestampMillis, wasm_version: Version) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
             name,
             created: now,
             last_notification_of_activity: now,
+            wasm_version,
         }
     }
 
@@ -42,11 +46,12 @@ impl PublicGroupInfo {
 }
 
 impl PrivateGroupInfo {
-    pub fn new(id: GroupChatId, now: TimestampMillis) -> PrivateGroupInfo {
+    pub fn new(id: GroupChatId, now: TimestampMillis, wasm_version: Version) -> PrivateGroupInfo {
         PrivateGroupInfo {
             id,
             created: now,
             last_notification_of_activity: now,
+            wasm_version,
         }
     }
 
