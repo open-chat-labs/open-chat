@@ -33,7 +33,7 @@ struct SuccessResult {
 
 #[update]
 async fn create_group(args: Args) -> Response {
-    let prepare_result = match RUNTIME_STATE.with(|state| prepare(args, state.borrow_mut().as_mut().unwrap())) {
+    let prepare_result = match RUNTIME_STATE.with(|state| prepare(args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -64,7 +64,7 @@ struct PrepareResult {
     create_group_args: group_index_canister::CreateGroupArgs,
 }
 
-fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false
