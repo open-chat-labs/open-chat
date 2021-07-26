@@ -153,20 +153,3 @@ pub enum CanisterUpgradeStatus {
     InProgress,
     NotRequired,
 }
-
-#[cfg(test)]
-impl Default for CreatedUser {
-    fn default() -> Self {
-        CreatedUser {
-            principal: Principal::from_slice(&[0]),
-            phone_number: PhoneNumber::from_str("+441111111111").unwrap(),
-            user_id: Principal::from_slice(&[0]).into(),
-            username: "user".to_string(),
-            date_created: 0,
-            date_updated: 0,
-            last_online: 0,
-            wasm_version: Version::new(0, 0, 0),
-            upgrade_in_progress: false,
-        }
-    }
-}
