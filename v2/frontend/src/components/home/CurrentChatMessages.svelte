@@ -55,6 +55,7 @@
             if ($machine.context.focusIndex) {
                 scrollToIndex($machine.context.focusIndex);
             } else {
+                // todo - come back to this once we have sorted out the state machine.
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }

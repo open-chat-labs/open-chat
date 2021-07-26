@@ -163,7 +163,43 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             });
         },
     },
+    actions: {
+        assignMessagesResponse: assign((ctx, ev) =>
+            ev.type === "done.invoke.loadMessagesAndUsers"
+                ? {
+                      userLookup: ev.data.userLookup,
+                      messages: [...ev.data.messages, ...ctx.messages].sort(
+                          (a, b) => a.messageIndex - b.messageIndex
+                      ),
+                      latestMessageIndex: ev.data.latestMessageIndex,
+                  }
+                : {}
+        ),
+    },
 };
+
+/**
+ * Parallel
+ * ========
+ *
+ * loading_new_messages
+ *      loading
+ *      idle
+ *      error
+ *
+ * ui-states (better name?)
+ *      loading_previous_messages
+ *          loading
+ *          idle
+ *          error
+ *
+ *      sending_message
+ *
+ *      showing_participants
+ *          substates
+ *
+ *      selecting_emojii
+ */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
@@ -190,24 +226,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             entry: log("entering the chat machine"),
         },
         loading_messages: {
-            entry: log(
-                (ctx) =>
-                    `entering the loading_messages state: ${ctx.chatSummary.latestMessage?.messageIndex} / ${ctx.latestMessageIndex}`
-            ),
             invoke: {
                 id: "loadMessagesAndUsers",
                 src: "loadMessagesAndUsers",
                 onDone: {
                     target: "loaded_messages",
-                    actions: assign((ctx, ev: DoneInvokeEvent<LoadMessagesResponse>) => {
-                        return {
-                            userLookup: ev.data.userLookup,
-                            messages: [...ev.data.messages, ...ctx.messages].sort(
-                                (a, b) => a.messageIndex - b.messageIndex
-                            ),
-                            latestMessageIndex: ev.data.latestMessageIndex,
-                        };
-                    }),
+                    actions: "assignMessagesResponse",
                 },
                 onError: {
                     target: "unexpected_error",
