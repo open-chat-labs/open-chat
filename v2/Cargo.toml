@@ -1,10 +1,11 @@
 [workspace]
 members = [
-    "backend/canisters/group",
-    "backend/canisters/group_index",
-    "backend/canisters/notifications",
-    "backend/canisters/user",
-    "backend/canisters/user_index",
+    "backend/canisters/group/api",
+    "backend/canisters/group/impl",
+    "backend/canisters/group_index/canister",
+    "backend/canisters/notifications/canister",
+    "backend/canisters/user/canister",
+    "backend/canisters/user_index/canister",
     "backend/notification_service",
     "backend/shared",
     "backend/sms_service",
