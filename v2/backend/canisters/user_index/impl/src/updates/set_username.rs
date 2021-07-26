@@ -58,6 +58,7 @@ mod tests {
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
+    use shared::types::Version;
     use std::str::FromStr;
     use user_index_canister::common::user::{CreatedUser, UnconfirmedUser, User};
 
@@ -73,7 +74,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -100,7 +102,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -123,7 +126,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
@@ -133,7 +137,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -176,7 +181,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -199,7 +205,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -222,7 +229,8 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            ..Default::default()
+            upgrade_in_progress: false,
+            wasm_version: Version::new(0, 0, 0),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

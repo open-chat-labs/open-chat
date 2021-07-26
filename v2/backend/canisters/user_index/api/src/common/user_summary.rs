@@ -23,17 +23,14 @@ impl UserSummary {
         }
     }
 
-    #[cfg(test)]
     pub fn user_id(&self) -> UserId {
         self.user_id
     }
 
-    #[cfg(test)]
     pub fn username(&self) -> String {
         self.username.clone()
     }
 
-    #[cfg(test)]
     pub fn seconds_since_last_online(&self) -> u32 {
         self.seconds_since_last_online
     }
@@ -58,17 +55,14 @@ impl PartialUserSummary {
         }
     }
 
-    #[cfg(test)]
     pub fn user_id(&self) -> UserId {
         self.user_id
     }
 
-    #[cfg(test)]
     pub fn username(&self) -> Option<String> {
         self.username.as_ref().cloned()
     }
 
-    #[cfg(test)]
     pub fn seconds_since_last_online(&self) -> u32 {
         self.seconds_since_last_online
     }
