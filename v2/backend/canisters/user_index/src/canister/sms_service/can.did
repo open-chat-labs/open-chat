@@ -1,4 +1,4 @@
-type GetSmsMessagesArgs =
+type SmsMessagesArgs =
     record {
         from_index: nat64;
         max_results: nat64;
@@ -10,7 +10,7 @@ type SmsNotification =
         message: text;
     };
 
-type GetSmsMessagesResponse =
+type SmsMessagesResponse =
     variant {
         Success: record {
             notifications: vec SmsNotification;
@@ -31,6 +31,6 @@ type RemoveSmsMessagesResponse =
 
 service : {
     // Get a page of SMS messages
-    sms_messages: (GetSmsMessagesArgs) -> (GetSmsMessagesResponse) query;
+    sms_messages: (SmsMessagesArgs) -> (SmsMessagesResponse) query;
     remove_sms_messages: (RemoveSmsMessagesArgs) -> (RemoveSmsMessagesResponse);
 }

@@ -29,18 +29,18 @@ type IndexedNotification =
         notification: Notification;
     };
 
-type GetNotificationsSuccessResult =
+type NotificationsSuccessResult =
     record {
         notifications: vec IndexedNotification;
         subscriptions: vec { UserId, vec text; }
     };
 
-type GetNotificationsArgs =
+type NotificationsArgs =
     record {
         from_notification_index: nat64;
     };
 
-type GetNotificationsResponse =
+type NotificationsResponse =
     variant {
         Success(GetNotificationsSuccessResult);
         NotAuthorized;
@@ -58,6 +58,6 @@ type RemoveNotificationsResponse =
     };
 
 service: {
-    get_notifications: (GetNotificationsArgs) -> (GetNotificationsResponse);
+    get_notifications: (NotificationsArgs) -> (NotificationsResponse);
     remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
 }
