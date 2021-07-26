@@ -1,4 +1,3 @@
-mod api;
 mod init;
 
 use crate::model::runtime_state::RuntimeState;
