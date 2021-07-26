@@ -1,5 +1,6 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::data::{append_sms_to_queue, CONFIRMATION_CODE_EXPIRY_MILLIS};
+use crate::model::confirmation_code_sms::ConfirmationCodeSms;
+use crate::model::data::CONFIRMATION_CODE_EXPIRY_MILLIS;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
@@ -80,7 +81,11 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             };
 
             if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
-                append_sms_to_queue(&mut runtime_state.data.sms_queue, phone_number, confirmation_code);
+                let sms = ConfirmationCodeSms {
+                    phone_number: phone_number.to_string(),
+                    confirmation_code,
+                };
+                runtime_state.data.sms_messages.add(sms);
                 Response::Success
             } else {
                 panic!("Failed to add user");

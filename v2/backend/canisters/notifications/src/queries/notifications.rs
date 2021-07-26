@@ -5,7 +5,8 @@ use crate::queries::notifications::Response::*;
 use candid::CandidType;
 use ic_cdk_macros::query;
 use serde::Deserialize;
-use shared::types::notifications::{IndexedNotification, Notification};
+use shared::types::indexed_event::IndexedEvent;
+use shared::types::notifications::Notification;
 use shared::types::UserId;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -26,7 +27,7 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
-    notifications: Vec<IndexedNotification>,
+    notifications: Vec<IndexedEvent<Notification>>,
     subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
 }
 
@@ -49,15 +50,15 @@ fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 }
 
-fn add_subscriptions(notifications: Vec<IndexedNotification>, runtime_state: &RuntimeState) -> SuccessResult {
+fn add_subscriptions(notifications: Vec<IndexedEvent<Notification>>, runtime_state: &RuntimeState) -> SuccessResult {
     let now = runtime_state.env.now();
 
-    let mut active_notifications: Vec<IndexedNotification> = Vec::new();
+    let mut active_notifications: Vec<IndexedEvent<Notification>> = Vec::new();
     let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
     for n in notifications.into_iter() {
         let mut has_subscriptions = false;
-        match &n.notification {
+        match &n.value {
             Notification::DirectMessageNotification(d) => {
                 if let Some(s) = runtime_state.data.subscriptions.get(&d.recipient, MAX_SUBSCRIPTION_AGE, now) {
                     subscriptions.insert(d.recipient, s);

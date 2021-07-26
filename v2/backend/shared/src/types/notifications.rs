@@ -3,12 +3,6 @@ use crate::types::{MessageIndex, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Clone)]
-pub struct IndexedNotification {
-    pub index: u64,
-    pub notification: Notification,
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub enum Notification {
     DirectMessageNotification(DirectMessageNotification),

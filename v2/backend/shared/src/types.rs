@@ -2,6 +2,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 pub mod chat_id;
+pub mod indexed_event;
 pub mod message_content;
 pub mod notifications;
 

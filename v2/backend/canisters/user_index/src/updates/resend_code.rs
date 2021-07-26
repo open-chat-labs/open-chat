@@ -1,5 +1,5 @@
 use crate::canister::RUNTIME_STATE;
-use crate::model::data::append_sms_to_queue;
+use crate::model::confirmation_code_sms::ConfirmationCodeSms;
 use crate::model::runtime_state::RuntimeState;
 use crate::model::user::User;
 use candid::CandidType;
@@ -27,11 +27,11 @@ fn resend_code_impl(runtime_state: &mut RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => {
-                append_sms_to_queue(
-                    &mut runtime_state.data.sms_queue,
-                    u.phone_number.clone(),
-                    u.confirmation_code.to_string(),
-                );
+                let sms = ConfirmationCodeSms {
+                    phone_number: u.phone_number.to_string(),
+                    confirmation_code: u.confirmation_code.to_string(),
+                };
+                runtime_state.data.sms_messages.add(sms);
                 Response::Success
             }
             _ => Response::AlreadyClaimed,
@@ -66,7 +66,7 @@ mod tests {
 
         let result = resend_code_impl(&mut runtime_state);
         assert!(matches!(result, Response::Success));
-        assert_eq!(runtime_state.data.sms_queue.len(), 1);
+        assert_eq!(runtime_state.data.sms_messages.len(), 1);
     }
 
     #[test]
