@@ -56,7 +56,7 @@ impl ChatList {
         self.chats.insert(chat_id, chat_enum);
         self.user_to_chats_map.link_chat_to_user(chat_id, sender);
         self.user_to_chats_map.link_chat_to_user(chat_id, recipient);
-        self.stats.direct_chat_count = self.stats.direct_chat_count + 1;
+        self.stats.direct_chat_count += 1;
     }
 
     pub fn create_group_chat(
@@ -79,7 +79,7 @@ impl ChatList {
                 let chat_summary = GroupChatSummary::new(&chat, &creator, 0);
 
                 e.insert(ChatEnum::Group(chat));
-                self.stats.group_chat_count = self.stats.group_chat_count + 1;
+                self.stats.group_chat_count += 1;
                 Some(chat_summary)
             }
         }
@@ -150,13 +150,13 @@ impl ChatList {
                     let [user1, user2] = c.get_participants();
                     self.user_to_chats_map.unlink_chat_from_user(&chat_id, user1);
                     self.user_to_chats_map.unlink_chat_from_user(&chat_id, user2);
-                    self.stats.direct_chat_count = self.stats.direct_chat_count - 1;
+                    self.stats.direct_chat_count -= 1;
                 },
                 ChatEnum::Group(c) => {
                     for p in c.iter_participants() {
                         self.user_to_chats_map.unlink_chat_from_user(&chat_id, p);
                     }
-                    self.stats.group_chat_count = self.stats.group_chat_count - 1
+                    self.stats.group_chat_count -= 1
                 },
             }
         }
@@ -172,7 +172,7 @@ impl ChatList {
 
                 if is_blob {
                     self.messages_to_prune.push_back((chat_id, message_id));
-                    self.stats.pruneable_message_count = self.stats.pruneable_message_count + 1;
+                    self.stats.pruneable_message_count += 1;
                 }
                 
                 Some(message_id)        
@@ -203,7 +203,7 @@ impl ChatList {
                 }
             }
 
-            self.stats.pruneable_message_count = self.stats.pruneable_message_count - count_to_prune;
+            self.stats.pruneable_message_count -= count_to_prune;
         }
     }
 
@@ -221,14 +221,14 @@ impl ChatList {
 
     fn add_message_to_stats(&mut self, content: &MessageContent) {
         match content.get_type() {
-            MessageContentType::Text => self.stats.text_message_count = self.stats.text_message_count + 1,
-            MessageContentType::Image => self.stats.image_message_count = self.stats.image_message_count + 1,
-            MessageContentType::Video => self.stats.video_message_count = self.stats.video_message_count + 1,
-            MessageContentType::File => self.stats.file_message_count = self.stats.file_message_count + 1,
+            MessageContentType::Text => self.stats.text_message_count += 1,
+            MessageContentType::Image => self.stats.image_message_count += 1,
+            MessageContentType::Video => self.stats.video_message_count += 1,
+            MessageContentType::File => self.stats.file_message_count += 1,
             MessageContentType::Cycles => {
-                self.stats.cycles_message_count = self.stats.cycles_message_count + 1;
+                self.stats.cycles_message_count += 1;
                 if let MessageContent::Cycles(c) = content {
-                    self.stats.cycles_transferred = self.stats.cycles_transferred + c.get_amount();
+                    self.stats.cycles_transferred += c.get_amount();
                 }
             },
         }

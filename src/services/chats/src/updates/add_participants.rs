@@ -38,7 +38,7 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
                     chat_list.link_chat_to_user(chat_id, u);
                 }
 
-                if blocked.len() == 0 {
+                if blocked.is_empty() {
                     Success(count_added)
                 } else {
                     PartialSuccess(PartialSuccess {

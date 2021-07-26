@@ -187,11 +187,7 @@ impl Message {
 
 impl MessageContent {
     pub fn is_blob(&self) -> bool {
-        match self {
-            MessageContent::File(_) => true,
-            MessageContent::Media(_) => true,
-            _ => false
-        }            
+        matches!(self, MessageContent::File(_) | MessageContent::Media(_))
     }
 
     pub fn validate(&self) -> MessageContentValidationResponse {

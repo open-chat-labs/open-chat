@@ -124,10 +124,10 @@ impl Chat for DirectChat {
     fn mark_read(&mut self, me: &UserId, from_id: u32, to_id: u32, now: Timestamp) -> MarkReadResult {
         let unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>;
         if *me == self.user1 {
-            &mut self.user1_unread_message_ids.remove_range(from_id..=to_id);
+            self.user1_unread_message_ids.remove_range(from_id..=to_id);
             unread_message_ids = self.user1_unread_message_ids.clone();
         } else {
-            &mut self.user2_unread_message_ids.remove_range(from_id..=to_id);
+            self.user2_unread_message_ids.remove_range(from_id..=to_id);
             unread_message_ids = self.user2_unread_message_ids.clone();
         };
 
@@ -169,7 +169,7 @@ impl DirectChatSummary {
             .iter()
             .rev()
             .take(message_count as usize)
-            .map(|m| m.clone())
+            .cloned()
             .collect();
 
         DirectChatSummary {

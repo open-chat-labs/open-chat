@@ -23,10 +23,7 @@ pub fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32, min_v
     let from_index = (from_id - earliest_id) as usize;
     let to_index = min((to_id - earliest_id) as usize, messages.len());
 
-    messages[from_index..to_index]
-        .iter()
-        .map(|m| m.clone())
-        .collect()
+    messages[from_index..to_index].to_vec()
 }
 
 pub fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>, min_visible_message_id_for_user: u32) -> Vec<Message> {

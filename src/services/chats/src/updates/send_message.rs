@@ -51,8 +51,7 @@ pub fn update(request: Request) -> Response {
 
         let chat = chat_list.get(request.chat_id, &me).unwrap();
         let chat_summary = chat.to_summary(&me, 0);
-        let response = Success(Result::new(chat_summary, message_id, now));
-        response
+        Success(Result::new(chat_summary, message_id, now))
     }
 }
 
