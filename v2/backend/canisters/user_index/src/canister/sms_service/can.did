@@ -1,4 +1,4 @@
-type PendingSmsMessagesArgs =
+type GetSmsMessagesArgs =
     record {
         from_index: nat64;
         max_results: nat64;
@@ -10,7 +10,7 @@ type SmsNotification =
         message: text;
     };
 
-type PendingSmsMessagesResponse =
+type GetSmsMessagesResponse =
     variant {
         Success: record {
             notifications: vec SmsNotification;
@@ -18,7 +18,19 @@ type PendingSmsMessagesResponse =
         };
     };
 
+type RemoveSmsMessagesArgs =
+    record {
+        up_to_sms_index: nat64;
+    };
+
+type RemoveSmsMessagesResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
 service : {
-    // Get a page of pending SMS notifications to send and mark them as sent
-    pending_sms_messages: (PendingSmsMessagesArgs) -> (PendingSmsMessagesResponse) query;
+    // Get a page of SMS messages
+    sms_messages: (GetSmsMessagesArgs) -> (GetSmsMessagesResponse) query;
+    remove_sms_messages: (RemoveSmsMessagesArgs) -> (RemoveSmsMessagesResponse);
 }

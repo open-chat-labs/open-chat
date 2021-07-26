@@ -3,7 +3,8 @@ use crate::ic_agent::IcAgent;
 use crate::read_env_var;
 use futures::future;
 use lambda_runtime::Error;
-use shared::types::notifications::{IndexedNotification, Notification};
+use shared::types::indexed_event::IndexedEvent;
+use shared::types::notifications::Notification;
 use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
@@ -41,7 +42,7 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
 }
 
 async fn handle_notifications(
-    notifications: Vec<IndexedNotification>,
+    notifications: Vec<IndexedEvent<Notification>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     vapid_private_key: &[u8],
 ) -> Result<(), Error> {
@@ -59,7 +60,7 @@ async fn handle_notifications(
     Ok(())
 }
 
-fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashMap<UserId, Vec<Notification>> {
+fn group_notifications_by_user(notifications: Vec<IndexedEvent<Notification>>) -> HashMap<UserId, Vec<Notification>> {
     let mut grouped_by_user: HashMap<UserId, Vec<Notification>> = HashMap::new();
 
     fn assign_notification_to_user(map: &mut HashMap<UserId, Vec<Notification>>, user_id: UserId, notification: Notification) {
@@ -72,13 +73,13 @@ fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashM
     }
 
     for n in notifications.into_iter() {
-        match &n.notification {
+        match &n.value {
             Notification::DirectMessageNotification(d) => {
-                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.notification.clone());
+                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.value.clone());
             }
             Notification::GroupMessageNotification(g) => {
                 for u in g.recipients.iter() {
-                    assign_notification_to_user(&mut grouped_by_user, *u, n.notification.clone());
+                    assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
                 }
             }
         }

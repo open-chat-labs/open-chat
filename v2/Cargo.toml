@@ -7,6 +7,7 @@ members = [
     "backend/canisters/user_index",
     "backend/notification_service",
     "backend/shared",
+    "backend/sms_service",
 ]
 
 [profile.release]

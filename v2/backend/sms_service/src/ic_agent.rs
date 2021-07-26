@@ -1,3 +1,4 @@
+use crate::ConfirmationCodeSms;
 use candid::{CandidType, Decode, Encode};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -5,10 +6,7 @@ use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use serde::Deserialize;
 use shared::types::indexed_event::IndexedEvent;
-use shared::types::notifications::Notification;
-use shared::types::{CanisterId, UserId};
-use std::collections::HashMap;
-use web_push::SubscriptionInfo;
+use shared::types::CanisterId;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -30,41 +28,39 @@ impl IcAgent {
         Ok(IcAgent { agent })
     }
 
-    pub async fn get_notifications(
+    pub async fn get_sms_messages(
         &self,
         canister_id: CanisterId,
-        from_notification_index: u64,
-    ) -> Result<GetNotificationsSuccessResult, Error> {
-        let args = GetNotificationsArgs { from_notification_index };
+        from_index: u64,
+    ) -> Result<GetSmsMessagesSuccessResult, Error> {
+        let args = GetSmsMessagesArgs { from_index };
 
         let response = self
             .agent
-            .query(&canister_id, "notifications")
+            .query(&canister_id, "sms_messages")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
-        match Decode!(&response, GetNotificationsResponse)? {
-            GetNotificationsResponse::Success(result) => Ok(result),
-            GetNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, GetSmsMessagesResponse)? {
+            GetSmsMessagesResponse::Success(result) => Ok(result),
+            GetSmsMessagesResponse::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
-    pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
-        let args = RemoveNotificationsArgs {
-            up_to_notification_index,
-        };
+    pub async fn remove_sms_messages(&self, canister_id: CanisterId, up_to_index: u64) -> Result<(), Error> {
+        let args = RemoveSmsMessagesArgs { up_to_index };
 
         let response = self
             .agent
-            .query(&canister_id, "remove_notifications")
+            .query(&canister_id, "remove_sms_messages")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
-        match Decode!(&response, RemoveNotificationsResponse)? {
-            RemoveNotificationsResponse::Success => Ok(()),
-            RemoveNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, RemoveSmsMessagesResponse)? {
+            RemoveSmsMessagesResponse::Success => Ok(()),
+            RemoveSmsMessagesResponse::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
@@ -85,29 +81,28 @@ impl IcAgent {
 }
 
 #[derive(CandidType)]
-pub struct GetNotificationsArgs {
-    from_notification_index: u64,
+struct GetSmsMessagesArgs {
+    from_index: u64,
 }
 
 #[derive(Deserialize)]
-pub enum GetNotificationsResponse {
-    Success(GetNotificationsSuccessResult),
+enum GetSmsMessagesResponse {
+    Success(GetSmsMessagesSuccessResult),
     NotAuthorized,
 }
 
 #[derive(Deserialize)]
-pub struct GetNotificationsSuccessResult {
-    pub notifications: Vec<IndexedEvent<Notification>>,
-    pub subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
+pub struct GetSmsMessagesSuccessResult {
+    pub messages: Vec<IndexedEvent<ConfirmationCodeSms>>,
 }
 
 #[derive(CandidType)]
-pub struct RemoveNotificationsArgs {
-    up_to_notification_index: u64,
+pub struct RemoveSmsMessagesArgs {
+    up_to_index: u64,
 }
 
 #[derive(Deserialize)]
-pub enum RemoveNotificationsResponse {
+pub enum RemoveSmsMessagesResponse {
     Success,
     NotAuthorized,
 }
