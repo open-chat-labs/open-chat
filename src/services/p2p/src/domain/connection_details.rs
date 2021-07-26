@@ -74,7 +74,7 @@ impl AllConnectionDetails {
         // If the reverse offer already exists, return that
         if let Occupied(e) = self.connection_details_per_user.entry(me.clone()) {
             if let Some(o) = e.get().iter().find_map(|c| match c {
-                ConnectionDetails::Offer(offer) => if &offer.from == &them { Some(offer) } else { None },
+                ConnectionDetails::Offer(offer) => if offer.from == them { Some(offer) } else { None },
                 _ => None
             }) {
                 return Some(OfferSummary {
