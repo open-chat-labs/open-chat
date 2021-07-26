@@ -1,36 +1,14 @@
-use super::send_message::Response::*;
-use crate::canister::RUNTIME_STATE;
 use crate::model::direct_chat::DirectChat;
 use crate::model::messages::PushMessageArgs;
-use crate::model::reply_context::ReplyContextInternal;
-use crate::model::runtime_state::RuntimeState;
+use crate::{RuntimeState, RUNTIME_STATE};
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-
-#[derive(Deserialize)]
-struct Args {
-    message_id: MessageId,
-    recipient: UserId,
-    content: MessageContent,
-    replies_to: Option<ReplyContextInternal>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    message_index: MessageIndex,
-    timestamp: TimestampMillis,
-}
+use user_canister::common::reply_context::ReplyContextInternal;
+use user_canister::updates::send_message::{Response::*, *};
 
 #[update]
 fn send_message(args: Args) -> Response {
@@ -49,7 +27,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let result = push_message(args.recipient, push_message_args, runtime_state);
 
-        let (canister_id, send_message_c2c_args) = args.into();
+        let (canister_id, send_message_c2c_args) = c2c::build_args(args);
         let send_to_recipient_canister_future = c2c::call(canister_id, send_message_c2c_args);
         ic_cdk::block_on(send_to_recipient_canister_future);
 
@@ -78,15 +56,10 @@ fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mu
 
 mod c2c {
     use super::*;
-    use crate::model::reply_context::ReplyContextInternal;
     use ic_cdk::api::call::CallResult;
     use shared::c2c::call_with_logging;
     use shared::rand::get_random_item;
     use shared::types::CanisterId;
-
-    pub async fn call(canister_id: CanisterId, args: Args) {
-        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_message_received", (args,)).await;
-    }
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
@@ -98,6 +71,20 @@ mod c2c {
     #[derive(CandidType, Deserialize)]
     pub enum Response {
         Success,
+    }
+
+    pub async fn call(canister_id: CanisterId, args: Args) {
+        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_message_received", (args,)).await;
+    }
+
+    pub fn build_args(args: super::Args) -> (CanisterId, Args) {
+        let c2c_args = Args {
+            message_id: args.message_id,
+            content: args.content,
+            replies_to: args.replies_to,
+        };
+
+        (args.recipient.into(), c2c_args)
     }
 
     #[update]
@@ -140,18 +127,6 @@ mod c2c {
 
         let _: CallResult<(PushDirectMessageNotificationResponse,)> =
             call_with_logging(canister_id, "push_direct_message_notification", (args,)).await;
-    }
-
-    impl From<super::Args> for (CanisterId, Args) {
-        fn from(args: super::Args) -> Self {
-            let c2c_args = Args {
-                message_id: args.message_id,
-                content: args.content,
-                replies_to: args.replies_to,
-            };
-
-            (args.recipient.into(), c2c_args)
-        }
     }
 }
 

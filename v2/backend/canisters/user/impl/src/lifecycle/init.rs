@@ -1,15 +1,11 @@
-use crate::canister::RUNTIME_STATE;
-use crate::model::data::Data;
-use crate::model::runtime_state::RuntimeState;
-use candid::Principal;
+use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
-use serde::Deserialize;
 use shared::env::canister::CanisterEnv;
 use shared::env::Environment;
-use shared::types::{CanisterId, Version};
+use user_canister::lifecycle::init::Args;
 
 #[init]
-fn init(args: InitArgs) {
+fn init(args: Args) {
     ic_cdk::setup();
 
     RUNTIME_STATE.with(|state| {
@@ -27,12 +23,4 @@ fn init(args: InitArgs) {
 
         *state.borrow_mut() = Some(runtime_state);
     });
-}
-
-#[derive(Deserialize)]
-struct InitArgs {
-    owner: Principal,
-    group_index_canister_id: CanisterId,
-    notification_canister_ids: Vec<CanisterId>,
-    wasm_version: Version,
 }

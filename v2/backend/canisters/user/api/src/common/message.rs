@@ -1,4 +1,4 @@
-use crate::model::reply_context::{ReplyContext, ReplyContextInternal};
+use crate::common::reply_context::{ReplyContext, ReplyContextInternal};
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
@@ -14,7 +14,7 @@ pub struct MessageInternal {
     pub replies_to: Option<ReplyContextInternal>,
 }
 
-#[derive(CandidType)]
+#[derive(CandidType, Deserialize)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,

@@ -1,7 +1,5 @@
-use super::create_group::Response::*;
-use crate::canister::RUNTIME_STATE;
 use crate::model::group_chat::GroupChat;
-use crate::model::runtime_state::RuntimeState;
+use crate::{RuntimeState, RUNTIME_STATE};
 use candid::{CandidType, Principal};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
@@ -10,26 +8,7 @@ use serde::Deserialize;
 use shared::c2c::call_with_logging;
 use shared::types::chat_id::GroupChatId;
 use shared::types::CanisterId;
-
-#[derive(Deserialize)]
-struct Args {
-    is_public: bool,
-    name: String,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    NameTaken,
-    Throttled,
-    InternalError,
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    pub group_chat_id: GroupChatId,
-}
+use user_canister::updates::create_group::{Response::*, *};
 
 #[update]
 async fn create_group(args: Args) -> Response {

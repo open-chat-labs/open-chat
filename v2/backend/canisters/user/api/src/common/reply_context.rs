@@ -10,20 +10,20 @@ pub struct ReplyContextInternal {
     pub message_index: MessageIndex,
 }
 
-#[derive(CandidType)]
+#[derive(CandidType, Deserialize)]
 pub enum ReplyContext {
     Standard(StandardReplyContext),
     Private(PrivateReplyContext),
 }
 
-#[derive(CandidType)]
+#[derive(CandidType, Deserialize)]
 pub struct StandardReplyContext {
     pub message_index: MessageIndex,
     pub sent_by_me: bool,
     pub content: MessageContent,
 }
 
-#[derive(CandidType)]
+#[derive(CandidType, Deserialize)]
 pub struct PrivateReplyContext {
     pub chat_id: GroupChatId,
     pub message_index: MessageIndex,

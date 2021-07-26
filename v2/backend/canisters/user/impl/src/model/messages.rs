@@ -1,9 +1,9 @@
-use crate::model::message::{Message, MessageInternal};
-use crate::model::reply_context::{PrivateReplyContext, ReplyContext, ReplyContextInternal, StandardReplyContext};
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex};
 use std::cmp::{max, min};
+use user_canister::common::message::{Message, MessageInternal};
+use user_canister::common::reply_context::{PrivateReplyContext, ReplyContext, ReplyContextInternal, StandardReplyContext};
 
 #[derive(Default)]
 pub struct Messages {

@@ -1,25 +1,9 @@
-use super::mark_read::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
+use crate::{RuntimeState, RUNTIME_STATE};
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
-use shared::types::{MessageIndex, UserId};
-
-#[derive(Deserialize)]
-struct Args {
-    user_id: UserId,
-    up_to_message_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-    SuccessNoChange,
-    ChatNotFound,
-    NotAuthorised,
-}
+use user_canister::updates::mark_read::{Response::*, *};
 
 #[update]
 fn mark_read(args: Args) -> Response {
@@ -38,7 +22,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 result = SuccessNoChange;
             }
 
-            let (canister_id, mark_read_c2c_args) = args.into();
+            let (canister_id, mark_read_c2c_args) = c2c::build_args(args);
             let send_to_recipient_canister_future = c2c::call(canister_id, mark_read_c2c_args);
             ic_cdk::block_on(send_to_recipient_canister_future);
 
@@ -53,14 +37,9 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 mod c2c {
     use super::*;
-    use crate::model::runtime_state::RuntimeState;
     use ic_cdk::api::call::CallResult;
     use shared::c2c::call_with_logging;
     use shared::types::{CanisterId, MessageIndex};
-
-    pub async fn call(canister_id: CanisterId, args: Args) {
-        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_mark_read", (args,)).await;
-    }
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
@@ -72,6 +51,18 @@ mod c2c {
         Success,
         SuccessNoChange,
         ChatNotFound,
+    }
+
+    pub async fn call(canister_id: CanisterId, args: Args) {
+        let _: CallResult<(Response,)> = call_with_logging(canister_id, "handle_mark_read", (args,)).await;
+    }
+
+    pub fn build_args(args: super::Args) -> (CanisterId, Args) {
+        let c2c_args = Args {
+            up_to_message_index: args.up_to_message_index,
+        };
+
+        (args.user_id.into(), c2c_args)
     }
 
     #[update]
@@ -92,16 +83,6 @@ mod c2c {
             }
         } else {
             Response::ChatNotFound
-        }
-    }
-
-    impl From<super::Args> for (CanisterId, Args) {
-        fn from(args: super::Args) -> Self {
-            let c2c_args = Args {
-                up_to_message_index: args.up_to_message_index,
-            };
-
-            (args.user_id.into(), c2c_args)
         }
     }
 }

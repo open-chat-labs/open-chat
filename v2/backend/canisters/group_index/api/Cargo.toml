@@ -9,6 +9,5 @@ edition = "2018"
 [dependencies]
 candid = "0.6.21"
 ic-cdk = "0.3.0"
-ic-cdk-macros = "0.3.0"
 serde = "1.0.126"
 shared = { path = "../../../shared" }

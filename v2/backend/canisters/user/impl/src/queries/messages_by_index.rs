@@ -1,30 +1,7 @@
-use crate::canister::RUNTIME_STATE;
-use crate::model::message::Message;
-use crate::model::runtime_state::RuntimeState;
-use crate::queries::messages_by_index::Response::*;
-use candid::CandidType;
+use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use serde::Deserialize;
 use shared::types::chat_id::DirectChatId;
-use shared::types::{MessageIndex, UserId};
-
-#[derive(Deserialize)]
-struct Args {
-    user_id: UserId,
-    messages: Vec<MessageIndex>,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success(SuccessResult),
-    ChatNotFound,
-    NotAuthorised,
-}
-
-#[derive(CandidType)]
-struct SuccessResult {
-    messages: Vec<Message>,
-}
+use user_canister::queries::messages_by_index::{Response::*, *};
 
 #[query]
 fn messages_by_index(args: Args) -> Response {
