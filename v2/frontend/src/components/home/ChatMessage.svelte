@@ -4,20 +4,19 @@
     import Link from "../Link.svelte";
     import SvelteMarkdown from "svelte-markdown";
     import { AvatarSize } from "../../domain/user/user";
+    import type { UserLookup, UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import Typing from "../Typing.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type { Message } from "../../domain/chat/chat";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
+    import type { ChatSummary, Message } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
-    import { createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -27,16 +26,27 @@
     import DoubleTick from "./DoubleTick.svelte";
     const dispatch = createEventDispatcher();
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let chatSummary: ChatSummary;
+    export let user: UserSummary | undefined;
     export let msg: Message;
     export let showStem: boolean;
+    export let me: boolean;
+    export let userLookup: UserLookup;
     let confirmed: boolean = true; // todo - where does this come from
     let read: boolean = true; // todo - where does this come from
+    let msgElement: HTMLElement;
 
-    $: me = $machine.context.user?.userId === msg.sender;
-    $: username = $machine.context.userLookup[msg.sender]?.username;
+    $: groupChat = chatSummary.kind === "group_chat";
+    $: username = userLookup[msg.sender]?.username;
     $: textContent = getContentAsText(msg.content);
-    $: groupChat = $machine.context.chatSummary.kind === "group_chat";
+    $: userStatus = getUserStatus(userLookup, msg.sender);
+
+    afterUpdate(() => {
+        // todo - this shows us that we have a rendering problem
+        // in the case where we navigate to a specific message it re-renders all
+        // messages *twice*
+        console.log("updating ChatMessage component");
+    });
 
     function chatWithUser() {
         dispatch("chatWith", msg.sender);
@@ -51,7 +61,11 @@
     }
 </script>
 
-<div class="chat-message-wrapper" class:me id={`message-${msg.messageIndex}`}>
+<div
+    bind:this={msgElement}
+    class="chat-message-wrapper"
+    class:me
+    id={`message-${msg.messageIndex}`}>
     <div class="chat-message" class:me class:showStem class:rtl={$rtlStore} class:focus>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
@@ -59,7 +73,7 @@
             </Link>
         {/if}
         {#if msg.repliesTo !== undefined}
-            <RepliesTo {machine} repliesTo={msg.repliesTo} />
+            <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
         <div class="content">
             <SvelteMarkdown source={textContent} />
@@ -105,10 +119,7 @@
     </div>
     {#if groupChat && !me}
         <span class="avatar">
-            <Avatar
-                url={avatarUrl(msg.sender)}
-                status={getUserStatus($machine.context.userLookup, msg.sender)}
-                size={AvatarSize.Small} />
+            <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Small} />
 
             <div class="typing">
                 <Typing />

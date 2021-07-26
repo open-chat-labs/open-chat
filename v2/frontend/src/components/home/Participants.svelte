@@ -2,14 +2,14 @@
     import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import Participant from "./Participant.svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { ChatMachine } from "../../fsm/chat.machine";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import type { PartialUserSummary } from "../../domain/user/user";
     import { elasticOut } from "svelte/easing";
+    import type { ParticipantsMachine } from "../../fsm/participants.machine";
     // import VirtualList from "../VirtualList.svelte";
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let machine: ActorRefFrom<ParticipantsMachine>;
 
     function close() {
         machine.send({ type: "HIDE_PARTICIPANTS" });

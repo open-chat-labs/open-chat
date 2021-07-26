@@ -5,9 +5,10 @@
     import HoverIcon from "../HoverIcon.svelte";
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let machine: ActorRefFrom<ParticipantsMachine>;
     import { _ } from "svelte-i18n";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
+    import type { ParticipantsMachine } from "../../fsm/participants.machine";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 

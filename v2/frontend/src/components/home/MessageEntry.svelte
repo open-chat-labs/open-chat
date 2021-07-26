@@ -39,9 +39,6 @@
     function sendMessage() {
         if (inp.textContent) {
             machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
-
-            // todo - this is not good enough
-            // machine.send({ type: "GO_TO_MESSAGE_INDEX", data: lastMessageIndex + 1 });
             inp.textContent = "";
         }
     }
@@ -67,9 +64,6 @@
         selection.removeAllRanges();
         selection.addRange(selectedRange);
     }
-
-    $: lastMessageIndex =
-        $machine.context.messages[$machine.context.messages.length - 1]?.messageIndex;
 
     $: {
         if ($emojiStore !== undefined) {

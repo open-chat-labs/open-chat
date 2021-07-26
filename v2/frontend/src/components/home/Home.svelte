@@ -17,6 +17,7 @@
     import { sineInOut } from "svelte/easing";
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import type { ParticipantsMachine } from "../../fsm/participants.machine";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -108,7 +109,9 @@
 
     $: x = $rtlStore ? -300 : 300;
 
-    $: showRight = selectedChatActor && $selectedChatActor.matches("showing_participants");
+    $: participantsMachine =
+        selectedChatActor &&
+        ($selectedChatActor.children.participantsMachine as ActorRefFrom<ParticipantsMachine>);
 </script>
 
 {#if $machine.context.user}
@@ -132,14 +135,14 @@
 {/if}
 
 {#if selectedChatActor !== undefined}
-    <Overlay active={showRight === true}>
-        {#if showRight === true && groupChat !== undefined}
+    <Overlay active={participantsMachine !== undefined}>
+        {#if participantsMachine !== undefined && groupChat !== undefined}
             <div
                 transition:fly={{ x, duration: 200, easing: sineInOut }}
                 class="right-wrapper"
                 class:rtl={$rtlStore}>
                 <RightPanel
-                    machine={selectedChatActor}
+                    machine={participantsMachine}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser} />
             </div>

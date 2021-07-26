@@ -100,6 +100,7 @@
         "xstate": "^4.20.0"
     },
     "jest": {
+        "testEnvironment": "jsdom",
         "transform": {
             "^.+\\.svelte$": [
                 "svelte-jester",

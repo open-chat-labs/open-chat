@@ -1,16 +1,19 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ReplyContext } from "../../domain/chat/chat";
-    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ChatSummary, ReplyContext } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
-    import type { ActorRefFrom } from "xstate";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
     import { getContentAsText } from "../../domain/chat/chat.utils";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
+    import type { UserLookup, UserSummary } from "../../domain/user/user";
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let chatSummary: ChatSummary;
+    export let user: UserSummary | undefined;
+    export let userLookup: UserLookup;
     export let repliesTo: ReplyContext;
 
     function sentByMe(replyContext: ReplyContext): boolean {
@@ -19,7 +22,7 @@
 
     function zoomToMessage() {
         if (repliesTo.kind === "direct_standard_reply_context") {
-            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
+            dispatch("goToMessage", repliesTo.messageIndex);
         }
 
         if (repliesTo.kind === "direct_private_reply_context") {
@@ -27,7 +30,7 @@
         }
 
         if (repliesTo.kind === "group_reply_context") {
-            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: repliesTo.messageIndex });
+            dispatch("goToMessage", repliesTo.messageIndex);
         }
     }
 
@@ -38,18 +41,15 @@
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
         if (replyContext.kind === "direct_standard_reply_context") {
             if (replyContext.sentByMe) {
-                return $machine.context.user!.username;
+                return user!.username;
             } else {
-                if ($machine.context.chatSummary.kind === "direct_chat") {
-                    return (
-                        $machine.context.userLookup[$machine.context.chatSummary.them]?.username ??
-                        $_("unknownUser")
-                    );
+                if (chatSummary.kind === "direct_chat") {
+                    return userLookup[chatSummary.them]?.username ?? $_("unknownUser");
                 }
             }
         }
         if (replyContext.kind === "group_reply_context") {
-            return $machine.context.userLookup[replyContext.userId]?.username ?? $_("unknownUser");
+            return userLookup[replyContext.userId]?.username ?? $_("unknownUser");
         }
         // for the private reply context - we do not currently have the message content or the userId - we need them both
         return "todo - someone else";

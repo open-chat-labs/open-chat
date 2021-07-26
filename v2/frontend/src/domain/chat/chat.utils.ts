@@ -13,6 +13,10 @@ import type {
     UpdatedGroupChatSummary,
     UpdatesResponse,
 } from "./chat";
+import { flatMap, groupWhile } from "../../utils/list";
+import { areOnSameDay } from "../../utils/date";
+
+const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -198,4 +202,35 @@ function mergeThings<A, U>(
         return dict;
     }, dict);
     return [...Object.values(updated), ...updates.added];
+}
+
+function sameUser(a: Message, b: Message): boolean {
+    return (
+        a.sender === b.sender &&
+        b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+    );
+}
+
+function groupBySender(messages: Message[]): Message[][] {
+    return groupWhile(sameUser, messages);
+}
+
+export function groupMessages(messages: Message[]): Message[][][] {
+    return groupWhile(sameDate, messages).map(groupBySender);
+}
+
+export function earliestLoadedMessageIndex(messages: Message[]): number | undefined {
+    return messages[0]?.messageIndex;
+}
+
+export function lastLoadedMessageIndex(messages: Message[]): number | undefined {
+    return messages[messages.length - 1]?.messageIndex;
+}
+
+export function identity<T>(x: T): T {
+    return x;
+}
+
+function sameDate(a: Message, b: Message): boolean {
+    return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
 }

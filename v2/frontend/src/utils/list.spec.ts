@@ -1,4 +1,4 @@
-import { groupWhile } from "./list";
+import { flatMap, groupWhile } from "./list";
 
 describe("list utils", () => {
     describe("group by", () => {
@@ -29,6 +29,26 @@ describe("list utils", () => {
         test("empty list", () => {
             const grouped = groupWhile((a: number, b: number) => a === b, []);
             expect(grouped.length).toEqual(0);
+        });
+    });
+
+    describe("flatMap", () => {
+        test("it works", () => {
+            const xs = [
+                {
+                    a: [1, 2, 3],
+                },
+                {
+                    a: [4, 5, 6],
+                },
+                {
+                    a: [7, 8, 9],
+                },
+            ];
+
+            const flat = flatMap(xs, (x) => x.a);
+
+            expect(flat).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
         });
     });
 });

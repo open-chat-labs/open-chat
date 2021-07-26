@@ -1,12 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, escalate, log, pure, send } from "xstate/lib/actions";
+import { createMachine, MachineConfig, MachineOptions } from "xstate";
+import { assign, pure } from "xstate/lib/actions";
 import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
-import { textMessage, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import {
+    earliestLoadedMessageIndex,
+    lastLoadedMessageIndex,
+    textMessage,
+    userIdsFromChatSummaries,
+} from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { userSearchMachine } from "./userSearch.machine";
+import { participantsMachine } from "./participants.machine";
+import { toastStore } from "../stores/toast";
 
 const PAGE_SIZE = 20;
 
@@ -36,17 +42,7 @@ export type ChatEvents =
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
-    | { type: "LOAD_MORE_MESSAGES" }
-    | { type: "CANCEL_ADD_PARTICIPANT" }
-    | { type: "REMOVE_PARTICIPANT"; data: string }
-    | { type: "DISMISS_AS_ADMIN"; data: string }
-    | { type: "HIDE_PARTICIPANTS" }
-    | { type: "done.invoke.removeParticipant"; data: LoadMessagesResponse }
-    | { type: "error.platform.removeParticipant"; data: Error }
-    | { type: "done.invoke.dismissAsAdmin"; data: LoadMessagesResponse }
-    | { type: "error.platform.dismissAsAdmin"; data: Error }
-    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
-    | { type: "error.platform.userSearchMachine"; data: Error };
+    | { type: "LOAD_PREVIOUS_MESSAGES" };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -94,16 +90,34 @@ export function earliestAvailableMessageIndex(ctx: ChatContext): number {
     return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleMessageIndex : 0;
 }
 
-export function earliestLoadedMessageIndex(ctx: ChatContext): number {
-    return ctx.messages[0]?.messageIndex ?? ctx.chatSummary.latestMessage?.messageIndex ?? 0;
-}
-
-export function lastLoadedMessageIndex(ctx: ChatContext): number | undefined {
-    return ctx.messages[ctx.messages.length - 1]?.messageIndex + 1;
+export function earliestIndex(ctx: ChatContext): number {
+    const earliestLoaded = earliestLoadedMessageIndex(ctx.messages);
+    if (earliestLoaded) {
+        return earliestLoaded - 1;
+    } else {
+        return ctx.chatSummary.latestMessage?.messageIndex ?? 0;
+    }
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
-    return earliestLoadedMessageIndex(ctx) > earliestAvailableMessageIndex(ctx);
+    return earliestIndex(ctx) >= earliestAvailableMessageIndex(ctx);
+}
+
+export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
+    const lastLoaded = lastLoadedMessageIndex(ctx.messages);
+    if (lastLoaded) {
+        const from = lastLoaded + 1;
+        const to = ctx.latestMessageIndex;
+        if (from === to || from >= to) {
+            // nothing that needs loading
+            return undefined;
+        } else {
+            return [from, to];
+        }
+    } else {
+        // this implies that we have not loaded any messages which should never happen
+        return undefined;
+    }
 }
 
 export function requiredMessageRange(
@@ -111,15 +125,16 @@ export function requiredMessageRange(
     ev: ChatEvents
 ): [number, number] | undefined {
     if (ev.type === "CHAT_UPDATED") {
-        const from = lastLoadedMessageIndex(ctx) ?? ctx.latestMessageIndex - PAGE_SIZE;
-        const to = ctx.latestMessageIndex;
-        return from === to ? undefined : [from, to];
+        return newMessagesRange(ctx);
     }
-    const earliestLoaded = earliestLoadedMessageIndex(ctx);
-    const earliestRequired =
-        ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : earliestLoaded - PAGE_SIZE;
-    const lookupRequired = earliestRequired < earliestLoaded && moreMessagesAvailable(ctx);
-    return lookupRequired ? [earliestRequired, earliestLoaded] : undefined;
+
+    // in all other cases we are getting previous messages
+    // to is always the earliest we have - 1 || the last index if we don't have any
+    // from depends on whether there is a focus index
+    const to = earliestIndex(ctx);
+    const from = ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
+    const lookupRequired = from < to && moreMessagesAvailable(ctx);
+    return lookupRequired ? [from, to] : undefined;
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
@@ -145,23 +160,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                         : messagesResponse.latestMessageIndex,
             };
         },
-        removeParticipant: (_ctx, _ev) => {
-            // todo - what do we do if this fails given that we have already optimistically removed it?
-            // perhaps we have to keep track of the participant that we are trying to delete so that we can
-            // re-insert if it fails
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 1000);
-            });
-        },
-        dismissAsAdmin: (_ctx, _ev) => {
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 1000);
-            });
-        },
     },
     actions: {
         assignMessagesResponse: assign((ctx, ev) =>
@@ -178,214 +176,62 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     },
 };
 
-/**
- * Parallel
- * ========
- *
- * loading_new_messages
- *      loading
- *      idle
- *      error
- *
- * ui-states (better name?)
- *      loading_previous_messages
- *          loading
- *          idle
- *          error
- *
- *      sending_message
- *
- *      showing_participants
- *          substates
- *
- *      selecting_emojii
- */
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
     id: "chat_machine",
-    initial: "loading_messages",
-    on: {
-        CHAT_UPDATED: [
-            {
-                // todo problem - this is going to disrupt the UI if we are viewing participants
-                // we probably need another state sideloading_messages or something
-                target: "loading_messages",
-                actions: assign((_, ev) => {
-                    console.log("assigning latest stuff: ", ev.data.latestMessage?.messageIndex);
-                    return {
-                        chatSummary: ev.data,
-                        latestMessageIndex: ev.data.latestMessage?.messageIndex ?? 0,
-                    };
-                }),
-            },
-        ],
-    },
+    type: "parallel",
     states: {
-        idle: {
-            entry: log("entering the chat machine"),
-        },
-        loading_messages: {
-            invoke: {
-                id: "loadMessagesAndUsers",
-                src: "loadMessagesAndUsers",
-                onDone: {
-                    target: "loaded_messages",
-                    actions: "assignMessagesResponse",
-                },
-                onError: {
-                    target: "unexpected_error",
-                    actions: assign({
-                        error: (_, { data }) => data,
+        loading_new_messages: {
+            meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
+            initial: "idle",
+            on: {
+                CHAT_UPDATED: {
+                    target: ".loading",
+                    internal: true,
+                    actions: assign((_, ev) => {
+                        return {
+                            chatSummary: ev.data,
+                            latestMessageIndex: ev.data.latestMessage?.messageIndex ?? 0,
+                        };
                     }),
                 },
             },
-        },
-        showing_participants: {
-            entry: log("entering showing_particitants"),
-            initial: "idle",
-            on: {
-                HIDE_PARTICIPANTS: "loaded_messages",
-                REMOVE_PARTICIPANT: ".removing_participant",
-                DISMISS_AS_ADMIN: ".dismissing_participant",
-                ADD_PARTICIPANT: ".adding_participant",
-            },
             states: {
                 idle: {},
-                adding_participant: {
-                    on: {
-                        CANCEL_ADD_PARTICIPANT: "idle",
-                        "error.platform.userSearchMachine": "..unexpected_error",
-                    },
+                loading: {
                     invoke: {
-                        id: "userSearchMachine",
-                        src: userSearchMachine,
-                        data: (ctx, _) => {
-                            return {
-                                serviceContainer: ctx.serviceContainer,
-                                searchTerm: "",
-                                users: [],
-                                error: undefined,
-                            };
-                        },
+                        id: "loadMessagesAndUsers",
+                        src: "loadMessagesAndUsers",
                         onDone: {
                             target: "idle",
-                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
-                                    // todo - we will need to make some subsequent call to actually add the user to the group properly
-                                    console.log("selected user from search machine: ", ev.data);
-                                    return {
-                                        userLookup: {
-                                            ...ctx.userLookup,
-                                            [ev.data.userId]: ev.data,
-                                        },
-                                        chatSummary: {
-                                            ...ctx.chatSummary,
-                                            participants: [
-                                                { userId: ev.data.userId, role: "standard" },
-                                                ...ctx.chatSummary.participants,
-                                            ],
-                                        },
-                                    };
-                                }
-                                return {};
-                            }),
+                            actions: "assignMessagesResponse",
                         },
                         onError: {
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
-                            ],
-                        },
-                    },
-                },
-                dismissing_participant: {
-                    invoke: {
-                        id: "dismissAsAdmin",
-                        src: "dismissAsAdmin",
-                        onDone: {
-                            target: "idle",
-                        },
-                        onError: {
-                            target: "..unexpected_error",
+                            target: "error",
                             actions: assign({
                                 error: (_, { data }) => data,
                             }),
                         },
                     },
                 },
-                removing_participant: {
-                    entry: assign((ctx, ev) => {
-                        if (
-                            ctx.chatSummary.kind === "group_chat" &&
-                            ev.type === "REMOVE_PARTICIPANT"
-                        ) {
-                            return {
-                                chatSummary: {
-                                    ...ctx.chatSummary,
-                                    participants: ctx.chatSummary.participants.filter(
-                                        (p) => p.userId !== ev.data
-                                    ),
-                                },
-                            };
-                        }
-                        return {};
-                    }),
-                    invoke: {
-                        id: "removeParticipant",
-                        src: "removeParticipant",
-                        onDone: {
-                            target: "idle",
-                        },
-                        onError: {
-                            // todo - need to make sure that this actually works - I'm not sure it does
-                            actions: escalate((_, { data }) => data),
-                        },
-                    },
+                error: {
+                    //todo - what does this do?
                 },
             },
         },
-        sending_message: {
-            entry: assign((ctx, ev) => {
-                if (ev.type === "SEND_MESSAGE") {
-                    // todo - this is obvious a huge simplification at the moment
-                    const messageIndex =
-                        ctx.messages.length === 0
-                            ? 0
-                            : ctx.messages[ctx.messages.length - 1].messageIndex + 1;
-                    return {
-                        messages: [
-                            ...ctx.messages,
-                            {
-                                ...textMessage(ctx.user!.userId, ev.data),
-                                messageIndex,
-                            },
-                        ],
-                    };
-                }
-                return {};
-            }),
-            after: {
-                // simulate the actual api call delay
-                // todo - this will cause us to skip messages that are entered if they are < 2000 ms since the last
-                // one. Don't worry about that for now.
-                2000: "loaded_messages",
-            },
-        },
-        loaded_messages: {
+        user_states: {
+            meta: "This is a parent state for all states that the user cares about or the UI should reflect",
+            initial: "loading_previous_messages",
             on: {
-                SEND_MESSAGE: "sending_message",
-                SHOW_PARTICIPANTS: "showing_participants",
-                ADD_PARTICIPANT: "showing_participants.adding_participant",
-                LOAD_MORE_MESSAGES: "loading_messages",
+                SEND_MESSAGE: ".sending_message",
+                SHOW_PARTICIPANTS: ".showing_participants",
+                ADD_PARTICIPANT: ".showing_participants",
+                LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({ focusIndex: undefined })),
                 },
                 GO_TO_MESSAGE_INDEX: {
-                    target: "loading_messages",
+                    target: ".loading_previous_messages",
                     actions: assign((_, ev) => {
                         return {
                             focusIndex: ev.data,
@@ -393,16 +239,95 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     }),
                 },
             },
-        },
-        unexpected_error: {
-            // todo - not sure what we do when we end up here?
-            // log the error I suppose at least
-            // error handling in general needs a bit of thought.
-            // It doesn't feel quite right at the moment.
-            // should be anything unexpected bubbles all the way to the top
-            // and we see the generic error UI.
-            // currently we will only see the generic UI if the identity machine is in the unexpected_error state
-            // I don't think errors will bubble like that. We need to handle them a lot more carefully.
+            states: {
+                idle: { id: "ui_idle" },
+                loading_previous_messages: {
+                    initial: "loading",
+                    // when we load previous messages we always want to load
+                    // some range from the earliest we currently have back to some
+                    // index n where n is either the earliest index there is or
+                    // it is the index we want
+                    // we load previous messsages in one of three scenarios
+                    // 1) when first spawning the machine
+                    // 2) when the user scrolls up and there are more messages
+                    // 3) when the user clicks on a reply and we want to scroll back to that reply
+                    meta: "Triggered by selecting a chat, scrolling up, or by clicking a link to a previous message",
+                    states: {
+                        idle: {},
+                        loading: {
+                            invoke: {
+                                id: "loadMessagesAndUsers",
+                                src: "loadMessagesAndUsers",
+                                onDone: {
+                                    target: "#ui_idle",
+                                    actions: "assignMessagesResponse",
+                                },
+                                onError: {
+                                    target: "error",
+                                    actions: assign({
+                                        error: (_, { data }) => data,
+                                    }),
+                                },
+                            },
+                        },
+                        error: {
+                            entry: pure((ctx, _) => {
+                                toastStore.showFailureToast(ctx.error?.stack ?? "error");
+                                return undefined;
+                            }),
+                        },
+                    },
+                },
+                sending_message: {
+                    entry: assign((ctx, ev) => {
+                        if (ev.type === "SEND_MESSAGE") {
+                            // todo - this is obvious a huge simplification at the moment
+                            const messageIndex = lastLoadedMessageIndex(ctx.messages) ?? 0;
+                            return {
+                                messages: [
+                                    ...ctx.messages,
+                                    {
+                                        ...textMessage(ctx.user!.userId, ev.data),
+                                        messageIndex,
+                                    },
+                                ],
+                            };
+                        }
+                        return {};
+                    }),
+                    after: {
+                        // simulate the actual api call delay
+                        // todo - this will cause us to skip messages that are entered if they are < 2000 ms since the last
+                        // one. Don't worry about that for now.
+                        2000: "idle",
+                    },
+                },
+                showing_participants: {
+                    invoke: {
+                        id: "participantsMachine",
+                        src: participantsMachine,
+                        data: (ctx, ev) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                                chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
+                                userLookup: ctx.userLookup,
+                                add: ev.type === "ADD_PARTICIPANT",
+                                user: ctx.user,
+                                error: undefined,
+                            };
+                        },
+                        onDone: {
+                            // todo - do we need to pass back the updated chat summary and merge it maybe?
+                            target: "#ui_idle",
+                        },
+                        onError: {
+                            // todo - can this really *fail* or would we just deal with it in the sub machine?
+                            target: "#ui_idle",
+                        },
+                    },
+                },
+                selecting_emojii: {},
+            },
         },
     },
 };

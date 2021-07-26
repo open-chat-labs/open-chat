@@ -8,21 +8,19 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import Loading from "../Loading.svelte";
-    import type { Message } from "../../domain/chat/chat";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { groupWhile } from "../../utils/list";
     import {
         addDays,
-        areOnSameDay,
         getStartOfToday,
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
+    import type { Message } from "../../domain/chat/chat";
+    import { groupMessages } from "../../domain/chat/chat.utils";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
-    const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -70,22 +68,18 @@
     }
 
     function onScroll() {
-        if ($machine.matches("loaded_messages")) {
+        if ($machine.matches({ user_states: "idle" })) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
                 moreMessagesAvailable($machine.context)
             ) {
-                machine.send({ type: "LOAD_MORE_MESSAGES" });
+                machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
             }
             fromBottom =
                 messagesDiv.scrollHeight -
                 Math.abs(messagesDiv.scrollTop) -
                 messagesDiv.clientHeight;
         }
-    }
-
-    function sameDate(a: Message, b: Message): boolean {
-        return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
     }
 
     function formatDate(timestamp: bigint): string {
@@ -103,19 +97,21 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
-    function sameUser(a: Message, b: Message): boolean {
+    function finishedLoadingPreviousMessages() {
         return (
-            a.sender === b.sender &&
-            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            $machine.matches({ user_states: "idle" }) &&
+            $machine.history !== undefined &&
+            $machine.history.matches({ user_states: "loading_previous_messages" })
         );
     }
 
-    function groupBySender(messages: Message[]): Message[][] {
-        return groupWhile(sameUser, messages);
-    }
-
-    function groupMessages(messages: Message[]): Message[][][] {
-        return groupWhile(sameDate, messages).map(groupBySender);
+    function shouldShowNewMessages() {
+        return (
+            $machine.matches({ loading_new_messages: "idle" }) &&
+            $machine.history !== undefined &&
+            $machine.history.matches({ loading_new_messages: "loading" }) &&
+            fromBottom < FROM_BOTTOM_THRESHOLD
+        );
     }
 
     $: groupedMessages = groupMessages($machine.context.messages);
@@ -129,46 +125,59 @@
                 initialised = false;
             }
 
-            if ($machine.matches("loaded_messages")) {
-                // capture the current scrollheight and scrollTop just before the new messages get rendered
-                if (messagesDiv) {
-                    scrollHeight = messagesDiv.scrollHeight;
-                    scrollTop = messagesDiv.scrollTop;
-                }
+            if (finishedLoadingPreviousMessages()) {
                 tick().then(resetScroll);
             }
 
-            if ($machine.matches("sending_message")) {
+            if (shouldShowNewMessages()) {
                 tick().then(() => scrollBottom());
+            }
+
+            if ($machine.matches({ user_states: "sending_messages" })) {
+                tick().then(() => scrollBottom());
+            }
+
+            // capture the current scrollheight and scrollTop just before the new messages get rendered
+            if (messagesDiv) {
+                scrollHeight = messagesDiv.scrollHeight;
+                scrollTop = messagesDiv.scrollTop;
             }
 
             previous = $machine;
         }
     }
 
-    // message grouping by date and user
-    // then we need to figure out side loading new messages via polling
-    // then we need to figure out loading new messages when we see the index has increased
+    function goToMessage(ev: CustomEvent<number>) {
+        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
+    }
+
+    function dateGroupKey(group: Message[][]): string {
+        const first = group[0] && group[0][0] && group[0][0].timestamp;
+        return first ? new Date(Number(first)).toDateString() : "unknown";
+    }
+
     // then we need to integrate web rtc
-    // message replies
-    // jump to private reply from a group chat
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
-    {#if $machine.matches("loading_messages")}
+    {#if $machine.matches({ user_states: "loading_previous_messages" })}
         <div class="spinner">
             <Loading />
         </div>
     {/if}
-    {#each groupedMessages as dayGroup}
+    {#each groupedMessages as dayGroup, di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">{formatDate(dayGroup[0][0]?.timestamp)}</div>
-            {#each dayGroup as userGroup}
+            {#each dayGroup as userGroup, ui (ui)}
                 {#each userGroup as msg, i (msg.messageIndex)}
                     <ChatMessage
+                        chatSummary={$machine.context.chatSummary}
+                        user={$machine.context.user}
+                        me={$machine.context.user?.userId === msg.sender}
                         showStem={i + 1 === userGroup.length}
+                        userLookup={$machine.context.userLookup}
                         on:chatWith
-                        {machine}
+                        on:goToMessage={goToMessage}
                         {msg} />
                 {/each}
             {/each}

@@ -19,3 +19,10 @@ export function groupWhile<T>(predicate: (a1: T, a2: T) => boolean, items: T[]):
     );
     return grouped;
 }
+
+export function flatMap<A, B>(things: A[], fn: (thing: A) => B[]): B[] {
+    return things.reduce((agg, thing) => {
+        agg.push(...fn(thing));
+        return agg;
+    }, [] as B[]);
+}

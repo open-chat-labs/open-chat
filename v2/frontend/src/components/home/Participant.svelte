@@ -14,10 +14,10 @@
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { ChatMachine } from "../../fsm/chat.machine";
+    import type { ParticipantsMachine } from "../../fsm/participants.machine";
     const dispatch = createEventDispatcher();
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let machine: ActorRefFrom<ParticipantsMachine>;
     export let participant: PartialUserSummary;
 
     function removeUser() {
