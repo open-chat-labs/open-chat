@@ -1,5 +1,5 @@
-use crate::model::subscription::{Subscription, SubscriptionInfo};
 use candid::CandidType;
+use notifications_canister::common::subscription::{Subscription, SubscriptionInfo};
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::UserId;
@@ -46,8 +46,8 @@ impl Subscriptions {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::subscription::SubscriptionKeys;
     use candid::Principal;
+    use notifications_canister::common::subscription::SubscriptionKeys;
 
     #[test]
     fn push_new_subscriptions() {

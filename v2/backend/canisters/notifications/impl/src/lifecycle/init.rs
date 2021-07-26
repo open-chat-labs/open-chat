@@ -1,18 +1,10 @@
-use crate::canister::RUNTIME_STATE;
-use crate::model::data::Data;
-use crate::model::runtime_state::RuntimeState;
-use candid::Principal;
+use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
-use serde::Deserialize;
+use notifications_canister::lifecycle::init::Args;
 use shared::env::canister::CanisterEnv;
 
-#[derive(Deserialize)]
-struct InitArgs {
-    push_service_principals: Vec<Principal>,
-}
-
 #[init]
-fn init(args: InitArgs) {
+fn init(args: Args) {
     ic_cdk::setup();
 
     RUNTIME_STATE.with(|state| {

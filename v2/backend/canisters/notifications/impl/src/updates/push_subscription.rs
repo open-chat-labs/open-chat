@@ -1,22 +1,6 @@
-use super::push_subscription::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
-use crate::model::subscription::SubscriptionInfo;
-use candid::CandidType;
+use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use serde::Deserialize;
-use shared::types::UserId;
-
-#[derive(Deserialize)]
-struct Args {
-    user_id: UserId,
-    subscription: SubscriptionInfo,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-}
+use notifications_canister::updates::push_subscription::{Response::*, *};
 
 #[update]
 fn push_subscription(args: Args) -> Response {

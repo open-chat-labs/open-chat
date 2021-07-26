@@ -1,20 +1,6 @@
-use super::remove_notifications::Response::*;
-use crate::canister::RUNTIME_STATE;
-use crate::model::runtime_state::RuntimeState;
-use candid::CandidType;
+use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct Args {
-    up_to_notification_index: u64,
-}
-
-#[derive(CandidType)]
-enum Response {
-    Success,
-    NotAuthorized,
-}
+use notifications_canister::updates::remove_notifications::{Response::*, *};
 
 #[update]
 fn remove_notifications(args: Args) -> Response {
