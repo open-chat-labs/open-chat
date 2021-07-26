@@ -5,6 +5,7 @@ use candid::{CandidType, Principal};
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
+use shared::canisters::canister_wasm::CanisterWasm;
 use shared::types::chat_id::GroupChatId;
 use shared::types::{UserId, Version};
 
@@ -33,10 +34,11 @@ async fn create_private_group(args: Args) -> Response {
     };
 
     let wasm_arg = candid::encode_one(canister_args.init_canister_arg).unwrap();
-    match canisters::create::call(None, canister_args.canister_wasm_module, wasm_arg).await {
+    match canisters::create::call(None, canister_args.canister_wasm.module, wasm_arg).await {
         Ok(canister_id) => {
             let group_id = canister_id.into();
-            RUNTIME_STATE.with(|state| commit(group_id, state.borrow_mut().as_mut().unwrap()));
+            let wasm_version = canister_args.canister_wasm.version;
+            RUNTIME_STATE.with(|state| commit(group_id, wasm_version, state.borrow_mut().as_mut().unwrap()));
             Success(SuccessResult { group_id })
         }
         Err(_) => {
@@ -47,7 +49,7 @@ async fn create_private_group(args: Args) -> Response {
 }
 
 struct CreateCanisterArgs {
-    canister_wasm_module: Vec<u8>,
+    canister_wasm: CanisterWasm,
     init_canister_arg: InitGroupCanisterArgs,
 }
 
@@ -59,18 +61,21 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
         name: args.name.clone(),
         created_by_principal: args.creator_principal,
         created_by_user_id: user_id,
-        wasm_version: canister_wasm.version,
+        wasm_version: canister_wasm.version.clone(),
     };
 
     Ok(CreateCanisterArgs {
-        canister_wasm_module: canister_wasm.module,
+        canister_wasm,
         init_canister_arg,
     })
 }
 
-fn commit(group_id: GroupChatId, runtime_state: &mut RuntimeState) {
+fn commit(group_id: GroupChatId, wasm_version: Version, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    runtime_state.data.private_groups.handle_group_created(group_id, now);
+    runtime_state
+        .data
+        .private_groups
+        .handle_group_created(group_id, now, wasm_version);
 }
 
 #[derive(CandidType)]

@@ -1,6 +1,7 @@
 use crate::model::group_info::PublicGroupInfo;
 use shared::time::TimestampMillis;
 use shared::types::chat_id::GroupChatId;
+use shared::types::Version;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 
@@ -34,9 +35,15 @@ impl PublicGroups {
         }
     }
 
-    pub fn handle_group_created(&mut self, group_id: GroupChatId, name: String, now: TimestampMillis) -> bool {
+    pub fn handle_group_created(
+        &mut self,
+        group_id: GroupChatId,
+        name: String,
+        now: TimestampMillis,
+        wasm_version: Version,
+    ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(group_id, name.clone(), now);
+            let group_info = PublicGroupInfo::new(group_id, name.clone(), now, wasm_version);
 
             self.name_to_id_map.insert(name, group_id);
             self.groups.insert(group_id, group_info);

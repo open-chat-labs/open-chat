@@ -7,6 +7,7 @@ use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::canisters;
+use shared::canisters::canister_wasm::CanisterWasm;
 use shared::canisters::create::CreateCanisterError;
 use shared::types::{CanisterId, Version};
 
@@ -38,12 +39,12 @@ async fn create_canister(_args: Args) -> Response {
     // If the create previously succeeded but the install failed then pass in the canister_id
     // and skip canister creation
     let wasm_arg = candid::encode_one(init_ok.init_canister_args).unwrap();
-    let wasm_version = init_ok.canister_wasm_version;
-    match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm_module, wasm_arg).await {
+    match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
+            let wasm_version = init_ok.canister_wasm.version;
             RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap(), canister_id, wasm_version));
             Response::Success(canister_id)
         }
@@ -63,8 +64,7 @@ async fn create_canister(_args: Args) -> Response {
 
 struct InitOk {
     canister_id: Option<CanisterId>,
-    canister_wasm_module: Vec<u8>,
-    canister_wasm_version: Version,
+    canister_wasm: CanisterWasm,
     init_canister_args: InitUserCanisterArgs,
 }
 
@@ -83,7 +83,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                     user.set_canister_creation_status(CanisterCreationStatus::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
-                            let canister_wasm = &runtime_state.data.user_wasm;
+                            let canister_wasm = runtime_state.data.user_wasm.clone();
                             let init_canister_args = InitUserCanisterArgs {
                                 owner: user_principal,
                                 notification_canister_ids: Vec::new(),
@@ -91,8 +91,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                             };
                             return Ok(InitOk {
                                 canister_id,
-                                canister_wasm_module: canister_wasm.module.clone(),
-                                canister_wasm_version: canister_wasm.version.clone(),
+                                canister_wasm,
                                 init_canister_args,
                             });
                         }
