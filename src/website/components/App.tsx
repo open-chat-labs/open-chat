@@ -63,6 +63,7 @@ function App() {
     const viewMode = useSelector((state: RootState) => state.appState.viewMode);
 
     useEffect(() => {
+        registerServiceWorker();
         dispatch(aboutUs());
     }, []);
 

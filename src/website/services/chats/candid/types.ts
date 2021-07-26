@@ -1,4 +1,4 @@
-import type { Principal } from '@dfinity/agent';
+import type { Principal } from '@dfinity/principal';
 export type AddParticipantsResponse = {
     'PartialSuccess' : { 'count_added' : number, 'blocked' : Array<UserId> }
   } |
@@ -14,13 +14,13 @@ export interface CreateGroupChatRequest {
   'subject' : string,
   'chat_history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
-};
+}
 export type CreateGroupChatResponse = { 'SubjectTooLong' : number } |
   { 'SubjectTooShort' : number } |
   { 'TooManyParticipants' : number } |
   { 'ChatAlreadyExists' : null } |
   { 'Success' : GroupChatSummary };
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint };
+export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export type DeleteGroupResponse = { 'ChatNotFound' : null } |
   { 'NotGroupChat' : null } |
   { 'Success' : null } |
@@ -34,7 +34,7 @@ export interface DirectChatSummary {
   'unread_by_them_message_id_ranges' : Array<Array<number>>,
   'latest_messages' : Array<Message>,
   'unread_by_me_message_id_ranges' : Array<Array<number>>,
-};
+}
 export interface FileContent {
   'blob_size' : number,
   'blob_id' : string,
@@ -43,11 +43,11 @@ export interface FileContent {
   'caption' : [] | [string],
   'chunk_size' : number,
   'blob_deleted' : boolean,
-};
+}
 export interface GetChatsRequest {
   'message_count_for_top_chat' : [] | [number],
   'updated_since' : [] | [Timestamp],
-};
+}
 export type GetChatsResponse = { 'Success' : Array<ChatSummary> };
 export type GetMessagesByIdResponse = { 'ChatNotFound' : null } |
   { 'Success' : GetMessagesResult };
@@ -56,16 +56,17 @@ export type GetMessagesResponse = { 'ChatNotFound' : null } |
 export interface GetMessagesResult {
   'messages' : Array<Message>,
   'latest_message_id' : number,
-};
+}
 export interface GetUpdatesRequest {
   'message_count_for_top_chat' : [] | [number],
   'updated_since' : [] | [Timestamp],
-};
+}
 export type GetUpdatesResponse = { 'Success' : GetUpdatesResult };
 export interface GetUpdatesResult {
+  'notification_status' : NotificationStatus,
   'chats' : Array<ChatSummary>,
   'blocked_users' : Array<UserId>,
-};
+}
 export interface GroupChatSummary {
   'id' : ChatId,
   'participants' : Array<UserId>,
@@ -76,7 +77,7 @@ export interface GroupChatSummary {
   'latest_messages' : Array<Message>,
   'unread_by_me_message_id_ranges' : Array<Array<number>>,
   'unread_by_any_message_id_ranges' : Array<Array<number>>,
-};
+}
 export type JoinGroupResponse = { 'AlreadyInGroup' : null } |
   { 'UserLimitReached' : null } |
   { 'ChatNotFound' : null } |
@@ -91,7 +92,7 @@ export type MarkReadResponse = { 'ChatNotFound' : null } |
   { 'Success' : MarkReadResult };
 export interface MarkReadResult {
   'unread_message_id_ranges' : Array<Array<number>>,
-};
+}
 export interface MediaContent {
   'height' : number,
   'blob_size' : number,
@@ -102,7 +103,7 @@ export interface MediaContent {
   'width' : number,
   'chunk_size' : number,
   'blob_deleted' : boolean,
-};
+}
 export interface Message {
   'id' : number,
   'content' : MessageContent,
@@ -110,11 +111,14 @@ export interface Message {
   'timestamp' : Timestamp,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
-};
+}
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Media' : MediaContent } |
   { 'Cycles' : CyclesContent };
+export type NotificationStatus = { 'Enabled' : null } |
+  { 'Disabled' : null } |
+  { 'Unknown' : null };
 export type RemoveParticipantResponse = { 'CannotRemoveSelfFromChat' : null } |
   { 'ParticipantNotFound' : null } |
   { 'ChatNotFound' : null } |
@@ -126,21 +130,18 @@ export interface ReplyContext {
   'user_id' : UserId,
   'chat_id' : ChatId,
   'message_id' : number,
-};
+}
 export type SearchAllMessagesResponse = { 'Success' : SearchAllMessagesResult };
 export interface SearchAllMessagesResult {
   'matches' : Array<SearchMessagesMatch>,
-};
-export interface SearchMessagesMatch {
-  'message' : Message,
-  'chat_id' : ChatId,
-};
+}
+export interface SearchMessagesMatch { 'message' : Message, 'chat_id' : ChatId }
 export interface SendDirectMessageRequest {
   'content' : MessageContent,
   'recipient' : UserId,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
-};
+}
 export type SendDirectMessageResponse = { 'BalanceExceeded' : null } |
   { 'Success' : SendDirectMessageResult } |
   { 'RecipientBlocked' : null } |
@@ -153,13 +154,13 @@ export interface SendDirectMessageResult {
   'timestamp' : Timestamp,
   'message_id' : number,
   'chat_summary' : DirectChatSummary,
-};
+}
 export interface SendMessageRequest {
   'content' : MessageContent,
   'chat_id' : ChatId,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
-};
+}
 export type SendMessageResponse = { 'ChatNotFound' : null } |
   { 'Success' : SendMessageResult } |
   { 'RecipientBlocked' : null } |
@@ -170,7 +171,7 @@ export interface SendMessageResult {
   'timestamp' : Timestamp,
   'message_id' : number,
   'chat_summary' : ChatSummary,
-};
+}
 export interface Stats {
   'cycles_balance' : bigint,
   'chunk_bytes' : bigint,
@@ -187,11 +188,11 @@ export interface Stats {
   'cycles_transferred' : bigint,
   'pruneable_message_count' : number,
   'video_message_count' : bigint,
-};
-export interface TextContent { 'text' : string };
+}
+export interface TextContent { 'text' : string }
 export type Timestamp = bigint;
 export type UserId = Principal;
-export default interface _SERVICE {
+export interface _SERVICE {
   'add_participants' : (arg_0: ChatId, arg_1: Array<UserId>) => Promise<
       AddParticipantsResponse
     >,
@@ -227,5 +228,6 @@ export default interface _SERVICE {
       SendDirectMessageResponse
     >,
   'send_message' : (arg_0: SendMessageRequest) => Promise<SendMessageResponse>,
+  'set_user_notification_status' : (arg_0: boolean) => Promise<undefined>,
   'stats' : () => Promise<Stats>,
-};
+}

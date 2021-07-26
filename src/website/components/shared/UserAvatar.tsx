@@ -5,7 +5,7 @@ import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import UnknownUserAvatar from "../../assets/icons/unknownUserAvatar.svg";
+import UnknownUserAvatar from "../../icons/unknownUserAvatar.svg";
 import { Option } from "../../domain/model/common";
 import dataService, { DataSource, GetDataResponse } from "../../services/data/CachingDataService";
 import { UserId } from "../../domain/model/users";

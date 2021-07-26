@@ -1,1 +1,0 @@
-console.log("OpenChat service worker reigistered");
