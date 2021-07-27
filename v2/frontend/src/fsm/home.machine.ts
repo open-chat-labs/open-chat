@@ -315,8 +315,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                       }
                                                     : undefined,
                                                 messages: [],
-                                                latestMessageIndex:
-                                                    chatSummary.latestMessage?.messageIndex ?? 0,
                                                 focusIndex: ev.data.messageIndex
                                                     ? Number(ev.data.messageIndex)
                                                     : undefined,

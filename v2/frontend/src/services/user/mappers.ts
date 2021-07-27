@@ -34,7 +34,6 @@ export function getMessagesResponse(candid: ApiMessagesResponse): MessagesRespon
     if ("Success" in candid) {
         return {
             messages: candid.Success.messages.map(message),
-            latestMessageIndex: candid.Success.latest_message_index,
         };
     }
     if ("ChatNotFound" in candid) {

@@ -223,8 +223,12 @@ export function earliestLoadedMessageIndex(messages: Message[]): number | undefi
     return messages[0]?.messageIndex;
 }
 
-export function lastLoadedMessageIndex(messages: Message[]): number | undefined {
+export function latestLoadedMessageIndex(messages: Message[]): number | undefined {
     return messages[messages.length - 1]?.messageIndex;
+}
+
+export function latestAvailableMessageIndex(chatSummary: ChatSummary): number | undefined {
+    return chatSummary.latestMessage?.messageIndex;
 }
 
 export function identity<T>(x: T): T {

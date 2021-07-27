@@ -147,6 +147,7 @@
             if ($machine.context.chatSummary.chatId !== currentChatId) {
                 currentChatId = $machine.context.chatSummary.chatId;
                 initialised = false;
+                tick().then(resetScroll);
             }
 
             if (finishedLoadingPreviousMessages()) {
@@ -154,11 +155,11 @@
             }
 
             if (shouldShowNewMessages()) {
-                tick().then(() => scrollBottom());
+                tick().then(() => scrollBottom("smooth"));
             }
 
-            if ($machine.matches({ user_states: "sending_messages" })) {
-                tick().then(() => scrollBottom());
+            if ($machine.matches({ user_states: "sending_message" })) {
+                tick().then(() => scrollBottom("smooth"));
             }
 
             // capture the current scrollheight and scrollTop just before the new messages get rendered

@@ -4,7 +4,8 @@ import { assign, pure } from "xstate/lib/actions";
 import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
 import {
     earliestLoadedMessageIndex,
-    lastLoadedMessageIndex,
+    latestAvailableMessageIndex,
+    latestLoadedMessageIndex,
     textMessage,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
@@ -24,14 +25,12 @@ export interface ChatContext {
     user?: UserSummary;
     error?: Error;
     messages: Message[];
-    latestMessageIndex: number;
-    focusIndex?: number;
+    focusIndex?: number; // this is the index of a message that we want to scroll to
 }
 
 type LoadMessagesResponse = {
     userLookup: UserLookup;
     messages: Message[];
-    latestMessageIndex: number;
 };
 
 export type ChatEvents =
@@ -67,14 +66,6 @@ function loadMessages(
     earliestRequiredMessageIndex: number,
     earliestLoadedMessageIndex: number
 ): Promise<MessagesResponse> {
-    console.log(
-        "loading messages from ",
-        earliestRequiredMessageIndex,
-        " to ",
-        earliestLoadedMessageIndex,
-        " chat: ",
-        chatSummary.chatId
-    );
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatMessages(
             chatSummary.them,
@@ -87,6 +78,10 @@ function loadMessages(
         earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );
+}
+
+export function moreMessagesAvailable(ctx: ChatContext): boolean {
+    return earliestIndex(ctx) >= earliestAvailableMessageIndex(ctx);
 }
 
 export function earliestAvailableMessageIndex(ctx: ChatContext): number {
@@ -102,24 +97,32 @@ export function earliestIndex(ctx: ChatContext): number {
     }
 }
 
-export function moreMessagesAvailable(ctx: ChatContext): boolean {
-    return earliestIndex(ctx) >= earliestAvailableMessageIndex(ctx);
-}
-
 export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const lastLoaded = lastLoadedMessageIndex(ctx.messages);
+    const lastLoaded = latestLoadedMessageIndex(ctx.messages);
     if (lastLoaded) {
         const from = lastLoaded + 1;
-        const to = ctx.latestMessageIndex;
-        if (from === to || from >= to) {
-            // nothing that needs loading
-            return undefined;
-        } else {
-            return [from, to];
-        }
+        const to = latestAvailableMessageIndex(ctx.chatSummary) ?? 0;
+        return clampRange([from, to]);
     } else {
         // this implies that we have not loaded any messages which should never happen
         return undefined;
+    }
+}
+
+export function previousMessagesRange(ctx: ChatContext): [number, number] | undefined {
+    const to = earliestIndex(ctx);
+    const candidateFrom =
+        ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
+    const min = earliestAvailableMessageIndex(ctx);
+    const from = Math.max(min, candidateFrom);
+    return clampRange([from, to]);
+}
+
+export function clampRange([from, to]: [number, number]): [number, number] | undefined {
+    if (from > to) {
+        return undefined;
+    } else {
+        return [from, to];
     }
 }
 
@@ -129,20 +132,13 @@ export function requiredMessageRange(
 ): [number, number] | undefined {
     if (ev.type === "CHAT_UPDATED") {
         return newMessagesRange(ctx);
+    } else {
+        return previousMessagesRange(ctx);
     }
-
-    // to is always the earliest we have - 1 || the last index if we don't have any
-    // from depends on whether there is a focus index
-    const to = earliestIndex(ctx);
-    const from = ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
-    const lookupRequired = from < to && moreMessagesAvailable(ctx);
-    return lookupRequired ? [from, to] : undefined;
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
-    guards: {
-        moreMessagesAvailable,
-    },
+    guards: {},
     services: {
         loadMessagesAndUsers: async (ctx, ev) => {
             const range = requiredMessageRange(ctx, ev);
@@ -151,15 +147,11 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
                 range
                     ? loadMessages(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
-                    : { messages: [], latestMessageIndex: ctx.latestMessageIndex },
+                    : { messages: [] },
             ]);
             return {
                 userLookup,
                 messages: messagesResponse === "chat_not_found" ? [] : messagesResponse.messages,
-                latestMessageIndex:
-                    messagesResponse === "chat_not_found"
-                        ? ctx.latestMessageIndex
-                        : messagesResponse.latestMessageIndex,
             };
         },
     },
@@ -176,7 +168,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                               (a, b) => a.messageIndex - b.messageIndex
                           )
                       ),
-                      latestMessageIndex: ev.data.latestMessageIndex,
                   }
                 : {}
         ),
@@ -253,14 +244,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 idle: { id: "ui_idle" },
                 loading_previous_messages: {
                     initial: "loading",
-                    // when we load previous messages we always want to load
-                    // some range from the earliest we currently have back to some
-                    // index n where n is either the earliest index there is or
-                    // it is the index we want
-                    // we load previous messsages in one of three scenarios
-                    // 1) when first spawning the machine
-                    // 2) when the user scrolls up and there are more messages
-                    // 3) when the user clicks on a reply and we want to scroll back to that reply
                     meta: "Triggered by selecting a chat, scrolling up, or by clicking a link to a previous message",
                     states: {
                         idle: {},
@@ -292,13 +275,14 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     entry: assign((ctx, ev) => {
                         if (ev.type === "SEND_MESSAGE") {
                             // todo - this is obvious a huge simplification at the moment
-                            const messageIndex = lastLoadedMessageIndex(ctx.messages) ?? 0;
+                            const messageIndex = latestLoadedMessageIndex(ctx.messages) ?? 0;
                             return {
                                 messages: [
                                     ...ctx.messages,
                                     {
                                         ...textMessage(ctx.user!.userId, ev.data),
-                                        messageIndex,
+                                        messageIndex: messageIndex + 1,
+                                        timestamp: BigInt(+new Date() - messageIndex + 1),
                                     },
                                 ],
                             };
@@ -309,7 +293,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         // simulate the actual api call delay
                         // todo - this will cause us to skip messages that are entered if they are < 2000 ms since the last
                         // one. Don't worry about that for now.
-                        2000: "idle",
+                        // although - not sure *why*
+                        100: "idle",
                     },
                 },
                 showing_participants: {

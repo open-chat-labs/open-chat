@@ -33,8 +33,8 @@ function mockGroupChat(i: number): GroupChatSummary {
         minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: numMessages - 1,
-        latestMessage: mockTextMessage(numMessages - 1),
+        latestReadByMe: numMessages,
+        latestMessage: mockTextMessage(numMessages),
         participants,
     };
 }
@@ -135,12 +135,11 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
 export class UserClientMock implements IUserClient {
     chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
-        const messages = fill(n, mockTextMessage, (i: number) => fromIndex + i);
+        const messages = fill(n + 1, mockTextMessage, (i: number) => fromIndex + i);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
                     messages,
-                    latestMessageIndex: numMessages,
                 });
             }, 300);
         });

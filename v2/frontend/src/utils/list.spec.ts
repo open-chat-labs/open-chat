@@ -74,22 +74,10 @@ describe("list utils", () => {
             },
         ];
 
-        const expected = [
-            {
-                a: 1,
-            },
-            {
-                a: 2,
-            },
-            {
-                a: 3,
-            },
-        ];
         const deduped = dedupe((a, b) => a.a === b.a, things);
-        console.log(deduped);
-        // expect(deduped.length).toEqual(3);
-        // expect(deduped[0].a).toEqual(1);
-        // expect(deduped[1].a).toEqual(2);
-        // expect(deduped[2].a).toEqual(3);
+        expect(deduped.length).toEqual(3);
+        expect(deduped[0].a).toEqual(1);
+        expect(deduped[1].a).toEqual(2);
+        expect(deduped[2].a).toEqual(3);
     });
 });
