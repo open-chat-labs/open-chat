@@ -8,7 +8,9 @@ use shared::types::notifications::Notification;
 use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use web_push::{ContentEncoding, SubscriptionInfo, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
+use web_push::{
+    ContentEncoding, SubscriptionInfo, SubscriptionKeys, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder,
+};
 
 pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let dynamodb_client = DynamoDbClient::build();
@@ -26,12 +28,13 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let ic_response = ic_agent.get_notifications(canister_id, from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
-        handle_notifications(
-            ic_response.notifications,
-            ic_response.subscriptions,
-            vapid_private_key.as_bytes(),
-        )
-        .await?;
+        let subscriptions_map = ic_response
+            .subscriptions
+            .into_iter()
+            .map(|(k, v)| (k, v.into_iter().map(convert_subscription_info).collect()))
+            .collect();
+
+        handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_key.as_bytes()).await?;
 
         dynamodb_client
             .set_notification_index_processed_up_to(canister_id, latest_notification_index)
@@ -111,4 +114,14 @@ async fn push_notifications_to_user(
     futures::future::join_all(futures).await;
 
     Ok(())
+}
+
+fn convert_subscription_info(value: notifications_canister::common::subscription::SubscriptionInfo) -> SubscriptionInfo {
+    SubscriptionInfo {
+        endpoint: value.endpoint,
+        keys: SubscriptionKeys {
+            p256dh: value.keys.p256dh,
+            auth: value.keys.auth,
+        },
+    }
 }

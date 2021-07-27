@@ -1,12 +1,11 @@
-use crate::ConfirmationCodeSms;
-use candid::{CandidType, Decode, Encode};
+use candid::{Decode, Encode};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
-use serde::Deserialize;
-use shared::types::indexed_event::IndexedEvent;
 use shared::types::CanisterId;
+use user_index_canister::queries::sms_messages;
+use user_index_canister::updates::remove_sms_messages;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -32,8 +31,8 @@ impl IcAgent {
         &self,
         canister_id: CanisterId,
         from_index: u64,
-    ) -> Result<GetSmsMessagesSuccessResult, Error> {
-        let args = GetSmsMessagesArgs { from_index };
+    ) -> Result<sms_messages::SuccessResult, Error> {
+        let args = sms_messages::Args { from_index };
 
         let response = self
             .agent
@@ -42,14 +41,14 @@ impl IcAgent {
             .call()
             .await?;
 
-        match Decode!(&response, GetSmsMessagesResponse)? {
-            GetSmsMessagesResponse::Success(result) => Ok(result),
-            GetSmsMessagesResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, sms_messages::Response)? {
+            sms_messages::Response::Success(result) => Ok(result),
+            sms_messages::Response::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
     pub async fn remove_sms_messages(&self, canister_id: CanisterId, up_to_index: u64) -> Result<(), Error> {
-        let args = RemoveSmsMessagesArgs { up_to_index };
+        let args = remove_sms_messages::Args { up_to_index };
 
         let response = self
             .agent
@@ -58,9 +57,9 @@ impl IcAgent {
             .call()
             .await?;
 
-        match Decode!(&response, RemoveSmsMessagesResponse)? {
-            RemoveSmsMessagesResponse::Success => Ok(()),
-            RemoveSmsMessagesResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, remove_sms_messages::Response)? {
+            remove_sms_messages::Response::Success => Ok(()),
+            remove_sms_messages::Response::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
@@ -78,31 +77,4 @@ impl IcAgent {
             }
         }
     }
-}
-
-#[derive(CandidType)]
-struct GetSmsMessagesArgs {
-    from_index: u64,
-}
-
-#[derive(Deserialize)]
-enum GetSmsMessagesResponse {
-    Success(GetSmsMessagesSuccessResult),
-    NotAuthorized,
-}
-
-#[derive(Deserialize)]
-pub struct GetSmsMessagesSuccessResult {
-    pub messages: Vec<IndexedEvent<ConfirmationCodeSms>>,
-}
-
-#[derive(CandidType)]
-pub struct RemoveSmsMessagesArgs {
-    up_to_index: u64,
-}
-
-#[derive(Deserialize)]
-pub enum RemoveSmsMessagesResponse {
-    Success,
-    NotAuthorized,
 }

@@ -16,6 +16,7 @@ openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
 shared = { path = "../shared" }
 tokio = "1.8.1"
+user_index_canister = { path = "../canisters/user_index/api" }
 
 [[bin]]
 name = "bootstrap"

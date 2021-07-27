@@ -1,8 +1,8 @@
-use crate::ConfirmationCodeSms;
 use aws_sdk_sns::model::MessageAttributeValue;
 use aws_sdk_sns::Client;
 use lambda_runtime::Error;
 use std::collections::HashMap;
+use user_index_canister::common::confirmation_code_sms::ConfirmationCodeSms;
 
 pub struct SnsClient {
     client: Client,
