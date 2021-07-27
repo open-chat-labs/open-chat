@@ -42,9 +42,6 @@
     $: userStatus = getUserStatus(userLookup, msg.sender);
 
     afterUpdate(() => {
-        // todo - this shows us that we have a rendering problem
-        // in the case where we navigate to a specific message it re-renders all
-        // messages *twice*
         console.log("updating ChatMessage component");
     });
 

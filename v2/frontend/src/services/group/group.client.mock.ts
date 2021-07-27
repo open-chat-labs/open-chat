@@ -24,6 +24,7 @@ function mockTextMessage(index: number): Message {
     const now = +new Date();
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
+
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     return {

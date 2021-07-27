@@ -8,10 +8,6 @@
 
     export let machine: ActorRefFrom<HomeMachine>;
     export let hideLeft = false;
-
-    // todo - next up we need to handle some other left panel states e.g. new chat
-    // hence separating ChatList into a self-contained component
-    // we will branch here on home.machine state
 </script>
 
 <Panel left {hideLeft}>

@@ -13,6 +13,7 @@ import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { participantsMachine } from "./participants.machine";
 import { toastStore } from "../stores/toast";
+import { dedupe } from "../utils/list";
 
 const PAGE_SIZE = 20;
 
@@ -70,7 +71,9 @@ function loadMessages(
         "loading messages from ",
         earliestRequiredMessageIndex,
         " to ",
-        earliestLoadedMessageIndex
+        earliestLoadedMessageIndex,
+        " chat: ",
+        chatSummary.chatId
     );
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatMessages(
@@ -163,11 +166,16 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     },
     actions: {
         assignMessagesResponse: assign((ctx, ev) =>
+            // todo - we should de-dupe here. It is always possible that we could load the same
+            // message twice
             ev.type === "done.invoke.loadMessagesAndUsers"
                 ? {
                       userLookup: ev.data.userLookup,
-                      messages: [...ev.data.messages, ...ctx.messages].sort(
-                          (a, b) => a.messageIndex - b.messageIndex
+                      messages: dedupe(
+                          (a, b) => a.messageIndex === b.messageIndex,
+                          [...ev.data.messages, ...ctx.messages].sort(
+                              (a, b) => a.messageIndex - b.messageIndex
+                          )
                       ),
                       latestMessageIndex: ev.data.latestMessageIndex,
                   }
@@ -185,6 +193,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
             on: {
+                // todo - this is not quite right at the moment as it will load all new messages
+                // for a chat regardless of whether the chat is selected or not.
+                // we should probably only do that if this is the active (selected chat)
                 CHAT_UPDATED: {
                     target: ".loading",
                     internal: true,

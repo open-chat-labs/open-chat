@@ -100,7 +100,6 @@
         "xstate": "^4.20.0"
     },
     "jest": {
-        "testEnvironment": "jsdom",
         "transform": {
             "^.+\\.svelte$": [
                 "svelte-jester",
@@ -118,7 +117,8 @@
         ],
         "moduleNameMapper": {
             "api-canisters/*": "<rootDir>/../backend/canisters/*",
-            "svelte-spa-router": "<rootDir>/src/dummyRouter.js"
+            "svelte-spa-router": "<rootDir>/src/dummyModule.js",
+            "stores/background": "<rootDir>/src/dummyModule.js"
         }
     }
 }

@@ -17,7 +17,7 @@
         toLongDateString,
     } from "../../utils/date";
     import type { Message } from "../../domain/chat/chat";
-    import { groupMessages } from "../../domain/chat/chat.utils";
+    import { getUnreadMessages, groupMessages } from "../../domain/chat/chat.utils";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -53,7 +53,6 @@
             if ($machine.context.focusIndex) {
                 scrollToIndex($machine.context.focusIndex);
             } else {
-                // todo - come back to this once we have sorted out the state machine.
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
@@ -114,7 +113,20 @@
         );
     }
 
+    function goToMessage(ev: CustomEvent<number>) {
+        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
+    }
+
+    function dateGroupKey(group: Message[][]): string {
+        const first = group[0] && group[0][0] && group[0][0].timestamp;
+        return first ? new Date(Number(first)).toDateString() : "unknown";
+    }
+
     $: groupedMessages = groupMessages($machine.context.messages);
+
+    $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
+
+    $: console.log("unread: ", unreadMessages);
 
     // this is a horrible hack but I can't find any other solution to this problem
     let previous: any;
@@ -147,15 +159,6 @@
         }
     }
 
-    function goToMessage(ev: CustomEvent<number>) {
-        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
-    }
-
-    function dateGroupKey(group: Message[][]): string {
-        const first = group[0] && group[0][0] && group[0][0].timestamp;
-        return first ? new Date(Number(first)).toDateString() : "unknown";
-    }
-
     // then we need to integrate web rtc
 </script>
 
@@ -167,7 +170,9 @@
     {/if}
     {#each groupedMessages as dayGroup, di (dateGroupKey(dayGroup))}
         <div class="day-group">
-            <div class="date-label">{formatDate(dayGroup[0][0]?.timestamp)}</div>
+            <div class="date-label">
+                {formatDate(dayGroup[0][0]?.timestamp)}
+            </div>
             {#each dayGroup as userGroup, ui (ui)}
                 {#each userGroup as msg, i (msg.messageIndex)}
                     <ChatMessage

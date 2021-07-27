@@ -54,7 +54,7 @@ const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents> = {
     id: "participants_machine",
-    initial: "idle",
+    initial: "init",
     on: {
         HIDE_PARTICIPANTS: ".done", // todo make sure this goes to the parent.idle state correctly
         REMOVE_PARTICIPANT: ".removing_participant",
@@ -75,10 +75,10 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                 },
             ],
         },
-        idle: { id: "showing_participants_idle" },
+        idle: { id: "showing_participants_idle", entry: assign((_ctx, _ev) => ({ add: false })) },
         adding_participant: {
             on: {
-                CANCEL_ADD_PARTICIPANT: "..idle",
+                CANCEL_ADD_PARTICIPANT: "idle",
                 "error.platform.userSearchMachine": "..unexpected_error",
             },
             invoke: {

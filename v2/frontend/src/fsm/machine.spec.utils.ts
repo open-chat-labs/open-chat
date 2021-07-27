@@ -39,7 +39,7 @@ export function testTransition<TContext, TEvent extends EventObject>(
 ): TContext {
     const configured = machine.withConfig(config);
     const nextState = configured.transition(from, ev);
-    expect(nextState.value).toStrictEqual(to);
+    expect(nextState.matches(to)).toBe(true);
     return nextState.context;
 }
 

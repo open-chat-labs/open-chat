@@ -33,7 +33,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: 0,
+        latestReadByMe: numMessages,
         latestMessage: mockTextMessage(numMessages),
         participants,
     };
@@ -170,7 +170,9 @@ export class UserClientMock implements IUserClient {
             timestamp: BigInt(+new Date()),
         };
 
-        this.previousChats = [...this.previousChats, ...add];
+        this.previousChats = [...this.previousChats, ...add].sort((a, b) =>
+            Number(a.lastUpdated - b.lastUpdated)
+        );
 
         return new Promise((res) => {
             setTimeout(() => {
