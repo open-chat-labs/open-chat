@@ -1,9 +1,11 @@
 use candid::{Decode, Encode};
+use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use shared::types::CanisterId;
+use std::time::Duration;
 use user_index_canister::queries::sms_messages;
 use user_index_canister::updates::remove_sms_messages;
 
@@ -50,14 +52,17 @@ impl IcAgent {
     pub async fn remove_sms_messages(&self, canister_id: CanisterId, up_to_index: u64) -> Result<(), Error> {
         let args = remove_sms_messages::Args { up_to_index };
 
-        let response = self
+        let request_id = self
             .agent
-            .query(&canister_id, "remove_sms_messages")
+            .update(&canister_id, "remove_sms_messages")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
-        match Decode!(&response, remove_sms_messages::Response)? {
+        let waiter = ThrottleWaiter::new(Duration::from_secs(1));
+        let response_bytes = self.agent.wait(request_id, &canister_id, waiter).await?;
+
+        match Decode!(&response_bytes, remove_sms_messages::Response)? {
             remove_sms_messages::Response::Success => Ok(()),
             remove_sms_messages::Response::NotAuthorized => Err("Not authorized".into()),
         }
