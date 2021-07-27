@@ -42,10 +42,23 @@
         }
     }
 
+    function scrollToNew() {
+        // todo - at this point we should *probably* fire off a message to update the lastReadByMe
+        // the problem is that will make the new legend immediately disappear which is not quite what we
+        // want. We'll come back to that.
+        if (unreadMessages > 0) {
+            scrollToElement(document.getElementById("new-msgs"), "smooth");
+        } else {
+            scrollBottom("smooth");
+        }
+    }
+
+    function scrollToElement(element: HTMLElement | null, behavior: ScrollBehavior = "auto") {
+        element?.scrollIntoView({ behavior, block: "center" });
+    }
+
     function scrollToIndex(index: number) {
-        document
-            .getElementById(`message-${index}`)
-            ?.scrollIntoView({ behavior: "auto", block: "center" });
+        scrollToElement(document.getElementById(`message-${index}`));
         setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 100);
     }
 
@@ -174,6 +187,9 @@
             </div>
             {#each dayGroup as userGroup, ui (ui)}
                 {#each userGroup as msg, i (msg.messageIndex)}
+                    {#if msg.messageIndex === $machine.context.chatSummary.latestReadByMe + 1}
+                        <div id="new-msgs" class="new-msgs">{$_("new")}</div>
+                    {/if}
                     <ChatMessage
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
@@ -192,11 +208,11 @@
 {#if fromBottom > FROM_BOTTOM_THRESHOLD}
     <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
-        <Fab on:click={() => scrollBottom("smooth")}>
+        <Fab on:click={() => scrollToNew()}>
             {#if unreadMessages > 0}
                 <div in:pop={{ duration: 1500 }} class="unread">
                     <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
-                    <div class="unread-label">new</div>
+                    <div class="unread-label">{$_("new")}</div>
                 </div>
             {:else}
                 <ArrowDown size={"1.2em"} color={"#fff"} />
@@ -206,6 +222,22 @@
 {/if}
 
 <style type="text/scss">
+    .new-msgs {
+        display: inline-block;
+        color: #fff;
+        @include font(light, normal, fs-100);
+        margin-bottom: $sp4;
+        margin-top: $sp4;
+
+        &:after {
+            content: "";
+            width: 100%;
+            border-top: 1px dotted #fff;
+            display: block;
+            position: absolute;
+        }
+    }
+
     .day-group {
         position: relative;
 
@@ -232,6 +264,7 @@
 
         .unread-count {
             @include font(book, normal, fs-120);
+            line-height: 80%;
         }
         .unread-label {
             @include font(book, normal, fs-80);

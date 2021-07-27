@@ -33,8 +33,8 @@ function mockGroupChat(i: number): GroupChatSummary {
         minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: numMessages,
-        latestMessage: mockTextMessage(numMessages),
+        latestReadByMe: numMessages - 1,
+        latestMessage: mockTextMessage(numMessages - 1),
         participants,
     };
 }

@@ -131,7 +131,6 @@ export function requiredMessageRange(
         return newMessagesRange(ctx);
     }
 
-    // in all other cases we are getting previous messages
     // to is always the earliest we have - 1 || the last index if we don't have any
     // from depends on whether there is a focus index
     const to = earliestIndex(ctx);
