@@ -18,6 +18,7 @@
     } from "../../utils/date";
     import type { Message } from "../../domain/chat/chat";
     import { getUnreadMessages, groupMessages } from "../../domain/chat/chat.utils";
+    import { pop } from "../../utils/transition";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -126,8 +127,6 @@
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
-    $: console.log("unread: ", unreadMessages);
-
     // this is a horrible hack but I can't find any other solution to this problem
     let previous: any;
     $: {
@@ -191,9 +190,17 @@
 </div>
 
 {#if fromBottom > FROM_BOTTOM_THRESHOLD}
+    <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollBottom("smooth")}>
-            <ArrowDown size={"1.2em"} color={"#fff"} />
+            {#if unreadMessages > 0}
+                <div in:pop={{ duration: 1500 }} class="unread">
+                    <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
+                    <div class="unread-label">new</div>
+                </div>
+            {:else}
+                <ArrowDown size={"1.2em"} color={"#fff"} />
+            {/if}
         </Fab>
     </div>
 {/if}
@@ -215,6 +222,19 @@
             @include font(book, normal, fs-70);
             text-align: center;
             margin-bottom: $sp4;
+        }
+    }
+
+    .unread {
+        color: var(--button-txt);
+        text-align: center;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+
+        .unread-count {
+            @include font(book, normal, fs-120);
+        }
+        .unread-label {
+            @include font(book, normal, fs-80);
         }
     }
 

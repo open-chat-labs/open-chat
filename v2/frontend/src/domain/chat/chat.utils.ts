@@ -65,7 +65,7 @@ export function userIdsFromChatSummaries(
 }
 
 export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary): number {
-    return latestMessage?.messageIndex ?? 0 - latestReadByMe;
+    return (latestMessage?.messageIndex ?? 0) - latestReadByMe;
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {

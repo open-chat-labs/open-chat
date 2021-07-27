@@ -14,20 +14,11 @@
         latestMessageText,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
-    import { elasticOut } from "svelte/easing";
+    import { pop } from "../../utils/transition";
 
     export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
-
-    function pop(_node: any, { duration }: any) {
-        return {
-            duration,
-            css: (t: number) => {
-                return `transform: scale(${elasticOut(t)});`;
-            },
-        };
-    }
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
