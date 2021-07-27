@@ -1,14 +1,11 @@
-use candid::{CandidType, Decode, Encode};
+use candid::{Decode, Encode};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
-use serde::Deserialize;
-use shared::types::indexed_event::IndexedEvent;
-use shared::types::notifications::Notification;
-use shared::types::{CanisterId, UserId};
-use std::collections::HashMap;
-use web_push::SubscriptionInfo;
+use notifications_canister::queries::notifications;
+use notifications_canister::updates::remove_notifications;
+use shared::types::CanisterId;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -34,8 +31,8 @@ impl IcAgent {
         &self,
         canister_id: CanisterId,
         from_notification_index: u64,
-    ) -> Result<GetNotificationsSuccessResult, Error> {
-        let args = GetNotificationsArgs { from_notification_index };
+    ) -> Result<notifications::SuccessResult, Error> {
+        let args = notifications::Args { from_notification_index };
 
         let response = self
             .agent
@@ -44,14 +41,14 @@ impl IcAgent {
             .call()
             .await?;
 
-        match Decode!(&response, GetNotificationsResponse)? {
-            GetNotificationsResponse::Success(result) => Ok(result),
-            GetNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, notifications::Response)? {
+            notifications::Response::Success(result) => Ok(result),
+            notifications::Response::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
     pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
-        let args = RemoveNotificationsArgs {
+        let args = notifications_canister::updates::remove_notifications::Args {
             up_to_notification_index,
         };
 
@@ -62,9 +59,9 @@ impl IcAgent {
             .call()
             .await?;
 
-        match Decode!(&response, RemoveNotificationsResponse)? {
-            RemoveNotificationsResponse::Success => Ok(()),
-            RemoveNotificationsResponse::NotAuthorized => Err("Not authorized".into()),
+        match Decode!(&response, remove_notifications::Response)? {
+            remove_notifications::Response::Success => Ok(()),
+            remove_notifications::Response::NotAuthorized => Err("Not authorized".into()),
         }
     }
 
@@ -82,32 +79,4 @@ impl IcAgent {
             }
         }
     }
-}
-
-#[derive(CandidType)]
-pub struct GetNotificationsArgs {
-    from_notification_index: u64,
-}
-
-#[derive(Deserialize)]
-pub enum GetNotificationsResponse {
-    Success(GetNotificationsSuccessResult),
-    NotAuthorized,
-}
-
-#[derive(Deserialize)]
-pub struct GetNotificationsSuccessResult {
-    pub notifications: Vec<IndexedEvent<Notification>>,
-    pub subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
-}
-
-#[derive(CandidType)]
-pub struct RemoveNotificationsArgs {
-    up_to_notification_index: u64,
-}
-
-#[derive(Deserialize)]
-pub enum RemoveNotificationsResponse {
-    Success,
-    NotAuthorized,
 }

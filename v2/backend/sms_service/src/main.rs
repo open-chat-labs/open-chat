@@ -3,7 +3,6 @@ mod dynamodb;
 mod ic_agent;
 mod sns;
 
-use candid::CandidType;
 use lambda_runtime::{handler_fn, Context, Error};
 use serde::Deserialize;
 use shared::types::CanisterId;
@@ -37,10 +36,4 @@ async fn my_handler(request: Request, _: Context) -> Result<(), Error> {
 
 pub fn read_env_var(name: &str) -> Result<String, Error> {
     env::var(name).map_err(|e| format!("Unable to read environment variable: {}. Error: {}", name, e).into())
-}
-
-#[derive(CandidType, Deserialize, Clone)]
-pub struct ConfirmationCodeSms {
-    pub phone_number: String,
-    pub confirmation_code: String,
 }
