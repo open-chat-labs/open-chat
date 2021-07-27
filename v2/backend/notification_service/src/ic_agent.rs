@@ -1,4 +1,5 @@
 use candid::{Decode, Encode};
+use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
@@ -6,6 +7,7 @@ use lambda_runtime::Error;
 use notifications_canister::queries::notifications;
 use notifications_canister::updates::remove_notifications;
 use shared::types::CanisterId;
+use std::time::Duration;
 
 const IC_URL: &str = "https://ic0.app";
 
@@ -52,14 +54,17 @@ impl IcAgent {
             up_to_notification_index,
         };
 
-        let response = self
+        let request_id = self
             .agent
-            .query(&canister_id, "remove_notifications")
+            .update(&canister_id, "remove_notifications")
             .with_arg(Encode!(&args)?)
             .call()
             .await?;
 
-        match Decode!(&response, remove_notifications::Response)? {
+        let waiter = ThrottleWaiter::new(Duration::from_secs(1));
+        let response_bytes = self.agent.wait(request_id, &canister_id, waiter).await?;
+
+        match Decode!(&response_bytes, remove_notifications::Response)? {
             remove_notifications::Response::Success => Ok(()),
             remove_notifications::Response::NotAuthorized => Err("Not authorized".into()),
         }

@@ -8,6 +8,7 @@ edition = "2018"
 aws-sdk-dynamodb = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.11-alpha", package = "aws-sdk-dynamodb" }
 candid = "0.6.21"
 futures = "0.3.15"
+garcon = "0.2.3"
 ic-agent = "0.5.2"
 ic-cdk = "0.3.0"
 lambda_runtime = "0.3.0"
