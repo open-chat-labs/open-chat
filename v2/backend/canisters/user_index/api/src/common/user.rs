@@ -3,10 +3,7 @@ use phonenumber::PhoneNumber;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::{UserId, Version};
-#[cfg(test)]
-use std::str::FromStr;
 
-#[allow(dead_code)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
     Unconfirmed(UnconfirmedUser),
