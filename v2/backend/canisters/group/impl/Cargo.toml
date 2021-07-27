@@ -11,11 +11,11 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.6.21"
+candid = "0.7.4"
 group_canister = { path = "../api" }
-ic-cdk = "0.3.0"
-ic-cdk-macros = "0.3.0"
 group_index_canister = { path = "../../group_index/api" }
+ic-cdk = "0.3.1"
+ic-cdk-macros = "0.3.1"
 notifications_canister = { path = "../../notifications/api" }
 serde = "1.0.126"
 shared = { path = "../../../shared" }
