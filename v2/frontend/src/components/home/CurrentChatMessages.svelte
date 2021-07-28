@@ -264,11 +264,10 @@
         text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
 
         .unread-count {
-            @include font(book, normal, fs-120);
             line-height: 80%;
         }
         .unread-label {
-            @include font(book, normal, fs-80);
+            @include font(book, normal, fs-70);
         }
     }
 
