@@ -24,7 +24,7 @@ import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 
 const ONE_MINUTE = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = 5000;
+const CHAT_UPDATE_INTERVAL = 3000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 

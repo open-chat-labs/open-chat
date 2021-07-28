@@ -13,7 +13,7 @@ import type {
     UpdatedGroupChatSummary,
     UpdatesResponse,
 } from "./chat";
-import { flatMap, groupWhile } from "../../utils/list";
+import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute

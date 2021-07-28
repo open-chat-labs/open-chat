@@ -1,12 +1,7 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import idlFactory, { UserService } from "api-canisters/user/src/canister/app/idl";
-import type {
-    ChatSummary,
-    UpdatesResponse,
-    MessagesResponse,
-    UpdateArgs,
-} from "../../domain/chat/chat";
+import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import { getMessagesResponse, getUpdatesResponse } from "./mappers";
 import type { IUserClient } from "./user.client.interface";

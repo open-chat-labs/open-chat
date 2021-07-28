@@ -2,9 +2,6 @@ import type { MessagesResponse, Message, ReplyContext } from "../../domain/chat/
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
-const numMessages = 1000;
-const interval = 1000 * 60 * 60 * 8; // 8 hours
-
 function mockRepliesTo(index: number): ReplyContext {
     const jumpTo = randomNum(index - 100, index - 1);
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";

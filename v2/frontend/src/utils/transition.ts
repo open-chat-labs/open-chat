@@ -1,7 +1,13 @@
 import { elasticOut } from "svelte/easing";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function pop(_node: any, { duration }: any): { duration: any; css: (t: number) => string } {
+type PopParams = {
+    duration: number;
+};
+
+export function pop(
+    _node: Element,
+    { duration }: PopParams
+): { duration: number; css: (t: number) => string } {
     return {
         duration,
         css: (t: number) => {

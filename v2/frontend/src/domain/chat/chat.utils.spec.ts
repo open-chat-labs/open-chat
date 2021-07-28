@@ -3,7 +3,6 @@ import type {
     DirectChatSummary,
     GroupChatSummary,
     Participant,
-    UpdatedChatSummary,
     UpdatedDirectChatSummary,
     UpdatedGroupChatSummary,
 } from "./chat";
