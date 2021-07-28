@@ -76,7 +76,6 @@ export type MessagesResponse = "chat_not_found" | GetMessagesSuccess;
 
 export type GetMessagesSuccess = {
     messages: Message[];
-    latestMessageIndex: number;
 };
 
 export type UpdateArgs = {

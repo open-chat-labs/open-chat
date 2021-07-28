@@ -1,9 +1,12 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import { AvatarSize } from "../../domain/user/user";
+    import type { UserLookup } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -13,23 +16,22 @@
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
-    import type { ActorRefFrom } from "xstate";
-    import type { ChatMachine } from "../../fsm/chat.machine";
     const dispatch = createEventDispatcher();
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let me: boolean;
+    export let userLookup: UserLookup;
     export let participant: PartialUserSummary;
 
     function removeUser() {
-        machine.send({ type: "REMOVE_PARTICIPANT", data: participant.userId });
+        dispatch("removeParticipant", participant.userId);
     }
 
     function dismissAsAdmin() {
-        machine.send({ type: "DISMISS_AS_ADMIN", data: participant.userId });
+        dispatch("dismissAsAdmin", participant.userId);
     }
 
     function participantSelected(e: MouseEvent) {
-        if (!you) {
+        if (!me) {
             dispatch("chatWith", participant.userId);
             dispatch("close");
         }
@@ -38,21 +40,19 @@
     function blockUser() {
         dispatch("blockUser", { userId: participant.userId });
     }
-
-    $: you = $machine.context.user === participant;
 </script>
 
-<div class="participant" class:you on:click={participantSelected} role="button">
+<div class="participant" class:me on:click={participantSelected} role="button">
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant.userId)}
-            status={getUserStatus($machine.context.userLookup, participant.userId)}
+            status={getUserStatus(userLookup, participant.userId)}
             size={AvatarSize.Small} />
     </span>
     <h4 class="details">
-        {you ? $_("you") : participant.username ?? $_("unknownUser")}
+        {me ? $_("you") : participant.username ?? $_("unknownUser")}
     </h4>
-    {#if !you}
+    {#if !me}
         <span class="menu">
             <MenuIcon>
                 <span slot="icon">
@@ -97,11 +97,11 @@
         margin-bottom: $sp3;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
 
-        &:not(.you) {
+        &:not(.me) {
             cursor: pointer;
         }
 
-        &:not(.you):hover {
+        &:not(.me):hover {
             background-color: var(--participants-hv);
         }
     }

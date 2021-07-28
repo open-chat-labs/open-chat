@@ -8,21 +8,20 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import Loading from "../Loading.svelte";
-    import type { Message } from "../../domain/chat/chat";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { groupWhile } from "../../utils/list";
     import {
         addDays,
-        areOnSameDay,
         getStartOfToday,
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
+    import type { Message } from "../../domain/chat/chat";
+    import { getUnreadMessages, groupMessages } from "../../domain/chat/chat.utils";
+    import { pop } from "../../utils/transition";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
-    const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -43,10 +42,23 @@
         }
     }
 
+    function scrollToNew() {
+        // todo - at this point we should *probably* fire off a message to update the lastReadByMe
+        // the problem is that will make the new legend immediately disappear which is not quite what we
+        // want. We'll come back to that.
+        if (unreadMessages > 0) {
+            scrollToElement(document.getElementById("new-msgs"), "smooth");
+        } else {
+            scrollBottom("smooth");
+        }
+    }
+
+    function scrollToElement(element: HTMLElement | null, behavior: ScrollBehavior = "auto") {
+        element?.scrollIntoView({ behavior, block: "center" });
+    }
+
     function scrollToIndex(index: number) {
-        document
-            .getElementById(`message-${index}`)
-            ?.scrollIntoView({ behavior: "auto", block: "center" });
+        scrollToElement(document.getElementById(`message-${index}`));
         setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 100);
     }
 
@@ -69,22 +81,18 @@
     }
 
     function onScroll() {
-        if ($machine.matches("loaded_messages")) {
+        if ($machine.matches({ user_states: "idle" })) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
                 moreMessagesAvailable($machine.context)
             ) {
-                machine.send({ type: "LOAD_MORE_MESSAGES" });
+                machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
             }
             fromBottom =
                 messagesDiv.scrollHeight -
                 Math.abs(messagesDiv.scrollTop) -
                 messagesDiv.clientHeight;
         }
-    }
-
-    function sameDate(a: Message, b: Message): boolean {
-        return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
     }
 
     function formatDate(timestamp: bigint): string {
@@ -102,22 +110,35 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
-    function sameUser(a: Message, b: Message): boolean {
+    function finishedLoadingPreviousMessages() {
         return (
-            a.sender === b.sender &&
-            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            $machine.matches({ user_states: "idle" }) &&
+            $machine.history !== undefined &&
+            $machine.history.matches({ user_states: "loading_previous_messages" })
         );
     }
 
-    function groupBySender(messages: Message[]): Message[][] {
-        return groupWhile(sameUser, messages);
+    function shouldShowNewMessages() {
+        return (
+            $machine.matches({ loading_new_messages: "idle" }) &&
+            $machine.history !== undefined &&
+            $machine.history.matches({ loading_new_messages: "loading" }) &&
+            fromBottom < FROM_BOTTOM_THRESHOLD
+        );
     }
 
-    function groupMessages(messages: Message[]): Message[][][] {
-        return groupWhile(sameDate, messages).map(groupBySender);
+    function goToMessage(ev: CustomEvent<number>) {
+        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
+    }
+
+    function dateGroupKey(group: Message[][]): string {
+        const first = group[0] && group[0][0] && group[0][0].timestamp;
+        return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
     $: groupedMessages = groupMessages($machine.context.messages);
+
+    $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
     // this is a horrible hack but I can't find any other solution to this problem
     let previous: any;
@@ -126,48 +147,58 @@
             if ($machine.context.chatSummary.chatId !== currentChatId) {
                 currentChatId = $machine.context.chatSummary.chatId;
                 initialised = false;
-            }
-
-            if ($machine.matches("loaded_messages")) {
-                // capture the current scrollheight and scrollTop just before the new messages get rendered
-                if (messagesDiv) {
-                    scrollHeight = messagesDiv.scrollHeight;
-                    scrollTop = messagesDiv.scrollTop;
-                }
                 tick().then(resetScroll);
             }
 
-            if ($machine.matches("sending_message")) {
-                tick().then(() => scrollBottom());
+            if (finishedLoadingPreviousMessages()) {
+                tick().then(resetScroll);
+            }
+
+            if (shouldShowNewMessages()) {
+                tick().then(() => scrollBottom("smooth"));
+            }
+
+            if ($machine.matches({ user_states: "sending_message" })) {
+                tick().then(() => scrollBottom("smooth"));
+            }
+
+            // capture the current scrollheight and scrollTop just before the new messages get rendered
+            if (messagesDiv) {
+                scrollHeight = messagesDiv.scrollHeight;
+                scrollTop = messagesDiv.scrollTop;
             }
 
             previous = $machine;
         }
     }
 
-    // message grouping by date and user
-    // then we need to figure out side loading new messages via polling
-    // then we need to figure out loading new messages when we see the index has increased
     // then we need to integrate web rtc
-    // message replies
-    // jump to private reply from a group chat
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
-    {#if $machine.matches("loading_messages")}
+    {#if $machine.matches({ user_states: "loading_previous_messages" })}
         <div class="spinner">
             <Loading />
         </div>
     {/if}
-    {#each groupedMessages as dayGroup}
+    {#each groupedMessages as dayGroup, di (dateGroupKey(dayGroup))}
         <div class="day-group">
-            <div class="date-label">{formatDate(dayGroup[0][0]?.timestamp)}</div>
-            {#each dayGroup as userGroup}
+            <div class="date-label">
+                {formatDate(dayGroup[0][0]?.timestamp)}
+            </div>
+            {#each dayGroup as userGroup, ui (ui)}
                 {#each userGroup as msg, i (msg.messageIndex)}
+                    {#if msg.messageIndex === $machine.context.chatSummary.latestReadByMe + 1}
+                        <div id="new-msgs" class="new-msgs">{$_("new")}</div>
+                    {/if}
                     <ChatMessage
+                        chatSummary={$machine.context.chatSummary}
+                        user={$machine.context.user}
+                        me={$machine.context.user?.userId === msg.sender}
                         showStem={i + 1 === userGroup.length}
+                        userLookup={$machine.context.userLookup}
                         on:chatWith
-                        {machine}
+                        on:goToMessage={goToMessage}
                         {msg} />
                 {/each}
             {/each}
@@ -176,14 +207,38 @@
 </div>
 
 {#if fromBottom > FROM_BOTTOM_THRESHOLD}
+    <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
-        <Fab on:click={() => scrollBottom("smooth")}>
-            <ArrowDown size={"1.2em"} color={"#fff"} />
+        <Fab on:click={() => scrollToNew()}>
+            {#if unreadMessages > 0}
+                <div in:pop={{ duration: 1500 }} class="unread">
+                    <div class="unread-count">{unreadMessages > 99 ? "99+" : unreadMessages}</div>
+                    <div class="unread-label">{$_("new")}</div>
+                </div>
+            {:else}
+                <ArrowDown size={"1.2em"} color={"#fff"} />
+            {/if}
         </Fab>
     </div>
 {/if}
 
 <style type="text/scss">
+    .new-msgs {
+        display: inline-block;
+        color: #fff;
+        @include font(light, normal, fs-100);
+        margin-bottom: $sp4;
+        margin-top: $sp4;
+
+        &:after {
+            content: "";
+            width: 100%;
+            border-top: 1px dotted #fff;
+            display: block;
+            position: absolute;
+        }
+    }
+
     .day-group {
         position: relative;
 
@@ -200,6 +255,19 @@
             @include font(book, normal, fs-70);
             text-align: center;
             margin-bottom: $sp4;
+        }
+    }
+
+    .unread {
+        color: var(--button-txt);
+        text-align: center;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+
+        .unread-count {
+            line-height: 80%;
+        }
+        .unread-label {
+            @include font(book, normal, fs-70);
         }
     }
 

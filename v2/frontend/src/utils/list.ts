@@ -19,3 +19,24 @@ export function groupWhile<T>(predicate: (a1: T, a2: T) => boolean, items: T[]):
     );
     return grouped;
 }
+
+export function flatMap<A, B>(things: A[], fn: (thing: A) => B[]): B[] {
+    return things.reduce((agg, thing) => {
+        agg.push(...fn(thing));
+        return agg;
+    }, [] as B[]);
+}
+
+export function dedupe<A>(eq: (a: A, b: A) => boolean, things: A[]): A[] {
+    if (things.length == 0) return things;
+
+    const output = [];
+
+    for (let i = 0; i < things.length; i++) {
+        if (things[i + 1] === undefined || !eq(things[i], things[i + 1])) {
+            output.push(things[i]);
+        }
+    }
+
+    return output;
+}

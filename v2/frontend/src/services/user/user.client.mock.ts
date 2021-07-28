@@ -20,7 +20,7 @@ const interval = 1000 * 60 * 60 * 8; // 8 hours
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
-    const participants: Participant[] = fill(randomNum(0, 200), (i: number) => ({
+    const participants: Participant[] = fill(randomNum(10, 200), (i: number) => ({
         role: "admin",
         userId: `${randomWord(5)}_${i}`,
     }));
@@ -33,7 +33,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: 0,
+        latestReadByMe: numMessages,
         latestMessage: mockTextMessage(numMessages),
         participants,
     };
@@ -101,14 +101,22 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
     const uppercase = i % 2 === 0;
 
     if (chat.kind === "group_chat") {
+        const removeParticipant = chat.participants[randomNum(0, chat.participants.length - 1)];
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
-            latestMessage: chat.latestMessage,
+            latestMessage: chat.latestMessage
+                ? {
+                      ...chat.latestMessage,
+                      messageIndex: chat.latestMessage.messageIndex + 2, // simulate new messages
+                  }
+                : undefined,
             kind: "group_chat",
             participantsAdded: [],
-            participantsRemoved: new Set([]),
+            participantsRemoved: removeParticipant
+                ? new Set([removeParticipant.userId])
+                : new Set([]),
             participantsUpdated: [],
             name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
             description: chat.description,
@@ -127,12 +135,11 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
 export class UserClientMock implements IUserClient {
     chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
-        const messages = fill(n, mockTextMessage, (i: number) => fromIndex + i);
+        const messages = fill(n + 1, mockTextMessage, (i: number) => fromIndex + i);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
                     messages,
-                    latestMessageIndex: numMessages,
                 });
             }, 300);
         });
@@ -140,23 +147,36 @@ export class UserClientMock implements IUserClient {
 
     private updateCycles = -1;
 
+    private previousChats: ChatSummary[] = [];
+
     getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
-        console.log("Args", args);
         this.updateCycles += 1;
         const direct = fill(3, mockDirectChat);
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);
-        const chats = ([] as ChatSummary[]).concat(direct, group);
+
+        const add = args.lastUpdated
+            ? this.updateCycles % 5 === 0
+                ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
+                : []
+            : ([] as ChatSummary[]).concat(direct, group);
+
+        const resp = {
+            chatsUpdated: args.lastUpdated
+                ? this.previousChats.map((c) => updateChat(c, this.updateCycles))
+                : [],
+            chatsAdded: add,
+            chatsRemoved: new Set([]),
+            timestamp: BigInt(+new Date()),
+        };
+
+        this.previousChats = [...this.previousChats, ...add].sort((a, b) =>
+            Number(a.lastUpdated - b.lastUpdated)
+        );
+
         return new Promise((res) => {
             setTimeout(() => {
-                res({
-                    chatsUpdated: args.lastUpdated
-                        ? chats.map((c) => updateChat(c, this.updateCycles))
-                        : [],
-                    chatsAdded: args.lastUpdated ? [] : chats,
-                    chatsRemoved: new Set([]),
-                    timestamp: BigInt(+new Date()),
-                });
-            }, 1000);
+                res(resp);
+            }, 500);
         });
     }
 }

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { DirectChatSummary } from "../domain/chat/chat";
+import type { DirectChatSummary, GroupChatSummary, Message } from "../domain/chat/chat";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { ChatContext, chatMachine } from "./chat.machine";
+import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
 
 const directChat: DirectChatSummary = {
@@ -13,6 +13,20 @@ const directChat: DirectChatSummary = {
     latestReadByMe: 0,
     latestReadByThem: 0,
     latestMessage: undefined,
+};
+
+const groupChat: GroupChatSummary = {
+    kind: "group_chat",
+    name: "this is a group chat",
+    description: "this is a group chat",
+    public: true,
+    joined: BigInt(0),
+    minVisibleMessageIndex: 0,
+    chatId: "abcdef",
+    lastUpdated: BigInt(0),
+    latestReadByMe: 0,
+    latestMessage: undefined,
+    participants: [],
 };
 
 const testContext: ChatContext = {
@@ -28,140 +42,194 @@ const testContext: ChatContext = {
 };
 
 describe("chat machine transitions", () => {
-    test("load messages success", () => {
+    test("initiate loading previous messages", () => {
         testTransition(
             chatMachine.withContext(testContext),
-            "loading_messages",
-            {
-                type: "done.invoke.loadMessagesAndUsers",
-                data: { userLookup: {}, messages: [], latestMessageIndex: 0 },
-            },
-            "loaded_messages"
+            { user_states: "idle" },
+            { type: "LOAD_PREVIOUS_MESSAGES" },
+            { user_states: "loading_previous_messages" }
         );
     });
-
-    test("load messages failure", () => {
-        testTransition(
+    test("send messages", () => {
+        const ctx = testTransition(
             chatMachine.withContext(testContext),
-            "loading_messages",
-            "error.platform.loadMessagesAndUsers",
-            "unexpected_error"
+            { user_states: "idle" },
+            { type: "SEND_MESSAGE", data: "hello world" },
+            { user_states: "sending_message" }
         );
+        expect(ctx.messages.length).toEqual(1);
     });
-
     test("show participants", () => {
         testTransition(
             chatMachine.withContext(testContext),
-            "loaded_messages",
-            "SHOW_PARTICIPANTS",
-            { showing_participants: "idle" }
+            { user_states: "idle" },
+            { type: "SHOW_PARTICIPANTS" },
+            { user_states: "showing_participants" }
         );
     });
-
     test("add participants", () => {
-        testTransition(chatMachine.withContext(testContext), "loaded_messages", "ADD_PARTICIPANT", {
-            showing_participants: "adding_participant",
-        });
-    });
-
-    test("cancel add participants", () => {
         testTransition(
             chatMachine.withContext(testContext),
-            { showing_participants: "adding_participant" },
-            "CANCEL_ADD_PARTICIPANT",
-            { showing_participants: "idle" }
+            { user_states: "idle" },
+            { type: "ADD_PARTICIPANT" },
+            { user_states: "showing_participants" }
         );
     });
-
-    test("user search completes", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "adding_participant" },
-            "done.invoke.userSearchMachine",
-            { showing_participants: "idle" }
-        );
-    });
-
-    test.skip("user search throws error", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "adding_participant" },
-            "error.platform.userSearchMachine",
-            "unexpected_error"
-        );
-    });
-
-    test("hide participants", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "adding_participant" },
-            "HIDE_PARTICIPANTS",
-            "loaded_messages"
-        );
-    });
-
-    test("remove participant", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "idle" },
-            "REMOVE_PARTICIPANT",
-            { showing_participants: "removing_participant" }
-        );
-    });
-
-    test("dismiss as admin", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "idle" },
-            "DISMISS_AS_ADMIN",
-            { showing_participants: "dismissing_participant" }
-        );
-    });
-
-    test("add participant while showing", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            { showing_participants: "idle" },
-            "ADD_PARTICIPANT",
-            { showing_participants: "adding_participant" }
-        );
-    });
-
-    test("load more messages", () => {
-        testTransition(
-            chatMachine.withContext(testContext),
-            "loaded_messages",
-            "LOAD_MORE_MESSAGES",
-            "loading_messages"
-        );
-    });
-
-    test("go to message index", () => {
-        const ctx = testTransition(
-            chatMachine.withContext(testContext),
-            "loaded_messages",
-            { type: "GO_TO_MESSAGE_INDEX", data: 123 },
-            "loading_messages"
-        );
-        expect(ctx.focusIndex).toEqual(123);
-    });
-
     test("clear focus index", () => {
         const ctx = testTransition(
             chatMachine.withContext({ ...testContext, focusIndex: 123 }),
-            "loaded_messages",
-            "CLEAR_FOCUS_INDEX",
-            "loaded_messages"
+            { user_states: "idle" },
+            { type: "CLEAR_FOCUS_INDEX" },
+            { user_states: "idle" }
         );
         expect(ctx.focusIndex).toBe(undefined);
     });
-
-    test("send message", () => {
-        testTransition(
+    test("clear focus index", () => {
+        const ctx = testTransition(
             chatMachine.withContext(testContext),
-            "loaded_messages",
-            "SEND_MESSAGE",
-            "sending_message"
+            { user_states: "idle" },
+            { type: "GO_TO_MESSAGE_INDEX", data: 123 },
+            { user_states: "loading_previous_messages" }
         );
+        expect(ctx.focusIndex).toBe(123);
+    });
+});
+
+function textMessage(index: number): Message {
+    return {
+        messageId: BigInt(index),
+        messageIndex: index,
+        content: {
+            kind: "text_content",
+            text: "some text",
+        },
+        sender: "abcdefg",
+        timestamp: BigInt(+new Date()),
+        repliesTo: undefined,
+    };
+}
+
+describe("required message range calculation", () => {
+    describe("updating chats", () => {
+        /**
+         * from: latestMessageIndexLoaded
+         * to: latestMessage?.messageIndex
+         *
+         * if there are no messages loaded then we should not be loading updates so do nothing
+         * if there is no latest message then there cannot be anything to load so do nothing
+         */
+        test("from equals to", () => {
+            const ctx = {
+                ...testContext,
+                messages: [textMessage(100)],
+                chatSummary: { ...directChat, latestMessage: textMessage(101) },
+            };
+            expect(newMessagesRange(ctx)).toEqual([101, 101]);
+        });
+        test("from greater than to", () => {
+            // this is not really a valid scenario, but we should deal with it
+            const ctx = {
+                ...testContext,
+                messages: [textMessage(200)],
+                chatSummary: { ...directChat, latestMessage: textMessage(101) },
+            };
+            expect(newMessagesRange(ctx)).toBe(undefined);
+        });
+        test("no messages loaded", () => {
+            expect(newMessagesRange(testContext)).toBe(undefined);
+        });
+        test("no latest message on chat", () => {
+            const ctx = {
+                ...testContext,
+                messages: [textMessage(200)],
+            };
+            expect(newMessagesRange(ctx)).toBe(undefined);
+        });
+        test("normal scenario", () => {
+            const ctx = {
+                ...testContext,
+                messages: [textMessage(100)],
+                chatSummary: { ...directChat, latestMessage: textMessage(110) },
+            };
+            expect(newMessagesRange(ctx)).toEqual([101, 110]);
+        });
+    });
+
+    describe("loading previous chats", () => {
+        describe("when we have not loaded any chats", () => {
+            test("cannot go back beyond zero for direct chat", () => {
+                const ctx = {
+                    ...testContext,
+                    chatSummary: { ...directChat, latestMessage: textMessage(9) },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+            });
+            test("cannot go back beyond min index for group chat", () => {
+                const ctx: ChatContext = {
+                    ...testContext,
+                    chatSummary: {
+                        ...groupChat,
+                        minVisibleMessageIndex: 90,
+                        latestMessage: textMessage(100),
+                    },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
+            });
+            test("takes into account focus index", () => {
+                // should go to focusIndex - page_size
+                const ctx: ChatContext = {
+                    ...testContext,
+                    focusIndex: 70,
+                    chatSummary: { ...directChat, latestMessage: textMessage(100) },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
+            });
+            test("limited by page size if nothing else", () => {
+                const ctx: ChatContext = {
+                    ...testContext,
+                    chatSummary: { ...directChat, latestMessage: textMessage(100) },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+            });
+        });
+
+        describe("when we have already got some chats", () => {
+            test("cannot go back beyond zero for direct chat", () => {
+                const ctx = {
+                    ...testContext,
+                    messages: [textMessage(10)],
+                };
+                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+            });
+            test("cannot go back beyond min index for group chat", () => {
+                const ctx: ChatContext = {
+                    ...testContext,
+                    messages: [textMessage(101)],
+                    chatSummary: {
+                        ...groupChat,
+                        minVisibleMessageIndex: 90,
+                    },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
+            });
+            test("takes into account focus index", () => {
+                // should go to focusIndex - page_size
+                const ctx: ChatContext = {
+                    ...testContext,
+                    messages: [textMessage(101)],
+                    focusIndex: 70,
+                    chatSummary: { ...directChat },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
+            });
+            test("limited by page size if nothing else", () => {
+                const ctx: ChatContext = {
+                    ...testContext,
+                    messages: [textMessage(101)],
+                    chatSummary: { ...directChat },
+                };
+                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+            });
+        });
     });
 });

@@ -1,4 +1,4 @@
-import { groupWhile } from "./list";
+import { dedupe, flatMap, groupWhile } from "./list";
 
 describe("list utils", () => {
     describe("group by", () => {
@@ -30,5 +30,54 @@ describe("list utils", () => {
             const grouped = groupWhile((a: number, b: number) => a === b, []);
             expect(grouped.length).toEqual(0);
         });
+    });
+
+    describe("flatMap", () => {
+        test("it works", () => {
+            const xs = [
+                {
+                    a: [1, 2, 3],
+                },
+                {
+                    a: [4, 5, 6],
+                },
+                {
+                    a: [7, 8, 9],
+                },
+            ];
+
+            const flat = flatMap(xs, (x) => x.a);
+
+            expect(flat).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        });
+    });
+
+    describe("dedupe", () => {
+        const things = [
+            {
+                a: 1,
+            },
+            {
+                a: 1,
+            },
+            {
+                a: 2,
+            },
+            {
+                a: 2,
+            },
+            {
+                a: 3,
+            },
+            {
+                a: 3,
+            },
+        ];
+
+        const deduped = dedupe((a, b) => a.a === b.a, things);
+        expect(deduped.length).toEqual(3);
+        expect(deduped[0].a).toEqual(1);
+        expect(deduped[1].a).toEqual(2);
+        expect(deduped[2].a).toEqual(3);
     });
 });
