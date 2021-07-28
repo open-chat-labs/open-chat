@@ -1,6 +1,5 @@
 use crate::types::CanisterId;
-use candid::de::ArgumentDecoder;
-use candid::ser::ArgumentEncoder;
+use candid::utils::{ArgumentDecoder, ArgumentEncoder};
 use ic_cdk::api::call::CallResult;
 use log::error;
 
