@@ -152,26 +152,26 @@ impl GroupChat {
         self.participants.iter().find(|p| p.user_id == *user_id)
     }
 
-    fn get_unread_by_any_message_id_ranges<F>(&self, me: &UserId, participant_filter: F) -> Vec<[u32; 2]>
-        where F: Fn(&UserId) -> bool {
-        let participants: Vec<_> = self.participants
-            .iter()
-            .filter(|p| participant_filter(&p.user_id))
-            .collect();
+    // fn get_unread_by_any_message_id_ranges<F>(&self, me: &UserId, participant_filter: F) -> Vec<[u32; 2]>
+    //     where F: Fn(&UserId) -> bool {
+    //     let participants: Vec<_> = self.participants
+    //         .iter()
+    //         .filter(|p| participant_filter(&p.user_id))
+    //         .collect();
 
-        let mut range_set = RangeSet::new();
-        for participant in participants {
-            for range in participant.unread_message_ids.clone().into_smallvec() {
-                range_set.insert_range(range);
-            }
-        }
+    //     let mut range_set = RangeSet::new();
+    //     for participant in participants {
+    //         for range in participant.unread_message_ids.clone().into_smallvec() {
+    //             range_set.insert_range(range);
+    //         }
+    //     }
 
-        let min_visible_message_id = self.get_min_visible_message_id(me);
+    //     let min_visible_message_id = self.get_min_visible_message_id(me);
 
-        range_set.remove_range(0..=(min_visible_message_id - 1));
+    //     range_set.remove_range(0..=(min_visible_message_id - 1));
 
-        utils::range_set_to_vec(range_set)
-    }
+    //     utils::range_set_to_vec(range_set)
+    // }
 }
 
 impl Chat for GroupChat {
@@ -303,7 +303,7 @@ impl GroupChatSummary {
             .rev()
             .take(message_count as usize)
             .take_while(|m| m.get_id() >= min_visible_message_id)
-            .map(|m| m.clone())
+            .cloned()
             .collect();
 
         GroupChatSummary {

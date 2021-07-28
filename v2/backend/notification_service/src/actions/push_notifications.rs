@@ -3,11 +3,14 @@ use crate::ic_agent::IcAgent;
 use crate::read_env_var;
 use futures::future;
 use lambda_runtime::Error;
-use shared::types::notifications::{IndexedNotification, Notification};
+use shared::types::indexed_event::IndexedEvent;
+use shared::types::notifications::Notification;
 use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use web_push::{ContentEncoding, SubscriptionInfo, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
+use web_push::{
+    ContentEncoding, SubscriptionInfo, SubscriptionKeys, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder,
+};
 
 pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let dynamodb_client = DynamoDbClient::build();
@@ -25,12 +28,13 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let ic_response = ic_agent.get_notifications(canister_id, from_notification_index).await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
-        handle_notifications(
-            ic_response.notifications,
-            ic_response.subscriptions,
-            vapid_private_key.as_bytes(),
-        )
-        .await?;
+        let subscriptions_map = ic_response
+            .subscriptions
+            .into_iter()
+            .map(|(k, v)| (k, v.into_iter().map(convert_subscription_info).collect()))
+            .collect();
+
+        handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_key.as_bytes()).await?;
 
         dynamodb_client
             .set_notification_index_processed_up_to(canister_id, latest_notification_index)
@@ -41,7 +45,7 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
 }
 
 async fn handle_notifications(
-    notifications: Vec<IndexedNotification>,
+    notifications: Vec<IndexedEvent<Notification>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     vapid_private_key: &[u8],
 ) -> Result<(), Error> {
@@ -59,7 +63,7 @@ async fn handle_notifications(
     Ok(())
 }
 
-fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashMap<UserId, Vec<Notification>> {
+fn group_notifications_by_user(notifications: Vec<IndexedEvent<Notification>>) -> HashMap<UserId, Vec<Notification>> {
     let mut grouped_by_user: HashMap<UserId, Vec<Notification>> = HashMap::new();
 
     fn assign_notification_to_user(map: &mut HashMap<UserId, Vec<Notification>>, user_id: UserId, notification: Notification) {
@@ -72,13 +76,13 @@ fn group_notifications_by_user(notifications: Vec<IndexedNotification>) -> HashM
     }
 
     for n in notifications.into_iter() {
-        match &n.notification {
+        match &n.value {
             Notification::DirectMessageNotification(d) => {
-                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.notification.clone());
+                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.value.clone());
             }
             Notification::GroupMessageNotification(g) => {
                 for u in g.recipients.iter() {
-                    assign_notification_to_user(&mut grouped_by_user, *u, n.notification.clone());
+                    assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
                 }
             }
         }
@@ -110,4 +114,14 @@ async fn push_notifications_to_user(
     futures::future::join_all(futures).await;
 
     Ok(())
+}
+
+fn convert_subscription_info(value: notifications_canister::common::subscription::SubscriptionInfo) -> SubscriptionInfo {
+    SubscriptionInfo {
+        endpoint: value.endpoint,
+        keys: SubscriptionKeys {
+            p256dh: value.keys.p256dh,
+            auth: value.keys.auth,
+        },
+    }
 }

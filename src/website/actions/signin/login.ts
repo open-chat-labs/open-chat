@@ -1,5 +1,4 @@
 import getAuthClient, { getTimeUntilSessionExpiryMs } from "../../utils/authClient";
-import { IDP_URL } from "../../constants";
 import { Dispatch } from "react";
 import getCurrentUser from "../users/getCurrentUser";
 import CanisterClientFactory from "../../services/CanisterClientFactory";
@@ -11,7 +10,7 @@ export default function login() {
     return async (dispatch: Dispatch<any>) => {
         let authClient = getAuthClient();
         await authClient.login({
-            identityProvider: IDP_URL,
+            identityProvider: process.env.IDP_URL,
             maxTimeToLive: SESSION_TIMEOUT_NANOS,
             onSuccess: async () => {
                 const identity = authClient.getIdentity();

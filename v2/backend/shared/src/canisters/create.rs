@@ -1,5 +1,4 @@
 use crate::canisters::error::Error;
-use crate::consts;
 use crate::types::CanisterId;
 use ic_cdk::api;
 use ic_cdk::export::candid::{CandidType, Nat};
@@ -16,10 +15,11 @@ pub async fn call(
     existing_canister_id: Option<CanisterId>,
     wasm_module: Vec<u8>,
     wasm_arg: Vec<u8>,
+    cycles_to_use: u64,
 ) -> Result<CanisterId, CreateCanisterError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
-        None => match create().await {
+        None => match create(cycles_to_use).await {
             Err(error) => {
                 error!("Error calling create_canister: {}: {}", error.code, error.msg);
                 return Err(CreateCanisterError::CreateFailed(error));
@@ -37,7 +37,7 @@ pub async fn call(
     }
 }
 
-async fn create() -> Result<Principal, Error> {
+async fn create(cycles_to_use: u64) -> Result<Principal, Error> {
     #[derive(CandidType, Clone, Deserialize)]
     struct CanisterSettings {
         controller: Option<Principal>,
@@ -65,19 +65,14 @@ async fn create() -> Result<Principal, Error> {
         }),
     };
 
-    let (create_result,): (CreateResult,) = match api::call::call_with_payment(
-        Principal::management_canister(),
-        "create_canister",
-        (in_arg,),
-        consts::CANISTER_INITIAL_PAYMENT,
-    )
-    .await
-    {
-        Ok(x) => x,
-        Err((code, msg)) => {
-            return Err(Error { code: code as u8, msg });
-        }
-    };
+    let (create_result,): (CreateResult,) =
+        match api::call::call_with_payment(Principal::management_canister(), "create_canister", (in_arg,), cycles_to_use).await
+        {
+            Ok(x) => x,
+            Err((code, msg)) => {
+                return Err(Error { code: code as u8, msg });
+            }
+        };
 
     Ok(create_result.canister_id)
 }

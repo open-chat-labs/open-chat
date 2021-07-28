@@ -14,8 +14,8 @@ import { RootState } from "../../reducers";
 import SendCycles, { ISendCyclesRef } from "./SendCycles";
 import MessageTextInput, { IMessageTextInputRef } from "./MessageTextInput";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
-import Smiley from "../../assets/icons/smiley.svg";
-import Dollar from "../../assets/icons/dollar.svg";
+import Smiley from "../../icons/smiley.svg";
+import Dollar from "../../icons/dollar.svg";
 import EmojiPicker from "./EmojiPicker"
 import CloseButton from "../shared/CloseButton";
 import DraftMediaMessage from "./DraftMediaMessage";

@@ -185,7 +185,7 @@ impl UserStore {
         users
             .iter()
             .filter_map(|id| self.data.get(&id))
-            .filter(|u| if updated_since.is_some() { filter(u, updated_since.unwrap()) } else { true })
+            .filter(|u| if let Some(updated_since) = updated_since { filter(u, updated_since) } else { true })
             .map(|u| UserSummary::new(u, me, Some(now)))
             .collect()
     }
@@ -226,7 +226,7 @@ impl UserStore {
                 return TransferCyclesResponse::BalanceExceeded;
             }
 
-            me.account_balance = me.account_balance - amount;
+            me.account_balance -= amount;
             new_balance = me.account_balance;
         }
         
@@ -237,7 +237,7 @@ impl UserStore {
             }
             let recipient = recipient.unwrap();
             
-            recipient.account_balance = recipient.account_balance + amount;
+            recipient.account_balance += amount;
         }
 
         TransferCyclesResponse::Success(TransferCyclesResult { new_balance })
@@ -256,27 +256,22 @@ impl UserStore {
     fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
         let u1_starts = u1.starts_with(&search_term);
         let u2_starts = u2.starts_with(&search_term);
-
-        if u1_starts && u2_starts {
-            if u1.len() < u2.len() { 
-                return Ordering::Less; 
-            } else if u1.len() > u2.len() { 
-                return Ordering::Greater;
-            } 
-        } else if u1_starts {
-            return Ordering::Less;
-        } else if u2_starts {
-            return Ordering::Greater;
+    
+        if u1_starts != u2_starts {
+            if u1_starts {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        } else {
+            match u1.len().cmp(&u2.len()) {
+                Ordering::Less => Ordering::Less,
+                Ordering::Equal => u1.cmp(&u2),
+                Ordering::Greater => Ordering::Greater,
+            }
         }
-
-        if u1.len() < u2.len() { 
-            return Ordering::Less; 
-        } else if u1.len() > u2.len() { 
-            return Ordering::Greater;
-        } 
-
-        u1.cmp(&u2)
     }
+    
 }
 
 impl StableState for UserStore {

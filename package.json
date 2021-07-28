@@ -32,6 +32,7 @@
     "async": "^3.2.0",
     "buffer": "6.0.3",
     "clipboard-polyfill": "^3.0.3",
+    "copy-webpack-plugin": "^9.0.1",
     "css-loader": "5.0.1",
     "emoji-mart": "^3.0.0",
     "events": "3.3.0",
