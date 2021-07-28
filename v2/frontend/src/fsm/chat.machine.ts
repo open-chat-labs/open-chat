@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure } from "xstate/lib/actions";
+import { assign, log, pure } from "xstate/lib/actions";
 import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
 import {
     earliestLoadedMessageIndex,
@@ -73,11 +73,12 @@ function loadMessages(
             earliestLoadedMessageIndex
         );
     }
-    return serviceContainer.groupChatMessages(
+    const messages = serviceContainer.groupChatMessages(
         chatSummary.chatId,
         earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );
+    return messages;
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
@@ -243,6 +244,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             states: {
                 idle: { id: "ui_idle" },
                 loading_previous_messages: {
+                    entry: log("entering loading previous messages"),
                     initial: "loading",
                     meta: "Triggered by selecting a chat, scrolling up, or by clicking a link to a previous message",
                     states: {
@@ -253,7 +255,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 src: "loadMessagesAndUsers",
                                 onDone: {
                                     target: "#ui_idle",
-                                    actions: "assignMessagesResponse",
+                                    actions: [
+                                        log("loaded previous messages"),
+                                        "assignMessagesResponse",
+                                    ],
                                 },
                                 onError: {
                                     target: "error",

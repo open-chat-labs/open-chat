@@ -21,6 +21,8 @@ import type { IGroupClient } from "./group/group.client.interface";
 // import { GroupClient } from "./group/group.client";
 // import { Principal } from "@dfinity/principal";
 import { GroupClientMock } from "./group/group.client.mock";
+import { CachingUserClient } from "./user/user.caching.client";
+import { CachingGroupClient } from "./group/group.caching.client";
 
 export class ServiceContainer {
     private userIndexClient: IUserIndexClient;
@@ -35,7 +37,8 @@ export class ServiceContainer {
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
             // this._groupClients[chatId] = new GroupClient(this.identity, Principal.fromText(chatId));
-            this._groupClients[chatId] = new GroupClientMock();
+            this._groupClients[chatId] = new CachingGroupClient(chatId, new GroupClientMock());
+            // this._groupClients[chatId] = new GroupClientMock();
         }
         return this._groupClients[chatId];
     }
@@ -64,8 +67,8 @@ export class ServiceContainer {
     }
 
     createUserClient(_userId: string): ServiceContainer {
-        this._userClient = new UserClientMock();
-        // this._userClient = new UserClient(this.identity, userId);
+        this._userClient = new CachingUserClient(new UserClientMock());
+        // this._userClient = new CachingUserClient(new UserClient(this.identity, userId));
         return this;
     }
 

@@ -12,7 +12,8 @@
         "lint": "eslint ./src --fix",
         "storybook": "start-storybook -p 6006 -s ./public",
         "build-storybook": "build-storybook",
-        "format": "prettier --config .prettierrc './src/**/*.ts' --write"
+        "format": "prettier --config .prettierrc './src/**/*.ts' --write",
+        "codegen": "sh ./codegen.sh"
     },
     "devDependencies": {
         "@babel/core": "^7.14.6",
@@ -89,6 +90,7 @@
         "@xstate/test": "^0.4.2",
         "country-telephone-data": "^0.6.3",
         "emoji-mart": "^3.0.1",
+        "idb": "^6.1.2",
         "preact": "^10.5.13",
         "remount": "^0.11.0",
         "rollbar": "^2.23.0",
@@ -116,7 +118,6 @@
             "svelte"
         ],
         "moduleNameMapper": {
-            "api-canisters/*": "<rootDir>/../backend/canisters/*",
             "svelte-spa-router": "<rootDir>/src/dummyModule.js",
             "stores/background": "<rootDir>/src/dummyModule.js"
         }

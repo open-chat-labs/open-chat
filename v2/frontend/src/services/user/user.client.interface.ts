@@ -3,4 +3,5 @@ import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../../domain
 export interface IUserClient {
     getUpdates(args: UpdateArgs): Promise<UpdatesResponse>;
     chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse>;
+    chatMessagesByIndex(userId: string, indexes: Set<number>): Promise<MessagesResponse>;
 }

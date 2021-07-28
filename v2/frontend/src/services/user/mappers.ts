@@ -12,7 +12,7 @@ import type {
     ApiUpdatesResponse,
     ApiParticipant,
     ApiUpdatedChatSummary,
-} from "api-canisters/user/src/canister/app/idl";
+} from "./candid/idl";
 import type {
     BlobReference,
     ChatSummary,

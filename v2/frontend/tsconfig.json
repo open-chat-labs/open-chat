@@ -7,8 +7,6 @@
         "module": "es2020",
         "strict": true,
         "types": ["jest", "node"],
-        "paths": {
-            "api-canisters/*": ["../backend/canisters/*"]
-        }
+        "paths": {}
     }
 }
