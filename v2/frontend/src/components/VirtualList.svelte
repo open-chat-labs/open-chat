@@ -1,7 +1,10 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
 
+    type KeyFn = (item: any) => string;
+
     // props
+    export let keyFn: KeyFn | undefined = undefined;
     export let items: any[];
     export let height = "100%";
     export let itemHeight: number | undefined = undefined;
@@ -16,7 +19,7 @@
     let viewport: HTMLElement;
     let contents: HTMLElement;
     let viewport_height = 0;
-    let visible: { index: number; data: any }[];
+    let visible: { index: number; data: any; key: string | undefined }[];
     let mounted: boolean;
 
     let top = 0;
@@ -24,10 +27,8 @@
     let average_height: number;
 
     $: visible = items.slice(start, end).map((data, i) => {
-        return { index: i + start, data };
+        return { index: i + start, data, key: keyFn ? keyFn(data) : undefined };
     });
-
-    $: console.log(visible);
 
     // whenever `items` changes, invalidate the current heightmap
     $: if (mounted) refresh(items, viewport_height, itemHeight);
@@ -147,7 +148,7 @@
     <svelte-virtual-list-contents
         bind:this={contents}
         style="padding-top: {top}px; padding-bottom: {bottom}px;">
-        {#each visible as row (row.index)}
+        {#each visible as row (row.key ?? row.index)}
             <svelte-virtual-list-row>
                 <slot item={row.data}>Missing template</slot>
             </svelte-virtual-list-row>
@@ -155,7 +156,7 @@
     </svelte-virtual-list-contents>
 </svelte-virtual-list-viewport>
 
-<style>
+<style type="text/scss">
     svelte-virtual-list-viewport {
         position: relative;
         overflow-y: auto;
@@ -168,7 +169,7 @@
         display: block;
     }
 
-    svelte-virtual-list-row {
-        overflow: hidden;
-    }
+    // svelte-virtual-list-row {
+    //     overflow: hidden;
+    // }
 </style>
