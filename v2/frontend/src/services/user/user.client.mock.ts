@@ -20,7 +20,7 @@ const interval = 1000 * 60 * 60 * 8; // 8 hours
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
-    const participants: Participant[] = fill(randomNum(10, 200), (i: number) => ({
+    const participants: Participant[] = fill(randomNum(10, 1200), (i: number) => ({
         role: "admin",
         userId: `${randomWord(5)}_${i}`,
     }));
