@@ -1,10 +1,9 @@
 use crate::model::group_chat::GroupChat;
 use crate::{RuntimeState, RUNTIME_STATE};
-use candid::{CandidType, Principal};
+use group_index_canister::updates::create_group;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use log::error;
-use serde::Deserialize;
 use shared::c2c::call_with_logging;
 use shared::types::chat_id::GroupChatId;
 use shared::types::CanisterId;
@@ -17,19 +16,17 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match group_index_canister::call_create_group(prepare_result.group_index_canister_id, prepare_result.create_group_args)
-        .await
-    {
+    match group_index::call_create_group(prepare_result.group_index_canister_id, prepare_result.create_group_args).await {
         Ok(response) => match response.0 {
-            group_index_canister::CreateGroupResponse::Success(r) => {
+            create_group::Response::Success(r) => {
                 RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
                 Success(SuccessResult {
                     group_chat_id: r.group_id,
                 })
             }
-            group_index_canister::CreateGroupResponse::NameTaken => NameTaken,
-            group_index_canister::CreateGroupResponse::CyclesBalanceTooLow => InternalError,
-            group_index_canister::CreateGroupResponse::InternalError => InternalError,
+            create_group::Response::NameTaken => NameTaken,
+            create_group::Response::CyclesBalanceTooLow => InternalError,
+            create_group::Response::InternalError => InternalError,
         },
         Err(error) => {
             error!("Error calling create group: {:?}", error);
@@ -40,7 +37,7 @@ async fn create_group(args: Args) -> Response {
 
 struct PrepareResult {
     group_index_canister_id: CanisterId,
-    create_group_args: group_index_canister::CreateGroupArgs,
+    create_group_args: create_group::Args,
 }
 
 fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -53,7 +50,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         if is_throttled() {
             Err(Throttled)
         } else {
-            let create_group_args = group_index_canister::CreateGroupArgs {
+            let create_group_args = create_group::Args {
                 is_public: args.is_public,
                 creator_principal: runtime_state.env.caller(),
                 name: args.name,
@@ -75,33 +72,13 @@ fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
         .insert(group_chat_id, GroupChat::new(group_chat_id));
 }
 
-mod group_index_canister {
+mod group_index {
     use super::*;
 
     pub async fn call_create_group(
         group_index_canister_id: CanisterId,
-        args: CreateGroupArgs,
-    ) -> CallResult<(CreateGroupResponse,)> {
+        args: create_group::Args,
+    ) -> CallResult<(create_group::Response,)> {
         call_with_logging(group_index_canister_id, "create_group", (args,)).await
-    }
-
-    #[derive(CandidType)]
-    pub struct CreateGroupArgs {
-        pub is_public: bool,
-        pub creator_principal: Principal,
-        pub name: String,
-    }
-
-    #[derive(Deserialize)]
-    pub enum CreateGroupResponse {
-        Success(CreateGroupSuccessResult),
-        NameTaken,
-        CyclesBalanceTooLow,
-        InternalError,
-    }
-
-    #[derive(Deserialize)]
-    pub struct CreateGroupSuccessResult {
-        pub group_id: GroupChatId,
     }
 }

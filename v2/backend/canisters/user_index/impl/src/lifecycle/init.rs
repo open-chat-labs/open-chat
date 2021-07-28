@@ -1,11 +1,10 @@
 use crate::{Data, RuntimeState, RUNTIME_STATE};
-use candid::Principal;
 use ic_cdk_macros::init;
-use serde::Deserialize;
 use shared::env::canister::CanisterEnv;
+use user_index_canister::lifecycle::init::Args;
 
 #[init]
-fn init(args: InitArgs) {
+fn init(args: Args) {
     ic_cdk::setup();
 
     RUNTIME_STATE.with(|state| {
@@ -15,20 +14,4 @@ fn init(args: InitArgs) {
 
         *state.borrow_mut() = Some(runtime_state);
     });
-}
-
-#[derive(Deserialize)]
-struct InitArgs {
-    // Only these principals can call update_wasm
-    service_principals: Vec<Principal>,
-
-    // Only these principals can call pending_sms_messages
-    sms_service_principals: Vec<Principal>,
-
-    // The initial wasm module for creating user canisters
-    #[serde(with = "serde_bytes")]
-    user_wasm_module: Vec<u8>,
-
-    // Accepts confirmation code 123456
-    test_mode: bool,
 }

@@ -14,8 +14,10 @@ crate-type = ["cdylib"]
 candid = "0.6.21"
 ic-cdk = "0.3.0"
 ic-cdk-macros = "0.3.0"
+group_index_canister = { path = "../../group_index/api" }
 itertools = "0.10.1"
 log = "0.4.14"
+notifications_canister = { path = "../../notifications/api" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 shared = { path = "../../../shared" }

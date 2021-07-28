@@ -5,7 +5,7 @@ use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::types::message_content::MessageContent;
-use shared::types::{chat_id::DirectChatId, MessageId, MessageIndex, UserId};
+use shared::types::{chat_id::DirectChatId, MessageId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use user_canister::common::reply_context::ReplyContextInternal;
 use user_canister::updates::send_message::{Response::*, *};
@@ -57,8 +57,10 @@ fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mu
 mod c2c {
     use super::*;
     use ic_cdk::api::call::CallResult;
+    use notifications_canister::updates::push_direct_message_notification;
     use shared::c2c::call_with_logging;
     use shared::rand::get_random_item;
+    use shared::types::notifications::DirectMessageNotification;
     use shared::types::CanisterId;
 
     #[derive(CandidType, Deserialize)]
@@ -123,26 +125,9 @@ mod c2c {
     }
 
     async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
-        let args = PushDirectMessageNotificationArgs { notification };
+        let args = push_direct_message_notification::Args { notification };
 
-        let _: CallResult<(PushDirectMessageNotificationResponse,)> =
+        let _: CallResult<(push_direct_message_notification::Response,)> =
             call_with_logging(canister_id, "push_direct_message_notification", (args,)).await;
     }
-}
-
-#[derive(CandidType)]
-pub struct DirectMessageNotification {
-    sender: UserId,
-    recipient: UserId,
-    message_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-struct PushDirectMessageNotificationArgs {
-    notification: DirectMessageNotification,
-}
-
-#[derive(Deserialize)]
-enum PushDirectMessageNotificationResponse {
-    Success,
 }

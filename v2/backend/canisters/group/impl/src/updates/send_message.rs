@@ -1,15 +1,14 @@
 use crate::model::messages::PushMessageArgs;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
-use candid::CandidType;
 use group_canister::updates::send_message::{Response::*, *};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
-use serde::Deserialize;
+use notifications_canister::updates::push_group_message_notification;
 use shared::c2c::call_with_logging;
 use shared::rand::get_random_item;
-use shared::types::chat_id::GroupChatId;
-use shared::types::{CanisterId, MessageIndex, UserId};
+use shared::types::notifications::GroupMessageNotification;
+use shared::types::CanisterId;
 
 #[update]
 fn send_message(args: Args) -> Response {
@@ -59,26 +58,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 }
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
-    let args = PushGroupMessageNotificationArgs { notification };
+    let args = push_group_message_notification::Args { notification };
 
-    let _: CallResult<(PushGroupMessageNotificationResponse,)> =
+    let _: CallResult<(push_group_message_notification::Response,)> =
         call_with_logging(canister_id, "push_group_message_notification", (args,)).await;
-}
-
-#[derive(CandidType)]
-struct GroupMessageNotification {
-    chat_id: GroupChatId,
-    sender: UserId,
-    recipients: Vec<UserId>,
-    message_index: MessageIndex,
-}
-
-#[derive(CandidType)]
-struct PushGroupMessageNotificationArgs {
-    notification: GroupMessageNotification,
-}
-
-#[derive(Deserialize)]
-enum PushGroupMessageNotificationResponse {
-    Success,
 }

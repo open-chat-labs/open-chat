@@ -1,7 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use candid::CandidType;
+use group_index_canister::updates::notify_activity;
 use ic_cdk::api::call::CallResult;
-use serde::Deserialize;
 use shared::c2c::call_with_logging;
 use shared::types::CanisterId;
 
@@ -13,15 +12,6 @@ pub fn handle_activity_notification() {
     RUNTIME_STATE.with(|state| handle_activity_notification_impl(state.borrow_mut().as_mut().unwrap()));
 }
 
-#[derive(CandidType)]
-struct NotifyActivityArgs {}
-
-#[derive(Deserialize)]
-enum NotifyActivityResponse {
-    Success,
-    ChatNotFound,
-}
-
 fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
@@ -31,8 +21,9 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
     }
 
     async fn call_group_index_canister(canister_id: CanisterId) {
-        let args = NotifyActivityArgs {};
-        let response: CallResult<(NotifyActivityResponse,)> = call_with_logging(canister_id, "notify_activity", (args,)).await;
+        let args = notify_activity::Args {};
+        let response: CallResult<(notify_activity::Response,)> =
+            call_with_logging(canister_id, "notify_activity", (args,)).await;
         RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
     }
 

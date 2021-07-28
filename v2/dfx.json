@@ -3,19 +3,19 @@
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/candid/c2c.did",
-      "wasm": "target/wasm32-unknown-unknown/release/notifications-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm",
       "build": "./generate-wasm.sh notifications"
     },
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/candid/app.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user_index-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/user_index_canister_impl-opt.wasm",
       "build": "./generate-wasm.sh user_index"
     },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/candid/app.did",
-      "wasm": "target/wasm32-unknown-unknown/release/user-opt.wasm",
+      "wasm": "target/wasm32-unknown-unknown/release/user_canister_impl-opt.wasm",
       "build": "./generate-wasm.sh user"
     },
     "website": {
