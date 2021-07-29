@@ -10,6 +10,7 @@ import type {
     UpgradeCanisterResponse,
     CreateCanisterResponse,
 } from "../../domain/user/user";
+import { randomNum, randomWord } from "../../utils/mockutils";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 
 export const DELAY = 1000;
@@ -26,6 +27,12 @@ export class UserIndexClientMock implements IUserIndexClient {
     }
 
     getUsers(userIds: string[], _since: bigint): Promise<UsersResponse> {
+        if (userIds.length === 0) {
+            return Promise.resolve({
+                timestamp: BigInt(+new Date()),
+                users: [],
+            });
+        }
         // this is just to inject a bit of randomness so we can see that the updates flow through the UI ok
         const uppercase = +new Date() % 2 === 0;
         return new Promise((resolve) => {
@@ -33,11 +40,16 @@ export class UserIndexClientMock implements IUserIndexClient {
                 () =>
                     resolve({
                         timestamp: BigInt(+new Date()),
-                        users: userIds.map((u, i) => ({
-                            userId: u,
-                            username: uppercase ? "JULIAN_JELFS" : "julian_jelfs",
-                            secondsSinceLastOnline: 20 * i,
-                        })),
+                        users: userIds.map((u, i) => {
+                            const username = randomWord(randomNum(5, 25));
+                            return {
+                                userId: u,
+                                username: uppercase
+                                    ? username.toUpperCase()
+                                    : username.toLowerCase(),
+                                secondsSinceLastOnline: 20 * i,
+                            };
+                        }),
                     }),
                 DELAY
             );

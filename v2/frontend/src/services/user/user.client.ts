@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import idlFactory, { UserService } from "api-canisters/user/src/canister/app/idl";
+import idlFactory, { UserService } from "./candid/idl";
 import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import { getMessagesResponse, getUpdatesResponse } from "./mappers";
@@ -20,6 +20,16 @@ export class UserClient extends CandidService implements IUserClient {
                 user_id: Principal.fromText(userId),
                 to_index: toIndex,
                 from_index: fromIndex,
+            }),
+            getMessagesResponse
+        );
+    }
+
+    chatMessagesByIndex(userId: string, indexes: Set<number>): Promise<MessagesResponse> {
+        return this.handleResponse(
+            this.userService.messages_by_index({
+                user_id: Principal.fromText(userId),
+                messages: [...indexes],
             }),
             getMessagesResponse
         );

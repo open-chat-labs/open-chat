@@ -136,6 +136,11 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
+    function userGroupKey(group: Message[]): string {
+        const first = group[0]!;
+        return `${first.sender}_${first.messageIndex}`;
+    }
+
     $: groupedMessages = groupMessages($machine.context.messages);
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
@@ -147,7 +152,6 @@
             if ($machine.context.chatSummary.chatId !== currentChatId) {
                 currentChatId = $machine.context.chatSummary.chatId;
                 initialised = false;
-                tick().then(resetScroll);
             }
 
             if (finishedLoadingPreviousMessages()) {
@@ -186,7 +190,7 @@
             <div class="date-label">
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
-            {#each dayGroup as userGroup, ui (ui)}
+            {#each dayGroup as userGroup, ui (userGroupKey(userGroup))}
                 {#each userGroup as msg, i (msg.messageIndex)}
                     {#if msg.messageIndex === $machine.context.chatSummary.latestReadByMe + 1}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>

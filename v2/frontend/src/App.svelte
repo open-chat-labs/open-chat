@@ -36,10 +36,6 @@
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
     }
-
-    $: {
-        console.log($state.value);
-    }
 </script>
 
 {#if $state.matches("login") || $state.matches("logging_in")}

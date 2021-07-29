@@ -73,11 +73,12 @@ function loadMessages(
             earliestLoadedMessageIndex
         );
     }
-    return serviceContainer.groupChatMessages(
+    const messages = serviceContainer.groupChatMessages(
         chatSummary.chatId,
         earliestRequiredMessageIndex,
         earliestLoadedMessageIndex
     );
+    return messages;
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {

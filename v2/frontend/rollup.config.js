@@ -27,32 +27,17 @@ const production = !process.env.ROLLUP_WATCH;
 console.log("PROD", production);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
 
-// const aliases = Object.entries(dfxJson.canisters).map(([name, _value]) => {
-//     const networkName = process.env["DFX_NETWORK"] || "local";
-//     const outputRoot = path.join(
-//         __dirname,
-//         ".dfx",
-//         networkName,
-//         "canisters",
-//         name
-//     );
-//     return {
-//         find: `dfx-generated/${name}`,
-//         replacement: path.join(outputRoot, `${name}.js`)
-//     };
-// })
+// const aliases = ["controller", "group", "group_index", "phone_index", "user", "user_index"].map(
+//     (name) => {
+//         const find = `api-canisters/${name}/canister`;
+//         const replacement = path.join(__dirname, "..", "backend", "canisters", name, "canister");
 
-const aliases = ["controller", "group", "group_index", "phone_index", "user", "user_index"].map(
-    (name) => {
-        const find = `api-canisters/${name}/canister`;
-        const replacement = path.join(__dirname, "..", "backend", "canisters", name, "canister");
-
-        return {
-            find,
-            replacement,
-        };
-    }
-);
+//         return {
+//             find,
+//             replacement,
+//         };
+//     }
+// );
 
 function serve() {
     return dev({
@@ -76,7 +61,7 @@ export default {
     plugins: [
         alias({
             entries: [
-                ...aliases,
+                // ...aliases,
                 {
                     find: "react",
                     replacement: require.resolve("preact/compat"),

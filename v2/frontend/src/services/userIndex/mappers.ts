@@ -24,7 +24,7 @@ import type {
     ApiUpgradeCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
-} from "api-canisters/user_index/src/canister/app/idl";
+} from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {

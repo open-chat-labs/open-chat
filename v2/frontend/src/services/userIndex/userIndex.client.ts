@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import idlFactory, { UserIndexService } from "api-canisters/user_index/src/canister/app/idl";
+import idlFactory, { UserIndexService } from "./candid/idl";
 import type {
     ConfirmPhoneNumberResponse,
     CurrentUserResponse,
@@ -94,7 +94,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
         return this.handleResponse(
             this.userService.submit_phone_number({
-                number: {
+                phone_number: {
                     country_code: phoneNumber.countryCode,
                     number: phoneNumber.number,
                 },

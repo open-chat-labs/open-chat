@@ -39,12 +39,14 @@ function mockGroupChat(i: number): GroupChatSummary {
     };
 }
 
+const others = ["qwxyz", "mnopr", "rstuv"];
+
 function mockDirectChat(i: number): DirectChatSummary {
     time -= oneDay;
     const us = randomNum(10, 1000);
     return {
         kind: "direct_chat",
-        them: "qwxyz",
+        them: others[i % 3],
         chatId: String(i),
         lastUpdated: BigInt(time),
         latestReadByMe: us,
@@ -136,6 +138,19 @@ export class UserClientMock implements IUserClient {
     chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
         const n = toIndex - fromIndex;
         const messages = fill(n + 1, mockTextMessage, (i: number) => fromIndex + i);
+        return new Promise((res) => {
+            setTimeout(() => {
+                res({
+                    messages,
+                });
+            }, 300);
+        });
+    }
+
+    chatMessagesByIndex(_userId: string, indexes: Set<number>): Promise<MessagesResponse> {
+        const messages = [...indexes].map((i) => {
+            return mockTextMessage(i);
+        });
         return new Promise((res) => {
             setTimeout(() => {
                 res({

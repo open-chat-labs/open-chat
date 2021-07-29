@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
-    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -42,6 +42,7 @@
     $: userStatus = getUserStatus(userLookup, msg.sender);
 
     afterUpdate(() => {
+        // todo - keep an eye on this
         console.log("updating ChatMessage component");
     });
 

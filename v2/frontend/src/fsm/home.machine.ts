@@ -24,7 +24,7 @@ import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 
 const ONE_MINUTE = 60 * 1000;
-const CHAT_UPDATE_INTERVAL = 3000;
+const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
 
@@ -295,45 +295,46 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         const chatSummary = ctx.chatSummaries.find(
                             (c) => c.chatId === ev.data.chatId
                         );
-                        const chatActor = ctx.chatsIndex[key];
+                        // const chatActor = ctx.chatsIndex[key];
                         if (chatSummary) {
-                            if (!chatActor) {
-                                return {
-                                    selectedChat: chatSummary,
-                                    chatsIndex: {
-                                        ...ctx.chatsIndex,
-                                        [key]: spawn(
-                                            chatMachine.withContext({
-                                                serviceContainer: ctx.serviceContainer!,
-                                                chatSummary: { ...chatSummary }, //clone
-                                                userLookup: ctx.userLookup,
-                                                user: ctx.user
-                                                    ? {
-                                                          userId: ctx.user.userId,
-                                                          username: ctx.user.username,
-                                                          secondsSinceLastOnline: 0,
-                                                      }
-                                                    : undefined,
-                                                messages: [],
-                                                focusIndex: ev.data.messageIndex
-                                                    ? Number(ev.data.messageIndex)
-                                                    : undefined,
-                                            }),
-                                            `chat-${key}`
-                                        ),
-                                    },
-                                };
-                            } else {
-                                // if we *have* got a chat actor already then we still need to tell it if
-                                // we want to focus a particular message index
-                                if (ev.data.messageIndex) {
-                                    chatActor.send({
-                                        type: "GO_TO_MESSAGE_INDEX",
-                                        data: Number(ev.data.messageIndex),
-                                    });
-                                }
-                            }
+                            // if (!chatActor) {
+                            return {
+                                selectedChat: chatSummary,
+                                chatsIndex: {
+                                    ...ctx.chatsIndex,
+                                    [key]: spawn(
+                                        chatMachine.withContext({
+                                            serviceContainer: ctx.serviceContainer!,
+                                            chatSummary: { ...chatSummary }, //clone
+                                            userLookup: ctx.userLookup,
+                                            user: ctx.user
+                                                ? {
+                                                      userId: ctx.user.userId,
+                                                      username: ctx.user.username,
+                                                      secondsSinceLastOnline: 0,
+                                                  }
+                                                : undefined,
+                                            messages: [],
+                                            focusIndex: ev.data.messageIndex
+                                                ? Number(ev.data.messageIndex)
+                                                : undefined,
+                                        }),
+                                        `chat-${key}`
+                                    ),
+                                },
+                            };
                         }
+                        // else {
+                        //     // if we *have* got a chat actor already then we still need to tell it if
+                        //     // we want to focus a particular message index
+                        //     if (ev.data.messageIndex) {
+                        //         chatActor.send({
+                        //             type: "GO_TO_MESSAGE_INDEX",
+                        //             data: Number(ev.data.messageIndex),
+                        //         });
+                        //     }
+                        // }
+                        // }
                         return { selectedChat: chatSummary };
                     }),
                 },

@@ -33,10 +33,6 @@
     }
 
     $: {
-        console.log($machine.context.error?.message);
-    }
-
-    $: {
         switch ($machine.value) {
             case "awaiting_phone_number":
                 uiState = "awaitingPhoneNumber";
