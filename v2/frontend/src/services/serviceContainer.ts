@@ -23,22 +23,43 @@ import type { IGroupClient } from "./group/group.client.interface";
 import { GroupClientMock } from "./group/group.client.mock";
 import { CachingUserClient } from "./user/user.caching.client";
 import { CachingGroupClient } from "./group/group.caching.client";
+import type { IDBPDatabase } from "idb";
+import { ChatSchema, openMessageCache } from "../utils/caching";
 
 export class ServiceContainer {
     private userIndexClient: IUserIndexClient;
     private _userClient?: IUserClient;
     private _groupClients: Record<string, IGroupClient>;
+    private db?: Promise<IDBPDatabase<ChatSchema>>;
 
     constructor(private identity: Identity) {
         this.userIndexClient = new UserIndexClientMock();
         this._groupClients = {};
+        this.db = openMessageCache();
+    }
+
+    createUserClient(_userId: string): ServiceContainer {
+        if (this.db) {
+            this._userClient = new CachingUserClient(this.db, new UserClientMock());
+        } else {
+            this._userClient = new UserClientMock();
+        }
+        // this._userClient = new CachingUserClient(new UserClient(this.identity, userId));
+        return this;
     }
 
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
             // this._groupClients[chatId] = new GroupClient(this.identity, Principal.fromText(chatId));
-            this._groupClients[chatId] = new CachingGroupClient(chatId, new GroupClientMock());
-            // this._groupClients[chatId] = new GroupClientMock();
+            if (this.db) {
+                this._groupClients[chatId] = new CachingGroupClient(
+                    this.db,
+                    chatId,
+                    new GroupClientMock()
+                );
+            } else {
+                this._groupClients[chatId] = new GroupClientMock();
+            }
         }
         return this._groupClients[chatId];
     }
@@ -64,12 +85,6 @@ export class ServiceContainer {
         toIndex: number
     ): Promise<MessagesResponse> {
         return this.getGroupClient(chatId).chatMessages(fromIndex, toIndex);
-    }
-
-    createUserClient(_userId: string): ServiceContainer {
-        this._userClient = new CachingUserClient(new UserClientMock());
-        // this._userClient = new CachingUserClient(new UserClient(this.identity, userId));
-        return this;
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {

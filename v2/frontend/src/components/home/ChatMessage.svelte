@@ -42,8 +42,7 @@
     $: userStatus = getUserStatus(userLookup, msg.sender);
 
     afterUpdate(() => {
-        // todo - this has gone wrong again. But only for group chats. Need to understand why.
-        // I have a feeling it might have to do with the userlookup
+        // todo - keep an eye on this
         console.log("updating ChatMessage component");
     });
 

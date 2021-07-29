@@ -45,8 +45,6 @@
         let content_height = top - scrollTop;
         let i = start;
 
-        console.log("content height", content_height);
-
         while (content_height < viewport_height && i < items.length) {
             let row = rows[i - start] as HTMLElement;
 

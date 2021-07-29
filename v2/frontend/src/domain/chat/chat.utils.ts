@@ -235,6 +235,6 @@ export function identity<T>(x: T): T {
     return x;
 }
 
-function sameDate(a: Message, b: Message): boolean {
+function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
     return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
 }
