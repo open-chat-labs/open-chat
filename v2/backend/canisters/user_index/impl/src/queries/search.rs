@@ -57,7 +57,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
     } else {
         match u1.len().cmp(&u2.len()) {
             Ordering::Less => Ordering::Less,
-            Ordering::Equal => u1.cmp(&u2),
+            Ordering::Equal => u1.cmp(u2),
             Ordering::Greater => Ordering::Greater,
         }
     }
