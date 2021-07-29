@@ -1,5 +1,5 @@
-use ic_fondue::ic_manager::IcManager;
 use fondue::*;
+use ic_fondue::ic_manager::IcManager;
 
 mod register_user_test;
 mod utils;
@@ -28,9 +28,7 @@ fn main() {
 /// and are good places to look for simple test examples.
 fn all_pots() -> Vec<fondue::pot::Pot<IcManager>> {
     // HAVE YOU READ THE README AT THE TOP?
-    vec![
-        register_user_pot()
-    ]
+    vec![register_user_pot()]
 }
 
 fn register_user_pot() -> pot::Pot<IcManager> {

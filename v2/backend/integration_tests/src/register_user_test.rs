@@ -1,9 +1,9 @@
-use ic_fondue::internet_computer::{InternetComputer, Subnet};
-use ic_registry_subnet_type::SubnetType;
-use ic_fondue::ic_manager::{IcHandle, IcManager};
 use crate::utils::*;
 use fondue::pot;
 use ic_agent::Identity;
+use ic_fondue::ic_manager::{IcHandle, IcManager};
+use ic_fondue::internet_computer::{InternetComputer, Subnet};
+use ic_registry_subnet_type::SubnetType;
 
 pub fn config() -> InternetComputer {
     InternetComputer::new()
@@ -30,16 +30,14 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     assert_all_ready(&endpoints, ctx).await;
 
-    let url = handle.public_api_endpoints
+    let url = handle
+        .public_api_endpoints
         .into_iter()
         .find(|e| e.initial_subnet_type == SubnetType::Application)
         .map(|e| e.url)
         .expect("Failed to find verified application subnet");
 
     let identity = build_identity(TestIdentity::Controller);
-
-    // panic!(format!("{:?}", identity.sender().map(|p| p.to_text())));
-
     let agent = build_ic_agent(url.to_string(), identity).await;
     let management_canister = build_management_canister(&agent);
 

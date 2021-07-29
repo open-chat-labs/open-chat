@@ -9,17 +9,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.6.15"
+candid = "0.6.21"
 fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
 futures = "0.3.16"
 garcon = "0.2.3"
-ic-agent = "0.5.1"
+ic-agent = "0.5.2"
 ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
 ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
-ic-utils = "0.3.3"
-nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
 ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
+ic-utils = "0.3.3"
+nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 tokio = { version = "1.9.0", features = ["full"] }

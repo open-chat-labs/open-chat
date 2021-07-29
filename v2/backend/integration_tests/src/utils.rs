@@ -1,12 +1,12 @@
+use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
-use ic_agent::Agent;
 use ic_agent::identity::BasicIdentity;
-use std::future::Future;
-use tokio::runtime::Runtime as TRuntime;
+use ic_agent::Agent;
+use ic_fondue::ic_manager::IcEndpoint;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use candid::Principal;
-use ic_fondue::ic_manager::IcEndpoint;
+use std::future::Future;
+use tokio::runtime::Runtime as TRuntime;
 
 const CONTROLLER_PEM: &'static str = include_str!("../keys/controller.pem");
 const USER1_PEM: &'static str = include_str!("../keys/user1.pem");
@@ -71,7 +71,6 @@ pub fn delay() -> garcon::Delay {
 }
 
 pub fn block_on<F: Future>(f: F) -> F::Output {
-    let rt =
-        TRuntime::new().unwrap_or_else(|err| panic!("Could not create tokio runtime: {}", err));
+    let rt = TRuntime::new().unwrap_or_else(|err| panic!("Could not create tokio runtime: {}", err));
     rt.block_on(f)
 }
