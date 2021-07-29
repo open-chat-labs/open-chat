@@ -42,11 +42,11 @@ export function getMessagesResponse(candid: ApiMessagesResponse): MessagesRespon
     throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
 }
 
-export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
+export function getUpdatesResponse(userId: string, candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
-            chatsAdded: candid.Success.chats_added.map(chatSummary),
+            chatsAdded: candid.Success.chats_added.map((c) => chatSummary(userId, c)),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
             timestamp: candid.Success.timestamp,
         };
@@ -84,8 +84,9 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
     throw new Error(`Unexpected ChatSummary type received: ${candid}`);
 }
 
-function chatSummary(candid: ApiChatSummary): ChatSummary {
+function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
+        const participants = candid.Group.participants.map(participant);
         return {
             kind: "group_chat",
             chatId: candid.Group.id.toString(),
@@ -94,7 +95,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             latestMessage: optional(candid.Group.latest_message, message),
             name: candid.Group.name,
             description: candid.Group.description,
-            participants: candid.Group.participants.map(participant),
+            participants,
             public: candid.Group.public,
             joined: candid.Group.joined,
             minVisibleMessageIndex: candid.Group.min_visible_message_index,

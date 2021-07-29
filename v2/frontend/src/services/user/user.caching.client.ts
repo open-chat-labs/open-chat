@@ -28,7 +28,7 @@ export class CachingUserClient implements IUserClient {
         return this.client.chatMessagesByIndex(userId, indexes);
     }
 
-    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
-        return this.client.getUpdates(args);
+    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
+        return this.client.getUpdates(userId, args);
     }
 }

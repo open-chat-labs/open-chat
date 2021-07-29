@@ -68,13 +68,14 @@ type ChatsResponse = {
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
 async function getUpdates(
+    userId: string,
     serviceContainer: ServiceContainer,
     userLookup: UserLookup,
     chatSummaries: ChatSummary[],
     directChatsLastUpdate?: bigint
 ): Promise<ChatsResponse> {
     try {
-        const chatsResponse = await serviceContainer.getUpdates({
+        const chatsResponse = await serviceContainer.getUpdates(userId, {
             lastUpdated: directChatsLastUpdate,
             groups: chatSummaries
                 .filter((c) => c.kind === "group_chat")
@@ -114,6 +115,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     services: {
         getUpdates: async (ctx, _) =>
             getUpdates(
+                ctx.user!.userId,
                 ctx.serviceContainer!,
                 ctx.userLookup,
                 ctx.chatSummaries,
@@ -144,6 +146,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                     callback({
                         type: "CHATS_UPDATED",
                         data: await getUpdates(
+                            ctx.user!.userId,
                             ctx.serviceContainer!,
                             userLookup,
                             chatSummaries,

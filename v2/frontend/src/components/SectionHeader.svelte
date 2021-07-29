@@ -12,7 +12,6 @@
         padding: $sp3;
         height: 60px;
         margin-bottom: $sp3;
-        // todo - is this header a some kind of generic thing? I think it is
         background-color: var(--participants-header-bg);
         border: 1px solid var(--participants-header-bd);
         color: var(--participants-header-txt);

@@ -5,6 +5,13 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
+    import type { FullParticipant } from "../../domain/chat/chat";
+
+    export let me: FullParticipant | undefined;
+    export let publicGroup: boolean;
+
+    $: canAdd = me?.role === "admin" || publicGroup;
+
     const dispatch = createEventDispatcher();
     function close() {
         dispatch("close");
@@ -17,11 +24,13 @@
 </script>
 
 <SectionHeader>
-    <span title={$_("addParticipant")} class="add" on:click={addParticipant}>
-        <HoverIcon>
-            <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
-        </HoverIcon>
-    </span>
+    {#if canAdd}
+        <span title={$_("addParticipant")} class="add" on:click={addParticipant}>
+            <HoverIcon>
+                <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
+            </HoverIcon>
+        </span>
+    {/if}
     <h4>{$_("participants")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
