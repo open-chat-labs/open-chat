@@ -115,11 +115,21 @@ case $(uname) in
 esac
 
 if [[ "$no_build" != true ]]; then
-    ## Go build the replica and the nodemanager
+    ## Build the replica and the nodemanager
     st_build=$(date)
     cargo build ${jobs_str} --package ic-replica --target ${RUST_TRIPLE} ${release_string}
     cargo build ${jobs_str} --package nodemanager --package ic-rosetta-api --target ${RUST_TRIPLE} ${release_string}
     cargo build ${jobs_str}
+
+    ## Build the canister wasms
+    pushd ../..
+    ./generate-wasm.sh group_canister_impl
+    ./generate-wasm.sh group_index_canister_impl
+    ./generate-wasm.sh notifications_canister_impl
+    ./generate-wasm.sh user_canister_impl
+    ./generate-wasm.sh user_index_canister_impl
+    popd
+
     e_build=$(date)
 
     echo "Building times:"
@@ -139,16 +149,16 @@ if [[ ! -f "${target}/replica" ]] || [[ ! -f "${target}/nodemanager" ]]; then
     exit 1
 fi
 
-## Make a local-bin directory and link the replica and nodemanager here
+## Make a local-bin directory and link the replica and nodemanager here and copy the canister wasms here
 mkdir -p local-bin
 ln -fs "${target}/replica" local-bin/
 ln -fs "${target}/nodemanager" local-bin/
 ln -fs "${target}/replica" local-bin/replica_base
 ln -fs "${target}/nodemanager" local-bin/nodemanager_base
 ln -fs "${target}/ic-rosetta-api" local-bin/
+cp ../../target/wasm32-unknown-unknown/release/*-opt.wasm local-bin/
 
-## Update path; because we must run this script from the tests directory,
-## we know local bin is in here.
+## Update path; because we must run this script from the integration_tests directory, we know local-bin is in here.
 PATH="$PWD/local-bin:$PATH"
 
 if [ "$non_interactive" != true ]; then
