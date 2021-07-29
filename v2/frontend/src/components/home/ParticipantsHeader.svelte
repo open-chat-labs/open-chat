@@ -1,5 +1,6 @@
 <script lang="ts">
     import HoverIcon from "../HoverIcon.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import { _ } from "svelte-i18n";
@@ -15,7 +16,7 @@
     }
 </script>
 
-<div class="participants-header">
+<SectionHeader>
     <span title={$_("addParticipant")} class="add" on:click={addParticipant}>
         <HoverIcon>
             <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
@@ -27,29 +28,13 @@
             <Close size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
-</div>
+</SectionHeader>
 
 <style type="text/scss">
     h4 {
         flex: 1;
         margin: 0;
         text-align: center;
-    }
-    .participants-header {
-        display: flex;
-        position: sticky;
-        top: 0;
-        align-items: center;
-        width: 100%;
-        padding: $sp3;
-        height: 60px;
-        background-color: var(--participants-header-bg);
-        border: 1px solid var(--participants-header-bd);
-        color: var(--participants-header-txt);
-        margin-bottom: $sp3;
-        @include z-index("participants-header");
-        @include box-shadow(1);
-        cursor: pointer;
     }
     .close,
     .add {

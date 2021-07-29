@@ -46,7 +46,7 @@ export async function getCachedMessages(
     console.log("cache", cachedMsgs.length, toIndex - fromIndex);
     if (cachedMsgs.length === toIndex - fromIndex + 1) {
         // the range is inclusive
-        console.log("cache hit!", cachedMsgs);
+        console.log("cache hit!");
         return { messages: cachedMsgs };
     }
 }
