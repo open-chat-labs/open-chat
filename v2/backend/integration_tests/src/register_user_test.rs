@@ -7,8 +7,8 @@ use ic_agent::Identity;
 
 pub fn config() -> InternetComputer {
     InternetComputer::new()
-        .add_subnet(Subnet::fast(SubnetType::System).add_nodes(1))
-        .add_subnet(Subnet::fast(SubnetType::VerifiedApplication).add_nodes(1))
+        .add_fast_single_node_subnet(SubnetType::System)
+        .add_fast_single_node_subnet(SubnetType::Application)
 }
 
 pub fn setup() -> pot::Setup<IcManager> {
@@ -32,7 +32,7 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let url = handle.public_api_endpoints
         .into_iter()
-        .find(|e| e.initial_subnet_type == SubnetType::VerifiedApplication)
+        .find(|e| e.initial_subnet_type == SubnetType::Application)
         .map(|e| e.url)
         .expect("Failed to find verified application subnet");
 
@@ -45,6 +45,7 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let canister_id = management_canister
         .create_canister()
+        .as_provisional_create_with_amount(None)
         .call_and_wait(delay())
         .await
         .expect("Failed to create canister");

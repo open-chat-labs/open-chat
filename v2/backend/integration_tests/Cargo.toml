@@ -23,3 +23,6 @@ ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 tokio = { version = "1.9.0", features = ["full"] }
+
+[patch."https://github.com/dfinity-lab/lmdb-rs"]
+lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }
