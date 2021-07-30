@@ -67,3 +67,17 @@ impl Data {
         }
     }
 }
+
+#[cfg(test)]
+impl Default for Data {
+    fn default() -> Data {
+        Data {
+            users: UserMap::default(),
+            service_principals: HashSet::new(),
+            user_wasm: CanisterWasm::default(),
+            sms_service_principals: HashSet::new(),
+            sms_messages: EventStream::default(),
+            group_index_canister_id: Principal::anonymous(),
+        }
+    }
+}
