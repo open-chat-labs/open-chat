@@ -19,7 +19,7 @@ fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     if let Some(User::Created(user)) = user {
         let now = runtime_state.env.now();
-        Success(UserSummary::new(&user, now))
+        Success(UserSummary::new(user, now))
     } else {
         UserNotFound
     }

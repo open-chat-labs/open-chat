@@ -30,7 +30,6 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        border-radius: $sp4;
         background-color: var(--modal-bg);
         color: var(--modal-txt);
         box-shadow: var(--modal-sh);
@@ -44,7 +43,6 @@
     .header {
         @include font(bold, normal, fs-140);
         padding: $sp4;
-        border-radius: $sp4 $sp4 0 0;
         background-color: var(--modal-header-bg);
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
@@ -58,7 +56,6 @@
         background-color: var(--modal-footer-bg);
         color: var(--modal-footer-txt);
         border-top: 1px solid var(--modal-footer-bd);
-        border-radius: 0 0 $sp4 $sp4;
         text-align: right;
         @include size-below(xs) {
             border-radius: 0;

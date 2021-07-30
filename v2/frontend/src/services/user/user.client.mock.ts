@@ -21,14 +21,19 @@ const interval = 1000 * 60 * 60 * 8; // 8 hours
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
     const participants: Participant[] = fill(randomNum(10, 1200), (i: number) => ({
-        role: "admin",
+        role: i % 2 === 0 ? "admin" : "standard",
         userId: `${randomWord(5)}_${i}`,
     }));
+
+    participants.push({
+        userId: "abcdefg",
+        role: i % 2 === 0 ? "admin" : "standard",
+    });
     return {
         kind: "group_chat",
         name: randomPara(4),
         description: randomPara(20),
-        public: true,
+        public: false,
         joined: BigInt(time),
         minVisibleMessageIndex: 0,
         chatId: String(i),
@@ -164,7 +169,7 @@ export class UserClientMock implements IUserClient {
 
     private previousChats: ChatSummary[] = [];
 
-    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
+    getUpdates(_userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
         this.updateCycles += 1;
         const direct = fill(3, mockDirectChat);
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);

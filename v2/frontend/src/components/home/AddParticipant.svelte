@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
-    import type { ChatMachine } from "../../fsm/chat.machine";
+    import SectionHeader from "../SectionHeader.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import FindUser from "../FindUser.svelte";
@@ -17,14 +17,14 @@
     }
 </script>
 
-<div class="participants-header">
+<SectionHeader>
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
             <Close size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
     <h4>{$_("addParticipant")}</h4>
-</div>
+</SectionHeader>
 
 {#if $machine.matches({ showing_participants: { adding_participant: "unexpected_error" } })}
     <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
@@ -37,21 +37,6 @@
 {/if}
 
 <style type="text/scss">
-    .participants-header {
-        display: flex;
-        position: sticky;
-        top: 0;
-        align-items: center;
-        width: 100%;
-        padding: $sp3;
-        height: 60px;
-        margin-bottom: $sp3;
-        background-color: var(--participants-header-bg);
-        border: 1px solid var(--participants-header-bd);
-        color: var(--participants-header-txt);
-        @include z-index("participants-header");
-        cursor: pointer;
-    }
     h4 {
         flex: 1;
         padding: 0 $sp4;

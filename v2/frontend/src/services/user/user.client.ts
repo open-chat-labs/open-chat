@@ -35,7 +35,7 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
+    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
         return this.handleResponse(
             this.userService.updates({
                 groups: args.groups.map((g) => ({
@@ -44,7 +44,7 @@ export class UserClient extends CandidService implements IUserClient {
                 })),
                 last_updated: args.lastUpdated ? [args.lastUpdated] : [],
             }),
-            getUpdatesResponse
+            (resp) => getUpdatesResponse(userId, resp)
         );
     }
 }

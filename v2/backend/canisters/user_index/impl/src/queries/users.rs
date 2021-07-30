@@ -15,10 +15,10 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let users = args
         .users
         .iter()
-        .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
+        .filter_map(|user_id| runtime_state.data.users.get_by_user_id(user_id))
         .filter_map(|u| u.created_user())
         .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
-        .map(|u| PartialUserSummary::new(&u, u.date_updated > updated_since, now))
+        .map(|u| PartialUserSummary::new(u, u.date_updated > updated_since, now))
         .collect();
 
     Success(Result { users, timestamp: now })

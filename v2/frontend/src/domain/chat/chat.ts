@@ -1,4 +1,5 @@
 import type { Principal } from "@dfinity/principal";
+import type { PartialUserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
 
@@ -113,10 +114,14 @@ export type UpdatedGroupChatSummary = UpdatedChatSummaryCommon & {
     description?: string;
 };
 
+export type ParticipantRole = "admin" | "standard";
+
 export type Participant = {
-    role: "admin" | "standard";
+    role: ParticipantRole;
     userId: string;
 };
+
+export type FullParticipant = Participant & PartialUserSummary;
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 

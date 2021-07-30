@@ -5,6 +5,7 @@
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
+    import AccountLock from "svelte-material-icons/AccountLock.svelte";
     import { AvatarSize } from "../../domain/user/user";
     import type { UserLookup } from "../../domain/user/user";
     import Avatar from "../Avatar.svelte";
@@ -12,15 +13,16 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import type { PartialUserSummary } from "../../domain/user/user";
     import { _ } from "svelte-i18n";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
+    import type { FullParticipant, ParticipantRole } from "../../domain/chat/chat";
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
     export let userLookup: UserLookup;
-    export let participant: PartialUserSummary;
+    export let participant: FullParticipant;
+    export let myRole: ParticipantRole;
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
@@ -48,6 +50,12 @@
             url={avatarUrl(participant.userId)}
             status={getUserStatus(userLookup, participant.userId)}
             size={AvatarSize.Small} />
+
+        {#if participant.role === "admin"}
+            <div class="admin">
+                <AccountLock size={"1.2em"} color={"#fff"} />
+            </div>
+        {/if}
     </span>
     <h4 class="details">
         {me ? $_("you") : participant.username ?? $_("unknownUser")}
@@ -61,16 +69,22 @@
                     </HoverIcon>
                 </span>
                 <span slot="menu">
-                    <!-- TODO this menu depends on knowing whether I am an admin and whether the other user is an admin -->
                     <Menu>
-                        <MenuItem on:click={removeUser}>
-                            <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("remove")}</div>
-                        </MenuItem>
-                        <MenuItem on:click={dismissAsAdmin}>
-                            <AccountRemoveOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("dismissAsAdmin")}</div>
-                        </MenuItem>
+                        {#if myRole === "admin"}
+                            <MenuItem on:click={removeUser}>
+                                <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("remove")}</div>
+                            </MenuItem>
+                            {#if participant.role === "admin"}
+                                <MenuItem on:click={dismissAsAdmin}>
+                                    <AccountRemoveOutline
+                                        size={"1.2em"}
+                                        color={"#aaa"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("dismissAsAdmin")}</div>
+                                </MenuItem>
+                            {/if}
+                        {/if}
                         <!-- TODO need to know if the participant is blocked or not -->
                         <MenuItem on:click={blockUser}>
                             <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
@@ -107,9 +121,18 @@
     }
     .avatar {
         flex: 0 0 50px;
+        position: relative;
     }
+
+    .admin {
+        position: absolute;
+        bottom: -3px;
+        right: 16px;
+    }
+
     .details {
         flex: 1;
         padding: 0 5px;
+        @include ellipsis();
     }
 </style>

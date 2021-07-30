@@ -4,6 +4,7 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { UserLookup } from "../../domain/user/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
@@ -87,7 +88,7 @@
     // if 5 or fewer, we list the usernames sorted by online status
 </script>
 
-<div class="chat-header">
+<SectionHeader>
     {#if $screenWidth === ScreenWidth.ExtraSmall}
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>
@@ -148,21 +149,9 @@
             </div>
         </MenuIcon>
     </div>
-</div>
+</SectionHeader>
 
 <style type="text/scss">
-    .chat-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        padding: 10px;
-        background-color: var(--currentChat-header-bg);
-        color: var(--currentChat-header-txt);
-        border: 1px solid var(--currentChat-header-bd);
-        height: 60px;
-    }
-
     .chat-name {
         @include font(bold, normal, fs-120);
         @include ellipsis();

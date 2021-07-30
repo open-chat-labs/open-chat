@@ -95,8 +95,8 @@ export class ServiceContainer {
         return this.userIndexClient.getUsers(userIds, since);
     }
 
-    getUpdates(args: UpdateArgs): Promise<UpdatesResponse> {
-        return this.userClient.getUpdates(args);
+    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
+        return this.userClient.getUpdates(userId, args);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
