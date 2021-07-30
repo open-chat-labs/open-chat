@@ -2,7 +2,11 @@
 mod macros {
     macro_rules! generate_update_call {
         ($method_name:ident) => {
-            pub async fn $method_name(agent: &Agent, canister_id: &Principal, args: &$method_name::Args) -> $method_name::Response {
+            pub async fn $method_name(
+                agent: &Agent,
+                canister_id: &Principal,
+                args: &$method_name::Args,
+            ) -> $method_name::Response {
                 let method_name = stringify!($method_name);
                 let response = agent
                     .update(canister_id, method_name)

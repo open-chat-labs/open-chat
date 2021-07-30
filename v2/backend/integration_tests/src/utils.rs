@@ -4,11 +4,11 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use std::future::Future;
-use tokio::runtime::Runtime as TRuntime;
-use std::path::PathBuf;
 use std::fs::File;
+use std::future::Future;
 use std::io::Read;
+use std::path::PathBuf;
+use tokio::runtime::Runtime as TRuntime;
 
 const CONTROLLER_PEM: &'static str = include_str!("../keys/controller.pem");
 const USER1_PEM: &'static str = include_str!("../keys/user1.pem");
@@ -75,7 +75,8 @@ pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
         CanisterWasmName::UserIndex => "user_index",
     };
     let file_name = file_name_prefix.to_string() + "_canister_impl-opt.wasm";
-    let mut file_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
+    let mut file_path =
+        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     file_path.push("local-bin");
     file_path.push(&file_name);
 

@@ -44,7 +44,7 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         sms_service_principals: Vec::new(),
         user_wasm_module: user_wasm_bytes,
         group_index_canister_id: Principal::anonymous(),
-        test_mode: true
+        test_mode: true,
     };
 
     management_canister
@@ -61,10 +61,11 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         phone_number: submit_phone_number::UnvalidatedPhoneNumber {
             country_code: 44,
             number: "07887123456".to_string(),
-        }
+        },
     };
 
-    let submit_phone_number_response = submit_phone_number(&user1_agent, &user_index_canister_id, &submit_phone_number_args).await;
+    let submit_phone_number_response =
+        submit_phone_number(&user1_agent, &user_index_canister_id, &submit_phone_number_args).await;
 
     assert!(matches!(submit_phone_number_response, submit_phone_number::Response::Success));
 
@@ -72,9 +73,13 @@ async fn register_user_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         confirmation_code: "123456".to_string(),
     };
 
-    let confirm_phone_number_response = confirm_phone_number(&user1_agent, &user_index_canister_id, &confirm_phone_number_args).await;
+    let confirm_phone_number_response =
+        confirm_phone_number(&user1_agent, &user_index_canister_id, &confirm_phone_number_args).await;
 
-    assert!(matches!(confirm_phone_number_response, confirm_phone_number::Response::Success));
+    assert!(matches!(
+        confirm_phone_number_response,
+        confirm_phone_number::Response::Success
+    ));
 
     let create_canister_args = create_canister::Args {};
 
