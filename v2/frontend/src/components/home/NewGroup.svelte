@@ -9,17 +9,22 @@
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import Input from "../Input.svelte";
+    import TextArea from "../TextArea.svelte";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
+    const MAX_DESC_LENGTH = 1024;
 
     export let machine: ActorRefFrom<HomeMachine>;
 
     let groupName: string = "";
+    let groupDesc: string = "";
     let historyVisible: boolean = false;
     let isPublic: boolean = false;
+    let fileinput: HTMLInputElement;
+    let avatar: string | null | undefined;
 
     $: valid = groupName.length > MIN_LENGTH && groupName.length <= MAX_LENGTH;
 
@@ -32,7 +37,28 @@
     }
 
     function addPhoto() {
-        alert("add group photo");
+        fileinput.click();
+    }
+
+    function toggleScope() {
+        isPublic = !isPublic;
+        if (isPublic) {
+            historyVisible = true;
+        }
+    }
+
+    function onFileSelected(e: { currentTarget: HTMLInputElement }) {
+        if (e.currentTarget) {
+            const target = e.currentTarget as HTMLInputElement;
+            if (target.files) {
+                const image = target.files[0];
+                let reader = new FileReader();
+                reader.readAsDataURL(image);
+                reader.onload = (e) => {
+                    avatar = e?.target?.result as string;
+                };
+            }
+        }
     }
 </script>
 
@@ -46,10 +72,21 @@
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
 
+<input
+    style="display:none"
+    type="file"
+    accept=".jpg, .jpeg, .png"
+    on:change={onFileSelected}
+    bind:this={fileinput} />
+
 <form class="group-form" on:submit|preventDefault={createGroup}>
     <div class="photo-section sub-section" on:click={addPhoto}>
         <div class="photo-icon">
-            <Camera size={"3em"} color={"#aaa"} />
+            {#if avatar}
+                <div class="avatar" style={`background-image: url(${avatar})`} />
+            {:else}
+                <Camera size={"3em"} color={"#aaa"} />
+            {/if}
         </div>
         <p>{$_("addGroupPhoto")}</p>
     </div>
@@ -62,6 +99,12 @@
         maxlength={MAX_LENGTH}
         placeholder={$_("newGroupName")} />
 
+    <TextArea
+        invalid={false}
+        bind:value={groupDesc}
+        maxlength={MAX_DESC_LENGTH}
+        placeholder={$_("newGroupDesc")} />
+
     <div class="sub-section">
         <div class="scope">
             <span class="scope-label" class:selected={!isPublic} on:click={() => (isPublic = false)}
@@ -70,7 +113,7 @@
             <Checkbox
                 id="is-public"
                 toggle={true}
-                on:change={() => (isPublic = !isPublic)}
+                on:change={toggleScope}
                 label={$_("isPublic")}
                 checked={isPublic} />
 
@@ -98,6 +141,7 @@
         <div class="history">
             <Checkbox
                 id="history-visible"
+                disabled={isPublic}
                 on:change={() => (historyVisible = !historyVisible)}
                 label={$_("historyVisible")}
                 checked={historyVisible} />
@@ -143,6 +187,13 @@
         justify-content: center;
         align-items: center;
         margin-bottom: $sp4;
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            border-radius: 50%;
+        }
     }
 
     .group-form {

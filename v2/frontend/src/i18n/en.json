@@ -21,6 +21,7 @@
     "publicGroupUnique": "Public group names must be unique.",
     "publicGroupInfo": "Anyone will be able to discover and join this group.",
     "newGroupName": "enter group name",
+    "newGroupDesc": "what is this group about?",
     "new": "new",
     "cancel": "Cancel",
     "addGroupPhoto": "Add group photo",

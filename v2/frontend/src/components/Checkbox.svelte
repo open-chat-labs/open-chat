@@ -1,13 +1,14 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
     export let checked: boolean = false;
+    export let disabled: boolean = false;
     export let id: string;
     export let label: string;
     export let toggle: boolean = false;
 </script>
 
 <div class="checkbox" class:toggle class:rtl={$rtlStore}>
-    <input {id} type="checkbox" {checked} on:change />
+    <input {id} type="checkbox" {checked} {disabled} on:change />
     <label for={id}>{label}</label>
 </div>
 
