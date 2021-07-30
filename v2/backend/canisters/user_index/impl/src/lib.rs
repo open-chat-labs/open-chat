@@ -74,10 +74,11 @@ impl Default for Data {
         Data {
             users: UserMap::default(),
             service_principals: HashSet::new(),
-            user_wasm: CanisterWasm::default(),
+            user_canister_wasm: CanisterWasm::default(),
             sms_service_principals: HashSet::new(),
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
+            notifications_canister_id: Principal::anonymous(),
         }
     }
 }
