@@ -13,5 +13,5 @@ pub enum Response {
     UserAlreadyCreated,
     CreationInProgress,
     CyclesBalanceTooLow,
-    InternalError,
+    InternalError(String),
 }

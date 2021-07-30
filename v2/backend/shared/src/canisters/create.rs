@@ -6,6 +6,7 @@ use ic_cdk::export::Principal;
 use log::error;
 use serde::Deserialize;
 
+#[derive(Debug)]
 pub enum CreateCanisterError {
     CreateFailed(Error),
     InstallFailed((Error, CanisterId)),

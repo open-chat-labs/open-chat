@@ -3,7 +3,7 @@ use candid::Principal;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::env::Environment;
 use shared::event_stream::EventStream;
-use shared::types::Version;
+use shared::types::CanisterId;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use user_index_canister::common::confirmation_code_sms::ConfirmationCodeSms;
@@ -38,26 +38,47 @@ impl RuntimeState {
     }
 }
 
-#[derive(Default)]
 pub struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
-    pub user_wasm: CanisterWasm,
+    pub user_canister_wasm: CanisterWasm,
     pub sms_service_principals: HashSet<Principal>,
     pub sms_messages: EventStream<ConfirmationCodeSms>,
+    pub group_index_canister_id: CanisterId,
+    pub notifications_canister_id: CanisterId,
 }
 
 impl Data {
-    pub fn new(service_principals: Vec<Principal>, sms_service_principals: Vec<Principal>, user_wasm_module: Vec<u8>) -> Self {
+    pub fn new(
+        service_principals: Vec<Principal>,
+        sms_service_principals: Vec<Principal>,
+        user_canister_wasm: CanisterWasm,
+        group_index_canister_id: CanisterId,
+        notifications_canister_id: CanisterId,
+    ) -> Self {
         Data {
             users: UserMap::default(),
             service_principals: service_principals.into_iter().collect(),
-            user_wasm: CanisterWasm {
-                module: user_wasm_module,
-                version: Version::new(0, 0, 0),
-            },
+            user_canister_wasm,
             sms_service_principals: sms_service_principals.into_iter().collect(),
             sms_messages: EventStream::default(),
+            group_index_canister_id,
+            notifications_canister_id,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for Data {
+    fn default() -> Data {
+        Data {
+            users: UserMap::default(),
+            service_principals: HashSet::new(),
+            user_canister_wasm: CanisterWasm::default(),
+            sms_service_principals: HashSet::new(),
+            sms_messages: EventStream::default(),
+            group_index_canister_id: Principal::anonymous(),
+            notifications_canister_id: Principal::anonymous(),
         }
     }
 }
