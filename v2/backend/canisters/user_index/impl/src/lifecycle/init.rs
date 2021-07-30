@@ -9,7 +9,12 @@ fn init(args: Args) {
 
     RUNTIME_STATE.with(|state| {
         let env = Box::new(CanisterEnv::new(args.test_mode));
-        let data = Data::new(args.service_principals, args.sms_service_principals, args.user_wasm_module, args.group_index_canister_id);
+        let data = Data::new(
+            args.service_principals,
+            args.sms_service_principals,
+            args.user_wasm_module,
+            args.group_index_canister_id,
+        );
         let runtime_state = RuntimeState::new(env, data);
 
         *state.borrow_mut() = Some(runtime_state);

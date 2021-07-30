@@ -3,7 +3,7 @@ use candid::Principal;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::env::Environment;
 use shared::event_stream::EventStream;
-use shared::types::{Version, CanisterId};
+use shared::types::{CanisterId, Version};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use user_index_canister::common::confirmation_code_sms::ConfirmationCodeSms;
@@ -48,7 +48,12 @@ pub struct Data {
 }
 
 impl Data {
-    pub fn new(service_principals: Vec<Principal>, sms_service_principals: Vec<Principal>, user_wasm_module: Vec<u8>, group_index_canister_id: CanisterId) -> Self {
+    pub fn new(
+        service_principals: Vec<Principal>,
+        sms_service_principals: Vec<Principal>,
+        user_wasm_module: Vec<u8>,
+        group_index_canister_id: CanisterId,
+    ) -> Self {
         Data {
             users: UserMap::default(),
             service_principals: service_principals.into_iter().collect(),
