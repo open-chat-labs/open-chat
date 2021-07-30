@@ -1,4 +1,4 @@
-use crate::canisters::{CanisterWasm, Version};
+use crate::types::{CanisterWasm, Version};
 use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -24,7 +24,6 @@ pub enum TestIdentity {
     User3,
 }
 
-#[allow(dead_code)]
 pub enum CanisterWasmName {
     Group,
     GroupIndex,
@@ -62,7 +61,7 @@ pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
 
 pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> {
     Canister::builder()
-        .with_agent(&agent)
+        .with_agent(agent)
         .with_canister_id(Principal::management_canister())
         .with_interface(ManagementCanister)
         .build()

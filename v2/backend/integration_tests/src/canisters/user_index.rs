@@ -1,4 +1,4 @@
-use crate::canisters::{CanisterId, CanisterWasm};
+use crate::types::{CanisterId, CanisterWasm};
 use crate::utils::delay;
 use candid::{CandidType, Decode, Encode, Principal};
 use ic_agent::Agent;
