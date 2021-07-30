@@ -10,11 +10,12 @@ use std::io::Read;
 use std::path::PathBuf;
 use tokio::runtime::Runtime as TRuntime;
 
-const CONTROLLER_PEM: &'static str = include_str!("../keys/controller.pem");
-const USER1_PEM: &'static str = include_str!("../keys/user1.pem");
-const USER2_PEM: &'static str = include_str!("../keys/user2.pem");
-const USER3_PEM: &'static str = include_str!("../keys/user3.pem");
+const CONTROLLER_PEM: &str = include_str!("../keys/controller.pem");
+const USER1_PEM: &str = include_str!("../keys/user1.pem");
+const USER2_PEM: &str = include_str!("../keys/user2.pem");
+const USER3_PEM: &str = include_str!("../keys/user3.pem");
 
+#[allow(dead_code)]
 pub enum TestIdentity {
     Controller,
     User1,
@@ -22,6 +23,7 @@ pub enum TestIdentity {
     User3,
 }
 
+#[allow(dead_code)]
 pub enum CanisterWasmName {
     Group,
     GroupIndex,
@@ -80,7 +82,7 @@ pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
     file_path.push("local-bin");
     file_path.push(&file_name);
 
-    let mut file = File::open(&file_path).expect(&format!("Failed to open file: {}", file_path.to_str().unwrap()));
+    let mut file = File::open(&file_path).unwrap_or_else(|_| panic!("Failed to open file: {}", file_path.to_str().unwrap()));
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).expect("Failed to read file");
     bytes
