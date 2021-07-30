@@ -1,7 +1,7 @@
 use crate::canisters::error::Error;
 use crate::types::CanisterId;
-use ic_cdk::api;
 use candid::{CandidType, Nat, Principal};
+use ic_cdk::api;
 use log::error;
 use serde::Deserialize;
 

@@ -7,9 +7,7 @@ pub mod message_content;
 pub mod notifications;
 
 pub type CanisterId = Principal;
-pub type Milliseconds = u64;
 pub type TimestampMillis = u64;
-pub type TimestampNanos = u64;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MessageIndex(u32);
