@@ -67,6 +67,10 @@
         push("/");
     }
 
+    function newGroup() {
+        machine.send({ type: "NEW_GROUP" });
+    }
+
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
@@ -121,6 +125,7 @@
             hideLeft={params.chatId !== null}
             on:logout={logout}
             on:joinGroup={joinGroup}
+            on:newGroup={newGroup}
             on:newchat={newChat} />
         <MiddlePanel
             loadingChats={$machine.matches("loading_chats")}

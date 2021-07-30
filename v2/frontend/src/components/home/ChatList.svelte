@@ -18,7 +18,7 @@
 </script>
 
 {#if $machine.context.user}
-    <CurrentUser on:logout user={$machine.context.user} on:newchat on:joinGroup />
+    <CurrentUser on:logout user={$machine.context.user} on:newchat on:joinGroup on:newGroup />
     <SearchChats on:filter={filterChats} />
     {#if $machine.matches("loading_chats")}
         <Loading />

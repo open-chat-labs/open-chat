@@ -115,7 +115,7 @@
             </MenuIcon>
         </div>
     </div>
-    {#if groupChat && !me}
+    {#if groupChat && !me && showStem}
         <span class="avatar">
             <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Small} />
 
@@ -184,11 +184,13 @@
     .avatar {
         margin: 0 $sp3;
         position: relative;
+        margin-bottom: $sp4;
     }
 
     .chat-message-wrapper {
         display: flex;
         justify-content: flex-start;
+        align-items: flex-end;
 
         &.me {
             justify-content: flex-end;

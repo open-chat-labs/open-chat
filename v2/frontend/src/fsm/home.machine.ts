@@ -43,10 +43,12 @@ export interface HomeContext {
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
     | { type: "NEW_CHAT" }
+    | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
+    | { type: "CANCEL_NEW_GROUP" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
@@ -353,6 +355,11 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_chat",
                     actions: log("received new chat"),
                 },
+                NEW_GROUP: {
+                    internal: true,
+                    target: ".new_group",
+                    actions: log("received new group"),
+                },
                 JOIN_GROUP: {
                     internal: true,
                     target: ".join_group",
@@ -385,6 +392,11 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     entry: log("entering join group"),
                     on: {
                         CANCEL_JOIN_GROUP: "no_chat_selected",
+                    },
+                },
+                new_group: {
+                    on: {
+                        CANCEL_NEW_GROUP: "no_chat_selected",
                     },
                 },
                 new_chat: {

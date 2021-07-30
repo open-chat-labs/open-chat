@@ -13,6 +13,17 @@ export interface Theme {
     txt: string;
 
     error: string;
+    accent: string;
+
+    section: {
+        bg: string;
+        txt: string;
+        bd: string;
+    };
+
+    "sub-section": {
+        bg: string;
+    };
 
     toast: {
         failure: {
@@ -36,11 +47,6 @@ export interface Theme {
         txt: string;
         hv: string;
         bd: string;
-        header: {
-            bg: string;
-            txt: string;
-            bd: string;
-        };
     };
 
     entry: {
@@ -177,6 +183,7 @@ const defaultTheme = {
     txt: "#191919",
     // error: "#ff0000",
     error: "#CF6679",
+    accent: "hotpink",
 
     toast: {
         failure: {
@@ -187,6 +194,16 @@ const defaultTheme = {
             bg: "limegreen",
             txt: "#ffffff",
         },
+    },
+
+    section: {
+        bg: "#efefef",
+        txt: "#191919",
+        bd: "transparent",
+    },
+
+    "sub-section": {
+        bg: "#ffffff",
     },
 
     input: {
@@ -200,11 +217,6 @@ const defaultTheme = {
         txt: "#191919",
         hv: "#e2e2e2",
         bd: "transparent",
-        header: {
-            bg: "#efefef",
-            txt: "#191919",
-            bd: "transparent",
-        },
     },
 
     entry: {
@@ -341,6 +353,7 @@ export const themes: Themes = {
         txt: dark60,
         // error: "#800000",
         error: "#CF6679",
+        accent: "hotpink",
 
         toast: {
             failure: {
@@ -351,6 +364,16 @@ export const themes: Themes = {
                 bg: "seagreen",
                 txt: "#ffffff",
             },
+        },
+
+        section: {
+            bg: dark20,
+            txt: dark60,
+            bd: dark15,
+        },
+
+        "sub-section": {
+            bg: dark25,
         },
 
         input: {
@@ -364,11 +387,6 @@ export const themes: Themes = {
             txt: dark60,
             hv: dark15,
             bd: dark15,
-            header: {
-                bg: dark20,
-                txt: dark60,
-                bd: dark15,
-            },
         },
 
         entry: {

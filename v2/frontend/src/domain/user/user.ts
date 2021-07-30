@@ -36,6 +36,7 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
+    Tiny,
     Small,
     Medium,
     Large,
