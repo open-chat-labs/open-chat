@@ -78,7 +78,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                     user.set_canister_creation_status(CanisterCreationStatus::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
-                            let canister_wasm = runtime_state.data.user_wasm.clone();
+                            let canister_wasm = runtime_state.data.user_canister_wasm.clone();
                             let init_canister_args = InitUserCanisterArgs {
                                 owner: user_principal,
                                 group_index_canister_id: runtime_state.data.group_index_canister_id,

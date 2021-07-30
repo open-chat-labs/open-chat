@@ -1,3 +1,4 @@
+use crate::canisters::{CanisterWasm, Version};
 use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -68,7 +69,7 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
+pub fn get_canister_wasm(canister_name: CanisterWasmName) -> CanisterWasm {
     let file_name_prefix = match canister_name {
         CanisterWasmName::Group => "group",
         CanisterWasmName::GroupIndex => "group_index",
@@ -85,7 +86,11 @@ pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
     let mut file = File::open(&file_path).unwrap_or_else(|_| panic!("Failed to open file: {}", file_path.to_str().unwrap()));
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).expect("Failed to read file");
-    bytes
+
+    CanisterWasm {
+        module: bytes,
+        version: Version::new(0, 0, 0),
+    }
 }
 
 // How `Agent` is instructed to wait for update calls.

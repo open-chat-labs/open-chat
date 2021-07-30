@@ -12,8 +12,9 @@ fn init(args: Args) {
         let data = Data::new(
             args.service_principals,
             args.sms_service_principals,
-            args.user_wasm_module,
+            args.user_canister_wasm,
             args.group_index_canister_id,
+            args.notifications_canister_id,
         );
         let runtime_state = RuntimeState::new(env, data);
 
