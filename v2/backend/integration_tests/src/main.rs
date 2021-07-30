@@ -1,6 +1,7 @@
 use fondue::*;
 use ic_fondue::ic_manager::IcManager;
 
+mod canisters;
 mod register_user_test;
 mod utils;
 

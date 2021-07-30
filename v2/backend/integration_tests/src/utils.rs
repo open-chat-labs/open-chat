@@ -2,7 +2,6 @@ use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Agent;
-use ic_fondue::ic_manager::IcEndpoint;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use std::future::Future;
@@ -67,12 +66,6 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-pub async fn assert_all_ready(endpoints: &[&IcEndpoint], ctx: &fondue::pot::Context) {
-    for &e in endpoints {
-        e.assert_ready(ctx).await;
-    }
-}
-
 pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
     let file_name_prefix = match canister_name {
         CanisterWasmName::Group => "group",
@@ -90,7 +83,6 @@ pub fn get_wasm_bytes(canister_name: CanisterWasmName) -> Vec<u8> {
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).expect("Failed to read file");
     bytes
-
 }
 
 // How `Agent` is instructed to wait for update calls.

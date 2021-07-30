@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
+use shared::types::CanisterId;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
@@ -12,6 +13,8 @@ pub struct Args {
     // The initial wasm module for creating user canisters
     #[serde(with = "serde_bytes")]
     pub user_wasm_module: Vec<u8>,
+
+    pub group_index_canister_id: CanisterId,
 
     // Accepts confirmation code 123456
     pub test_mode: bool,
