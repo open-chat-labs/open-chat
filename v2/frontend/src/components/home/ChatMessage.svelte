@@ -74,7 +74,8 @@
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
         <div class="content">
-            <SvelteMarkdown source={textContent} />
+            <!-- <SvelteMarkdown source={textContent} /> -->
+            {textContent}
         </div>
 
         <div class="time-and-ticks">

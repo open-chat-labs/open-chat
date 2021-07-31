@@ -299,6 +299,7 @@
         position: relative;
         @include size-below(xs) {
             padding: 10px;
+            -webkit-overflow-scrolling: touch;
         }
     }
 </style>

@@ -4,6 +4,11 @@
     "display": "fullscreen",
     "icons": [
         {
+            "src": "apple-touch-icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
             "src": "logo-icon.svg",
             "purpose": "maskable any",
             "type": "image/svg+xml",
