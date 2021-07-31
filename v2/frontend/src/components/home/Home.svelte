@@ -12,6 +12,7 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { HomeMachine } from "../../fsm/home.machine";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
@@ -120,22 +121,26 @@
 
 {#if $machine.context.user}
     <main>
-        <LeftPanel
-            {machine}
-            hideLeft={params.chatId !== null}
-            on:logout={logout}
-            on:joinGroup={joinGroup}
-            on:newGroup={newGroup}
-            on:newchat={newChat} />
-        <MiddlePanel
-            loadingChats={$machine.matches("loading_chats")}
-            on:newchat={newChat}
-            on:clearSelection={clearSelectedChat}
-            on:blockUser={blockUser}
-            on:leaveGroup={leaveGroup}
-            on:chatWith={chatWith}
-            hideLeft={params.chatId !== null}
-            machine={selectedChatActor} />
+        {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
+            <LeftPanel
+                {machine}
+                hideLeft={params.chatId !== null}
+                on:logout={logout}
+                on:joinGroup={joinGroup}
+                on:newGroup={newGroup}
+                on:newchat={newChat} />
+        {/if}
+        {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
+            <MiddlePanel
+                loadingChats={$machine.matches("loading_chats")}
+                on:newchat={newChat}
+                on:clearSelection={clearSelectedChat}
+                on:blockUser={blockUser}
+                on:leaveGroup={leaveGroup}
+                on:chatWith={chatWith}
+                hideLeft={params.chatId !== null}
+                machine={selectedChatActor} />
+        {/if}
     </main>
 {/if}
 
