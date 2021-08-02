@@ -31,8 +31,18 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     let send_message_response = canisters::user::send_message(&agent, &user1_id, &send_message_args).await;
 
-    assert!(matches!(
-        send_message_response,
-        canisters::user::send_message::Response::Success(_)
-    ));
+    if let canisters::user::send_message::Response::Success(r) = send_message_response {
+        let message_args = canisters::user::messages_by_index::Args {
+            user_id: user2_id.into(),
+            messages: vec![r.message_index],
+        };
+        let get_message_response = canisters::user::messages_by_index(&agent, &user1_id, &message_args).await;
+        if let canisters::user::messages_by_index::Response::Success(r) = get_message_response {
+            assert_eq!(r.messages.len(), 1);
+        } else {
+            panic!("No message returned");
+        }
+    } else {
+        panic!("Send message returned an error: {:?}", send_message_response);
+    }
 }
