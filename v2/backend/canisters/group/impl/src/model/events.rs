@@ -10,13 +10,13 @@ use std::cmp::{max, min};
 
 #[derive(Default)]
 pub struct Events {
-    events: Vec<Event<EventDataInternal>>,
+    events: Vec<Event<GroupChatEvent>>,
     latest_message_event_index: EventIndex,
     latest_message_index: MessageIndex,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum EventDataInternal {
+pub enum GroupChatEvent {
     Message(MessageInternal),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
@@ -57,13 +57,13 @@ impl Events {
             replies_to: args.replies_to,
         };
         let message = self.hydrate_message(&message_internal);
-        let event_index = self.push_event(EventDataInternal::Message(message_internal), args.now);
+        let event_index = self.push_event(GroupChatEvent::Message(message_internal), args.now);
         (event_index, message)
     }
 
-    pub fn push_event(&mut self, event: EventDataInternal, now: TimestampMillis) -> EventIndex {
+    pub fn push_event(&mut self, event: GroupChatEvent, now: TimestampMillis) -> EventIndex {
         let event_index = self.next_event_index();
-        if let EventDataInternal::Message(m) = &event {
+        if let GroupChatEvent::Message(m) = &event {
             self.latest_message_index = m.message_index;
             self.latest_message_event_index = event_index;
         }
@@ -131,18 +131,18 @@ impl Events {
         self.events.last().map_or(EventIndex::default(), |e| e.index).incr()
     }
 
-    fn hydrate_event(&self, event: &Event<EventDataInternal>) -> Event<EventData> {
+    fn hydrate_event(&self, event: &Event<GroupChatEvent>) -> Event<EventData> {
         let event_data = match &event.event {
-            EventDataInternal::Message(m) => EventData::Message(self.hydrate_message(m)),
-            EventDataInternal::GroupChatCreated(g) => EventData::GroupChatCreated(g.clone()),
-            EventDataInternal::GroupNameChanged(g) => EventData::GroupNameChanged(g.clone()),
-            EventDataInternal::GroupDescriptionChanged(g) => EventData::GroupDescriptionChanged(g.clone()),
-            EventDataInternal::ParticipantsAdded(p) => EventData::ParticipantsAdded(p.clone()),
-            EventDataInternal::ParticipantsRemoved(p) => EventData::ParticipantsRemoved(p.clone()),
-            EventDataInternal::ParticipantJoined(p) => EventData::ParticipantJoined(p.clone()),
-            EventDataInternal::ParticipantLeft(p) => EventData::ParticipantLeft(p.clone()),
-            EventDataInternal::ParticipantsPromotedToAdmin(p) => EventData::ParticipantsPromotedToAdmin(p.clone()),
-            EventDataInternal::ParticipantsDismissedAsAdmin(p) => EventData::ParticipantsDismissedAsAdmin(p.clone()),
+            GroupChatEvent::Message(m) => EventData::Message(self.hydrate_message(m)),
+            GroupChatEvent::GroupChatCreated(g) => EventData::GroupChatCreated(g.clone()),
+            GroupChatEvent::GroupNameChanged(g) => EventData::GroupNameChanged(g.clone()),
+            GroupChatEvent::GroupDescriptionChanged(g) => EventData::GroupDescriptionChanged(g.clone()),
+            GroupChatEvent::ParticipantsAdded(p) => EventData::ParticipantsAdded(p.clone()),
+            GroupChatEvent::ParticipantsRemoved(p) => EventData::ParticipantsRemoved(p.clone()),
+            GroupChatEvent::ParticipantJoined(p) => EventData::ParticipantJoined(p.clone()),
+            GroupChatEvent::ParticipantLeft(p) => EventData::ParticipantLeft(p.clone()),
+            GroupChatEvent::ParticipantsPromotedToAdmin(p) => EventData::ParticipantsPromotedToAdmin(p.clone()),
+            GroupChatEvent::ParticipantsDismissedAsAdmin(p) => EventData::ParticipantsDismissedAsAdmin(p.clone()),
         };
 
         Event {
@@ -165,7 +165,7 @@ impl Events {
     fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
         self.get_internal(reply_context.event_index)
             .map(|e| {
-                if let EventDataInternal::Message(m) = &e.event {
+                if let GroupChatEvent::Message(m) = &e.event {
                     Some(ReplyContext {
                         event_index: reply_context.event_index,
                         user_id: m.sender,
@@ -178,7 +178,7 @@ impl Events {
             .flatten()
     }
 
-    fn get_internal(&self, event_index: EventIndex) -> Option<&Event<EventDataInternal>> {
+    fn get_internal(&self, event_index: EventIndex) -> Option<&Event<GroupChatEvent>> {
         if self.events.is_empty() {
             return None;
         }
