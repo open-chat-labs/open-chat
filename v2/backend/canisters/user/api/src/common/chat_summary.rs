@@ -1,8 +1,8 @@
-use crate::common::message::Message;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::chat_id::{DirectChatId, GroupChatId};
+use shared::types::direct_message::Message;
 use shared::types::UserId;
 
 #[derive(CandidType, Deserialize)]

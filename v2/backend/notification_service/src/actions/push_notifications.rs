@@ -85,6 +85,11 @@ fn group_notifications_by_user(notifications: Vec<IndexedEvent<Notification>>) -
                     assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
                 }
             }
+            Notification::V1GroupMessageNotification(g) => {
+                for u in g.recipients.iter() {
+                    assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
+                }
+            }
         }
     }
 

@@ -134,6 +134,17 @@ type NotifyBalanceArgs =
         balance: nat;
     };
 
+type RemoveSmsMessagesArgs =
+    record {
+        up_to_sms_index: nat64;
+    };
+
+type RemoveSmsMessagesResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
 type CurrentUserArgs = 
     record {
     };
@@ -243,6 +254,26 @@ type MetricsResponse =
         wasm_memory_used: nat64;
     };
 
+type SmsMessagesArgs =
+    record {
+        from_index: nat64;
+        max_results: nat64;
+    };
+
+type SmsNotification =
+    record {
+        phone_number: text;
+        message: text;
+    };
+
+type SmsMessagesResponse =
+    variant {
+        Success: record {
+            notifications: vec SmsNotification;
+            latest_index: nat64;
+        };
+    };
+
 type InitArgs = 
     record {
         service_principals: vec principal;
@@ -287,6 +318,8 @@ service : (InitArgs) -> {
     // Called by a user canister when it is low on cycles
     notify_balance: (NotifyBalanceArgs) -> ();
 
+    remove_sms_messages: (RemoveSmsMessagesArgs) -> (RemoveSmsMessagesResponse);
+
     // Gets the user based on the caller principal. The user can be in a variety of states
     current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
 
@@ -301,4 +334,7 @@ service : (InitArgs) -> {
 
     // Canister metrics
     metrics: (MetricsArgs) -> (MetricsResponse) query;
+
+    // Get a page of SMS messages
+    sms_messages: (SmsMessagesArgs) -> (SmsMessagesResponse) query;
 }

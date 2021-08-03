@@ -1,4 +1,4 @@
-use crate::common::reply_context::ReplyContextInternal;
+use crate::common::message_internal::ReplyContextInternal;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;

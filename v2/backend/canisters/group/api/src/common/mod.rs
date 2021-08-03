@@ -1,4 +1,3 @@
-pub mod message;
+pub mod message_internal;
 pub mod participant;
-pub mod reply_context;
 pub mod role;

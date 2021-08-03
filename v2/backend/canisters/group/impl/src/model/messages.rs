@@ -1,6 +1,6 @@
-use group_canister::common::message::{Message, MessageInternal};
-use group_canister::common::reply_context::{ReplyContext, ReplyContextInternal};
+use group_canister::common::message_internal::{MessageInternal, ReplyContextInternal};
 use shared::time::TimestampMillis;
+use shared::types::group_message::{Message, ReplyContext};
 use shared::types::message_content::MessageContent;
 use shared::types::{MessageId, MessageIndex, UserId};
 use std::cmp::{max, min};
@@ -19,9 +19,9 @@ pub struct PushMessageArgs {
 }
 
 impl Messages {
-    pub fn push_message(&mut self, args: PushMessageArgs) -> MessageIndex {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> Message {
         let message_index = self.next_message_index();
-        let message = MessageInternal {
+        let internal_message = MessageInternal {
             message_index,
             message_id: args.message_id,
             timestamp: args.now,
@@ -30,8 +30,9 @@ impl Messages {
             replies_to: args.replies_to,
         };
 
-        self.messages.push(message);
-        message_index
+        let message = self.hydrate_message(&internal_message);
+        self.messages.push(internal_message);
+        message
     }
 
     pub fn get(&self, message_index: MessageIndex) -> Option<&MessageInternal> {
