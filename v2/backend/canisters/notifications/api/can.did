@@ -176,9 +176,7 @@ type PushSubscriptionResponse =
 
 type PushDirectMessageNotificationArgs =
     record {
-        sender: UserId;
-        recipient: UserId;
-        message: DirectMessage;
+        notification: DirectMessageNotification;
     };
 
 type PushDirectMessageNotificationResponse =
@@ -188,10 +186,7 @@ type PushDirectMessageNotificationResponse =
 
 type PushGroupMessageNotificationArgs =
     record {
-        chat_id: GroupId;
-        sender: UserId;
-        recipients: vec UserId;
-        message: GroupMessage;
+        notification: GroupMessageNotification;
     };
 
 type PushGroupMessageNotificationResponse =
@@ -201,10 +196,7 @@ type PushGroupMessageNotificationResponse =
 
 type PushV1GroupMessageNotificationArgs =
     record {
-        chat_id: V1GroupId;
-        sender: UserId;
-        recipients: vec UserId;
-        message: V1Message;
+        notification: V1GroupMessageNotification;
     };
 
 type PushV1GroupMessageNotificationResponse =
@@ -214,9 +206,7 @@ type PushV1GroupMessageNotificationResponse =
 
 type PushV1DirectMessageNotificationArgs =
     record {
-        sender: UserId;
-        recipient: UserId;
-        message: V1Message;
+        notification: V1DirectMessageNotification;
     };
 
 type PushV1DirectMessageNotificationResponse =
@@ -227,6 +217,7 @@ type PushV1DirectMessageNotificationResponse =
 type DirectMessageNotification =
     record {
         sender: UserId;
+        sender_name: text;
         recipient: UserId;
         message: DirectMessage;
     };
@@ -234,23 +225,28 @@ type DirectMessageNotification =
 type GroupMessageNotification =
     record {
         chat_id: GroupId;
+        group_name: text;
         sender: UserId;
+        sender_name: text;
         recipients: vec UserId;
         message: GroupMessage;
-    };
-
-type V1GroupMessageNotification =
-    record {
-        chat_id: V1GroupId;
-        sender: UserId;
-        recipients: vec UserId;
-        message: V1Message;
     };
 
 type V1DirectMessageNotification =
     record {
         sender: UserId;
+        sender_name: text;
         recipient: UserId;
+        message: V1Message;
+    };
+
+type V1GroupMessageNotification =
+    record {
+        chat_id: V1GroupId;
+        group_name: text;
+        sender: UserId;
+        sender_name: text;
+        recipients: vec UserId;
         message: V1Message;
     };
 

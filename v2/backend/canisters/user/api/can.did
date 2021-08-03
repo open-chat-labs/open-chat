@@ -94,6 +94,7 @@ type ReplyContextArgs =
 type SendMessageArgs =
     record {
         recipient: UserId;
+        sender_name: text;
         message_id: MessageId;
         content: MessageContent;
         replies_to: opt ReplyContextArgs;
