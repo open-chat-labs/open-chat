@@ -5,12 +5,12 @@ use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::group_message::{Message, ReplyContext};
 use shared::types::message_content::MessageContent;
-use shared::types::{Event, EventIndex, MessageId, MessageIndex, UserId};
+use shared::types::{EventIndex, EventWrapper, MessageId, MessageIndex, UserId};
 use std::cmp::{max, min};
 
 #[derive(Default)]
 pub struct Events {
-    events: Vec<Event<GroupChatEvent>>,
+    events: Vec<EventWrapper<GroupChatEvent>>,
     latest_message_event_index: EventIndex,
     latest_message_index: MessageIndex,
 }
@@ -67,7 +67,7 @@ impl Events {
             self.latest_message_index = m.message_index;
             self.latest_message_event_index = event_index;
         }
-        self.events.push(Event {
+        self.events.push(EventWrapper {
             index: event_index,
             timestamp: now,
             event,
@@ -75,11 +75,11 @@ impl Events {
         event_index
     }
 
-    pub fn get(&self, event_index: EventIndex) -> Option<Event<EventData>> {
+    pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<EventData>> {
         self.get_internal(event_index).map(|e| self.hydrate_event(e))
     }
 
-    pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> Vec<Event<EventData>> {
+    pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> Vec<EventWrapper<EventData>> {
         if self.events.is_empty() {
             return Vec::new();
         }
@@ -103,7 +103,7 @@ impl Events {
             .collect()
     }
 
-    pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<Event<EventData>> {
+    pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<EventWrapper<EventData>> {
         if self.events.is_empty() {
             return Vec::new();
         }
@@ -131,7 +131,7 @@ impl Events {
         self.events.last().map_or(EventIndex::default(), |e| e.index).incr()
     }
 
-    fn hydrate_event(&self, event: &Event<GroupChatEvent>) -> Event<EventData> {
+    fn hydrate_event(&self, event: &EventWrapper<GroupChatEvent>) -> EventWrapper<EventData> {
         let event_data = match &event.event {
             GroupChatEvent::Message(m) => EventData::Message(self.hydrate_message(m)),
             GroupChatEvent::GroupChatCreated(g) => EventData::GroupChatCreated(g.clone()),
@@ -145,7 +145,7 @@ impl Events {
             GroupChatEvent::ParticipantsDismissedAsAdmin(p) => EventData::ParticipantsDismissedAsAdmin(p.clone()),
         };
 
-        Event {
+        EventWrapper {
             index: event.index,
             timestamp: event.timestamp,
             event: event_data,
@@ -178,7 +178,7 @@ impl Events {
             .flatten()
     }
 
-    fn get_internal(&self, event_index: EventIndex) -> Option<&Event<GroupChatEvent>> {
+    fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<GroupChatEvent>> {
         if self.events.is_empty() {
             return None;
         }

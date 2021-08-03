@@ -1,5 +1,5 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::events::{GroupChatEvent, Events};
+use crate::model::events::{Events, GroupChatEvent};
 use crate::model::participants::Participants;
 use candid::Principal;
 use group_canister::common::events::GroupChatCreated;

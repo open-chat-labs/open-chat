@@ -87,7 +87,7 @@ impl Version {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Event<T: CandidType + Clone + Debug> {
+pub struct EventWrapper<T: CandidType + Clone + Debug> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
     pub event: T,
