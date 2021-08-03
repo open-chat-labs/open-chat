@@ -1,3 +1,2 @@
 pub mod chat_summary;
-pub mod message;
-pub mod reply_context;
+pub mod message_internal;

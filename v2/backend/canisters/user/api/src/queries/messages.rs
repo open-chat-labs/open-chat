@@ -1,6 +1,6 @@
-use crate::common::message::Message;
 use candid::CandidType;
 use serde::Deserialize;
+use shared::types::direct_message::Message;
 use shared::types::{MessageIndex, UserId};
 
 #[derive(CandidType, Deserialize)]

@@ -1,0 +1,153 @@
+type TimestampMillis = nat64;
+type CanisterId = principal;
+type GroupId = CanisterId;
+type MessageIndex = nat32;
+type UserId = CanisterId;
+type V1GroupId = nat;
+
+type Message = 
+    record {
+        index: nat32;
+        timestamp: TimestampMillis;
+        sender: text;
+        group: opt text;
+        text: text;
+        thumbnail: opt text;
+    };
+
+type Subscription =
+    record {
+        endpoint: text;
+        keys: record {
+            auth: text;
+            p256dh: text;
+        };
+    };
+
+type PushSubscriptionArgs =
+    record {
+        user_id: UserId;
+        subscription: Subscription;
+    };
+
+type PushSubscriptionResponse =
+    variant {
+        Success;
+    };
+
+type PushDirectMessageNotificationArgs =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        message: Message;
+    };
+
+type PushDirectMessageNotificationResponse =
+    variant {
+        Success;
+    };
+
+type PushGroupMessageNotificationArgs =
+    record {
+        chat_id: GroupId;
+        sender: UserId;
+        recipients: vec UserId;
+        message: Message;
+    };
+
+type PushGroupMessageNotificationResponse =
+    variant {
+        Success;
+    };
+
+type PushV1GroupMessageNotificationArgs =
+    record {
+        chat_id: V1GroupId;
+        sender: UserId;
+        recipients: vec UserId;
+        message: Message;
+    };
+
+type PushV1GroupMessageNotificationResponse =
+    variant {
+        Success;
+    };
+    
+type DirectMessageNotification =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        message: Message;
+    };
+
+type GroupMessageNotification =
+    record {
+        chat_id: GroupId;
+        sender: UserId;
+        recipients: vec UserId;
+        message: Message;
+    };
+
+type V1GroupMessageNotification =
+    record {
+        chat_id: V1GroupId;
+        sender: UserId;
+        recipients: vec UserId;
+        message: Message;
+    };
+
+type Notification =
+    variant {
+        DirectMessageNotification: DirectMessageNotification;
+        GroupMessageNotification: GroupMessageNotification;
+        V1GroupMessageNotification: V1GroupMessageNotification;
+    };
+
+type IndexedNotification =
+    record {
+        index: nat64;
+        value: Notification;
+    };
+
+type NotificationsSuccessResult =
+    record {
+        notifications: vec IndexedNotification;
+        subscriptions: vec record { UserId; vec Subscription }
+    };
+
+type NotificationsArgs =
+    record {
+        from_notification_index: nat64;
+    };
+
+type NotificationsResponse =
+    variant {
+        Success: NotificationsSuccessResult;
+        NotAuthorized;
+    };
+
+type RemoveNotificationsArgs =
+    record {
+        up_to_notification_index: nat64;
+    };
+
+type RemoveNotificationsResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
+type InitArgs = 
+    record {
+        push_service_principals: vec principal;
+    };
+
+service: (InitArgs) -> {
+    push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
+    push_direct_message_notification: (PushDirectMessageNotificationArgs) -> (PushDirectMessageNotificationResponse);
+    push_group_message_notification: (PushGroupMessageNotificationArgs) -> (PushGroupMessageNotificationResponse);
+    push_v1group_message_notification: (PushV1GroupMessageNotificationArgs) -> (PushV1GroupMessageNotificationResponse);
+    
+    remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
+    notifications: (NotificationsArgs) -> (NotificationsResponse) query;
+}

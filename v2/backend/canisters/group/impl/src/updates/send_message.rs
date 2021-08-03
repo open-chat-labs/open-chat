@@ -32,7 +32,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        let message_index = runtime_state.data.messages.push_message(push_message_args);
+        let message = runtime_state.data.messages.push_message(push_message_args);
+        let message_index = message.message_index;
 
         let random = runtime_state.env.random_u32() as usize;
 
@@ -41,7 +42,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 chat_id: runtime_state.env.canister_id().into(),
                 sender: participant.user_id,
                 recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
-                message_index,
+                message,
             };
 
             let push_notification_future = push_notification(*canister_id, notification);

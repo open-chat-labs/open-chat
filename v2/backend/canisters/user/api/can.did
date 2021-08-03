@@ -222,7 +222,7 @@ type UpdatedChatSummary =
 
 type DirectChatSummary =
     record {
-        id: DirectChatId;
+        chat_id: DirectChatId;
         them: UserId;
         last_updated: TimestampMillis;
         latest_read_by_me: MessageIndex;
@@ -232,7 +232,7 @@ type DirectChatSummary =
 
 type GroupChatSummary =
     record {
-        id: GroupId;
+        chat_id: GroupId;
         name: text;
         description: text;
         public: bool;

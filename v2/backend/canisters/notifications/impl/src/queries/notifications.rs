@@ -53,6 +53,14 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<Notification>>, runtime_sta
                     }
                 }
             }
+            Notification::V1GroupMessageNotification(g) => {
+                for u in g.recipients.iter() {
+                    if let Some(s) = runtime_state.data.subscriptions.get(u, MAX_SUBSCRIPTION_AGE, now) {
+                        subscriptions.insert(*u, s);
+                        has_subscriptions = true;
+                    }
+                }
+            }
         }
         if has_subscriptions {
             active_notifications.push(n);
