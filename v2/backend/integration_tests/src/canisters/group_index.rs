@@ -1,4 +1,5 @@
-use crate::canisters::{CanisterId, CanisterWasm, GroupChatId};
+use crate::types::chat_id::GroupChatId;
+use crate::types::{CanisterId, CanisterWasm};
 use crate::utils::delay;
 use candid::{CandidType, Decode, Encode, Principal};
 use ic_agent::Agent;
