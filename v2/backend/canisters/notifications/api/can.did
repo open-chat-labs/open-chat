@@ -4,15 +4,154 @@ type GroupId = CanisterId;
 type MessageIndex = nat32;
 type UserId = CanisterId;
 type V1GroupId = nat;
+type V1ChatId = nat;
+type MessageId = nat;
 
-type Message = 
+type V1TextContent =
     record {
-        index: nat32;
-        timestamp: TimestampMillis;
-        sender: text;
-        group: opt text;
         text: text;
-        thumbnail: opt text;
+    };
+
+type V1MediaContent =
+    record {
+        caption: opt text;
+        mime_type: text;
+        width: nat32;
+        height: nat32;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+        thumbnail_data: text;
+        blob_deleted: bool;
+    };
+
+type V1FileContent =
+    record {
+        caption: opt text;
+        name: text;
+        mime_type: text;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+        blob_deleted: bool;
+    };
+
+type V1CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type V1MessageContent =
+    variant {
+        Text: V1TextContent;
+        Media: V1MediaContent;
+        File: V1FileContent;
+        Cycles: V1CyclesContent;
+    };
+
+type V1ReplyContext =
+    record {
+        chat_id: V1ChatId;
+        user_id: UserId;
+        message_id: nat32;
+        content: V1MessageContent;
+    };
+
+type V1Message =
+    record {
+        id: nat32;
+        client_message_id: text;
+        timestamp: TimestampMillis;
+        sender: UserId;
+        content: V1MessageContent;
+        replies_to: opt V1ReplyContext;
+    };
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type BlobReference = 
+    record {
+        canister_id: CanisterId;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type MediaContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type MessageContent =
+    variant {
+        Text: TextContent;
+        Media: MediaContent;
+        File: FileContent;
+        Cycles: CyclesContent;
+    };
+
+type DirectMessageReplyContext =
+    variant {
+        Standard: record {
+            message_index: MessageIndex;
+            sent_by_me: bool;
+            content: MessageContent;
+        };
+        Private: record {
+            chat_id: GroupId;
+            message_index: MessageIndex;
+        };
+    };
+
+type DirectMessage = 
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        timestamp: TimestampMillis;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt DirectMessageReplyContext;
+    };
+
+type GroupMessageReplyContext =
+    record {
+        message_id: MessageId;
+        message_index: MessageIndex;
+        user_id: UserId;
+        content: MessageContent;
+    };
+
+type GroupMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        timestamp: TimestampMillis;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt GroupMessageReplyContext;
     };
 
 type Subscription =
@@ -39,7 +178,7 @@ type PushDirectMessageNotificationArgs =
     record {
         sender: UserId;
         recipient: UserId;
-        message: Message;
+        message: DirectMessage;
     };
 
 type PushDirectMessageNotificationResponse =
@@ -52,7 +191,7 @@ type PushGroupMessageNotificationArgs =
         chat_id: GroupId;
         sender: UserId;
         recipients: vec UserId;
-        message: Message;
+        message: GroupMessage;
     };
 
 type PushGroupMessageNotificationResponse =
@@ -65,19 +204,31 @@ type PushV1GroupMessageNotificationArgs =
         chat_id: V1GroupId;
         sender: UserId;
         recipients: vec UserId;
-        message: Message;
+        message: V1Message;
     };
 
 type PushV1GroupMessageNotificationResponse =
     variant {
         Success;
     };
-    
+
+type PushV1DirectMessageNotificationArgs =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        message: V1Message;
+    };
+
+type PushV1DirectMessageNotificationResponse =
+    variant {
+        Success;
+    };
+
 type DirectMessageNotification =
     record {
         sender: UserId;
         recipient: UserId;
-        message: Message;
+        message: DirectMessage;
     };
 
 type GroupMessageNotification =
@@ -85,7 +236,7 @@ type GroupMessageNotification =
         chat_id: GroupId;
         sender: UserId;
         recipients: vec UserId;
-        message: Message;
+        message: GroupMessage;
     };
 
 type V1GroupMessageNotification =
@@ -93,13 +244,21 @@ type V1GroupMessageNotification =
         chat_id: V1GroupId;
         sender: UserId;
         recipients: vec UserId;
-        message: Message;
+        message: V1Message;
+    };
+
+type V1DirectMessageNotification =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        message: V1Message;
     };
 
 type Notification =
     variant {
         DirectMessageNotification: DirectMessageNotification;
         GroupMessageNotification: GroupMessageNotification;
+        V1DirectMessageNotification: V1DirectMessageNotification;
         V1GroupMessageNotification: V1GroupMessageNotification;
     };
 
@@ -146,6 +305,7 @@ service: (InitArgs) -> {
     push_subscription: (PushSubscriptionArgs) -> (PushSubscriptionResponse);
     push_direct_message_notification: (PushDirectMessageNotificationArgs) -> (PushDirectMessageNotificationResponse);
     push_group_message_notification: (PushGroupMessageNotificationArgs) -> (PushGroupMessageNotificationResponse);
+    push_v1direct_message_notification: (PushV1DirectMessageNotificationArgs) -> (PushV1DirectMessageNotificationResponse);
     push_v1group_message_notification: (PushV1GroupMessageNotificationArgs) -> (PushV1GroupMessageNotificationResponse);
     
     remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
