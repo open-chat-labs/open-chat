@@ -9,6 +9,7 @@ use shared::types::{MessageId, MessageIndex};
 pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContent,
+    pub sender_name: String,
     pub replies_to: Option<ReplyContextInternal>,
 }
 

@@ -65,6 +65,7 @@ mod c2c {
     #[derive(CandidType, Deserialize)]
     pub struct Args {
         message_id: MessageId,
+        sender_name: String,
         content: MessageContent,
         replies_to: Option<ReplyContextInternal>,
     }
@@ -81,6 +82,7 @@ mod c2c {
     pub fn build_args(args: super::Args) -> (CanisterId, Args) {
         let c2c_args = Args {
             message_id: args.message_id,
+            sender_name: args.sender_name,
             content: args.content,
             replies_to: args.replies_to,
         };
@@ -112,6 +114,7 @@ mod c2c {
         if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
             let notification = DirectMessageNotification {
                 sender: sender_user_id,
+                sender_name: args.sender_name,
                 recipient: runtime_state.env.canister_id().into(),
                 message,
             };

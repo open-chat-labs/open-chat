@@ -15,6 +15,7 @@ pub enum Notification {
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct DirectMessageNotification {
     pub sender: UserId,
+    pub sender_name: String,
     pub recipient: UserId,
     pub message: direct_message::Message,
 }
@@ -22,22 +23,27 @@ pub struct DirectMessageNotification {
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct GroupMessageNotification {
     pub chat_id: GroupChatId,
+    pub group_name: String,
     pub sender: UserId,
+    pub sender_name: String,
     pub recipients: Vec<UserId>,
     pub message: group_message::Message,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
-pub struct V1GroupMessageNotification {
-    pub chat_id: u128,
+pub struct V1DirectMessageNotification {
     pub sender: UserId,
-    pub recipients: Vec<UserId>,
+    pub sender_name: String,
+    pub recipient: UserId,
     pub message: v1_message::Message,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
-pub struct V1DirectMessageNotification {
+pub struct V1GroupMessageNotification {
+    pub chat_id: u128,
+    pub group_name: String,
     pub sender: UserId,
-    pub recipient: UserId,
+    pub sender_name: String,
+    pub recipients: Vec<UserId>,
     pub message: v1_message::Message,
 }
