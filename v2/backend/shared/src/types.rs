@@ -7,6 +7,7 @@ pub mod group_message;
 pub mod indexed_event;
 pub mod message_content;
 pub mod notifications;
+pub mod v1_message;
 
 pub type CanisterId = Principal;
 
