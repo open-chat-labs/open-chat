@@ -1,5 +1,5 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::events::{Events, GroupChatEvent};
+use crate::model::events::{Events, GroupChatEventInternal};
 use crate::model::participants::Participants;
 use candid::Principal;
 use group_canister::common::events::GroupChatCreated;
@@ -58,7 +58,7 @@ impl Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let mut events = Events::default();
         events.push_event(
-            GroupChatEvent::GroupChatCreated(GroupChatCreated {
+            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
                 name: name.clone(),
                 description: None,
                 created_by: creator_user_id,

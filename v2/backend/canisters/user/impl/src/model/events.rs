@@ -5,18 +5,18 @@ use shared::types::direct_message::{Message, PrivateReplyContext, ReplyContext, 
 use shared::types::message_content::MessageContent;
 use shared::types::{EventIndex, EventWrapper, MessageId, MessageIndex};
 use std::cmp::{max, min};
-use user_canister::common::events::EventData;
+use user_canister::common::events::DirectChatEvent;
 use user_canister::common::reply_context_internal::ReplyContextInternal;
 
 #[derive(Default)]
 pub struct Events {
-    events: Vec<EventWrapper<DirectChatEvent>>,
+    events: Vec<EventWrapper<DirectChatEventInternal>>,
     latest_message_event_index: EventIndex,
     latest_message_index: MessageIndex,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum DirectChatEvent {
+pub enum DirectChatEventInternal {
     Message(MessageInternal),
 }
 
@@ -48,13 +48,13 @@ impl Events {
             replies_to: args.replies_to,
         };
         let message = self.hydrate_message(&message_internal);
-        let event_index = self.push_event(DirectChatEvent::Message(message_internal), args.now);
+        let event_index = self.push_event(DirectChatEventInternal::Message(message_internal), args.now);
         (event_index, message)
     }
 
-    pub fn push_event(&mut self, event: DirectChatEvent, now: TimestampMillis) -> EventIndex {
+    pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.latest_event_index().incr();
-        let DirectChatEvent::Message(m) = &event;
+        let DirectChatEventInternal::Message(m) = &event;
         self.latest_message_index = m.message_index;
         self.latest_message_event_index = event_index;
         self.events.push(EventWrapper {
@@ -65,11 +65,11 @@ impl Events {
         event_index
     }
 
-    pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<EventData>> {
+    pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<DirectChatEvent>> {
         self.get_internal(event_index).map(|e| self.hydrate_event(e))
     }
 
-    pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> Vec<EventWrapper<EventData>> {
+    pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> Vec<EventWrapper<DirectChatEvent>> {
         if self.events.is_empty() {
             return Vec::new();
         }
@@ -93,7 +93,7 @@ impl Events {
             .collect()
     }
 
-    pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<EventWrapper<EventData>> {
+    pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<EventWrapper<DirectChatEvent>> {
         if self.events.is_empty() {
             return Vec::new();
         }
@@ -115,7 +115,7 @@ impl Events {
 
     pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
         self.get_internal(self.latest_message_event_index).map(|e| {
-            let DirectChatEvent::Message(m) = &e.event;
+            let DirectChatEventInternal::Message(m) = &e.event;
             EventWrapper {
                 index: e.index,
                 timestamp: e.timestamp,
@@ -124,7 +124,7 @@ impl Events {
         })
     }
 
-    pub fn last(&self) -> Option<&EventWrapper<DirectChatEvent>> {
+    pub fn last(&self) -> Option<&EventWrapper<DirectChatEventInternal>> {
         self.events.last()
     }
 
@@ -136,9 +136,9 @@ impl Events {
         self.latest_message_index
     }
 
-    fn hydrate_event(&self, event: &EventWrapper<DirectChatEvent>) -> EventWrapper<EventData> {
+    fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
-            DirectChatEvent::Message(m) => EventData::Message(self.hydrate_message(m)),
+            DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
         };
 
         EventWrapper {
@@ -166,7 +166,7 @@ impl Events {
             }))
         } else {
             self.get_internal(reply_context.event_index).map(|e| {
-                let DirectChatEvent::Message(m) = &e.event;
+                let DirectChatEventInternal::Message(m) = &e.event;
                 ReplyContext::Standard(StandardReplyContext {
                     event_index: e.index,
                     sent_by_me: m.sent_by_me,
@@ -176,7 +176,7 @@ impl Events {
         }
     }
 
-    fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<DirectChatEvent>> {
+    fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<DirectChatEventInternal>> {
         if self.events.is_empty() {
             return None;
         }

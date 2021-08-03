@@ -4,11 +4,11 @@ use shared::types::chat_id::DirectChatId;
 use user_canister::queries::events::{Response::*, *};
 
 #[query]
-fn messages(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| messages_impl(args, state.borrow().as_ref().unwrap()))
+fn events(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| events_impl(args, state.borrow().as_ref().unwrap()))
 }
 
-fn messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
         let my_user_id = runtime_state.env.canister_id().into();
         let their_user_id = args.user_id;

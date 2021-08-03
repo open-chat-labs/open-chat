@@ -4,7 +4,7 @@ use shared::types::group_message::Message;
 use shared::types::UserId;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum EventData {
+pub enum GroupChatEvent {
     Message(Message),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),

@@ -7,8 +7,21 @@ type CanisterId = principal;
 type UserId = CanisterId;
 type DirectChatId = principal;
 type GroupId = CanisterId;
+type EventIndex = nat32;
 type MessageIndex = nat32;
 type MessageId = nat;
+
+type EventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: DirectChatEvent;
+    };
+
+type DirectChatEvent =
+    variant {
+        Message: Message;
+    };
 
 type TextContent =
     record {

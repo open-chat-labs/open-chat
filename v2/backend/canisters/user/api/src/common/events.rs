@@ -3,6 +3,6 @@ use serde::Deserialize;
 use shared::types::direct_message::Message;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum EventData {
+pub enum DirectChatEvent {
     Message(Message),
 }

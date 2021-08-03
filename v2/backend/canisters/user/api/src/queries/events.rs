@@ -1,4 +1,4 @@
-use crate::common::events::EventData;
+use crate::common::events::DirectChatEvent;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::types::{EventIndex, EventWrapper, UserId};
@@ -19,5 +19,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
-    pub events: Vec<EventWrapper<EventData>>,
+    pub events: Vec<EventWrapper<DirectChatEvent>>,
 }
