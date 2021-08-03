@@ -1,7 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use shared::types::chat_id::DirectChatId;
-use user_canister::queries::messages_by_index::{Response::*, *};
+use user_canister::queries::events_by_index::{Response::*, *};
 
 #[query]
 fn messages_by_index(args: Args) -> Response {
@@ -14,13 +14,8 @@ fn messages_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response 
         let their_user_id = args.user_id;
         let chat_id = DirectChatId::from((&my_user_id, &their_user_id));
         if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-            let messages = chat
-                .messages
-                .get_by_index(args.messages)
-                .into_iter()
-                .map(|m| chat.messages.hydrate_message(m))
-                .collect();
-            Success(SuccessResult { messages })
+            let events = chat.events.get_by_index(args.events);
+            Success(SuccessResult { events })
         } else {
             ChatNotFound
         }

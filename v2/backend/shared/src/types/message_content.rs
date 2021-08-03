@@ -2,7 +2,7 @@ use crate::types::CanisterId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
     Text(TextContent),
     Media(MediaContent),
@@ -10,12 +10,12 @@ pub enum MessageContent {
     Cycles(CycleContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
     text: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MediaContent {
     width: u32,
     height: u32,
@@ -25,7 +25,7 @@ pub struct MediaContent {
     blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileContent {
     name: String,
     caption: Option<String>,
@@ -33,13 +33,13 @@ pub struct FileContent {
     blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CycleContent {
     amount: u128,
     caption: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentType {
     Text,
     Image,
@@ -48,7 +48,7 @@ pub enum MessageContentType {
     Cycles,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReference {
     canister_id: CanisterId,
     blob_id: String,

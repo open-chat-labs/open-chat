@@ -1,4 +1,4 @@
-use crate::model::messages::PushMessageArgs;
+use crate::model::events::PushMessageArgs;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::updates::send_message::{Response::*, *};
@@ -32,7 +32,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        let message = runtime_state.data.messages.push_message(push_message_args);
+        let (event_index, message) = runtime_state.data.events.push_message(push_message_args);
         let message_index = message.message_index;
 
         let random = runtime_state.env.random_u32() as usize;
@@ -50,6 +50,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         Success(SuccessResult {
+            event_index,
             message_index,
             timestamp: now,
         })

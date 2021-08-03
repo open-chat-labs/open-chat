@@ -214,12 +214,6 @@ type ChatSummary =
         Group: GroupChatSummary;
     };
 
-type UpdatedChatSummary =
-    variant {
-        Direct: UpdatedDirectChatSummary;
-        Group: UpdatedGroupChatSummary;
-    };
-
 type DirectChatSummary =
     record {
         chat_id: DirectChatId;
@@ -244,65 +238,33 @@ type GroupChatSummary =
         latest_message: opt Message;
     };
 
-type UpdatedDirectChatSummary =
-    record {
-        chat_id: DirectChatId;
-        last_updated: TimestampMillis;
-        latest_read_by_me: opt MessageIndex;
-        latest_read_by_them: opt MessageIndex;
-        latest_message: opt Message;
-    };
-
-type UpdatedGroupChatSummary =
-    record {
-        chat_id: GroupId;
-        last_updated: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        latest_read_by_me: opt MessageIndex;
-        latest_message: opt Message;
-        participants_removed: vec UserId;
-        participants_added: vec Participant;
-        participants_updated: vec Participant;
-    };
-
-type ChatId = 
+type ChatId =
     variant { 
         Direct: DirectChatId; 
         Group: GroupId; 
     };
 
-type UpdatesResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            chats_added: vec ChatSummary;
-            chats_updated: vec UpdatedChatSummary;
-            chats_removed: vec ChatId;         
-        }
-    };
-
-type MessagesSuccess =
+type EventsSuccess =
     record {
-        messages: vec Message;
-        latest_message_index: MessageIndex;
+        events: vec Event;
+        latest_event_index: EventIndex;
     };
 
-type MessagesResponse =
+type EventsResponse =
     variant {
-        Success: MessagesSuccess;
+        Success: EventsSuccess;
         ChatNotFound;
     }; 
 
-type MessagesByIndexArgs =
+type EventsByIndexArgs =
     record {
         user_id: UserId;
-        messages: vec MessageIndex;
+        events: vec EventIndex;
     };
 
-type MessagesByIndexResponse =
+type EventsByIndexResponse =
     variant {
-        Success: MessagesSuccess;
+        Success: EventsSuccess;
         ChatNotFound;
     }; 
 
@@ -375,9 +337,8 @@ service: (InitArgs) -> {
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     
-    messages: (MessagesArgs) -> (MessagesResponse) query;
-    messages_by_index: (MessagesByIndexArgs) -> (MessagesByIndexResponse) query;
-    updates: (UpdatesArgs) -> (UpdatesResponse) query;
+    events: (EventsArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;

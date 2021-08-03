@@ -1,12 +1,13 @@
+use crate::common::events::EventData;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::direct_message::Message;
-use shared::types::{MessageIndex, UserId};
+use shared::types::{Event, EventIndex, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
     pub user_id: UserId,
-    pub messages: Vec<MessageIndex>,
+    pub from_index: EventIndex,
+    pub to_index: EventIndex,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -18,5 +19,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
-    pub messages: Vec<Message>,
+    pub events: Vec<Event<EventData>>,
 }

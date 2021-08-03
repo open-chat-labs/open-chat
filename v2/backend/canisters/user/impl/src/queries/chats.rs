@@ -26,9 +26,10 @@ fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             )
             .map(|c| {
                 ChatSummary::Direct(DirectChatSummary {
-                    chat_id: c.chat_id,
                     them: c.them,
-                    latest_message: c.messages.hydrate_message(c.messages.last().unwrap()),
+                    chat_id: c.chat_id,
+                    latest_message: c.events.latest_message().unwrap(),
+                    latest_event_index: c.events.latest_event_index(),
                     date_created: c.date_created,
                 })
             })

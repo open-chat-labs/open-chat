@@ -1,22 +1,20 @@
-use crate::time::TimestampMillis;
 use crate::types::message_content::MessageContent;
-use crate::types::{MessageId, MessageIndex, UserId};
+use crate::types::{EventIndex, MessageId, MessageIndex, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
-    pub timestamp: TimestampMillis,
     pub sender: UserId,
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
-    pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub user_id: UserId,
     pub content: MessageContent,
 }
