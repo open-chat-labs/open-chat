@@ -314,6 +314,31 @@ type ChunkResponse =
         NotFound;
     };
 
+type HandleMarkReadArgs =
+    record {
+        up_to_message_index: MessageIndex;
+    };
+
+type HandleMarkReadResponse =
+    variant {
+        Success;
+        SuccessNoChange;
+        ChatNotFound;
+    };
+
+type HandleMessageReceivedArgs =
+    record {
+        message_id: MessageId;
+        sender_name: text;
+        content: MessageContent;
+        replies_to: opt ReplyContextArgs;
+    };
+
+type HandleMessageReceivedResponse =
+    variant {
+        Success;
+    };
+
 type MetricsArgs =
     record {
     };
@@ -353,6 +378,9 @@ service: (InitArgs) -> {
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+
+    handle_mark_read: (HandleMarkReadArgs) -> (HandleMarkReadResponse);
+    handle_message_received: (HandleMessageReceivedArgs) -> (HandleMessageReceivedResponse);
 
     // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;

@@ -1,6 +1,7 @@
 use crate::model::events::Events;
 use shared::time::TimestampMillis;
-use shared::types::{chat_id::DirectChatId, MessageIndex, UserId};
+use shared::types::chat_id::DirectChatId;
+use shared::types::{MessageIndex, UserId};
 
 pub struct DirectChat {
     pub chat_id: DirectChatId,

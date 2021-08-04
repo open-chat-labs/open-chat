@@ -2,10 +2,8 @@ use crate::model::events::PushMessageArgs;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::updates::send_message::{Response::*, *};
-use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use notifications_canister::updates::push_group_message_notification;
-use shared::c2c::call_with_logging;
 use shared::rand::get_random_item;
 use shared::types::notifications::GroupMessageNotification;
 use shared::types::CanisterId;
@@ -46,9 +44,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
                 message,
             };
-
-            let push_notification_future = push_notification(*canister_id, notification);
-            ic_cdk::block_on(push_notification_future);
+            ic_cdk::block_on(push_notification(*canister_id, notification));
         }
 
         Success(SuccessResult {
@@ -63,7 +59,18 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
     let args = push_group_message_notification::Args { notification };
+    let _ = c2c::notifications::push_group_message_notification(canister_id, &args).await;
+}
 
-    let _: CallResult<(push_group_message_notification::Response,)> =
-        call_with_logging(canister_id, "push_group_message_notification", (args,)).await;
+mod c2c {
+    use super::*;
+    use ic_cdk::api::call::CallResult;
+    use log::error;
+    use shared::generate_c2c_call;
+
+    pub mod notifications {
+        use super::*;
+
+        generate_c2c_call!(push_group_message_notification);
+    }
 }
