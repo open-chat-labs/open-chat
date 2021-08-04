@@ -15,7 +15,7 @@ async fn create_group(args: Args) -> Response {
     };
 
     match c2c::group_index::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args).await {
-        Ok(response) => match response.0 {
+        Ok(response) => match response {
             create_group::Response::Success(r) => {
                 RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
                 Success(SuccessResult {

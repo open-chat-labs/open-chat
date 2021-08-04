@@ -195,7 +195,23 @@ type CreateGroupResponse =
         InvalidName;
         NameTooLong: nat16;
         UnknownError;
-    }; 
+    };
+
+type JoinGroupArgs =
+    record {
+        group_chat_id: GroupId;
+    };
+
+type JoinGroupResponse =
+    variant {
+        Success;
+        AlreadyInGroup;
+        GroupNotFound;
+        GroupNotPublic;
+        Blocked;
+        NotAuthorized;
+        InternalError: text;
+    };
 
 type MessagesArgs =
     record {
@@ -375,6 +391,7 @@ service: (InitArgs) -> {
     unblock_user: (UnblockUserArgs) -> ();
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
+    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;

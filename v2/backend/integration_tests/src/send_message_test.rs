@@ -26,6 +26,7 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let send_message_args = canisters::user::send_message::Args {
         message_id: MessageId(123),
         recipient: user2_id.into(),
+        sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
     };

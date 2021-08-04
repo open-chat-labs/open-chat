@@ -1,4 +1,4 @@
-use crate::types::chat_id::GroupChatId;
+use crate::types::chat_id::{DirectChatId, GroupChatId};
 use crate::types::message_content::MessageContent;
 use crate::types::{EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
 use crate::utils::delay;
@@ -55,6 +55,7 @@ pub mod send_message {
     pub struct Args {
         pub message_id: MessageId,
         pub recipient: UserId,
+        pub sender_name: String,
         pub content: MessageContent,
         pub replies_to: Option<ReplyContextInternal>,
     }
@@ -67,6 +68,7 @@ pub mod send_message {
 
     #[derive(CandidType, Deserialize, Clone, Debug)]
     pub struct SuccessResult {
+        pub direct_chat_id: DirectChatId,
         pub event_index: EventIndex,
         pub message_index: MessageIndex,
         pub timestamp: TimestampMillis,

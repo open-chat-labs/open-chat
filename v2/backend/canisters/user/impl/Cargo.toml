@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.7.4"
+group_canister = { path = "../../group/api" }
 group_index_canister = { path = "../../group_index/api" }
 ic-cdk = "0.3.1"
 ic-cdk-macros = "0.3.1"
