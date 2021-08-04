@@ -31,7 +31,7 @@ fn join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     .data
                     .events
                     .push_event(GroupChatEventInternal::ParticipantJoined(event), now);
-                
+
                 Success(SuccessResult {})
             }
             AddResult::AlreadyInGroup => AlreadyInGroup,
