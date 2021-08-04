@@ -1,24 +1,19 @@
 [package]
-name = "notification_service"
+name = "notification_service_aws"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+async-trait = "0.1.51"
 aws-sdk-dynamodb = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.11-alpha", package = "aws-sdk-dynamodb" }
 candid = "0.7.4"
 futures = "0.3.15"
-garcon = "0.2.3"
-ic-agent = "0.6.0"
-ic-cdk = "0.3.1"
 lambda_runtime = "0.3.0"
-notifications_canister = { path = "../canisters/notifications/api" }
-openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
-shared = { path = "../shared" }
+shared = { path = "../shared", package = "notification_service_shared" }
 tokio = "1.8.1"
-web-push = "0.7.2"
 
 [[bin]]
 name = "bootstrap"
