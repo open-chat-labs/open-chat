@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::updates::push_v1direct_message_notification::{Response::*, *};
 use shared::types::notifications::Notification;
@@ -9,10 +9,17 @@ fn push_v1direct_message_notification(args: Args) -> Response {
 }
 
 fn push_v1direct_message_notification_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state
+    let now = runtime_state.env.now();
+    if runtime_state
         .data
-        .notifications
-        .add(Notification::V1DirectMessageNotification(args.notification));
+        .subscriptions
+        .contains_any(&vec![args.notification.recipient], MAX_SUBSCRIPTION_AGE, now)
+    {
+        runtime_state
+            .data
+            .notifications
+            .add(Notification::V1DirectMessageNotification(args.notification));
+    }
 
     Success
 }
