@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use notifications_canister::common::subscription::SubscriptionInfo;
 use notifications_canister::queries::notifications::{Response::*, *};
@@ -6,10 +6,8 @@ use shared::types::indexed_event::IndexedEvent;
 use shared::types::notifications::Notification;
 use shared::types::UserId;
 use std::collections::HashMap;
-use std::time::Duration;
 
 const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
-const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(30 * 24 * 60 * 60); // 30 days
 
 #[query]
 fn notifications(args: Args) -> Response {
