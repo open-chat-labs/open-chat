@@ -42,7 +42,7 @@ impl Subscriptions {
         }
     }
 
-    pub fn contains_any(&self, user_ids: &Vec<UserId>, max_age: Duration, now: TimestampMillis) -> bool {
+    pub fn contains_any(&self, user_ids: &[UserId], max_age: Duration, now: TimestampMillis) -> bool {
         let active_since = now.saturating_sub(max_age.as_millis() as u64);
 
         user_ids.iter().any(|u| {

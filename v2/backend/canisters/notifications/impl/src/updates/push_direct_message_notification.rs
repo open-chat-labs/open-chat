@@ -13,7 +13,7 @@ fn push_direct_message_notification_impl(args: Args, runtime_state: &mut Runtime
     if runtime_state
         .data
         .subscriptions
-        .contains_any(&vec![args.notification.recipient], MAX_SUBSCRIPTION_AGE, now)
+        .contains_any(&[args.notification.recipient], MAX_SUBSCRIPTION_AGE, now)
     {
         runtime_state
             .data
