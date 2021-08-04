@@ -54,5 +54,5 @@ fn build_c2c_args(args: Args) -> (CanisterId, handle_message_received::Args) {
 }
 
 async fn send_to_recipients_canister(canister_id: CanisterId, args: handle_message_received::Args) {
-    let _ = user_canister_client::updates::handle_message_received(canister_id, &args).await;
+    let _ = user_canister_client::handle_message_received(canister_id, &args).await;
 }

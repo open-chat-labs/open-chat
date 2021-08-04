@@ -57,5 +57,5 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
     let args = push_group_message_notification::Args { notification };
-    let _ = notifications_canister_client::updates::push_group_message_notification(canister_id, &args).await;
+    let _ = notifications_canister_client::push_group_message_notification(canister_id, &args).await;
 }

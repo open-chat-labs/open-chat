@@ -17,7 +17,7 @@ async fn join_group(args: Args) -> Response {
         principal: prepare_ok.principal,
     };
 
-    match group_canister_client::updates::join_group(args.group_chat_id.into(), &c2c_args).await {
+    match group_canister_client::join_group(args.group_chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
             join_group::Response::Success(_) => {
                 RUNTIME_STATE.with(|state| confirm(args.group_chat_id, state.borrow_mut().as_mut().unwrap()));

@@ -14,11 +14,8 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match group_index_canister_client::updates::create_group(
-        prepare_result.group_index_canister_id,
-        &prepare_result.create_group_args,
-    )
-    .await
+    match group_index_canister_client::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args)
+        .await
     {
         Ok(response) => match response {
             create_group::Response::Success(r) => {
