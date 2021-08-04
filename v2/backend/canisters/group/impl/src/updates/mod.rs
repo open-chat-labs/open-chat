@@ -20,7 +20,7 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
     }
 
     async fn call_group_index_canister(canister_id: CanisterId) {
-        let response = c2c::group_index::notify_activity(canister_id, &notify_activity::Args {}).await;
+        let response = group_index_canister_client::notify_activity(canister_id, &notify_activity::Args {}).await;
         RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
     }
 
@@ -31,18 +31,5 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
         } else {
             runtime_state.data.activity_notification_state.mark_failed();
         }
-    }
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use shared::generate_c2c_call;
-
-    pub mod group_index {
-        use super::*;
-
-        generate_c2c_call!(notify_activity);
     }
 }

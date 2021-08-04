@@ -14,7 +14,9 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match c2c::group_index::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args).await {
+    match group_index_canister_client::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args)
+        .await
+    {
         Ok(response) => match response {
             create_group::Response::Success(r) => {
                 RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
@@ -68,16 +70,4 @@ fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
         .data
         .group_chats
         .insert(group_chat_id, GroupChat::new(group_chat_id));
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use shared::generate_c2c_call;
-
-    pub mod group_index {
-        use super::*;
-
-        generate_c2c_call!(create_group);
-    }
 }

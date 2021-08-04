@@ -4,7 +4,6 @@ use candid::Principal;
 use group_canister::updates::join_group;
 use ic_cdk_macros::update;
 use shared::types::chat_id::GroupChatId;
-use shared::types::CanisterId;
 use user_canister::updates::join_group::{Response::*, *};
 
 #[update]
@@ -18,7 +17,7 @@ async fn join_group(args: Args) -> Response {
         principal: prepare_ok.principal,
     };
 
-    match c2c::group::join_group(args.group_chat_id.into(), &c2c_args).await {
+    match group_canister_client::join_group(args.group_chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
             join_group::Response::Success(_) => {
                 RUNTIME_STATE.with(|state| confirm(args.group_chat_id, state.borrow_mut().as_mut().unwrap()));
@@ -51,17 +50,4 @@ fn confirm(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
         .data
         .group_chats
         .insert(group_chat_id, GroupChat::new(group_chat_id));
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use shared::generate_c2c_call;
-
-    pub mod group {
-        use super::*;
-
-        generate_c2c_call!(join_group);
-    }
 }
