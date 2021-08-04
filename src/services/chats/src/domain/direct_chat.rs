@@ -72,7 +72,7 @@ impl Chat for DirectChat {
         self.user1 == *user || self.user2 == *user
     }
 
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Message {
 
         let id = match self.messages.last() {
             Some(message) => message.get_id() + 1,
@@ -88,7 +88,7 @@ impl Chat for DirectChat {
             replies_to
         );
 
-        self.messages.push(message);
+        self.messages.push(message.clone());
 
         if sender == &self.user1 {
             self.user2_unread_message_ids.insert(id);
@@ -98,7 +98,7 @@ impl Chat for DirectChat {
 
         self.last_updated = now;
 
-        id
+        message
     }
 
     fn get_messages(&self, _user: &UserId, from_id: u32, page_size: u32) -> Vec<Message> {

@@ -9,4 +9,3 @@ pub mod put_chunk;
 pub mod remove_participant;
 pub mod send_direct_message;
 pub mod send_message;
-pub mod set_user_notification_status;

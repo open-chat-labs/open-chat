@@ -131,7 +131,7 @@ type DirectMessage =
         message_index: MessageIndex;
         message_id: MessageId;
         timestamp: TimestampMillis;
-        sender: UserId;
+        sent_by_me: bool;
         content: MessageContent;
         replies_to: opt DirectMessageReplyContext;
     };

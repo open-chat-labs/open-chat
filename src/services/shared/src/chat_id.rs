@@ -1,10 +1,10 @@
 use std::ops::Shl;
 use ic_cdk::export::candid::CandidType;
 use highway::{HighwayHasher, HighwayHash};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use crate::user_id::UserId;
 
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(CandidType, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
 pub struct ChatId(pub u128);
 
 impl ChatId {

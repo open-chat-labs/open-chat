@@ -1,6 +1,6 @@
 use ic_cdk::export::candid::CandidType;
 use enum_dispatch::enum_dispatch;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
@@ -19,7 +19,7 @@ pub enum ChatEnum {
 pub trait Chat {
     fn get_id(&self) -> ChatId;
     fn involves_user(&self, user: &UserId) -> bool;
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32;
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Message;
     fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message>;
     fn get_messages_by_id(&self, user: &UserId, ids: Vec<u32>) -> Vec<Message>;
     fn get_message_mut(&mut self, id: u32) -> Option<&mut Message>;
@@ -32,12 +32,12 @@ pub trait Chat {
     fn to_summary(&self, user: &UserId, message_count: u32) -> ChatSummary;
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct TextContent {
     text: String
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct MediaContent {
     caption: Option<String>,
     mime_type: String,
@@ -50,7 +50,7 @@ pub struct MediaContent {
     blob_deleted: bool
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct FileContent {
     caption: Option<String>,
     name: String,
@@ -61,13 +61,13 @@ pub struct FileContent {
     blob_deleted: bool
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct CycleContent {
     amount: u128,
     caption: Option<String>
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub enum MessageContent {
     Text(TextContent),
     Media(MediaContent),
@@ -75,7 +75,7 @@ pub enum MessageContent {
     Cycles(CycleContent)
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub enum MessageContentType {
     Text,
     Image,
@@ -84,7 +84,7 @@ pub enum MessageContentType {
     Cycles
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct Message {
     id: u32,
     client_message_id: String,
@@ -94,7 +94,7 @@ pub struct Message {
     replies_to: Option<ReplyContext>
 }
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct ReplyContext {
     chat_id: ChatId,
     user_id: UserId,
