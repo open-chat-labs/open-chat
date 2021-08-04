@@ -34,18 +34,5 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn mark_read_on_recipients_canister(canister_id: CanisterId, up_to_message_index: MessageIndex) {
     let args = handle_mark_read::Args { up_to_message_index };
-    let _ = c2c::user::handle_mark_read(canister_id, &args).await;
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use shared::generate_c2c_call;
-
-    pub mod user {
-        use super::*;
-
-        generate_c2c_call!(handle_mark_read);
-    }
+    let _ = user_canister_client::updates::handle_mark_read(canister_id, &args).await;
 }

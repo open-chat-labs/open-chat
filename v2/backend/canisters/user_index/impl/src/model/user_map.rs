@@ -96,9 +96,12 @@ impl UserMap {
         }
     }
 
-    pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) {
+    pub fn mark_online(&mut self, principal: &Principal, now: TimestampMillis) -> bool {
         if let Some(User::Created(user)) = self.users_by_principal.get_mut(principal) {
             user.last_online = now;
+            true
+        } else {
+            false
         }
     }
 

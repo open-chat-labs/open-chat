@@ -49,7 +49,7 @@ fn handle_message_received_impl(args: Args, runtime_state: &mut RuntimeState) ->
 
 async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
     let args = push_direct_message_notification::Args { notification };
-    let _ = c2c::notifications::push_direct_message_notification(canister_id, &args).await;
+    let _ = notifications_canister_client::updates::push_direct_message_notification(canister_id, &args).await;
 }
 
 mod c2c {

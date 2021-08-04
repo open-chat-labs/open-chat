@@ -49,7 +49,6 @@ type ResendCodeResponse =
         UserNotFound;
     };
 
-
 type CreateCanisterArgs =
     record {
     };
@@ -110,6 +109,12 @@ type UpgradeCanisterResponse =
 
 type MarkAsOnlineArgs = 
     record {
+    };
+
+type MarkAsOnlineResponse =
+    variant {
+        Success;
+        UserNotFound;
     };
 
 type TransferCyclesArgs = 
@@ -310,7 +315,7 @@ service : (InitArgs) -> {
     upgrade_canister: (UpgradeCanisterArgs) -> (UpgradeCanisterResponse);
 
     // Call this regularly to maintain the online status of the user
-    mark_as_online: (MarkAsOnlineArgs) -> ();
+    mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
 
     // Called by a user canister - authorized based on caller
     transfer_cycles: (TransferCyclesArgs) -> (TransferCyclesResponse);

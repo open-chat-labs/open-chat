@@ -57,18 +57,5 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
     let args = push_group_message_notification::Args { notification };
-    let _ = c2c::notifications::push_group_message_notification(canister_id, &args).await;
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use shared::generate_c2c_call;
-
-    pub mod notifications {
-        use super::*;
-
-        generate_c2c_call!(push_group_message_notification);
-    }
+    let _ = notifications_canister_client::updates::push_group_message_notification(canister_id, &args).await;
 }

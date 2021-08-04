@@ -1,16 +1,20 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::updates::mark_as_online::Args;
+use user_index_canister::updates::mark_as_online::{Response::*, *};
 
 #[update]
-fn mark_as_online(_args: Args) {
+fn mark_as_online(_args: Args) -> Response {
     RUNTIME_STATE.with(|state| mark_as_online_impl(state.borrow_mut().as_mut().unwrap()))
 }
 
-fn mark_as_online_impl(runtime_state: &mut RuntimeState) {
+fn mark_as_online_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     let now = runtime_state.env.now();
-    runtime_state.data.users.mark_online(caller, now);
+    if runtime_state.data.users.mark_online(caller, now) {
+        Success
+    } else {
+        UserNotFound
+    }
 }
 
 #[cfg(test)]
@@ -42,7 +46,8 @@ mod tests {
         env.now += 10000;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
-        mark_as_online_impl(&mut runtime_state);
+        let response = mark_as_online_impl(&mut runtime_state);
+        assert!(matches!(response, Success));
 
         let user = runtime_state
             .data

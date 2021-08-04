@@ -54,18 +54,5 @@ fn build_c2c_args(args: Args) -> (CanisterId, handle_message_received::Args) {
 }
 
 async fn send_to_recipients_canister(canister_id: CanisterId, args: handle_message_received::Args) {
-    let _ = c2c::user::handle_message_received(canister_id, &args).await;
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use shared::generate_c2c_call;
-
-    pub mod user {
-        use super::*;
-
-        generate_c2c_call!(handle_message_received);
-    }
+    let _ = user_canister_client::updates::handle_message_received(canister_id, &args).await;
 }
