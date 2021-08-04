@@ -20,7 +20,7 @@ pub struct GroupChat {
     last_updated: Timestamp
 }
 
-struct Participant {
+pub struct Participant {
     user_id: UserId,
     admin: bool,
     date_added: Timestamp,
@@ -148,6 +148,14 @@ impl GroupChat {
         self.participants.iter().map(|p| &p.user_id)
     }
 
+    pub fn subject(&self) -> &String {
+        &self.subject
+    }
+
+    pub fn participants(&self) -> &Vec<Participant> {
+        &self.participants
+    }
+
     fn find_participant(&self, user_id: &UserId) -> Option<&Participant> {
         self.participants.iter().find(|p| p.user_id == *user_id)
     }
@@ -183,7 +191,7 @@ impl Chat for GroupChat {
         self.participants.iter().any(|p| p.user_id == *user)
     }
 
-    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> u32 {
+    fn push_message(&mut self, sender: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Message {
 
         let id = match self.messages.last() {
             Some(message) => message.get_id() + 1,
@@ -199,7 +207,7 @@ impl Chat for GroupChat {
             replies_to
         );
 
-        self.messages.push(message);
+        self.messages.push(message.clone());
 
         for p in self.participants.iter_mut().filter(|p| p.user_id != *sender) {
             p.unread_message_ids.insert(id);
@@ -207,7 +215,7 @@ impl Chat for GroupChat {
 
         self.last_updated = now;
 
-        id
+        message
     }
 
     fn get_messages(&self, user: &UserId, from_id: u32, page_size: u32) -> Vec<Message> {
@@ -287,6 +295,10 @@ impl Participant {
             date_added: now,
             unread_message_ids: RangeSet::new()
         }
+    }
+    
+    pub fn user_id(&self) -> UserId {
+        self.user_id
     }
 }
 

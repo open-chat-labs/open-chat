@@ -7,6 +7,8 @@ use shared::user_id::UserId;
 use crate::domain::chat::{Chat, MessageContent, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
+use crate::services::notifications::push_direct_message_notification;
+use crate::services::notifications::push_direct_message_notification::Notification;
 use crate::services::user_mgmt::*;
 use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
 use self::Response::*;
@@ -63,7 +65,7 @@ pub async fn update(request: Request) -> Response {
         }
     }
 
-    let message_id = chat_list.push_message(
+    let message = chat_list.push_message(
         chat_id, 
         &me, 
         request.client_message_id, 
@@ -73,7 +75,17 @@ pub async fn update(request: Request) -> Response {
 
     let chat = chat_list.get(chat_id, &me).unwrap();
     let chat_summary = chat.to_summary(&me, 0).direct().unwrap();
-    
+    let message_id = message.get_id();
+
+    if let Some(sender_name) = request.sender_name {
+        push_direct_message_notification::fire_and_forget(Notification {
+            sender: me,
+            sender_name,
+            recipient: request.recipient.into(),
+            message,
+        });            
+    }
+
     Success(Result {
         chat_summary,
         message_id,
@@ -102,6 +114,7 @@ fn validate(request: &Request) -> Option<Response> {
 #[derive(Deserialize)]
 pub struct Request {
     recipient: UserId,
+    sender_name: Option<String>,
     client_message_id: String,
     content: MessageContent,
     replies_to: Option<ReplyContext>

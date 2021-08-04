@@ -1,5 +1,3 @@
-use crate::domain::user_notifications_status::UserNotificationsStatusMap;
-use crate::domain::user_notifications_status::UserNotificationStatus;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
@@ -22,10 +20,7 @@ pub fn query(request: Request) -> Response {
     let blocked_users: &BlockedUsers = storage::get();       
     let my_blocked_users = blocked_users.get(&me);
 
-    let user_notifications_status_map: &UserNotificationsStatusMap = storage::get();
-    let my_notification_status = user_notifications_status_map.get(&me);
-
-    Success(Result::new(chats, my_blocked_users, my_notification_status))
+    Success(Result::new(chats, my_blocked_users))
 }
 
 #[derive(Deserialize)]
@@ -43,11 +38,10 @@ pub enum Response {
 pub struct Result {
     chats: Vec<ChatSummary>,
     blocked_users: Vec<UserId>,
-    notification_status: UserNotificationStatus,
 }
 
 impl Result {
-    pub fn new(chats: Vec<ChatSummary>, blocked_users: Vec<UserId>, notification_status: UserNotificationStatus) -> Result {
-        Result { chats, blocked_users, notification_status }
+    pub fn new(chats: Vec<ChatSummary>, blocked_users: Vec<UserId>) -> Result {
+        Result { chats, blocked_users }
     }
 }
