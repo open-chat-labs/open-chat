@@ -2,6 +2,7 @@ type TimestampMillis = nat64;
 type CanisterId = principal;
 type GroupId = CanisterId;
 type MessageIndex = nat32;
+type EventIndex = nat32;
 type UserId = CanisterId;
 type V1GroupId = nat;
 type V1ChatId = nat;
@@ -116,13 +117,13 @@ type MessageContent =
 type DirectMessageReplyContext =
     variant {
         Standard: record {
-            message_index: MessageIndex;
+            event_index: EventIndex;
             sent_by_me: bool;
             content: MessageContent;
         };
         Private: record {
             chat_id: GroupId;
-            message_index: MessageIndex;
+            event_index: EventIndex;
         };
     };
 
@@ -130,7 +131,6 @@ type DirectMessage =
     record {
         message_index: MessageIndex;
         message_id: MessageId;
-        timestamp: TimestampMillis;
         sent_by_me: bool;
         content: MessageContent;
         replies_to: opt DirectMessageReplyContext;
@@ -148,7 +148,6 @@ type GroupMessage =
     record {
         message_index: MessageIndex;
         message_id: MessageId;
-        timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
         replies_to: opt GroupMessageReplyContext;

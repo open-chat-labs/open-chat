@@ -1,8 +1,7 @@
-use crate::dynamodb::DynamoDbClient;
 use crate::ic_agent::IcAgent;
-use crate::read_env_var;
+use crate::store::Store;
 use futures::future;
-use lambda_runtime::Error;
+use shared::error::Error;
 use shared::types::indexed_event::IndexedEvent;
 use shared::types::notifications::Notification;
 use shared::types::{CanisterId, UserId};
@@ -12,15 +11,14 @@ use web_push::{
     ContentEncoding, SubscriptionInfo, SubscriptionKeys, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder,
 };
 
-pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
-    let dynamodb_client = DynamoDbClient::build();
-
-    let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
+pub async fn run(
+    canister_id: CanisterId,
+    store: Box<dyn Store + Send + Sync>,
+    ic_identity_pem: String,
+    vapid_private_key: String,
+) -> Result<(), Error> {
     let ic_agent = IcAgent::build(&ic_identity_pem)?;
-
-    let vapid_private_key = read_env_var("VAPID_PRIVATE_KEY")?;
-
-    let from_notification_index = dynamodb_client
+    let from_notification_index = store
         .get_notification_index_processed_up_to(canister_id)
         .await?
         .map_or(0, |i| i + 1);
@@ -36,7 +34,7 @@ pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
 
         handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_key.as_bytes()).await?;
 
-        dynamodb_client
+        store
             .set_notification_index_processed_up_to(canister_id, latest_notification_index)
             .await?;
     }

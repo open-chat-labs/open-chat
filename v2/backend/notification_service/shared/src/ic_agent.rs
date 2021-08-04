@@ -3,9 +3,9 @@ use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
-use lambda_runtime::Error;
 use notifications_canister::queries::notifications;
 use notifications_canister::updates::remove_notifications;
+use shared::error::Error;
 use shared::types::CanisterId;
 use std::time::Duration;
 

@@ -1,7 +1,9 @@
+use async_trait::async_trait;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::{Blob, Client};
-use lambda_runtime::Error;
-use shared::types::CanisterId;
+use candid::Principal;
+use shared::error::Error;
+use shared::store::Store;
 use std::str::FromStr;
 
 pub struct DynamoDbClient {
@@ -16,8 +18,11 @@ impl DynamoDbClient {
 
         DynamoDbClient { client }
     }
+}
 
-    pub async fn get_notification_index_processed_up_to(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
+#[async_trait]
+impl Store for DynamoDbClient {
+    async fn get_notification_index_processed_up_to(&self, canister_id: Principal) -> Result<Option<u64>, Error> {
         let response = self
             .client
             .get_item()
@@ -34,9 +39,9 @@ impl DynamoDbClient {
         }
     }
 
-    pub async fn set_notification_index_processed_up_to(
+    async fn set_notification_index_processed_up_to(
         &self,
-        canister_id: CanisterId,
+        canister_id: Principal,
         notification_index: u64,
     ) -> Result<(), Error> {
         self.client

@@ -10,7 +10,8 @@ members = [
     "backend/canisters/user/impl",
     "backend/canisters/user_index/api",
     "backend/canisters/user_index/impl",
-    "backend/notification_service",
+    "backend/notification_service/aws",
+    "backend/notification_service/shared",
     "backend/shared",
     "backend/sms_service",
 ]
