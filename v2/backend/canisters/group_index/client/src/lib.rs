@@ -5,7 +5,9 @@ use log::error;
 use shared::generate_c2c_call;
 use shared::types::CanisterId;
 
+// Queries
 generate_c2c_call!(active_groups);
 
+// Updates
 generate_c2c_call!(create_group);
 generate_c2c_call!(notify_activity);

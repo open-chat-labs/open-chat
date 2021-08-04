@@ -5,10 +5,12 @@ use shared::types::CanisterId;
 use user_canister::queries::*;
 use user_canister::updates::*;
 
+// Queries
 generate_c2c_call!(chats);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
 
+// Updates
 generate_c2c_call!(create_group);
 generate_c2c_call!(handle_mark_read);
 generate_c2c_call!(handle_message_received);
