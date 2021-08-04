@@ -1,7 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::updates::notify_activity;
-use ic_cdk::api::call::CallResult;
-use shared::c2c::call_with_logging;
 use shared::types::CanisterId;
 
 mod mark_read;
@@ -21,9 +19,7 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
     }
 
     async fn call_group_index_canister(canister_id: CanisterId) {
-        let args = notify_activity::Args {};
-        let response: CallResult<(notify_activity::Response,)> =
-            call_with_logging(canister_id, "notify_activity", (args,)).await;
+        let response = c2c::group_index::notify_activity(canister_id, &notify_activity::Args {}).await;
         RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
     }
 
@@ -34,5 +30,18 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
         } else {
             runtime_state.data.activity_notification_state.mark_failed();
         }
+    }
+}
+
+mod c2c {
+    use super::*;
+    use ic_cdk::api::call::CallResult;
+    use log::error;
+    use shared::generate_c2c_call;
+
+    pub mod group_index {
+        use super::*;
+
+        generate_c2c_call!(notify_activity);
     }
 }

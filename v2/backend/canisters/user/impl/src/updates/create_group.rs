@@ -1,10 +1,8 @@
 use crate::model::group_chat::GroupChat;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::updates::create_group;
-use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use log::error;
-use shared::c2c::call_with_logging;
 use shared::types::chat_id::GroupChatId;
 use shared::types::CanisterId;
 use user_canister::updates::create_group::{Response::*, *};
@@ -16,7 +14,7 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match group_index::call_create_group(prepare_result.group_index_canister_id, prepare_result.create_group_args).await {
+    match c2c::group_index::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args).await {
         Ok(response) => match response.0 {
             create_group::Response::Success(r) => {
                 RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
@@ -72,13 +70,14 @@ fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
         .insert(group_chat_id, GroupChat::new(group_chat_id));
 }
 
-mod group_index {
+mod c2c {
     use super::*;
+    use ic_cdk::api::call::CallResult;
+    use shared::generate_c2c_call;
 
-    pub async fn call_create_group(
-        group_index_canister_id: CanisterId,
-        args: create_group::Args,
-    ) -> CallResult<(create_group::Response,)> {
-        call_with_logging(group_index_canister_id, "create_group", (args,)).await
+    pub mod group_index {
+        use super::*;
+
+        generate_c2c_call!(create_group);
     }
 }
