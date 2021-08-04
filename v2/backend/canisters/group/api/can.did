@@ -147,15 +147,17 @@ type InviteUsersResponse =
         Success;
     }; 
 
-// TODO
 type JoinGroupArgs =
     record {
+        principal: principal;
     };
 
-// TODO
 type JoinGroupResponse =
     variant {
-        Success;
+        Success: record {};
+        AlreadyInGroup;
+        GroupNotPublic;
+        Blocked;
     }; 
 
 // TODO

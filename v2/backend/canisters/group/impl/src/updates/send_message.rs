@@ -10,11 +10,9 @@ use shared::types::CanisterId;
 
 #[update]
 fn send_message(args: Args) -> Response {
-    let response = RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()));
-
     handle_activity_notification();
 
-    response
+    RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
