@@ -1,12 +1,12 @@
 use crate::model::direct_chat::DirectChat;
-use crate::model::messages::PushMessageArgs;
+use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::CandidType;
 use ic_cdk_macros::update;
 use serde::Deserialize;
 use shared::types::direct_message::Message;
 use shared::types::message_content::MessageContent;
-use shared::types::{chat_id::DirectChatId, MessageId, UserId};
+use shared::types::{chat_id::DirectChatId, EventIndex, MessageId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use user_canister::updates::send_message::{Response::*, *};
 
@@ -17,30 +17,32 @@ fn send_message(args: Args) -> Response {
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
+        let now = runtime_state.env.now();
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
             sent_by_me: true,
             content: args.content.clone(),
             replies_to: args.replies_to.clone(),
-            now: runtime_state.env.now(),
+            now,
         };
 
-        let result = push_message(args.recipient, push_message_args, runtime_state);
+        let (event_index, message) = push_message(args.recipient, push_message_args, runtime_state);
 
         let (canister_id, send_message_c2c_args) = c2c::build_args(args);
         let send_to_recipient_canister_future = c2c::call(canister_id, send_message_c2c_args);
         ic_cdk::block_on(send_to_recipient_canister_future);
 
         Success(SuccessResult {
-            message_index: result.message_index,
-            timestamp: result.timestamp,
+            event_index,
+            message_index: message.message_index,
+            timestamp: now,
         })
     } else {
         NotAuthorised
     }
 }
 
-fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> Message {
+fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mut RuntimeState) -> (EventIndex, Message) {
     let now = runtime_state.env.now();
     let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &their_user_id));
 
@@ -49,7 +51,7 @@ fn push_message(their_user_id: UserId, args: PushMessageArgs, runtime_state: &mu
         Vacant(e) => e.insert(DirectChat::new(chat_id, their_user_id, now)),
     };
 
-    chat.messages.push_message(args)
+    chat.events.push_message(args)
 }
 
 mod c2c {
@@ -60,7 +62,7 @@ mod c2c {
     use shared::rand::get_random_item;
     use shared::types::notifications::DirectMessageNotification;
     use shared::types::CanisterId;
-    use user_canister::common::message_internal::ReplyContextInternal;
+    use user_canister::common::reply_context_internal::ReplyContextInternal;
 
     #[derive(CandidType, Deserialize)]
     pub struct Args {
@@ -107,7 +109,7 @@ mod c2c {
             now: runtime_state.env.now(),
         };
 
-        let message = push_message(sender_user_id, push_message_args, runtime_state);
+        let (_, message) = push_message(sender_user_id, push_message_args, runtime_state);
 
         let random = runtime_state.env.random_u32() as usize;
 

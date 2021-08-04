@@ -1,9 +1,9 @@
-use crate::common::message_internal::ReplyContextInternal;
+use crate::common::reply_context_internal::ReplyContextInternal;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::message_content::MessageContent;
-use shared::types::{MessageId, MessageIndex, UserId};
+use shared::types::{EventIndex, MessageId, MessageIndex, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
@@ -22,6 +22,7 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
+    pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
 }

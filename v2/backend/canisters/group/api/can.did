@@ -2,8 +2,26 @@ type TimestampMillis = nat64;
 type CanisterId = principal;
 type UserId = CanisterId;
 type GroupId = CanisterId;
+type EventIndex = nat32;
 type MessageIndex = nat32;
 type MessageId = nat;
+
+type EventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: GroupChatEvent;
+    };
+
+type GroupChatEvent =
+    variant {
+        Message: Message;
+        GroupChatCreated: record {
+            name: text;,
+            description: opt text;
+            created_by: UserId;
+        };
+    };
 
 type TextContent =
     record {
@@ -55,7 +73,6 @@ type Message =
     record {
         message_index: MessageIndex;
         message_id: MessageId;
-        timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
         replies_to: opt ReplyContext;
@@ -263,32 +280,32 @@ type GetChunkResponse =
         NotFound;
     };
 
-type GetMessagesArgs =
+type EventsArgs =
     record {
-        from_index: MessageIndex;
-        to_index: MessageIndex;
+        from_index: EventIndex;
+        to_index: EventIndex;
     };
 
-type GetMessagesSuccess =
+type EventsSuccess =
     record {
-        messages: vec Message;
-        latest_message_index: MessageIndex;
+        events: vec EventWrapper;
+        latest_event_index: EventIndex;
     };
 
-type GetMessagesResponse =
+type EventsResponse =
     variant {
         Success: GetMessagesSuccess;
         ChatNotFound;
     }; 
 
-type GetMessagesByIndexArgs =
+type EventsByIndexArgs =
     record {
-        messages: vec MessageIndex;
+        events: vec EventsIndex;
     };
 
-type GetMessagesByIndexResponse =
+type EventsByIndexResponse =
     variant {
-        Success: GetMessagesSuccess;
+        Success: EventsSuccess;
         ChatNotFound;
     }; 
 
@@ -365,8 +382,8 @@ service: {
 
     get_group: (GetGroupArgs) -> (GetGroupResponse) query;
         
-    get_messages: (GetMessagesArgs) -> (GetMessagesResponse) query;
-    get_messages_by_index: (GetMessagesByIndexArgs) -> (GetMessagesByIndexResponse) query;
+    events: (EventsArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
 
     // Use Tantivy
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;

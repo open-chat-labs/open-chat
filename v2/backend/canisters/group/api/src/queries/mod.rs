@@ -1,2 +1,2 @@
-pub mod messages;
-pub mod messages_by_index;
+pub mod events;
+pub mod events_by_index;

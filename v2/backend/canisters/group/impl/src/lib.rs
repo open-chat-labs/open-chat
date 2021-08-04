@@ -1,7 +1,8 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::messages::Messages;
+use crate::model::events::{Events, GroupChatEventInternal};
 use crate::model::participants::Participants;
 use candid::Principal;
+use group_canister::common::events::GroupChatCreated;
 use shared::env::Environment;
 use shared::time::TimestampMillis;
 use shared::types::{CanisterId, UserId, Version};
@@ -36,7 +37,7 @@ pub struct Data {
     pub name: String,
     pub description: Option<String>,
     pub participants: Participants,
-    pub messages: Messages,
+    pub events: Events,
     pub date_created: TimestampMillis,
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
@@ -55,13 +56,22 @@ impl Data {
         wasm_version: Version,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
+        let mut events = Events::default();
+        events.push_event(
+            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
+                name: name.clone(),
+                description: None,
+                created_by: creator_user_id,
+            }),
+            now,
+        );
 
         Data {
             is_public,
             name,
             description: None,
             participants,
-            messages: Messages::default(),
+            events,
             date_created: now,
             group_index_canister_id,
             notification_canister_ids: Vec::new(),

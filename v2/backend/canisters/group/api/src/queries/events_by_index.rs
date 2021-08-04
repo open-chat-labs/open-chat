@@ -1,12 +1,11 @@
+use crate::common::events::GroupChatEvent;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::group_message::Message;
-use shared::types::MessageIndex;
+use shared::types::{EventIndex, EventWrapper};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
-    pub from_index: MessageIndex,
-    pub to_index: MessageIndex,
+    pub events: Vec<EventIndex>,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -17,5 +16,6 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
-    pub messages: Vec<Message>,
+    pub events: Vec<EventWrapper<GroupChatEvent>>,
+    pub latest_event_index: EventIndex,
 }
