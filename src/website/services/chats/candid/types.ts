@@ -63,7 +63,6 @@ export interface GetUpdatesRequest {
 }
 export type GetUpdatesResponse = { 'Success' : GetUpdatesResult };
 export interface GetUpdatesResult {
-  'notification_status' : NotificationStatus,
   'chats' : Array<ChatSummary>,
   'blocked_users' : Array<UserId>,
 }
@@ -116,9 +115,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Media' : MediaContent } |
   { 'Cycles' : CyclesContent };
-export type NotificationStatus = { 'Enabled' : null } |
-  { 'Disabled' : null } |
-  { 'Unknown' : null };
 export type RemoveParticipantResponse = { 'CannotRemoveSelfFromChat' : null } |
   { 'ParticipantNotFound' : null } |
   { 'ChatNotFound' : null } |
@@ -139,6 +135,7 @@ export interface SearchMessagesMatch { 'message' : Message, 'chat_id' : ChatId }
 export interface SendDirectMessageRequest {
   'content' : MessageContent,
   'recipient' : UserId,
+  'sender_name' : [] | [string],
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
 }
@@ -157,6 +154,7 @@ export interface SendDirectMessageResult {
 }
 export interface SendMessageRequest {
   'content' : MessageContent,
+  'sender_name' : [] | [string],
   'chat_id' : ChatId,
   'replies_to' : [] | [ReplyContext],
   'client_message_id' : string,
@@ -228,6 +226,5 @@ export interface _SERVICE {
       SendDirectMessageResponse
     >,
   'send_message' : (arg_0: SendMessageRequest) => Promise<SendMessageResponse>,
-  'set_user_notification_status' : (arg_0: boolean) => Promise<undefined>,
   'stats' : () => Promise<Stats>,
 }

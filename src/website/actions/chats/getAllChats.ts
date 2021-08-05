@@ -1,15 +1,15 @@
 import { Dispatch } from "react";
-
 import { RootState } from "../../reducers";
 import chatsService from "../../services/chats/service";
 import { ConfirmedChat } from "../../domain/model/chats";
 import * as chatFunctions from "../../domain/model/chats";
-import { PAGE_SIZE } from "../../constants";
+import { ABOUT_US, PAGE_SIZE } from "../../constants";
 import { Option, Timestamp } from "../../domain/model/common";
 import { HttpError } from "../../errors/httpError";
 import { ViewMode } from "../../domain/model/viewMode";
 import { extractChatIdFromLocation } from "../../domain/historyFunctions";
 import { UserId } from "../../domain/model/users";
+import { alertDialog } from "../../components/modals/Alert";
 
 export const GET_ALL_CHATS_REQUESTED = "GET_ALL_CHATS_REQUESTED";
 export const GET_ALL_CHATS_SUCCEEDED = "GET_ALL_CHATS_SUCCEEDED";
@@ -60,6 +60,8 @@ export default function() {
         }
 
         dispatch(outcomeEvent);
+
+        alertDialog(ABOUT_US);
     }
 }
 

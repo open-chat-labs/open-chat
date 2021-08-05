@@ -6,14 +6,16 @@ import { toCandid as messagePayloadToCandid } from "../candidConverters/messageC
 import { toCandid as replyContextToCandid } from "../candidConverters/replyContext";
 import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import { toCandid as userIdToCandid } from "../candidConverters/userId";
+import { toCandid as optionToCandid } from "../candidConverters/option";
 import { directChatFromCandid } from "../candidConverters/chat";
 import CanisterClientFactory from "../CanisterClientFactory";
 import { HttpError, toHttpError } from "../../errors/httpError";
 
-export default async function(userId: UserId, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
+export default async function(userId: UserId, senderName: string, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const canisterRequest = {
         recipient: userIdToCandid(userId),
+        sender_name: optionToCandid(senderName),
         client_message_id: clientMessageId,
         content: messagePayloadToCandid(content),
         replies_to: replyContextToCandid(repliesTo)

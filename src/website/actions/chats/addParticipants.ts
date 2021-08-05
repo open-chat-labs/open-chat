@@ -5,7 +5,7 @@ import { ChatId, GroupChat } from "../../domain/model/chats";
 import { UNCONFIRMED_GROUP_CHAT } from "../../constants";
 import Stopwatch from "../../utils/Stopwatch";
 import { startSpinning, stopSpinning } from "../app/modalSpinner";
-import { showAlertDialog } from "../app/showAlertDialog";
+import { alertDialog } from "../../components/modals/Alert";
 import * as setFunctions from "../../utils/setFunctions";
 
 export const ADD_PARTICIPANTS_SUCCEEDED = "ADD_PARTICIPANTS_SUCCEEDED";
@@ -27,7 +27,7 @@ export default function(chat: GroupChat, userIds: UserId[]) {
             
             if (response.kind === "partialSuccess") {
                 setFunctions.exceptWith(usersAdded, response.blocked);
-                let message = "You can't add users if you are blocking them or they are blocking you";
+                let text = "You can't add users if you are blocking them or they are blocking you";
                 let title = "User not added";
                 if (userIds.length > 1) {
                     if (response.countAdded == 0) {
@@ -36,7 +36,7 @@ export default function(chat: GroupChat, userIds: UserId[]) {
                         title = `Only ${response.countAdded} users added`;
                     }
                 }
-                dispatch(showAlertDialog({title, message}));            
+                alertDialog({ title, text });
             }
 
             if (response.countAdded > 0) {

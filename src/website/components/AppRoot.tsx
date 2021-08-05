@@ -8,6 +8,7 @@ import StyledEngineProvider from "@material-ui/styled-engine/StyledEngineProvide
 import Container from "@material-ui/core/Container";
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import ModalContainer from "react-modal-promise";
 import { DelegationIdentity } from "@dfinity/identity";
 import { RootState } from "../reducers";
 import App from "./App";
@@ -19,14 +20,13 @@ import { UserRegistrationStatus } from "../reducers/usersReducer";
 import RegisterUser from "./RegisterUser";
 import getCurrentUser from "../actions/users/getCurrentUser";
 import getAuthClient from "../utils/authClient";
-import AlertDialog, {AlertContent} from "./AlertDialog";
-import { Option } from "../domain/model/common";
 import { sessionExpiryAcknowledged } from "../actions/signin/notifySessionExpired";
 import SessionExpirationHandler from "../domain/SessionExpirationHandler";
 import switchViewMode from "../actions/app/switchViewMode";
 import { ViewMode } from "../domain/model/viewMode";
 import { gotoChatById } from "../actions/chats/gotoChat";
 import gotoHome from "../actions/app/gotoHome";
+import { alertDialog } from "./modals/Alert";
 
 export default AppRoot;
 
@@ -133,12 +133,18 @@ function AppContainer() {
         containerClass += " no-padding";
     }
 
-    const sessionExpiredAlert: Option<AlertContent> = sessionExpired
-        ? {
-            title: "Session Expired",
-            message: "Your session has expired - please login again"
+    useEffect(() => {
+        if (sessionExpired) {
+            (async () => {
+                await alertDialog({
+                    title: "Session Expired",
+                    text: "Your session has expired - please login again",
+                });
+    
+                dispatch(sessionExpiryAcknowledged());
+            })()            
         }
-        : null;
+    }, [sessionExpired]);
 
     useEffect(() => {
         if (currentViewMode !== targetViewMode) {
@@ -189,11 +195,7 @@ function AppContainer() {
         <>
             <Container maxWidth={large ? "lg" : "md"} className={containerClass}>
                 {component}
-                {sessionExpiredAlert ?
-                    <AlertDialog
-                        content={sessionExpiredAlert}
-                        onClose={() => dispatch(sessionExpiryAcknowledged())}
-                    /> : null}
+                <ModalContainer />
             </Container>
             <Backdrop className={classes.backdrop} open={modalSpinner}>
                 <CircularProgress color="inherit" />

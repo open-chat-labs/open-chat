@@ -2,23 +2,15 @@ import produce from "immer";
 import { USER_LOGGED_OUT, UserLoggedOutEvent } from "../actions/signin/logout";
 import { THEME_SELECTED, ThemeSelectedEvent } from "../actions/app/selectTheme";
 import SelectedThemeCache from "../domain/SelectedThemeCache";
-import { Option } from "../domain/model/common";
 import { LeaveGroupResult } from "../services/chats/leaveGroup";
-import { AlertContent } from "../components/AlertDialog";
 import { SelectedTheme } from "../domain/model/theme";
 import { ViewMode } from "../domain/model/viewMode";
+import { alertDialog } from "../components/modals/Alert";
 
 import {
     LEAVE_GROUP_FAILED,
     LeaveGroupFailedEvent
 } from "../actions/chats/leaveGroup";
-
-import {
-    CLOSE_ALERT_DIALOG_REQUESTED,
-    SHOW_ALERT_DIALOG_REQUESTED,
-    CloseAlertDialogRequestedEvent,
-    ShowAlertDialogRequestedEvent
-} from "../actions/app/showAlertDialog";
 
 import {
     SESSION_EXPIRED, SESSION_EXPIRY_ACKNOWLEDGED,
@@ -65,27 +57,24 @@ import {
 export type AppState = {
     sessionExpired: boolean,
     selectedTheme: SelectedTheme,
-    alert: Option<AlertContent>,
     viewMode: ViewMode,
     panelState: PanelState,
-    modalSpinner: boolean
+    modalSpinner: boolean,
 }
 
 const initialState: AppState = {
     sessionExpired: false,
     selectedTheme: SelectedThemeCache.tryGet() ?? SelectedTheme.SystemDefault,
-    alert: null,
     viewMode: ViewMode.Desktop,
     panelState: {
         leftPanel: LeftPanelType.Chats,
         middlePanel: MiddlePanelType.Messages,
         rightPanel: RightPanelType.None
     } ,
-    modalSpinner: false
+    modalSpinner: false,
 }
 
 type Event =
-    CloseAlertDialogRequestedEvent |
     CreateGroupChatFailedEvent |
     CreateGroupChatRequestedEvent | 
     DirectChatCreatedEvent |
@@ -99,7 +88,6 @@ type Event =
     RightPanelChangedEvent | 
     SessionExpiredEvent |
     SessionExpiryAcknowledgedEvent |
-    ShowAlertDialogRequestedEvent |
     StartSpinningEvent |
     StopSpinningEvent |
     SwitchViewModeRequestedEvent |
@@ -116,31 +104,19 @@ export default produce((state: AppState, event: Event) => {
         }
 
         case LEAVE_GROUP_FAILED: {
-            let alert = {
-                title: "Failed to leave group",                
-            };
+            let text;
 
             if (event.payload.result === LeaveGroupResult.LastAdminCannotLeave) {
-                state.alert = { 
-                    ...alert, 
-                    message: "You can't leave the group because you are the only administrator"
-                };
+                text = "You can't leave the group because you are the only administrator";
             } else {
-                state.alert = { 
-                    ...alert, 
-                    message: "Unexpected error - please refresh the page"
-                };
+                text = "Unexpected error - please refresh the page";
             }
-            break;
-        }
 
-        case SHOW_ALERT_DIALOG_REQUESTED: {
-            state.alert = event.payload;
-            break;
-        }
+            alertDialog({
+                title: "Failed to leave group",
+                text
+            });                    
 
-        case CLOSE_ALERT_DIALOG_REQUESTED: {
-            state.alert = null;
             break;
         }
 
@@ -168,26 +144,27 @@ export default produce((state: AppState, event: Event) => {
         }
 
         case CREATE_GROUP_CHAT_FAILED: {
-            let message;
+            let text;
             switch (event.payload.response.kind) {
                 case "subjectTooLong":
-                    message = `The group name must be at most ${event.payload.response.result} characters long`;
+                    text = `The group name must be at most ${event.payload.response.result} characters long`;
                     break;
                 case "subjectTooShort":
-                    message = `The group name must be at least ${event.payload.response.result} characters long`;
+                    text = `The group name must be at least ${event.payload.response.result} characters long`;
                     break;
                 case "tooManyParticipants":
-                    message = `You can only have ${event.payload.response.result} participants in a group`;
+                    text = `You can only have ${event.payload.response.result} participants in a group`;
                     break;
                 default:
-                    message = "Unexpected error - please refresh the page";
+                    text = "Unexpected error - please refresh the page";
                     break;
             }
 
-            state.alert = {
+            alertDialog({
                 title: "Create group chat failed",
-                message
-            };
+                text
+            });                    
+
             break;
         }
 
