@@ -137,8 +137,9 @@ type SetAvatarResponse =
     }; 
 
 // TODO
-type InviteUsersArgs =
+type AddParticipantsArgs =
     record {
+        user_ids: vec UserId;
     };
 
 // TODO

@@ -330,6 +330,17 @@ type ChunkResponse =
         NotFound;
     };
 
+type HandleAddedToGroupArgs =
+    record {
+        added_by: UserId;
+    };
+
+type HandleAddedToGroupResponse =
+    variant {
+        Success;
+        Blocked;
+    };
+
 type HandleMarkReadArgs =
     record {
         up_to_message_index: MessageIndex;
@@ -396,6 +407,7 @@ service: (InitArgs) -> {
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
 
+    handle_added_to_group: (HandleAddedToGroupArgs) -> (HandleAddedToGroupResponse);
     handle_mark_read: (HandleMarkReadArgs) -> (HandleMarkReadResponse);
     handle_message_received: (HandleMessageReceivedArgs) -> (HandleMessageReceivedResponse);
 

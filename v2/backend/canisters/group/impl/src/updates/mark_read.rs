@@ -21,6 +21,6 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             Success
         }
     } else {
-        NotInChat
+        NotInGroup
     }
 }

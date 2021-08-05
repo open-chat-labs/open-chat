@@ -1,4 +1,3 @@
-use crate::model::group_chat::GroupChat;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use group_canister::updates::join_group;
@@ -20,7 +19,7 @@ async fn join_group(args: Args) -> Response {
     match group_canister_client::join_group(args.group_chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
             join_group::Response::Success(_) => {
-                RUNTIME_STATE.with(|state| confirm(args.group_chat_id, state.borrow_mut().as_mut().unwrap()));
+                RUNTIME_STATE.with(|state| commit(args.group_chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success
             }
             join_group::Response::AlreadyInGroup => AlreadyInGroup,
@@ -45,9 +44,6 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-fn confirm(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
-    runtime_state
-        .data
-        .group_chats
-        .insert(group_chat_id, GroupChat::new(group_chat_id));
+fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
+    runtime_state.data.group_chats.add(group_chat_id);
 }
