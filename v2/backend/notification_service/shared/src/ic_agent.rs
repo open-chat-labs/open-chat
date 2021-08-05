@@ -1,3 +1,4 @@
+use crate::error::Error;
 use candid::{Decode, Encode};
 use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
@@ -5,26 +6,33 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use notifications_canister::queries::notifications;
 use notifications_canister::updates::remove_notifications;
-use shared::error::Error;
 use shared::types::CanisterId;
 use std::time::Duration;
 
-const IC_URL: &str = "https://ic0.app";
+pub struct IcAgentConfig {
+    pub ic_url: String,
+    pub ic_identity_pem: String,
+    pub fetch_root_key: bool,
+}
 
 pub struct IcAgent {
     agent: Agent,
 }
 
 impl IcAgent {
-    pub fn build(pem: &str) -> Result<IcAgent, Error> {
-        let transport = ReqwestHttpReplicaV2Transport::create(IC_URL.to_string())?;
+    pub async fn build(config: IcAgentConfig) -> Result<IcAgent, Error> {
+        let transport = ReqwestHttpReplicaV2Transport::create(config.ic_url)?;
         let timeout = std::time::Duration::from_secs(60 * 5);
 
         let agent = Agent::builder()
             .with_transport(transport)
-            .with_boxed_identity(Self::get_identity(pem))
+            .with_boxed_identity(Self::get_identity(&config.ic_identity_pem))
             .with_ingress_expiry(Some(timeout))
             .build()?;
+
+        if config.fetch_root_key {
+            agent.fetch_root_key().await?;
+        }
 
         Ok(IcAgent { agent })
     }

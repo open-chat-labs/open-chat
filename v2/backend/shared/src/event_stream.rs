@@ -31,7 +31,7 @@ impl<T: CandidType + Clone> EventStream<T> {
     }
 
     pub fn add(&mut self, event: T) -> u64 {
-        let event_index = self.events.back().map(|e| e.index + 1).unwrap_or(0);
+        let event_index = self.events.back().map(|e| e.index + 1).unwrap_or(1);
         self.events.push_back(IndexedEvent {
             index: event_index,
             value: event,

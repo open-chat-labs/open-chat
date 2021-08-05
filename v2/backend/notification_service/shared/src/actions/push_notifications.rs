@@ -1,7 +1,8 @@
+use crate::error::Error;
 use crate::ic_agent::IcAgent;
+use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
 use futures::future;
-use shared::error::Error;
 use shared::types::indexed_event::IndexedEvent;
 use shared::types::notifications::Notification;
 use shared::types::{CanisterId, UserId};
@@ -12,12 +13,12 @@ use web_push::{
 };
 
 pub async fn run(
+    config: IcAgentConfig,
     canister_id: CanisterId,
-    store: Box<dyn Store + Send + Sync>,
-    ic_identity_pem: String,
+    mut store: Box<dyn Store + Send + Sync>,
     vapid_private_key: String,
 ) -> Result<(), Error> {
-    let ic_agent = IcAgent::build(&ic_identity_pem)?;
+    let ic_agent = IcAgent::build(config).await?;
     let from_notification_index = store
         .get_notification_index_processed_up_to(canister_id)
         .await?
@@ -57,8 +58,14 @@ async fn handle_notifications(
             futures.push(push_notifications_to_user(&client, vapid_private_key, notifications, s));
         }
     }
-    future::join_all(futures).await;
-    Ok(())
+
+    let results = future::join_all(futures).await;
+
+    if let Some(first_error) = results.into_iter().find(|r| r.is_err()) {
+        first_error
+    } else {
+        Ok(())
+    }
 }
 
 fn group_notifications_by_user(notifications: Vec<IndexedEvent<Notification>>) -> HashMap<UserId, Vec<Notification>> {
@@ -108,7 +115,6 @@ async fn push_notifications_to_user(
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.into_iter() {
         let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_key, &subscription)?;
-
         let mut builder = WebPushMessageBuilder::new(&subscription)?;
         builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
         builder.set_vapid_signature(sig_builder.build()?);
