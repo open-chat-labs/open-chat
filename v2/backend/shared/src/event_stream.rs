@@ -31,7 +31,7 @@ impl<T: CandidType + Clone> EventStream<T> {
     }
 
     pub fn add(&mut self, event: T) -> u64 {
-        let event_index = self.events.back().map(|e| e.index + 1).unwrap_or(0);
+        let event_index = self.events.back().map(|e| e.index + 1).unwrap_or(1);
         self.events.push_back(IndexedEvent {
             index: event_index,
             value: event,
@@ -88,7 +88,7 @@ mod tests {
 
         for i in 0..10 {
             let indexed_event = &events_collection.events[i];
-            assert_eq!(indexed_event.index, i as u64);
+            assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
     }
@@ -107,7 +107,7 @@ mod tests {
 
         for i in 0..5 {
             let indexed_event = &events[i];
-            assert_eq!(indexed_event.index, i as u64);
+            assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
     }
@@ -120,13 +120,13 @@ mod tests {
             events_collection.add(i);
         }
 
-        let events = events_collection.get(5, 5);
+        let events = events_collection.get(6, 5);
 
         assert_eq!(events.len(), 5);
 
         for i in 5..10 {
             let indexed_event = &events[i - 5];
-            assert_eq!(indexed_event.index, i as u64);
+            assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
     }
@@ -139,13 +139,13 @@ mod tests {
             events_collection.add(i);
         }
 
-        let events = events_collection.get(5, 10);
+        let events = events_collection.get(6, 10);
 
         assert_eq!(events.len(), 5);
 
         for i in 5..10 {
             let indexed_event = &events[i - 5];
-            assert_eq!(indexed_event.index, i as u64);
+            assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
     }
@@ -158,7 +158,7 @@ mod tests {
             events_collection.add(i);
         }
 
-        assert_eq!(events_collection.remove(4), 5);
+        assert_eq!(events_collection.remove(5), 5);
 
         let events = events_collection.get(0, 5);
 
@@ -166,12 +166,12 @@ mod tests {
 
         for i in 5..10 {
             let indexed_event = &events[i - 5];
-            assert_eq!(indexed_event.index, i as u64);
+            assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
 
-        assert_eq!(events_collection.remove(4), 0);
-        assert_eq!(events_collection.remove(9), 5);
+        assert_eq!(events_collection.remove(5), 0);
+        assert_eq!(events_collection.remove(10), 5);
         assert!(events_collection.events.is_empty());
     }
 }

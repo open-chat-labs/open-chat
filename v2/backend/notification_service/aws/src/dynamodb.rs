@@ -40,7 +40,7 @@ impl Store for DynamoDbClient {
     }
 
     async fn set_notification_index_processed_up_to(
-        &self,
+        &mut self,
         canister_id: Principal,
         notification_index: u64,
     ) -> Result<(), Error> {
