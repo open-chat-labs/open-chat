@@ -22,7 +22,7 @@ import DraftMediaMessage from "./DraftMediaMessage";
 import DraftFileMessage from "./DraftFileMessage";
 import { DraftMessageContent } from "../../domain/model/messages";
 import ReplyToMessagePanel from "./ReplyToMessagePanel";
-import { showAlertDialog } from "../../actions/app/showAlertDialog";
+import { alertDialog } from "../../components/modals/Alert";
 
 export default React.memo(Footer);
 
@@ -167,19 +167,19 @@ function Footer() {
             switch (draftMessage.kind) {
                 case "text":
                     if (draftMessage.text.length > 5000) {
-                        dispatch(showAlertDialog({
+                        alertDialog({
                             title: "Text too long",
-                            message: "Messages are limited to 5000 characters"
-                        }));
+                            text: "Messages are limited to 5000 characters"
+                        });
                         return;
                     }
                     break;
                 default:
                     if (draftMessage.caption && draftMessage.caption.length > 500) {
-                        dispatch(showAlertDialog({
+                        alertDialog({
                             title: "Text too long",
-                            message: "Captions are limited to 500 characters"
-                        }));
+                            text: "Captions are limited to 500 characters"
+                        });
                         return;
                     }                    
                     break;
@@ -218,9 +218,9 @@ function Footer() {
             type = "files";
             size = "1 Mb";
         }
-        let message = `You are limited to ${type} of size ${size}`;
+        let text = `You are limited to ${type} of size ${size}`;
 
-        dispatch(showAlertDialog({ title, message }));
+        alertDialog({ title, text });
     }
 
     function onTextChanged(text: string) {

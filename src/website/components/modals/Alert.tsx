@@ -5,38 +5,28 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
-import { Option } from "../domain/model/common";
 
-export default AlertDialog;
+import { create, InstanceProps } from "react-modal-promise";
 
-export interface Props {
-    content: Option<AlertContent>,
-    onClose?: () => void
+interface Props extends InstanceProps<boolean> {
+    title?: string
+    text?: string
 }
 
-export interface AlertContent {
-    title: string,
-    message: string,
-}
-
-function AlertDialog(props: Props): JSX.Element {
-    function onClose() {
-        if (props.onClose) {
-            props.onClose();
-        }
-    }
+const Modal: React.FC<Props> = ({ title, text, isOpen, onResolve }) => {
+    const onClose = () => onResolve(true);
 
     return (
         <Dialog
-            open={props.content != null}
+            open={isOpen}
             onClose={onClose}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">{props.content?.title ?? ""}</DialogTitle>
+            <DialogTitle id="alert-dialog-title">{title ?? ""}</DialogTitle>
             <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                    {props.content?.message ?? ""}
+                    {text ?? ""}
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
@@ -46,4 +36,6 @@ function AlertDialog(props: Props): JSX.Element {
             </DialogActions>
         </Dialog>  
     );
-}
+};
+
+export const alertDialog = create(Modal);

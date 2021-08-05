@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import Divider from "@material-ui/core/Divider";
 import Grid from "@material-ui/core/Grid";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
@@ -10,20 +10,17 @@ import LeftPanel from "./leftPanel/LeftPanel";
 import MainPanel from "./mainPanel/MainPanel";
 import RightPanel from "./rightPanel/RightPanel";
 import { setupBackgroundTasks } from "../backgroundTasks";
-import AlertDialog from "./AlertDialog";
-import { closeAlertDialog } from "../actions/app/showAlertDialog";
-import aboutUs from "../actions/app/aboutUs";
 import { LeftPanelType, MiddlePanelType, RightPanelType } from "../domain/model/panels";
 import { ViewMode } from "../domain/model/viewMode";
-import { registerServiceWorker } from "../webpush/subscribe";
+import NotificationBar from "./NotificationBar";
 
 export default App;
 
 const useStyles = makeStyles((theme: Theme) => ({
     grid: {
-        height: "100%",
         overflow: "hidden",
-        backgroundColor: theme.colors.sidePanel.backgroundColor
+        backgroundColor: theme.colors.sidePanel.backgroundColor,
+        flex: "1 0 auto",
     },
     left: {
         height: "100%",
@@ -52,20 +49,20 @@ const useStyles = makeStyles((theme: Theme) => ({
         "&.mobile": {
             width: "100%"
         }
-    }
+    },
+    container: {
+        height: "100%",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+    },
 }));
 
 function App() {
-    const dispatch = useDispatch();
     const classes = useStyles();
-    const alert = useSelector((state: RootState) => state.appState.alert);
     const panel = useSelector((state: RootState) => state.appState.panelState);
     const viewMode = useSelector((state: RootState) => state.appState.viewMode);
-
-    useEffect(() => {
-        registerServiceWorker();
-        dispatch(aboutUs());
-    }, []);
+    const [gridHeight, setGridHeight] = useState("100%");
 
     setupBackgroundTasks();
 
@@ -144,19 +141,21 @@ function App() {
         );
     }
 
+    function onNotificationBarRender(render: boolean) {
+        return render 
+            ? setGridHeight("calc(100% - 32px)")
+            : setGridHeight("100%");
+    }
+
     return (
-        <>
-            <Grid container wrap="nowrap" className={classes.grid}>
+        <div className={classes.container}>
+            <NotificationBar onRender={onNotificationBarRender} />
+            <Grid container wrap="nowrap" className={classes.grid} height={gridHeight}>
                 {buildLeftPanel()}
                 {buildMainPanel()}
                 {buildRightPanel()}
-            </Grid>
-            {alert ?
-            <AlertDialog
-                content={alert}
-                onClose={() => dispatch(closeAlertDialog())}
-                 /> : null}
-        </>
+            </Grid>            
+        </div>
     );
 }
 

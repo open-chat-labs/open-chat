@@ -38,7 +38,7 @@ export default async function(request: GetUpdatesRequest) : Promise<GetUpdatesRe
             kind: "success",
             chats,
             blockedUsers,
-            latestUpdateTimestamp
+            latestUpdateTimestamp,
         };
     } else {
         throw new Error("Unrecognised 'get_chats' response");
@@ -57,8 +57,5 @@ export type Success = {
     kind: "success",
     chats: ConfirmedChat[],
     blockedUsers: UserId[]
-    latestUpdateTimestamp: Option<Timestamp>
+    latestUpdateTimestamp: Option<Timestamp>,
 }
-
-
-

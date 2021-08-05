@@ -5,7 +5,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import UserAvatar from "../shared/UserAvatar";
 import setProfileImage from "../../actions/users/setProfileImage";
-import { showAlertDialog } from "../../actions/app/showAlertDialog";
+import { alertDialog } from "../../components/modals/Alert";
 import { MAX_AVATAR_SIZE } from "../../constants";
 
 export default React.memo(MyAvatar);
@@ -49,18 +49,18 @@ function MyAvatar(props: Props) {
             const data: ArrayBuffer = e.target.result;
             
             if (!mimeType.startsWith("image/")) {
-                dispatch(showAlertDialog({
+                alertDialog({
                     title: "Invalid avatar image",
-                    message: "You must choose an image"
-                }));
+                    text: "You must choose an image"
+                });
                 return;
             }
 
             if (data.byteLength > MAX_AVATAR_SIZE) {
-                dispatch(showAlertDialog({
+                alertDialog({
                     title: "Invalid avatar image",
-                    message: "Your image file must be less than 256 Kb in size"
-                }));
+                    text: "Your image file must be less than 256 Kb in size"
+                });
                 return;
             }
 
