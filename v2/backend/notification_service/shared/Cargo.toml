@@ -1,0 +1,19 @@
+[package]
+name = "notification_service_shared"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+async-trait = "0.1.51"
+candid = "0.7.4"
+futures = "0.3.15"
+garcon = "0.2.3"
+ic-agent = "0.6.0"
+ic-cdk = "0.3.1"
+notifications_canister = { path = "../../canisters/notifications/api" }
+openssl = { version = "0.10.35", features = ["vendored"] }
+serde = "1.0.126"
+serde_json = "1.0.64"
+shared = { path = "../../shared" }
+web-push = "0.7.2"

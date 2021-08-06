@@ -2,6 +2,7 @@ use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::env::Environment;
+use shared::types::CanisterId;
 use std::cell::RefCell;
 
 mod lifecycle;
@@ -27,9 +28,20 @@ impl RuntimeState {
     }
 }
 
-#[derive(Default)]
 pub struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
     pub group_canister_wasm: CanisterWasm,
+    pub notifications_canister_id: CanisterId,
+}
+
+impl Data {
+    pub fn new(group_canister_wasm: CanisterWasm, notifications_canister_id: CanisterId) -> Data {
+        Data {
+            public_groups: PublicGroups::default(),
+            private_groups: PrivateGroups::default(),
+            group_canister_wasm,
+            notifications_canister_id,
+        }
+    }
 }

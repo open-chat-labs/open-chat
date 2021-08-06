@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { RootState } from "./reducers";
 import userMgmtService from "./services/userMgmt/service";
 import { UserSummary } from "./domain/model/users";

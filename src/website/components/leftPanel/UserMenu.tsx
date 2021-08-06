@@ -8,8 +8,9 @@ import { changeLeftPanel } from "../../actions/app/changeSidePanel";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import ThemeSelector from "./ThemeSelector";
 import logout from "../../actions/signin/logout";
-import aboutUs from "../../actions/app/aboutUs";
+import { alertDialog } from "../../components/modals/Alert";
 import { LeftPanelType } from "../../domain/model/panels";
+import { ABOUT_US } from "../../constants";
 
 export default React.memo(UserMenu);
 
@@ -30,7 +31,7 @@ function UserMenu() {
     menuItems.push({ text: "Join group", action: () => dispatch(changeLeftPanel(LeftPanelType.JoinGroupChat)) });
     menuItems.push({ text: "Theme", action: () => setThemeSelectorOpen(true) });
     menuItems.push({ text: "Internet Identity", action: () => window.open(process.env.IDP_URL, "_blank") });
-    menuItems.push({ text: "TEST MODE", action: () => dispatch(aboutUs()) });
+    menuItems.push({ text: "TEST MODE", action: () => alertDialog(ABOUT_US) });
     menuItems.push({ text: "Logout", action: () => dispatch(logout()) });
 
     return (

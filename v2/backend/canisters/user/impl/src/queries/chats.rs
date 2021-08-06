@@ -14,21 +14,13 @@ fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let direct_chats = runtime_state
             .data
             .direct_chats
-            .values()
-            .filter(
-                |&c| {
-                    if let Some(updated_since) = args.updated_since {
-                        c.last_updated() > updated_since
-                    } else {
-                        true
-                    }
-                },
-            )
+            .get_all(args.updated_since)
             .map(|c| {
                 ChatSummary::Direct(DirectChatSummary {
-                    chat_id: c.chat_id,
                     them: c.them,
-                    latest_message: c.messages.hydrate_message(c.messages.last().unwrap()),
+                    chat_id: c.chat_id,
+                    latest_message: c.events.latest_message().unwrap(),
+                    latest_event_index: c.events.latest_event_index(),
                     date_created: c.date_created,
                 })
             })

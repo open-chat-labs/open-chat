@@ -4,7 +4,6 @@ import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import React from "react";
 import ChatIcon from '@material-ui/icons/Chat';
-import Typography from "@material-ui/core/Typography";
 import { useDispatch } from "react-redux";
 import login from "../actions/signin/login";
 

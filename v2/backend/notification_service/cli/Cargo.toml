@@ -1,0 +1,12 @@
+[package]
+name = "notification_service_cli"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+async-trait = "0.1.51"
+candid = "0.7.4"
+dotenv = "0.15.0"
+shared = { path = "../shared", package = "notification_service_shared" }
+tokio = { version = "1.8.1", features = ["macros"] }

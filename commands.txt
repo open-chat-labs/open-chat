@@ -38,9 +38,22 @@ dfx --identity=matt canister call user_index set_username '(record { username = 
 
 dfx deploy user --argument '(record { notification_canister_ids = vec {}; owner = principal "czfqq-wsqcp-34akk-p5ax7-rvqwv-6cgwc-kr2rr-4fr3f-mka7k-5haqh-hqe" })'
 
-dfx deploy notifications --argument '(record { push_service_principals = vec {} })'
 -- Get Users
 dfx --identity=matt canister call user_mgmt get_users '(vec { record { id = principal "uhpjy-crxbe-6chrq-vadba-aqrmz-f4d2e-h7nxj-7hrso-ebvqe-gnygw-tae"; cached_version = opt 1 } })'
 
 -- Search for users
 dfx canister call user_mgmt search_users '(record { search_term = "ali"; max_results = 10 })'
+
+// Deploy II
+II_ENV=development dfx deploy --no-wallet --argument '(null)'
+
+// Metrics
+dfx canister --network=ic --no-wallet call user_mgmt stats '()'
+dfx canister --network=ic --no-wallet call chats stats '()'
+
+// Notifications
+dfx deploy notifications --argument '(record { push_service_principals = vec { principal "tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae" } })'
+dfx canister install notifications --mode=reinstall --argument '(record { push_service_principals = vec { principal "tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae" } })'
+dfx canister call notifications notifications '(record { from_notification_index = 0 })' 
+
+dfx canister install notifications --mode=upgrade --argument '(record { push_service_principals = vec { principal "tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae" } })'

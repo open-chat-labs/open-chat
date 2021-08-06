@@ -1,6 +1,8 @@
 export const APP_TITLE = "OpenChat";
 
-export const APP_SERVICE_WORKER_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+// https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
+export const PUBLIC_VAPID_KEY = "BBFStgbHlC4AyZzh2Uj3E8HncFhJosn3Kr1MNv3ajOEE7sukaWOBVbeTPJ4GTlX4uERUcUThmhAI0iVLuKLitoA";
+
 export const MAX_IMAGE_SIZE = 1024 * 1024;
 export const MAX_AVATAR_SIZE = 1024 * 256;
 export const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
@@ -22,3 +24,8 @@ export const CONFIRMED_DIRECT_CHAT = "cd";
 export const CONFIRMED_GROUP_CHAT = "cg";
 export const UNCONFIRMED_DIRECT_CHAT = "ud";
 export const UNCONFIRMED_GROUP_CHAT = "ug";
+
+export const ABOUT_US = {
+    title: "TEST MODE",
+    text: "OpenChat is running in test mode. Maximum users 20,000. Old media files scavenged. Dummy cycle balance. Accounts may get reset on coming beta release. Enjoy! - OpenChat devs",
+};

@@ -122,13 +122,7 @@ export const idlFactory = ({ IDL }) => {
     'message_count_for_top_chat' : IDL.Opt(IDL.Nat16),
     'updated_since' : IDL.Opt(Timestamp),
   });
-  const NotificationStatus = IDL.Variant({
-    'Enabled' : IDL.Null,
-    'Disabled' : IDL.Null,
-    'Unknown' : IDL.Null,
-  });
   const GetUpdatesResult = IDL.Record({
-    'notification_status' : NotificationStatus,
     'chats' : IDL.Vec(ChatSummary),
     'blocked_users' : IDL.Vec(UserId),
   });
@@ -175,6 +169,7 @@ export const idlFactory = ({ IDL }) => {
   const SendDirectMessageRequest = IDL.Record({
     'content' : MessageContent,
     'recipient' : UserId,
+    'sender_name' : IDL.Opt(IDL.Text),
     'replies_to' : IDL.Opt(ReplyContext),
     'client_message_id' : IDL.Text,
   });
@@ -195,6 +190,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageRequest = IDL.Record({
     'content' : MessageContent,
+    'sender_name' : IDL.Opt(IDL.Text),
     'chat_id' : ChatId,
     'replies_to' : IDL.Opt(ReplyContext),
     'client_message_id' : IDL.Text,
@@ -291,7 +287,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'send_message' : IDL.Func([SendMessageRequest], [SendMessageResponse], []),
-    'set_user_notification_status' : IDL.Func([IDL.Bool], [], []),
     'stats' : IDL.Func([], [Stats], ['query']),
   });
 };

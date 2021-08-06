@@ -2,21 +2,33 @@
   "canisters": {
     "notifications": {
       "type": "custom",
-      "candid": "backend/canisters/notifications/api/candid/c2c.did",
+      "candid": "backend/canisters/notifications/api/can.did",
       "wasm": "target/wasm32-unknown-unknown/release/notifications_canister_impl-opt.wasm",
-      "build": "./generate-wasm.sh notifications"
+      "build": "./generate-wasm.sh notifications_canister_impl"
     },
     "user_index": {
       "type": "custom",
-      "candid": "backend/canisters/user_index/api/candid/app.did",
+      "candid": "backend/canisters/user_index/api/can.did",
       "wasm": "target/wasm32-unknown-unknown/release/user_index_canister_impl-opt.wasm",
-      "build": "./generate-wasm.sh user_index"
+      "build": "./generate-wasm.sh user_index_canister_impl"
+    },
+    "group_index": {
+      "type": "custom",
+      "candid": "backend/canisters/user_index/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/group_index_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh group_index_canister_impl"
     },
     "user": {
       "type": "custom",
-      "candid": "backend/canisters/user/api/candid/app.did",
+      "candid": "backend/canisters/user/api/can.did",
       "wasm": "target/wasm32-unknown-unknown/release/user_canister_impl-opt.wasm",
-      "build": "./generate-wasm.sh user"
+      "build": "./generate-wasm.sh user_canister_impl"
+    },
+    "group": {
+      "type": "custom",
+      "candid": "backend/canisters/group/api/can.did",
+      "wasm": "target/wasm32-unknown-unknown/release/group_canister_impl-opt.wasm",
+      "build": "./generate-wasm.sh group_canister_impl"
     },
     "website": {
       "frontend": {

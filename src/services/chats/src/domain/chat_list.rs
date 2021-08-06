@@ -1,3 +1,4 @@
+use crate::domain::chat::Message;
 use core::ops::RangeTo;
 use core::cmp::min;
 use ic_cdk::export::candid::CandidType;
@@ -162,20 +163,21 @@ impl ChatList {
         }
     }
 
-    pub fn push_message(&mut self, chat_id: ChatId, me: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Option<u32> {
+    pub fn push_message(&mut self, chat_id: ChatId, me: &UserId, client_message_id: String, content: MessageContent, replies_to: Option<ReplyContext>, now: Timestamp) -> Option<Message> {
         self.add_message_to_stats(&content);
         
         match self.get_mut(chat_id, me) {
             Some(chat) => {
                 let is_blob = content.is_blob();
-                let message_id = chat.push_message(me, client_message_id, content, replies_to, now);
+                let message = chat.push_message(me, client_message_id, content, replies_to, now);
+                let message_id = message.get_id();
 
                 if is_blob {
                     self.messages_to_prune.push_back((chat_id, message_id));
                     self.stats.pruneable_message_count += 1;
                 }
                 
-                Some(message_id)        
+                Some(message)        
             },
             None => None
         }        

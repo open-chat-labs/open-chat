@@ -65,6 +65,7 @@ type MessageContent =
 type SendDirectMessageRequest =
     record {
         recipient: UserId;
+        sender_name: opt text;
         client_message_id: text;
         content: MessageContent;
         replies_to: opt ReplyContext;
@@ -92,6 +93,7 @@ type SendDirectMessageResponse =
 type SendMessageRequest =
     record {
         chat_id: ChatId;
+        sender_name: opt text;
         client_message_id: text;
         content: MessageContent;
         replies_to: opt ReplyContext;
@@ -248,14 +250,6 @@ type GetUpdatesResult =
     record {
         chats: vec ChatSummary;
         blocked_users: vec UserId;
-        notification_status: NotificationStatus;
-    };
-
-type NotificationStatus =
-    variant {
-        Unknown;
-        Disabled;
-        Enabled;
     };
 
 type GetMessagesResult =
@@ -323,7 +317,6 @@ service : {
     join_group: (ChatId) -> (JoinGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
     block_user: (UserId, bool) -> ();
-    set_user_notification_status: (bool) -> ();
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_updates: (GetUpdatesRequest) -> (GetUpdatesResponse) query;

@@ -14,7 +14,7 @@ import {
     UNCONFIRMED_GROUP_CHAT
 } from "../../constants";
 import Stopwatch from "../../utils/Stopwatch";
-import { showAlertDialog } from "../app/showAlertDialog";
+import { alertDialog } from "../../components/modals/Alert";
 import * as chatFunctions from "../../domain/model/chats";
 
 export const SEND_MESSAGE_REQUESTED = "SEND_MESSAGE_REQUESTED";
@@ -22,17 +22,17 @@ export const SEND_MESSAGE_SUCCEEDED = "SEND_MESSAGE_SUCCEEDED";
 export const SEND_MESSAGE_FAILED = "SEND_MESSAGE_FAILED";
 export const SEND_MESSAGE_CONTENT_UPLOAD_FAILED = "SEND_MESSAGE_CONTENT_UPLOAD_FAILED";
 
-export default function(chat: Chat, sendMessageContent: DraftMessageContent, repliesTo: Option<ReplyContext>) {
+export default function (chat: Chat, sendMessageContent: DraftMessageContent, repliesTo: Option<ReplyContext>) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
 
         // Don't send a direct message if you block the recipient
         if (chatFunctions.isDirectChat(chat)) {
             const blockedUsers = getState().chatsState.blockedUsers;
-            if (blockedUsers.includes(chat.them)) {    
-                dispatch(showAlertDialog({
+            if (blockedUsers.includes(chat.them)) {
+                alertDialog({
                     title: "Message not sent",
-                    message: "You have blocked this user - you must unblock them before sending a message"
-                }));            
+                    text: "You have blocked this user - you must unblock them before sending a message"
+                });
                 return;
             }
         }
@@ -48,8 +48,8 @@ export default function(chat: Chat, sendMessageContent: DraftMessageContent, rep
         let uploadContentTask: Option<Promise<boolean>> = null;
         if ("id" in content && "data" in sendMessageContent) {
             uploadContentTask = dataService.putData(
-                sendMessageContent.kind === "media" ? DataSource.MediaMessage : DataSource.FileMessage, 
-                content.id, 
+                sendMessageContent.kind === "media" ? DataSource.MediaMessage : DataSource.FileMessage,
+                content.id,
                 sendMessageContent.data);
         }
 
@@ -75,20 +75,22 @@ export default function(chat: Chat, sendMessageContent: DraftMessageContent, rep
 
         // Wait for the media data to finish uploading
         if (uploadContentTask && !await uploadContentTask) {
-            dispatch ({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
+            dispatch({ type: SEND_MESSAGE_CONTENT_UPLOAD_FAILED });
             return;
         }
 
+        const me = getState().usersState.me!;
+
         // Send the message to the IC
         const response = chat.kind === UNCONFIRMED_DIRECT_CHAT || (chat.kind === CONFIRMED_DIRECT_CHAT && sendMessageContent.kind === "cycles")
-            ? await chatsService.sendDirectMessage(chat.them, clientMessageId, content, repliesTo)
-            : await chatsService.sendMessage(chat.chatId, clientMessageId, content, repliesTo);
+            ? await chatsService.sendDirectMessage(chat.them, me.username, clientMessageId, content, repliesTo)
+            : await chatsService.sendMessage(chat.chatId, me.username, clientMessageId, content, repliesTo);
 
         if (response.kind !== "success") {
             // Dispatch a failed event
-            dispatch ({ 
-                type: SEND_MESSAGE_FAILED,  
-                payload: { 
+            dispatch({
+                type: SEND_MESSAGE_FAILED,
+                payload: {
                     chatId: chat.chatId,
                     clientMessageId
                 },
@@ -96,39 +98,39 @@ export default function(chat: Chat, sendMessageContent: DraftMessageContent, rep
             } as SendMessageFailedEvent);
 
             if (response.kind !== "httpError") {
-                let message;
+                let text;
                 switch (response.kind) {
                     case "userNotFound":
-                        message = "User not found";
+                        text = "User not found";
                         break;
                     case "recipientNotFound":
-                        message = "Recipient not found";
+                        text = "Recipient not found";
                         break;
                     case "chatNotFound":
-                        message = "Chat not found";
+                        text = "Chat not found";
                         break;
                     case "balanceExceeded":
-                        message = "Balance exceeded";
+                        text = "Balance exceeded";
                         break;
                     case "senderBlocked":
-                        message = "You are blocked from sending messages to this user";
+                        text = "You are blocked from sending messages to this user";
                         break;
                     case "recipientBlocked":
-                        message = "You have blocked this user - you must unblock them before sending a message";
+                        text = "You have blocked this user - you must unblock them before sending a message";
                         break;
                 }
 
-                dispatch(showAlertDialog({
+                alertDialog({
                     title: "Message not sent",
-                    message
-                }));            
+                    text
+                });
             }
             return;
         }
 
         // Dispatch a succeeded event
         {
-            const myUserId = getState().usersState.me!.userId;
+            const myUserId = me.userId;
             const message: LocalMessage = {
                 kind: "local",
                 id: response.result.messageId,
@@ -186,7 +188,7 @@ function convertContent(sendMessageContent: DraftMessageContent): MessageContent
         default:
             throw Error("Unrecognised content type");
     }
-} 
+}
 
 export type SendMessageRequestedEvent = {
     type: typeof SEND_MESSAGE_REQUESTED,

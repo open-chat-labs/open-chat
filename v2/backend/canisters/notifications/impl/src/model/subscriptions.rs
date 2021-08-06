@@ -41,6 +41,17 @@ impl Subscriptions {
             }
         }
     }
+
+    pub fn contains_any(&self, user_ids: &[UserId], max_age: Duration, now: TimestampMillis) -> bool {
+        let active_since = now.saturating_sub(max_age.as_millis() as u64);
+
+        user_ids.iter().any(|u| {
+            self.subscriptions
+                .get(u)
+                .map(|s| s.iter().any(|s| s.last_active() >= active_since))
+                .is_some()
+        })
+    }
 }
 
 #[cfg(test)]

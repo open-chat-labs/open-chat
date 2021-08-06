@@ -6,11 +6,14 @@ use shared::event_stream::EventStream;
 use shared::types::notifications::Notification;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::time::Duration;
 
 mod lifecycle;
 mod model;
 mod queries;
 mod updates;
+
+const MAX_SUBSCRIPTION_AGE: Duration = Duration::from_secs(365 * 24 * 60 * 60); // 365 days
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();

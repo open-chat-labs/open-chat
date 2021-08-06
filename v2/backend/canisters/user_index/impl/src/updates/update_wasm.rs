@@ -15,11 +15,10 @@ fn update_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    if args.version <= runtime_state.data.user_wasm.version {
+    if args.user_canister_wasm.version <= runtime_state.data.user_canister_wasm.version {
         VersionNotHigher
     } else {
-        runtime_state.data.user_wasm.version = args.version;
-        runtime_state.data.user_wasm.module = args.user_wasm_module;
+        runtime_state.data.user_canister_wasm = args.user_canister_wasm;
         Success
     }
 }

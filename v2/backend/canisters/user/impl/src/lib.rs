@@ -1,9 +1,9 @@
-use crate::model::direct_chat::DirectChat;
+use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use candid::Principal;
 use serde_bytes::ByteBuf;
 use shared::env::Environment;
-use shared::types::chat_id::{DirectChatId, GroupChatId};
+use shared::types::chat_id::GroupChatId;
 use shared::types::{CanisterId, UserId, Version};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -34,7 +34,7 @@ impl RuntimeState {
 
 pub struct Data {
     pub owner: Principal,
-    pub direct_chats: HashMap<DirectChatId, DirectChat>,
+    pub direct_chats: DirectChats,
     pub group_chats: HashMap<GroupChatId, GroupChat>,
     pub blobs: HashMap<String, Vec<ByteBuf>>,
     pub blocked_users: HashSet<UserId>,
@@ -54,7 +54,7 @@ impl Data {
     ) -> Data {
         Data {
             owner,
-            direct_chats: HashMap::new(),
+            direct_chats: DirectChats::default(),
             group_chats: HashMap::new(),
             blobs: HashMap::new(),
             blocked_users: HashSet::new(),

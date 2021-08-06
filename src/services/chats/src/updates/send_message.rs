@@ -6,6 +6,8 @@ use shared::{timestamp, timestamp::Timestamp};
 use crate::domain::chat::{Chat, MessageContent, ChatSummary, ChatEnum, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
+use crate::services::notifications::push_direct_message_notification;
+use crate::services::notifications::push_group_message_notification;
 use self::Response::*;
 
 pub fn update(request: Request) -> Response {
@@ -41,7 +43,7 @@ pub fn update(request: Request) -> Response {
     {
         let now = timestamp::now();
 
-        let message_id = chat_list.push_message(
+        let message = chat_list.push_message(
             request.chat_id, 
             &me, 
             request.client_message_id, 
@@ -49,9 +51,48 @@ pub fn update(request: Request) -> Response {
             request.replies_to, 
             now).unwrap();
 
-        let chat = chat_list.get(request.chat_id, &me).unwrap();
-        let chat_summary = chat.to_summary(&me, 0);
-        Success(Result::new(chat_summary, message_id, now))
+        if let Some(chat) = chat_list.get(request.chat_id, &me) {
+            let chat_summary = chat.to_summary(&me, 0);
+            let message_id = message.get_id();
+
+            if let Some(sender_name) = request.sender_name {            
+                match chat {
+                    ChatEnum::Direct(direct) => {
+                        let them = direct.get_other(&me);
+                        let notification = push_direct_message_notification::Notification {
+                            sender: me,
+                            sender_name,
+                            recipient: them.clone(),
+                            message,
+                        };
+
+                        push_direct_message_notification::fire_and_forget(notification);                          
+                    },
+                    ChatEnum::Group(group) => {
+                        let recipients = group
+                            .participants()
+                            .iter()
+                            .map(|p| p.user_id())
+                            .collect();
+
+                        let notification = push_group_message_notification::Notification {
+                            chat_id: group.get_id().0,
+                            group_name: group.subject().clone(),
+                            sender: me,
+                            sender_name,
+                            recipients,
+                            message,
+                        };
+
+                        push_group_message_notification::fire_and_forget(notification);        
+                    }
+                };
+            }
+
+            Success(Result::new(chat_summary, message_id, now))
+        } else {
+            ChatNotFound
+        }
     }
 }
 
@@ -76,6 +117,7 @@ fn validate(request: &Request) -> Option<Response> {
 #[derive(Deserialize)]
 pub struct Request {
     chat_id: ChatId,
+    sender_name: Option<String>,
     client_message_id: String,
     content: MessageContent,
     replies_to: Option<ReplyContext>
@@ -95,7 +137,7 @@ pub enum Response {
 pub struct Result {
     chat_summary: ChatSummary,
     message_id: u32,
-    timestamp: Timestamp
+    timestamp: Timestamp,
 }
 
 impl Result {
@@ -103,7 +145,7 @@ impl Result {
         Result {
             chat_summary,
             message_id,
-            timestamp
+            timestamp,
         }
     }
 }

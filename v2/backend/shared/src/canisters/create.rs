@@ -1,11 +1,11 @@
 use crate::canisters::error::Error;
 use crate::types::CanisterId;
+use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
-use ic_cdk::export::candid::{CandidType, Nat};
-use ic_cdk::export::Principal;
 use log::error;
 use serde::Deserialize;
 
+#[derive(Debug)]
 pub enum CreateCanisterError {
     CreateFailed(Error),
     InstallFailed((Error, CanisterId)),

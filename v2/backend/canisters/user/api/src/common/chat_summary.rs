@@ -1,11 +1,11 @@
-use crate::common::message::Message;
 use candid::CandidType;
 use serde::Deserialize;
 use shared::time::TimestampMillis;
 use shared::types::chat_id::{DirectChatId, GroupChatId};
-use shared::types::UserId;
+use shared::types::{direct_message, group_message};
+use shared::types::{EventIndex, EventWrapper, UserId};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
     Direct(DirectChatSummary),
     Group(GroupChatSummary),
@@ -20,11 +20,12 @@ impl ChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub chat_id: DirectChatId,
-    pub latest_message: Message,
+    pub latest_message: EventWrapper<direct_message::Message>,
+    pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
 }
 
@@ -34,11 +35,12 @@ impl DirectChatSummary {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub name: String,
     pub chat_id: GroupChatId,
-    pub latest_message: Option<Message>,
+    pub latest_message: Option<EventWrapper<group_message::Message>>,
+    pub latest_event_index: EventIndex,
     pub date_added: TimestampMillis,
 }
 

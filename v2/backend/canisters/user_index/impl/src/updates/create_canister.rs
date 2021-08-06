@@ -1,12 +1,13 @@
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
 use shared::canisters::canister_wasm::CanisterWasm;
 use shared::canisters::create::CreateCanisterError;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
 use shared::types::{CanisterId, Version};
+use user_canister::lifecycle::init::Args as InitUserCanisterArgs;
 use user_index_canister::common::user::{CanisterCreationStatus, CreatedUser, User};
 use user_index_canister::updates::create_canister::{Response::*, *};
 
@@ -23,6 +24,7 @@ async fn create_canister(_args: Args) -> Response {
     // Make async calls to the management canister to create and install a user canister
     // If the create previously succeeded but the install failed then pass in the canister_id
     // and skip canister creation
+    let caller = init_ok.caller;
     let wasm_arg = candid::encode_one(init_ok.init_canister_args).unwrap();
     let cycles = CREATE_CANISTER_CYCLES_FEE + USER_CANISTER_INITIAL_CYCLES_BALANCE;
     match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles).await {
@@ -31,7 +33,7 @@ async fn create_canister(_args: Args) -> Response {
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
             let wasm_version = init_ok.canister_wasm.version;
-            RUNTIME_STATE.with(|state| commit(state.borrow_mut().as_mut().unwrap(), canister_id, wasm_version));
+            RUNTIME_STATE.with(|state| commit(caller, canister_id, wasm_version, state.borrow_mut().as_mut().unwrap()));
             Success(canister_id)
         }
         Err(error) => {
@@ -42,13 +44,14 @@ async fn create_canister(_args: Args) -> Response {
             // The canister create/install failed so set the user's CanisterCreationStatus back to Pending.
             // If the create succeeded but the install failed then set the user_id (aka canister_id)
             // on the user record.
-            RUNTIME_STATE.with(|state| rollback(state.borrow_mut().as_mut().unwrap(), canister_id));
-            InternalError
+            RUNTIME_STATE.with(|state| rollback(caller, canister_id, state.borrow_mut().as_mut().unwrap()));
+            InternalError(format!("{:?}", error))
         }
     }
 }
 
 struct InitOk {
+    caller: Principal,
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
     init_canister_args: InitUserCanisterArgs,
@@ -75,19 +78,21 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                     user.set_canister_creation_status(CanisterCreationStatus::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
-                            let canister_wasm = runtime_state.data.user_wasm.clone();
+                            let canister_wasm = runtime_state.data.user_canister_wasm.clone();
                             let init_canister_args = InitUserCanisterArgs {
                                 owner: user_principal,
+                                group_index_canister_id: runtime_state.data.group_index_canister_id,
                                 notification_canister_ids: Vec::new(),
                                 wasm_version: canister_wasm.version.clone(),
                             };
                             return Ok(InitOk {
+                                caller,
                                 canister_id,
                                 canister_wasm,
                                 init_canister_args,
                             });
                         }
-                        _ => InternalError,
+                        _ => InternalError("Failed to update user".to_string()),
                     }
                 }
                 CanisterCreationStatus::InProgress => CreationInProgress,
@@ -101,8 +106,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId, wasm_version: Version) {
-    let caller = runtime_state.env.caller();
+fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
@@ -135,8 +139,7 @@ fn commit(runtime_state: &mut RuntimeState, canister_id: CanisterId, wasm_versio
     }
 }
 
-fn rollback(runtime_state: &mut RuntimeState, canister_id: Option<CanisterId>) {
-    let caller = runtime_state.env.caller();
+fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
             if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status {
@@ -149,11 +152,4 @@ fn rollback(runtime_state: &mut RuntimeState, canister_id: Option<CanisterId>) {
             }
         }
     }
-}
-
-#[derive(CandidType)]
-struct InitUserCanisterArgs {
-    owner: Principal,
-    notification_canister_ids: Vec<CanisterId>,
-    wasm_version: Version,
 }

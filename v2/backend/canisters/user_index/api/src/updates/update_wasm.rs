@@ -1,12 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::Version;
+use shared::canisters::canister_wasm::CanisterWasm;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
-    #[serde(with = "serde_bytes")]
-    pub user_wasm_module: Vec<u8>,
-    pub version: Version,
+    pub user_canister_wasm: CanisterWasm,
 }
 
 #[derive(CandidType, Deserialize)]

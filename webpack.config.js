@@ -5,6 +5,9 @@ const TerserPlugin = require("terser-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
+const NOTIFICATIONS_CANISTER_ID = "qhbym-qaaaa-aaaaa-aaafq-cai";
+const ENABLE_NOTIFICATIONS = true;
+
 const isDevelopment = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
   : (process.env.DFX_NETWORK !== "ic");
@@ -85,7 +88,7 @@ function generateWebpackConfigForCanister(name, info) {
     },
     devtool: "source-map",
     optimization: {
-      minimize: true,
+      minimize: !isDevelopment,
       minimizer: [new TerserPlugin()],
       splitChunks: {
         chunks: "all"
@@ -150,7 +153,9 @@ function generateWebpackConfigForCanister(name, info) {
         CHATS_CANISTER_ID: canisterIds["chats"],
         P2P_CANISTER_ID: canisterIds["p2p"],
         USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
+        NOTIFICATIONS_CANISTER_ID,
         IDP_URL,
+        ENABLE_NOTIFICATIONS,
       }),  
       new webpack.ProvidePlugin({
         Buffer: [require.resolve('buffer/'), 'Buffer'],
