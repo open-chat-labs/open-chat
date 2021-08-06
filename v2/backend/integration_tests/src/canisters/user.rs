@@ -6,6 +6,7 @@ use candid::{CandidType, Decode, Encode, Principal};
 use ic_agent::Agent;
 use serde::Deserialize;
 
+generate_update_call!(create_group);
 generate_update_call!(send_message);
 generate_query_call!(events_by_index);
 
@@ -46,6 +47,30 @@ pub struct PrivateReplyContext {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
     Message(Message),
+}
+
+pub mod create_group {
+    use super::*;
+
+    #[derive(CandidType, Deserialize, Clone, Debug)]
+    pub struct Args {
+        pub is_public: bool,
+        pub name: String,
+    }
+
+    #[derive(CandidType, Deserialize, Clone, Debug)]
+    pub enum Response {
+        Success(SuccessResult),
+        NameTaken,
+        Throttled,
+        InternalError,
+        NotAuthorised,
+    }
+
+    #[derive(CandidType, Deserialize, Clone, Debug)]
+    pub struct SuccessResult {
+        pub group_chat_id: GroupChatId,
+    }
 }
 
 pub mod send_message {

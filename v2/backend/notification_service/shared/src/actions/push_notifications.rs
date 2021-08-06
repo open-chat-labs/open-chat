@@ -111,7 +111,6 @@ async fn push_notifications_to_user(
     subscriptions: Vec<SubscriptionInfo>,
 ) -> Result<(), Error> {
     let serialized = serde_json::to_string(&notifications)?;
-
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.into_iter() {
         let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_key, &subscription)?;

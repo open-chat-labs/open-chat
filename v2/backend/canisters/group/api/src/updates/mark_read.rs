@@ -11,5 +11,5 @@ pub struct Args {
 pub enum Response {
     Success,
     SuccessNoChange,
-    NotInChat,
+    NotInGroup,
 }

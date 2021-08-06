@@ -9,6 +9,7 @@ use std::collections::{HashMap, HashSet};
 #[derive(Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, Participant>,
+    user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
 }
 
@@ -24,14 +25,15 @@ impl Participants {
 
         Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
+            user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
         }
     }
 
     pub fn add(
         &mut self,
-        principal: Principal,
         user_id: UserId,
+        principal: Principal,
         now: TimestampMillis,
         latest_message_index: MessageIndex,
     ) -> AddResult {
@@ -47,10 +49,27 @@ impl Participants {
                         read_up_to: latest_message_index,
                         mute_notifications: false,
                     });
+                    self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
                 }
                 _ => AddResult::AlreadyInGroup,
             }
+        }
+    }
+
+    pub fn get(&self, user_id: &UserId) -> Option<&Participant> {
+        if let Some(p) = self.user_id_to_principal_map.get(user_id) {
+            self.get_by_principal(p)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut Participant> {
+        if let Some(&p) = self.user_id_to_principal_map.get(user_id) {
+            self.get_by_principal_mut(&p)
+        } else {
+            None
         }
     }
 
@@ -60,6 +79,10 @@ impl Participants {
 
     pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut Participant> {
         self.by_principal.get_mut(principal)
+    }
+
+    pub fn is_blocked(&self, user_id: &UserId) -> bool {
+        self.blocked.contains(user_id)
     }
 
     pub fn get_other_user_ids(&self, my_user_id: UserId) -> Vec<UserId> {

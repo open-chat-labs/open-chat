@@ -2,6 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::updates::notify_activity;
 use shared::types::CanisterId;
 
+mod add_participants;
 mod join_group;
 mod mark_read;
 mod send_message;

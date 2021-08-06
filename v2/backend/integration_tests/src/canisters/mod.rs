@@ -46,6 +46,7 @@ mod macros {
 }
 
 #[allow(dead_code)]
+pub mod group;
 pub mod group_index;
 pub mod notifications;
 pub mod user;

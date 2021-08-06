@@ -4,6 +4,7 @@ use ic_fondue::internet_computer::InternetComputer;
 use ic_registry_subnet_type::SubnetType;
 
 mod canisters;
+mod create_group_test;
 mod register_user_test;
 mod send_message_test;
 mod setup;
@@ -35,7 +36,8 @@ fn tests_pot() -> pot::Pot<IcManager> {
         steps! {
             register_user_test::register_user_test,
             register_user_test::register_existing_user_test,
-            send_message_test::send_message_test
+            send_message_test::send_message_test,
+            create_group_test::create_group_test
         }
     )
 }
