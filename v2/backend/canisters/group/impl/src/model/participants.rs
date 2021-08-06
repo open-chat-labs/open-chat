@@ -57,15 +57,6 @@ impl Participants {
         }
     }
 
-    pub fn remove_unchecked(&mut self, user_id: &UserId) -> bool {
-        if let Some(principal) = self.user_id_to_principal_map.remove(user_id) {
-            self.by_principal.remove(&principal);
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn get(&self, user_id: &UserId) -> Option<&Participant> {
         if let Some(p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal(p)
