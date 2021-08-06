@@ -1,6 +1,8 @@
+use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
+use group_canister::common::events::ParticipantsAdded;
 use group_canister::updates::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
@@ -46,7 +48,7 @@ async fn add_participants(args: Args) -> Response {
     }
 
     if !users_added.is_empty() {
-        RUNTIME_STATE.with(|state| commit(&users_added, state.borrow_mut().as_mut().unwrap()));
+        RUNTIME_STATE.with(|state| commit(prepare_result.added_by, &users_added, state.borrow_mut().as_mut().unwrap()));
     }
 
     handle_activity_notification();
@@ -115,7 +117,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
+fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let latest_message_index = runtime_state.data.events.latest_message_index();
     for (user_id, principal) in users.iter().cloned() {
@@ -124,4 +126,13 @@ fn commit(users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
             .participants
             .add(user_id, principal, now, latest_message_index);
     }
+
+    let event = ParticipantsAdded {
+        user_ids: users.iter().map(|(u, _)| u).cloned().collect(),
+        added_by,
+    };
+    runtime_state
+        .data
+        .events
+        .push_event(GroupChatEventInternal::ParticipantsAdded(event), now);
 }
