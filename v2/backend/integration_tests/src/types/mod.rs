@@ -96,4 +96,3 @@ pub struct EventWrapper<T: CandidType + Clone + Debug> {
     pub timestamp: TimestampMillis,
     pub event: T,
 }
-
