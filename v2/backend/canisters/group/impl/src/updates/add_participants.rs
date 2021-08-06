@@ -1,10 +1,11 @@
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use candid::Principal;
 use group_canister::updates::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
 use shared::types::UserId;
-use user_canister::updates::handle_added_to_group;
+use user_canister::updates::handle_add_to_group_requested;
 
 #[update]
 async fn add_participants(args: Args) -> Response {
@@ -17,14 +18,14 @@ async fn add_participants(args: Args) -> Response {
     let mut users_who_blocked_request = Vec::new();
     let mut errors = Vec::new();
     if !prepare_result.users_to_add.is_empty() {
-        let c2c_args = handle_added_to_group::Args {
+        let c2c_args = handle_add_to_group_requested::Args {
             added_by: prepare_result.added_by,
         };
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
             .cloned()
-            .map(|u| user_canister_client::handle_added_to_group(u.into(), &c2c_args))
+            .map(|u| user_canister_client::handle_add_to_group_requested(u.into(), &c2c_args))
             .collect();
 
         let responses = futures::future::join_all(futures).await;
@@ -33,8 +34,8 @@ async fn add_participants(args: Args) -> Response {
             let user_id = *prepare_result.users_to_add.get(index).unwrap();
             match response {
                 Ok(result) => match result {
-                    handle_added_to_group::Response::Success => users_added.push(user_id),
-                    handle_added_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
+                    handle_add_to_group_requested::Response::Success(r) => users_added.push((user_id, r.principal)),
+                    handle_add_to_group_requested::Response::Blocked => users_who_blocked_request.push(user_id),
                 },
                 Err(error) => {
                     error!("{:?}", error);
@@ -42,6 +43,10 @@ async fn add_participants(args: Args) -> Response {
                 }
             }
         }
+    }
+
+    if !users_added.is_empty() {
+        RUNTIME_STATE.with(|state| commit(&users_added, state.borrow_mut().as_mut().unwrap()));
     }
 
     handle_activity_notification();
@@ -52,7 +57,6 @@ async fn add_participants(args: Args) -> Response {
         let mut failed_users = Vec::new();
         failed_users.extend(users_who_blocked_request.iter().cloned());
         failed_users.extend(errors.iter().cloned());
-        RUNTIME_STATE.with(|state| rollback_failed_users(failed_users, state.borrow_mut().as_mut().unwrap()));
 
         if users_added.is_empty() {
             Failed(FailedResult {
@@ -63,7 +67,7 @@ async fn add_participants(args: Args) -> Response {
             })
         } else {
             PartialSuccess(PartialSuccessResult {
-                users_added,
+                users_added: users_added.into_iter().map(|(u, _)| u).collect(),
                 users_already_in_group: prepare_result.users_already_in_group,
                 users_blocked_from_group: prepare_result.users_blocked_from_group,
                 users_who_blocked_request,
@@ -111,8 +115,13 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn rollback_failed_users(failed_users: Vec<UserId>, runtime_state: &mut RuntimeState) {
-    for user_id in failed_users.into_iter() {
-        runtime_state.data.participants.remove_unchecked(&user_id);
+fn commit(users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
+    let now = runtime_state.env.now();
+    let latest_message_index = runtime_state.data.events.latest_message_index();
+    for (user_id, principal) in users.iter().cloned() {
+        runtime_state
+            .data
+            .participants
+            .add(user_id, principal, now, latest_message_index);
     }
 }

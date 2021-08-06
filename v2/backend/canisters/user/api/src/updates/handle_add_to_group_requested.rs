@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 use shared::types::UserId;
 
@@ -9,6 +9,11 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
     Blocked,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct SuccessResult {
+    pub principal: Principal,
 }

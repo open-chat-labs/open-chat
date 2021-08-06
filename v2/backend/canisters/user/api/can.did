@@ -330,15 +330,20 @@ type ChunkResponse =
         NotFound;
     };
 
-type HandleAddedToGroupArgs =
+type HandleAddToGroupRequestedArgs =
     record {
         added_by: UserId;
     };
 
-type HandleAddedToGroupResponse =
+type HandleAddToGroupRequestedResponse =
     variant {
-        Success;
+        Success: HandleAddToGroupRequestedSuccessResult;
         Blocked;
+    };
+
+type HandleAddToGroupRequestedSuccessResult =
+    record {
+        principal: principal;
     };
 
 type HandleMarkReadArgs =
@@ -407,7 +412,7 @@ service: (InitArgs) -> {
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
 
-    handle_added_to_group: (HandleAddedToGroupArgs) -> (HandleAddedToGroupResponse);
+    handle_add_to_group_requested: (HandleAddToGroupRequestedArgs) -> (HandleAddToGroupRequestedResponse);
     handle_mark_read: (HandleMarkReadArgs) -> (HandleMarkReadResponse);
     handle_message_received: (HandleMessageReceivedArgs) -> (HandleMessageReceivedResponse);
 

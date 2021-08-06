@@ -32,8 +32,8 @@ impl Participants {
 
     pub fn add(
         &mut self,
-        principal: Principal,
         user_id: UserId,
+        principal: Principal,
         now: TimestampMillis,
         latest_message_index: MessageIndex,
     ) -> AddResult {

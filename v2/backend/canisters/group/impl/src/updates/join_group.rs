@@ -23,7 +23,7 @@ fn join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         match runtime_state
             .data
             .participants
-            .add(args.principal, user_id, now, latest_message_index)
+            .add(user_id, args.principal, now, latest_message_index)
         {
             AddResult::Success => {
                 let event = ParticipantJoined { user_id };
