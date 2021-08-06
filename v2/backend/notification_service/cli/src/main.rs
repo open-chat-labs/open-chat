@@ -13,7 +13,7 @@ async fn main() -> Result<(), Error> {
     let command: &str = &args[1];
     let index = args[2].parse::<u64>().unwrap();
     let store = Box::new(DummyStore::new(index));
-    let vapid_private_key = dotenv::var("VAPID_PRIVATE_KEY")?;
+    let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
     let canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Error> {
     };
 
     match command {
-        "push" => push_notifications::run(ic_agent_config, canister_id, store, vapid_private_key).await,
+        "push" => push_notifications::run(ic_agent_config, canister_id, store, &vapid_private_pem).await,
         "remove" => prune_notifications::run(ic_agent_config, canister_id, store).await,
         _ => Err(format!("Unsupported command: {}", command).into()),
     }
