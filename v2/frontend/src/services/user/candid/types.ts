@@ -27,8 +27,11 @@ export type DirectChatId = Principal;
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : MessageIndex,
   'latest_event_index' : EventIndex,
   'chat_id' : DirectChatId,
+  'latest_read_by_them' : MessageIndex,
   'latest_message' : {
     'event' : DirectMessage,
     'timestamp' : TimestampMillis,
@@ -88,6 +91,8 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,

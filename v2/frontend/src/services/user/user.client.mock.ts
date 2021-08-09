@@ -60,6 +60,7 @@ function mockDirectChat(i: number): DirectChatSummary {
         latestReadByThem: 0,
         latestMessage: mockEvent(numMessages),
         latestEventIndex: numMessages,
+        dateCreated: BigInt(time),
     };
 }
 

@@ -305,6 +305,9 @@ type DirectChatSummary =
         };
         latest_event_index: EventIndex;
         date_created: TimestampMillis;
+        latest_read_by_me: MessageIndex;
+        latest_read_by_them: MessageIndex;
+        last_updated: TimestampMillis;
     };
 
 type GroupChatSummary =
@@ -321,7 +324,9 @@ type GroupChatSummary =
             event: GroupMessage;
         };
         latest_event_index: EventIndex;
+        latest_read_by_me: MessageIndex;
         joined: TimestampMillis;
+        last_updated: TimestampMillis;
     };
 
 type ChatId =

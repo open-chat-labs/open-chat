@@ -279,6 +279,8 @@ export const idlFactory = ({ IDL }) => {
     'participants' : IDL.Vec(Participant),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
@@ -294,8 +296,11 @@ export const idlFactory = ({ IDL }) => {
   const DirectChatSummary = IDL.Record({
     'date_created' : TimestampMillis,
     'them' : UserId,
+    'last_updated' : TimestampMillis,
+    'latest_read_by_me' : MessageIndex,
     'latest_event_index' : EventIndex,
     'chat_id' : DirectChatId,
+    'latest_read_by_them' : MessageIndex,
     'latest_message' : IDL.Record({
       'event' : DirectMessage,
       'timestamp' : TimestampMillis,

@@ -149,16 +149,17 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    lastUpdated: bigint;
     latestReadByMe: number;
     latestMessage?: EventWrapper;
     latestEventIndex: number;
+    lastUpdated: bigint;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
     latestReadByThem: number;
+    dateCreated: bigint;
 };
 
 export type GroupChatSummary = ChatSummaryCommon & {

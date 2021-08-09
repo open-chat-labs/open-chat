@@ -376,6 +376,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             latestReadByThem: 0,
                             latestMessage: undefined,
                             latestEventIndex: 0,
+                            dateCreated: BigInt(+new Date()),
                         };
                         push(`/${dummyChat.chatId}`);
                         return {
@@ -434,6 +435,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     latestReadByThem: 0,
                                     latestMessage: undefined,
                                     latestEventIndex: 0,
+                                    dateCreated: BigInt(+new Date()),
                                 };
                                 push(`/${dummyChat.chatId}`);
                                 return {

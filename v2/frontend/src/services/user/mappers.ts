@@ -12,7 +12,6 @@ import type {
     ApiUpdatesResponse,
     ApiParticipant,
     ApiUpdatedChatSummary,
-    ApiEventWrapper,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -28,14 +27,17 @@ import type {
     TextContent,
     Participant,
     UpdatedChatSummary,
-    EventWrapper,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
     if ("Success" in candid) {
         return {
-            events: candid.Success.events.map(eventMessage),
+            events: candid.Success.events.map((ev) => ({
+                index: ev.index,
+                timestamp: ev.timestamp,
+                event: message(ev.event),
+            })),
         };
     }
     if ("ChatNotFound" in candid) {
@@ -66,7 +68,11 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
             latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
-            latestMessage: optional(candid.Group.latest_message, eventMessage),
+            latestMessage: optional(candid.Group.latest_message, (ev) => ({
+                index: ev.index,
+                timestamp: ev.timestamp,
+                event: message(ev.event),
+            })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
             participantsAdded: candid.Group.participants_added.map(participant),
@@ -83,7 +89,11 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             chatId: candid.Direct.chat_id.toString(),
             lastUpdated: candid.Direct.last_updated,
             latestReadByMe: optional(candid.Direct.latest_read_by_me, identity),
-            latestMessage: optional(candid.Direct.latest_message, eventMessage),
+            latestMessage: optional(candid.Direct.latest_message, (ev) => ({
+                index: ev.index,
+                timestamp: ev.timestamp,
+                event: message(ev.event),
+            })),
             latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
             latestEventIndex: candid.Direct.latest_event_index,
         };
@@ -97,28 +107,39 @@ function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
         return {
             kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
-            lastUpdated: candid.Group.last_updated,
+            latestMessage: optional(candid.Group.latest_message, (ev) => {
+                return {
+                    index: ev.index,
+                    timestamp: ev.timestamp,
+                    event: message(ev.event),
+                };
+            }),
             latestReadByMe: candid.Group.latest_read_by_me,
-            latestMessage: optional(candid.Group.latest_message, eventMessage),
             name: candid.Group.name,
             description: candid.Group.description,
             participants,
-            public: candid.Group.public,
+            public: candid.Group.is_public,
             joined: candid.Group.joined,
             minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
+            lastUpdated: candid.Group.last_updated,
         };
     }
     if ("Direct" in candid) {
         return {
             kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),
-            lastUpdated: candid.Direct.last_updated,
-            latestReadByMe: candid.Direct.latest_read_by_me,
-            latestMessage: eventMessage(candid.Direct.latest_message),
+            latestMessage: {
+                index: candid.Direct.latest_message.index,
+                timestamp: candid.Direct.latest_message.timestamp,
+                event: message(candid.Direct.latest_message.event),
+            },
             them: candid.Direct.them.toString(),
-            latestReadByThem: candid.Direct.latest_read_by_them,
             latestEventIndex: candid.Direct.latest_event_index,
+            latestReadByMe: candid.Direct.latest_read_by_me,
+            latestReadByThem: candid.Direct.latest_read_by_me,
+            dateCreated: candid.Direct.date_created,
+            lastUpdated: candid.Direct.last_updated,
         };
     }
     throw new Error(`Unexpected ChatSummary type received: ${candid}`);
@@ -128,14 +149,6 @@ function participant(candid: ApiParticipant): Participant {
     return {
         role: "Admin" in candid.role ? "admin" : "standard",
         userId: candid.user_id.toString(),
-    };
-}
-
-function eventMessage(candid: ApiEventWrapper): EventWrapper {
-    return {
-        event: message(candid.event.Message),
-        index: candid.index,
-        timestamp: candid.timestamp,
     };
 }
 

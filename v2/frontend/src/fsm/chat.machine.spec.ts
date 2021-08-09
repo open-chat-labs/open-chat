@@ -19,6 +19,7 @@ const directChat: DirectChatSummary = {
     latestReadByThem: 0,
     latestMessage: undefined,
     latestEventIndex: 0,
+    dateCreated: BigInt(0),
 };
 
 const groupChat: GroupChatSummary = {
