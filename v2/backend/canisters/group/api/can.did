@@ -134,22 +134,11 @@ type SetAvatarResponse =
         Success;
         FileTooBig: nat32;
         InvalidMimeType: nat32;
-    }; 
-
-// TODO
-type InviteUsersArgs =
-    record {
     };
-
-// TODO
-type InviteUsersResponse =
-    variant {
-        Success;
-    }; 
 
 type JoinGroupArgs =
     record {
-        groupId: principal;
+        "principal": principal;
     };
 
 type JoinGroupResponse =
@@ -182,16 +171,36 @@ type UnblockUserResponse =
         Success;
     }; 
 
-// TODO
 type AddParticipantsArgs =
     record {
+        user_ids: vec UserId;
     };
 
-// TODO
 type AddParticipantsResponse =
     variant {
         Success;
-    }; 
+        PartialSuccess: AddParticipantsPartialSuccessResult;
+        Failed: AddParticipantsFailedResult;
+        NotInGroup;
+        NotAuthorized;
+    };
+
+type AddParticipantsPartialSuccessResult =
+    record {
+        users_added: vec UserId;
+        users_already_in_group: vec UserId;
+        users_blocked_from_group: vec UserId;
+        users_who_blocked_request: vec UserId;
+        errors: vec UserId;
+    };
+
+type AddParticipantsFailedResult =
+    record {
+        users_already_in_group: vec UserId;
+        users_blocked_from_group: vec UserId;
+        users_who_blocked_request: vec UserId;
+        errors: vec UserId;
+    };
 
 // TODO
 type RemoveParticipantsArgs =
@@ -288,7 +297,7 @@ type EventsArgs =
         to_index: EventIndex;
     };
 
-type EventsSuccess =
+type EventsSuccessResult =
     record {
         events: vec EventWrapper;
         latest_event_index: EventIndex;
@@ -296,18 +305,18 @@ type EventsSuccess =
 
 type EventsResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 
 type EventsByIndexArgs =
     record {
-        events: vec EventIndex;
+        events: vec EventWrapper;
     };
 
 type EventsByIndexResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 
@@ -355,9 +364,6 @@ service: {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
 
     // Public only
-    invite_users: (InviteUsersArgs) -> (InviteUsersResponse);
-
-    // Public only
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     
     // Admin only - public only
@@ -366,7 +372,6 @@ service: {
     // Admin only - public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
 
-    // Admin only - Private only
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Admin only - Private only

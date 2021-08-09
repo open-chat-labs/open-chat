@@ -32,7 +32,7 @@ async fn main() -> Result<(), Error> {
 #[rustfmt::skip]
 async fn my_handler(request: Request, _: Context) -> Result<(), Error> {
     let dynamodb_client = Box::new(DynamoDbClient::build());
-    let vapid_private_key = read_env_var("VAPID_PRIVATE_KEY")?;
+    let vapid_private_pem = read_env_var("VAPID_PRIVATE_PEM")?;
     let ic_url = read_env_var("IC_URL")?;
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&read_env_var("IS_PRODUCTION")?).unwrap();
@@ -48,7 +48,7 @@ async fn my_handler(request: Request, _: Context) -> Result<(), Error> {
             ic_agent_config,
             request.canister_id, 
             dynamodb_client,
-            vapid_private_key).await,
+            &vapid_private_pem).await,
         Mode::PruneNotifications => prune_notifications::run(
             ic_agent_config,
             request.canister_id, 

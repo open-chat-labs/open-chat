@@ -319,17 +319,25 @@ type EventsArgs =
         to_index: EventIndex;
     };
 
-type EventsSuccess =
+type EventsSuccessResult =
     record {
         events: vec EventWrapper;
         latest_event_index: EventIndex;
     };
 
+type EventsArgs =
+    record {
+        user_id: UserId;
+        from_index: EventIndex;
+        to_index: EventIndex;
+    };
+
 type EventsResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
-    }; 
+        NotAuthorised;
+    };
 
 type EventsByIndexArgs =
     record {
@@ -339,7 +347,7 @@ type EventsByIndexArgs =
 
 type EventsByIndexResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 
@@ -373,6 +381,22 @@ type ChunkResponse =
             bytes: vec nat8;
         };
         NotFound;
+    };
+
+type HandleAddToGroupRequestedArgs =
+    record {
+        added_by: UserId;
+    };
+
+type HandleAddToGroupRequestedResponse =
+    variant {
+        Success: HandleAddToGroupRequestedSuccessResult;
+        Blocked;
+    };
+
+type HandleAddToGroupRequestedSuccessResult =
+    record {
+        "principal": principal;
     };
 
 type HandleMarkReadArgs =
@@ -442,6 +466,7 @@ service: (InitArgs) -> {
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
+    handle_add_to_group_requested: (HandleAddToGroupRequestedArgs) -> (HandleAddToGroupRequestedResponse);
     handle_mark_read: (HandleMarkReadArgs) -> (HandleMarkReadResponse);
     handle_message_received: (HandleMessageReceivedArgs) -> (HandleMessageReceivedResponse);
 

@@ -29,3 +29,9 @@ impl From<CanisterId> for GroupChatId {
         GroupChatId(canister_id)
     }
 }
+
+impl From<GroupChatId> for CanisterId {
+    fn from(group_chat_id: GroupChatId) -> Self {
+        group_chat_id.0
+    }
+}

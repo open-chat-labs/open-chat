@@ -12,6 +12,7 @@ generate_c2c_call!(events_by_index);
 
 // Updates
 generate_c2c_call!(create_group);
+generate_c2c_call!(handle_add_to_group_requested);
 generate_c2c_call!(handle_mark_read);
 generate_c2c_call!(handle_message_received);
 generate_c2c_call!(join_group);
