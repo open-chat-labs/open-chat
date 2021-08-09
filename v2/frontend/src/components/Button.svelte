@@ -4,9 +4,18 @@
     export let disabled: boolean = false;
     export let secondary: boolean = false;
     export let small: boolean = false;
+    export let fill: boolean = false;
 </script>
 
-<button on:click class={cls} class:loading class:disabled class:small {disabled} class:secondary>
+<button
+    on:click
+    class={cls}
+    class:loading
+    class:disabled
+    class:small
+    {disabled}
+    class:secondary
+    class:fill>
     {#if !loading}
         <slot />
     {/if}
@@ -48,6 +57,10 @@
             background: var(--button-txt);
             color: var(--button-bg);
             border: 1px solid var(--button-bg);
+        }
+
+        &.fill {
+            width: 100%;
         }
     }
 </style>

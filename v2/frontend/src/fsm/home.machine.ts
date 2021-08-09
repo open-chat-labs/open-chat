@@ -22,6 +22,7 @@ import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
+import { groupMachine } from "./group.machine";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -48,7 +49,6 @@ export type HomeEvents =
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
-    | { type: "CANCEL_NEW_GROUP" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
@@ -397,8 +397,32 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     },
                 },
                 new_group: {
-                    on: {
-                        CANCEL_NEW_GROUP: "no_chat_selected",
+                    invoke: {
+                        id: "groupMachine",
+                        src: groupMachine,
+                        data: (ctx, _) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                            };
+                        },
+                        onDone: {
+                            target: "no_chat_selected",
+                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                // todo - do we need to do anything here or will it all be done in the
+                                // group machine
+                                return {};
+                            }),
+                        },
+                        onError: {
+                            // todo - as in many other cases, this needs sorting out properly
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
                     },
                 },
                 new_chat: {

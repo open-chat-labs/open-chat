@@ -5,19 +5,19 @@
     import HoverIcon from "../HoverIcon.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
-    import type { HomeMachine } from "../../fsm/home.machine";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import Input from "../Input.svelte";
     import TextArea from "../TextArea.svelte";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
+    import type { GroupMachine } from "../../fsm/group.machine";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    export let machine: ActorRefFrom<HomeMachine>;
+    export let machine: ActorRefFrom<GroupMachine>;
 
     let groupName: string = "";
     let groupDesc: string = "";
@@ -32,8 +32,8 @@
         machine.send({ type: "CANCEL_NEW_GROUP" });
     }
 
-    function createGroup() {
-        alert("create group");
+    function chooseParticipants() {
+        machine.send({ type: "CHOOSE_PARTICIPANTS" });
     }
 
     function addPhoto() {
@@ -79,7 +79,7 @@
     on:change={onFileSelected}
     bind:this={fileinput} />
 
-<form class="group-form" on:submit|preventDefault={createGroup}>
+<form class="group-form" on:submit|preventDefault={chooseParticipants}>
     <div class="photo-section sub-section" on:click={addPhoto}>
         <div class="photo-icon">
             {#if avatar}
@@ -93,7 +93,7 @@
 
     <Input
         invalid={false}
-        autofocus={true}
+        autofocus={false}
         bind:value={groupName}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <Button disabled={!valid}>{$_("submitNewGroup")}</Button>
+    <Button fill={true} disabled={!valid}>{$_("submitNewGroup")}</Button>
 </form>
 
 <style type="text/scss">
