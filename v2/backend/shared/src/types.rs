@@ -4,11 +4,14 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 pub mod chat_id;
+pub mod chat_summary;
 pub mod direct_message;
 pub mod group_message;
 pub mod indexed_event;
 pub mod message_content;
 pub mod notifications;
+pub mod participant;
+pub mod role;
 pub mod v1_message;
 
 pub type CanisterId = Principal;

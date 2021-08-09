@@ -20,7 +20,7 @@ type EventWrapper =
 
 type DirectChatEvent =
     variant {
-        Message: Message;
+        Message: DirectMessage;
     };
 
 type TextContent =
@@ -75,7 +75,7 @@ type PrivateReplyDetails =
         content: MessageContent;
     };
 
-type ReplyContext =
+type DirectReplyContext =
     variant {
         Standard: record {
             message_index: MessageIndex;
@@ -88,14 +88,30 @@ type ReplyContext =
         };
     };
 
-type Message =
+type GroupReplyContext =
+    record {
+        event_index: EventIndex;
+        user_id: UserId;
+        content: MessageContent;
+    };
+
+type DirectMessage =
     record {
         message_index: MessageIndex;
         message_id: MessageId;
         timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
-        replies_to: opt ReplyContext;
+        replies_to: opt DirectReplyContext;
+    };
+
+type GroupMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt GroupReplyContext;
     };
 
 type ReplyContextArgs =
@@ -225,6 +241,7 @@ type UpdatesArgs =
 type Participant =
     record {
         user_id: UserId;
+        date_added: TimestampMillis;
         role: variant {
             Standard;
             Admin;
@@ -281,11 +298,13 @@ type DirectChatSummary =
     record {
         chat_id: DirectChatId;
         them: UserId;
-        last_updated: TimestampMillis;
-        latest_read_by_me: MessageIndex;
-        latest_read_by_them: MessageIndex;
-        latest_message: EventWrapper;
+        latest_message: record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            event: DirectMessage;
+        };
         latest_event_index: EventIndex;
+        date_created: TimestampMillis;
     };
 
 type GroupChatSummary =
@@ -293,14 +312,16 @@ type GroupChatSummary =
         chat_id: GroupId;
         name: text;
         description: text;
-        public: bool;
-        joined: TimestampMillis;
-        last_updated: TimestampMillis;
+        is_public: bool;
         min_visible_message_index: MessageIndex;
         participants: vec Participant;
-        latest_read_by_me: MessageIndex;
-        latest_message: opt EventWrapper;
+        latest_message: opt record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            event: GroupMessage;
+        };
         latest_event_index: EventIndex;
+        joined: TimestampMillis;
     };
 
 type ChatId =
@@ -353,7 +374,7 @@ type SearchAllMessagesResponse =
             matches: vec record {
                 is_direct: bool;
                 chat: CanisterId;
-                message: Message;
+                message: DirectMessage;
             };
         };
         Failure;
