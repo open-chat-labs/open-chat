@@ -279,6 +279,8 @@ type GroupChatSummary =
         chat_id: GroupId;
         name: text;
         description: text;
+        is_public: bool;
+        min_visible_message_index: MessageIndex;
         participants: vec Participant;
         latest_message: opt record {
             index: EventIndex;
@@ -286,7 +288,7 @@ type GroupChatSummary =
             event: GroupMessage;
         };
         latest_event_index: EventIndex;
-        date_added: TimestampMillis;
+        joined: TimestampMillis;
     };
 
 type ChatId =

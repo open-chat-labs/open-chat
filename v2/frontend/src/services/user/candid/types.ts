@@ -84,11 +84,13 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export interface GroupChatSummary {
+  'is_public' : boolean,
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
-  'date_added' : TimestampMillis,
+  'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
+  'min_visible_message_index' : MessageIndex,
   'chat_id' : GroupId,
   'latest_message' : [] | [
     {
