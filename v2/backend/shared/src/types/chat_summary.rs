@@ -1,9 +1,9 @@
+use crate::time::TimestampMillis;
+use crate::types::chat_id::{DirectChatId, GroupChatId};
+use crate::types::participant::Participant;
+use crate::types::{direct_message, group_message, EventIndex, EventWrapper, MessageIndex, UserId};
 use candid::CandidType;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::chat_id::{DirectChatId, GroupChatId};
-use shared::types::{direct_message, group_message};
-use shared::types::{EventIndex, EventWrapper, UserId};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ChatSummary {
@@ -22,8 +22,8 @@ impl ChatSummary {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
-    pub them: UserId,
     pub chat_id: DirectChatId,
+    pub them: UserId,
     pub latest_message: EventWrapper<direct_message::Message>,
     pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
@@ -37,15 +37,19 @@ impl DirectChatSummary {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
-    pub name: String,
     pub chat_id: GroupChatId,
+    pub name: String,
+    pub description: String,
+    pub is_public: bool,
+    pub min_visible_message_index: MessageIndex,
+    pub participants: Vec<Participant>,
     pub latest_message: Option<EventWrapper<group_message::Message>>,
     pub latest_event_index: EventIndex,
-    pub date_added: TimestampMillis,
+    pub joined: TimestampMillis,
 }
 
 impl GroupChatSummary {
     pub fn display_date(&self) -> TimestampMillis {
-        self.latest_message.as_ref().map_or(self.date_added, |m| m.timestamp)
+        self.latest_message.as_ref().map_or(self.joined, |m| m.timestamp)
     }
 }

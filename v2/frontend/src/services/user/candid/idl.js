@@ -64,7 +64,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const GroupId = CanisterId;
   const MessageIndex = IDL.Nat32;
-  const ReplyContext = IDL.Variant({
+  const DirectReplyContext = IDL.Variant({
     'Private' : IDL.Record({
       'chat_id' : GroupId,
       'message_index' : MessageIndex,
@@ -75,15 +75,15 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
   });
-  const Message = IDL.Record({
+  const DirectMessage = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'timestamp' : TimestampMillis,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContext),
+    'replies_to' : IDL.Opt(DirectReplyContext),
     'message_index' : MessageIndex,
   });
-  const DirectChatEvent = IDL.Variant({ 'Message' : Message });
+  const DirectChatEvent = IDL.Variant({ 'Message' : DirectMessage });
   const EventWrapper = IDL.Record({
     'event' : DirectChatEvent,
     'timestamp' : TimestampMillis,
@@ -189,7 +189,7 @@ export const idlFactory = ({ IDL }) => {
         IDL.Record({
           'chat' : CanisterId,
           'is_direct' : IDL.Bool,
-          'message' : Message,
+          'message' : DirectMessage,
         })
       ),
     }),
