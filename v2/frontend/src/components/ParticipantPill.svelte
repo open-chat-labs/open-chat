@@ -1,19 +1,19 @@
 <script lang="ts">
-    import type { UserSummary } from "../domain/user/user";
     import { createEventDispatcher } from "svelte";
+    import type { CandidateParticipant } from "../fsm/group.machine";
     const dispatch = createEventDispatcher();
 
-    export let user: UserSummary;
+    export let participant: CandidateParticipant;
 
-    function deleteUser() {
-        dispatch("deleteUser", user);
+    function deleteParticipant() {
+        dispatch("deleteParticipant", participant);
     }
 </script>
 
 <div class="pill">
     <div class="avatar" />
-    <div class="username">{user.username}</div>
-    <div on:click={deleteUser} class="delete" />
+    <div class="username">{participant.user.username}</div>
+    <div on:click={deleteParticipant} class="delete" />
 </div>
 
 <style type="text/scss">

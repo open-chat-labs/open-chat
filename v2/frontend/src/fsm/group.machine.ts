@@ -14,15 +14,38 @@ import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent }
 import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
+import type { ParticipantRole } from "../domain/chat/chat";
 
 export interface GroupContext {
-    serviceContainer: ServiceContainer;
+    serviceContainer?: ServiceContainer;
+    candidateGroup: CandidateGroup;
     error?: Error;
 }
 
+export type CandidateParticipant = {
+    role: ParticipantRole;
+    user: UserSummary;
+};
+
+export type CandidateGroup = {
+    name: string;
+    description: string;
+    historyVisible: boolean;
+    isPublic: boolean;
+    participants: CandidateParticipant[];
+};
+
+export const nullGroup = {
+    name: "",
+    description: "",
+    historyVisible: false,
+    isPublic: false,
+    participants: [],
+};
+
 export type GroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
-    | { type: "CHOOSE_PARTICIPANTS" }
+    | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroup }
     | { type: "CANCEL_CHOOSE_PARTICIPANTS" }
     | { type: "SKIP_CHOOSE_PARTICIPANTS" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
@@ -43,7 +66,12 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
         group_form: {
             on: {
                 CANCEL_NEW_GROUP: "done",
-                CHOOSE_PARTICIPANTS: "choosing_participants",
+                CHOOSE_PARTICIPANTS: {
+                    target: "choosing_participants",
+                    actions: assign((_, ev) => ({
+                        candidateGroup: ev.data,
+                    })),
+                },
             },
         },
         choosing_participants: {
@@ -68,7 +96,18 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                 onDone: {
                     target: "choosing_participants",
                     actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                        return {};
+                        return {
+                            candidateGroup: {
+                                ...ctx.candidateGroup,
+                                participants: [
+                                    ...ctx.candidateGroup.participants,
+                                    {
+                                        role: "standard",
+                                        user: ev.data,
+                                    },
+                                ],
+                            },
+                        };
                     }),
                 },
                 onError: {

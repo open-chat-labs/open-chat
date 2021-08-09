@@ -19,10 +19,10 @@
 
     export let machine: ActorRefFrom<GroupMachine>;
 
-    let groupName: string = "";
-    let groupDesc: string = "";
-    let historyVisible: boolean = false;
-    let isPublic: boolean = false;
+    let groupName: string = $machine.context.candidateGroup.name;
+    let groupDesc: string = $machine.context.candidateGroup.description;
+    let historyVisible: boolean = $machine.context.candidateGroup.historyVisible;
+    let isPublic: boolean = $machine.context.candidateGroup.isPublic;
     let fileinput: HTMLInputElement;
     let avatar: string | null | undefined;
 
@@ -33,7 +33,16 @@
     }
 
     function chooseParticipants() {
-        machine.send({ type: "CHOOSE_PARTICIPANTS" });
+        machine.send({
+            type: "CHOOSE_PARTICIPANTS",
+            data: {
+                name: groupName,
+                description: groupDesc,
+                historyVisible,
+                isPublic,
+                participants: $machine.context.candidateGroup.participants,
+            },
+        });
     }
 
     function addPhoto() {

@@ -5,6 +5,7 @@
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import SectionHeader from "../SectionHeader.svelte";
+    import ParticipantPill from "../ParticipantPill.svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
@@ -31,7 +32,11 @@
 </SectionHeader>
 
 <div class="participants">
-    <div class="selected" />
+    <div class="selected">
+        {#each $machine.context.candidateGroup.participants as participant, pi (participant.user.userId)}
+            <ParticipantPill {participant} />
+        {/each}
+    </div>
     {#if $machine.matches({ showing_participants: { adding_participant: "unexpected_error" } })}
         <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
     {/if}
