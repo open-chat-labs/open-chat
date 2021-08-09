@@ -1,4 +1,4 @@
-import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../../domain/chat/chat";
+import type { UpdatesResponse, EventsResponse, UpdateArgs } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
@@ -10,22 +10,18 @@ import type { IDBPDatabase } from "idb";
 export class CachingUserClient implements IUserClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
-    async chatMessages(
-        userId: string,
-        fromIndex: number,
-        toIndex: number
-    ): Promise<MessagesResponse> {
+    async chatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
         const cachedMsgs = await getCachedMessages(this.db, userId, fromIndex, toIndex);
         return (
             cachedMsgs ??
             this.client
-                .chatMessages(userId, fromIndex, toIndex)
+                .chatEvents(userId, fromIndex, toIndex)
                 .then(setCachedMessages(this.db, userId))
         );
     }
 
-    chatMessagesByIndex(userId: string, indexes: Set<number>): Promise<MessagesResponse> {
-        return this.client.chatMessagesByIndex(userId, indexes);
+    chatEventsByIndex(userId: string, indexes: Set<number>): Promise<EventsResponse> {
+        return this.client.chatEventsByIndex(userId, indexes);
     }
 
     getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {

@@ -1,5 +1,5 @@
-import type { MessagesResponse } from "../../domain/chat/chat";
+import type { EventsResponse, GroupChatEvent } from "../../domain/chat/chat";
 
 export interface IGroupClient {
-    chatMessages(fromIndex: number, toIndex: number): Promise<MessagesResponse>;
+    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse>;
 }

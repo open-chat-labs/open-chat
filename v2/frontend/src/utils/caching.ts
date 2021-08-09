@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type { Message, MessagesResponse } from "../domain/chat/chat";
+import type { EventsResponse, EventWrapper } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
 type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -7,7 +7,7 @@ type Database = Promise<IDBPDatabase<ChatSchema>>;
 export interface ChatSchema extends DBSchema {
     chat_messages: {
         key: string;
-        value: Message;
+        value: EventWrapper;
     };
 }
 
@@ -36,7 +36,7 @@ export async function getCachedMessages(
     chatId: string,
     fromIndex: number,
     toIndex: number
-): Promise<MessagesResponse | undefined> {
+): Promise<EventsResponse | undefined> {
     const cachedMsgs = await (
         await db
     ).getAll(
@@ -47,20 +47,21 @@ export async function getCachedMessages(
     if (cachedMsgs.length === toIndex - fromIndex + 1) {
         // the range is inclusive
         console.log("cache hit!");
-        return { messages: cachedMsgs };
+        return { events: cachedMsgs };
     }
 }
 
 export function setCachedMessages(
     db: Database,
     chatId: string
-): (resp: MessagesResponse) => Promise<MessagesResponse> {
-    return async (resp: MessagesResponse) => {
+): (resp: EventsResponse) => Promise<EventsResponse> {
+    return async (resp: EventsResponse) => {
         if (resp === "chat_not_found") return Promise.resolve(resp);
+        if (resp === "not_authorised") return Promise.resolve(resp);
         const tx = (await db).transaction("chat_messages", "readwrite");
         const store = tx.objectStore("chat_messages");
-        resp.messages.forEach(async (msg) => {
-            await store.put(msg, createCacheKey(chatId, msg.messageIndex));
+        resp.events.forEach(async (event) => {
+            await store.put(event, createCacheKey(chatId, event.index));
         });
         await tx.done;
         return resp;

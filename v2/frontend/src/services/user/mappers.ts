@@ -3,7 +3,7 @@ import type {
     ApiChatSummary,
     ApiCyclesContent,
     ApiFileContent,
-    ApiMessagesResponse,
+    ApiEventsResponse,
     ApiMediaContent,
     ApiMessage,
     ApiMessageContent,
@@ -12,6 +12,7 @@ import type {
     ApiUpdatesResponse,
     ApiParticipant,
     ApiUpdatedChatSummary,
+    ApiEventWrapper,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -19,7 +20,7 @@ import type {
     CyclesContent,
     FileContent,
     UpdatesResponse,
-    MessagesResponse,
+    EventsResponse,
     MediaContent,
     Message,
     MessageContent,
@@ -27,17 +28,21 @@ import type {
     TextContent,
     Participant,
     UpdatedChatSummary,
+    EventWrapper,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
-export function getMessagesResponse(candid: ApiMessagesResponse): MessagesResponse {
+export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
     if ("Success" in candid) {
         return {
-            messages: candid.Success.messages.map(message),
+            events: candid.Success.events.map(eventMessage),
         };
     }
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
+    }
+    if ("NotAuthorised" in candid) {
+        return "not_authorised";
     }
     throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
 }
@@ -61,7 +66,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
             latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
-            latestMessage: optional(candid.Group.latest_message, message),
+            latestMessage: optional(candid.Group.latest_message, eventMessage),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
             participantsAdded: candid.Group.participants_added.map(participant),
@@ -69,6 +74,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             participantsRemoved: new Set(
                 candid.Group.participants_removed.map((p) => p.toString())
             ),
+            latestEventIndex: candid.Group.latest_event_index,
         };
     }
     if ("Direct" in candid) {
@@ -77,8 +83,9 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             chatId: candid.Direct.chat_id.toString(),
             lastUpdated: candid.Direct.last_updated,
             latestReadByMe: optional(candid.Direct.latest_read_by_me, identity),
-            latestMessage: optional(candid.Direct.latest_message, message),
+            latestMessage: optional(candid.Direct.latest_message, eventMessage),
             latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
+            latestEventIndex: candid.Direct.latest_event_index,
         };
     }
     throw new Error(`Unexpected ChatSummary type received: ${candid}`);
@@ -89,27 +96,29 @@ function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
         const participants = candid.Group.participants.map(participant);
         return {
             kind: "group_chat",
-            chatId: candid.Group.id.toString(),
+            chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
             latestReadByMe: candid.Group.latest_read_by_me,
-            latestMessage: optional(candid.Group.latest_message, message),
+            latestMessage: optional(candid.Group.latest_message, eventMessage),
             name: candid.Group.name,
             description: candid.Group.description,
             participants,
             public: candid.Group.public,
             joined: candid.Group.joined,
             minVisibleMessageIndex: candid.Group.min_visible_message_index,
+            latestEventIndex: candid.Group.latest_event_index,
         };
     }
     if ("Direct" in candid) {
         return {
             kind: "direct_chat",
-            chatId: candid.Direct.id.toString(),
+            chatId: candid.Direct.chat_id.toString(),
             lastUpdated: candid.Direct.last_updated,
             latestReadByMe: candid.Direct.latest_read_by_me,
-            latestMessage: message(candid.Direct.latest_message),
+            latestMessage: eventMessage(candid.Direct.latest_message),
             them: candid.Direct.them.toString(),
             latestReadByThem: candid.Direct.latest_read_by_them,
+            latestEventIndex: candid.Direct.latest_event_index,
         };
     }
     throw new Error(`Unexpected ChatSummary type received: ${candid}`);
@@ -122,14 +131,20 @@ function participant(candid: ApiParticipant): Participant {
     };
 }
 
+function eventMessage(candid: ApiEventWrapper): EventWrapper {
+    return {
+        event: message(candid.event.Message),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
 function message(candid: ApiMessage): Message {
     return {
-        messageId: candid.message_id,
+        kind: "message",
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
-        timestamp: candid.timestamp,
         repliesTo: optional(candid.replies_to, replyContext),
-        messageIndex: candid.message_index,
     };
 }
 

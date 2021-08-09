@@ -319,7 +319,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                       secondsSinceLastOnline: 0,
                                                   }
                                                 : undefined,
-                                            messages: [],
+                                            events: [],
                                             focusIndex: ev.data.messageIndex
                                                 ? Number(ev.data.messageIndex)
                                                 : undefined,
@@ -375,6 +375,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             latestReadByMe: 0,
                             latestReadByThem: 0,
                             latestMessage: undefined,
+                            latestEventIndex: 0,
                         };
                         push(`/${dummyChat.chatId}`);
                         return {
@@ -432,6 +433,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     latestReadByMe: 0,
                                     latestReadByThem: 0,
                                     latestMessage: undefined,
+                                    latestEventIndex: 0,
                                 };
                                 push(`/${dummyChat.chatId}`);
                                 return {

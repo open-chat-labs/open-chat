@@ -64,19 +64,40 @@ export interface StandardReplyContext {
     messageIndex: number;
 }
 
+// todo - removing some stuff from this interface until we can see clearly that we need it
 export interface Message {
-    messageId: bigint;
-    messageIndex: number;
+    // messageId: bigint;
+    // messageIndex: number;
+    kind: "message";
     content: MessageContent;
     sender: string;
-    timestamp: bigint;
+    // timestamp: bigint;
     repliesTo?: ReplyContext;
 }
 
-export type MessagesResponse = "chat_not_found" | GetMessagesSuccess;
+export type ChatEvent = DirectChatEvent | GroupChatEvent | Message;
 
-export type GetMessagesSuccess = {
-    messages: Message[];
+export type EventsResponse = "chat_not_found" | "not_authorised" | EventsSuccessResult;
+
+export type DirectChatEvent = Message;
+
+export type GroupChatEvent = Message | GroupChatCreated;
+
+export type GroupChatCreated = {
+    kind: "group_chat_created";
+    name: string;
+    description?: string;
+    created_by: string;
+};
+
+export type EventWrapper = {
+    event: ChatEvent;
+    timestamp: bigint;
+    index: number;
+};
+
+export type EventsSuccessResult = {
+    events: EventWrapper[];
 };
 
 export type UpdateArgs = {
@@ -97,7 +118,8 @@ type UpdatedChatSummaryCommon = {
     chatId: string;
     lastUpdated: bigint;
     latestReadByMe?: number;
-    latestMessage?: Message;
+    latestMessage?: EventWrapper;
+    latestEventIndex: number;
 };
 
 export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
@@ -129,7 +151,8 @@ type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
     lastUpdated: bigint;
     latestReadByMe: number;
-    latestMessage?: Message;
+    latestMessage?: EventWrapper;
+    latestEventIndex: number;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {

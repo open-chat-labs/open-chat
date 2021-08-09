@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions } from "xstate";
 import { assign, pure } from "xstate/lib/actions";
-import type { ChatSummary, MessagesResponse, Message } from "../domain/chat/chat";
+import type { ChatSummary, EventsResponse, EventWrapper } from "../domain/chat/chat";
 import {
-    earliestLoadedMessageIndex,
-    latestAvailableMessageIndex,
-    latestLoadedMessageIndex,
+    earliestLoadedEventIndex,
+    latestAvailableEventIndex,
+    latestLoadedEventIndex,
     textMessage,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
@@ -24,18 +24,18 @@ export interface ChatContext {
     userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
-    messages: Message[];
+    events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
 }
 
-type LoadMessagesResponse = {
+type LoadEventsResponse = {
     userLookup: UserLookup;
-    messages: Message[];
+    events: EventWrapper[];
 };
 
 export type ChatEvents =
-    | { type: "done.invoke.loadMessagesAndUsers"; data: LoadMessagesResponse }
-    | { type: "error.platform.loadMessagesAndUsers"; data: Error }
+    | { type: "done.invoke.loadEventsAndUsers"; data: LoadEventsResponse }
+    | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: string }
@@ -60,25 +60,25 @@ async function loadUsersForChat(
     return Promise.resolve(userLookup);
 }
 
-function loadMessages(
+function loadEvents(
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
-    earliestRequiredMessageIndex: number,
-    earliestLoadedMessageIndex: number
-): Promise<MessagesResponse> {
+    earliestRequiredEventIndex: number,
+    earliestLoadedEventIndex: number
+): Promise<EventsResponse> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatMessages(
+        return serviceContainer.directChatEvents(
             chatSummary.them,
-            earliestRequiredMessageIndex,
-            earliestLoadedMessageIndex
+            earliestRequiredEventIndex,
+            earliestLoadedEventIndex
         );
     }
-    const messages = serviceContainer.groupChatMessages(
+    const events = serviceContainer.groupChatEvents(
         chatSummary.chatId,
-        earliestRequiredMessageIndex,
-        earliestLoadedMessageIndex
+        earliestRequiredEventIndex,
+        earliestLoadedEventIndex
     );
-    return messages;
+    return events;
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
@@ -90,19 +90,19 @@ export function earliestAvailableMessageIndex(ctx: ChatContext): number {
 }
 
 export function earliestIndex(ctx: ChatContext): number {
-    const earliestLoaded = earliestLoadedMessageIndex(ctx.messages);
+    const earliestLoaded = earliestLoadedEventIndex(ctx.events);
     if (earliestLoaded) {
         return earliestLoaded - 1;
     } else {
-        return ctx.chatSummary.latestMessage?.messageIndex ?? 0;
+        return ctx.chatSummary.latestEventIndex;
     }
 }
 
 export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const lastLoaded = latestLoadedMessageIndex(ctx.messages);
+    const lastLoaded = latestLoadedEventIndex(ctx.events);
     if (lastLoaded) {
         const from = lastLoaded + 1;
-        const to = latestAvailableMessageIndex(ctx.chatSummary) ?? 0;
+        const to = latestAvailableEventIndex(ctx.chatSummary) ?? 0;
         return clampRange([from, to]);
     } else {
         // this implies that we have not loaded any messages which should never happen
@@ -141,33 +141,32 @@ export function requiredMessageRange(
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {},
     services: {
-        loadMessagesAndUsers: async (ctx, ev) => {
+        loadEventsAndUsers: async (ctx, ev) => {
             const range = requiredMessageRange(ctx, ev);
 
-            const [userLookup, messagesResponse] = await Promise.all([
+            const [userLookup, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
                 range
-                    ? loadMessages(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
-                    : { messages: [] },
+                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
+                    : { events: [] },
             ]);
             return {
                 userLookup,
-                messages: messagesResponse === "chat_not_found" ? [] : messagesResponse.messages,
+                events:
+                    eventsResponse === "chat_not_found" || eventsResponse === "not_authorised"
+                        ? []
+                        : eventsResponse.events,
             };
         },
     },
     actions: {
-        assignMessagesResponse: assign((ctx, ev) =>
-            // todo - we should de-dupe here. It is always possible that we could load the same
-            // message twice
-            ev.type === "done.invoke.loadMessagesAndUsers"
+        assignEventsResponse: assign((ctx, ev) =>
+            ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
                       userLookup: ev.data.userLookup,
-                      messages: dedupe(
-                          (a, b) => a.messageIndex === b.messageIndex,
-                          [...ev.data.messages, ...ctx.messages].sort(
-                              (a, b) => a.messageIndex - b.messageIndex
-                          )
+                      events: dedupe(
+                          (a, b) => a.index === b.index,
+                          [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
                       ),
                   }
                 : {}
@@ -184,16 +183,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
             on: {
-                // todo - this is not quite right at the moment as it will load all new messages
-                // for a chat regardless of whether the chat is selected or not.
-                // we should probably only do that if this is the active (selected chat)
                 CHAT_UPDATED: {
                     target: ".loading",
                     internal: true,
                     actions: assign((_, ev) => {
                         return {
                             chatSummary: ev.data,
-                            latestMessageIndex: ev.data.latestMessage?.messageIndex ?? 0,
                         };
                     }),
                 },
@@ -202,11 +197,11 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 idle: {},
                 loading: {
                     invoke: {
-                        id: "loadMessagesAndUsers",
-                        src: "loadMessagesAndUsers",
+                        id: "loadEventsAndUsers",
+                        src: "loadEventsAndUsers",
                         onDone: {
                             target: "idle",
-                            actions: "assignMessagesResponse",
+                            actions: "assignEventsResponse",
                         },
                         onError: {
                             target: "error",
@@ -250,11 +245,11 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         idle: {},
                         loading: {
                             invoke: {
-                                id: "loadMessagesAndUsers",
-                                src: "loadMessagesAndUsers",
+                                id: "loadEventsAndUsers",
+                                src: "loadEventsAndUsers",
                                 onDone: {
                                     target: "#ui_idle",
-                                    actions: "assignMessagesResponse",
+                                    actions: "assignEventsResponse",
                                 },
                                 onError: {
                                     target: "error",
@@ -276,14 +271,14 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     entry: assign((ctx, ev) => {
                         if (ev.type === "SEND_MESSAGE") {
                             // todo - this is obvious a huge simplification at the moment
-                            const messageIndex = latestLoadedMessageIndex(ctx.messages) ?? 0;
+                            const index = latestLoadedEventIndex(ctx.events) ?? 0;
                             return {
-                                messages: [
-                                    ...ctx.messages,
+                                events: [
+                                    ...ctx.events,
                                     {
-                                        ...textMessage(ctx.user!.userId, ev.data),
-                                        messageIndex: messageIndex + 1,
-                                        timestamp: BigInt(+new Date() - messageIndex + 1),
+                                        event: textMessage(ctx.user!.userId, ev.data),
+                                        index: index + 1,
+                                        timestamp: BigInt(+new Date() - index + 1),
                                     },
                                 ],
                             };

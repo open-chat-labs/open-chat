@@ -1,7 +1,8 @@
 import type {
     ApiBlobReference,
+    ApiEventsResponse,
+    ApiEventWrapper,
     ApiFileContent,
-    ApiGetMessagesResponse,
     ApiMediaContent,
     ApiMessage,
     ApiMessageContent,
@@ -11,12 +12,13 @@ import type {
 import type {
     BlobReference,
     FileContent,
-    MessagesResponse,
+    EventsResponse,
     MediaContent,
     Message,
     MessageContent,
     ReplyContext,
     TextContent,
+    EventWrapper,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
@@ -24,26 +26,50 @@ import { identity, optional } from "../../utils/mapping";
 // some aspects actually different so we will map them independently for the time being
 // this means that we may not be able to just have a /domain/chat module - it might not be that simple
 
-export function getMessagesResponse(candid: ApiGetMessagesResponse): MessagesResponse {
+export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse {
     if ("Success" in candid) {
         return {
-            messages: candid.Success.messages.map(message),
+            events: candid.Success.events.map(event),
         };
     }
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
-    throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
+    if ("NotAuthorised" in candid) {
+        return "not_authorised";
+    }
+    throw new Error(`Unexpected ApiEventsResponse type received: ${candid}`);
+}
+
+function event(candid: ApiEventWrapper): EventWrapper {
+    if ("Message" in candid.event) {
+        return {
+            event: message(candid.event.Message),
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    if ("GroupChatCreated" in candid.event) {
+        return {
+            event: {
+                kind: "group_chat_created",
+                name: candid.event.GroupChatCreated.name,
+                description: optional(candid.event.GroupChatCreated.description, identity),
+                created_by: candid.event.GroupChatCreated.created_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    throw new Error(`Unexpected ApiEventWrapper type received: ${candid}`);
 }
 
 function message(candid: ApiMessage): Message {
     return {
-        messageId: candid.message_id,
+        kind: "message",
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
-        timestamp: candid.timestamp,
         repliesTo: optional(candid.replies_to, replyContext),
-        messageIndex: candid.message_index,
     };
 }
 

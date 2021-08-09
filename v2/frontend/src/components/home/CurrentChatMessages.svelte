@@ -1,6 +1,6 @@
 <script lang="ts">
     import { tick } from "svelte";
-    import ChatMessage from "./ChatMessage.svelte";
+    import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
@@ -16,8 +16,8 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { Message } from "../../domain/chat/chat";
-    import { getUnreadMessages, groupMessages } from "../../domain/chat/chat.utils";
+    import type { EventWrapper } from "../../domain/chat/chat";
+    import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -131,17 +131,21 @@
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
-    function dateGroupKey(group: Message[][]): string {
+    function dateGroupKey(group: EventWrapper[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function userGroupKey(group: Message[]): string {
+    function userGroupKey(group: EventWrapper[]): string {
         const first = group[0]!;
-        return `${first.sender}_${first.messageIndex}`;
+        if (first.event.kind !== "message") {
+            // todo - we're going to have to come back to this
+            throw new Error("Unexpected event type");
+        }
+        return `${first.event.sender}_${first.index}`;
     }
 
-    $: groupedMessages = groupMessages($machine.context.messages);
+    $: groupedEvents = groupEvents($machine.context.events);
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
@@ -185,25 +189,26 @@
             <Loading />
         </div>
     {/if}
-    {#each groupedMessages as dayGroup, di (dateGroupKey(dayGroup))}
+    {#each groupedEvents as dayGroup, di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
             {#each dayGroup as userGroup, ui (userGroupKey(userGroup))}
-                {#each userGroup as msg, i (msg.messageIndex)}
-                    {#if msg.messageIndex === $machine.context.chatSummary.latestReadByMe + 1}
+                {#each userGroup as evt, i (evt.index)}
+                    {#if evt.index === $machine.context.chatSummary.latestReadByMe + 1}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
-                    <ChatMessage
+                    <ChatEvent
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
-                        me={$machine.context.user?.userId === msg.sender}
+                        me={evt.event.kind === "message" &&
+                            $machine.context.user?.userId === evt.event.sender}
                         showStem={i + 1 === userGroup.length}
                         userLookup={$machine.context.userLookup}
                         on:chatWith
                         on:goToMessage={goToMessage}
-                        {msg} />
+                        event={evt} />
                 {/each}
             {/each}
         </div>

@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { getContentAsText } from "../../domain/chat/chat.utils";
-    import { afterUpdate, beforeUpdate, createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -32,6 +32,9 @@
     export let showStem: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
+    export let index: number;
+    export let timestamp: bigint;
+
     let confirmed: boolean = true; // todo - where does this come from
     let read: boolean = true; // todo - where does this come from
     let msgElement: HTMLElement;
@@ -59,12 +62,8 @@
     }
 </script>
 
-<div
-    bind:this={msgElement}
-    class="chat-message-wrapper"
-    class:me
-    id={`message-${msg.messageIndex}`}>
-    <div class="chat-message" class:me class:showStem class:rtl={$rtlStore} class:focus>
+<div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
+    <div class="chat-message" class:me class:showStem class:rtl={$rtlStore}>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
                 <h4 class="username">{username}</h4>
@@ -80,7 +79,7 @@
 
         <div class="time-and-ticks">
             <span class="time">
-                {toShortTimeString(new Date(Number(msg.timestamp)))}
+                {toShortTimeString(new Date(Number(timestamp)))}
             </span>
             {#if me && confirmed}
                 {#if read}
@@ -91,7 +90,7 @@
             {/if}
         </div>
 
-        <pre class="debug">({msg.messageIndex})</pre>
+        <pre class="debug">({index})</pre>
         <div class="menu" class:rtl={$rtlStore}>
             <MenuIcon>
                 <div class="menu-icon" slot="icon">

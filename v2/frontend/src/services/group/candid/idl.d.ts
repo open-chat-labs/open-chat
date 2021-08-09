@@ -10,9 +10,14 @@ import {
     MediaContent,
     TimestampMillis,
     BlobReference,
-    GetMessagesArgs,
-    GetMessagesResponse,
-    GetMessagesSuccess,
+    EventIndex,
+    EventWrapper,
+    EventsByIndexArgs,
+    EventsByIndexResponse,
+    EventsResponse,
+    EventsSuccessResult,
+    EventsArgs,
+    GroupChatEvent,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -25,9 +30,14 @@ export {
     MediaContent as ApiMediaContent,
     TimestampMillis as ApiTimestampMillis,
     BlobReference as ApiBlobReference,
-    GetMessagesArgs as ApiGetMessageArgs,
-    GetMessagesResponse as ApiGetMessagesResponse,
-    GetMessagesSuccess as ApiGetMessagesSuccess,
+    EventIndex as ApiEventIndex,
+    EventWrapper as ApiEventWrapper,
+    EventsByIndexArgs as ApiEventsByIndexArgs,
+    EventsByIndexResponse as ApiEventsByIndexResponse,
+    EventsResponse as ApiEventsResponse,
+    EventsSuccessResult as ApiEventsSuccessResult,
+    EventsArgs as ApiEventsArgs,
+    GroupChatEvent as ApiGroupChatEvent,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

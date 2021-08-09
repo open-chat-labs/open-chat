@@ -213,13 +213,6 @@ type JoinGroupResponse =
         InternalError: text;
     };
 
-type MessagesArgs =
-    record {
-        user_id: UserId;
-        from_index: MessageIndex;
-        to_index: MessageIndex;
-    };
-
 type UpdatesArgs = 
     record {
         last_updated: opt TimestampMillis;
@@ -250,7 +243,8 @@ type UpdatedDirectChatSummary =
         last_updated: TimestampMillis;
         latest_read_by_me: opt MessageIndex;
         latest_read_by_them: opt MessageIndex;
-        latest_message: opt Message;
+        latest_message: opt EventWrapper;
+        latest_event_index: EventIndex;
     };
 
 type UpdatedGroupChatSummary =
@@ -260,10 +254,11 @@ type UpdatedGroupChatSummary =
         name: opt text;
         description: opt text;
         latest_read_by_me: opt MessageIndex;
-        latest_message: opt Message;
+        latest_message: opt EventWrapper;
         participants_removed: vec UserId;
         participants_added: vec Participant;
         participants_updated: vec Participant;
+        latest_event_index: EventIndex;
     };
 
 type UpdatesResponse =
@@ -289,7 +284,8 @@ type DirectChatSummary =
         last_updated: TimestampMillis;
         latest_read_by_me: MessageIndex;
         latest_read_by_them: MessageIndex;
-        latest_message: Message;
+        latest_message: EventWrapper;
+        latest_event_index: EventIndex;
     };
 
 type GroupChatSummary =
@@ -303,7 +299,8 @@ type GroupChatSummary =
         min_visible_message_index: MessageIndex;
         participants: vec Participant;
         latest_read_by_me: MessageIndex;
-        latest_message: opt Message;
+        latest_message: opt EventWrapper;
+        latest_event_index: EventIndex;
     };
 
 type ChatId =

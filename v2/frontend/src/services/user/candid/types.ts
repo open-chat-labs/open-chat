@@ -28,9 +28,10 @@ export interface DirectChatSummary {
   'them' : UserId,
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
+  'latest_event_index' : EventIndex,
   'chat_id' : DirectChatId,
   'latest_read_by_them' : MessageIndex,
-  'latest_message' : Message,
+  'latest_message' : EventWrapper,
 }
 export type EventIndex = number;
 export interface EventWrapper {
@@ -70,9 +71,10 @@ export interface GroupChatSummary {
   'public' : boolean,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
+  'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : GroupId,
-  'latest_message' : [] | [Message],
+  'latest_message' : [] | [EventWrapper],
 }
 export type GroupId = CanisterId;
 export interface HandleAddToGroupRequestedArgs { 'added_by' : UserId }
@@ -227,9 +229,10 @@ export type UpdatedChatSummary = { 'Group' : UpdatedGroupChatSummary } |
 export interface UpdatedDirectChatSummary {
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
+  'latest_event_index' : EventIndex,
   'chat_id' : DirectChatId,
   'latest_read_by_them' : [] | [MessageIndex],
-  'latest_message' : [] | [Message],
+  'latest_message' : [] | [EventWrapper],
 }
 export interface UpdatedGroupChatSummary {
   'participants_added' : Array<Participant>,
@@ -238,9 +241,10 @@ export interface UpdatedGroupChatSummary {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
+  'latest_event_index' : EventIndex,
   'chat_id' : GroupId,
   'participants_updated' : Array<Participant>,
-  'latest_message' : [] | [Message],
+  'latest_message' : [] | [EventWrapper],
 }
 export interface UpdatesArgs {
   'groups' : Array<{ 'last_updated' : TimestampMillis, 'chat_id' : GroupId }>,

@@ -12,6 +12,7 @@ const directChat: DirectChatSummary = {
     latestReadByMe: 0,
     latestReadByThem: 0,
     latestMessage: undefined,
+    latestEventIndex: 0,
 };
 
 describe("home machine transitions", () => {

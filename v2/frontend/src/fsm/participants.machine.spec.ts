@@ -16,6 +16,7 @@ const groupChat: GroupChatSummary = {
     lastUpdated: BigInt(200),
     latestReadByMe: 0,
     latestMessage: undefined,
+    latestEventIndex: 0,
     participants: [
         {
             userId: "abc",

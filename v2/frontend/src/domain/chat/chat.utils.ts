@@ -3,6 +3,7 @@ import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.ut
 import type {
     ChatSummary,
     DirectChatSummary,
+    EventWrapper,
     GroupChatSummary,
     MediaContent,
     Message,
@@ -65,11 +66,12 @@ export function userIdsFromChatSummaries(
 }
 
 export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary): number {
-    return (latestMessage?.messageIndex ?? 0) - latestReadByMe;
+    return (latestMessage?.index ?? 0) - latestReadByMe;
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
-    return latestMessage ? getContentAsText(latestMessage.content) : "";
+    if (latestMessage?.event.kind !== "message") return "";
+    return getContentAsText(latestMessage.event.content);
 }
 
 export function compareByDate(a: ChatSummary, b: ChatSummary): number {
@@ -98,14 +100,12 @@ export function getParticipantsString(
 
 export function textMessage(userId: string, content: string): Message {
     return {
-        messageId: BigInt(0),
-        messageIndex: 0,
+        kind: "message",
         content: {
             kind: "text_content",
             text: content,
         },
         sender: userId,
-        timestamp: BigInt(+new Date()),
         repliesTo: undefined,
     };
 }
@@ -125,6 +125,7 @@ function mergeUpdatedDirectChat(
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestReadByThem = updatedChat.latestReadByThem ?? chat.latestReadByThem;
     chat.lastUpdated = updatedChat.lastUpdated;
+    chat.latestEventIndex = updatedChat.latestEventIndex;
     return chat;
 }
 
@@ -169,6 +170,7 @@ function mergeUpdatedGroupChat(
     chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
+    chat.latestEventIndex = updatedChat.latestEventIndex;
     chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
         added: updatedChat.participantsAdded,
         updated: updatedChat.participantsUpdated,
@@ -204,31 +206,34 @@ function mergeThings<A, U>(
     return [...Object.values(updated), ...updates.added];
 }
 
-function sameUser(a: Message, b: Message): boolean {
+function sameUser(a: EventWrapper, b: EventWrapper): boolean {
+    if (a.event.kind !== "message" || b.event.kind !== "message") {
+        return false;
+    }
     return (
-        a.sender === b.sender &&
+        a.event.sender === b.event.sender &&
         b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
     );
 }
 
-function groupBySender(messages: Message[]): Message[][] {
-    return groupWhile(sameUser, messages);
+function groupBySender(events: EventWrapper[]): EventWrapper[][] {
+    return groupWhile(sameUser, events);
 }
 
-export function groupMessages(messages: Message[]): Message[][][] {
-    return groupWhile(sameDate, messages).map(groupBySender);
+export function groupEvents(events: EventWrapper[]): EventWrapper[][][] {
+    return groupWhile(sameDate, events).map(groupBySender);
 }
 
-export function earliestLoadedMessageIndex(messages: Message[]): number | undefined {
-    return messages[0]?.messageIndex;
+export function earliestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+    return events[0]?.index;
 }
 
-export function latestLoadedMessageIndex(messages: Message[]): number | undefined {
-    return messages[messages.length - 1]?.messageIndex;
+export function latestLoadedEventIndex(messages: EventWrapper[]): number | undefined {
+    return messages[messages.length - 1]?.index;
 }
 
-export function latestAvailableMessageIndex(chatSummary: ChatSummary): number | undefined {
-    return chatSummary.latestMessage?.messageIndex;
+export function latestAvailableEventIndex(chatSummary: ChatSummary): number | undefined {
+    return chatSummary.latestEventIndex;
 }
 
 export function identity<T>(x: T): T {

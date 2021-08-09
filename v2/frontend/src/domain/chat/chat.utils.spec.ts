@@ -16,6 +16,7 @@ const defaultDirectChat: DirectChatSummary = {
     latestReadByMe: 0,
     latestReadByThem: 0,
     latestMessage: undefined,
+    latestEventIndex: 0,
 };
 
 const defaultGroupChat: GroupChatSummary = {
@@ -30,6 +31,7 @@ const defaultGroupChat: GroupChatSummary = {
     public: true,
     joined: BigInt(0),
     minVisibleMessageIndex: 0,
+    latestEventIndex: 0,
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -187,16 +189,19 @@ describe("merging updates", () => {
             chatId: "4",
             lastUpdated: BigInt(1000),
             latestReadByMe: 200,
+            latestEventIndex: 300,
             latestMessage: {
-                messageId: BigInt(100),
-                messageIndex: 300,
-                content: {
-                    kind: "text_content",
-                    text: "test message",
+                event: {
+                    kind: "message",
+                    content: {
+                        kind: "text_content",
+                        text: "test message",
+                    },
+                    sender: "2",
+                    repliesTo: undefined,
                 },
-                sender: "2",
+                index: 300,
                 timestamp: BigInt(400),
-                repliesTo: undefined,
             },
         };
 
@@ -206,16 +211,19 @@ describe("merging updates", () => {
             lastUpdated: BigInt(1000),
             latestReadByMe: 200,
             latestMessage: {
-                messageId: BigInt(100),
-                messageIndex: 300,
-                content: {
-                    kind: "text_content",
-                    text: "test message",
+                event: {
+                    kind: "message",
+                    content: {
+                        kind: "text_content",
+                        text: "test message",
+                    },
+                    sender: "2",
+                    repliesTo: undefined,
                 },
-                sender: "2",
+                index: 300,
                 timestamp: BigInt(400),
-                repliesTo: undefined,
             },
+            latestEventIndex: 300,
             participantsAdded: [participant("4"), participant("5")],
             participantsRemoved: new Set(["2"]),
             participantsUpdated: [{ ...participant("1"), role: "standard" }],
