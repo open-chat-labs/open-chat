@@ -228,8 +228,8 @@ export function earliestLoadedEventIndex(events: EventWrapper[]): number | undef
     return events[0]?.index;
 }
 
-export function latestLoadedEventIndex(messages: EventWrapper[]): number | undefined {
-    return messages[messages.length - 1]?.index;
+export function latestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+    return events[events.length - 1]?.index;
 }
 
 export function latestAvailableEventIndex(chatSummary: ChatSummary): number | undefined {

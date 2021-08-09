@@ -135,7 +135,11 @@ describe("required message range calculation", () => {
             const ctx = {
                 ...testContext,
                 events: [eventMessage(100)],
-                chatSummary: { ...directChat, latestMessage: eventMessage(101) },
+                chatSummary: {
+                    ...directChat,
+                    latestMessage: eventMessage(101),
+                    latestEventIndex: 101,
+                },
             };
             expect(newMessagesRange(ctx)).toEqual([101, 101]);
         });
@@ -144,7 +148,11 @@ describe("required message range calculation", () => {
             const ctx = {
                 ...testContext,
                 events: [eventMessage(200)],
-                chatSummary: { ...directChat, latestMessage: eventMessage(101) },
+                chatSummary: {
+                    ...directChat,
+                    latestMessage: eventMessage(101),
+                    latestEventIndex: 101,
+                },
             };
             expect(newMessagesRange(ctx)).toBe(undefined);
         });
@@ -162,7 +170,11 @@ describe("required message range calculation", () => {
             const ctx = {
                 ...testContext,
                 events: [eventMessage(100)],
-                chatSummary: { ...directChat, latestMessage: eventMessage(110) },
+                chatSummary: {
+                    ...directChat,
+                    latestMessage: eventMessage(110),
+                    latestEventIndex: 110,
+                },
             };
             expect(newMessagesRange(ctx)).toEqual([101, 110]);
         });
@@ -173,7 +185,11 @@ describe("required message range calculation", () => {
             test("cannot go back beyond zero for direct chat", () => {
                 const ctx = {
                     ...testContext,
-                    chatSummary: { ...directChat, latestMessage: eventMessage(9) },
+                    chatSummary: {
+                        ...directChat,
+                        latestMessage: eventMessage(9),
+                        latestEventIndex: 9,
+                    },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([0, 9]);
             });
@@ -184,6 +200,7 @@ describe("required message range calculation", () => {
                         ...groupChat,
                         minVisibleMessageIndex: 90,
                         latestMessage: eventMessage(100),
+                        latestEventIndex: 100,
                     },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([90, 100]);
@@ -193,14 +210,22 @@ describe("required message range calculation", () => {
                 const ctx: ChatContext = {
                     ...testContext,
                     focusIndex: 70,
-                    chatSummary: { ...directChat, latestMessage: eventMessage(100) },
+                    chatSummary: {
+                        ...directChat,
+                        latestMessage: eventMessage(100),
+                        latestEventIndex: 100,
+                    },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([50, 100]);
             });
             test("limited by page size if nothing else", () => {
                 const ctx: ChatContext = {
                     ...testContext,
-                    chatSummary: { ...directChat, latestMessage: eventMessage(100) },
+                    chatSummary: {
+                        ...directChat,
+                        latestMessage: eventMessage(100),
+                        latestEventIndex: 100,
+                    },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([80, 100]);
             });
