@@ -3,15 +3,13 @@ export const idlFactory = ({ IDL }) => {
   const AddParticipantsResponse = IDL.Variant({ 'Success' : IDL.Null });
   const BlockUserArgs = IDL.Record({});
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const GetChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
-  const GetChunkResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
+  const EventIndex = IDL.Nat32;
+  const EventsArgs = IDL.Record({
+    'to_index' : EventIndex,
+    'from_index' : EventIndex,
   });
-  const GetGroupArgs = IDL.Record({});
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
-  const TimestampMillis = IDL.Nat64;
   const BlobReference = IDL.Record({
     'blob_size' : IDL.Nat32,
     'blob_id' : IDL.Text,
@@ -49,11 +47,43 @@ export const idlFactory = ({ IDL }) => {
   const Message = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
-    'timestamp' : TimestampMillis,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
     'message_index' : MessageIndex,
   });
+  const GroupChatEvent = IDL.Variant({
+    'GroupChatCreated' : IDL.Record({
+      'name' : IDL.Text,
+      'description' : IDL.Opt(IDL.Text),
+      'created_by' : UserId,
+    }),
+    'Message' : Message,
+  });
+  const TimestampMillis = IDL.Nat64;
+  const EventWrapper = IDL.Record({
+    'event' : GroupChatEvent,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const EventsSuccess = IDL.Record({
+    'events' : IDL.Vec(EventWrapper),
+    'latest_event_index' : EventIndex,
+  });
+  const EventsResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : EventsSuccess,
+  });
+  const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventIndex) });
+  const EventsByIndexResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : EventsSuccess,
+  });
+  const GetChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
+  const GetChunkResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
+  });
+  const GetGroupArgs = IDL.Record({});
   const GetGroupResponse = IDL.Variant({
     'Success' : IDL.Record({
       'participants' : IDL.Vec(UserId),
@@ -66,29 +96,15 @@ export const idlFactory = ({ IDL }) => {
       'unread_by_any_message_id_ranges' : IDL.Vec(IDL.Vec(MessageIndex)),
     }),
   });
-  const GetMessagesArgs = IDL.Record({
-    'to_index' : MessageIndex,
-    'from_index' : MessageIndex,
-  });
-  const GetMessagesSuccess = IDL.Record({
-    'messages' : IDL.Vec(Message),
-    'latest_message_index' : MessageIndex,
-  });
-  const GetMessagesResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : GetMessagesSuccess,
-  });
-  const GetMessagesByIndexArgs = IDL.Record({
-    'messages' : IDL.Vec(MessageIndex),
-  });
-  const GetMessagesByIndexResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : GetMessagesSuccess,
-  });
   const InviteUsersArgs = IDL.Record({});
   const InviteUsersResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const JoinGroupArgs = IDL.Record({});
-  const JoinGroupResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const JoinGroupArgs = IDL.Record({ 'groupId' : IDL.Principal });
+  const JoinGroupResponse = IDL.Variant({
+    'Blocked' : IDL.Null,
+    'GroupNotPublic' : IDL.Null,
+    'AlreadyInGroup' : IDL.Null,
+    'Success' : IDL.Record({}),
+  });
   const LeaveGroupArgs = IDL.Record({});
   const LeaveGroupResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MakeAdminArgs = IDL.Record({});
@@ -181,18 +197,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
+    'events_by_index' : IDL.Func(
+        [EventsByIndexArgs],
+        [EventsByIndexResponse],
+        ['query'],
+      ),
     'get_chunk' : IDL.Func([GetChunkArgs], [GetChunkResponse], ['query']),
     'get_group' : IDL.Func([GetGroupArgs], [GetGroupResponse], ['query']),
-    'get_messages' : IDL.Func(
-        [GetMessagesArgs],
-        [GetMessagesResponse],
-        ['query'],
-      ),
-    'get_messages_by_index' : IDL.Func(
-        [GetMessagesByIndexArgs],
-        [GetMessagesByIndexResponse],
-        ['query'],
-      ),
     'invite_users' : IDL.Func([InviteUsersArgs], [InviteUsersResponse], []),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),

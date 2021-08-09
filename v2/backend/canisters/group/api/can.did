@@ -17,7 +17,7 @@ type GroupChatEvent =
     variant {
         Message: Message;
         GroupChatCreated: record {
-            name: text;,
+            name: text;
             description: opt text;
             created_by: UserId;
         };
@@ -149,7 +149,7 @@ type InviteUsersResponse =
 
 type JoinGroupArgs =
     record {
-        principal: principal;
+        groupId: principal;
     };
 
 type JoinGroupResponse =
@@ -296,13 +296,13 @@ type EventsSuccess =
 
 type EventsResponse =
     variant {
-        Success: GetMessagesSuccess;
+        Success: EventsSuccess;
         ChatNotFound;
     }; 
 
 type EventsByIndexArgs =
     record {
-        events: vec EventsIndex;
+        events: vec EventIndex;
     };
 
 type EventsByIndexResponse =

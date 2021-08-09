@@ -238,6 +238,44 @@ type Participant =
         };
     };
 
+type UpdatedChatSummary =
+    variant {
+        Direct: UpdatedDirectChatSummary;
+        Group: UpdatedGroupChatSummary;
+    };
+
+type UpdatedDirectChatSummary =
+    record {
+        chat_id: DirectChatId;
+        last_updated: TimestampMillis;
+        latest_read_by_me: opt MessageIndex;
+        latest_read_by_them: opt MessageIndex;
+        latest_message: opt Message;
+    };
+
+type UpdatedGroupChatSummary =
+    record {
+        chat_id: GroupId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        latest_read_by_me: opt MessageIndex;
+        latest_message: opt Message;
+        participants_removed: vec UserId;
+        participants_added: vec Participant;
+        participants_updated: vec Participant;
+    };
+
+type UpdatesResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            chats_added: vec ChatSummary;
+            chats_updated: vec UpdatedChatSummary;
+            chats_removed: vec ChatId;         
+        }
+    };
+
 type ChatSummary =
     variant {
         Direct: DirectChatSummary;
@@ -274,9 +312,16 @@ type ChatId =
         Group: GroupId; 
     };
 
+type EventsArgs =
+    record {
+        user_id: UserId;
+        from_index: EventIndex;
+        to_index: EventIndex;
+    };
+
 type EventsSuccess =
     record {
-        events: vec Event;
+        events: vec EventWrapper;
         latest_event_index: EventIndex;
     };
 
@@ -395,6 +440,7 @@ service: (InitArgs) -> {
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+    updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
     handle_mark_read: (HandleMarkReadArgs) -> (HandleMarkReadResponse);
     handle_message_received: (HandleMessageReceivedArgs) -> (HandleMessageReceivedResponse);

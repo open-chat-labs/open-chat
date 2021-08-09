@@ -22,14 +22,38 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : number };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type DirectChatEvent = { 'Message' : Message };
 export type DirectChatId = Principal;
 export interface DirectChatSummary {
-  'id' : DirectChatId,
   'them' : UserId,
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
+  'chat_id' : DirectChatId,
   'latest_read_by_them' : MessageIndex,
   'latest_message' : Message,
+}
+export type EventIndex = number;
+export interface EventWrapper {
+  'event' : DirectChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
+export interface EventsArgs {
+  'user_id' : UserId,
+  'to_index' : EventIndex,
+  'from_index' : EventIndex,
+}
+export interface EventsByIndexArgs {
+  'user_id' : UserId,
+  'events' : Array<EventIndex>,
+}
+export type EventsByIndexResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccess };
+export type EventsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccess };
+export interface EventsSuccess {
+  'events' : Array<EventWrapper>,
+  'latest_event_index' : EventIndex,
 }
 export interface FileContent {
   'name' : string,
@@ -38,7 +62,6 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export interface GroupChatSummary {
-  'id' : GroupId,
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
@@ -47,13 +70,33 @@ export interface GroupChatSummary {
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'min_visible_message_index' : MessageIndex,
+  'chat_id' : GroupId,
   'latest_message' : [] | [Message],
 }
 export type GroupId = CanisterId;
+export interface HandleMarkReadArgs { 'up_to_message_index' : MessageIndex }
+export type HandleMarkReadResponse = { 'SuccessNoChange' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : null };
+export interface HandleMessageReceivedArgs {
+  'content' : MessageContent,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContextArgs],
+}
+export type HandleMessageReceivedResponse = { 'Success' : null };
 export interface InitArgs {
   'owner' : Principal,
   'notification_canister_ids' : Array<CanisterId>,
 }
+export interface JoinGroupArgs { 'group_chat_id' : GroupId }
+export type JoinGroupResponse = { 'Blocked' : null } |
+  { 'GroupNotFound' : null } |
+  { 'GroupNotPublic' : null } |
+  { 'AlreadyInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface MarkReadArgs {
   'up_to_message_index' : MessageIndex,
   'user_id' : UserId,
@@ -88,18 +131,6 @@ export interface MessagesArgs {
   'user_id' : UserId,
   'to_index' : MessageIndex,
   'from_index' : MessageIndex,
-}
-export interface MessagesByIndexArgs {
-  'messages' : Array<MessageIndex>,
-  'user_id' : UserId,
-}
-export type MessagesByIndexResponse = { 'ChatNotFound' : null } |
-  { 'Success' : MessagesSuccess };
-export type MessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : MessagesSuccess };
-export interface MessagesSuccess {
-  'messages' : Array<Message>,
-  'latest_message_index' : MessageIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -164,6 +195,7 @@ export type SearchAllMessagesResponse = {
 export interface SendMessageArgs {
   'content' : MessageContent,
   'recipient' : UserId,
+  'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContextArgs],
 }
@@ -225,11 +257,18 @@ export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,
   'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
-  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
-  'messages' : (arg_0: MessagesArgs) => Promise<MessagesResponse>,
-  'messages_by_index' : (arg_0: MessagesByIndexArgs) => Promise<
-      MessagesByIndexResponse
+  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
+  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
+      EventsByIndexResponse
     >,
+  'handle_mark_read' : (arg_0: HandleMarkReadArgs) => Promise<
+      HandleMarkReadResponse
+    >,
+  'handle_message_received' : (arg_0: HandleMessageReceivedArgs) => Promise<
+      HandleMessageReceivedResponse
+    >,
+  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
+  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
