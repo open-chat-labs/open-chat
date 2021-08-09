@@ -312,13 +312,6 @@ type ChatId =
         Group: GroupId; 
     };
 
-type EventsArgs =
-    record {
-        user_id: UserId;
-        from_index: EventIndex;
-        to_index: EventIndex;
-    };
-
 type EventsSuccessResult =
     record {
         events: vec EventWrapper;
