@@ -84,7 +84,9 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export interface GroupChatSummary {
+  'participants' : Array<Participant>,
   'name' : string,
+  'description' : string,
   'date_added' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'chat_id' : GroupId,
@@ -186,6 +188,7 @@ export interface Participant {
   'role' : { 'Admin' : null } |
     { 'Standard' : null },
   'user_id' : UserId,
+  'date_added' : TimestampMillis,
 }
 export interface PrivateReplyDetails {
   'content' : MessageContent,

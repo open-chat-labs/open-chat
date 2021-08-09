@@ -1,21 +1,21 @@
 use candid::Principal;
-use group_canister::common::participant::Participant;
-use group_canister::common::role::Role;
 use shared::time::TimestampMillis;
+use shared::types::participant::ParticipantInternal;
+use shared::types::role::Role;
 use shared::types::{MessageIndex, UserId};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct Participants {
-    by_principal: HashMap<Principal, Participant>,
+    by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
 }
 
 impl Participants {
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
-        let participant = Participant {
+        let participant = ParticipantInternal {
             user_id: creator_user_id,
             date_added: now,
             role: Role::Admin,
@@ -42,7 +42,7 @@ impl Participants {
         } else {
             match self.by_principal.entry(principal) {
                 Vacant(e) => {
-                    e.insert(Participant {
+                    e.insert(ParticipantInternal {
                         user_id,
                         date_added: now,
                         role: Role::Participant,
@@ -57,7 +57,7 @@ impl Participants {
         }
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&Participant> {
+    pub fn get(&self, user_id: &UserId) -> Option<&ParticipantInternal> {
         if let Some(p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal(p)
         } else {
@@ -65,7 +65,7 @@ impl Participants {
         }
     }
 
-    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut Participant> {
+    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
         if let Some(&p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal_mut(&p)
         } else {
@@ -73,11 +73,11 @@ impl Participants {
         }
     }
 
-    pub fn get_by_principal(&self, principal: &Principal) -> Option<&Participant> {
+    pub fn get_by_principal(&self, principal: &Principal) -> Option<&ParticipantInternal> {
         self.by_principal.get(principal)
     }
 
-    pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut Participant> {
+    pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut ParticipantInternal> {
         self.by_principal.get_mut(principal)
     }
 

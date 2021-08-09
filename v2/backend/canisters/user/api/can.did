@@ -248,6 +248,7 @@ type UpdatesArgs =
 type Participant =
     record {
         user_id: UserId;
+        date_added: TimestampMillis;
         role: variant {
             Standard;
             Admin;
@@ -262,8 +263,8 @@ type ChatSummary =
 
 type DirectChatSummary =
     record {
-        them: UserId;
         chat_id: DirectChatId;
+        them: UserId;
         latest_message: record {
             index: EventIndex;
             timestamp: TimestampMillis;
@@ -275,8 +276,10 @@ type DirectChatSummary =
 
 type GroupChatSummary =
     record {
-        name: text;
         chat_id: GroupId;
+        name: text;
+        description: text;
+        participants: vec Participant;
         latest_message: opt record {
             index: EventIndex;
             timestamp: TimestampMillis;
