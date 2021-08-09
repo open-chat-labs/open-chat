@@ -22,16 +22,37 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : number };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
-export type DirectChatEvent = { 'Message' : Message };
+export type DirectChatEvent = { 'Message' : DirectMessage };
 export type DirectChatId = Principal;
 export interface DirectChatSummary {
+  'date_created' : TimestampMillis,
   'them' : UserId,
-  'last_updated' : TimestampMillis,
-  'latest_read_by_me' : MessageIndex,
+  'latest_event_index' : EventIndex,
   'chat_id' : DirectChatId,
-  'latest_read_by_them' : MessageIndex,
-  'latest_message' : Message,
+  'latest_message' : {
+    'event' : DirectMessage,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  },
 }
+export interface DirectMessage {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'timestamp' : TimestampMillis,
+  'message_id' : MessageId,
+  'replies_to' : [] | [DirectReplyContext],
+  'message_index' : MessageIndex,
+}
+export type DirectReplyContext = {
+    'Private' : { 'chat_id' : GroupId, 'message_index' : MessageIndex }
+  } |
+  {
+    'Standard' : {
+      'content' : MessageContent,
+      'sent_by_me' : boolean,
+      'message_index' : MessageIndex,
+    }
+  };
 export type EventIndex = number;
 export interface EventWrapper {
   'event' : DirectChatEvent,
@@ -63,18 +84,31 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export interface GroupChatSummary {
-  'participants' : Array<Participant>,
   'name' : string,
-  'description' : string,
-  'last_updated' : TimestampMillis,
-  'public' : boolean,
-  'latest_read_by_me' : MessageIndex,
-  'joined' : TimestampMillis,
-  'min_visible_message_index' : MessageIndex,
+  'date_added' : TimestampMillis,
+  'latest_event_index' : EventIndex,
   'chat_id' : GroupId,
-  'latest_message' : [] | [Message],
+  'latest_message' : [] | [
+    {
+      'event' : GroupMessage,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+    }
+  ],
 }
 export type GroupId = CanisterId;
+export interface GroupMessage {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+  'message_index' : MessageIndex,
+}
+export interface GroupReplyContext {
+  'content' : MessageContent,
+  'user_id' : UserId,
+  'event_index' : EventIndex,
+}
 export interface HandleAddToGroupRequestedArgs { 'added_by' : UserId }
 export type HandleAddToGroupRequestedResponse = { 'Blocked' : null } |
   { 'Success' : HandleAddToGroupRequestedSuccessResult };
@@ -119,14 +153,6 @@ export interface MediaContent {
   'thumbnail_data' : string,
   'caption' : [] | [string],
   'width' : number,
-}
-export interface Message {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'timestamp' : TimestampMillis,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-  'message_index' : MessageIndex,
 }
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
@@ -173,16 +199,6 @@ export interface PutChunkArgs {
 }
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null };
-export type ReplyContext = {
-    'Private' : { 'chat_id' : GroupId, 'message_index' : MessageIndex }
-  } |
-  {
-    'Standard' : {
-      'content' : MessageContent,
-      'sent_by_me' : boolean,
-      'message_index' : MessageIndex,
-    }
-  };
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [GroupId],
   'message_index' : MessageIndex,
@@ -194,7 +210,11 @@ export interface SearchAllMessagesArgs {
 export type SearchAllMessagesResponse = {
     'Success' : {
       'matches' : Array<
-        { 'chat' : CanisterId, 'is_direct' : boolean, 'message' : Message }
+        {
+          'chat' : CanisterId,
+          'is_direct' : boolean,
+          'message' : DirectMessage,
+        }
       >,
     }
   } |
