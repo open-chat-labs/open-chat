@@ -134,11 +134,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
-export interface MessagesArgs {
-  'user_id' : UserId,
-  'to_index' : MessageIndex,
-  'from_index' : MessageIndex,
-}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
