@@ -22,14 +22,39 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : number };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type DirectChatEvent = { 'Message' : Message };
 export type DirectChatId = Principal;
 export interface DirectChatSummary {
-  'id' : DirectChatId,
   'them' : UserId,
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
+  'chat_id' : DirectChatId,
   'latest_read_by_them' : MessageIndex,
   'latest_message' : Message,
+}
+export type EventIndex = number;
+export interface EventWrapper {
+  'event' : DirectChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
+export interface EventsArgs {
+  'user_id' : UserId,
+  'to_index' : EventIndex,
+  'from_index' : EventIndex,
+}
+export interface EventsByIndexArgs {
+  'user_id' : UserId,
+  'events' : Array<EventIndex>,
+}
+export type EventsByIndexResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccessResult };
+export type EventsResponse = { 'ChatNotFound' : null } |
+  { 'NotAuthorised' : null } |
+  { 'Success' : EventsSuccessResult };
+export interface EventsSuccessResult {
+  'events' : Array<EventWrapper>,
+  'latest_event_index' : EventIndex,
 }
 export interface FileContent {
   'name' : string,
@@ -38,7 +63,6 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export interface GroupChatSummary {
-  'id' : GroupId,
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
@@ -47,13 +71,39 @@ export interface GroupChatSummary {
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'min_visible_message_index' : MessageIndex,
+  'chat_id' : GroupId,
   'latest_message' : [] | [Message],
 }
 export type GroupId = CanisterId;
+export interface HandleAddToGroupRequestedArgs { 'added_by' : UserId }
+export type HandleAddToGroupRequestedResponse = { 'Blocked' : null } |
+  { 'Success' : HandleAddToGroupRequestedSuccessResult };
+export interface HandleAddToGroupRequestedSuccessResult {
+  'principal' : Principal,
+}
+export interface HandleMarkReadArgs { 'up_to_message_index' : MessageIndex }
+export type HandleMarkReadResponse = { 'SuccessNoChange' : null } |
+  { 'ChatNotFound' : null } |
+  { 'Success' : null };
+export interface HandleMessageReceivedArgs {
+  'content' : MessageContent,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContextArgs],
+}
+export type HandleMessageReceivedResponse = { 'Success' : null };
 export interface InitArgs {
   'owner' : Principal,
   'notification_canister_ids' : Array<CanisterId>,
 }
+export interface JoinGroupArgs { 'group_chat_id' : GroupId }
+export type JoinGroupResponse = { 'Blocked' : null } |
+  { 'GroupNotFound' : null } |
+  { 'GroupNotPublic' : null } |
+  { 'AlreadyInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface MarkReadArgs {
   'up_to_message_index' : MessageIndex,
   'user_id' : UserId,
@@ -88,18 +138,6 @@ export interface MessagesArgs {
   'user_id' : UserId,
   'to_index' : MessageIndex,
   'from_index' : MessageIndex,
-}
-export interface MessagesByIndexArgs {
-  'messages' : Array<MessageIndex>,
-  'user_id' : UserId,
-}
-export type MessagesByIndexResponse = { 'ChatNotFound' : null } |
-  { 'Success' : MessagesSuccess };
-export type MessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : MessagesSuccess };
-export interface MessagesSuccess {
-  'messages' : Array<Message>,
-  'latest_message_index' : MessageIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -164,6 +202,7 @@ export type SearchAllMessagesResponse = {
 export interface SendMessageArgs {
   'content' : MessageContent,
   'recipient' : UserId,
+  'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContextArgs],
 }
@@ -188,48 +227,30 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
-export type UpdatedChatSummary = { 'Group' : UpdatedGroupChatSummary } |
-  { 'Direct' : UpdatedDirectChatSummary };
-export interface UpdatedDirectChatSummary {
-  'last_updated' : TimestampMillis,
-  'latest_read_by_me' : [] | [MessageIndex],
-  'chat_id' : DirectChatId,
-  'latest_read_by_them' : [] | [MessageIndex],
-  'latest_message' : [] | [Message],
-}
-export interface UpdatedGroupChatSummary {
-  'participants_added' : Array<Participant>,
-  'participants_removed' : Array<UserId>,
-  'name' : [] | [string],
-  'description' : [] | [string],
-  'last_updated' : TimestampMillis,
-  'latest_read_by_me' : [] | [MessageIndex],
-  'chat_id' : GroupId,
-  'participants_updated' : Array<Participant>,
-  'latest_message' : [] | [Message],
-}
 export interface UpdatesArgs {
   'groups' : Array<{ 'last_updated' : TimestampMillis, 'chat_id' : GroupId }>,
   'last_updated' : [] | [TimestampMillis],
 }
-export type UpdatesResponse = {
-    'Success' : {
-      'chats_updated' : Array<UpdatedChatSummary>,
-      'chats_added' : Array<ChatSummary>,
-      'chats_removed' : Array<ChatId>,
-      'timestamp' : TimestampMillis,
-    }
-  };
 export type UserId = CanisterId;
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,
   'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
-  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
-  'messages' : (arg_0: MessagesArgs) => Promise<MessagesResponse>,
-  'messages_by_index' : (arg_0: MessagesByIndexArgs) => Promise<
-      MessagesByIndexResponse
+  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
+  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
+      EventsByIndexResponse
     >,
+  'handle_add_to_group_requested' : (
+      arg_0: HandleAddToGroupRequestedArgs,
+    ) => Promise<HandleAddToGroupRequestedResponse>,
+  'handle_mark_read' : (arg_0: HandleMarkReadArgs) => Promise<
+      HandleMarkReadResponse
+    >,
+  'handle_message_received' : (arg_0: HandleMessageReceivedArgs) => Promise<
+      HandleMessageReceivedResponse
+    >,
+  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
+  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
@@ -238,5 +259,4 @@ export interface _SERVICE {
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<undefined>,
-  'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

@@ -59,6 +59,10 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   const MarkAsOnlineArgs = IDL.Record({});
+  const MarkAsOnlineResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
   const MetricsArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
   const MetricsResponse = IDL.Record({
@@ -75,6 +79,11 @@ export const idlFactory = ({ IDL }) => {
     'active_user_count' : IDL.Nat64,
   });
   const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
+  const RemoveSmsMessagesArgs = IDL.Record({ 'up_to_sms_index' : IDL.Nat64 });
+  const RemoveSmsMessagesResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const ResendCodeArgs = IDL.Record({});
   const ResendCodeResponse = IDL.Variant({
     'AlreadyClaimed' : IDL.Null,
@@ -102,6 +111,20 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
+  });
+  const SmsMessagesArgs = IDL.Record({
+    'max_results' : IDL.Nat64,
+    'from_index' : IDL.Nat64,
+  });
+  const SmsNotification = IDL.Record({
+    'message' : IDL.Text,
+    'phone_number' : IDL.Text,
+  });
+  const SmsMessagesResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'notifications' : IDL.Vec(SmsNotification),
+      'latest_index' : IDL.Nat64,
+    }),
   });
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
@@ -179,12 +202,22 @@ export const idlFactory = ({ IDL }) => {
         [CurrentUserResponse],
         ['query'],
       ),
-    'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [], []),
+    'mark_as_online' : IDL.Func([MarkAsOnlineArgs], [MarkAsOnlineResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
+    'remove_sms_messages' : IDL.Func(
+        [RemoveSmsMessagesArgs],
+        [RemoveSmsMessagesResponse],
+        [],
+      ),
     'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
+    'sms_messages' : IDL.Func(
+        [SmsMessagesArgs],
+        [SmsMessagesResponse],
+        ['query'],
+      ),
     'submit_phone_number' : IDL.Func(
         [SubmitPhoneNumberArgs],
         [SubmitPhoneNumberResponse],

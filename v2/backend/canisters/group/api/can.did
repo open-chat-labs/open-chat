@@ -17,7 +17,7 @@ type GroupChatEvent =
     variant {
         Message: Message;
         GroupChatCreated: record {
-            name: text;,
+            name: text;
             description: opt text;
             created_by: UserId;
         };
@@ -138,7 +138,7 @@ type SetAvatarResponse =
 
 type JoinGroupArgs =
     record {
-        principal: principal;
+        "principal": principal;
     };
 
 type JoinGroupResponse =
@@ -179,13 +179,13 @@ type AddParticipantsArgs =
 type AddParticipantsResponse =
     variant {
         Success;
-        PartialSuccess(AddParticipantsPartialSuccessResult);
-        Failed(AddParticipantsFailedResult);
+        PartialSuccess: AddParticipantsPartialSuccessResult;
+        Failed: AddParticipantsFailedResult;
         NotInGroup;
         NotAuthorized;
     };
 
-type AddParticipantsPartialSuccessResult {
+type AddParticipantsPartialSuccessResult =
     record {
         users_added: vec UserId;
         users_already_in_group: vec UserId;
@@ -194,7 +194,7 @@ type AddParticipantsPartialSuccessResult {
         errors: vec UserId;
     };
 
-type AddParticipantsFailedResult {
+type AddParticipantsFailedResult =
     record {
         users_already_in_group: vec UserId;
         users_blocked_from_group: vec UserId;
@@ -297,7 +297,7 @@ type EventsArgs =
         to_index: EventIndex;
     };
 
-type EventsSuccess =
+type EventsSuccessResult =
     record {
         events: vec EventWrapper;
         latest_event_index: EventIndex;
@@ -305,18 +305,18 @@ type EventsSuccess =
 
 type EventsResponse =
     variant {
-        Success: GetMessagesSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 
 type EventsByIndexArgs =
     record {
-        events: vec EventsIndex;
+        events: vec EventWrapper;
     };
 
 type EventsByIndexResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 

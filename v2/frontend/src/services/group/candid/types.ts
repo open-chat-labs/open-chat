@@ -1,6 +1,25 @@
 import type { Principal } from '@dfinity/principal';
-export type AddParticipantsArgs = {};
-export type AddParticipantsResponse = { 'Success' : null };
+export interface AddParticipantsArgs { 'user_ids' : Array<UserId> }
+export interface AddParticipantsFailedResult {
+  'errors' : Array<UserId>,
+  'users_blocked_from_group' : Array<UserId>,
+  'users_who_blocked_request' : Array<UserId>,
+  'users_already_in_group' : Array<UserId>,
+}
+export interface AddParticipantsPartialSuccessResult {
+  'errors' : Array<UserId>,
+  'users_blocked_from_group' : Array<UserId>,
+  'users_added' : Array<UserId>,
+  'users_who_blocked_request' : Array<UserId>,
+  'users_already_in_group' : Array<UserId>,
+}
+export type AddParticipantsResponse = {
+    'Failed' : AddParticipantsFailedResult
+  } |
+  { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'NotInGroup' : null };
 export interface BlobReference {
   'blob_size' : number,
   'blob_id' : string,
@@ -10,6 +29,25 @@ export interface BlobReference {
 export type BlockUserArgs = {};
 export type BlockUserResponse = { 'Success' : null };
 export type CanisterId = Principal;
+export type EventIndex = number;
+export interface EventWrapper {
+  'event' : GroupChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
+export interface EventsArgs {
+  'to_index' : EventIndex,
+  'from_index' : EventIndex,
+}
+export interface EventsByIndexArgs { 'events' : Array<EventWrapper> }
+export type EventsByIndexResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccessResult };
+export type EventsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : EventsSuccessResult };
+export interface EventsSuccessResult {
+  'events' : Array<EventWrapper>,
+  'latest_event_index' : EventIndex,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
@@ -32,24 +70,20 @@ export type GetGroupResponse = {
       'unread_by_any_message_id_ranges' : Array<Array<MessageIndex>>,
     }
   };
-export interface GetMessagesArgs {
-  'to_index' : MessageIndex,
-  'from_index' : MessageIndex,
-}
-export interface GetMessagesByIndexArgs { 'messages' : Array<MessageIndex> }
-export type GetMessagesByIndexResponse = { 'ChatNotFound' : null } |
-  { 'Success' : GetMessagesSuccess };
-export type GetMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : GetMessagesSuccess };
-export interface GetMessagesSuccess {
-  'messages' : Array<Message>,
-  'latest_message_index' : MessageIndex,
-}
+export type GroupChatEvent = {
+    'GroupChatCreated' : {
+      'name' : string,
+      'description' : [] | [string],
+      'created_by' : UserId,
+    }
+  } |
+  { 'Message' : Message };
 export type GroupId = CanisterId;
-export type InviteUsersArgs = {};
-export type InviteUsersResponse = { 'Success' : null };
-export type JoinGroupArgs = {};
-export type JoinGroupResponse = { 'Success' : null };
+export interface JoinGroupArgs { 'principal' : Principal }
+export type JoinGroupResponse = { 'Blocked' : null } |
+  { 'GroupNotPublic' : null } |
+  { 'AlreadyInGroup' : null } |
+  { 'Success' : {} };
 export type LeaveGroupArgs = {};
 export type LeaveGroupResponse = { 'Success' : null };
 export type MakeAdminArgs = {};
@@ -69,7 +103,6 @@ export interface MediaContent {
 export interface Message {
   'content' : MessageContent,
   'sender' : UserId,
-  'timestamp' : TimestampMillis,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'message_index' : MessageIndex,
@@ -157,13 +190,12 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
+  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
+      EventsByIndexResponse
+    >,
   'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
   'get_group' : (arg_0: GetGroupArgs) => Promise<GetGroupResponse>,
-  'get_messages' : (arg_0: GetMessagesArgs) => Promise<GetMessagesResponse>,
-  'get_messages_by_index' : (arg_0: GetMessagesByIndexArgs) => Promise<
-      GetMessagesByIndexResponse
-    >,
-  'invite_users' : (arg_0: InviteUsersArgs) => Promise<InviteUsersResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,

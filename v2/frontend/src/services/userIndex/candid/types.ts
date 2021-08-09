@@ -50,6 +50,8 @@ export interface InitArgs {
   'service_principals' : Array<Principal>,
 }
 export type MarkAsOnlineArgs = {};
+export type MarkAsOnlineResponse = { 'Success' : null } |
+  { 'UserNotFound' : null };
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'cycles_balance' : bigint,
@@ -72,6 +74,9 @@ export interface PartialUserSummary {
   'seconds_since_last_online' : number,
 }
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
+export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
+export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type ResendCodeArgs = {};
 export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
@@ -86,6 +91,17 @@ export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'Success' : null } |
   { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null };
+export interface SmsMessagesArgs {
+  'max_results' : bigint,
+  'from_index' : bigint,
+}
+export type SmsMessagesResponse = {
+    'Success' : {
+      'notifications' : Array<SmsNotification>,
+      'latest_index' : bigint,
+    }
+  };
+export interface SmsNotification { 'message' : string, 'phone_number' : string }
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
@@ -146,12 +162,16 @@ export interface _SERVICE {
       CreateCanisterResponse
     >,
   'current_user' : (arg_0: CurrentUserArgs) => Promise<CurrentUserResponse>,
-  'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<undefined>,
+  'mark_as_online' : (arg_0: MarkAsOnlineArgs) => Promise<MarkAsOnlineResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'notify_balance' : (arg_0: NotifyBalanceArgs) => Promise<undefined>,
+  'remove_sms_messages' : (arg_0: RemoveSmsMessagesArgs) => Promise<
+      RemoveSmsMessagesResponse
+    >,
   'resend_code' : (arg_0: ResendCodeArgs) => Promise<ResendCodeResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
   'set_username' : (arg_0: SetUsernameArgs) => Promise<SetUsernameResponse>,
+  'sms_messages' : (arg_0: SmsMessagesArgs) => Promise<SmsMessagesResponse>,
   'submit_phone_number' : (arg_0: SubmitPhoneNumberArgs) => Promise<
       SubmitPhoneNumberResponse
     >,

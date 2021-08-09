@@ -274,17 +274,25 @@ type ChatId =
         Group: GroupId; 
     };
 
-type EventsSuccess =
+type EventsSuccessResult =
     record {
-        events: vec Event;
+        events: vec EventWrapper;
         latest_event_index: EventIndex;
+    };
+
+type EventsArgs =
+    record {
+        user_id: UserId;
+        from_index: EventIndex;
+        to_index: EventIndex;
     };
 
 type EventsResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
-    }; 
+        NotAuthorised;
+    };
 
 type EventsByIndexArgs =
     record {
@@ -294,7 +302,7 @@ type EventsByIndexArgs =
 
 type EventsByIndexResponse =
     variant {
-        Success: EventsSuccess;
+        Success: EventsSuccessResult;
         ChatNotFound;
     }; 
 
@@ -343,7 +351,7 @@ type HandleAddToGroupRequestedResponse =
 
 type HandleAddToGroupRequestedSuccessResult =
     record {
-        principal: principal;
+        "principal": principal;
     };
 
 type HandleMarkReadArgs =
