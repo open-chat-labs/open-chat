@@ -8,8 +8,8 @@ pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: Events,
-    pub read_up_to: MessageIndex,
-    pub read_up_to_by_them: MessageIndex,
+    pub latest_read_by_me: MessageIndex,
+    pub latest_read_by_them: MessageIndex,
 }
 
 impl DirectChat {
@@ -19,8 +19,8 @@ impl DirectChat {
             them,
             date_created: now,
             events: Events::default(),
-            read_up_to: MessageIndex::default(),
-            read_up_to_by_them: MessageIndex::default(),
+            latest_read_by_me: MessageIndex::default(),
+            latest_read_by_them: MessageIndex::default(),
         }
     }
 

@@ -22,6 +22,8 @@ fn chats_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     latest_message: c.events.latest_message().unwrap(),
                     latest_event_index: c.events.latest_event_index(),
                     date_created: c.date_created,
+                    latest_read_by_me: c.latest_read_by_me,
+                    latest_read_by_them: c.latest_read_by_them,
                 })
             })
             .sorted_unstable_by_key(|s| s.display_date())
