@@ -18,9 +18,9 @@
 <Panel left {hideLeft}>
     {#if $machine.matches({ loaded_chats: "new_chat" })}
         <NewChat {machine} />
-    {:else if groupMachine !== undefined && $groupMachine.matches("group_form")}
+    {:else if groupMachine !== undefined && $groupMachine.matches( { data_collection: "group_form" } )}
         <NewGroup machine={groupMachine} />
-    {:else if groupMachine !== undefined && $groupMachine.matches("choosing_participants")}
+    {:else if groupMachine !== undefined && $groupMachine.matches( { data_collection: "choosing_participants" } )}
         <ChooseParticipants machine={groupMachine} />
     {:else if $machine.matches({ loaded_chats: "join_group" })}
         <JoinGroup {machine} />

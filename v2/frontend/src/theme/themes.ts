@@ -108,6 +108,7 @@ export interface Theme {
         disabled: string;
         spinner: string;
         "disabled-txt": string;
+        "disabled-bd": string;
     };
 
     link: {
@@ -278,6 +279,7 @@ const defaultTheme = {
         disabled: "#cccccc",
         spinner: "#ffffff",
         "disabled-txt": "#999999",
+        "disabled-bd": "transparent",
     },
 
     link: {
@@ -447,6 +449,7 @@ export const themes: Themes = {
             disabled: dark20,
             spinner: dark60,
             "disabled-txt": "#999999",
+            "disabled-bd": "#999999",
         },
 
         link: {

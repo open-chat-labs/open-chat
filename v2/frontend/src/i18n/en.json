@@ -15,6 +15,8 @@
     "createNewGroup": "Create a new group",
     "submitNewGroup": "Create group",
     "chooseParticipants": "Choose participants",
+    "confirmParticipants": "Confirm participants",
+    "skip": "Skip",
     "historyVisible": "visible chat history",
     "historyOnInfo": "Full chat history will be visible to new joiners. Careful now! 🤐",
     "historyOffInfo": "Relax - new joiners will only see messages arriving after thay join. 🤫",

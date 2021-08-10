@@ -89,86 +89,93 @@
     bind:this={fileinput} />
 
 <form class="group-form" on:submit|preventDefault={chooseParticipants}>
-    <div class="photo-section sub-section" on:click={addPhoto}>
-        <div class="photo-icon">
-            {#if avatar}
-                <div class="avatar" style={`background-image: url(${avatar})`} />
-            {:else}
-                <Camera size={"3em"} color={"#aaa"} />
-            {/if}
+    <div class="form-fields">
+        <div class="photo-section sub-section" on:click={addPhoto}>
+            <div class="photo-icon">
+                {#if avatar}
+                    <div class="avatar" style={`background-image: url(${avatar})`} />
+                {:else}
+                    <Camera size={"3em"} color={"#aaa"} />
+                {/if}
+            </div>
+            <p>{$_("addGroupPhoto")}</p>
         </div>
-        <p>{$_("addGroupPhoto")}</p>
+
+        <Input
+            invalid={false}
+            autofocus={false}
+            bind:value={groupName}
+            minlength={MIN_LENGTH}
+            maxlength={MAX_LENGTH}
+            placeholder={$_("newGroupName")} />
+
+        <TextArea
+            invalid={false}
+            bind:value={groupDesc}
+            maxlength={MAX_DESC_LENGTH}
+            placeholder={$_("newGroupDesc")} />
+
+        <div class="sub-section">
+            <div class="scope">
+                <span
+                    class="scope-label"
+                    class:selected={!isPublic}
+                    on:click={() => (isPublic = false)}>{$_("private")}</span>
+
+                <Checkbox
+                    id="is-public"
+                    toggle={true}
+                    on:change={toggleScope}
+                    label={$_("isPublic")}
+                    checked={isPublic} />
+
+                <span
+                    class="scope-label"
+                    class:selected={isPublic}
+                    on:click={() => (isPublic = true)}>{$_("public")}</span>
+            </div>
+
+            <div class="info">
+                {#if isPublic}
+                    <p>
+                        {$_("publicGroupInfo")}
+                    </p>
+                    <p>
+                        {$_("publicGroupUnique")}
+                    </p>
+                {:else}
+                    <p>
+                        {$_("privateGroupInfo")}
+                    </p>
+                {/if}
+            </div>
+        </div>
+
+        <div class="sub-section">
+            <div class="history">
+                <Checkbox
+                    id="history-visible"
+                    disabled={isPublic}
+                    on:change={() => (historyVisible = !historyVisible)}
+                    label={$_("historyVisible")}
+                    checked={historyVisible} />
+            </div>
+            <div class="info">
+                {#if historyVisible}
+                    <p>
+                        {$_("historyOnInfo")}
+                    </p>
+                {:else}
+                    <p>
+                        {$_("historyOffInfo")}
+                    </p>
+                {/if}
+            </div>
+        </div>
     </div>
-
-    <Input
-        invalid={false}
-        autofocus={false}
-        bind:value={groupName}
-        minlength={MIN_LENGTH}
-        maxlength={MAX_LENGTH}
-        placeholder={$_("newGroupName")} />
-
-    <TextArea
-        invalid={false}
-        bind:value={groupDesc}
-        maxlength={MAX_DESC_LENGTH}
-        placeholder={$_("newGroupDesc")} />
-
-    <div class="sub-section">
-        <div class="scope">
-            <span class="scope-label" class:selected={!isPublic} on:click={() => (isPublic = false)}
-                >{$_("private")}</span>
-
-            <Checkbox
-                id="is-public"
-                toggle={true}
-                on:change={toggleScope}
-                label={$_("isPublic")}
-                checked={isPublic} />
-
-            <span class="scope-label" class:selected={isPublic} on:click={() => (isPublic = true)}
-                >{$_("public")}</span>
-        </div>
-
-        <div class="info">
-            {#if isPublic}
-                <p>
-                    {$_("publicGroupInfo")}
-                </p>
-                <p>
-                    {$_("publicGroupUnique")}
-                </p>
-            {:else}
-                <p>
-                    {$_("privateGroupInfo")}
-                </p>
-            {/if}
-        </div>
+    <div class="cta">
+        <Button fill={true} disabled={!valid}>{$_("submitNewGroup")}</Button>
     </div>
-
-    <div class="sub-section">
-        <div class="history">
-            <Checkbox
-                id="history-visible"
-                disabled={isPublic}
-                on:change={() => (historyVisible = !historyVisible)}
-                label={$_("historyVisible")}
-                checked={historyVisible} />
-        </div>
-        <div class="info">
-            {#if historyVisible}
-                <p>
-                    {$_("historyOnInfo")}
-                </p>
-            {:else}
-                <p>
-                    {$_("historyOffInfo")}
-                </p>
-            {/if}
-        </div>
-    </div>
-
-    <Button fill={true} disabled={!valid}>{$_("submitNewGroup")}</Button>
 </form>
 
 <style type="text/scss">
@@ -178,6 +185,11 @@
     }
     .close {
         flex: 0 0 30px;
+    }
+
+    .cta {
+        position: sticky;
+        bottom: 0;
     }
 
     .photo-section {
@@ -207,10 +219,13 @@
 
     .group-form {
         flex: 1;
-        padding: $sp4;
         background-color: var(--section-bg);
         color: var(--section-txt);
+        overflow: auto;
+    }
 
+    .form-fields {
+        padding: $sp4;
         @include size-below(xs) {
             padding: $sp3;
         }

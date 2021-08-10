@@ -60,64 +60,85 @@ const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
     id: "group_machine",
-    initial: "group_form",
+    type: "parallel",
+    initial: "data_collection",
     states: {
-        done: { type: "final" },
-        group_form: {
-            on: {
-                CANCEL_NEW_GROUP: "done",
-                CHOOSE_PARTICIPANTS: {
-                    target: "choosing_participants",
-                    actions: assign((_, ev) => ({
-                        candidateGroup: ev.data,
-                    })),
-                },
+        canister_creation: {
+            initial: "idle",
+            states: {
+                creating: {},
+                created: {},
+                idle: {},
             },
         },
-        choosing_participants: {
-            on: {
-                CANCEL_CHOOSE_PARTICIPANTS: "group_form",
-                REMOVE_PARTICIPANT: {
-                    // todo
+        data_collection: {
+            initial: "group_form",
+            states: {
+                done: { type: "final" },
+                group_form: {
+                    on: {
+                        CANCEL_NEW_GROUP: "done",
+                        CHOOSE_PARTICIPANTS: {
+                            target: "choosing_participants",
+                            actions: assign((_, ev) => ({
+                                candidateGroup: ev.data,
+                            })),
+                        },
+                    },
                 },
-                "error.platform.userSearchMachine": "..unexpected_error",
-            },
-            invoke: {
-                id: "userSearchMachine",
-                src: userSearchMachine,
-                data: (ctx, _) => {
-                    return {
-                        serviceContainer: ctx.serviceContainer,
-                        searchTerm: "",
-                        users: [],
-                        error: undefined,
-                    };
-                },
-                onDone: {
-                    target: "choosing_participants",
-                    actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                        return {
-                            candidateGroup: {
-                                ...ctx.candidateGroup,
-                                participants: [
-                                    ...ctx.candidateGroup.participants,
-                                    {
-                                        role: "standard",
-                                        user: ev.data,
+                choosing_participants: {
+                    on: {
+                        CANCEL_CHOOSE_PARTICIPANTS: "group_form",
+                        REMOVE_PARTICIPANT: {
+                            actions: assign((ctx, ev) => ({
+                                candidateGroup: {
+                                    ...ctx.candidateGroup,
+                                    participants: ctx.candidateGroup.participants.filter(
+                                        (p) => p.user.userId !== ev.data
+                                    ),
+                                },
+                            })),
+                        },
+                        "error.platform.userSearchMachine": "..unexpected_error",
+                    },
+                    invoke: {
+                        id: "userSearchMachine",
+                        src: userSearchMachine,
+                        data: (ctx, _) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                                searchTerm: "",
+                                users: [],
+                                error: undefined,
+                            };
+                        },
+                        onDone: {
+                            target: "choosing_participants",
+                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                return {
+                                    candidateGroup: {
+                                        ...ctx.candidateGroup,
+                                        participants: [
+                                            ...ctx.candidateGroup.participants,
+                                            {
+                                                role: "standard",
+                                                user: ev.data,
+                                            },
+                                        ],
                                     },
-                                ],
-                            },
-                        };
-                    }),
-                },
-                onError: {
-                    internal: true,
-                    target: "..unexpected_error",
-                    actions: [
-                        assign({
-                            error: (_, { data }) => data,
-                        }),
-                    ],
+                                };
+                            }),
+                        },
+                        onError: {
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
+                    },
                 },
             },
         },

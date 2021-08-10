@@ -50,7 +50,7 @@
             background: var(--button-disabled);
             color: var(--button-disabled-txt);
             cursor: not-allowed;
-            border: 1px solid var(--button-disabled-txt);
+            border: 1px solid var(--button-disabled-bd);
         }
 
         &.secondary {
