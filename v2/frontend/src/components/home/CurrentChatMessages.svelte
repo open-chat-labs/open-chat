@@ -204,7 +204,7 @@
                         user={$machine.context.user}
                         me={evt.event.kind === "message" &&
                             $machine.context.user?.userId === evt.event.sender}
-                        showStem={i + 1 === userGroup.length}
+                        last={i + 1 === userGroup.length}
                         userLookup={$machine.context.userLookup}
                         on:chatWith
                         on:goToMessage={goToMessage}

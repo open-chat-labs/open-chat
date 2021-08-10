@@ -28,7 +28,7 @@ function mockEvent(index: number): EventWrapper {
 }
 
 function mockTextMessage(index: number): Message {
-    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    const sender = index % 4 === 0 ? "abcdefg" : "qwxyz";
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     return {
         kind: "message",

@@ -29,11 +29,11 @@
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let msg: Message;
-    export let showStem: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
     export let index: number;
     export let timestamp: bigint;
+    export let last: boolean;
 
     let confirmed: boolean = true; // todo - where does this come from
     let read: boolean = true; // todo - where does this come from
@@ -63,7 +63,7 @@
 </script>
 
 <div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
-    <div class="chat-message" class:me class:showStem class:rtl={$rtlStore}>
+    <div class="chat-message" class:me class:last class:rtl={$rtlStore}>
         {#if groupChat && !me}
             <Link on:click={chatWithUser} underline="hover">
                 <h4 class="username">{username}</h4>
@@ -115,7 +115,7 @@
             </MenuIcon>
         </div>
     </div>
-    {#if groupChat && !me && showStem}
+    {#if groupChat && !me && last}
         <span class="avatar">
             <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Small} />
 
@@ -128,7 +128,6 @@
 
 <style type="text/scss">
     $size: 10px;
-    $stem-offset: 30px;
 
     .debug {
         margin-top: 10px;
@@ -208,17 +207,8 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
-        margin-bottom: $sp2;
-        border-radius: $sp4;
-
-        &.showStem {
-            margin-bottom: $sp4;
-            border-radius: $sp4 $sp4 $sp4 0;
-        }
-
-        &.rtl.showStem {
-            border-radius: $sp4 $sp4 0 $sp4;
-        }
+        margin-bottom: $sp3;
+        border-radius: $sp5;
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -227,101 +217,34 @@
             }
         }
 
+        &.last {
+            margin-bottom: $sp5;
+            border-radius: $sp5 $sp5 $sp5 0;
+        }
+
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
             border-color: var(--currentChat-msg-me-bd);
-            border-radius: $sp4;
 
-            &.showStem {
-                border-radius: $sp4 $sp4 0 $sp4;
-            }
-
-            &.rtl.showStem {
-                border-radius: $sp4 $sp4 $sp4 0;
-            }
             &:hover {
                 background-color: var(--currentChat-msg-me-hv);
             }
-        }
 
-        &.showStem:after {
-            content: "";
-            position: absolute;
-            border-style: solid;
-            border-width: $size $size 0;
-            border-color: var(--currentChat-msg-bg) transparent;
-            display: block;
-            width: 0;
-            @include z-index("bubble-stem");
-            bottom: -1px;
-            transform: rotate(135deg) translateX(9px);
-            left: 0;
-        }
-
-        &.showStem.rtl:after {
-            right: -13px;
-            bottom: -14px;
-            transform: rotate(225deg) translateX(9px);
-            left: unset;
-        }
-
-        &.showStem.me {
-            &:after {
-                transition: border-color ease-in-out 200ms;
-                border-color: var(--currentChat-msg-me-bd) transparent;
-                right: -13px;
-                bottom: -14px;
-                transform: rotate(225deg) translateX(9px);
-                left: unset;
+            &.last {
+                border-radius: $sp5 $sp5 0 $sp5;
             }
-            &.rtl:after {
-                left: 0;
-                bottom: -1px;
-                transform: rotate(135deg) translateX(9px);
-                right: unset;
+        }
+
+        &.rtl {
+            &.last {
+                border-radius: $sp5 $sp5 0 $sp5;
             }
-            &:hover {
-                &:after {
-                    border-color: var(--currentChat-msg-me-hv) transparent;
+
+            &.me {
+                &.last {
+                    border-radius: $sp5 $sp5 $sp5 0;
                 }
-            }
-        }
-
-        &.showStem:before {
-            content: "";
-            position: absolute;
-            border-style: solid;
-            border-width: $size $size 0;
-            border-color: var(--currentChat-msg-bd) transparent;
-            display: block;
-            width: 0;
-            @include z-index("bubble-stem");
-            transform: rotate(135deg) scale(1.2) translateX($size);
-            bottom: -1px;
-            left: 0;
-        }
-
-        &.showStem.rtl:before {
-            right: -15px;
-            left: unset;
-            bottom: -17px;
-            transform: rotate(225deg) scale(1.1) translateX($size);
-        }
-
-        &.showStem.me {
-            &:before {
-                right: -15px;
-                left: unset;
-                border-color: var(--currentChat-msg-me-bd) transparent;
-                bottom: -17px;
-                transform: rotate(225deg) scale(1.1) translateX($size);
-            }
-            &.rtl:before {
-                left: 0;
-                bottom: -1px;
-                transform: rotate(135deg) scale(1.2) translateX($size);
-                right: unset;
             }
         }
     }

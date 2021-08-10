@@ -4,19 +4,13 @@
     import ChatMessage from "./ChatMessage.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatSummary, EventWrapper } from "../../domain/chat/chat";
-    import { afterUpdate } from "svelte";
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let event: EventWrapper;
-    export let showStem: boolean;
+    export let last: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
-
-    // afterUpdate(() => {
-    //     // todo - keep an eye on this
-    //     console.log("updating ChatEvent component");
-    // });
 </script>
 
 {#if event.event.kind === "message"}
@@ -24,8 +18,8 @@
         {chatSummary}
         {user}
         {me}
-        {showStem}
         {userLookup}
+        {last}
         on:chatWith
         on:goToMessage
         index={event.index}
