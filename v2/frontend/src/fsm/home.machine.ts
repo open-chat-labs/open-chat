@@ -435,10 +435,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 new_chat: {
                     entry: log("entering new chat"),
-                    exit: assign((_, ev) => {
-                        console.log("exiting new chat: ", ev);
-                        return {};
-                    }),
                     on: {
                         // todo - actually we would like to go back to where we were
                         CANCEL_NEW_CHAT: "no_chat_selected",
