@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { DirectChatSummary } from "../domain/chat/chat";
+import type { DirectChatSummary, GroupChatSummary } from "../domain/chat/chat";
 import { homeMachine } from "./home.machine";
 import { testTransition } from "./machine.spec.utils";
 
@@ -14,6 +14,26 @@ const directChat: DirectChatSummary = {
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),
+};
+
+const groupChat: GroupChatSummary = {
+    kind: "group_chat",
+    name: "my group chat",
+    description: "some group or other",
+    participants: [
+        {
+            role: "standard",
+            userId: "123456",
+        },
+    ],
+    public: true,
+    joined: BigInt(+new Date()),
+    minVisibleMessageIndex: 0,
+    chatId: "123456",
+    latestReadByMe: 0,
+    latestMessage: undefined,
+    latestEventIndex: 0,
+    lastUpdated: BigInt(+new Date()),
 };
 
 describe("home machine transitions", () => {
@@ -112,6 +132,19 @@ describe("home machine transitions", () => {
     test("new chat clicked", () => {
         testTransition(homeMachine, { loaded_chats: "no_chat_selected" }, "NEW_CHAT", {
             loaded_chats: "new_chat",
+        });
+    });
+
+    test("new group received", () => {
+        const ctx = testTransition(
+            homeMachine,
+            { loaded_chats: "new_group" },
+            { type: "GROUP_CHAT_CREATED", data: groupChat },
+            { loaded_chats: "new_group" }
+        );
+        expect(ctx.chatSummaries.length).toBe(1);
+        expect(ctx.chatSummaries[0]).toMatchObject({
+            chatId: "123456",
         });
     });
 

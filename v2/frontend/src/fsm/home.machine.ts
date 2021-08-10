@@ -11,7 +11,7 @@ import {
     spawn,
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary, DirectChatSummary } from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary, GroupChatSummary } from "../domain/chat/chat";
 import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -48,6 +48,7 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "GROUP_CHAT_CREATED"; data: GroupChatSummary }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
@@ -56,6 +57,8 @@ export type HomeEvents =
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
     | { type: "error.platform.getUpdates"; data: Error }
+    | { type: "done.invoke.groupMachine"; data: GroupChatSummary }
+    | { type: "error.platform.groupMachine"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
@@ -397,6 +400,16 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     },
                 },
                 new_group: {
+                    on: {
+                        // todo - bit worried that there may be a race condition here
+                        GROUP_CHAT_CREATED: {
+                            actions: assign((ctx, ev: DoneInvokeEvent<GroupChatSummary>) => {
+                                return {
+                                    chatSummaries: [ev.data, ...ctx.chatSummaries],
+                                };
+                            }),
+                        },
+                    },
                     invoke: {
                         id: "groupMachine",
                         src: groupMachine,
@@ -407,14 +420,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 error: undefined,
                             };
                         },
-                        onDone: {
-                            target: "no_chat_selected",
-                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                                // todo - do we need to do anything here or will it all be done in the
-                                // group machine
-                                return {};
-                            }),
-                        },
+                        onDone: { target: "no_chat_selected" },
                         onError: {
                             // todo - as in many other cases, this needs sorting out properly
                             internal: true,

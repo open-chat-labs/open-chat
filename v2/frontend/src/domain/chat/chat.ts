@@ -1,5 +1,5 @@
 import type { Principal } from "@dfinity/principal";
-import type { PartialUserSummary } from "../user/user";
+import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
 
@@ -171,3 +171,19 @@ export type GroupChatSummary = ChatSummaryCommon & {
     joined: bigint;
     minVisibleMessageIndex: number;
 };
+
+export type CandidateParticipant = {
+    role: ParticipantRole;
+    user: UserSummary;
+};
+
+export type CandidateGroupChat = {
+    name: string;
+    description: string;
+    historyVisible: boolean;
+    isPublic: boolean;
+    participants: CandidateParticipant[];
+};
+
+// todo - there are all sorts of error conditions here that we need to deal with but - later
+export type CreateGroupChatResponse = string;

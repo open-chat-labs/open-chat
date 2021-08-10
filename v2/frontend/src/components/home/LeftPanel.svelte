@@ -14,8 +14,10 @@
 
     $: groupMachine = $machine.children.groupMachine as ActorRefFrom<GroupMachine>;
 
-    $: console.log("GroupMachine: ", groupMachine && $groupMachine.value);
-    $: console.log("HomeMachine: ", $machine.value);
+    $: choosingParticipants =
+        groupMachine !== undefined &&
+        ($groupMachine.matches({ data_collection: "choosing_participants" }) ||
+            $groupMachine.matches({ data_collection: "adding_participants" }));
 </script>
 
 <Panel left {hideLeft}>
@@ -23,7 +25,7 @@
         <NewChat {machine} />
     {:else if groupMachine !== undefined && $groupMachine.matches( { data_collection: "group_form" } )}
         <NewGroup machine={groupMachine} />
-    {:else if groupMachine !== undefined && $groupMachine.matches( { data_collection: "choosing_participants" } )}
+    {:else if choosingParticipants}
         <ChooseParticipants machine={groupMachine} />
     {:else if $machine.matches({ loaded_chats: "join_group" })}
         <JoinGroup {machine} />

@@ -14,26 +14,14 @@ import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent }
 import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ParticipantRole } from "../domain/chat/chat";
+import type { CandidateGroupChat } from "../domain/chat/chat";
+import { sendParent } from "xstate/lib/actions";
 
 export interface GroupContext {
-    serviceContainer?: ServiceContainer;
-    candidateGroup: CandidateGroup;
+    serviceContainer: ServiceContainer;
+    candidateGroup: CandidateGroupChat;
     error?: Error;
 }
-
-export type CandidateParticipant = {
-    role: ParticipantRole;
-    user: UserSummary;
-};
-
-export type CandidateGroup = {
-    name: string;
-    description: string;
-    historyVisible: boolean;
-    isPublic: boolean;
-    participants: CandidateParticipant[];
-};
 
 export const nullGroup = {
     name: "",
@@ -46,23 +34,27 @@ export const nullGroup = {
 export type GroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
     | { type: "COMPLETE" }
-    | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroup }
+    | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroupChat }
     | { type: "CANCEL_CHOOSE_PARTICIPANTS" }
     | { type: "SKIP_CHOOSE_PARTICIPANTS" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
-    | { type: "error.platform.userSearchMachine"; data: Error };
+    | { type: "error.platform.userSearchMachine"; data: Error }
+    | { type: "done.invoke.createGroup"; data: string }
+    | { type: "error.platform.createGroup"; data: Error };
 
 const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
-    guards: {},
-    services: {},
+    services: {
+        createGroup: (ctx, _) => {
+            return ctx.serviceContainer.createGroupChat(ctx.candidateGroup);
+        },
+    },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
     id: "group_machine",
     type: "parallel",
-    initial: "data_collection",
     states: {
         canister_creation: {
             initial: "idle",
@@ -114,6 +106,44 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                         },
                     },
                 },
+                adding_participants: {
+                    invoke: {
+                        id: "createGroup",
+                        src: "createGroup",
+                        onDone: {
+                            target: "done",
+                            actions: sendParent((ctx, ev: DoneInvokeEvent<string>) => {
+                                const now = BigInt(+new Date());
+                                return {
+                                    type: "GROUP_CHAT_CREATED",
+                                    data: {
+                                        kind: "group_chat",
+                                        name: ctx.candidateGroup.name,
+                                        description: ctx.candidateGroup.description,
+                                        participants: ctx.candidateGroup.participants.map((p) => ({
+                                            role: p.role,
+                                            userId: p.user.userId,
+                                        })),
+                                        public: ctx.candidateGroup.isPublic,
+                                        joined: now,
+                                        minVisibleMessageIndex: 0,
+                                        chatId: ev.data,
+                                        latestReadByMe: 0,
+                                        latestMessage: undefined,
+                                        latestEventIndex: 0,
+                                        lastUpdated: now,
+                                    },
+                                };
+                            }),
+                        },
+                        onError: {
+                            target: "unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
+                },
                 choosing_participants: {
                     on: {
                         CANCEL_CHOOSE_PARTICIPANTS: "group_form",
@@ -129,12 +159,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                         },
                         "error.platform.userSearchMachine": "..unexpected_error",
                         COMPLETE: {
-                            // canister will be created if we recieve this, we may or may not need to
-                            // add some participants to the group, after which we will move to the done state
-                            // todo - we need to decide when we will actually refresh the chats list.
-                            // perhaps we don't need to and we just pass the created group chat back to the
-                            // parent machine?
-                            target: "done",
+                            target: "adding_participants",
                         },
                     },
                     invoke: {
@@ -176,6 +201,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                         },
                     },
                 },
+                unexpected_error: {},
             },
         },
     },
