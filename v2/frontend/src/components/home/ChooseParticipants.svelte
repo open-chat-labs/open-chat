@@ -25,6 +25,10 @@
         machine.send({ type: "CANCEL_CHOOSE_PARTICIPANTS" });
     }
 
+    function complete() {
+        machine.send({ type: "COMPLETE" });
+    }
+
     function deleteParticipant(ev: CustomEvent<CandidateParticipant>): void {
         console.log("removing participant: ", ev.detail.user.userId);
         machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail.user.userId });
@@ -66,7 +70,11 @@
     </div>
 
     <div class="cta">
-        <Button fill={true}>{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
+        <Button
+            disabled={$machine.matches({ canister_creation: "creating" })}
+            loading={$machine.matches({ canister_creation: "creating" })}
+            on:click={complete}
+            fill={true}>{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
     </div>
 </div>
 

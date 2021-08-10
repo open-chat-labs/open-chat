@@ -174,7 +174,11 @@
         </div>
     </div>
     <div class="cta">
-        <Button fill={true} disabled={!valid}>{$_("submitNewGroup")}</Button>
+        <Button
+            fill={true}
+            disabled={!valid || $machine.matches({ canister_creation: "creating" })}
+            loading={$machine.matches({ canister_creation: "creating" })}
+            >{$_("submitNewGroup")}</Button>
     </div>
 </form>
 

@@ -13,6 +13,9 @@
     export let hideLeft = false;
 
     $: groupMachine = $machine.children.groupMachine as ActorRefFrom<GroupMachine>;
+
+    $: console.log("GroupMachine: ", groupMachine && $groupMachine.value);
+    $: console.log("HomeMachine: ", $machine.value);
 </script>
 
 <Panel left {hideLeft}>

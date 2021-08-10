@@ -45,6 +45,7 @@ export const nullGroup = {
 
 export type GroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
+    | { type: "COMPLETE" }
     | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroup }
     | { type: "CANCEL_CHOOSE_PARTICIPANTS" }
     | { type: "SKIP_CHOOSE_PARTICIPANTS" }
@@ -66,9 +67,36 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
         canister_creation: {
             initial: "idle",
             states: {
-                creating: {},
-                created: {},
-                idle: {},
+                creating: {
+                    // todo - for now simulate the creation of the canister
+                    after: {
+                        5000: "created",
+                    },
+                },
+                created: {
+                    type: "final",
+                    // todo - we *probably* want to do something slightly different if the user
+                    // updates a group after we have already created it
+                    on: {
+                        CHOOSE_PARTICIPANTS: {
+                            target: "creating",
+                            actions: assign((_, ev) => ({
+                                candidateGroup: ev.data,
+                            })),
+                        },
+                    },
+                },
+                idle: {
+                    // kick off the creation of the group canister
+                    on: {
+                        CHOOSE_PARTICIPANTS: {
+                            target: "creating",
+                            actions: assign((_, ev) => ({
+                                candidateGroup: ev.data,
+                            })),
+                        },
+                    },
+                },
             },
         },
         data_collection: {
@@ -100,6 +128,14 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                             })),
                         },
                         "error.platform.userSearchMachine": "..unexpected_error",
+                        COMPLETE: {
+                            // canister will be created if we recieve this, we may or may not need to
+                            // add some participants to the group, after which we will move to the done state
+                            // todo - we need to decide when we will actually refresh the chats list.
+                            // perhaps we don't need to and we just pass the created group chat back to the
+                            // parent machine?
+                            target: "done",
+                        },
                     },
                     invoke: {
                         id: "userSearchMachine",
