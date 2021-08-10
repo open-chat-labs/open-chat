@@ -124,7 +124,6 @@
         {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
             <LeftPanel
                 {machine}
-                hideLeft={params.chatId !== null}
                 on:logout={logout}
                 on:joinGroup={joinGroup}
                 on:newGroup={newGroup}

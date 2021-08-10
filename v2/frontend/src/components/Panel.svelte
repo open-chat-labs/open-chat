@@ -3,10 +3,9 @@
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
-    export let hideLeft: boolean = false;
 </script>
 
-<section class:left class:right class:middle class:hideLeft class:rtl={$rtlStore}>
+<section class:left class:right class:middle class:rtl={$rtlStore}>
     <slot />
 </section>
 
@@ -32,9 +31,6 @@
             }
             @include size-below(xs) {
                 padding: 0;
-                &.hideLeft {
-                    width: 100%;
-                }
                 &.rtl {
                     padding: 0;
                 }
@@ -56,14 +52,8 @@
             @include z-index("left-panel");
             @include size-below(xs) {
                 width: 100%;
-                &.hideLeft {
-                    left: -600px;
-                    &.rtl {
-                        right: -600px;
-                    }
-                }
+                padding: 0;
             }
-            // background: rgba(255, 255, 255, 0.03);
         }
 
         &.right {

@@ -88,7 +88,7 @@
     }
 
     .cta {
-        flex: 0 0 45px;
+        flex: 0 0 57px;
     }
 
     .pill {
@@ -103,6 +103,9 @@
         flex-direction: column;
         justify-content: space-around;
         overflow: auto;
+        @include size-below(xs) {
+            background-color: transparent;
+        }
     }
 
     .form-fields {

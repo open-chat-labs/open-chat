@@ -194,6 +194,7 @@
     .cta {
         position: sticky;
         bottom: 0;
+        height: 57px;
     }
 
     .photo-section {
@@ -226,6 +227,9 @@
         background-color: var(--section-bg);
         color: var(--section-txt);
         overflow: auto;
+        @include size-below(xs) {
+            background-color: transparent;
+        }
     }
 
     .form-fields {

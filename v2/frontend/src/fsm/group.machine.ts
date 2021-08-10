@@ -81,6 +81,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                 idle: {
                     // kick off the creation of the group canister
                     on: {
+                        CANCEL_NEW_GROUP: "created", //this is just so that the whole machine goes to the done state
                         CHOOSE_PARTICIPANTS: {
                             target: "creating",
                             actions: assign((_, ev) => ({

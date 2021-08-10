@@ -64,11 +64,6 @@
 
 <div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
     <div class="chat-message" class:me class:last class:rtl={$rtlStore}>
-        {#if groupChat && !me}
-            <Link on:click={chatWithUser} underline="hover">
-                <h4 class="username">{username}</h4>
-            </Link>
-        {/if}
         {#if msg.repliesTo !== undefined}
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
@@ -115,16 +110,19 @@
             </MenuIcon>
         </div>
     </div>
-    {#if groupChat && !me && last}
-        <span class="avatar">
-            <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Small} />
-
-            <div class="typing">
-                <Typing />
-            </div>
-        </span>
-    {/if}
 </div>
+
+{#if groupChat && !me && last}
+    <Link on:click={chatWithUser}>
+        <div class="avatar-section">
+            <div class="avatar">
+                <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Tiny} />
+            </div>
+
+            <h4 class="username">{username}</h4>
+        </div>
+    </Link>
+{/if}
 
 <style type="text/scss">
     $size: 10px;
@@ -180,10 +178,15 @@
         opacity: 0;
     }
 
-    .avatar {
-        margin: 0 $sp3;
+    .avatar-section {
         position: relative;
-        margin-bottom: $sp4;
+        margin-bottom: $sp5;
+        display: flex;
+        align-items: center;
+
+        .avatar {
+            flex: 0 0 45px;
+        }
     }
 
     .chat-message-wrapper {
@@ -218,7 +221,6 @@
         }
 
         &.last {
-            margin-bottom: $sp5;
             border-radius: $sp5 $sp5 $sp5 0;
         }
 
@@ -232,6 +234,7 @@
             }
 
             &.last {
+                margin-bottom: $sp5;
                 border-radius: $sp5 $sp5 0 $sp5;
             }
         }
@@ -253,5 +256,6 @@
         margin: 0;
         margin-bottom: $sp2;
         @include font(bold, normal, fs-100);
+        color: #fff;
     }
 </style>

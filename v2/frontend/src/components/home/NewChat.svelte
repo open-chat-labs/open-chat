@@ -26,13 +26,15 @@
     <h4>{$_("startNewChat")}</h4>
 </SectionHeader>
 
-{#if $machine.matches({ loaded_chats: { new_chat: "unexpected_error" } })}
-    <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
-{/if}
+<div class="body">
+    {#if $machine.matches({ loaded_chats: { new_chat: "unexpected_error" } })}
+        <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
+    {/if}
 
-{#if userSearchMachine !== undefined && !$userSearchMachine.matches("unexpected_error")}
-    <FindUser machine={userSearchMachine} />
-{/if}
+    {#if userSearchMachine !== undefined && !$userSearchMachine.matches("unexpected_error")}
+        <FindUser machine={userSearchMachine} />
+    {/if}
+</div>
 
 <style type="text/scss">
     h4 {
@@ -41,5 +43,11 @@
     }
     .close {
         flex: 0 0 30px;
+    }
+    .body {
+        overflow: auto;
+        @include size-below(xs) {
+            padding: 0 $sp3;
+        }
     }
 </style>

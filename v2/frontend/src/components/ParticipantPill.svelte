@@ -4,7 +4,7 @@
     import { createEventDispatcher } from "svelte";
     import { AvatarSize, UserStatus } from "../domain/user/user";
     import { avatarUrl } from "../domain/user/user.utils";
-    import type { CandidateParticipant } from "../fsm/group.machine";
+    import type { CandidateParticipant } from "../domain/chat/chat";
     const dispatch = createEventDispatcher();
 
     export let participant: CandidateParticipant;
@@ -37,6 +37,9 @@
 
         .username {
             @include ellipsis();
+            @include size-below(xs) {
+                color: #fff;
+            }
         }
 
         .delete {
