@@ -9,14 +9,12 @@
     import TestTube from "svelte-material-icons/TestTube.svelte";
     import Cog from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
-    import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { _ } from "svelte-i18n";
     import { modalStore, ModalType } from "../../stores/modal";
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { User } from "../../domain/user/user";
@@ -61,10 +59,6 @@
             <EditableAvatar
                 image={avatarUrl(user.userId.toString())}
                 on:imageSelected={userAvatarSelected} />
-            <!-- <Avatar
-                url={avatarUrl(user.userId.toString())}
-                status={UserStatus.None}
-                size={AvatarSize.Large} /> -->
         {/if}
         <h4 class="name">{user.username}</h4>
     </div>
