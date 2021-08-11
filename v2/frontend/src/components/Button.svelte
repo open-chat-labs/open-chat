@@ -31,6 +31,7 @@
         border: 1px solid var(--button-bd);
         min-height: 45px;
         min-width: 150px;
+        @include font(book, normal, fs-100);
 
         &.small {
             padding: $sp2 $sp5;

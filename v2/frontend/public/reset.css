@@ -103,10 +103,10 @@ blockquote::before,
 blockquote::after,
 q::before,
 q::after {
-    content: '';
+    content: "";
 }
 
-a   {
+a {
     margin: 0;
     background: transparent;
     cursor: pointer;
