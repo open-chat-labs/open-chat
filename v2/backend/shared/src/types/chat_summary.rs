@@ -29,7 +29,6 @@ pub struct DirectChatSummary {
     pub date_created: TimestampMillis,
     pub latest_read_by_me: MessageIndex,
     pub latest_read_by_them: MessageIndex,
-
 }
 
 impl DirectChatSummary {
