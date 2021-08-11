@@ -3,9 +3,8 @@
     import Overlay from "./Overlay.svelte";
     import Link from "./Link.svelte";
     import ModalContent from "./ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import Cropper from "svelte-easy-crop/src/index.svelte";
+    import Cropper from "svelte-easy-crop";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
