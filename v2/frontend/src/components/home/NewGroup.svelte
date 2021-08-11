@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
     import Close from "svelte-material-icons/Close.svelte";
-    import Camera from "svelte-material-icons/Camera.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
+    import EditableAvatar from "../EditableAvatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import Input from "../Input.svelte";
     import TextArea from "../TextArea.svelte";
@@ -23,8 +23,7 @@
     let groupDesc: string = $machine.context.candidateGroup.description;
     let historyVisible: boolean = $machine.context.candidateGroup.historyVisible;
     let isPublic: boolean = $machine.context.candidateGroup.isPublic;
-    let fileinput: HTMLInputElement;
-    let avatar: string | null | undefined;
+    let groupAvatar: string | undefined = $machine.context.candidateGroup.avatar;
 
     $: valid = groupName.length > MIN_LENGTH && groupName.length <= MAX_LENGTH;
 
@@ -41,12 +40,9 @@
                 historyVisible,
                 isPublic,
                 participants: $machine.context.candidateGroup.participants,
+                avatar: groupAvatar,
             },
         });
-    }
-
-    function addPhoto() {
-        fileinput.click();
     }
 
     function toggleScope() {
@@ -56,18 +52,8 @@
         }
     }
 
-    function onFileSelected(e: { currentTarget: HTMLInputElement }) {
-        if (e.currentTarget) {
-            const target = e.currentTarget as HTMLInputElement;
-            if (target.files) {
-                const image = target.files[0];
-                let reader = new FileReader();
-                reader.readAsDataURL(image);
-                reader.onload = (e) => {
-                    avatar = e?.target?.result as string;
-                };
-            }
-        }
+    function groupAvatarSelected(ev: CustomEvent<string>) {
+        groupAvatar = ev.detail;
     }
 </script>
 
@@ -81,24 +67,11 @@
     <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
 </SectionHeader>
 
-<input
-    style="display:none"
-    type="file"
-    accept=".jpg, .jpeg, .png"
-    on:change={onFileSelected}
-    bind:this={fileinput} />
-
 <form class="group-form" on:submit|preventDefault={chooseParticipants}>
     <div class="form-fields">
-        <div class="photo-section sub-section" on:click={addPhoto}>
-            <div class="photo-icon">
-                {#if avatar}
-                    <div class="avatar" style={`background-image: url(${avatar})`} />
-                {:else}
-                    <Camera size={"3em"} color={"#aaa"} />
-                {/if}
-            </div>
-            <p>{$_("addGroupPhoto")}</p>
+        <div class="sub-section photo">
+            <EditableAvatar image={groupAvatar} on:imageSelected={groupAvatarSelected} />
+            <p class="photo-legend">{$_("addGroupPhoto")}</p>
         </div>
 
         <Input
@@ -197,29 +170,12 @@
         height: 57px;
     }
 
-    .photo-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        cursor: pointer;
+    .photo {
+        text-align: center;
     }
 
-    .photo-icon {
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        width: 90px;
-        height: 90px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: $sp4;
-
-        .avatar {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            border-radius: 50%;
-        }
+    .photo-legend {
+        margin-top: $sp4;
     }
 
     .group-form {

@@ -137,7 +137,6 @@
                 on:blockUser={blockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
-                hideLeft={params.chatId !== null}
                 machine={selectedChatActor} />
         {/if}
     </main>

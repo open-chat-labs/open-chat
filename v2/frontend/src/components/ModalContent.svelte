@@ -3,6 +3,8 @@
     import Link from "./Link.svelte";
     import { modalStore } from "../stores/modal";
     import { rtlStore } from "../stores/rtl";
+
+    export let fill: boolean = false;
 </script>
 
 <div
@@ -15,7 +17,7 @@
             <slot name="header" />
         </h3>
     </div>
-    <div class="body">
+    <div class="body" class:fill>
         <slot name="body" />
     </div>
     <div class="footer" class:rtl={$rtlStore}>
@@ -50,6 +52,10 @@
     .body {
         flex: 1;
         padding: $sp6 $sp4;
+
+        &.fill {
+            padding: 0;
+        }
     }
     .footer {
         padding: $sp4;

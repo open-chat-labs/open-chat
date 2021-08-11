@@ -3,6 +3,7 @@
     import MessagePlus from "svelte-material-icons/MessagePlus.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
+    import EditableAvatar from "../EditableAvatar.svelte";
     import Palette from "svelte-material-icons/Palette.svelte";
     import ShieldLock from "svelte-material-icons/ShieldLock.svelte";
     import TestTube from "svelte-material-icons/TestTube.svelte";
@@ -43,6 +44,10 @@
     function showSettings() {
         dispatch("showSettings");
     }
+
+    function userAvatarSelected(ev: CustomEvent<string>): void {
+        console.log(ev.detail);
+    }
 </script>
 
 <div class="current-user-box">
@@ -53,10 +58,13 @@
     </span>
     <div class="current-user">
         {#if $screenWidth !== ScreenWidth.ExtraSmall}
-            <Avatar
+            <EditableAvatar
+                image={avatarUrl(user.userId.toString())}
+                on:imageSelected={userAvatarSelected} />
+            <!-- <Avatar
                 url={avatarUrl(user.userId.toString())}
                 status={UserStatus.None}
-                size={AvatarSize.Large} />
+                size={AvatarSize.Large} /> -->
         {/if}
         <h4 class="name">{user.username}</h4>
     </div>

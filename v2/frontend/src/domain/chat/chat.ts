@@ -183,6 +183,7 @@ export type CandidateGroupChat = {
     historyVisible: boolean;
     isPublic: boolean;
     participants: CandidateParticipant[];
+    avatar?: string;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later

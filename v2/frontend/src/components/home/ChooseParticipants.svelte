@@ -12,8 +12,9 @@
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
-    import type { CandidateParticipant, GroupMachine } from "../../fsm/group.machine";
+    import type { GroupMachine } from "../../fsm/group.machine";
     import { pop } from "../../utils/transition";
+    import type { CandidateParticipant } from "../../domain/chat/chat";
 
     export let machine: ActorRefFrom<GroupMachine>;
 
