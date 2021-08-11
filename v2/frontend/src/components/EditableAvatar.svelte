@@ -5,6 +5,7 @@
     import ModalContent from "./ModalContent.svelte";
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
+    import type { CropData } from "svelte-easy-crop";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
@@ -14,8 +15,7 @@
     let originalImage = new Image();
     let showModal = false;
     let CROP_SIZE = 300;
-    let cropData: { pixels: { x: number; y: number; width: number; height: number } } | undefined =
-        undefined;
+    let cropData: CropData | undefined = undefined;
 
     function addPhoto() {
         fileinput.click();
@@ -54,6 +54,10 @@
         showModal = false;
         dispatch("imageSelected", image);
     }
+
+    function onCrop(ev: CustomEvent<CropData>): void {
+        cropData = ev.detail;
+    }
 </script>
 
 <Overlay active={showModal}>
@@ -63,7 +67,7 @@
             <div class="cropper">
                 <Cropper
                     image={avatar}
-                    on:cropcomplete={(e) => (cropData = e.detail)}
+                    on:cropcomplete={onCrop}
                     cropSize={{ width: CROP_SIZE, height: CROP_SIZE }}
                     cropShape="round" />
             </div>
