@@ -40,6 +40,7 @@
         if (inp.textContent) {
             machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
             inp.textContent = "";
+            showEmojiPicker = false;
         }
     }
 
@@ -77,11 +78,11 @@
     }
 </script>
 
-{#if showEmojiPicker}
-    <Lazy component={EmojiPicker} />
-{/if}
-
 <div class="message-entry">
+    {#if showEmojiPicker}
+        <Lazy component={EmojiPicker} />
+    {/if}
+
     <div class="emoji" on:click={toggleEmojiPicker}>
         {#if showEmojiPicker}
             <HoverIcon>

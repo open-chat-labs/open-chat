@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions } from "xstate";
 import { assign, pure } from "xstate/lib/actions";
-import type { ChatSummary, EventsResponse, EventWrapper } from "../domain/chat/chat";
+import type { ChatSummary, EventsResponse, EventWrapper, Message } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
@@ -26,6 +26,7 @@ export interface ChatContext {
     error?: Error;
     events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
+    replyingTo?: Message;
 }
 
 type LoadEventsResponse = {
@@ -40,6 +41,8 @@ export type ChatEvents =
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: string }
     | { type: "CLEAR_FOCUS_INDEX" }
+    | { type: "REPLY_TO"; data: Message }
+    | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
     | { type: "LOAD_PREVIOUS_MESSAGES" };
@@ -227,6 +230,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({ focusIndex: undefined })),
                 },
+                REPLY_TO: {
+                    actions: assign((_, ev) => ({ replyingTo: ev.data })),
+                },
+                CANCEL_REPLY_TO: {
+                    actions: assign((_, _ev) => ({ replyingTo: undefined })),
+                },
                 GO_TO_MESSAGE_INDEX: {
                     target: ".loading_previous_messages",
                     actions: assign((_, ev) => {
@@ -276,11 +285,16 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: [
                                     ...ctx.events,
                                     {
-                                        event: textMessage(ctx.user!.userId, ev.data),
+                                        event: textMessage(
+                                            ctx.user!.userId,
+                                            ev.data,
+                                            ctx.replyingTo
+                                        ),
                                         index: index + 1,
                                         timestamp: BigInt(+new Date() - index + 1),
                                     },
                                 ],
+                                replyingTo: undefined,
                             };
                         }
                         return {};

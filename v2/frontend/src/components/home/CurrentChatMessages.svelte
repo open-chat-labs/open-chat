@@ -16,7 +16,7 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { EventWrapper } from "../../domain/chat/chat";
+    import type { EventWrapper, Message } from "../../domain/chat/chat";
     import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
 
@@ -131,6 +131,16 @@
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
+    function replyTo(ev: CustomEvent<Message>) {
+        machine.send({ type: "REPLY_TO", data: ev.detail });
+    }
+
+    function replyPrivatelyTo(ev: CustomEvent<Message>) {
+        // todo - this is very similar to chatWith - maybe we can just attach an optional message
+        // to chatWith that we are replying to
+        console.log("reply privately - this involves switching (and maybe creating) chat");
+    }
+
     function dateGroupKey(group: EventWrapper[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
@@ -207,6 +217,8 @@
                         last={i + 1 === userGroup.length}
                         userLookup={$machine.context.userLookup}
                         on:chatWith
+                        on:replyTo={replyTo}
+                        on:replyPrivatelyTo={replyPrivatelyTo}
                         on:goToMessage={goToMessage}
                         event={evt} />
                 {/each}

@@ -6,7 +6,6 @@
     import { AvatarSize } from "../../domain/user/user";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
-    import Typing from "../Typing.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -54,11 +53,11 @@
     }
 
     function reply() {
-        console.log("reply");
+        dispatch("replyTo", msg);
     }
 
     function replyPrivately() {
-        console.log("reply privately");
+        dispatch("replyPrivatelyTo", msg);
     }
 </script>
 
@@ -68,8 +67,7 @@
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
         <div class="content">
-            <!-- <SvelteMarkdown source={textContent} /> -->
-            {textContent}
+            <SvelteMarkdown source={textContent} />
         </div>
 
         <div class="time-and-ticks">
@@ -248,6 +246,11 @@
                 &.last {
                     border-radius: $sp5 $sp5 $sp5 0;
                 }
+            }
+
+            .time-and-ticks {
+                right: unset;
+                left: $sp3;
             }
         }
     }

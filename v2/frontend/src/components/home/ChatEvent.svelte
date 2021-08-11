@@ -22,6 +22,8 @@
         {last}
         on:chatWith
         on:goToMessage
+        on:replyPrivatelyTo
+        on:replyTo
         index={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

@@ -98,7 +98,11 @@ export function getParticipantsString(
         .join(", ");
 }
 
-export function textMessage(userId: string, content: string): Message {
+export function textMessage(
+    userId: string,
+    content: string,
+    replyingTo: Message | undefined
+): Message {
     return {
         kind: "message",
         content: {
@@ -106,7 +110,16 @@ export function textMessage(userId: string, content: string): Message {
             text: content,
         },
         sender: userId,
-        repliesTo: undefined,
+        // todo - we need to send all the information we need to build the correct reply context
+        // that is not just the message
+        repliesTo: replyingTo
+            ? {
+                  kind: "direct_standard_reply_context",
+                  content: replyingTo.content,
+                  sentByMe: replyingTo.sender === userId,
+                  messageIndex: 0, // todo - we need to send the original event index through somehow
+              }
+            : undefined,
     };
 }
 

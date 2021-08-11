@@ -47,6 +47,7 @@ const testContext: ChatContext = {
         username: "julian_jelfs",
         secondsSinceLastOnline: 10,
     },
+    replyingTo: undefined,
 };
 
 describe("chat machine transitions", () => {
@@ -58,6 +59,16 @@ describe("chat machine transitions", () => {
             { user_states: "loading_previous_messages" }
         );
     });
+    test("reply to", () => {
+        const msg = textMessage();
+        const ctx = testTransition(
+            chatMachine.withContext(testContext),
+            { user_states: "idle" },
+            { type: "REPLY_TO", data: msg },
+            { user_states: "idle" }
+        );
+        expect(ctx.replyingTo).toEqual(msg);
+    });
     test("send messages", () => {
         const ctx = testTransition(
             chatMachine.withContext(testContext),
@@ -66,6 +77,24 @@ describe("chat machine transitions", () => {
             { user_states: "sending_message" }
         );
         expect(ctx.events.length).toEqual(1);
+    });
+    test("cancel reply to", () => {
+        const ctx = testTransition(
+            chatMachine.withContext({ ...testContext, replyingTo: textMessage() }),
+            { user_states: "idle" },
+            { type: "CANCEL_REPLY_TO" },
+            { user_states: "idle" }
+        );
+        expect(ctx.replyingTo).toBe(undefined);
+    });
+    test("send messages clears replyto", () => {
+        const ctx = testTransition(
+            chatMachine.withContext({ ...testContext, replyingTo: textMessage() }),
+            { user_states: "idle" },
+            { type: "SEND_MESSAGE", data: "hello world" },
+            { user_states: "sending_message" }
+        );
+        expect(ctx.replyingTo).toBe(undefined);
     });
     test("show participants", () => {
         testTransition(

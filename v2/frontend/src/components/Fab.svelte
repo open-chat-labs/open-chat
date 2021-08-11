@@ -4,6 +4,7 @@
 
 <style type="text/scss">
     .fab {
+        @include z-index("fab");
         transition: background-color ease-in-out 200ms;
         width: $sp7;
         height: $sp7;
