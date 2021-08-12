@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type {
     DirectChatSummary,
+    EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
     Message,
@@ -60,7 +61,7 @@ describe("chat machine transitions", () => {
         );
     });
     test("reply to", () => {
-        const msg = textMessage();
+        const msg = repliesTo();
         const ctx = testTransition(
             chatMachine.withContext(testContext),
             { user_states: "idle" },
@@ -80,7 +81,7 @@ describe("chat machine transitions", () => {
     });
     test("cancel reply to", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...testContext, replyingTo: textMessage() }),
+            chatMachine.withContext({ ...testContext, replyingTo: repliesTo() }),
             { user_states: "idle" },
             { type: "CANCEL_REPLY_TO" },
             { user_states: "idle" }
@@ -89,7 +90,7 @@ describe("chat machine transitions", () => {
     });
     test("send messages clears replyto", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...testContext, replyingTo: textMessage() }),
+            chatMachine.withContext({ ...testContext, replyingTo: repliesTo() }),
             { user_states: "idle" },
             { type: "SEND_MESSAGE", data: "hello world" },
             { user_states: "sending_message" }
@@ -139,6 +140,19 @@ function eventMessage(index: number): EventWrapper {
         timestamp: BigInt(+new Date()),
     };
 }
+
+function repliesTo(): EnhancedReplyContext {
+    return {
+        kind: "direct_standard_reply_context",
+        content: {
+            kind: "text_content",
+            text: "some text",
+        },
+        sentByMe: true,
+        messageIndex: 0,
+    };
+}
+
 function textMessage(): Message {
     return {
         kind: "message",

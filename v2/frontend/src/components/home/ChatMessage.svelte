@@ -10,7 +10,7 @@
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type { ChatSummary, Message } from "../../domain/chat/chat";
+    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -39,7 +39,8 @@
     let msgElement: HTMLElement;
 
     $: groupChat = chatSummary.kind === "group_chat";
-    $: username = userLookup[msg.sender]?.username;
+    $: sender = userLookup[msg.sender];
+    $: username = sender?.username;
     $: textContent = getContentAsText(msg.content);
     $: userStatus = getUserStatus(userLookup, msg.sender);
 
@@ -52,12 +53,41 @@
         dispatch("chatWith", msg.sender);
     }
 
+    function createReplyContext(privately: boolean): EnhancedReplyContext {
+        if (privately) {
+            return {
+                kind: "direct_private_reply_context",
+                chatId: chatSummary.chatId,
+                messageIndex: index,
+                content: msg.content,
+                sender,
+            };
+        } else if (groupChat) {
+            return {
+                kind: "group_reply_context",
+                content: msg.content,
+                userId: msg.sender,
+                messageId: BigInt(0), //todo - don't have this at the moment
+                messageIndex: index,
+                sender,
+            };
+        } else {
+            return {
+                kind: "direct_standard_reply_context",
+                content: msg.content,
+                sentByMe: me,
+                messageIndex: index,
+                sender,
+            };
+        }
+    }
+
     function reply() {
-        dispatch("replyTo", msg);
+        dispatch("replyTo", createReplyContext(false));
     }
 
     function replyPrivately() {
-        dispatch("replyPrivatelyTo", msg);
+        dispatch("replyPrivatelyTo", createReplyContext(true));
     }
 </script>
 

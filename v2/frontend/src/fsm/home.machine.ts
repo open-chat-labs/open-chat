@@ -11,7 +11,12 @@ import {
     spawn,
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary, DirectChatSummary, GroupChatSummary } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    EnhancedReplyContext,
+    GroupChatSummary,
+} from "../domain/chat/chat";
 import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -39,6 +44,7 @@ export interface HomeContext {
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     directChatsLastUpdate?: bigint;
+    replyingTo?: EnhancedReplyContext;
 }
 
 export type HomeEvents =
@@ -51,6 +57,7 @@ export type HomeEvents =
     | { type: "GROUP_CHAT_CREATED"; data: GroupChatSummary }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
+    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -308,6 +315,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             // if (!chatActor) {
                             return {
                                 selectedChat: chatSummary,
+                                replyingTo: undefined,
                                 chatsIndex: {
                                     ...ctx.chatsIndex,
                                     [key]: spawn(
@@ -326,6 +334,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                             focusIndex: ev.data.messageIndex
                                                 ? Number(ev.data.messageIndex)
                                                 : undefined,
+                                            replyingTo: ctx.replyingTo,
                                         }),
                                         `chat-${key}`
                                     ),
@@ -366,6 +375,39 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 JOIN_GROUP: {
                     internal: true,
                     target: ".join_group",
+                },
+                REPLY_PRIVATELY_TO: {
+                    actions: assign((ctx, ev) => {
+                        // let's see if we already have a direct chat with this user?
+                        const chat = ctx.chatSummaries.find((c) => {
+                            return c.kind === "direct_chat" && c.them === ev.data.sender?.userId;
+                        });
+                        if (chat) {
+                            push(`/${chat.chatId}`);
+                            return {
+                                replyingTo: ev.data,
+                            };
+                        } else {
+                            // todo - this is just temporary obvs
+                            const newChat: ChatSummary = {
+                                kind: "direct_chat",
+                                them: ev.data.sender!.userId,
+                                chatId: String(ctx.chatSummaries.length + 1),
+                                lastUpdated: BigInt(+new Date()),
+                                latestReadByMe: 0,
+                                latestReadByThem: 0,
+                                latestMessage: undefined,
+                                latestEventIndex: 0,
+                                dateCreated: BigInt(+new Date()),
+                            };
+                            const chatSummaries: ChatSummary[] = [newChat, ...ctx.chatSummaries];
+                            push(`/${newChat.chatId}`);
+                            return {
+                                replyingTo: ev.data,
+                                chatSummaries,
+                            };
+                        }
+                    }),
                 },
                 CREATE_DIRECT_CHAT: {
                     internal: true,

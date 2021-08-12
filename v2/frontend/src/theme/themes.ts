@@ -15,6 +15,11 @@ export interface Theme {
     error: string;
     accent: string;
 
+    timeline: {
+        txt: string;
+        bg: string;
+    };
+
     section: {
         bg: string;
         txt: string;
@@ -186,6 +191,11 @@ const defaultTheme = {
     error: "#CF6679",
     accent: "hotpink",
 
+    timeline: {
+        txt: "rgba(255,255,255,0.9)",
+        bg: "transparent",
+    },
+
     toast: {
         failure: {
             bg: "#c71f1f",
@@ -356,6 +366,11 @@ export const themes: Themes = {
         // error: "#800000",
         error: "#CF6679",
         accent: "hotpink",
+
+        timeline: {
+            txt: "rgba(255,255,255,0.7)",
+            bg: "transparent",
+        },
 
         toast: {
             failure: {

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure } from "xstate/lib/actions";
-import type { ChatSummary, EventsResponse, EventWrapper, Message } from "../domain/chat/chat";
+import { assign, pure, sendParent } from "xstate/lib/actions";
+import type {
+    ChatSummary,
+    EventsResponse,
+    EventWrapper,
+    EnhancedReplyContext,
+} from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
@@ -26,7 +31,7 @@ export interface ChatContext {
     error?: Error;
     events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
-    replyingTo?: Message;
+    replyingTo?: EnhancedReplyContext;
 }
 
 type LoadEventsResponse = {
@@ -41,7 +46,8 @@ export type ChatEvents =
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: string }
     | { type: "CLEAR_FOCUS_INDEX" }
-    | { type: "REPLY_TO"; data: Message }
+    | { type: "REPLY_TO"; data: EnhancedReplyContext }
+    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
@@ -232,6 +238,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 REPLY_TO: {
                     actions: assign((_, ev) => ({ replyingTo: ev.data })),
+                },
+                REPLY_PRIVATELY_TO: {
+                    // this involved switching / creating a chat so we need to bubble to the parent machine
+                    actions: sendParent((_, ev) => ev),
                 },
                 CANCEL_REPLY_TO: {
                     actions: assign((_, _ev) => ({ replyingTo: undefined })),

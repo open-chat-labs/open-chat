@@ -49,6 +49,11 @@ export type GroupChatReplyContext = {
 
 export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
 
+export type EnhancedReplyContext = ReplyContext & {
+    sender?: PartialUserSummary;
+    content: MessageContent;
+};
+
 export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
 
 export interface PrivateReplyContext {

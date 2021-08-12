@@ -20,6 +20,18 @@ function mockRepliesTo(index: number): ReplyContext {
 const now = +new Date();
 
 function mockEvent(index: number): EventWrapper {
+    if (index === 0) {
+        return {
+            event: {
+                kind: "group_chat_created",
+                name: "cat picz",
+                description: "Pictures of my favourite cats",
+                created_by: "abcdefg",
+            },
+            index,
+            timestamp: BigInt(+new Date(now - index)),
+        };
+    }
     return {
         event: mockTextMessage(index),
         index: index,

@@ -16,7 +16,7 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { EventWrapper, Message } from "../../domain/chat/chat";
+    import type { EventWrapper, EnhancedReplyContext } from "../../domain/chat/chat";
     import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
 
@@ -131,14 +131,12 @@
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
-    function replyTo(ev: CustomEvent<Message>) {
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         machine.send({ type: "REPLY_TO", data: ev.detail });
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<Message>) {
-        // todo - this is very similar to chatWith - maybe we can just attach an optional message
-        // to chatWith that we are replying to
-        console.log("reply privately - this involves switching (and maybe creating) chat");
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
     function dateGroupKey(group: EventWrapper[][]): string {
@@ -149,7 +147,11 @@
     function userGroupKey(group: EventWrapper[]): string {
         const first = group[0]!;
         if (first.event.kind !== "message") {
-            // todo - we're going to have to come back to this
+            if (first.event.kind === "group_chat_created") {
+                return `${first.event.created_by}_${first.index}`;
+            }
+            // todo - we will have to implement this as we get more events
+            // we will have things like people joining and leaving the group
             throw new Error("Unexpected event type");
         }
         return `${first.event.sender}_${first.index}`;

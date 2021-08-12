@@ -34,7 +34,6 @@
     {#if $machine.context.replyingTo}
         <ReplyingTo
             on:cancelReply={cancelReply}
-            userLookup={$machine.context.userLookup}
             user={$machine.context.user}
             replyingTo={$machine.context.replyingTo} />
     {/if}

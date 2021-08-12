@@ -9,6 +9,7 @@ import type {
     Message,
     MessageContent,
     Participant,
+    ReplyContext,
     UpdatedChatSummary,
     UpdatedDirectChatSummary,
     UpdatedGroupChatSummary,
@@ -101,7 +102,7 @@ export function getParticipantsString(
 export function textMessage(
     userId: string,
     content: string,
-    replyingTo: Message | undefined
+    replyingTo: ReplyContext | undefined
 ): Message {
     return {
         kind: "message",
@@ -110,16 +111,7 @@ export function textMessage(
             text: content,
         },
         sender: userId,
-        // todo - we need to send all the information we need to build the correct reply context
-        // that is not just the message
-        repliesTo: replyingTo
-            ? {
-                  kind: "direct_standard_reply_context",
-                  content: replyingTo.content,
-                  sentByMe: replyingTo.sender === userId,
-                  messageIndex: 0, // todo - we need to send the original event index through somehow
-              }
-            : undefined,
+        repliesTo: replyingTo,
     };
 }
 

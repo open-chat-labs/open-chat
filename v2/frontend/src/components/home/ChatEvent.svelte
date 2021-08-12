@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import ChatMessage from "./ChatMessage.svelte";
+    import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatSummary, EventWrapper } from "../../domain/chat/chat";
 
@@ -27,6 +28,8 @@
         index={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
+{:else if event.event.kind === "group_chat_created"}
+    <GroupChatCreatedEvent event={event.event} {me} {userLookup} timestamp={event.timestamp} />
 {:else}
-    <div>TODO - We got an event that wasn't a message</div>
+    <div>Unexpected event type</div>
 {/if}
