@@ -27,8 +27,11 @@ export type DirectChatId = Principal;
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : MessageIndex,
   'latest_event_index' : EventIndex,
   'chat_id' : DirectChatId,
+  'latest_read_by_them' : MessageIndex,
   'latest_message' : {
     'event' : DirectMessage,
     'timestamp' : TimestampMillis,
@@ -88,6 +91,8 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
@@ -164,11 +169,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
-export interface MessagesArgs {
-  'user_id' : UserId,
-  'to_index' : MessageIndex,
-  'from_index' : MessageIndex,
-}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -252,10 +252,40 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
+export type UpdatedChatSummary = { 'Group' : UpdatedGroupChatSummary } |
+  { 'Direct' : UpdatedDirectChatSummary };
+export interface UpdatedDirectChatSummary {
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : [] | [MessageIndex],
+  'latest_event_index' : EventIndex,
+  'chat_id' : DirectChatId,
+  'latest_read_by_them' : [] | [MessageIndex],
+  'latest_message' : [] | [EventWrapper],
+}
+export interface UpdatedGroupChatSummary {
+  'participants_added' : Array<Participant>,
+  'participants_removed' : Array<UserId>,
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'latest_read_by_me' : [] | [MessageIndex],
+  'latest_event_index' : EventIndex,
+  'chat_id' : GroupId,
+  'participants_updated' : Array<Participant>,
+  'latest_message' : [] | [EventWrapper],
+}
 export interface UpdatesArgs {
   'groups' : Array<{ 'last_updated' : TimestampMillis, 'chat_id' : GroupId }>,
   'last_updated' : [] | [TimestampMillis],
 }
+export type UpdatesResponse = {
+    'Success' : {
+      'chats_updated' : Array<UpdatedChatSummary>,
+      'chats_added' : Array<ChatSummary>,
+      'chats_removed' : Array<ChatId>,
+      'timestamp' : TimestampMillis,
+    }
+  };
 export type UserId = CanisterId;
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,
@@ -284,4 +314,5 @@ export interface _SERVICE {
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<undefined>,
+  'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

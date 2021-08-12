@@ -1,15 +1,41 @@
 <script lang="ts">
-    export let active: boolean;
     import { modalStore } from "../stores/modal";
+    import { onMount, onDestroy } from "svelte";
+
+    export let active: boolean;
+    let ref: HTMLElement;
+    let portal: HTMLElement;
+
+    /**
+     * This acts like a portal i.e. where ever it is rendered in component hierarchy it will
+     * attatch itself to the body of the document. This is what we want for a modal.
+     */
+
+    onMount(() => {
+        portal = document.createElement("div");
+        portal.className = "portal";
+        document.body.appendChild(portal);
+        portal.appendChild(ref);
+    });
+
+    onDestroy(() => {
+        document.body.removeChild(portal);
+    });
 </script>
 
-<div class="overlay" class:active on:click={modalStore.hideModal}>
-    {#if active}
-        <slot />
-    {/if}
+<div class="blueprint">
+    <div bind:this={ref} class="overlay" class:active on:click={modalStore.hideModal}>
+        {#if active}
+            <slot />
+        {/if}
+    </div>
 </div>
 
 <style type="text/scss">
+    .blueprint {
+        display: none;
+    }
+
     .overlay {
         @include z-index("overlay");
         position: absolute;

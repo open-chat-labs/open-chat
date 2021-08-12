@@ -1,5 +1,5 @@
 import type { Principal } from "@dfinity/principal";
-import type { PartialUserSummary } from "../user/user";
+import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
 
@@ -49,6 +49,11 @@ export type GroupChatReplyContext = {
 
 export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
 
+export type EnhancedReplyContext = ReplyContext & {
+    sender?: PartialUserSummary;
+    content: MessageContent;
+};
+
 export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
 
 export interface PrivateReplyContext {
@@ -64,19 +69,40 @@ export interface StandardReplyContext {
     messageIndex: number;
 }
 
+// todo - removing some stuff from this interface until we can see clearly that we need it
 export interface Message {
-    messageId: bigint;
-    messageIndex: number;
+    // messageId: bigint;
+    // messageIndex: number;
+    kind: "message";
     content: MessageContent;
     sender: string;
-    timestamp: bigint;
+    // timestamp: bigint;
     repliesTo?: ReplyContext;
 }
 
-export type MessagesResponse = "chat_not_found" | GetMessagesSuccess;
+export type ChatEvent = DirectChatEvent | GroupChatEvent | Message;
 
-export type GetMessagesSuccess = {
-    messages: Message[];
+export type EventsResponse = "chat_not_found" | "not_authorised" | EventsSuccessResult;
+
+export type DirectChatEvent = Message;
+
+export type GroupChatEvent = Message | GroupChatCreated;
+
+export type GroupChatCreated = {
+    kind: "group_chat_created";
+    name: string;
+    description?: string;
+    created_by: string;
+};
+
+export type EventWrapper = {
+    event: ChatEvent;
+    timestamp: bigint;
+    index: number;
+};
+
+export type EventsSuccessResult = {
+    events: EventWrapper[];
 };
 
 export type UpdateArgs = {
@@ -97,7 +123,8 @@ type UpdatedChatSummaryCommon = {
     chatId: string;
     lastUpdated: bigint;
     latestReadByMe?: number;
-    latestMessage?: Message;
+    latestMessage?: EventWrapper;
+    latestEventIndex: number;
 };
 
 export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
@@ -127,15 +154,17 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    lastUpdated: bigint;
     latestReadByMe: number;
-    latestMessage?: Message;
+    latestMessage?: EventWrapper;
+    latestEventIndex: number;
+    lastUpdated: bigint;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
     latestReadByThem: number;
+    dateCreated: bigint;
 };
 
 export type GroupChatSummary = ChatSummaryCommon & {
@@ -146,4 +175,52 @@ export type GroupChatSummary = ChatSummaryCommon & {
     public: boolean;
     joined: bigint;
     minVisibleMessageIndex: number;
+};
+
+export type CandidateParticipant = {
+    role: ParticipantRole;
+    user: UserSummary;
+};
+
+export type CandidateGroupChat = {
+    name: string;
+    description: string;
+    historyVisible: boolean;
+    isPublic: boolean;
+    participants: CandidateParticipant[];
+    avatar?: string;
+};
+
+// todo - there are all sorts of error conditions here that we need to deal with but - later
+export type CreateGroupResponse =
+    | CreateGroupSuccess
+    | CreateGroupUnknownError
+    | CreateGroupInvalidName
+    | CreateGroupNameTooLong
+    | CreateGroupPublicGroupAlreadyExists
+    | CreateGroupLimitExceeded;
+
+export type CreateGroupSuccess = {
+    kind: "success";
+    canisterId: string;
+};
+
+export type CreateGroupUnknownError = {
+    kind: "unknown_error";
+};
+
+export type CreateGroupInvalidName = {
+    kind: "invalid_name";
+};
+
+export type CreateGroupNameTooLong = {
+    kind: "name_too_long";
+};
+
+export type CreateGroupPublicGroupAlreadyExists = {
+    kind: "public_group_already_exists";
+};
+
+export type CreateGroupLimitExceeded = {
+    kind: "group_limit_exceeded";
 };

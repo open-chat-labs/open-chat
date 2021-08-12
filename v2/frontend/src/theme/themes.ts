@@ -13,6 +13,22 @@ export interface Theme {
     txt: string;
 
     error: string;
+    accent: string;
+
+    timeline: {
+        txt: string;
+        bg: string;
+    };
+
+    section: {
+        bg: string;
+        txt: string;
+        bd: string;
+    };
+
+    "sub-section": {
+        bg: string;
+    };
 
     toast: {
         failure: {
@@ -36,11 +52,6 @@ export interface Theme {
         txt: string;
         hv: string;
         bd: string;
-        header: {
-            bg: string;
-            txt: string;
-            bd: string;
-        };
     };
 
     entry: {
@@ -102,6 +113,7 @@ export interface Theme {
         disabled: string;
         spinner: string;
         "disabled-txt": string;
+        "disabled-bd": string;
     };
 
     link: {
@@ -177,6 +189,12 @@ const defaultTheme = {
     txt: "#191919",
     // error: "#ff0000",
     error: "#CF6679",
+    accent: "hotpink",
+
+    timeline: {
+        txt: "rgba(255,255,255,0.9)",
+        bg: "transparent",
+    },
 
     toast: {
         failure: {
@@ -187,6 +205,16 @@ const defaultTheme = {
             bg: "limegreen",
             txt: "#ffffff",
         },
+    },
+
+    section: {
+        bg: "#efefef",
+        txt: "#191919",
+        bd: "transparent",
+    },
+
+    "sub-section": {
+        bg: "#ffffff",
     },
 
     input: {
@@ -200,11 +228,6 @@ const defaultTheme = {
         txt: "#191919",
         hv: "#e2e2e2",
         bd: "transparent",
-        header: {
-            bg: "#efefef",
-            txt: "#191919",
-            bd: "transparent",
-        },
     },
 
     entry: {
@@ -266,6 +289,7 @@ const defaultTheme = {
         disabled: "#cccccc",
         spinner: "#ffffff",
         "disabled-txt": "#999999",
+        "disabled-bd": "transparent",
     },
 
     link: {
@@ -341,6 +365,12 @@ export const themes: Themes = {
         txt: dark60,
         // error: "#800000",
         error: "#CF6679",
+        accent: "hotpink",
+
+        timeline: {
+            txt: "rgba(255,255,255,0.7)",
+            bg: "transparent",
+        },
 
         toast: {
             failure: {
@@ -351,6 +381,16 @@ export const themes: Themes = {
                 bg: "seagreen",
                 txt: "#ffffff",
             },
+        },
+
+        section: {
+            bg: dark20,
+            txt: dark60,
+            bd: dark15,
+        },
+
+        "sub-section": {
+            bg: dark25,
         },
 
         input: {
@@ -364,11 +404,6 @@ export const themes: Themes = {
             txt: dark60,
             hv: dark15,
             bd: dark15,
-            header: {
-                bg: dark20,
-                txt: dark60,
-                bd: dark15,
-            },
         },
 
         entry: {
@@ -429,6 +464,7 @@ export const themes: Themes = {
             disabled: dark20,
             spinner: dark60,
             "disabled-txt": "#999999",
+            "disabled-bd": "#999999",
         },
 
         link: {

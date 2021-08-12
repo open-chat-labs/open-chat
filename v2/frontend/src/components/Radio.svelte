@@ -11,7 +11,7 @@
     <label for={id}>{label}</label>
 </div>
 
-<style text="text/scss">
+<style type="text/scss">
     .radio {
         display: flex;
         align-items: center;

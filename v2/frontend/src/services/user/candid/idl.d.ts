@@ -1,6 +1,8 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
+    CreateGroupArgs,
+    CreateGroupResponse,
     UpdatesArgs,
     UpdatesResponse,
     ChatSummary,
@@ -16,14 +18,20 @@ import {
     CyclesContent,
     TimestampMillis,
     BlobReference,
-    MessagesArgs,
-    MessagesResponse,
-    MessagesSuccess,
     Participant,
     UpdatedChatSummary,
+    EventIndex,
+    EventWrapper,
+    EventsByIndexArgs,
+    EventsByIndexResponse,
+    EventsResponse,
+    EventsSuccessResult,
+    EventsArgs,
 } from "./types";
 export {
     _SERVICE as UserService,
+    CreateGroupArgs as ApiCreateGroupArgs,
+    CreateGroupResponse as ApiCreateGroupResponse,
     UpdatesArgs as ApiUpdatesArgs,
     UpdatesResponse as ApiUpdatesResponse,
     ChatSummary as ApiChatSummary,
@@ -39,11 +47,15 @@ export {
     CyclesContent as ApiCyclesContent,
     TimestampMillis as ApiTimestampMillis,
     BlobReference as ApiBlobReference,
-    MessagesArgs as ApiMessageArgs,
-    MessagesResponse as ApiMessagesResponse,
-    MessagesSuccess as ApiMessagesSuccess,
     Participant as ApiParticipant,
     UpdatedChatSummary as ApiUpdatedChatSummary,
+    EventIndex as ApiEventIndex,
+    EventWrapper as ApiEventWrapper,
+    EventsByIndexArgs as ApiEventsByIndexArgs,
+    EventsByIndexResponse as ApiEventsByIndexResponse,
+    EventsResponse as ApiEventsResponse,
+    EventsSuccessResult as ApiEventsSuccessResult,
+    EventsArgs as ApiEventsArgs,
 };
 
 declare const idlFactory: IDL.InterfaceFactory;

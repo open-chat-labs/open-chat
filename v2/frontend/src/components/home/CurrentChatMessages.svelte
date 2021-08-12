@@ -1,6 +1,6 @@
 <script lang="ts">
     import { tick } from "svelte";
-    import ChatMessage from "./ChatMessage.svelte";
+    import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
@@ -16,8 +16,8 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { Message } from "../../domain/chat/chat";
-    import { getUnreadMessages, groupMessages } from "../../domain/chat/chat.utils";
+    import type { EventWrapper, EnhancedReplyContext } from "../../domain/chat/chat";
+    import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
@@ -131,17 +131,33 @@
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
-    function dateGroupKey(group: Message[][]): string {
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        machine.send({ type: "REPLY_TO", data: ev.detail });
+    }
+
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
+    }
+
+    function dateGroupKey(group: EventWrapper[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function userGroupKey(group: Message[]): string {
+    function userGroupKey(group: EventWrapper[]): string {
         const first = group[0]!;
-        return `${first.sender}_${first.messageIndex}`;
+        if (first.event.kind !== "message") {
+            if (first.event.kind === "group_chat_created") {
+                return `${first.event.created_by}_${first.index}`;
+            }
+            // todo - we will have to implement this as we get more events
+            // we will have things like people joining and leaving the group
+            throw new Error("Unexpected event type");
+        }
+        return `${first.event.sender}_${first.index}`;
     }
 
-    $: groupedMessages = groupMessages($machine.context.messages);
+    $: groupedEvents = groupEvents($machine.context.events);
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
@@ -185,25 +201,28 @@
             <Loading />
         </div>
     {/if}
-    {#each groupedMessages as dayGroup, di (dateGroupKey(dayGroup))}
+    {#each groupedEvents as dayGroup, di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
             {#each dayGroup as userGroup, ui (userGroupKey(userGroup))}
-                {#each userGroup as msg, i (msg.messageIndex)}
-                    {#if msg.messageIndex === $machine.context.chatSummary.latestReadByMe + 1}
+                {#each userGroup as evt, i (evt.index)}
+                    {#if evt.index === $machine.context.chatSummary.latestReadByMe + 1}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
-                    <ChatMessage
+                    <ChatEvent
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
-                        me={$machine.context.user?.userId === msg.sender}
-                        showStem={i + 1 === userGroup.length}
+                        me={evt.event.kind === "message" &&
+                            $machine.context.user?.userId === evt.event.sender}
+                        last={i + 1 === userGroup.length}
                         userLookup={$machine.context.userLookup}
                         on:chatWith
+                        on:replyTo={replyTo}
+                        on:replyPrivatelyTo={replyPrivatelyTo}
                         on:goToMessage={goToMessage}
-                        {msg} />
+                        event={evt} />
                 {/each}
             {/each}
         </div>
@@ -299,6 +318,7 @@
         position: relative;
         @include size-below(xs) {
             padding: 10px;
+            -webkit-overflow-scrolling: touch;
         }
     }
 </style>

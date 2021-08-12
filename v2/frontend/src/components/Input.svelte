@@ -8,7 +8,7 @@
     export let placeholder: string = "";
     export let type: "text" | "number" = "text";
     export let minlength: number = 0;
-    export let maxlength: number = 500;
+    export let maxlength: number = Number.MAX_VALUE;
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
 
@@ -25,22 +25,44 @@
             value = parseInt(e.currentTarget.value, 10);
         }
     };
+
+    $: remaining = typeof value === "string" ? maxlength - value.length : 0;
 </script>
 
-<input
-    class:invalid
-    spellcheck="false"
-    {disabled}
-    {type}
-    {minlength}
-    {maxlength}
-    {placeholder}
-    on:input={handleInput}
-    bind:this={inp}
-    {value}
-    class={`textbox ${fontSize} ${align}`} />
+<div class="input-wrapper">
+    <input
+        class:invalid
+        spellcheck="false"
+        {disabled}
+        {type}
+        {minlength}
+        {maxlength}
+        {placeholder}
+        on:input={handleInput}
+        bind:this={inp}
+        {value}
+        class={`textbox ${fontSize} ${align}`} />
+    {#if maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
+        <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
+    {/if}
+</div>
 
 <style type="text/scss">
+    .input-wrapper {
+        position: relative;
+    }
+
+    .countdown {
+        position: absolute;
+        right: 10px;
+        top: 11px;
+        @include font(light, normal, fs-80);
+
+        &.near-max {
+            color: darkred;
+        }
+    }
+
     .textbox {
         transition: border ease-in-out 300ms;
         display: block;

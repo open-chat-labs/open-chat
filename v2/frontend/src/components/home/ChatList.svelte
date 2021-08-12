@@ -18,30 +18,39 @@
 </script>
 
 {#if $machine.context.user}
-    <CurrentUser on:logout user={$machine.context.user} on:newchat on:joinGroup />
-    <SearchChats on:filter={filterChats} />
-    {#if $machine.matches("loading_chats")}
-        <Loading />
-    {:else}
-        <div class="chat-summaries">
-            {#each $machine.context.chatSummaries as chatSummary, i (chatSummary.chatId)}
-                <div
-                    animate:flip={{ duration: 600, easing: elasticOut }}
-                    out:fade|local={{ duration: 150 }}>
-                    <ChatSummary
-                        users={$machine.context.userLookup}
-                        {chatSummary}
-                        selected={$machine.context.selectedChat?.chatId === chatSummary.chatId} />
-                </div>
-            {/each}
-        </div>
-    {/if}
-    {#if $screenWidth === ScreenWidth.ExtraSmall}
-        <NewMessageFab on:newchat />
-    {/if}
+    <CurrentUser on:logout user={$machine.context.user} on:newchat on:joinGroup on:newGroup />
+    <div class="body">
+        <SearchChats on:filter={filterChats} />
+        {#if $machine.matches("loading_chats")}
+            <Loading />
+        {:else}
+            <div class="chat-summaries">
+                {#each $machine.context.chatSummaries as chatSummary, i (chatSummary.chatId)}
+                    <div
+                        animate:flip={{ duration: 600, easing: elasticOut }}
+                        out:fade|local={{ duration: 150 }}>
+                        <ChatSummary
+                            users={$machine.context.userLookup}
+                            {chatSummary}
+                            selected={$machine.context.selectedChat?.chatId ===
+                                chatSummary.chatId} />
+                    </div>
+                {/each}
+            </div>
+        {/if}
+        {#if $screenWidth === ScreenWidth.ExtraSmall}
+            <NewMessageFab on:newchat />
+        {/if}
+    </div>
 {/if}
 
 <style type="text/scss">
+    .body {
+        overflow: auto;
+        @include size-below(xs) {
+            padding: 0 $sp3;
+        }
+    }
     .chat-summaries {
         overflow: auto;
     }

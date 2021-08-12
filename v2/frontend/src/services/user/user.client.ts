@@ -1,9 +1,15 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import idlFactory, { UserService } from "./candid/idl";
-import type { UpdatesResponse, MessagesResponse, UpdateArgs } from "../../domain/chat/chat";
+import type {
+    UpdatesResponse,
+    EventsResponse,
+    UpdateArgs,
+    CandidateGroupChat,
+    CreateGroupResponse,
+} from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { getMessagesResponse, getUpdatesResponse } from "./mappers";
+import { createGroupResponse, getEventsResponse, getUpdatesResponse } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -14,24 +20,34 @@ export class UserClient extends CandidService implements IUserClient {
         this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
     }
 
-    chatMessages(userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
+    createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.handleResponse(
-            this.userService.messages({
+            this.userService.create_group({
+                is_public: group.isPublic,
+                name: group.name,
+            }),
+            createGroupResponse
+        );
+    }
+
+    chatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
+        return this.handleResponse(
+            this.userService.events({
                 user_id: Principal.fromText(userId),
                 to_index: toIndex,
                 from_index: fromIndex,
             }),
-            getMessagesResponse
+            getEventsResponse
         );
     }
 
-    chatMessagesByIndex(userId: string, indexes: Set<number>): Promise<MessagesResponse> {
+    chatEventsByIndex(userId: string, indexes: Set<number>): Promise<EventsResponse> {
         return this.handleResponse(
-            this.userService.messages_by_index({
+            this.userService.events_by_index({
                 user_id: Principal.fromText(userId),
-                messages: [...indexes],
+                events: [...indexes],
             }),
-            getMessagesResponse
+            getEventsResponse
         );
     }
 

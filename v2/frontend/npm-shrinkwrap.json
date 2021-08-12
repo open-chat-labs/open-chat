@@ -26,6 +26,7 @@
                 "remount": "^0.11.0",
                 "rollbar": "^2.23.0",
                 "sirv-cli": "^1.0.0",
+                "svelte-easy-crop": "^1.0.4",
                 "svelte-i18n": "^3.3.9",
                 "svelte-markdown": "^0.1.10",
                 "svelte-material-icons": "^1.0.3",
@@ -24511,6 +24512,14 @@
             "dev": true,
             "peer": true
         },
+        "node_modules/svelte-easy-crop": {
+            "version": "1.0.4",
+            "resolved": "https://registry.npmjs.org/svelte-easy-crop/-/svelte-easy-crop-1.0.4.tgz",
+            "integrity": "sha512-YWbayjPenBYx1b8Usbh70jXXSy/e2ggY7fYBnemefyXhnrccS6Ke4h2uBB07uGDZdwxQNZvS5ruoXwxxZQVo0g==",
+            "engines": {
+                "node": "14"
+            }
+        },
         "node_modules/svelte-hmr": {
             "version": "0.14.4",
             "resolved": "https://registry.npmjs.org/svelte-hmr/-/svelte-hmr-0.14.4.tgz",
@@ -46805,6 +46814,11 @@
             "integrity": "sha1-fRh9tcbNu9ZNdaMvkbiZi94yc8M=",
             "dev": true,
             "peer": true
+        },
+        "svelte-easy-crop": {
+            "version": "1.0.4",
+            "resolved": "https://registry.npmjs.org/svelte-easy-crop/-/svelte-easy-crop-1.0.4.tgz",
+            "integrity": "sha512-YWbayjPenBYx1b8Usbh70jXXSy/e2ggY7fYBnemefyXhnrccS6Ke4h2uBB07uGDZdwxQNZvS5ruoXwxxZQVo0g=="
         },
         "svelte-hmr": {
             "version": "0.14.4",

@@ -10,6 +10,7 @@
     class="avatar"
     class:online={status === UserStatus.Online}
     class:offline={status === UserStatus.Offline}
+    class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
@@ -27,6 +28,11 @@
 
         &.online {
             border: 2px solid limegreen;
+        }
+
+        &.tiny {
+            width: 35px;
+            height: 35px;
         }
 
         &.small {

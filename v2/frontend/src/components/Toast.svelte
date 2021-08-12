@@ -37,7 +37,7 @@
     .message {
         transition: background-color 200ms ease-in-out;
         background-color: var(--button-bg);
-        border-radius: $sp5;
+        border-radius: $sp6;
         padding: $sp4;
         width: 50%;
         margin: 0 $sp4;

@@ -2,13 +2,16 @@ import type {
     ChatSummary,
     DirectChatSummary,
     UpdatesResponse,
-    MessagesResponse,
+    EventsResponse,
     GroupChatSummary,
     Message,
     ReplyContext,
     UpdateArgs,
     Participant,
     UpdatedChatSummary,
+    EventWrapper,
+    CandidateGroupChat,
+    CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
@@ -39,7 +42,8 @@ function mockGroupChat(i: number): GroupChatSummary {
         chatId: String(i),
         lastUpdated: BigInt(time),
         latestReadByMe: numMessages,
-        latestMessage: mockTextMessage(numMessages),
+        latestMessage: mockEvent(numMessages),
+        latestEventIndex: numMessages,
         participants,
     };
 }
@@ -56,7 +60,9 @@ function mockDirectChat(i: number): DirectChatSummary {
         lastUpdated: BigInt(time),
         latestReadByMe: us,
         latestReadByThem: 0,
-        latestMessage: mockTextMessage(numMessages),
+        latestMessage: mockEvent(numMessages),
+        latestEventIndex: numMessages,
+        dateCreated: BigInt(time),
     };
 }
 
@@ -84,22 +90,28 @@ function mockRepliesTo(index: number): ReplyContext {
 }
 
 function mockTextMessage(index: number): Message {
-    const now = +new Date();
-    const numIntervals = numMessages - index;
-    const timeDiff = interval * numIntervals;
-
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
-        messageId: BigInt(index),
-        messageIndex: index,
+        kind: "message",
         content: {
             kind: "text_content",
             text: randomPara(),
         },
         sender,
-        timestamp: BigInt(+new Date(now - timeDiff)),
         repliesTo,
+    };
+}
+
+function mockEvent(index: number): EventWrapper {
+    const now = +new Date();
+    const numIntervals = numMessages - index;
+    const timeDiff = interval * numIntervals;
+
+    return {
+        event: mockTextMessage(index),
+        timestamp: BigInt(+new Date(now - timeDiff)),
+        index,
     };
 }
 
@@ -113,11 +125,9 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
+            latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
-                ? {
-                      ...chat.latestMessage,
-                      messageIndex: chat.latestMessage.messageIndex + 2, // simulate new messages
-                  }
+                ? mockEvent(chat.latestMessage?.index + 2)
                 : undefined,
             kind: "group_chat",
             participantsAdded: [],
@@ -134,32 +144,33 @@ function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
         lastUpdated: BigInt(+new Date()),
         latestReadByMe: chat.latestReadByMe,
         latestMessage: chat.latestMessage,
+        latestEventIndex: chat.latestEventIndex,
         kind: "direct_chat",
         latestReadByThem: chat.latestReadByThem,
     };
 }
 
 export class UserClientMock implements IUserClient {
-    chatMessages(_userId: string, fromIndex: number, toIndex: number): Promise<MessagesResponse> {
+    chatEvents(_userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
         const n = toIndex - fromIndex;
-        const messages = fill(n + 1, mockTextMessage, (i: number) => fromIndex + i);
+        const events = fill(n + 1, mockEvent, (i: number) => fromIndex + i);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
-                    messages,
+                    events,
                 });
             }, 300);
         });
     }
 
-    chatMessagesByIndex(_userId: string, indexes: Set<number>): Promise<MessagesResponse> {
-        const messages = [...indexes].map((i) => {
-            return mockTextMessage(i);
+    chatEventsByIndex(_userId: string, indexes: Set<number>): Promise<EventsResponse> {
+        const events = [...indexes].map((i) => {
+            return mockEvent(i);
         });
         return new Promise((res) => {
             setTimeout(() => {
                 res({
-                    messages,
+                    events,
                 });
             }, 300);
         });
@@ -197,6 +208,20 @@ export class UserClientMock implements IUserClient {
             setTimeout(() => {
                 res(resp);
             }, 500);
+        });
+    }
+
+    createGroup(_group: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res({
+                    kind: "success",
+                    canisterId: randomWord(16),
+                });
+                // res({
+                //     kind: "invalid_name",
+                // });
+            }, 5000);
         });
     }
 }

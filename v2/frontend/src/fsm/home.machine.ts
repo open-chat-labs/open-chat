@@ -11,7 +11,12 @@ import {
     spawn,
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { ChatSummary, DirectChatSummary } from "../domain/chat/chat";
+import type {
+    ChatSummary,
+    DirectChatSummary,
+    EnhancedReplyContext,
+    GroupChatSummary,
+} from "../domain/chat/chat";
 import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -22,6 +27,7 @@ import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
+import { groupMachine, nullGroup } from "./group.machine";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -38,22 +44,28 @@ export interface HomeContext {
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     directChatsLastUpdate?: bigint;
+    replyingTo?: EnhancedReplyContext;
 }
 
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
     | { type: "NEW_CHAT" }
+    | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "GROUP_CHAT_CREATED"; data: GroupChatSummary }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
+    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
     | { type: "error.platform.getUpdates"; data: Error }
+    | { type: "done.invoke.groupMachine"; data: GroupChatSummary }
+    | { type: "error.platform.groupMachine"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
@@ -303,6 +315,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             // if (!chatActor) {
                             return {
                                 selectedChat: chatSummary,
+                                replyingTo: undefined,
                                 chatsIndex: {
                                     ...ctx.chatsIndex,
                                     [key]: spawn(
@@ -317,10 +330,11 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                       secondsSinceLastOnline: 0,
                                                   }
                                                 : undefined,
-                                            messages: [],
+                                            events: [],
                                             focusIndex: ev.data.messageIndex
                                                 ? Number(ev.data.messageIndex)
                                                 : undefined,
+                                            replyingTo: ctx.replyingTo,
                                         }),
                                         `chat-${key}`
                                     ),
@@ -353,9 +367,47 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_chat",
                     actions: log("received new chat"),
                 },
+                NEW_GROUP: {
+                    internal: true,
+                    target: ".new_group",
+                    actions: log("received new group"),
+                },
                 JOIN_GROUP: {
                     internal: true,
                     target: ".join_group",
+                },
+                REPLY_PRIVATELY_TO: {
+                    actions: assign((ctx, ev) => {
+                        // let's see if we already have a direct chat with this user?
+                        const chat = ctx.chatSummaries.find((c) => {
+                            return c.kind === "direct_chat" && c.them === ev.data.sender?.userId;
+                        });
+                        if (chat) {
+                            push(`/${chat.chatId}`);
+                            return {
+                                replyingTo: ev.data,
+                            };
+                        } else {
+                            // todo - this is just temporary obvs
+                            const newChat: ChatSummary = {
+                                kind: "direct_chat",
+                                them: ev.data.sender!.userId,
+                                chatId: String(ctx.chatSummaries.length + 1),
+                                lastUpdated: BigInt(+new Date()),
+                                latestReadByMe: 0,
+                                latestReadByThem: 0,
+                                latestMessage: undefined,
+                                latestEventIndex: 0,
+                                dateCreated: BigInt(+new Date()),
+                            };
+                            const chatSummaries: ChatSummary[] = [newChat, ...ctx.chatSummaries];
+                            push(`/${newChat.chatId}`);
+                            return {
+                                replyingTo: ev.data,
+                                chatSummaries,
+                            };
+                        }
+                    }),
                 },
                 CREATE_DIRECT_CHAT: {
                     internal: true,
@@ -368,6 +420,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             latestReadByMe: 0,
                             latestReadByThem: 0,
                             latestMessage: undefined,
+                            latestEventIndex: 0,
+                            dateCreated: BigInt(+new Date()),
                         };
                         push(`/${dummyChat.chatId}`);
                         return {
@@ -387,12 +441,43 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         CANCEL_JOIN_GROUP: "no_chat_selected",
                     },
                 },
+                new_group: {
+                    on: {
+                        // todo - bit worried that there may be a race condition here
+                        GROUP_CHAT_CREATED: {
+                            actions: assign((ctx, ev) => {
+                                return {
+                                    chatSummaries: [ev.data, ...ctx.chatSummaries],
+                                };
+                            }),
+                        },
+                    },
+                    invoke: {
+                        id: "groupMachine",
+                        src: groupMachine,
+                        data: (ctx, _) => {
+                            return {
+                                user: ctx.user,
+                                serviceContainer: ctx.serviceContainer,
+                                candidateGroup: nullGroup,
+                                error: undefined,
+                            };
+                        },
+                        onDone: { target: "no_chat_selected" },
+                        onError: {
+                            // todo - as in many other cases, this needs sorting out properly
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
+                    },
+                },
                 new_chat: {
                     entry: log("entering new chat"),
-                    exit: assign((_, ev) => {
-                        console.log("exiting new chat: ", ev);
-                        return {};
-                    }),
                     on: {
                         // todo - actually we would like to go back to where we were
                         CANCEL_NEW_CHAT: "no_chat_selected",
@@ -420,6 +505,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     latestReadByMe: 0,
                                     latestReadByThem: 0,
                                     latestMessage: undefined,
+                                    latestEventIndex: 0,
+                                    dateCreated: BigInt(+new Date()),
                                 };
                                 push(`/${dummyChat.chatId}`);
                                 return {

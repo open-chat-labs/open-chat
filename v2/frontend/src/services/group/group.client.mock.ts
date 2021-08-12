@@ -1,4 +1,4 @@
-import type { MessagesResponse, Message, ReplyContext } from "../../domain/chat/chat";
+import type { EventsResponse, EventWrapper, Message, ReplyContext } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
@@ -19,30 +19,48 @@ function mockRepliesTo(index: number): ReplyContext {
 
 const now = +new Date();
 
+function mockEvent(index: number): EventWrapper {
+    if (index === 0) {
+        return {
+            event: {
+                kind: "group_chat_created",
+                name: "cat picz",
+                description: "Pictures of my favourite cats",
+                created_by: "abcdefg",
+            },
+            index,
+            timestamp: BigInt(+new Date(now - index)),
+        };
+    }
+    return {
+        event: mockTextMessage(index),
+        index: index,
+        timestamp: BigInt(+new Date(now - index)),
+    };
+}
+
 function mockTextMessage(index: number): Message {
-    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    const sender = index % 4 === 0 ? "abcdefg" : "qwxyz";
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     return {
-        messageId: BigInt(index),
-        messageIndex: index,
+        kind: "message",
         content: {
             kind: "text_content",
             text: randomPara(),
         },
         sender,
-        timestamp: BigInt(+new Date(now - index)),
         repliesTo,
     };
 }
 
 export class GroupClientMock implements IGroupClient {
-    chatMessages(fromIndex: number, toIndex: number): Promise<MessagesResponse> {
+    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse> {
         const n = toIndex - fromIndex;
-        const messages = fill(n + 1, mockTextMessage, (i: number) => fromIndex + i);
+        const events = fill(n + 1, mockEvent, (i: number) => fromIndex + i);
         return new Promise((res) => {
             setTimeout(() => {
                 res({
-                    messages,
+                    events,
                 });
             }, 300);
         });

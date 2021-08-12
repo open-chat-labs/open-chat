@@ -7,12 +7,11 @@
     import CurrentChat from "./CurrentChat.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
-    export let hideLeft: boolean = false;
     export let machine: ActorRefFrom<ChatMachine> | undefined;
     export let loadingChats: boolean = false;
 </script>
 
-<Panel middle {hideLeft}>
+<Panel middle>
     {#if loadingChats}
         {#if $screenWidth === ScreenWidth.ExtraSmall}
             <div />
