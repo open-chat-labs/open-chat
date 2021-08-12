@@ -27,6 +27,8 @@ pub struct DirectChatSummary {
     pub latest_message: EventWrapper<direct_message::Message>,
     pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
+    pub latest_read_by_me: MessageIndex,
+    pub latest_read_by_them: MessageIndex,
 }
 
 impl DirectChatSummary {
@@ -46,6 +48,7 @@ pub struct GroupChatSummary {
     pub latest_message: Option<EventWrapper<group_message::Message>>,
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
+    pub latest_read_by_me: MessageIndex,
 }
 
 impl GroupChatSummary {

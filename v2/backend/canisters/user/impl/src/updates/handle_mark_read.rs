@@ -13,8 +13,8 @@ fn handle_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
     let chat_id = DirectChatId::from((&runtime_state.env.canister_id().into(), &their_user_id));
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        if chat.read_up_to_by_them < args.up_to_message_index {
-            chat.read_up_to_by_them = args.up_to_message_index;
+        if chat.latest_read_by_them < args.up_to_message_index {
+            chat.latest_read_by_them = args.up_to_message_index;
             Success
         } else {
             SuccessNoChange
