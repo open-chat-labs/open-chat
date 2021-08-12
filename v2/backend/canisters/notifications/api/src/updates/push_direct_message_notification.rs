@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::notifications::DirectMessageNotification;
+use types::notifications::DirectMessageNotification;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

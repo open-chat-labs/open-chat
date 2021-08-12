@@ -1,8 +1,7 @@
 use candid::{CandidType, Principal};
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::{UserId, Version};
+use types::{TimestampMillis, UserId, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {

@@ -1,11 +1,10 @@
 use candid::CandidType;
-use notifications_canister::common::subscription::{Subscription, SubscriptionInfo};
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::UserId;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::time::Duration;
+use types::subscription::{Subscription, SubscriptionInfo};
+use types::{TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Subscriptions {
@@ -58,7 +57,7 @@ impl Subscriptions {
 mod tests {
     use super::*;
     use candid::Principal;
-    use notifications_canister::common::subscription::SubscriptionKeys;
+    use types::subscription::SubscriptionKeys;
 
     #[test]
     fn push_new_subscriptions() {

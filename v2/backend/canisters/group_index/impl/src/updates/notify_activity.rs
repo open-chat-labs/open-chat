@@ -1,7 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::updates::notify_activity::{Response::*, *};
 use ic_cdk_macros::update;
-use shared::types::chat_id::GroupChatId;
+use types::chat_id::GroupChatId;
 
 #[update]
 fn notify_activity(_: Args) -> Response {

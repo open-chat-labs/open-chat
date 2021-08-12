@@ -1,6 +1,6 @@
-use crate::time::TimestampMillis;
-use crate::types::role::Role;
-use crate::types::{MessageIndex, UserId};
+use crate::role::Role;
+use crate::TimestampMillis;
+use crate::{MessageIndex, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 

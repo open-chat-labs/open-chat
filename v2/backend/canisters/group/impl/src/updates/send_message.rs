@@ -5,8 +5,8 @@ use group_canister::updates::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::updates::push_group_message_notification;
 use shared::rand::get_random_item;
-use shared::types::notifications::GroupMessageNotification;
-use shared::types::CanisterId;
+use types::notifications::GroupMessageNotification;
+use types::CanisterId;
 
 #[update]
 fn send_message(args: Args) -> Response {

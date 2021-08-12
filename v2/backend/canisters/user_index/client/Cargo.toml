@@ -10,4 +10,5 @@ edition = "2018"
 ic-cdk = "0.3.1"
 log = "0.4.14"
 shared = { path = "../../../shared" }
+types = { path = "../../../types" }
 user_index_canister = { path = "../api" }

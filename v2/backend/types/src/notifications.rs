@@ -1,6 +1,6 @@
-use crate::types::chat_id::GroupChatId;
-use crate::types::UserId;
-use crate::types::{direct_message, group_message, v1_message};
+use crate::chat_id::GroupChatId;
+use crate::UserId;
+use crate::{message, v1_message};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +17,7 @@ pub struct DirectMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
     pub recipient: UserId,
-    pub message: direct_message::Message,
+    pub message: message::DirectMessage,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -27,7 +27,7 @@ pub struct GroupMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
     pub recipients: Vec<UserId>,
-    pub message: group_message::Message,
+    pub message: message::GroupMessage,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

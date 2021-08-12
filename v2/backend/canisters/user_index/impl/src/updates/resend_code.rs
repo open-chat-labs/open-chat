@@ -1,8 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::common::confirmation_code_sms::ConfirmationCodeSms;
-use user_index_canister::common::user::User;
+use types::confirmation_code_sms::ConfirmationCodeSms;
 use user_index_canister::updates::resend_code::{Response::*, *};
+use user_index_canister::user::User;
 
 #[update]
 fn resend_code(_: Args) -> Response {
@@ -36,7 +36,7 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CanisterCreationStatus, ConfirmedUser, UnconfirmedUser, User};
+    use user_index_canister::user::{CanisterCreationStatus, ConfirmedUser, UnconfirmedUser, User};
 
     #[test]
     fn unconfirmed_user_succeeds() {

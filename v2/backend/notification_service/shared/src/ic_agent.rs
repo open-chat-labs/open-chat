@@ -6,8 +6,8 @@ use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use notifications_canister::queries::notifications;
 use notifications_canister::updates::remove_notifications;
-use shared::types::CanisterId;
 use std::time::Duration;
+use types::CanisterId;
 
 pub struct IcAgentConfig {
     pub ic_url: String,

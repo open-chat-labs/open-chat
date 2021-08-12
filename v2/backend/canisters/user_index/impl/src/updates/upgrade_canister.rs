@@ -3,10 +3,10 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
-use shared::canisters::canister_wasm::CanisterWasm;
-use shared::types::{CanisterId, Version};
-use user_index_canister::common::user::User;
+use types::canister_wasm::CanisterWasm;
+use types::{CanisterId, Version};
 use user_index_canister::updates::upgrade_canister::{Response::*, *};
+use user_index_canister::user::User;
 
 #[update]
 async fn upgrade_canister(_args: Args) -> Response {

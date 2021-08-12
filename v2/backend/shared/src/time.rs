@@ -1,6 +1,4 @@
-pub type Milliseconds = u64;
-pub type TimestampMillis = u64;
-pub type TimestampNanos = u64;
+use types::{TimestampMillis, TimestampNanos};
 
 const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 

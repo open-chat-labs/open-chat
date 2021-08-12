@@ -1,4 +1,4 @@
-use crate::types::Version;
+use crate::Version;
 use candid::CandidType;
 use serde::Deserialize;
 

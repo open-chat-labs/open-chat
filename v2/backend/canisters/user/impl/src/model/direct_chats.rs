@@ -1,9 +1,10 @@
 use crate::model::direct_chat::DirectChat;
 use crate::model::events::PushMessageArgs;
-use shared::time::TimestampMillis;
-use shared::types::{chat_id::DirectChatId, direct_message::Message, EventIndex, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use types::chat_id::DirectChatId;
+use types::message::DirectMessage;
+use types::{EventIndex, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct DirectChats {
@@ -33,7 +34,7 @@ impl DirectChats {
         my_user_id: UserId,
         their_user_id: UserId,
         args: PushMessageArgs,
-    ) -> (DirectChatId, EventIndex, Message) {
+    ) -> (DirectChatId, EventIndex, DirectMessage) {
         let chat_id = DirectChatId::from((&my_user_id, &their_user_id));
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {

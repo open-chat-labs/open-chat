@@ -1,9 +1,9 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use core::cmp::Ordering;
 use ic_cdk_macros::query;
-use user_index_canister::common::user::CreatedUser;
-use user_index_canister::common::user_summary::UserSummary;
+use types::user_summary::UserSummary;
 use user_index_canister::queries::search::{Response::*, *};
+use user_index_canister::user::CreatedUser;
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
@@ -34,7 +34,16 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let results = matches
         .iter()
         .take(args.max_results as usize)
-        .map(|u| UserSummary::new(u, now))
+        .map(|u| {
+            let millis_since_last_online = now - u.last_online;
+            let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+
+            UserSummary {
+                user_id: u.user_id,
+                username: u.username.clone(),
+                seconds_since_last_online,
+            }
+        })
         .collect();
 
     Success(Result { users: results })
@@ -70,9 +79,9 @@ mod tests {
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::User;
+    use types::Version;
+    use user_index_canister::user::User;
 
     #[test]
     fn search_results_constrained_by_max_results() {
@@ -119,8 +128,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("matt", results.users[0].username());
-        assert_eq!("marcus", results.users[1].username());
+        assert_eq!("matt", results.users[0].username);
+        assert_eq!("marcus", results.users[1].username);
     }
 
     #[test]
@@ -136,8 +145,8 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!("jUlian", results.users[0].username());
-        assert_eq!("julian", results.users[1].username());
+        assert_eq!("jUlian", results.users[0].username);
+        assert_eq!("julian", results.users[1].username);
     }
 
     #[test]
@@ -171,9 +180,9 @@ mod tests {
         let Response::Success(results) = response;
 
         let user = results.users.first().unwrap();
-        assert_eq!(user.user_id(), Principal::from_slice(&[4, 1]).into());
-        assert_eq!(user.username(), "hamish");
-        assert_eq!(user.seconds_since_last_online(), 5);
+        assert_eq!(user.user_id, Principal::from_slice(&[4, 1]).into());
+        assert_eq!(user.username, "hamish");
+        assert_eq!(user.seconds_since_last_online, 5);
     }
 
     fn setup_runtime_state() -> RuntimeState {

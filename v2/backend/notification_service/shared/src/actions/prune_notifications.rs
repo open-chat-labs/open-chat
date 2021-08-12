@@ -2,7 +2,7 @@ use crate::error::Error;
 use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
-use shared::types::CanisterId;
+use types::CanisterId;
 
 pub async fn run(config: IcAgentConfig, canister_id: CanisterId, store: Box<dyn Store + Send + Sync>) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;

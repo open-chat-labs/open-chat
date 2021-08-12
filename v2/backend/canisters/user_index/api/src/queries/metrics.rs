@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use shared::time::TimestampMillis;
+use types::TimestampMillis;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {}

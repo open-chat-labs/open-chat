@@ -1,15 +1,15 @@
-use crate::common::reply_context_internal::ReplyContextInternal;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::message_content::MessageContent;
-use shared::types::MessageId;
+use types::message_content::MessageContent;
+use types::reply_context::DirectReplyContextInternal;
+use types::MessageId;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
     pub message_id: MessageId,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<DirectReplyContextInternal>,
 }
 
 #[derive(CandidType, Deserialize)]

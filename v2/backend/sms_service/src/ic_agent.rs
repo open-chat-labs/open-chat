@@ -4,8 +4,8 @@ use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
-use shared::types::CanisterId;
 use std::time::Duration;
+use types::CanisterId;
 use user_index_canister::queries::sms_messages;
 use user_index_canister::updates::remove_sms_messages;
 

@@ -1,6 +1,6 @@
+use crate::TimestampMillis;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Subscription {

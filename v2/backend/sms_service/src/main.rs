@@ -5,8 +5,8 @@ mod sns;
 
 use lambda_runtime::{handler_fn, Context, Error};
 use serde::Deserialize;
-use shared::types::CanisterId;
 use std::env;
+use types::CanisterId;
 
 #[derive(Deserialize)]
 struct Request {

@@ -1,11 +1,11 @@
+use crate::message::{DirectMessage, GroupMessage};
+use crate::UserId;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::group_message::Message;
-use shared::types::UserId;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum GroupChatEvent {
-    Message(Message),
+    Message(GroupMessage),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
@@ -70,4 +70,9 @@ pub struct ParticipantsPromotedToAdmin {
 pub struct ParticipantsDismissedAsAdmin {
     pub user_ids: Vec<UserId>,
     pub dismissed_by: UserId,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub enum DirectChatEvent {
+    Message(DirectMessage),
 }

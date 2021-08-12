@@ -1,7 +1,7 @@
-use crate::common::subscription::SubscriptionInfo;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::UserId;
+use types::subscription::SubscriptionInfo;
+use types::UserId;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

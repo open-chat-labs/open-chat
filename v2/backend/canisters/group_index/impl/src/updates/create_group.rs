@@ -3,10 +3,10 @@ use candid::{CandidType, Principal};
 use group_index_canister::updates::create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use shared::canisters;
-use shared::canisters::canister_wasm::CanisterWasm;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
-use shared::types::chat_id::GroupChatId;
-use shared::types::{UserId, Version};
+use types::canister_wasm::CanisterWasm;
+use types::chat_id::GroupChatId;
+use types::{UserId, Version};
 
 #[update]
 async fn create_group(args: Args) -> Response {

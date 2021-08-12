@@ -1,9 +1,9 @@
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
-use shared::canisters::canister_wasm::CanisterWasm;
 use shared::env::Environment;
-use shared::types::CanisterId;
 use std::cell::RefCell;
+use types::canister_wasm::CanisterWasm;
+use types::CanisterId;
 
 mod lifecycle;
 mod model;

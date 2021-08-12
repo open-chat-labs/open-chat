@@ -1,7 +1,7 @@
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::updates::push_v1direct_message_notification::{Response::*, *};
-use shared::types::notifications::Notification;
+use types::notifications::Notification;
 
 #[update]
 fn push_v1direct_message_notification(args: Args) -> Response {

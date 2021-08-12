@@ -3,9 +3,9 @@ use crate::model::group_chats::GroupChats;
 use candid::Principal;
 use serde_bytes::ByteBuf;
 use shared::env::Environment;
-use shared::types::{CanisterId, UserId, Version};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use types::{CanisterId, UserId, Version};
 
 mod lifecycle;
 mod model;

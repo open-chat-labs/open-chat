@@ -1,5 +1,5 @@
-use crate::time::TimestampMillis;
-use crate::types::UserId;
+use crate::TimestampMillis;
+use crate::UserId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 

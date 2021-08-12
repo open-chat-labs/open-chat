@@ -1,5 +1,5 @@
 [package]
-name = "notifications_canister"
+name = "types"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
@@ -10,4 +10,4 @@ edition = "2018"
 candid = "0.7.4"
 ic-cdk = "0.3.1"
 serde = "1.0.126"
-types = { path = "../../../types" }
+serde_bytes = "0.11.5"

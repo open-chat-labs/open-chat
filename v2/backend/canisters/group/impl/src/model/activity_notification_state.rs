@@ -1,4 +1,4 @@
-use shared::time::TimestampMillis;
+use types::TimestampMillis;
 
 const ACTIVITY_NOTIFICATION_INTERVAL_MILLIS: u64 = 5 * 60 * 1000; // 5 minutes
 

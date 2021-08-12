@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use shared::types::chat_id::DirectChatId;
+use types::chat_id::DirectChatId;
 use user_canister::queries::events::{Response::*, *};
 
 #[query]

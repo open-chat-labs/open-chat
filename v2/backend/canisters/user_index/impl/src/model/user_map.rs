@@ -1,11 +1,10 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use shared::time::TimestampMillis;
-use shared::types::UserId;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use user_index_canister::common::user::User;
+use types::{TimestampMillis, UserId};
+use user_index_canister::user::User;
 
 #[derive(Default)]
 pub struct UserMap {
@@ -171,9 +170,9 @@ pub enum UpdateUserResult {
 mod tests {
     use super::*;
     use itertools::Itertools;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use types::Version;
+    use user_index_canister::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
 
     #[test]
     fn add_with_no_clashes() {

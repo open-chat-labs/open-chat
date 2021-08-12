@@ -1,8 +1,8 @@
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::{Blob, Client};
 use lambda_runtime::Error;
-use shared::types::CanisterId;
 use std::str::FromStr;
+use types::CanisterId;
 
 pub struct DynamoDbClient {
     client: Client,

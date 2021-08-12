@@ -24,9 +24,9 @@ mod tests {
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CreatedUser, User};
+    use types::Version;
+    use user_index_canister::user::{CreatedUser, User};
 
     #[test]
     fn last_online_is_updated() {

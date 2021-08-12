@@ -1,7 +1,7 @@
-use crate::common::events::GroupChatEvent;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::{EventIndex, EventWrapper};
+use types::events::GroupChatEvent;
+use types::{EventIndex, EventWrapper};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

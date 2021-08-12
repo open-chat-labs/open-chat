@@ -1,7 +1,7 @@
-use crate::time::TimestampMillis;
-use crate::types::chat_id::{DirectChatId, GroupChatId};
-use crate::types::participant::Participant;
-use crate::types::{direct_message, group_message, EventIndex, EventWrapper, MessageIndex, UserId};
+use crate::chat_id::{DirectChatId, GroupChatId};
+use crate::participant::Participant;
+use crate::TimestampMillis;
+use crate::{message, EventIndex, EventWrapper, MessageIndex, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -24,7 +24,7 @@ impl ChatSummary {
 pub struct DirectChatSummary {
     pub chat_id: DirectChatId,
     pub them: UserId,
-    pub latest_message: EventWrapper<direct_message::Message>,
+    pub latest_message: EventWrapper<message::DirectMessage>,
     pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
     pub latest_read_by_me: MessageIndex,
@@ -45,7 +45,7 @@ pub struct GroupChatSummary {
     pub is_public: bool,
     pub min_visible_message_index: MessageIndex,
     pub participants: Vec<Participant>,
-    pub latest_message: Option<EventWrapper<group_message::Message>>,
+    pub latest_message: Option<EventWrapper<message::GroupMessage>>,
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub latest_read_by_me: MessageIndex,

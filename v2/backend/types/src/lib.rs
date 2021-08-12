@@ -1,20 +1,27 @@
-use crate::time::TimestampMillis;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
+pub mod canister_wasm;
 pub mod chat_id;
 pub mod chat_summary;
-pub mod direct_message;
-pub mod group_message;
+pub mod confirmation_code_sms;
+pub mod events;
 pub mod indexed_event;
+pub mod message;
 pub mod message_content;
 pub mod notifications;
 pub mod participant;
+pub mod reply_context;
 pub mod role;
+pub mod subscription;
+pub mod user_summary;
 pub mod v1_message;
 
 pub type CanisterId = Principal;
+pub type Milliseconds = u64;
+pub type TimestampMillis = u64;
+pub type TimestampNanos = u64;
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventIndex(u32);

@@ -3,13 +3,13 @@ use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITI
 use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
-use shared::canisters::canister_wasm::CanisterWasm;
 use shared::canisters::create::CreateCanisterError;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
-use shared::types::{CanisterId, Version};
+use types::canister_wasm::CanisterWasm;
+use types::{CanisterId, Version};
 use user_canister::lifecycle::init::Args as InitUserCanisterArgs;
-use user_index_canister::common::user::{CanisterCreationStatus, CreatedUser, User};
 use user_index_canister::updates::create_canister::{Response::*, *};
+use user_index_canister::user::{CanisterCreationStatus, CreatedUser, User};
 
 #[update]
 async fn create_canister(_args: Args) -> Response {
