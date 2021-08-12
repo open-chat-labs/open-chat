@@ -214,9 +214,12 @@ export class UserClientMock implements IUserClient {
     createGroup(_group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return new Promise((res) => {
             setTimeout(() => {
+                // res({
+                //     kind: "success",
+                //     canisterId: randomWord(16),
+                // });
                 res({
-                    kind: "success",
-                    canisterId: randomWord(16),
+                    kind: "invalid_name",
                 });
             }, 5000);
         });

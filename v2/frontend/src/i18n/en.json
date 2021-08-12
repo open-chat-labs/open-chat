@@ -16,6 +16,7 @@
     "submitNewGroup": "Create group",
     "chooseParticipants": "Choose participants",
     "confirmParticipants": "Confirm participants",
+    "groupCreationFailed": "Sorry we were unable to create your group",
     "skip": "Skip",
     "historyVisible": "visible chat history",
     "historyOnInfo": "Full chat history will be visible to new joiners. Careful now! 🤐",

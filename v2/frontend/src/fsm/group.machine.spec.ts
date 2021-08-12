@@ -36,6 +36,35 @@ describe("group machine transitions", () => {
             );
             expect(ctx.candidateGroup.name).toEqual("My fancy group");
         });
+        test("create group succeeds", () => {
+            const ctx = testTransition(
+                groupMachine.withContext(testContext),
+                { canister_creation: "creating" },
+                { type: "done.invoke.createGroup", data: { kind: "success", canisterId: "12345" } },
+                { canister_creation: "created" }
+            );
+            expect(ctx.createdGroup).not.toBe(undefined);
+            expect(ctx.createdGroup?.chatId).toEqual("12345");
+        });
+        test("create group expected failure", () => {
+            const ctx = testTransition(
+                groupMachine.withContext(testContext),
+                { canister_creation: "creating" },
+                { type: "done.invoke.createGroup", data: { kind: "invalid_name" } },
+                { canister_creation: "unexpected_error" }
+            );
+            expect(ctx.createdGroup).toBe(undefined);
+        });
+        test("create group exception", () => {
+            const err = new Error("oh no");
+            const ctx = testTransition(
+                groupMachine.withContext(testContext),
+                { canister_creation: "creating" },
+                { type: "error.platform.createGroup", data: err },
+                { canister_creation: "unexpected_error" }
+            );
+            expect(ctx.error).toEqual(err);
+        });
     });
     describe("data collection state", () => {
         test("cancel new group", () => {

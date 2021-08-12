@@ -24,7 +24,8 @@
 
     $: busy =
         $machine.matches({ canister_creation: "creating" }) ||
-        $machine.matches({ data_collection: "adding_participants" });
+        $machine.matches({ data_collection: "adding_participants" }) ||
+        $machine.matches({ canister_creation: "unexpected_error" });
 
     function cancel() {
         machine.send({ type: "CANCEL_CHOOSE_PARTICIPANTS" });

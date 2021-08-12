@@ -3,6 +3,7 @@ import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent }
 import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { toastStore } from "../stores/toast";
 import type {
     CandidateGroupChat,
     CreateGroupResponse,
@@ -60,36 +61,48 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                     invoke: {
                         id: "createGroup",
                         src: "createGroup",
-                        onDone: {
-                            target: "created",
-                            actions: assign((ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
-                                if (ev.data.kind !== "success") {
+                        onDone: [
+                            {
+                                cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
+                                    ev.data.kind !== "success",
+                                target: "unexpected_error",
+                                actions: assign((_ctx, _ev) => {
+                                    toastStore.showFailureToast("groupCreationFailed");
                                     return {
                                         error: new Error("groupCreationFailed"),
                                     };
-                                } else {
-                                    const now = BigInt(+new Date());
-                                    const chat: GroupChatSummary = {
-                                        kind: "group_chat",
-                                        name: ctx.candidateGroup.name,
-                                        description: ctx.candidateGroup.description,
-                                        participants: [],
-                                        public: ctx.candidateGroup.isPublic,
-                                        joined: now,
-                                        minVisibleMessageIndex: 0,
-                                        chatId: ev.data.canisterId,
-                                        latestReadByMe: 0,
-                                        latestMessage: undefined,
-                                        latestEventIndex: 0,
-                                        lastUpdated: now,
-                                    };
-                                    return {
-                                        createdGroup: chat,
-                                        error: undefined,
-                                    };
-                                }
-                            }),
-                        },
+                                }),
+                            },
+                            {
+                                cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
+                                    ev.data.kind === "success",
+                                target: "created",
+                                actions: assign((ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
+                                    if (ev.data.kind === "success") {
+                                        const now = BigInt(+new Date());
+                                        const chat: GroupChatSummary = {
+                                            kind: "group_chat",
+                                            name: ctx.candidateGroup.name,
+                                            description: ctx.candidateGroup.description,
+                                            participants: [],
+                                            public: ctx.candidateGroup.isPublic,
+                                            joined: now,
+                                            minVisibleMessageIndex: 0,
+                                            chatId: ev.data.canisterId,
+                                            latestReadByMe: 0,
+                                            latestMessage: undefined,
+                                            latestEventIndex: 0,
+                                            lastUpdated: now,
+                                        };
+                                        return {
+                                            createdGroup: chat,
+                                            error: undefined,
+                                        };
+                                    }
+                                    return {};
+                                }),
+                            },
+                        ],
                         onError: {
                             target: "unexpected_error",
                             actions: assign({
