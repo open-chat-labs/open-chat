@@ -1,6 +1,8 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
+    CreateGroupArgs,
+    CreateGroupResponse,
     UpdatesArgs,
     UpdatesResponse,
     ChatSummary,
@@ -28,6 +30,8 @@ import {
 } from "./types";
 export {
     _SERVICE as UserService,
+    CreateGroupArgs as ApiCreateGroupArgs,
+    CreateGroupResponse as ApiCreateGroupResponse,
     UpdatesArgs as ApiUpdatesArgs,
     UpdatesResponse as ApiUpdatesResponse,
     ChatSummary as ApiChatSummary,

@@ -19,7 +19,7 @@ import type {
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
-    CreateGroupChatResponse,
+    CreateGroupResponse,
 } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
@@ -82,8 +82,8 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupChatResponse> {
-        return this.groupIndexClient.createGroup(candidate);
+    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return this.userClient.createGroup(candidate);
     }
 
     directChatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {

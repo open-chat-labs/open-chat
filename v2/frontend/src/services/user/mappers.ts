@@ -12,6 +12,7 @@ import type {
     ApiUpdatesResponse,
     ApiParticipant,
     ApiUpdatedChatSummary,
+    ApiCreateGroupResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -27,8 +28,37 @@ import type {
     TextContent,
     Participant,
     UpdatedChatSummary,
+    CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+
+export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
+    if ("Success" in candid) {
+        return { kind: "success", canisterId: candid.Success.canister_id.toString() };
+    }
+
+    if ("PublicGroupAlreadyExists" in candid) {
+        return { kind: "public_group_already_exists" };
+    }
+
+    if ("InvalidName" in candid) {
+        return { kind: "invalid_name" };
+    }
+
+    if ("NameTooLong" in candid) {
+        return { kind: "name_too_long" };
+    }
+
+    if ("GroupLimitExceeded" in candid) {
+        return { kind: "group_limit_exceeded" };
+    }
+
+    if ("UnknownError" in candid) {
+        return { kind: "unknown_error" };
+    }
+
+    throw new Error(`Unexpected ApiCreateGroupResponse type received: ${candid}`);
+}
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
     if ("Success" in candid) {

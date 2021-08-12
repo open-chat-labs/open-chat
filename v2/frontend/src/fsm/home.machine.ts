@@ -235,10 +235,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             initial: "no_chat_selected",
             id: "loaded_chats",
             invoke: [
-                {
-                    id: "updateChatsPoller",
-                    src: "updateChatsPoller",
-                },
+                // {
+                //     id: "updateChatsPoller",
+                //     src: "updateChatsPoller",
+                // },
                 {
                     id: "updateUsersPoller",
                     src: "updateUsersPoller",
@@ -403,7 +403,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     on: {
                         // todo - bit worried that there may be a race condition here
                         GROUP_CHAT_CREATED: {
-                            actions: assign((ctx, ev: DoneInvokeEvent<GroupChatSummary>) => {
+                            actions: assign((ctx, ev) => {
                                 return {
                                     chatSummaries: [ev.data, ...ctx.chatSummaries],
                                 };
@@ -415,6 +415,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         src: groupMachine,
                         data: (ctx, _) => {
                             return {
+                                user: ctx.user,
                                 serviceContainer: ctx.serviceContainer,
                                 candidateGroup: nullGroup,
                                 error: undefined,

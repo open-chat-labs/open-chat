@@ -5,10 +5,11 @@ import type {
     UpdatesResponse,
     EventsResponse,
     UpdateArgs,
-    DirectChatEvent,
+    CandidateGroupChat,
+    CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { getEventsResponse, getUpdatesResponse } from "./mappers";
+import { createGroupResponse, getEventsResponse, getUpdatesResponse } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -17,6 +18,16 @@ export class UserClient extends CandidService implements IUserClient {
     constructor(identity: Identity, userId: Principal) {
         super(identity);
         this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
+    }
+
+    createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return this.handleResponse(
+            this.userService.create_group({
+                is_public: group.isPublic,
+                name: group.name,
+            }),
+            createGroupResponse
+        );
     }
 
     chatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {

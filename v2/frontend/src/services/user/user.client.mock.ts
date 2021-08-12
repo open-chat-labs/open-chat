@@ -10,6 +10,8 @@ import type {
     Participant,
     UpdatedChatSummary,
     EventWrapper,
+    CandidateGroupChat,
+    CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
@@ -206,6 +208,17 @@ export class UserClientMock implements IUserClient {
             setTimeout(() => {
                 res(resp);
             }, 500);
+        });
+    }
+
+    createGroup(_group: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res({
+                    kind: "success",
+                    canisterId: randomWord(16),
+                });
+            }, 5000);
         });
     }
 }

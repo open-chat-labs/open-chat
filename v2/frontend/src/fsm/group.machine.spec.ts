@@ -7,8 +7,10 @@ import { GroupContext, groupMachine, nullGroup } from "./group.machine";
 const testUser = { userId: "123456", username: "test user", secondsSinceLastOnline: 0 };
 
 const testContext: GroupContext = {
+    user: { userId: "abcdefg", username: "me", secondsSinceLastOnline: 0 },
     serviceContainer: {} as ServiceContainer,
     error: undefined,
+    createdGroup: undefined,
     candidateGroup: nullGroup,
 };
 

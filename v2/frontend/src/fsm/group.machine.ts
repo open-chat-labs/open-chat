@@ -1,25 +1,21 @@
-// creating a new group is complicated enough to have its own state machine
-// The states are going to look something like:
-// - group_form
-// - editing_avatar
-// - choosing_participants
-// The other reason to have a dedicated machine is that we need to "remember" the state of the
-// candidate group, while the user is selecting participants.
-// We also need to track whether canister creation is complete etc. It can get quite fiddly probably.
-
-// this is a job for tomorrow
-
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
 import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { CandidateGroupChat } from "../domain/chat/chat";
-import { sendParent } from "xstate/lib/actions";
+import type {
+    CandidateGroupChat,
+    CreateGroupResponse,
+    GroupChatSummary,
+} from "../domain/chat/chat";
+import { pure, sendParent } from "xstate/lib/actions";
+import { push } from "svelte-spa-router";
 
 export interface GroupContext {
+    user: UserSummary;
     serviceContainer: ServiceContainer;
     candidateGroup: CandidateGroupChat;
+    createdGroup?: GroupChatSummary;
     error?: Error;
 }
 
@@ -40,7 +36,7 @@ export type GroupEvents =
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error }
-    | { type: "done.invoke.createGroup"; data: string }
+    | { type: "done.invoke.createGroup"; data: CreateGroupResponse }
     | { type: "error.platform.createGroup"; data: Error };
 
 const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
@@ -59,10 +55,47 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
         canister_creation: {
             initial: "idle",
             states: {
+                unexpected_error: {},
                 creating: {
-                    // todo - for now simulate the creation of the canister
-                    after: {
-                        5000: "created",
+                    invoke: {
+                        id: "createGroup",
+                        src: "createGroup",
+                        onDone: {
+                            target: "created",
+                            actions: assign((ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
+                                if (ev.data.kind !== "success") {
+                                    return {
+                                        error: new Error("groupCreationFailed"),
+                                    };
+                                } else {
+                                    const now = BigInt(+new Date());
+                                    const chat: GroupChatSummary = {
+                                        kind: "group_chat",
+                                        name: ctx.candidateGroup.name,
+                                        description: ctx.candidateGroup.description,
+                                        participants: [],
+                                        public: ctx.candidateGroup.isPublic,
+                                        joined: now,
+                                        minVisibleMessageIndex: 0,
+                                        chatId: ev.data.canisterId,
+                                        latestReadByMe: 0,
+                                        latestMessage: undefined,
+                                        latestEventIndex: 0,
+                                        lastUpdated: now,
+                                    };
+                                    return {
+                                        createdGroup: chat,
+                                        error: undefined,
+                                    };
+                                }
+                            }),
+                        },
+                        onError: {
+                            target: "unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
                     },
                 },
                 created: {
@@ -79,7 +112,6 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                     },
                 },
                 idle: {
-                    // kick off the creation of the group canister
                     on: {
                         CANCEL_NEW_GROUP: "created", //this is just so that the whole machine goes to the done state
                         CHOOSE_PARTICIPANTS: {
@@ -104,44 +136,6 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                             actions: assign((_, ev) => ({
                                 candidateGroup: ev.data,
                             })),
-                        },
-                    },
-                },
-                adding_participants: {
-                    invoke: {
-                        id: "createGroup",
-                        src: "createGroup",
-                        onDone: {
-                            target: "done",
-                            actions: sendParent((ctx, ev: DoneInvokeEvent<string>) => {
-                                const now = BigInt(+new Date());
-                                return {
-                                    type: "GROUP_CHAT_CREATED",
-                                    data: {
-                                        kind: "group_chat",
-                                        name: ctx.candidateGroup.name,
-                                        description: ctx.candidateGroup.description,
-                                        participants: ctx.candidateGroup.participants.map((p) => ({
-                                            role: p.role,
-                                            userId: p.user.userId,
-                                        })),
-                                        public: ctx.candidateGroup.isPublic,
-                                        joined: now,
-                                        minVisibleMessageIndex: 0,
-                                        chatId: ev.data,
-                                        latestReadByMe: 0,
-                                        latestMessage: undefined,
-                                        latestEventIndex: 0,
-                                        lastUpdated: now,
-                                    },
-                                };
-                            }),
-                        },
-                        onError: {
-                            target: "unexpected_error",
-                            actions: assign({
-                                error: (_, { data }) => data,
-                            }),
                         },
                     },
                 },
@@ -202,7 +196,33 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                         },
                     },
                 },
-                unexpected_error: {},
+                adding_participants: {
+                    // todo - we still need to make an actual api call here to update the group with the participants
+                    after: {
+                        3000: {
+                            target: "done",
+                            actions: pure((ctx, _) => {
+                                if (ctx.createdGroup) {
+                                    push(`/${ctx.createdGroup.chatId}`); // trigger the selection of the chat
+                                    return sendParent({
+                                        type: "GROUP_CHAT_CREATED",
+                                        data: {
+                                            ...ctx.createdGroup,
+                                            participants: [
+                                                { role: "admin", userId: ctx.user.userId },
+                                                ...ctx.candidateGroup.participants.map((p) => ({
+                                                    role: p.role,
+                                                    userId: p.user.userId,
+                                                })),
+                                            ],
+                                        },
+                                    });
+                                }
+                                return undefined;
+                            }),
+                        },
+                    },
+                },
             },
         },
     },

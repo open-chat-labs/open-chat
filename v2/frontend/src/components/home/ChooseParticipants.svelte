@@ -22,6 +22,10 @@
 
     $: numParticipants = $machine.context.candidateGroup.participants.length;
 
+    $: busy =
+        $machine.matches({ canister_creation: "creating" }) ||
+        $machine.matches({ data_collection: "adding_participants" });
+
     function cancel() {
         machine.send({ type: "CANCEL_CHOOSE_PARTICIPANTS" });
     }
@@ -71,11 +75,8 @@
     </div>
 
     <div class="cta">
-        <Button
-            disabled={$machine.matches({ canister_creation: "creating" })}
-            loading={$machine.matches({ canister_creation: "creating" })}
-            on:click={complete}
-            fill={true}>{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
+        <Button disabled={busy} loading={busy} on:click={complete} fill={true}
+            >{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
     </div>
 </div>
 

@@ -1,4 +1,10 @@
-import type { UpdatesResponse, EventsResponse, UpdateArgs } from "../../domain/chat/chat";
+import type {
+    UpdatesResponse,
+    EventsResponse,
+    UpdateArgs,
+    CandidateGroupChat,
+    CreateGroupResponse,
+} from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
@@ -26,5 +32,9 @@ export class CachingUserClient implements IUserClient {
 
     getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
         return this.client.getUpdates(userId, args);
+    }
+
+    createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
+        return this.client.createGroup(group);
     }
 }
