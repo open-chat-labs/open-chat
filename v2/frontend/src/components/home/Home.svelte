@@ -19,7 +19,6 @@
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
-    import type { EnhancedReplyContext } from "../../domain/chat/chat";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,

@@ -76,6 +76,12 @@
             }
         }
     }
+
+    $: {
+        if ($machine.changed && $machine.context.replyingTo !== undefined) {
+            inp.focus();
+        }
+    }
 </script>
 
 <div class="message-entry">
