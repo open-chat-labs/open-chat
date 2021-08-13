@@ -2,6 +2,11 @@ import type { Principal } from "@dfinity/principal";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
+export type DraftMessageContent =
+    | TextContent
+    | DraftMediaContent
+    | DraftFileContent
+    | CyclesContent;
 
 export interface CyclesContent {
     kind: "cycles_content";
@@ -31,6 +36,25 @@ export interface FileContent {
     blobReference?: BlobReference;
     caption?: string;
 }
+
+export type DraftMediaContent = {
+    kind: "media_content";
+    caption?: string;
+    mimeType: string;
+    width: number;
+    height: number;
+    data: Uint8Array;
+    blobUrl: string;
+    thumbnailData: string;
+};
+
+export type DraftFileContent = {
+    kind: "file_content";
+    name: string;
+    caption?: string;
+    mimeType: string;
+    data: Uint8Array;
+};
 
 export interface BlobReference {
     blobSize: number;

@@ -49,9 +49,8 @@
 
 <style type="text/scss">
     .replying-wrapper {
-        border-radius: $sp3 $sp3 0 0;
+        border-radius: $sp4 $sp4 0 0;
         padding: 0 0 0 7px;
-        @include z-index("reply-to");
         box-shadow: 0 -6px 10px 0 rgba(25, 25, 25, 0.25);
 
         &.rtl {
@@ -61,12 +60,11 @@
 
     .replying {
         @include font(book, normal, fs-100);
-        border-radius: $sp3 $sp3 0 0;
+        border-radius: inherit;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         box-shadow: -7px 0px 0px 0px var(--button-bg);
-        margin-top: -5px; // forgive me!
         position: relative;
 
         .close-icon {

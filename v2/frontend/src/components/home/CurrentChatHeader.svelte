@@ -88,7 +88,7 @@
     // if 5 or fewer, we list the usernames sorted by online status
 </script>
 
-<SectionHeader>
+<SectionHeader flush={true}>
     {#if $screenWidth === ScreenWidth.ExtraSmall}
         <div class="back" class:rtl={$rtlStore} on:click={clearSelection}>
             <HoverIcon>

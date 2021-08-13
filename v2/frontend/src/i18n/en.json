@@ -28,6 +28,7 @@
     "newGroupName": "enter group name",
     "newGroupDesc": "what is this group about?",
     "new": "new",
+    "maxFileSize": "Maximum file size exceeded",
     "cancel": "Cancel",
     "addGroupPhoto": "Add group photo",
     "public": "Public",

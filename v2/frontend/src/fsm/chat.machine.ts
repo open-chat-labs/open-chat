@@ -6,6 +6,7 @@ import type {
     EventsResponse,
     EventWrapper,
     EnhancedReplyContext,
+    DraftMessageContent,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
@@ -32,6 +33,7 @@ export interface ChatContext {
     events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
+    fileToAttach?: DraftMessageContent;
 }
 
 type LoadEventsResponse = {
@@ -45,6 +47,8 @@ export type ChatEvents =
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: string }
+    | { type: "ATTACH_FILE"; data: DraftMessageContent }
+    | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "REPLY_TO"; data: EnhancedReplyContext }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
@@ -248,11 +252,19 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 GO_TO_MESSAGE_INDEX: {
                     target: ".loading_previous_messages",
-                    actions: assign((_, ev) => {
-                        return {
-                            focusIndex: ev.data,
-                        };
-                    }),
+                    actions: assign((_, ev) => ({
+                        focusIndex: ev.data,
+                    })),
+                },
+                ATTACH_FILE: {
+                    actions: assign((_, ev) => ({
+                        fileToAttach: ev.data,
+                    })),
+                },
+                CLEAR_ATTACHMENT: {
+                    actions: assign((_, _ev) => ({
+                        fileToAttach: undefined,
+                    })),
                 },
             },
             states: {
@@ -305,6 +317,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     },
                                 ],
                                 replyingTo: undefined,
+                                fileToAttach: undefined,
                             };
                         }
                         return {};

@@ -72,7 +72,7 @@
 
 <style type="text/scss">
     .reply-wrapper {
-        border-radius: $sp3;
+        border-radius: $sp4;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
