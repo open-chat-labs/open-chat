@@ -3,8 +3,8 @@ use phonenumber::PhoneNumber;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
+use types::user::User;
 use types::{TimestampMillis, UserId};
-use user_index_canister::user::User;
 
 #[derive(Default)]
 pub struct UserMap {
@@ -171,8 +171,8 @@ mod tests {
     use super::*;
     use itertools::Itertools;
     use std::str::FromStr;
+    use types::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
     use types::Version;
-    use user_index_canister::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
 
     #[test]
     fn add_with_no_clashes() {

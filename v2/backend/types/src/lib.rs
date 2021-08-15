@@ -18,6 +18,9 @@ pub mod subscription;
 pub mod user_summary;
 pub mod v1_message;
 
+#[cfg(feature = "phonenumber")]
+pub mod user;
+
 pub type CanisterId = Principal;
 pub type Milliseconds = u64;
 pub type TimestampMillis = u64;

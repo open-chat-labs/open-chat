@@ -1,8 +1,8 @@
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
+use types::user::User;
 use user_index_canister::updates::set_username::{Response::*, *};
-use user_index_canister::user::User;
 
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
@@ -59,8 +59,8 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
+    use types::user::{CreatedUser, UnconfirmedUser, User};
     use types::Version;
-    use user_index_canister::user::{CreatedUser, UnconfirmedUser, User};
 
     #[test]
     fn valid_username_succeeds() {

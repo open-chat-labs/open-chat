@@ -1,7 +1,7 @@
+use crate::{TimestampMillis, UserId, Version};
 use candid::{CandidType, Principal};
 use phonenumber::PhoneNumber;
 use serde::Deserialize;
-use types::{TimestampMillis, UserId, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {

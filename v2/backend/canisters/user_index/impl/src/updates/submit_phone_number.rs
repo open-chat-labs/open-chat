@@ -4,8 +4,8 @@ use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use std::str::FromStr;
 use types::confirmation_code_sms::ConfirmationCodeSms;
+use types::user::{UnconfirmedUser, User};
 use user_index_canister::updates::submit_phone_number::{Response::*, *};
-use user_index_canister::user::{UnconfirmedUser, User};
 
 #[update]
 fn submit_phone_number(args: Args) -> Response {
@@ -79,7 +79,7 @@ mod tests {
     use crate::Data;
     use candid::Principal;
     use shared::env::test::TestEnv;
-    use user_index_canister::user::{CanisterCreationStatus, ConfirmedUser, User};
+    use types::user::{CanisterCreationStatus, ConfirmedUser, User};
 
     #[test]
     fn new_user_succeeds() {

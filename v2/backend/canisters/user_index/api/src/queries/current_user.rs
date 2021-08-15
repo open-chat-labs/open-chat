@@ -1,6 +1,6 @@
-use crate::user::{CanisterCreationStatus, CanisterUpgradeStatus};
 use candid::CandidType;
 use serde::Deserialize;
+use types::user::{CanisterCreationStatus, CanisterUpgradeStatus};
 use types::UserId;
 
 #[derive(CandidType, Deserialize)]

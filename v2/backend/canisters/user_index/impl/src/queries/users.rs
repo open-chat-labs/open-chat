@@ -43,8 +43,8 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
+    use types::user::{CreatedUser, User};
     use types::Version;
-    use user_index_canister::user::{CreatedUser, User};
 
     #[test]
     fn requested_users_returned() {

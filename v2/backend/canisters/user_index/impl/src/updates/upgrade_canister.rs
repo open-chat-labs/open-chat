@@ -4,9 +4,9 @@ use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
 use types::canister_wasm::CanisterWasm;
+use types::user::User;
 use types::{CanisterId, Version};
 use user_index_canister::updates::upgrade_canister::{Response::*, *};
-use user_index_canister::user::User;
 
 #[update]
 async fn upgrade_canister(_args: Args) -> Response {

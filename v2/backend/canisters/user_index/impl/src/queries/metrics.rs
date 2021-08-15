@@ -1,8 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use shared::memory;
+use types::user::User;
 use user_index_canister::queries::metrics::*;
-use user_index_canister::user::User;
 
 const ONLINE_WINDOW_IN_MS: u64 = 2 * 60 * 1000; // 2 minutes
 const ACTIVE_WINDOW_IN_MS: u64 = 7 * 24 * 60 * 60 * 1000; // 1 week
