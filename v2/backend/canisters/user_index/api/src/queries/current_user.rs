@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::user::{CanisterCreationStatus, CanisterUpgradeStatus};
-use types::UserId;
+use types::{CanisterCreationStatus, CanisterUpgradeStatus, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {}

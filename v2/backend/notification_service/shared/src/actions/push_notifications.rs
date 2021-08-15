@@ -6,9 +6,7 @@ use futures::future;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::fs::File;
-use types::indexed_event::IndexedEvent;
-use types::notifications::Notification;
-use types::{CanisterId, UserId};
+use types::{CanisterId, IndexedEvent, Notification, UserId};
 use web_push::*;
 
 pub async fn run(
@@ -135,7 +133,7 @@ async fn push_notifications_to_user(
     }
 }
 
-fn convert_subscription_info(value: types::subscription::SubscriptionInfo) -> SubscriptionInfo {
+fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo {
     SubscriptionInfo {
         endpoint: value.endpoint,
         keys: SubscriptionKeys {

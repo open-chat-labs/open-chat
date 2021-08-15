@@ -1,6 +1,5 @@
 use candid::Principal;
-use types::CanisterId;
-use types::TimestampMillis;
+use types::{CanisterId, TimestampMillis};
 
 pub mod canister;
 pub mod test;

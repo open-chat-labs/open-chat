@@ -1,7 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use itertools::Itertools;
-use types::chat_summary::{ChatSummary, DirectChatSummary};
+use types::{ChatSummary, DirectChatSummary};
 use user_canister::queries::chats::{Response::*, *};
 
 #[query]

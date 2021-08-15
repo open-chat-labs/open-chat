@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::canister_wasm::CanisterWasm;
-use types::CanisterId;
+use types::{CanisterId, CanisterWasm};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

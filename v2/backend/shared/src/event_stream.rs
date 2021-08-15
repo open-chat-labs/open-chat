@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use std::collections::VecDeque;
-use types::indexed_event::IndexedEvent;
+use types::IndexedEvent;
 
 const MAX_EVENTS: usize = 100_000;
 

@@ -1,8 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use core::cmp::Ordering;
 use ic_cdk_macros::query;
-use types::user::CreatedUser;
-use types::user_summary::UserSummary;
+use types::CreatedUser;
+use types::UserSummary;
 use user_index_canister::queries::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
@@ -80,7 +80,7 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::user::User;
+    use types::User;
     use types::Version;
 
     #[test]

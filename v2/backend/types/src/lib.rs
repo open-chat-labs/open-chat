@@ -1,107 +1,56 @@
-use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use candid::Principal;
 
-pub mod canister_wasm;
-pub mod chat_id;
-pub mod chat_summary;
-pub mod confirmation_code_sms;
-pub mod events;
-pub mod indexed_event;
-pub mod message;
-pub mod message_content;
-pub mod notifications;
-pub mod participant;
-pub mod reply_context;
-pub mod role;
-pub mod subscription;
-pub mod user_summary;
-pub mod v1_message;
+mod canister_wasm;
+mod chat_id;
+mod chat_summary;
+mod confirmation_code_sms;
+mod event_index;
+mod event_wrapper;
+mod events;
+mod indexed_event;
+mod message;
+mod message_content;
+mod message_id;
+mod message_index;
+mod notifications;
+mod participant;
+mod reply_context;
+mod role;
+mod subscription;
+mod user_id;
+mod user_summary;
+mod version;
+
+pub use canister_wasm::*;
+pub use chat_id::*;
+pub use chat_summary::*;
+pub use confirmation_code_sms::*;
+pub use event_index::*;
+pub use event_wrapper::*;
+pub use events::*;
+pub use indexed_event::*;
+pub use message::*;
+pub use message_content::*;
+pub use message_id::*;
+pub use message_index::*;
+pub use notifications::*;
+pub use participant::*;
+pub use reply_context::*;
+pub use role::*;
+pub use subscription::*;
+pub use user_id::*;
+pub use user_summary::*;
+pub use version::*;
 
 #[cfg(feature = "phonenumber")]
-pub mod user;
+mod user;
+
+#[cfg(feature = "phonenumber")]
+pub use user::*;
+
+pub mod v1_message;
 
 pub type CanisterId = Principal;
 pub type Milliseconds = u64;
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EventIndex(u32);
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct MessageIndex(u32);
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct MessageId(u128);
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UserId(CanisterId);
-
-impl From<Principal> for UserId {
-    fn from(principal: Principal) -> Self {
-        UserId(principal)
-    }
-}
-
-impl From<UserId> for CanisterId {
-    fn from(user_id: UserId) -> Self {
-        user_id.0
-    }
-}
-
-impl EventIndex {
-    pub fn incr(&self) -> EventIndex {
-        EventIndex(self.0 + 1)
-    }
-}
-
-impl From<u32> for EventIndex {
-    fn from(val: u32) -> Self {
-        EventIndex(val)
-    }
-}
-
-impl From<EventIndex> for u32 {
-    fn from(event_index: EventIndex) -> Self {
-        event_index.0
-    }
-}
-
-impl MessageIndex {
-    pub fn incr(&self) -> MessageIndex {
-        MessageIndex(self.0 + 1)
-    }
-}
-
-impl From<u32> for MessageIndex {
-    fn from(val: u32) -> Self {
-        MessageIndex(val)
-    }
-}
-
-impl From<MessageIndex> for u32 {
-    fn from(message_index: MessageIndex) -> Self {
-        message_index.0
-    }
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
-pub struct Version {
-    pub major: u32,
-    pub minor: u32,
-    pub patch: u32,
-}
-
-impl Version {
-    pub fn new(major: u32, minor: u32, patch: u32) -> Version {
-        Version { major, minor, patch }
-    }
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct EventWrapper<T: CandidType + Clone + Debug> {
-    pub index: EventIndex,
-    pub timestamp: TimestampMillis,
-    pub event: T,
-}

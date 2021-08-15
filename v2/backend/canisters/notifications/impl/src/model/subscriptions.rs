@@ -3,8 +3,7 @@ use serde::Deserialize;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::time::Duration;
-use types::subscription::{Subscription, SubscriptionInfo};
-use types::{TimestampMillis, UserId};
+use types::{Subscription, SubscriptionInfo, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Subscriptions {
@@ -57,7 +56,7 @@ impl Subscriptions {
 mod tests {
     use super::*;
     use candid::Principal;
-    use types::subscription::SubscriptionKeys;
+    use types::SubscriptionKeys;
 
     #[test]
     fn push_new_subscriptions() {

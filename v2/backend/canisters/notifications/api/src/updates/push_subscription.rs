@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::subscription::SubscriptionInfo;
-use types::UserId;
+use types::{SubscriptionInfo, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

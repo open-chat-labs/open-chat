@@ -3,9 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
-use types::canister_wasm::CanisterWasm;
-use types::user::User;
-use types::{CanisterId, Version};
+use types::{CanisterId, CanisterWasm, User, Version};
 use user_index_canister::updates::upgrade_canister::{Response::*, *};
 
 #[update]

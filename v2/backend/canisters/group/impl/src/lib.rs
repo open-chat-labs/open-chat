@@ -4,8 +4,7 @@ use crate::model::participants::Participants;
 use candid::Principal;
 use shared::env::Environment;
 use std::cell::RefCell;
-use types::events::GroupChatCreated;
-use types::{CanisterId, TimestampMillis, UserId, Version};
+use types::{CanisterId, GroupChatCreated, TimestampMillis, UserId, Version};
 
 mod lifecycle;
 mod model;

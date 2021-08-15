@@ -1,11 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 use std::cmp::{max, min};
-use types::events::*;
-use types::message::GroupMessage;
-use types::message_content::MessageContent;
-use types::reply_context::{GroupReplyContext, GroupReplyContextInternal};
-use types::{EventIndex, EventWrapper, MessageId, MessageIndex, TimestampMillis, UserId};
+use types::*;
 
 #[derive(Default)]
 pub struct Events {

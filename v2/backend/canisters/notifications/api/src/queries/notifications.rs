@@ -1,10 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 use std::collections::HashMap;
-use types::indexed_event::IndexedEvent;
-use types::notifications::Notification;
-use types::subscription::SubscriptionInfo;
-use types::UserId;
+use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {

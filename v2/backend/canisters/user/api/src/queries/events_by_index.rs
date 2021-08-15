@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::events::DirectChatEvent;
-use types::{EventIndex, EventWrapper, UserId};
+use types::{DirectChatEvent, EventIndex, EventWrapper, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

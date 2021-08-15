@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::user_summary::PartialUserSummary;
-use types::{TimestampMillis, UserId};
+use types::{PartialUserSummary, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

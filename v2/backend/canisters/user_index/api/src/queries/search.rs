@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::user_summary::UserSummary;
+use types::UserSummary;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

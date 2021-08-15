@@ -1,11 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 use std::cmp::{max, min};
-use types::events::DirectChatEvent;
-use types::message::DirectMessage;
-use types::message_content::MessageContent;
-use types::reply_context::{DirectReplyContext, DirectReplyContextInternal, PrivateReplyContext, StandardReplyContext};
-use types::{EventIndex, EventWrapper, MessageId, MessageIndex, TimestampMillis};
+use types::*;
 
 #[derive(Default)]
 pub struct Events {

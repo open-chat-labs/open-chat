@@ -1,6 +1,5 @@
 use crate::model::events::Events;
-use types::chat_id::DirectChatId;
-use types::{MessageIndex, TimestampMillis, UserId};
+use types::{DirectChatId, MessageIndex, TimestampMillis, UserId};
 
 pub struct DirectChat {
     pub chat_id: DirectChatId,

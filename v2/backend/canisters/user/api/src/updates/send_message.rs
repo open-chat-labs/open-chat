@@ -1,9 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::chat_id::DirectChatId;
-use types::message_content::MessageContent;
-use types::reply_context::DirectReplyContextInternal;
-use types::{EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
+use types::*;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

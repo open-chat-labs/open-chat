@@ -2,10 +2,7 @@ use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use notifications_canister::queries::notifications::{Response::*, *};
 use std::collections::HashMap;
-use types::indexed_event::IndexedEvent;
-use types::notifications::Notification;
-use types::subscription::SubscriptionInfo;
-use types::UserId;
+use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
 
 const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
 

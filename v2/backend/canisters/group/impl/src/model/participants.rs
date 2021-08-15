@@ -1,9 +1,7 @@
 use candid::Principal;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::participant::ParticipantInternal;
-use types::role::Role;
-use types::{MessageIndex, TimestampMillis, UserId};
+use types::{MessageIndex, ParticipantInternal, Role, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct Participants {

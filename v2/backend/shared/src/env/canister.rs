@@ -3,8 +3,7 @@ use crate::time;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::CanisterId;
-use types::TimestampMillis;
+use types::{CanisterId, TimestampMillis};
 
 pub struct CanisterEnv {
     rng: StdRng,

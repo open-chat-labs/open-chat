@@ -2,7 +2,7 @@ use aws_sdk_sns::model::MessageAttributeValue;
 use aws_sdk_sns::Client;
 use lambda_runtime::Error;
 use std::collections::HashMap;
-use types::confirmation_code_sms::ConfirmationCodeSms;
+use types::ConfirmationCodeSms;
 
 pub struct SnsClient {
     client: Client,

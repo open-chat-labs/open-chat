@@ -4,9 +4,7 @@ use shared::env::Environment;
 use shared::event_stream::EventStream;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::canister_wasm::CanisterWasm;
-use types::confirmation_code_sms::ConfirmationCodeSms;
-use types::CanisterId;
+use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
 
 mod lifecycle;
 mod model;

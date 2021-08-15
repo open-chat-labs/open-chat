@@ -3,8 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::updates::push_direct_message_notification;
 use shared::rand::get_random_item;
-use types::notifications::DirectMessageNotification;
-use types::CanisterId;
+use types::{CanisterId, DirectMessageNotification};
 use user_canister::updates::handle_message_received::{Response::*, *};
 
 #[update]

@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::user_summary::PartialUserSummary;
+use types::PartialUserSummary;
 use user_index_canister::queries::users::{Response::*, *};
 
 #[query]
@@ -43,8 +43,7 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::user::{CreatedUser, User};
-    use types::Version;
+    use types::{CreatedUser, User, Version};
 
     #[test]
     fn requested_users_returned() {

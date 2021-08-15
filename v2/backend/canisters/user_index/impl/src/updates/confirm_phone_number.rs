@@ -1,7 +1,7 @@
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
-use types::user::{CanisterCreationStatus, ConfirmedUser, User};
+use types::{CanisterCreationStatus, ConfirmedUser, User};
 use user_index_canister::updates::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -53,7 +53,7 @@ mod tests {
     use crate::Data;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::user::UnconfirmedUser;
+    use types::UnconfirmedUser;
 
     #[test]
     fn correct_code_succeeds() {

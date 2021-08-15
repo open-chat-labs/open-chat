@@ -6,7 +6,7 @@ use shared::event_stream::EventStream;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::notifications::Notification;
+use types::Notification;
 
 mod lifecycle;
 mod model;

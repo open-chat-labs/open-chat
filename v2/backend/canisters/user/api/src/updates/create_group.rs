@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::chat_id::GroupChatId;
+use types::GroupChatId;
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

@@ -1,8 +1,7 @@
 use crate::model::GROUP_CHAT_ACTIVE_WINDOW_MILLIS;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::chat_id::GroupChatId;
-use types::{TimestampMillis, Version};
+use types::{GroupChatId, TimestampMillis, Version};
 
 #[derive(Default)]
 pub struct PrivateGroups {

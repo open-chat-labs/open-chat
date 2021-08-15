@@ -1,5 +1,5 @@
-use crate::types::chat_id::{DirectChatId, GroupChatId};
-use crate::types::message_content::MessageContent;
+use crate::types::{DirectChatId, GroupChatId};
+use crate::types::MessageContent;
 use crate::types::{EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
 use crate::utils::delay;
 use candid::{CandidType, Decode, Encode, Principal};

@@ -25,8 +25,7 @@ mod tests {
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::user::{CreatedUser, User};
-    use types::Version;
+    use types::{CreatedUser, User, Version};
 
     #[test]
     fn last_online_is_updated() {

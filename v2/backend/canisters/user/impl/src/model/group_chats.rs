@@ -1,7 +1,7 @@
 use crate::model::group_chat::GroupChat;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::chat_id::GroupChatId;
+use types::GroupChatId;
 
 #[derive(Default)]
 pub struct GroupChats {

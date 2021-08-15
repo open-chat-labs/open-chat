@@ -5,8 +5,7 @@ use candid::Principal;
 use group_canister::updates::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use types::events::ParticipantsAdded;
-use types::UserId;
+use types::{ParticipantsAdded, UserId};
 use user_canister::updates::handle_add_to_group_requested;
 
 #[update]

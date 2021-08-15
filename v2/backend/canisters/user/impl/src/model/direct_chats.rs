@@ -2,9 +2,7 @@ use crate::model::direct_chat::DirectChat;
 use crate::model::events::PushMessageArgs;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::chat_id::DirectChatId;
-use types::message::DirectMessage;
-use types::{EventIndex, TimestampMillis, UserId};
+use types::{DirectChatId, DirectMessage, EventIndex, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct DirectChats {

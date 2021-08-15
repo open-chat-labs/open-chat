@@ -4,9 +4,7 @@ use group_index_canister::updates::create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use shared::canisters;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
-use types::canister_wasm::CanisterWasm;
-use types::chat_id::GroupChatId;
-use types::{UserId, Version};
+use types::{CanisterWasm, GroupChatId, UserId, Version};
 
 #[update]
 async fn create_group(args: Args) -> Response {
