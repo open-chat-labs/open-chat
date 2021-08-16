@@ -1,7 +1,6 @@
-use crate::{TimestampMillis, UserId, Version};
-use candid::{CandidType, Principal};
+use candid::Principal;
 use phonenumber::PhoneNumber;
-use serde::Deserialize;
+use types::{CanisterCreationStatus, TimestampMillis, UserId, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -134,18 +133,4 @@ pub struct CreatedUser {
     pub last_online: TimestampMillis,
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
-}
-
-#[derive(CandidType, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CanisterCreationStatus {
-    Pending,
-    InProgress,
-    Created,
-}
-
-#[derive(CandidType, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CanisterUpgradeStatus {
-    Required,
-    InProgress,
-    NotRequired,
 }

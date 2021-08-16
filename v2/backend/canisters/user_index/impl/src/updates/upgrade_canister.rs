@@ -1,9 +1,10 @@
+use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
-use types::{CanisterId, CanisterWasm, User, Version};
+use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::updates::upgrade_canister::{Response::*, *};
 
 #[update]

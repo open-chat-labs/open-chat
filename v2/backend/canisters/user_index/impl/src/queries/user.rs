@@ -1,6 +1,6 @@
+use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::User;
 use types::UserSummary;
 use user_index_canister::queries::user::{Response::*, *};
 

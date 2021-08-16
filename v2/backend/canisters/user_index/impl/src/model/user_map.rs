@@ -1,9 +1,10 @@
+use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{TimestampMillis, User, UserId};
+use types::{TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct UserMap {
@@ -168,9 +169,10 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
     use std::str::FromStr;
-    use types::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser, Version};
+    use types::{CanisterCreationStatus, Version};
 
     #[test]
     fn add_with_no_clashes() {

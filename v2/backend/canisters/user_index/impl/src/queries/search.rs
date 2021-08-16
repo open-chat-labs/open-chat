@@ -1,7 +1,7 @@
+use crate::model::user::CreatedUser;
 use crate::{RuntimeState, RUNTIME_STATE};
 use core::cmp::Ordering;
 use ic_cdk_macros::query;
-use types::CreatedUser;
 use types::UserSummary;
 use user_index_canister::queries::search::{Response::*, *};
 
@@ -75,12 +75,12 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::User;
     use crate::Data;
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::User;
     use types::Version;
 
     #[test]

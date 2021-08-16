@@ -1,7 +1,8 @@
+use crate::model::user::{ConfirmedUser, User};
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
-use types::{CanisterCreationStatus, ConfirmedUser, User};
+use types::CanisterCreationStatus;
 use user_index_canister::updates::confirm_phone_number::{Response::*, *};
 
 #[update]
@@ -50,10 +51,10 @@ fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::UnconfirmedUser;
     use crate::Data;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::UnconfirmedUser;
 
     #[test]
     fn correct_code_succeeds() {

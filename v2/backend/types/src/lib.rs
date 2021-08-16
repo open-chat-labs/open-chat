@@ -1,5 +1,7 @@
 use candid::Principal;
 
+mod canister_creation_status;
+mod canister_upgrade_status;
 mod canister_wasm;
 mod chat_id;
 mod chat_summary;
@@ -21,6 +23,8 @@ mod user_id;
 mod user_summary;
 mod version;
 
+pub use canister_creation_status::*;
+pub use canister_upgrade_status::*;
 pub use canister_wasm::*;
 pub use chat_id::*;
 pub use chat_summary::*;
@@ -41,12 +45,6 @@ pub use subscription::*;
 pub use user_id::*;
 pub use user_summary::*;
 pub use version::*;
-
-#[cfg(feature = "phonenumber")]
-mod user;
-
-#[cfg(feature = "phonenumber")]
-pub use user::*;
 
 pub mod v1_message;
 

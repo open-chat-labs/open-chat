@@ -37,13 +37,14 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{CreatedUser, User};
     use crate::Data;
     use candid::Principal;
     use itertools::Itertools;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
     use std::str::FromStr;
-    use types::{CreatedUser, User, Version};
+    use types::Version;
 
     #[test]
     fn requested_users_returned() {
