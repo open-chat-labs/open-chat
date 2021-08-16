@@ -8,6 +8,8 @@
     import { getContentAsText } from "../../domain/chat/chat.utils";
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
+    import { extractImageThumbnail } from "../../utils/media";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
 
     const dispatch = createEventDispatcher();
     const SIZE_LIMIT = 1000;
@@ -43,7 +45,11 @@
         <h4 class="username">
             {username}
         </h4>
-        {truncateTo(SIZE_LIMIT, getContentAsText(replyingTo.content))}
+        {#if replyingTo.content.kind === "media_content"}
+            <img src={replyingTo.content.thumbnailData} alt={replyingTo.content.caption} />
+        {:else}
+            {truncateTo(SIZE_LIMIT, getContentAsText(replyingTo.content))}
+        {/if}
     </div>
 </div>
 

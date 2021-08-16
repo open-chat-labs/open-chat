@@ -9,8 +9,14 @@ import type {
     CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { createGroupResponse, getEventsResponse, getUpdatesResponse } from "./mappers";
+import {
+    chunkResponse,
+    createGroupResponse,
+    getEventsResponse,
+    getUpdatesResponse,
+} from "./mappers";
 import type { IUserClient } from "./user.client.interface";
+import type { ChunkResponse } from "../../domain/data/data";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -61,6 +67,23 @@ export class UserClient extends CandidService implements IUserClient {
                 last_updated: args.lastUpdated ? [args.lastUpdated] : [],
             }),
             (resp) => getUpdatesResponse(userId, resp)
+        );
+    }
+
+    async getData(blobId: bigint, totalBytes?: number, chunkSize?: number): Promise<ChunkResponse> {
+        if (!totalBytes || !chunkSize) {
+            return this.getChunk(blobId, 0);
+        }
+        return undefined;
+    }
+
+    private async getChunk(blobId: bigint, chunkIndex: number): Promise<ChunkResponse> {
+        return this.handleResponse(
+            this.userService.chunk({
+                blob_id: blobId,
+                index: chunkIndex,
+            }),
+            chunkResponse
         );
     }
 }

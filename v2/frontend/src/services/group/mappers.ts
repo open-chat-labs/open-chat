@@ -70,6 +70,8 @@ function message(candid: ApiMessage): Message {
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         repliesTo: optional(candid.replies_to, replyContext),
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
     };
 }
 

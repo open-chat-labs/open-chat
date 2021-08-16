@@ -6,7 +6,13 @@ import type {
     CreateGroupResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
-import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
+import {
+    ChatSchema,
+    getCachedData,
+    getCachedMessages,
+    setCachedData,
+    setCachedMessages,
+} from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 
 /**
@@ -36,5 +42,17 @@ export class CachingUserClient implements IUserClient {
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.client.createGroup(group);
+    }
+
+    async getData(
+        blobId: bigint,
+        totalBytes?: number,
+        chunkSize?: number
+    ): Promise<Uint8Array | undefined> {
+        const cachedData = await getCachedData(this.db, blobId);
+        return (
+            cachedData ??
+            this.client.getData(blobId, totalBytes, chunkSize).then(setCachedData(this.db, blobId))
+        );
     }
 }

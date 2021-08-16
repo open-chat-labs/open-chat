@@ -46,7 +46,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: string }
+    | { type: "SEND_MESSAGE"; data?: string }
     | { type: "ATTACH_FILE"; data: DraftMessageContent }
     | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
@@ -309,8 +309,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     {
                                         event: textMessage(
                                             ctx.user!.userId,
+                                            index + 1,
                                             ev.data,
-                                            ctx.replyingTo
+                                            ctx.replyingTo,
+                                            ctx.fileToAttach
                                         ),
                                         index: index + 1,
                                         timestamp: BigInt(+new Date() - index + 1),

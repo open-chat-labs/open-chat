@@ -16,13 +16,25 @@ export interface CyclesContent {
 
 export interface MediaContent {
     kind: "media_content";
+    caption?: string;
     height: number;
+    width: number;
     mimeType: string;
     blobReference?: BlobReference;
     thumbnailData: string;
-    caption?: string;
-    width: number;
+    blobUrl?: string;
 }
+
+export type DraftMediaContent = {
+    kind: "media_content";
+    caption?: string;
+    height: number;
+    width: number;
+    mimeType: string;
+    data: Uint8Array;
+    blobUrl: string;
+    thumbnailData: string;
+};
 
 export interface TextContent {
     kind: "text_content";
@@ -36,17 +48,6 @@ export interface FileContent {
     blobReference?: BlobReference;
     caption?: string;
 }
-
-export type DraftMediaContent = {
-    kind: "media_content";
-    caption?: string;
-    mimeType: string;
-    width: number;
-    height: number;
-    data: Uint8Array;
-    blobUrl: string;
-    thumbnailData: string;
-};
 
 export type DraftFileContent = {
     kind: "file_content";
@@ -95,12 +96,11 @@ export interface StandardReplyContext {
 
 // todo - removing some stuff from this interface until we can see clearly that we need it
 export interface Message {
-    // messageId: bigint;
-    // messageIndex: number;
+    messageId: bigint;
+    messageIndex: number;
     kind: "message";
     content: MessageContent;
     sender: string;
-    // timestamp: bigint;
     repliesTo?: ReplyContext;
 }
 

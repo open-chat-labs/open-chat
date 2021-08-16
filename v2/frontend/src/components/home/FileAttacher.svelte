@@ -3,14 +3,8 @@
     import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { toastStore } from "../../stores/toast";
-    import { dataToBlobUrl } from "../../utils/blob";
-    import {
-        draftMessageContentFromFile,
-        extractImageThumbnail,
-        extractVideoThumbnail,
-    } from "../../utils/media";
+    import { draftMessageContentFromFile } from "../../utils/media";
     import { createEventDispatcher } from "svelte";
-    import type { DraftMessageContent } from "../../domain/chat/chat";
 
     export let open: boolean = false;
 

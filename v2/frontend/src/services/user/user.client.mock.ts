@@ -13,6 +13,7 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
 } from "../../domain/chat/chat";
+import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
@@ -100,6 +101,8 @@ function mockTextMessage(index: number): Message {
         },
         sender,
         repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
     };
 }
 
@@ -223,5 +226,13 @@ export class UserClientMock implements IUserClient {
                 // });
             }, 5000);
         });
+    }
+
+    async getData(
+        blobId: bigint,
+        totalBytes?: number,
+        chunkSize?: number
+    ): Promise<Uint8Array | undefined> {
+        return undefined;
     }
 }

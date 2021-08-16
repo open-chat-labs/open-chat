@@ -7,6 +7,7 @@ import type {
     GroupChatSummary,
     Message,
 } from "../domain/chat/chat";
+import { newMessageId } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
@@ -135,7 +136,7 @@ describe("chat machine transitions", () => {
 
 function eventMessage(index: number): EventWrapper {
     return {
-        event: textMessage(),
+        event: textMessage(index),
         index,
         timestamp: BigInt(+new Date()),
     };
@@ -153,7 +154,7 @@ function repliesTo(): EnhancedReplyContext {
     };
 }
 
-function textMessage(): Message {
+function textMessage(index: number): Message {
     return {
         kind: "message",
         content: {
@@ -162,6 +163,8 @@ function textMessage(): Message {
         },
         sender: "abcdefg",
         repliesTo: undefined,
+        messageId: newMessageId(),
+        messageIndex: index,
     };
 }
 

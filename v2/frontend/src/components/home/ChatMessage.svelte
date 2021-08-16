@@ -2,10 +2,10 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
-    import SvelteMarkdown from "svelte-markdown";
     import { AvatarSize } from "../../domain/user/user";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
+    import ChatMessageContent from "./ChatMessageContent.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -14,7 +14,6 @@
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
     import { afterUpdate, createEventDispatcher } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -41,7 +40,6 @@
     $: groupChat = chatSummary.kind === "group_chat";
     $: sender = userLookup[msg.sender];
     $: username = sender?.username;
-    $: textContent = getContentAsText(msg.content);
     $: userStatus = getUserStatus(userLookup, msg.sender);
 
     afterUpdate(() => {
@@ -96,8 +94,9 @@
         {#if msg.repliesTo !== undefined}
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
+
         <div class="content">
-            <SvelteMarkdown source={textContent} />
+            <ChatMessageContent content={msg.content} />
         </div>
 
         <div class="time-and-ticks">

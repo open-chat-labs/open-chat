@@ -3,6 +3,7 @@ import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.ut
 import type {
     ChatSummary,
     DirectChatSummary,
+    DraftMessageContent,
     EventWrapper,
     GroupChatSummary,
     MediaContent,
@@ -10,6 +11,7 @@ import type {
     MessageContent,
     Participant,
     ReplyContext,
+    TextContent,
     UpdatedChatSummary,
     UpdatedDirectChatSummary,
     UpdatedGroupChatSummary,
@@ -17,8 +19,13 @@ import type {
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
+import { v1 as uuidv1 } from "uuid";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
+
+export function newMessageId(): bigint {
+    return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
+}
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -99,19 +106,35 @@ export function getParticipantsString(
         .join(", ");
 }
 
+// todo - this is just a temporary test thing
+export function fromDraft(draft: DraftMessageContent): MessageContent {
+    if (draft.kind === "cycles_content") return draft;
+    if (draft.kind === "text_content") return draft;
+    if (draft.kind === "file_content") return draft;
+    if (draft.kind === "media_content") return draft;
+    throw new Error("Unexpected draft message type");
+}
+
 export function textMessage(
     userId: string,
-    content: string,
-    replyingTo: ReplyContext | undefined
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: DraftMessageContent | undefined
 ): Message {
+    const msgContent = fileToAttach
+        ? fromDraft(fileToAttach)
+        : ({
+              kind: "text_content",
+              text: content ?? "",
+          } as TextContent);
     return {
         kind: "message",
-        content: {
-            kind: "text_content",
-            text: content,
-        },
+        content: msgContent,
         sender: userId,
         repliesTo: replyingTo,
+        messageId: newMessageId(),
+        messageIndex,
     };
 }
 

@@ -1,4 +1,5 @@
 import type { EventsResponse, EventWrapper, Message, ReplyContext } from "../../domain/chat/chat";
+import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
@@ -50,6 +51,8 @@ function mockTextMessage(index: number): Message {
         },
         sender,
         repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
     };
 }
 

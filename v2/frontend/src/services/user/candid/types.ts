@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 export interface BlobReference {
   'blob_size' : number,
-  'blob_id' : string,
+  'blob_id' : bigint,
   'canister_id' : CanisterId,
   'chunk_size' : number,
 }
@@ -41,7 +41,6 @@ export interface DirectChatSummary {
 export interface DirectMessage {
   'content' : MessageContent,
   'sender' : UserId,
-  'timestamp' : TimestampMillis,
   'message_id' : MessageId,
   'replies_to' : [] | [DirectReplyContext],
   'message_index' : MessageIndex,

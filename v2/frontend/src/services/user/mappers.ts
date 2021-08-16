@@ -13,6 +13,7 @@ import type {
     ApiParticipant,
     ApiUpdatedChatSummary,
     ApiCreateGroupResponse,
+    ApiChunkResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -31,6 +32,18 @@ import type {
     CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+import type { ChunkResponse } from "../../domain/data/data";
+
+export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
+    if ("NotFound" in candid) {
+        return undefined;
+    }
+    if ("Success" in candid) {
+        return new Uint8Array(candid.Success.bytes);
+    }
+
+    throw new Error(`Unexpected ApiChunkResponse type received: ${candid}`);
+}
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
     if ("Success" in candid) {
@@ -141,7 +154,7 @@ function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
                 return {
                     index: ev.index,
                     timestamp: ev.timestamp,
-                    event: message(ev.event),
+                    event: message(ev.event as ApiMessage),
                 };
             }),
             latestReadByMe: candid.Group.latest_read_by_me,
@@ -188,6 +201,8 @@ function message(candid: ApiMessage): Message {
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         repliesTo: optional(candid.replies_to, replyContext),
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
     };
 }
 

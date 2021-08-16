@@ -8,6 +8,7 @@
     import { emojiStore } from "../../stores/emoji";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
+    import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -27,7 +28,7 @@
     }
 
     function sendMessage() {
-        if (inp.textContent) {
+        if (inp.textContent || $machine.context.fileToAttach) {
             machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
             inp.textContent = "";
             showEmojiPicker = false;
@@ -107,7 +108,9 @@
         class="textbox"
         contenteditable={true}
         on:paste
-        placeholder="Type a message"
+        placeholder={$machine.context.fileToAttach !== undefined
+            ? $_("enterCaption")
+            : $_("enterMessage")}
         spellcheck={true}
         on:keypress={checkEnter} />
     <div class="send" on:click={sendMessage}>
@@ -150,5 +153,12 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         @include font(book, normal, fs-100);
+
+        &:empty:before {
+            content: attr(placeholder);
+            color: #ccc;
+            pointer-events: none;
+            display: block; /* For Firefox */
+        }
     }
 </style>
