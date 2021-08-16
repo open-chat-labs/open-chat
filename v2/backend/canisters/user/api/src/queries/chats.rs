@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::chat_summary::ChatSummary;
+use types::{ChatSummary, TimestampMillis};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

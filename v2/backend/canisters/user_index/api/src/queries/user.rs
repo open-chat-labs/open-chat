@@ -1,7 +1,6 @@
-use crate::common::user_summary::UserSummary;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::UserId;
+use types::{UserId, UserSummary};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

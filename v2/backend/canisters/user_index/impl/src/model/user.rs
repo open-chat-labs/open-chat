@@ -1,8 +1,6 @@
-use candid::{CandidType, Principal};
+use candid::Principal;
 use phonenumber::PhoneNumber;
-use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::{UserId, Version};
+use types::{CanisterCreationStatus, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -137,16 +135,26 @@ pub struct CreatedUser {
     pub upgrade_in_progress: bool,
 }
 
-#[derive(CandidType, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CanisterCreationStatus {
-    Pending,
-    InProgress,
-    Created,
-}
+impl CreatedUser {
+    pub fn to_summary(&self, now: TimestampMillis) -> UserSummary {
+        let millis_since_last_online = now - self.last_online;
+        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
 
-#[derive(CandidType, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CanisterUpgradeStatus {
-    Required,
-    InProgress,
-    NotRequired,
+        UserSummary {
+            user_id: self.user_id,
+            username: self.username.clone(),
+            seconds_since_last_online,
+        }
+    }
+
+    pub fn to_partial_summary(&self, include_username: bool, now: TimestampMillis) -> PartialUserSummary {
+        let millis_since_last_online = now - self.last_online;
+        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
+
+        PartialUserSummary {
+            user_id: self.user_id,
+            username: if include_username { Some(self.username.clone()) } else { None },
+            seconds_since_last_online,
+        }
+    }
 }

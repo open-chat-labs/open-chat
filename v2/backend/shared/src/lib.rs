@@ -6,4 +6,3 @@ pub mod event_stream;
 pub mod memory;
 pub mod rand;
 pub mod time;
-pub mod types;

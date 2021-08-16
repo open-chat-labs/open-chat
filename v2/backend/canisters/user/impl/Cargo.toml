@@ -25,5 +25,6 @@ notifications_canister_client = { path = "../../notifications/client" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 shared = { path = "../../../shared" }
+types = { path = "../../../types" }
 user_canister = { path = "../api" }
 user_canister_client = { path = "../client" }

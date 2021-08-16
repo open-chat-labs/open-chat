@@ -3,10 +3,10 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 use shared::env::Environment;
 use shared::event_stream::EventStream;
-use shared::types::notifications::Notification;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
+use types::Notification;
 
 mod lifecycle;
 mod model;

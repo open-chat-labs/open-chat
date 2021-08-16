@@ -2,11 +2,10 @@ use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
-use group_canister::common::events::ParticipantsAdded;
 use group_canister::updates::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use shared::types::UserId;
+use types::{ParticipantsAdded, UserId};
 use user_canister::updates::handle_add_to_group_requested;
 
 #[update]

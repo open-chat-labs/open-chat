@@ -1,7 +1,6 @@
+use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use user_index_canister::common::user::User;
-use user_index_canister::common::user_summary::UserSummary;
 use user_index_canister::queries::user::{Response::*, *};
 
 #[query]
@@ -19,7 +18,7 @@ fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     if let Some(User::Created(user)) = user {
         let now = runtime_state.env.now();
-        Success(UserSummary::new(user, now))
+        Success(user.to_summary(now))
     } else {
         UserNotFound
     }

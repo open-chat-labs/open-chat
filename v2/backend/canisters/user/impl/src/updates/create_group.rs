@@ -2,8 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::updates::create_group;
 use ic_cdk_macros::update;
 use log::error;
-use shared::types::chat_id::GroupChatId;
-use shared::types::CanisterId;
+use types::{CanisterId, GroupChatId};
 use user_canister::updates::create_group::{Response::*, *};
 
 #[update]

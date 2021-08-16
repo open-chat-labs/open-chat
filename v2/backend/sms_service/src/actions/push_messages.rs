@@ -3,7 +3,7 @@ use crate::ic_agent::IcAgent;
 use crate::read_env_var;
 use crate::sns::SnsClient;
 use lambda_runtime::Error;
-use shared::types::CanisterId;
+use types::CanisterId;
 
 pub async fn run(canister_id: CanisterId) -> Result<(), Error> {
     let dynamodb_client = DynamoDbClient::build();

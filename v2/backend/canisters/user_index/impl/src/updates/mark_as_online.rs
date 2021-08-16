@@ -20,13 +20,13 @@ fn mark_as_online_impl(runtime_state: &mut RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{CreatedUser, User};
     use crate::Data;
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CreatedUser, User};
+    use types::Version;
 
     #[test]
     fn last_online_is_updated() {

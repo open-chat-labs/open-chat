@@ -1,11 +1,10 @@
+use crate::model::user::User;
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use shared::time::TimestampMillis;
-use shared::types::UserId;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use user_index_canister::common::user::User;
+use types::{TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct UserMap {
@@ -170,10 +169,10 @@ pub enum UpdateUserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CanisterCreationStatus, ConfirmedUser, CreatedUser, UnconfirmedUser};
+    use types::{CanisterCreationStatus, Version};
 
     #[test]
     fn add_with_no_clashes() {

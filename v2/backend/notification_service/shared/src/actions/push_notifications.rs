@@ -3,12 +3,10 @@ use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
 use futures::future;
-use shared::types::indexed_event::IndexedEvent;
-use shared::types::notifications::Notification;
-use shared::types::{CanisterId, UserId};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::fs::File;
+use types::{CanisterId, IndexedEvent, Notification, UserId};
 use web_push::*;
 
 pub async fn run(
@@ -135,7 +133,7 @@ async fn push_notifications_to_user(
     }
 }
 
-fn convert_subscription_info(value: notifications_canister::common::subscription::SubscriptionInfo) -> SubscriptionInfo {
+fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo {
     SubscriptionInfo {
         endpoint: value.endpoint,
         keys: SubscriptionKeys {

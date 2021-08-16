@@ -1,10 +1,9 @@
 use crate::env::Environment;
 use crate::time;
-use crate::time::TimestampMillis;
-use crate::types::CanisterId;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
+use types::{CanisterId, TimestampMillis};
 
 pub struct CanisterEnv {
     rng: StdRng,

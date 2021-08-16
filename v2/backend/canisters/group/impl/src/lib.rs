@@ -2,11 +2,9 @@ use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::events::{Events, GroupChatEventInternal};
 use crate::model::participants::Participants;
 use candid::Principal;
-use group_canister::common::events::GroupChatCreated;
 use shared::env::Environment;
-use shared::time::TimestampMillis;
-use shared::types::{CanisterId, UserId, Version};
 use std::cell::RefCell;
+use types::{CanisterId, GroupChatCreated, TimestampMillis, UserId, Version};
 
 mod lifecycle;
 mod model;

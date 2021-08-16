@@ -1,6 +1,5 @@
-use crate::time::TimestampMillis;
-use crate::types::CanisterId;
 use candid::Principal;
+use types::{CanisterId, TimestampMillis};
 
 pub mod canister;
 pub mod test;

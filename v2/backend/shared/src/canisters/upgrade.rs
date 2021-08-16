@@ -1,9 +1,9 @@
 use crate::canisters::error::Error;
-use crate::types::CanisterId;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
 use log::error;
 use serde::Deserialize;
+use types::CanisterId;
 
 pub async fn call(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), Error> {
     #[derive(CandidType, Deserialize)]

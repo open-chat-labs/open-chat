@@ -1,8 +1,8 @@
-use crate::types::indexed_event::IndexedEvent;
 use candid::CandidType;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use std::collections::VecDeque;
+use types::IndexedEvent;
 
 const MAX_EVENTS: usize = 100_000;
 
@@ -152,6 +152,31 @@ mod tests {
 
     #[test]
     fn remove() {
+        let mut events_collection: EventStream<u32> = EventStream::default();
+
+        for i in 0..10 {
+            events_collection.add(i);
+        }
+
+        assert_eq!(events_collection.remove(5), 5);
+
+        let events = events_collection.get(0, 5);
+
+        assert_eq!(events.len(), 5);
+
+        for i in 5..10 {
+            let indexed_event = &events[i - 5];
+            assert_eq!(indexed_event.index, (i + 1) as u64);
+            assert_eq!(indexed_event.value, i as u32);
+        }
+
+        assert_eq!(events_collection.remove(5), 0);
+        assert_eq!(events_collection.remove(10), 5);
+        assert!(events_collection.events.is_empty());
+    }
+
+    #[test]
+    fn add_after_remove_uses_correct_index() {
         let mut events_collection: EventStream<u32> = EventStream::default();
 
         for i in 0..10 {

@@ -1,12 +1,7 @@
 use candid::CandidType;
-use group_canister::common::events::*;
-use group_canister::common::reply_context_internal::ReplyContextInternal;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::group_message::{Message, ReplyContext};
-use shared::types::message_content::MessageContent;
-use shared::types::{EventIndex, EventWrapper, MessageId, MessageIndex, UserId};
 use std::cmp::{max, min};
+use types::*;
 
 #[derive(Default)]
 pub struct Events {
@@ -35,19 +30,19 @@ pub struct MessageInternal {
     message_id: MessageId,
     sender: UserId,
     content: MessageContent,
-    replies_to: Option<ReplyContextInternal>,
+    replies_to: Option<GroupReplyContextInternal>,
 }
 
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<GroupReplyContextInternal>,
     pub now: TimestampMillis,
 }
 
 impl Events {
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, GroupMessage) {
         let message_index = self.latest_message_index.incr();
         let message_internal = MessageInternal {
             message_index,
@@ -123,7 +118,7 @@ impl Events {
             .collect()
     }
 
-    pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
+    pub fn latest_message(&self) -> Option<EventWrapper<GroupMessage>> {
         self.get_internal(self.latest_message_event_index)
             .map(|e| {
                 if let GroupChatEventInternal::Message(m) = &e.event {
@@ -172,8 +167,8 @@ impl Events {
         }
     }
 
-    fn hydrate_message(&self, message: &MessageInternal) -> Message {
-        Message {
+    fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
+        GroupMessage {
             message_index: message.message_index,
             message_id: message.message_id,
             sender: message.sender,
@@ -182,11 +177,11 @@ impl Events {
         }
     }
 
-    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
+    fn hydrate_reply_context(&self, reply_context: &GroupReplyContextInternal) -> Option<GroupReplyContext> {
         self.get_internal(reply_context.event_index)
             .map(|e| {
                 if let GroupChatEventInternal::Message(m) = &e.event {
-                    Some(ReplyContext {
+                    Some(GroupReplyContext {
                         event_index: reply_context.event_index,
                         user_id: m.sender,
                         content: m.content.clone(),

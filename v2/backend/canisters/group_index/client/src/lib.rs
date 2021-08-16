@@ -3,7 +3,7 @@ use group_index_canister::updates::*;
 use ic_cdk::api::call::CallResult;
 use log::error;
 use shared::generate_c2c_call;
-use shared::types::CanisterId;
+use types::CanisterId;
 
 // Queries
 generate_c2c_call!(active_groups);

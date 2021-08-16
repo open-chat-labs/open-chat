@@ -1,12 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::direct_message::{Message, PrivateReplyContext, ReplyContext, StandardReplyContext};
-use shared::types::message_content::MessageContent;
-use shared::types::{EventIndex, EventWrapper, MessageId, MessageIndex};
 use std::cmp::{max, min};
-use user_canister::common::events::DirectChatEvent;
-use user_canister::common::reply_context_internal::ReplyContextInternal;
+use types::*;
 
 #[derive(Default)]
 pub struct Events {
@@ -26,19 +21,19 @@ pub struct MessageInternal {
     pub message_id: MessageId,
     pub sent_by_me: bool,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<DirectReplyContextInternal>,
 }
 
 pub struct PushMessageArgs {
     pub sent_by_me: bool,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<DirectReplyContextInternal>,
     pub now: TimestampMillis,
 }
 
 impl Events {
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, DirectMessage) {
         let message_index = self.latest_message_index.incr();
         let message_internal = MessageInternal {
             message_index,
@@ -113,7 +108,7 @@ impl Events {
             .collect()
     }
 
-    pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
+    pub fn latest_message(&self) -> Option<EventWrapper<DirectMessage>> {
         self.get_internal(self.latest_message_event_index).map(|e| {
             let DirectChatEventInternal::Message(m) = &e.event;
             EventWrapper {
@@ -148,8 +143,8 @@ impl Events {
         }
     }
 
-    fn hydrate_message(&self, message: &MessageInternal) -> Message {
-        Message {
+    fn hydrate_message(&self, message: &MessageInternal) -> DirectMessage {
+        DirectMessage {
             message_index: message.message_index,
             message_id: message.message_id,
             sent_by_me: message.sent_by_me,
@@ -158,16 +153,16 @@ impl Events {
         }
     }
 
-    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
+    fn hydrate_reply_context(&self, reply_context: &DirectReplyContextInternal) -> Option<DirectReplyContext> {
         if let Some(chat_id) = reply_context.chat_id_if_other {
-            Some(ReplyContext::Private(PrivateReplyContext {
+            Some(DirectReplyContext::Private(PrivateReplyContext {
                 chat_id,
                 event_index: reply_context.event_index,
             }))
         } else {
             self.get_internal(reply_context.event_index).map(|e| {
                 let DirectChatEventInternal::Message(m) = &e.event;
-                ReplyContext::Standard(StandardReplyContext {
+                DirectReplyContext::Standard(StandardReplyContext {
                     event_index: e.index,
                     sent_by_me: m.sent_by_me,
                     content: m.content.clone(),

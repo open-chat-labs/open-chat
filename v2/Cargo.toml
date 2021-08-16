@@ -20,6 +20,7 @@ members = [
     "backend/notification_service/cli",
     "backend/shared",
     "backend/sms_service",
+    "backend/types",
 ]
 
 [profile.release]

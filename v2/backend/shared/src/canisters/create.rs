@@ -1,9 +1,9 @@
 use crate::canisters::error::Error;
-use crate::types::CanisterId;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
 use log::error;
 use serde::Deserialize;
+use types::CanisterId;
 
 #[derive(Debug)]
 pub enum CreateCanisterError {

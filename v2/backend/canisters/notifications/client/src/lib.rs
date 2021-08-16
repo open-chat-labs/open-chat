@@ -3,7 +3,7 @@ use log::error;
 use notifications_canister::queries::*;
 use notifications_canister::updates::*;
 use shared::generate_c2c_call;
-use shared::types::CanisterId;
+use types::CanisterId;
 
 // Queries
 generate_c2c_call!(notifications);

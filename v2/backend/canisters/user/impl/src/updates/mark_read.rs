@@ -1,7 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use shared::types::chat_id::DirectChatId;
-use shared::types::{CanisterId, MessageIndex};
+use types::{CanisterId, DirectChatId, MessageIndex};
 use user_canister::updates::handle_mark_read;
 use user_canister::updates::mark_read::{Response::*, *};
 

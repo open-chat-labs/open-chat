@@ -1,7 +1,8 @@
+use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use phonenumber::Mode;
-use user_index_canister::common::user::{CanisterUpgradeStatus, User};
+use types::CanisterUpgradeStatus;
 use user_index_canister::queries::current_user::{Response::*, *};
 
 #[query]

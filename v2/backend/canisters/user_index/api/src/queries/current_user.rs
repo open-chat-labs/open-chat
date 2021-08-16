@@ -1,7 +1,6 @@
-use crate::common::user::{CanisterCreationStatus, CanisterUpgradeStatus};
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::UserId;
+use types::{CanisterCreationStatus, CanisterUpgradeStatus, UserId};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {}

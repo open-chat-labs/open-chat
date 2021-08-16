@@ -1,7 +1,7 @@
+use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::common::user::User;
 use user_index_canister::updates::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -54,13 +54,13 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{CreatedUser, UnconfirmedUser, User};
     use crate::Data;
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CreatedUser, UnconfirmedUser, User};
+    use types::Version;
 
     #[test]
     fn valid_username_succeeds() {

@@ -2,7 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use group_canister::updates::join_group;
 use ic_cdk_macros::update;
-use shared::types::chat_id::GroupChatId;
+use types::GroupChatId;
 use user_canister::updates::join_group::{Response::*, *};
 
 #[update]

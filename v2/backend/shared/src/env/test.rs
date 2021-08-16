@@ -1,6 +1,6 @@
 use crate::env::Environment;
-use crate::types::CanisterId;
 use candid::Principal;
+use types::CanisterId;
 
 pub struct TestEnv {
     pub now: u64,

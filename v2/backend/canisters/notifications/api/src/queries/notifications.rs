@@ -1,10 +1,7 @@
-use crate::common::subscription::SubscriptionInfo;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::types::indexed_event::IndexedEvent;
-use shared::types::notifications::Notification;
-use shared::types::UserId;
 use std::collections::HashMap;
+use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {

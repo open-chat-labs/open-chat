@@ -1,16 +1,13 @@
-use crate::common::reply_context_internal::ReplyContextInternal;
 use candid::CandidType;
 use serde::Deserialize;
-use shared::time::TimestampMillis;
-use shared::types::message_content::MessageContent;
-use shared::types::{EventIndex, MessageId, MessageIndex};
+use types::{EventIndex, GroupReplyContextInternal, MessageContent, MessageId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContent,
     pub sender_name: String,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<GroupReplyContextInternal>,
 }
 
 #[derive(CandidType, Deserialize)]

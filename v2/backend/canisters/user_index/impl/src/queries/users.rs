@@ -1,6 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use user_index_canister::common::user_summary::PartialUserSummary;
 use user_index_canister::queries::users::{Response::*, *};
 
 #[query]
@@ -18,7 +17,10 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .filter_map(|user_id| runtime_state.data.users.get_by_user_id(user_id))
         .filter_map(|u| u.created_user())
         .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
-        .map(|u| PartialUserSummary::new(u, u.date_updated > updated_since, now))
+        .map(|u| {
+            let include_username = u.date_updated > updated_since;
+            u.to_partial_summary(include_username, now)
+        })
         .collect();
 
     Success(Result { users, timestamp: now })
@@ -27,14 +29,14 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::{CreatedUser, User};
     use crate::Data;
     use candid::Principal;
     use itertools::Itertools;
     use phonenumber::PhoneNumber;
     use shared::env::test::TestEnv;
-    use shared::types::Version;
     use std::str::FromStr;
-    use user_index_canister::common::user::{CreatedUser, User};
+    use types::Version;
 
     #[test]
     fn requested_users_returned() {
@@ -90,17 +92,17 @@ mod tests {
 
         let Success(result) = users_impl(args, &runtime_state);
 
-        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
+        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id).collect_vec();
 
         assert_eq!(users.len(), 2);
 
-        assert_eq!(users[0].user_id(), user_id1);
-        assert_eq!(users[0].username(), Some("abc".to_string()));
-        assert_eq!(users[0].seconds_since_last_online(), 3);
+        assert_eq!(users[0].user_id, user_id1);
+        assert_eq!(users[0].username, Some("abc".to_string()));
+        assert_eq!(users[0].seconds_since_last_online, 3);
 
-        assert_eq!(users[1].user_id(), user_id3);
-        assert_eq!(users[1].username(), Some("ghi".to_string()));
-        assert_eq!(users[1].seconds_since_last_online(), 1);
+        assert_eq!(users[1].user_id, user_id3);
+        assert_eq!(users[1].username, Some("ghi".to_string()));
+        assert_eq!(users[1].seconds_since_last_online, 1);
     }
 
     #[test]
@@ -162,9 +164,9 @@ mod tests {
 
         assert_eq!(users.len(), 1);
 
-        assert_eq!(users[0].user_id(), user_id3);
-        assert_eq!(users[0].username(), Some("ghi".to_string()));
-        assert_eq!(users[0].seconds_since_last_online(), 1);
+        assert_eq!(users[0].user_id, user_id3);
+        assert_eq!(users[0].username, Some("ghi".to_string()));
+        assert_eq!(users[0].seconds_since_last_online, 1);
     }
 
     #[test]
@@ -224,12 +226,12 @@ mod tests {
 
         let Success(result) = users_impl(args, &runtime_state);
 
-        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id()).collect_vec();
+        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id).collect_vec();
 
         assert_eq!(users.len(), 3);
 
-        assert_eq!(users[0].username(), None);
-        assert_eq!(users[1].username(), Some("def".to_string()));
-        assert_eq!(users[2].username(), Some("ghi".to_string()));
+        assert_eq!(users[0].username, None);
+        assert_eq!(users[1].username, Some("def".to_string()));
+        assert_eq!(users[2].username, Some("ghi".to_string()));
     }
 }

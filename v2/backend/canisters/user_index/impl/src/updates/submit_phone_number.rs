@@ -1,10 +1,10 @@
+use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use std::str::FromStr;
-use user_index_canister::common::confirmation_code_sms::ConfirmationCodeSms;
-use user_index_canister::common::user::{UnconfirmedUser, User};
+use types::ConfirmationCodeSms;
 use user_index_canister::updates::submit_phone_number::{Response::*, *};
 
 #[update]
@@ -76,10 +76,11 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
     use shared::env::test::TestEnv;
-    use user_index_canister::common::user::{CanisterCreationStatus, ConfirmedUser};
+    use types::CanisterCreationStatus;
 
     #[test]
     fn new_user_succeeds() {

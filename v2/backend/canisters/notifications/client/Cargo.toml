@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 ic-cdk = "0.3.1"
 log = "0.4.14"
-shared = { path = "../../../shared" }
 notifications_canister = { path = "../api" }
+shared = { path = "../../../shared" }
+types = { path = "../../../types" }

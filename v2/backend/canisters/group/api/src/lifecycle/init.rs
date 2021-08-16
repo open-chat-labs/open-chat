@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use shared::types::{UserId, Version};
+use types::{UserId, Version};
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {

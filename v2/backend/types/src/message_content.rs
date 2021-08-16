@@ -1,4 +1,4 @@
-use crate::types::CanisterId;
+use crate::CanisterId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
