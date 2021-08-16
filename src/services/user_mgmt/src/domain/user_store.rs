@@ -7,7 +7,7 @@ use shared::storage::StableState;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
 
-const MAX_USERS: u64 = 30_000;
+const MAX_USERS: u64 = 50_000;
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;
 
