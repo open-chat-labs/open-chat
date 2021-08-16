@@ -1,7 +1,6 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::UserSummary;
 use user_index_canister::queries::user::{Response::*, *};
 
 #[query]
@@ -19,14 +18,7 @@ fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     if let Some(User::Created(user)) = user {
         let now = runtime_state.env.now();
-        let millis_since_last_online = now - user.last_online;
-        let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
-
-        Success(UserSummary {
-            user_id: user.user_id,
-            username: user.username.clone(),
-            seconds_since_last_online,
-        })
+        Success(user.to_summary(now))
     } else {
         UserNotFound
     }

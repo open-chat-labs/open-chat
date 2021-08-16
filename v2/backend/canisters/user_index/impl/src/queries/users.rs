@@ -1,6 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::PartialUserSummary;
 use user_index_canister::queries::users::{Response::*, *};
 
 #[query]
@@ -20,14 +19,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .filter(|u| u.date_updated > updated_since || u.last_online > updated_since)
         .map(|u| {
             let include_username = u.date_updated > updated_since;
-            let millis_since_last_online = now - u.last_online;
-            let seconds_since_last_online = (millis_since_last_online / 1000) as u32;
-
-            PartialUserSummary {
-                user_id: u.user_id,
-                username: if include_username { Some(u.username.clone()) } else { None },
-                seconds_since_last_online,
-            }
+            u.to_partial_summary(include_username, now)
         })
         .collect();
 
