@@ -1,0 +1,324 @@
+type CanisterId = principal;
+type DirectChatId = blob;
+type EventIndex = nat32;
+type GroupChatId = blob;
+type MessageId = nat;
+type MessageIndex = nat32;
+type TimestampMillis = nat64;
+type UserId = CanisterId;
+
+type BlobReference =
+    record {
+        canister_id: CanisterId;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+    };
+
+type CanisterCreationStatus =
+    variant {
+        Pending;
+        InProgress;
+        Created;
+    };
+
+type CanisterUpgradeStatus =
+    variant {
+        Required;
+        InProgress;
+        NotRequired;
+    };
+
+type CanisterWasm =
+    record {
+        module: vec nat8;
+        version: Version;
+    };
+
+type ChatSummary =
+    variant {
+        Direct: DirectChatSummary;
+        Group: GroupChatSummary;
+    };
+
+type ConfirmationCodeSms =
+    record {
+         phone_number: text;
+         confirmation_code: text;
+    };
+
+type CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type DirectChatEvent =
+    variant {
+        Message: DirectMessage;
+    };
+
+type DirectChatSummary =
+    record {
+        chat_id: DirectChatId;
+        them: UserId;
+        latest_message: DirectMessageEventWrapper;
+        latest_event_index: EventIndex;
+        date_created: TimestampMillis;
+        latest_read_by_me: MessageIndex;
+        latest_read_by_them: MessageIndex;
+    };
+
+type DirectMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sent_by_me: bool;
+        content: MessageContent;
+        replies_to: opt DirectReplyContext;
+    };
+
+type DirectMessageEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: DirectMessage;
+    };
+
+type DirectMessageNotification =
+    record {
+        sender: UserId;
+        sender_name: text;
+        recipient: UserId;
+        message: DirectMessage;
+    };
+
+type DirectReplyContext =
+    variant {
+        Standard: StandardReplyContext;
+        Private: PrivateReplyContext;
+    };
+
+type FileContent =
+    record {
+        name: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type GroupChatEvent =
+    variant {
+        Message: GroupMessage;
+        GroupChatCreated: GroupChatCreated;
+        GroupNameChanged: GroupNameChanged;
+        GroupDescriptionChanged: GroupDescriptionChanged;
+        ParticipantsAdded: ParticipantsAdded;
+        ParticipantsRemoved: ParticipantsRemoved;
+        ParticipantJoined: ParticipantJoined;
+        ParticipantLeft: ParticipantLeft;
+        ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
+        ParticipantsDismissedAsAdmin: ParticipantsPromotedToAdmin;
+    };
+
+type GroupChatSummary =
+    record {
+        chat_id: GroupChatId;
+        name: text;
+        description: text;
+        is_public: bool;
+        min_visible_message_index: MessageIndex;
+        participants: vec Participant;
+        latest_message: opt GroupMessageEventWrapper;
+        latest_event_index: EventIndex;
+        joined: TimestampMillis;
+        latest_read_by_me: MessageIndex;
+    };
+
+type GroupChatCreated =
+    record {
+        name: text;
+        description: opt text;
+        created_by: UserId;
+    };
+
+type GroupDescriptionChanged =
+    record {
+        new_description: opt text;
+        previous_description: opt text;
+        changed_by: UserId;
+    };
+
+type GroupMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sender: UserId;
+        content: MessageContent;
+        replies_to: opt GroupReplyContext;
+    };
+
+type GroupMessageEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: GroupMessage;
+    };
+
+type GroupMessageNotification =
+    record {
+        chat_id: GroupChatId;
+        group_name: text;
+        sender: UserId;
+        sender_name: text;
+        recipients: vec UserId;
+        message: GroupMessage;
+    };
+
+type GroupNameChanged =
+    record {
+        new_name: text;
+        previous_name: text;
+        changed_by: UserId;
+    };
+
+type GroupReplyContext =
+    record {
+        event_index: EventIndex;
+        user_id: UserId;
+        content: MessageContent;
+    };
+
+type MediaContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
+type MessageContent =
+    variant {
+        text: TextContent;
+        Media: MediaContent;
+        File: FileContent;
+        Cycles: CyclesContent;
+    };
+
+type Notification =
+    variant {
+        DirectMessageNotification: DirectMessageNotification;
+        GroupMessageNotification: GroupMessageNotification;
+        V1DirectMessageNotification: V1DirectMessageNotification;
+        V1GroupMessageNotification: V1GroupMessageNotification;
+    };
+
+type Participant =
+    record {
+        user_id: UserId;
+        date_added: TimestampMillis;
+        role: Role;
+    };
+
+type ParticipantJoined =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantLeft =
+    record {
+        user_id: UserId;
+    };
+
+type ParticipantsAdded =
+    record {
+        user_ids: vec UserId;
+        added_by: UserId;
+    };
+
+type ParticipantsDismissedAsAdmin =
+    record {
+        user_ids: vec UserId;
+        dismissed_by: UserId;
+    };
+
+type ParticipantsPromotedToAdmin =
+    record {
+        user_ids: vec UserId;
+        promoted_by: UserId;
+    };
+
+type ParticipantsRemoved =
+    record {
+        user_ids: vec UserId;
+        removed_by: UserId;
+    };
+
+type PrivateReplyContext =
+    record {
+        chat_id: GroupChatId;
+        event_index: EventIndex;
+    };
+
+type Role =
+    variant {
+        Admin;
+        Participant;
+    };
+
+type StandardReplyContext =
+    record {
+        event_index: EventIndex;
+        sent_by_me: bool;
+        content: MessageContent;
+    };
+
+type Subscription =
+    record {
+        value: SubscriptionInfo;
+        last_active: TimestampMillis;
+    };
+
+type SubscriptionInfo =
+    record {
+        endpoint: text;
+        keys: SubscriptionKeys;
+    };
+
+type SubscriptionKeys =
+    record {
+        p256dh: text;
+        auth: text;
+    };
+
+type TextContent =
+    record {
+        text: text;
+    };
+
+type V1DirectMessageNotification =
+    record {
+        sender: UserId;
+        sender_name: text;
+        recipient: UserId;
+        message: reserved;
+    };
+
+type V1GroupMessageNotification =
+    record {
+        chat_id: nat;
+        group_name: text;
+        sender: UserId;
+        sender_name: text;
+        recipients: vec UserId;
+        message: reserved;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
