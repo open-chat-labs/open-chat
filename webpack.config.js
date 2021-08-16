@@ -6,7 +6,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
 const NOTIFICATIONS_CANISTER_ID = "qhbym-qaaaa-aaaaa-aaafq-cai";
-const ENABLE_NOTIFICATIONS = true;
+const ENABLE_NOTIFICATIONS = false;
 
 const isDevelopment = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
@@ -108,7 +108,6 @@ function generateWebpackConfigForCanister(name, info) {
     output: {
       filename: "[name].js",
       path: path.join(__dirname, "dist", name),
-      clean: true
     },
     module: {
       rules: [
@@ -140,14 +139,6 @@ function generateWebpackConfigForCanister(name, info) {
         filename: 'index.html',
         chunks: ['index'],
       }),
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.join(__dirname, "src", "website", "assets"),
-            to: path.join(__dirname, "dist", "website"),
-          },
-        ],
-      }),      
       new webpack.EnvironmentPlugin({
         NODE_ENV: mode,
         CHATS_CANISTER_ID: canisterIds["chats"],
@@ -165,12 +156,39 @@ function generateWebpackConfigForCanister(name, info) {
   };
 }
 
+function generateWebpackConfigForServiceWorker() {
+  const sourceDir = path.join(__dirname, "src", "website");
+  return {
+    mode: "production",
+    devtool: false,
+    entry: path.join(sourceDir, "sw/index.ts"),
+    resolve: {
+      extensions: [".ts"],
+    },
+    output: {
+      filename: "sw.js",
+      path: path.resolve(__dirname, "dist/website"),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(ts|tsx|jsx)$/,
+          use: "ts-loader",
+          include: path.join(sourceDir, "sw"),
+        },
+      ]
+    },
+  };
+}
+
 // If you have additional webpack configurations you want to build
 //  as part of this configuration, add them to the section below.
 module.exports = [
-  ...Object.entries(dfxJson.canisters)
+  ...Object
+      .entries(dfxJson.canisters)
       .map(([name, info]) => {
         return generateWebpackConfigForCanister(name, info);
       })
       .filter((x) => !!x),
+  generateWebpackConfigForServiceWorker(),
 ];

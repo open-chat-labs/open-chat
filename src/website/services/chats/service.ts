@@ -20,11 +20,11 @@ export default class service {
         return createGroupChat(chatId, subject, users, chatHistoryVisibleToNewJoiners);
     }
 
-    public static sendDirectMessage(userId: UserId, senderName: string, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
+    public static sendDirectMessage(userId: UserId, senderName: Option<string>, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
         return sendDirectMessage(userId, senderName, clientMessageId, content, repliesTo);
     }
 
-    public static sendMessage(chatId: ChatId, senderName: string, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
+    public static sendMessage(chatId: ChatId, senderName: Option<string>, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
         return sendMessage(chatId, senderName, clientMessageId, content, repliesTo);
     }
 

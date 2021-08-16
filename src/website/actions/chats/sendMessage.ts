@@ -80,11 +80,14 @@ export default function (chat: Chat, sendMessageContent: DraftMessageContent, re
         }
 
         const me = getState().usersState.me!;
+        
+        // Only send the username in the request if notifications are enabled because it is used as a flag on the back-end
+        const myUsername = process.env.ENABLE_NOTIFICATIONS ? me.username : null;
 
         // Send the message to the IC
         const response = chat.kind === UNCONFIRMED_DIRECT_CHAT || (chat.kind === CONFIRMED_DIRECT_CHAT && sendMessageContent.kind === "cycles")
-            ? await chatsService.sendDirectMessage(chat.them, me.username, clientMessageId, content, repliesTo)
-            : await chatsService.sendMessage(chat.chatId, me.username, clientMessageId, content, repliesTo);
+            ? await chatsService.sendDirectMessage(chat.them, myUsername, clientMessageId, content, repliesTo)
+            : await chatsService.sendMessage(chat.chatId, myUsername, clientMessageId, content, repliesTo);
 
         if (response.kind !== "success") {
             // Dispatch a failed event

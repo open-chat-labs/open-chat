@@ -9,7 +9,7 @@ import { toDate as timestampToDate } from "../candidConverters/timestamp";
 import CanisterClientFactory from "../CanisterClientFactory";
 import { toHttpError, HttpError } from "../../errors/httpError";
 
-export default async function(chatId: ChatId, senderName: string, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
+export default async function(chatId: ChatId, senderName: Option<string>, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const candidRequest = {
         chat_id: chatId,
