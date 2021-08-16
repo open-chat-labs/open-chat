@@ -1,0 +1,12 @@
+{
+    "target": "es2015",
+    "module": "commonjs",
+    "allowJs": false,
+    "strict": true,
+    "compilerOptions": {
+        "lib": ["webworker", "es2015"]
+    },
+    "include": ["."],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+}

@@ -1,7 +1,7 @@
 export const APP_TITLE = "OpenChat";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
-export const PUBLIC_VAPID_KEY = "BBFStgbHlC4AyZzh2Uj3E8HncFhJosn3Kr1MNv3ajOEE7sukaWOBVbeTPJ4GTlX4uERUcUThmhAI0iVLuKLitoA";
+export const PUBLIC_VAPID_KEY = "BD8RU5tDBbFTDFybDoWhFzlL5-mYptojI6qqqqiit68KSt17-vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv-iV3A=";
 
 export const MAX_IMAGE_SIZE = 1024 * 1024;
 export const MAX_AVATAR_SIZE = 1024 * 256;
@@ -27,5 +27,5 @@ export const UNCONFIRMED_GROUP_CHAT = "ug";
 
 export const ABOUT_US = {
     title: "TEST MODE",
-    text: "OpenChat is running in test mode. Maximum users 20,000. Old media files scavenged. Dummy cycle balance. Accounts may get reset on coming beta release. Enjoy! - OpenChat devs",
+    text: "OpenChat is running in test mode. Maximum users 30,000. Old media files scavenged. Dummy cycle balance. Accounts may get reset on coming beta release. Enjoy! - OpenChat devs",
 };

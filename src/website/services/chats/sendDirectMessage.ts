@@ -11,7 +11,7 @@ import { directChatFromCandid } from "../candidConverters/chat";
 import CanisterClientFactory from "../CanisterClientFactory";
 import { HttpError, toHttpError } from "../../errors/httpError";
 
-export default async function(userId: UserId, senderName: string, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
+export default async function(userId: UserId, senderName: Option<string>, clientMessageId: string, content: MessageContent, repliesTo: Option<ReplyContext>) : Promise<SendDirectMessageResponse> {
     const client = CanisterClientFactory.current!.chatsClient;
     const canisterRequest = {
         recipient: userIdToCandid(userId),

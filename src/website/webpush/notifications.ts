@@ -47,7 +47,7 @@ export async function trySubscribe(userId: UserId) : Promise<boolean> {
     }
 
     // Register a service worker if it hasn't already been done
-    let registration = await getOrRegisterServiceWorker();
+    let registration = await registerServiceWorker();
     if (registration == null) {
         return false;
     }
@@ -113,20 +113,17 @@ export async function setSoftDisabled(disabled: boolean) : Promise<void> {
     _softDisabled = disabled;
 }
 
-async function getOrRegisterServiceWorker() : Promise<Option<ServiceWorkerRegistration>> {
+async function registerServiceWorker() : Promise<Option<ServiceWorkerRegistration>> {
     const SW_PATH = "sw.js";
-    let registration = await navigator.serviceWorker.getRegistration(SW_PATH) ?? null;
 
-    if (!registration) {
-        try {
-            registration = await navigator.serviceWorker.register(SW_PATH, { scope: "/webpush/" });
-        } catch (e) {
-            console.log(e);
-            return null;
-        }
+    try {
+        let registration = await navigator.serviceWorker.register(SW_PATH, { scope: "/webpush/" });
+        console.log(registration);
+        return registration;
+    } catch (e) {
+        console.log(e);
+        return null;
     }
-
-    return registration;
 }
 
 async function hardPermission() : Promise<NotificationPermission> {
