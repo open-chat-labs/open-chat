@@ -1,6 +1,6 @@
 use crate::role::Role;
-use crate::TimestampMillis;
 use crate::{MessageIndex, UserId};
+use crate::{TimestampMillis, Updatable};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -16,12 +16,23 @@ pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub read_up_to: MessageIndex,
+    pub read_up_to: Updatable<MessageIndex>,
     pub mute_notifications: bool,
+    pub min_visible_message_id: MessageIndex,
 }
 
 impl From<ParticipantInternal> for Participant {
     fn from(p: ParticipantInternal) -> Self {
+        Participant {
+            user_id: p.user_id,
+            date_added: p.date_added,
+            role: p.role,
+        }
+    }
+}
+
+impl From<&ParticipantInternal> for Participant {
+    fn from(p: &ParticipantInternal) -> Self {
         Participant {
             user_id: p.user_id,
             date_added: p.date_added,

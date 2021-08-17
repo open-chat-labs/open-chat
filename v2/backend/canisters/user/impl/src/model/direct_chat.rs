@@ -1,13 +1,13 @@
 use crate::model::events::Events;
-use types::{DirectChatId, MessageIndex, TimestampMillis, UserId};
+use types::{DirectChatId, MessageIndex, TimestampMillis, Updatable, UserId};
 
 pub struct DirectChat {
     pub chat_id: DirectChatId,
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: Events,
-    pub latest_read_by_me: MessageIndex,
-    pub latest_read_by_them: MessageIndex,
+    pub latest_read_by_me: Updatable<MessageIndex>,
+    pub latest_read_by_them: Updatable<MessageIndex>,
 }
 
 impl DirectChat {
@@ -16,13 +16,13 @@ impl DirectChat {
             chat_id,
             them,
             date_created: now,
-            events: Events::default(),
-            latest_read_by_me: MessageIndex::default(),
-            latest_read_by_them: MessageIndex::default(),
+            events: Events::new(now),
+            latest_read_by_me: Updatable::new(MessageIndex::default(), now),
+            latest_read_by_them: Updatable::new(MessageIndex::default(), now),
         }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        self.events.last().map_or(self.date_created, |m| m.timestamp)
+        self.events.last().timestamp
     }
 }

@@ -6,9 +6,9 @@ use user_canister::queries::*;
 use user_canister::updates::*;
 
 // Queries
-generate_c2c_call!(chats);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
+generate_c2c_call!(updates);
 
 // Updates
 generate_c2c_call!(create_group);

@@ -1,20 +1,17 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatSummary, TimestampMillis};
+use types::GroupChatSummary;
 
 #[derive(CandidType, Deserialize)]
-pub struct Args {
-    pub updated_since: Option<TimestampMillis>,
-}
+pub struct Args {}
 
 #[derive(CandidType, Deserialize)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorised,
+    NotInGroup,
 }
 
 #[derive(CandidType, Deserialize)]
 pub struct SuccessResult {
-    pub chats: Vec<ChatSummary>,
-    pub timestamp: TimestampMillis,
+    pub summary: GroupChatSummary,
 }

@@ -15,6 +15,7 @@ fn init(args: Args) {
         let data = Data::new(
             args.is_public,
             args.name,
+            args.description,
             args.created_by_principal,
             args.created_by_user_id,
             env.now(),

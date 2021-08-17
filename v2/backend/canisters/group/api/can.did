@@ -6,7 +6,7 @@ type EventIndex = nat32;
 type MessageIndex = nat32;
 type MessageId = nat;
 
-type EventWrapper =
+type GroupChatEventWrapper =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
@@ -259,23 +259,52 @@ type PutChunkResponse =
         Full;
     }; 
 
-type GetGroupArgs =
+type GroupChatSummary =
+    record {
+        chat_id: GroupChatId;
+        name: text;
+        description: text;
+        is_public: bool;
+        min_visible_message_index: MessageIndex;
+        participants: vec Participant;
+        latest_message: opt GroupMessageEventWrapper;
+        latest_event_index: EventIndex;
+        joined: TimestampMillis;
+        latest_read_by_me: MessageIndex;
+    };
+
+type SummaryArgs =
     record {
     };
 
-type GetGroupResponse =
+type SummaryResponse =
     variant {
-        Success: record {
-            subject: text;
-            display_date: TimestampMillis;
-            last_updated: TimestampMillis;
-            min_visible_message_index: MessageIndex;
-            participants: vec UserId;
-            unread_by_me_message_id_ranges: vec vec MessageIndex;
-            unread_by_any_message_id_ranges: vec vec MessageIndex;
-            latest_messages: vec Message;
-        };
+        Success: GroupChatSummary;
+        NotInGroup;
     };
+
+type SummaryUpdatesArgs =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type SummaryUpdatesSuccess =
+    record {
+        timestamp: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        participants_added_or_updated: vec Participant;
+        participants_removed: vec UserId;
+        latest_message: opt GroupMessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        latest_read_by_me: opt MessageIndex;
+    };
+
+type SummaryUpdatesResponse =
+    variant {
+        Success: SummaryUpdatesSuccess;
+        NotInGroup;
+    }
 
 type GetChunkArgs =
     record {
@@ -299,7 +328,7 @@ type EventsArgs =
 
 type EventsSuccessResult =
     record {
-        events: vec EventWrapper;
+        events: vec GroupChatEventWrapper;
         latest_event_index: EventIndex;
     };
 
@@ -311,7 +340,7 @@ type EventsResponse =
 
 type EventsByIndexArgs =
     record {
-        events: vec EventWrapper;
+        events: vec GroupChatEventWrapper;
     };
 
 type EventsByIndexResponse =
@@ -387,8 +416,9 @@ service: {
 
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
-    get_group: (GetGroupArgs) -> (GetGroupResponse) query;
-        
+    summary: (SummaryArgs) -> (SummaryResponse) query;
+    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
+
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
 

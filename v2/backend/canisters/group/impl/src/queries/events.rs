@@ -16,6 +16,6 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             latest_event_index,
         })
     } else {
-        NotAuthorised
+        NotInGroup
     }
 }

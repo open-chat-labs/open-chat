@@ -18,4 +18,12 @@ impl GroupChats {
             Occupied(_) => false,
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
+        self.group_chats.values()
+    }
+
+    pub fn len(&self) -> usize {
+        self.group_chats.len()
+    }
 }

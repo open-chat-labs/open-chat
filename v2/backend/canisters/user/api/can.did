@@ -1,4 +1,4 @@
-// This is the canister for an indvidual user.
+// This is the canister for an individual user.
 // It holds all the user's direct chats and links to their group chats.
 // For now it also holds the file data for any direct messages sent by the user.
 
@@ -229,13 +229,21 @@ type JoinGroupResponse =
         InternalError: text;
     };
 
+type GroupChatUpdatesSince =
+    record {
+        chat_id: GroupId;
+        updates_since: EventIndex;
+    };
+
+type UpdatesSince =
+    record {
+        direct_chats: TimestampMillis;
+        group_chats: vec GroupChatUpdatesSince;
+    };
+
 type UpdatesArgs = 
     record {
-        last_updated: opt TimestampMillis;
-        groups: vec record {
-            chat_id: GroupId;
-            last_updated: TimestampMillis;
-        };
+        updates_since: opt UpdatesSince;
     };
 
 type Participant =
@@ -284,7 +292,7 @@ type UpdatesResponse =
             timestamp: TimestampMillis;
             chats_added: vec ChatSummary;
             chats_updated: vec UpdatedChatSummary;
-            chats_removed: vec ChatId;         
+            chats_removed: vec ChatId;
         }
     };
 

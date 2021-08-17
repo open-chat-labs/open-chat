@@ -8,6 +8,8 @@ use types::CanisterId;
 // Queries
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
+generate_c2c_call!(summary);
+generate_c2c_call!(summary_updates);
 
 // Updates
 generate_c2c_call!(join_group);

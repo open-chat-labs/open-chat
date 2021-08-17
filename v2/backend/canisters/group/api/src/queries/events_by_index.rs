@@ -10,7 +10,7 @@ pub struct Args {
 #[derive(CandidType, Deserialize)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorised,
+    NotInGroup,
 }
 
 #[derive(CandidType, Deserialize)]

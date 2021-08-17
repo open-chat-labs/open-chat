@@ -14,10 +14,11 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
         let max_message_index = runtime_state.data.events.latest_message_index();
         let up_to_index = min(args.up_to_message_index, max_message_index);
-        if up_to_index <= participant.read_up_to {
+        if up_to_index <= *participant.read_up_to.value() {
             SuccessNoChange
         } else {
-            participant.read_up_to = up_to_index;
+            let now = runtime_state.env.now();
+            participant.read_up_to.set_value(up_to_index, now);
             Success
         }
     } else {

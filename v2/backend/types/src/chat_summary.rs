@@ -56,3 +56,30 @@ impl GroupChatSummary {
         self.latest_message.as_ref().map_or(self.joined, |m| m.timestamp)
     }
 }
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub enum ChatSummaryUpdates {
+    Direct(DirectChatSummaryUpdates),
+    Group(GroupChatSummaryUpdates),
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct DirectChatSummaryUpdates {
+    pub chat_id: DirectChatId,
+    pub latest_message: Option<EventWrapper<message::DirectMessage>>,
+    pub latest_event_index: Option<EventIndex>,
+    pub latest_read_by_me: Option<MessageIndex>,
+    pub latest_read_by_them: Option<MessageIndex>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct GroupChatSummaryUpdates {
+    pub chat_id: GroupChatId,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub participants_added_or_updated: Vec<Participant>,
+    pub participants_removed: Vec<UserId>,
+    pub latest_message: Option<EventWrapper<message::GroupMessage>>,
+    pub latest_event_index: Option<EventIndex>,
+    pub latest_read_by_me: Option<MessageIndex>,
+}
