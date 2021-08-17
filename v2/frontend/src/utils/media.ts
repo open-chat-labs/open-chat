@@ -82,20 +82,17 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             const mimeType = file.type;
             const isImage = /^image/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
+            const isFile = !(isImage || isVideo);
             const data = e.target.result as ArrayBuffer;
             let content: MessageContent;
 
             if (isImage && data.byteLength > MAX_IMAGE_SIZE) {
                 reject("maxImageSize");
                 return;
-            }
-
-            if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
+            } else if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
                 reject("maxVideoSize");
                 return;
-            }
-
-            if (data.byteLength > MAX_FILE_SIZE) {
+            } else if (isFile && data.byteLength > MAX_FILE_SIZE) {
                 reject("maxFileSize");
                 return;
             }

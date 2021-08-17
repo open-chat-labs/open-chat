@@ -12,7 +12,6 @@
     export let machine: ActorRefFrom<ChatMachine>;
 
     const EmojiPicker = () => import("./EmojiPicker.svelte");
-    let pastedImage: string | undefined;
     let showEmojiPicker = false;
 
     function cancelReply() {
@@ -42,11 +41,6 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if pastedImage}
-            <div class="pasted-img">
-                <img src={pastedImage} alt="pasted by the user" />
-            </div>
-        {/if}
         {#if $machine.context.replyingTo}
             <ReplyingTo
                 on:cancelReply={cancelReply}

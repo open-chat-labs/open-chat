@@ -12,6 +12,7 @@ import type {
     EventWrapper,
     CandidateGroupChat,
     CreateGroupResponse,
+    BlobReference,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -91,9 +92,14 @@ function mockRepliesTo(index: number): ReplyContext {
     };
 }
 
+type MediaType = "image" | "video";
+let mediaType: MediaType = "image";
+
 function mockImageMessage(index: number): Message {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    mediaType = mediaType === "image" ? "video" : "image";
+    const mimeType = mediaType === "image" ? "image/jpg" : "video/mp4";
     return {
         kind: "message",
         content: {
@@ -101,10 +107,10 @@ function mockImageMessage(index: number): Message {
             caption: "A picture of a bird",
             height: 201,
             width: 250,
-            mimeType: "image/jpeg",
+            mimeType,
             blobReference: {
                 blobSize: CHUNK_SIZE_BYTES * 2,
-                blobId: BigInt(0),
+                blobId: BigInt(mediaType === "image" ? 0 : 1),
                 canisterId: "doesnt_matter",
                 chunkSize: CHUNK_SIZE_BYTES,
             },

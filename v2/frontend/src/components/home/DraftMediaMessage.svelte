@@ -1,30 +1,15 @@
-<script lang="ts">
-    import { onDestroy } from "svelte";
+<svelte:options immutable={true} />
 
+<script lang="ts">
+    import MediaContentComponent from "./MediaContent.svelte";
     import type { MediaContent } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
-    import { dataToBlobUrl } from "../../utils/blob";
 
     export let draft: MediaContent;
-
-    $: blobUrl = draft.blobData.then((data) =>
-        data ? dataToBlobUrl(data, draft.mimeType) : undefined
-    );
-
-    onDestroy(() => {
-        console.log("destroying image url");
-        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
-    });
-
-    let landscape = draft.height < draft.width;
 </script>
 
 <div class="msg-preview" class:rtl={$rtlStore}>
-    {#await blobUrl}
-        <div>TODO - Waiting for image to load</div>
-    {:then url}
-        <img class:landscape src={url} alt={draft.caption} />
-    {/await}
+    <MediaContentComponent content={draft} />
 </div>
 
 <style type="text/scss">
@@ -39,20 +24,6 @@
         &.rtl {
             border-left: none;
             border-right: 7px solid var(--button-bg);
-        }
-    }
-
-    img {
-        max-width: none;
-        width: auto;
-        height: 100%;
-        max-height: calc(var(--vh, 1vh) * 50);
-
-        &.landscape {
-            max-width: calc(var(--vh, 1vh) * 50);
-            width: 100%;
-            height: auto;
-            max-height: none;
         }
     }
 </style>
