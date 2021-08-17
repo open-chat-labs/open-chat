@@ -214,15 +214,9 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut new_chats: Vec<_> = new_group_chats
-        .into_iter()
-        .map(ChatSummary::Group)
-        .collect();
+    let mut new_chats: Vec<_> = new_group_chats.into_iter().map(ChatSummary::Group).collect();
 
-    let mut updated_chats: Vec<_> = updated_group_chats
-        .into_iter()
-        .map(ChatSummaryUpdates::Group)
-        .collect();
+    let mut updated_chats: Vec<_> = updated_group_chats.into_iter().map(ChatSummaryUpdates::Group).collect();
 
     for direct_chat in runtime_state
         .data
