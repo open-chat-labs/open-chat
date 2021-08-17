@@ -22,14 +22,14 @@ async fn updates(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let future1 = get_group_chat_summaries(prepare_result.new_group_chats);
-    let future2 = get_group_chat_summary_updates(
+    let summaries_future = get_group_chat_summaries(prepare_result.new_group_chats);
+    let updated_summaries_future = get_group_chat_summary_updates(
         prepare_result.group_index_canister_id,
         prepare_result.check_active_groups_only,
         prepare_result.group_chats_to_check_for_updates,
     );
 
-    let (summaries, updated_summaries) = futures::future::join(future1, future2).await;
+    let (summaries, updated_summaries) = futures::future::join(summaries_future, updated_summaries_future).await;
 
     let result = RUNTIME_STATE.with(|state| finalize(args, summaries, updated_summaries, state.borrow().as_ref().unwrap()));
 

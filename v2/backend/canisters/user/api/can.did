@@ -232,12 +232,12 @@ type JoinGroupResponse =
 type GroupChatUpdatesSince =
     record {
         chat_id: GroupId;
-        updates_since: EventIndex;
+        updates_since: TimestampMillis;
     };
 
 type UpdatesSince =
     record {
-        direct_chats: TimestampMillis;
+        timestamp: TimestampMillis;
         group_chats: vec GroupChatUpdatesSince;
     };
 

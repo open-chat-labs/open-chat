@@ -105,6 +105,10 @@ export interface GroupChatSummary {
     }
   ],
 }
+export interface GroupChatUpdatesSince {
+  'updates_since' : TimestampMillis,
+  'chat_id' : GroupId,
+}
 export type GroupId = CanisterId;
 export interface GroupMessage {
   'content' : MessageContent,
@@ -274,10 +278,7 @@ export interface UpdatedGroupChatSummary {
   'participants_updated' : Array<Participant>,
   'latest_message' : [] | [EventWrapper],
 }
-export interface UpdatesArgs {
-  'groups' : Array<{ 'last_updated' : TimestampMillis, 'chat_id' : GroupId }>,
-  'last_updated' : [] | [TimestampMillis],
-}
+export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }
 export type UpdatesResponse = {
     'Success' : {
       'chats_updated' : Array<UpdatedChatSummary>,
@@ -286,6 +287,10 @@ export type UpdatesResponse = {
       'timestamp' : TimestampMillis,
     }
   };
+export interface UpdatesSince {
+  'group_chats' : Array<GroupChatUpdatesSince>,
+  'timestamp' : TimestampMillis,
+}
 export type UserId = CanisterId;
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,

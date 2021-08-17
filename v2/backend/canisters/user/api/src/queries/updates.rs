@@ -10,11 +10,11 @@ pub struct Args {
 #[derive(CandidType, Deserialize)]
 pub struct UpdatesSince {
     pub timestamp: TimestampMillis,
-    pub group_chats: Vec<GroupChatSync>,
+    pub group_chats: Vec<GroupChatUpdatesSince>,
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct GroupChatSync {
+pub struct GroupChatUpdatesSince {
     pub chat_id: GroupChatId,
     pub updates_since: TimestampMillis,
 }

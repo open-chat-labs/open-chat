@@ -79,20 +79,22 @@ export const idlFactory = ({ IDL }) => {
     'Message' : Message,
   });
   const TimestampMillis = IDL.Nat64;
-  const EventWrapper = IDL.Record({
+  const GroupChatEventWrapper = IDL.Record({
     'event' : GroupChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
   });
   const EventsSuccessResult = IDL.Record({
-    'events' : IDL.Vec(EventWrapper),
+    'events' : IDL.Vec(GroupChatEventWrapper),
     'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
-  const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventWrapper) });
+  const EventsByIndexArgs = IDL.Record({
+    'events' : IDL.Vec(GroupChatEventWrapper),
+  });
   const EventsByIndexResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
@@ -101,19 +103,6 @@ export const idlFactory = ({ IDL }) => {
   const GetChunkResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
-  });
-  const GetGroupArgs = IDL.Record({});
-  const GetGroupResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'participants' : IDL.Vec(UserId),
-      'subject' : IDL.Text,
-      'last_updated' : TimestampMillis,
-      'display_date' : TimestampMillis,
-      'latest_messages' : IDL.Vec(Message),
-      'min_visible_message_index' : MessageIndex,
-      'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(MessageIndex)),
-      'unread_by_any_message_id_ranges' : IDL.Vec(IDL.Vec(MessageIndex)),
-    }),
   });
   const JoinGroupArgs = IDL.Record({ 'principal' : IDL.Principal });
   const JoinGroupResponse = IDL.Variant({
@@ -205,6 +194,50 @@ export const idlFactory = ({ IDL }) => {
     'FileTooBig' : IDL.Nat32,
     'Success' : IDL.Null,
   });
+  const SummaryArgs = IDL.Record({});
+  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Participant = IDL.Record({
+    'role' : Role,
+    'user_id' : UserId,
+    'date_added' : TimestampMillis,
+  });
+  const GroupId = CanisterId;
+  const GroupMessageEventWrapper = IDL.Record({
+    'event' : Message,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const GroupChatSummary = IDL.Record({
+    'is_public' : IDL.Bool,
+    'participants' : IDL.Vec(Participant),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'latest_read_by_me' : MessageIndex,
+    'joined' : TimestampMillis,
+    'latest_event_index' : EventIndex,
+    'min_visible_message_index' : MessageIndex,
+    'chat_id' : GroupId,
+    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+  });
+  const SummaryResponse = IDL.Variant({
+    'Success' : GroupChatSummary,
+    'NotInGroup' : IDL.Null,
+  });
+  const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const SummaryUpdatesSuccess = IDL.Record({
+    'participants_added_or_updated' : IDL.Vec(Participant),
+    'participants_removed' : IDL.Vec(UserId),
+    'name' : IDL.Opt(IDL.Text),
+    'description' : IDL.Opt(IDL.Text),
+    'latest_read_by_me' : IDL.Opt(MessageIndex),
+    'timestamp' : TimestampMillis,
+    'latest_event_index' : IDL.Opt(EventIndex),
+    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+  });
+  const SummaryUpdatesResponse = IDL.Variant({
+    'Success' : SummaryUpdatesSuccess,
+    'NotInGroup' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({});
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   return IDL.Service({
@@ -221,7 +254,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_chunk' : IDL.Func([GetChunkArgs], [GetChunkResponse], ['query']),
-    'get_group' : IDL.Func([GetGroupArgs], [GetGroupResponse], ['query']),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
@@ -241,6 +273,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'summary' : IDL.Func([SummaryArgs], [SummaryResponse], ['query']),
+    'summary_updates' : IDL.Func(
+        [SummaryUpdatesArgs],
+        [SummaryUpdatesResponse],
+        ['query'],
+      ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
   });
 };

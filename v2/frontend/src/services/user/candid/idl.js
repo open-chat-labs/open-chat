@@ -226,12 +226,15 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
-  const UpdatesArgs = IDL.Record({
-    'groups' : IDL.Vec(
-      IDL.Record({ 'last_updated' : TimestampMillis, 'chat_id' : GroupId })
-    ),
-    'last_updated' : IDL.Opt(TimestampMillis),
+  const GroupChatUpdatesSince = IDL.Record({
+    'updates_since' : TimestampMillis,
+    'chat_id' : GroupId,
   });
+  const UpdatesSince = IDL.Record({
+    'group_chats' : IDL.Vec(GroupChatUpdatesSince),
+    'timestamp' : TimestampMillis,
+  });
+  const UpdatesArgs = IDL.Record({ 'updates_since' : IDL.Opt(UpdatesSince) });
   const Participant = IDL.Record({
     'role' : IDL.Variant({ 'Admin' : IDL.Null, 'Standard' : IDL.Null }),
     'user_id' : UserId,
