@@ -7,6 +7,7 @@ pub struct Args {
     pub is_public: bool,
     pub creator_principal: Principal,
     pub name: String,
+    pub description: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

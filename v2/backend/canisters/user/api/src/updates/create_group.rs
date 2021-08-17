@@ -6,6 +6,7 @@ use types::GroupChatId;
 pub struct Args {
     pub is_public: bool,
     pub name: String,
+    pub description: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

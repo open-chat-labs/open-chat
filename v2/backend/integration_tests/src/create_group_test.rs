@@ -25,6 +25,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let create_group_args = user_canister::updates::create_group::Args {
         is_public: false,
         name: "TEST_GROUP".to_string(),
+        description: "TEST_DESCRIPTION".to_string(),
     };
     let create_group_response = canisters::user::create_group(&agent, &user1_id, &create_group_args).await;
 
