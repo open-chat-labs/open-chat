@@ -256,23 +256,23 @@ type Participant =
         };
     };
 
-type UpdatedChatSummary =
+type ChatSummaryUpdates =
     variant {
-        Direct: UpdatedDirectChatSummary;
-        Group: UpdatedGroupChatSummary;
+        Direct: DirectChatSummaryUpdates;
+        Group: GroupChatSummaryUpdates;
     };
 
-type UpdatedDirectChatSummary =
+type DirectChatSummaryUpdates =
     record {
         chat_id: DirectChatId;
         last_updated: TimestampMillis;
         latest_read_by_me: opt MessageIndex;
         latest_read_by_them: opt MessageIndex;
         latest_message: opt EventWrapper;
-        latest_event_index: EventIndex;
+        latest_event_index: opt EventIndex;
     };
 
-type UpdatedGroupChatSummary =
+type GroupChatSummaryUpdates =
     record {
         chat_id: GroupId;
         last_updated: TimestampMillis;
@@ -283,7 +283,7 @@ type UpdatedGroupChatSummary =
         participants_removed: vec UserId;
         participants_added: vec Participant;
         participants_updated: vec Participant;
-        latest_event_index: EventIndex;
+        latest_event_index: opt EventIndex;
     };
 
 type UpdatesResponse =
@@ -291,7 +291,7 @@ type UpdatesResponse =
         Success: record {
             timestamp: TimestampMillis;
             chats_added: vec ChatSummary;
-            chats_updated: vec UpdatedChatSummary;
+            chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
         }
     };
