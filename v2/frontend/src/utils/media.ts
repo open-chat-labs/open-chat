@@ -1,4 +1,4 @@
-import type { DraftMessageContent } from "../domain/chat/chat";
+import type { MessageContent } from "../domain/chat/chat";
 import { dataToBlobUrl } from "./blob";
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -72,7 +72,7 @@ type MediaExtract = {
     thumbnailData: string;
 };
 
-export async function draftMessageContentFromFile(file: File): Promise<DraftMessageContent> {
+export async function messageContentFromFile(file: File): Promise<MessageContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsArrayBuffer(file);
@@ -83,7 +83,7 @@ export async function draftMessageContentFromFile(file: File): Promise<DraftMess
             const isImage = /^image/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
             const data = e.target.result as ArrayBuffer;
-            let content: DraftMessageContent;
+            let content: MessageContent;
 
             if (isImage && data.byteLength > MAX_IMAGE_SIZE) {
                 reject("maxImageSize");
@@ -107,13 +107,14 @@ export async function draftMessageContentFromFile(file: File): Promise<DraftMess
                     ? await extractImageThumbnail(blobUrl)
                     : await extractVideoThumbnail(blobUrl);
 
+                URL.revokeObjectURL(blobUrl);
+
                 content = {
                     kind: "media_content",
                     mimeType: mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
-                    data: new Uint8Array(data),
-                    blobUrl,
+                    blobData: Promise.resolve(new Uint8Array(data)),
                     thumbnailData: extract.thumbnailData,
                 };
             } else {
@@ -121,7 +122,7 @@ export async function draftMessageContentFromFile(file: File): Promise<DraftMess
                     kind: "file_content",
                     name: file.name,
                     mimeType: mimeType,
-                    data: new Uint8Array(data),
+                    blobData: Promise.resolve(new Uint8Array(data)),
                 };
             }
             resolve(content);

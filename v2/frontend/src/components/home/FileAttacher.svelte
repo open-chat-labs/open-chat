@@ -3,7 +3,7 @@
     import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { toastStore } from "../../stores/toast";
-    import { draftMessageContentFromFile } from "../../utils/media";
+    import { messageContentFromFile } from "../../utils/media";
     import { createEventDispatcher } from "svelte";
 
     export let open: boolean = false;
@@ -24,7 +24,7 @@
         if (e.currentTarget) {
             const target = e.currentTarget;
             if (target.files && target.files[0]) {
-                draftMessageContentFromFile(target.files[0])
+                messageContentFromFile(target.files[0])
                     .then((content) => dispatch("fileSelected", content))
                     .catch((err) => toastStore.showFailureToast(err));
             }

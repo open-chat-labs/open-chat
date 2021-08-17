@@ -6,7 +6,7 @@ import type {
     EventsResponse,
     EventWrapper,
     EnhancedReplyContext,
-    DraftMessageContent,
+    MessageContent,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
@@ -33,7 +33,7 @@ export interface ChatContext {
     events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
-    fileToAttach?: DraftMessageContent;
+    fileToAttach?: MessageContent;
 }
 
 type LoadEventsResponse = {
@@ -47,7 +47,7 @@ export type ChatEvents =
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data?: string }
-    | { type: "ATTACH_FILE"; data: DraftMessageContent }
+    | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "REPLY_TO"; data: EnhancedReplyContext }

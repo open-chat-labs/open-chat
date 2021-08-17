@@ -1,12 +1,6 @@
-import type { Principal } from "@dfinity/principal";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
-export type DraftMessageContent =
-    | TextContent
-    | DraftMediaContent
-    | DraftFileContent
-    | CyclesContent;
 
 export interface CyclesContent {
     kind: "cycles_content";
@@ -14,53 +8,34 @@ export interface CyclesContent {
     amount: bigint;
 }
 
-export interface MediaContent {
-    kind: "media_content";
+interface DataContent {
     caption?: string;
-    height: number;
-    width: number;
-    mimeType: string;
     blobReference?: BlobReference;
-    thumbnailData: string;
-    blobUrl?: string;
+    blobData: Promise<Uint8Array | undefined>;
+    mimeType: string;
 }
 
-export type DraftMediaContent = {
+export interface MediaContent extends DataContent {
     kind: "media_content";
-    caption?: string;
     height: number;
     width: number;
-    mimeType: string;
-    data: Uint8Array;
-    blobUrl: string;
     thumbnailData: string;
-};
+}
 
 export interface TextContent {
     kind: "text_content";
     text: string;
 }
 
-export interface FileContent {
+export interface FileContent extends DataContent {
     kind: "file_content";
     name: string;
-    mimeType: string;
-    blobReference?: BlobReference;
-    caption?: string;
 }
-
-export type DraftFileContent = {
-    kind: "file_content";
-    name: string;
-    caption?: string;
-    mimeType: string;
-    data: Uint8Array;
-};
 
 export interface BlobReference {
     blobSize: number;
-    blobId: string;
-    canisterId: Principal;
+    blobId: bigint;
+    canisterId: string;
     chunkSize: number;
 }
 

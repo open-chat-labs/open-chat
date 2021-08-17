@@ -17,6 +17,7 @@ import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
+export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 const numMessages = 1000;
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
@@ -90,6 +91,33 @@ function mockRepliesTo(index: number): ReplyContext {
     };
 }
 
+function mockImageMessage(index: number): Message {
+    const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
+    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    return {
+        kind: "message",
+        content: {
+            kind: "media_content",
+            caption: "A picture of a bird",
+            height: 201,
+            width: 250,
+            mimeType: "image/jpeg",
+            blobReference: {
+                blobSize: CHUNK_SIZE_BYTES * 2,
+                blobId: BigInt(0),
+                canisterId: "doesnt_matter",
+                chunkSize: CHUNK_SIZE_BYTES,
+            },
+            blobData: Promise.resolve(undefined),
+            thumbnailData: "",
+        },
+        sender,
+        repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
+    };
+}
+
 function mockTextMessage(index: number): Message {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
@@ -111,8 +139,10 @@ function mockEvent(index: number): EventWrapper {
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
 
+    const imageMsg = index % 5 === 0;
+
     return {
-        event: mockTextMessage(index),
+        event: imageMsg ? mockImageMessage(index) : mockTextMessage(index),
         timestamp: BigInt(+new Date(now - timeDiff)),
         index,
     };

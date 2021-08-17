@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import idlFactory, { GroupIndexService } from "./candid/idl";
+import { idlFactory, GroupIndexService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
 

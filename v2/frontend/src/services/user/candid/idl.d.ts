@@ -68,5 +68,4 @@ export {
     PutChunkResponse as ApiPutChunkResponse,
 };
 
-declare const idlFactory: IDL.InterfaceFactory;
-export default idlFactory;
+export const idlFactory: IDL.InterfaceFactory;

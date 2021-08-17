@@ -14,7 +14,7 @@
 {#if content.kind === "text_content"}
     <SvelteMarkdown source={textContent} />
 {:else if content.kind === "media_content"}
-    <MediaContent {content}>Media content</MediaContent>
+    <MediaContent {content} />
 {:else if content.kind === "file_content"}
     <div>File content</div>
 {:else if content.kind === "cycles_content"}

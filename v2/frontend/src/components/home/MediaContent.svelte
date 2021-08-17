@@ -1,9 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { MediaContent, DraftMediaContent } from "../../domain/chat/chat";
+    import { onDestroy } from "svelte";
 
-    export let content: MediaContent | DraftMediaContent;
+    import type { MediaContent } from "../../domain/chat/chat";
+    import { dataToBlobUrl } from "../../utils/blob";
+
+    export let content: MediaContent;
 
     // the React version of this component has a hook that loads the media data on load
     // and then calls revokeObjectUrl on unload / destroy. We need to think about *when* to
@@ -17,12 +20,25 @@
 
     $: isImage = /^image/.test(content.mimeType);
     $: isVideo = /^video/.test(content.mimeType);
+
+    $: blobUrl = content.blobData.then((data) =>
+        data ? dataToBlobUrl(data, content.mimeType) : undefined
+    );
+
+    onDestroy(() => {
+        console.log("destroying image url");
+        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+    });
 </script>
 
 {#if isImage}
-    {#if content.blobUrl !== undefined}
-        <img src={content.blobUrl} alt={content.caption} />
-    {/if}
+    {#await blobUrl}
+        <pre>Waiting for an image</pre>
+    {:then url}
+        {#if url}
+            <img src={url} alt={content.caption} />
+        {/if}
+    {/await}
 {:else if isVideo}
     <div>Video content</div>
 {/if}

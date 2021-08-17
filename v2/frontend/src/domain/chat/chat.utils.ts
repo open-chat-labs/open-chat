@@ -3,7 +3,6 @@ import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.ut
 import type {
     ChatSummary,
     DirectChatSummary,
-    DraftMessageContent,
     EventWrapper,
     GroupChatSummary,
     MediaContent,
@@ -106,24 +105,15 @@ export function getParticipantsString(
         .join(", ");
 }
 
-// todo - this is just a temporary test thing
-export function fromDraft(draft: DraftMessageContent): MessageContent {
-    if (draft.kind === "cycles_content") return draft;
-    if (draft.kind === "text_content") return draft;
-    if (draft.kind === "file_content") return draft;
-    if (draft.kind === "media_content") return draft;
-    throw new Error("Unexpected draft message type");
-}
-
 export function textMessage(
     userId: string,
     messageIndex: number,
     content: string | undefined,
     replyingTo: ReplyContext | undefined,
-    fileToAttach: DraftMessageContent | undefined
+    fileToAttach: MessageContent | undefined
 ): Message {
     const msgContent = fileToAttach
-        ? fromDraft(fileToAttach)
+        ? fileToAttach
         : ({
               kind: "text_content",
               text: content ?? "",

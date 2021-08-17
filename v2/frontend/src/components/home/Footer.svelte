@@ -3,11 +3,11 @@
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import Lazy from "../Lazy.svelte";
-    import type { DraftMessageContent } from "../../domain/chat/chat";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
-    import { draftMessageContentFromFile } from "../../utils/media";
+    import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
+    import type { MessageContent } from "../../domain/chat/chat";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -19,7 +19,7 @@
         machine.send({ type: "CANCEL_REPLY_TO" });
     }
 
-    function fileSelected(ev: CustomEvent<DraftMessageContent>) {
+    function fileSelected(ev: CustomEvent<MessageContent>) {
         machine.send({ type: "ATTACH_FILE", data: ev.detail });
     }
 
@@ -32,7 +32,7 @@
                 ?.getAsFile();
             if (!imageFile) return;
 
-            draftMessageContentFromFile(imageFile)
+            messageContentFromFile(imageFile)
                 .then((content) => machine.send({ type: "ATTACH_FILE", data: content }))
                 .catch((err) => toastStore.showFailureToast(err));
             e.preventDefault();

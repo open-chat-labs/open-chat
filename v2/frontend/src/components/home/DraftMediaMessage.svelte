@@ -1,14 +1,30 @@
 <script lang="ts">
-    import type { DraftMediaContent } from "../../domain/chat/chat";
-    import { rtlStore } from "../../stores/rtl";
+    import { onDestroy } from "svelte";
 
-    export let draft: DraftMediaContent;
+    import type { MediaContent } from "../../domain/chat/chat";
+    import { rtlStore } from "../../stores/rtl";
+    import { dataToBlobUrl } from "../../utils/blob";
+
+    export let draft: MediaContent;
+
+    $: blobUrl = draft.blobData.then((data) =>
+        data ? dataToBlobUrl(data, draft.mimeType) : undefined
+    );
+
+    onDestroy(() => {
+        console.log("destroying image url");
+        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+    });
 
     let landscape = draft.height < draft.width;
 </script>
 
 <div class="msg-preview" class:rtl={$rtlStore}>
-    <img class:landscape src={draft.blobUrl} alt={draft.caption} />
+    {#await blobUrl}
+        <div>TODO - Waiting for image to load</div>
+    {:then url}
+        <img class:landscape src={url} alt={draft.caption} />
+    {/await}
 </div>
 
 <style type="text/scss">

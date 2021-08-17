@@ -79,7 +79,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
             events: candid.Success.events.map((ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
         };
     }
@@ -114,7 +114,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
@@ -135,7 +135,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
             latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
             latestEventIndex: candid.Direct.latest_event_index,
@@ -236,6 +236,7 @@ function mediaContent(candid: ApiMediaContent): MediaContent {
         height: candid.height,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
+        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
@@ -263,7 +264,7 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     return {
         blobSize: candid.blob_size,
         blobId: candid.blob_id,
-        canisterId: candid.canister_id,
+        canisterId: candid.canister_id.toString(),
         chunkSize: candid.chunk_size,
     };
 }
