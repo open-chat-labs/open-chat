@@ -1,42 +1,17 @@
-use crate::types::UserId;
 use crate::utils::delay;
-use candid::{CandidType, Decode, Encode, Principal};
+use candid::{Decode, Encode, Principal};
+use group_canister::queries::*;
+use group_canister::updates::*;
 use ic_agent::Agent;
-use serde::Deserialize;
 
+// Queries
+generate_query_call!(events);
+generate_query_call!(events_by_index);
+generate_query_call!(summary);
+generate_query_call!(summary_updates);
+
+// Updates
 generate_update_call!(add_participants);
-
-pub mod add_participants {
-    use super::*;
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub struct Args {
-        pub user_ids: Vec<UserId>,
-    }
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub enum Response {
-        Success,
-        PartialSuccess(PartialSuccessResult),
-        Failed(FailedResult),
-        NotInGroup,
-        NotAuthorized,
-    }
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub struct PartialSuccessResult {
-        pub users_added: Vec<UserId>,
-        pub users_already_in_group: Vec<UserId>,
-        pub users_blocked_from_group: Vec<UserId>,
-        pub users_who_blocked_request: Vec<UserId>,
-        pub errors: Vec<UserId>,
-    }
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub struct FailedResult {
-        pub users_already_in_group: Vec<UserId>,
-        pub users_blocked_from_group: Vec<UserId>,
-        pub users_who_blocked_request: Vec<UserId>,
-        pub errors: Vec<UserId>,
-    }
-}
+generate_update_call!(join_group);
+generate_update_call!(mark_read);
+generate_update_call!(send_message);

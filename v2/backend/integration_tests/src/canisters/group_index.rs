@@ -1,13 +1,12 @@
-use crate::types::{CanisterId, CanisterWasm};
-use candid::CandidType;
-use serde::Deserialize;
+use crate::utils::delay;
+use candid::{Decode, Encode, Principal};
+use group_index_canister::queries::*;
+use group_index_canister::updates::*;
+use ic_agent::Agent;
 
-pub mod init {
-    use super::*;
+// Queries
+generate_query_call!(active_groups);
 
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        pub group_canister_wasm: CanisterWasm,
-        pub notifications_canister_id: CanisterId,
-    }
-}
+// Updates
+generate_update_call!(create_group);
+generate_update_call!(notify_activity);

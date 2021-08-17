@@ -47,9 +47,17 @@ mod macros {
 
 #[allow(dead_code)]
 pub mod group;
+
+#[allow(dead_code)]
 pub mod group_index;
+
+#[allow(dead_code)]
 pub mod notifications;
+
+#[allow(dead_code)]
 pub mod user;
+
+#[allow(dead_code)]
 pub mod user_index;
 
 pub struct CanisterIds {

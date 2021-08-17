@@ -22,21 +22,21 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let agent = build_ic_agent(url, user1_identity).await;
 
-    let create_group_args = canisters::user::create_group::Args {
+    let create_group_args = user_canister::updates::create_group::Args {
         is_public: false,
         name: "TEST_GROUP".to_string(),
     };
     let create_group_response = canisters::user::create_group(&agent, &user1_id, &create_group_args).await;
 
-    if let canisters::user::create_group::Response::Success(r) = create_group_response {
-        let add_participants_args = canisters::group::add_participants::Args {
+    if let user_canister::updates::create_group::Response::Success(r) = create_group_response {
+        let add_participants_args = group_canister::updates::add_participants::Args {
             user_ids: vec![user2_id.into(), user3_id.into()],
         };
         let add_participants_response =
             canisters::group::add_participants(&agent, &r.group_chat_id.into(), &add_participants_args).await;
         if !matches!(
             add_participants_response,
-            canisters::group::add_participants::Response::Success
+            group_canister::updates::add_participants::Response::Success
         ) {
             panic!("Add participants returned an error: {:?}", add_participants_response);
         }

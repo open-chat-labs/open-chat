@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::Deserialize;
 use types::*;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub recipient: UserId,
@@ -11,13 +11,13 @@ pub struct Args {
     pub replies_to: Option<DirectReplyContextInternal>,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     NotAuthorised,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
     pub direct_chat_id: DirectChatId,
     pub event_index: EventIndex,

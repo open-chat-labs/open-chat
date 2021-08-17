@@ -8,7 +8,6 @@ mod create_group_test;
 mod register_user_test;
 mod send_message_test;
 mod setup;
-mod types;
 mod utils;
 
 fn main() {
@@ -30,9 +29,9 @@ fn main() {
 }
 
 fn tests_pot() -> pot::Pot<IcManager> {
-    composable_setup!(
+    composable!(
+        "Tests",
         configure(),
-        setup(),
         steps! {
             register_user_test::register_user_test,
             register_user_test::register_existing_user_test,
@@ -51,8 +50,4 @@ fn print_rng_seed<ManCfg>(fondue_config: &fondue::pot::execution::Config<ManCfg>
 
 pub fn configure() -> InternetComputer {
     InternetComputer::new().add_fast_single_node_subnet(SubnetType::System)
-}
-
-pub fn setup() -> pot::Setup<IcManager> {
-    Box::new(|_man, _ctx| {})
 }

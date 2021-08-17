@@ -10,7 +10,7 @@ candid = "0.7.4"
 futures = "0.3.16"
 garcon = "0.2.3"
 ic-agent = "0.6.0"
-ic-cdk = "0.3.1"
+ic-cdk = { version = "0.3.1", default-features = false }
 notifications_canister = { path = "../../canisters/notifications/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"

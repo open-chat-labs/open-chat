@@ -1,4 +1,3 @@
-use crate::types::{CanisterWasm, Version};
 use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -10,6 +9,7 @@ use std::future::Future;
 use std::io::Read;
 use std::path::PathBuf;
 use tokio::runtime::Runtime as TRuntime;
+use types::{CanisterWasm, Version};
 
 const CONTROLLER_PEM: &str = include_str!("../keys/controller.pem");
 const USER1_PEM: &str = include_str!("../keys/user1.pem");

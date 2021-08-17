@@ -12,7 +12,7 @@ pub enum MessageContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
-    text: String,
+    pub text: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

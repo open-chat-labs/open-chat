@@ -9,21 +9,27 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.6.21"
-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
+candid = "0.7.4"
+fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 futures = "0.3.16"
 garcon = "0.2.3"
-ic-agent = "0.5.2"
-ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
-ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
-ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
-ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
-ic-utils = "0.3.3"
-nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "09f0c726608eff7464866d1425f2d3a239f97d5f" }
+group_canister = { path = "../canisters/group/api" }
+group_index_canister = { path = "../canisters/group_index/api" }
+ic-agent = "0.7.0"
+ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+ic-utils = "0.5.0"
+nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
+notifications_canister = { path = "../canisters/notifications/api" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
 tokio = { version = "1.9.0", features = ["full"] }
+types = { path = "../../backend/types", default-features = false }
 url = "2.2.2"
+user_canister = { path = "../canisters/user/api" }
+user_index_canister = { path = "../canisters/user_index/api" }
 
 [patch."https://github.com/dfinity-lab/lmdb-rs"]
 lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }
