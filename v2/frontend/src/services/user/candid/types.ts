@@ -41,12 +41,17 @@ export interface DirectChatSummary {
   },
 }
 export interface DirectChatSummaryUpdates {
-  'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : DirectChatId,
   'latest_read_by_them' : [] | [MessageIndex],
-  'latest_message' : [] | [EventWrapper],
+  'latest_message' : [] | [
+    {
+      'event' : DirectMessage,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+    }
+  ],
 }
 export interface DirectMessage {
   'content' : MessageContent,
@@ -116,16 +121,21 @@ export interface GroupChatSummary {
   ],
 }
 export interface GroupChatSummaryUpdates {
-  'participants_added' : Array<Participant>,
+  'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
   'description' : [] | [string],
-  'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
+  'timestamp' : TimestampMillis,
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : GroupId,
-  'participants_updated' : Array<Participant>,
-  'latest_message' : [] | [EventWrapper],
+  'latest_message' : [] | [
+    {
+      'event' : GroupMessage,
+      'timestamp' : TimestampMillis,
+      'index' : EventIndex,
+    }
+  ],
 }
 export interface GroupChatUpdatesSince {
   'updates_since' : TimestampMillis,

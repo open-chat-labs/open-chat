@@ -265,25 +265,31 @@ type ChatSummaryUpdates =
 type DirectChatSummaryUpdates =
     record {
         chat_id: DirectChatId;
-        last_updated: TimestampMillis;
+        latest_message: opt record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            event: DirectMessage;
+        };
+        latest_event_index: opt EventIndex;
         latest_read_by_me: opt MessageIndex;
         latest_read_by_them: opt MessageIndex;
-        latest_message: opt EventWrapper;
-        latest_event_index: opt EventIndex;
     };
 
 type GroupChatSummaryUpdates =
     record {
         chat_id: GroupId;
-        last_updated: TimestampMillis;
+        timestamp: TimestampMillis;
         name: opt text;
         description: opt text;
-        latest_read_by_me: opt MessageIndex;
-        latest_message: opt EventWrapper;
+        participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
-        participants_added: vec Participant;
-        participants_updated: vec Participant;
+        latest_message: opt record {
+            index: EventIndex;
+            timestamp: TimestampMillis;
+            event: GroupMessage;
+        };
         latest_event_index: opt EventIndex;
+        latest_read_by_me: opt MessageIndex;
     };
 
 type UpdatesResponse =

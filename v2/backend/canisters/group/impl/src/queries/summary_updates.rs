@@ -14,6 +14,8 @@ fn summary_updates(args: Args) -> Response {
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        let now = runtime_state.env.now();
+
         let name = if runtime_state.data.name.updated() > args.updates_since {
             Some(runtime_state.data.name.value().clone())
         } else {
@@ -47,6 +49,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
         let updates = GroupChatSummaryUpdates {
             chat_id: runtime_state.env.canister_id().into(),
+            timestamp: now,
             name,
             description,
             participants_added_or_updated,
