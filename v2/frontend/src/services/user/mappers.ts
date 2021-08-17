@@ -256,6 +256,7 @@ function fileContent(candid: ApiFileContent): FileContent {
         name: candid.name,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
+        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         caption: optional(candid.caption, identity),
     };
 }

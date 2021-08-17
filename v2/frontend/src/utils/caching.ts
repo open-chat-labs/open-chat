@@ -40,13 +40,19 @@ export function createCacheKey(chatId: string, index: number): string {
 
 export function openMessageCache(): Database | undefined {
     try {
-        return openDB<ChatSchema>("openchat_db", 2, {
-            upgrade(db, oldVersion, newVersion) {
-                if (oldVersion === 0 && newVersion === 1) {
+        return openDB<ChatSchema>("openchat_db", 5, {
+            upgrade(db, _oldVersion, _newVersion) {
+                try {
+                    if (db.objectStoreNames.contains("chat_messages")) {
+                        db.deleteObjectStore("chat_messages");
+                    }
+                    if (db.objectStoreNames.contains("media_data")) {
+                        db.deleteObjectStore("media_data");
+                    }
                     db.createObjectStore("chat_messages");
-                }
-                if (oldVersion === 1 && newVersion === 2) {
                     db.createObjectStore("media_data");
+                } catch (err) {
+                    rollbar.error("Unable to upgrade indexDB", err);
                 }
             },
         });
