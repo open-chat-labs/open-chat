@@ -66,14 +66,17 @@ export async function trySubscribe(userId: UserId) : Promise<boolean> {
     // Check if the user has subscribed already
     let pushSubscription = await registration.pushManager.getSubscription();
     if (pushSubscription) {
-        return true;
-    }
-    
-    // Subscribe user to webpush notifications
-    pushSubscription = await subscribeUserToPush(registration);
-    if (pushSubscription == null) {
-        return false;
-    }
+        // Check if the subscription has already been pushed to the notifications canister
+        if (await notificationsService.subscriptionExists(userId, extract_p256dh_key(pushSubscription))) {
+            return true;
+        }
+    } else {
+        // Subscribe the user to webpush notifications
+        pushSubscription = await subscribeUserToPush(registration);
+        if (pushSubscription == null) {
+            return false;
+        }
+    }    
 
     // Add the subscription to the user record on the notifications canister
     try {
@@ -81,9 +84,6 @@ export async function trySubscribe(userId: UserId) : Promise<boolean> {
         return true;
     } catch (e) {
         console.log(e);
-        pushSubscription.unsubscribe().catch((e2) => {
-            console.log(e2);
-        });
         return false;
     }
 }
@@ -118,7 +118,6 @@ async function registerServiceWorker() : Promise<Option<ServiceWorkerRegistratio
 
     try {
         let registration = await navigator.serviceWorker.register(SW_PATH, { scope: "/webpush/" });
-        console.log(registration);
         return registration;
     } catch (e) {
         console.log(e);
@@ -146,9 +145,16 @@ async function subscribeUserToPush(registration: ServiceWorkerRegistration) : Pr
     };
 
     try {
-        return await registration.pushManager.subscribe(subscribeOptions);
+        let pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+        return pushSubscription;
     } catch (e) {
         console.log(e);
         return null;
     }
+}
+
+function extract_p256dh_key(subscription: PushSubscription) : string {
+    const json = subscription.toJSON();
+    const key = json.keys!["p256dh"];
+    return key;
 }
