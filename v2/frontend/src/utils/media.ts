@@ -5,6 +5,7 @@ const THUMBNAIL_DIMS = dimensions(30, 30);
 const RESIZE_IMAGE_TO = 800;
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
+const MAX_AUDIO_SIZE = 1024 * 1024 * 5;
 const MAX_FILE_SIZE = 1024 * 1024;
 
 type Dimensions = {
@@ -106,7 +107,8 @@ export function fillMessage(msg: Message): boolean {
     if (msg.content.kind === "media_content") {
         return (
             (msg.content.caption === undefined || msg.content.caption === "") &&
-            msg.repliesTo === undefined
+            msg.repliesTo === undefined &&
+            !/audio/.test(msg.content.mimeType)
         );
     }
     return false;
@@ -149,12 +151,16 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             const mimeType = file.type;
             const isImage = /^image/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
+            const isAudio = /^audio/.test(mimeType);
             const isFile = !(isImage || isVideo);
             let data = e.target.result as ArrayBuffer;
             let content: MessageContent;
 
             if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
                 reject("maxVideoSize");
+                return;
+            } else if (isAudio && data.byteLength > MAX_AUDIO_SIZE) {
+                reject("maxAudioSize");
                 return;
             } else if (isFile && data.byteLength > MAX_FILE_SIZE) {
                 reject("maxFileSize");
@@ -181,6 +187,15 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     height: extract.dimensions.height,
                     blobData: Promise.resolve(new Uint8Array(data)),
                     thumbnailData: extract.thumbnailUrl,
+                };
+            } else if (isAudio) {
+                content = {
+                    kind: "media_content",
+                    mimeType: mimeType,
+                    width: 0,
+                    height: 0,
+                    blobData: Promise.resolve(new Uint8Array(data)),
+                    thumbnailData: "",
                 };
             } else {
                 content = {

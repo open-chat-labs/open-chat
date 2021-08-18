@@ -10,6 +10,7 @@
     let landscape = content.height < content.width;
     let isImage = /^image/.test(content.mimeType);
     let isVideo = /^video/.test(content.mimeType);
+    let isAudio = /^audio/.test(content.mimeType);
     let blobUrl = content.blobData.then((data) =>
         data ? dataToBlobUrl(data, content.mimeType) : undefined
     );
@@ -32,6 +33,13 @@
                 <track kind="captions" />
                 {$_("noVideo")}
             </video>
+        {/if}
+        {#if isAudio}
+            <audio controls>
+                <source src={url} />
+                <track kind="captions" />
+                {$_("noAudio")}
+            </audio>
         {/if}
     {/if}
 {/await}
