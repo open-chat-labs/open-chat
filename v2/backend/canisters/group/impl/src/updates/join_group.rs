@@ -2,7 +2,7 @@ use crate::model::events::GroupChatEventInternal;
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::updates::join_group::{Response::*, *};
+use group_canister::join_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::ParticipantJoined;
 

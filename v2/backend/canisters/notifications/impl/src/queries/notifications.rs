@@ -1,6 +1,6 @@
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use notifications_canister::queries::notifications::{Response::*, *};
+use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
 use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
 

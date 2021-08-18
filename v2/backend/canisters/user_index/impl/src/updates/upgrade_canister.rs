@@ -5,7 +5,7 @@ use candid::Principal;
 use ic_cdk_macros::update;
 use shared::canisters;
 use types::{CanisterId, CanisterWasm, Version};
-use user_index_canister::updates::upgrade_canister::{Response::*, *};
+use user_index_canister::upgrade_canister::{Response::*, *};
 
 #[update]
 async fn upgrade_canister(_args: Args) -> Response {

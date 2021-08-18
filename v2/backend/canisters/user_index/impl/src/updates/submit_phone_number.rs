@@ -5,7 +5,7 @@ use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use std::str::FromStr;
 use types::ConfirmationCodeSms;
-use user_index_canister::updates::submit_phone_number::{Response::*, *};
+use user_index_canister::submit_phone_number::{Response::*, *};
 
 #[update]
 fn submit_phone_number(args: Args) -> Response {

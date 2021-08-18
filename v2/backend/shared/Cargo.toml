@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 candid = "0.7.4"
 getrandom = { version = "0.2.3", features = ["js"] }
-ic-cdk = "0.3.1"
+ic-cdk = { version = "0.3.1", default-features = false }
 log = "0.4.14"
 rand = "0.7.3"
 serde = "1.0.126"

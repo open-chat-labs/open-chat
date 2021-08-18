@@ -1,10 +1,10 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::events::{Events, GroupChatEventInternal};
+use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
 use shared::env::Environment;
 use std::cell::RefCell;
-use types::{CanisterId, GroupChatCreated, TimestampMillis, UserId, Version};
+use types::{CanisterId, Milliseconds, TimestampMillis, Updatable, UserId, Version};
 
 mod lifecycle;
 mod model;
@@ -32,45 +32,42 @@ impl RuntimeState {
 
 pub struct Data {
     pub is_public: bool,
-    pub name: String,
-    pub description: Option<String>,
+    pub name: Updatable<String>,
+    pub description: Updatable<String>,
     pub participants: Participants,
     pub events: Events,
     pub date_created: TimestampMillis,
+    pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
         is_public: bool,
         name: String,
+        description: String,
         creator_principal: Principal,
         creator_user_id: UserId,
         now: TimestampMillis,
+        mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
         wasm_version: Version,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let mut events = Events::default();
-        events.push_event(
-            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
-                name: name.clone(),
-                description: None,
-                created_by: creator_user_id,
-            }),
-            now,
-        );
+        let events = Events::new(name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,
-            name,
-            description: None,
+            name: Updatable::new(name, now),
+            description: Updatable::new(description, now),
             participants,
             events,
             date_created: now,
+            mark_active_duration,
             group_index_canister_id,
             notification_canister_ids: Vec::new(),
             wasm_version,

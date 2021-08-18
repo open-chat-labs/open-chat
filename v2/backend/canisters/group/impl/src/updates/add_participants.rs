@@ -2,11 +2,11 @@ use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
-use group_canister::updates::add_participants::{Response::*, *};
+use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
 use types::{ParticipantsAdded, UserId};
-use user_canister::updates::handle_add_to_group_requested;
+use user_canister::handle_add_to_group_requested;
 
 #[update]
 async fn add_participants(args: Args) -> Response {
@@ -96,7 +96,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             for user_id in args.user_ids.iter() {
                 if runtime_state.data.participants.is_blocked(user_id) {
                     users_blocked_from_group.push(*user_id);
-                } else if runtime_state.data.participants.get(user_id).is_none() {
+                } else if runtime_state.data.participants.get_by_user_id(user_id).is_none() {
                     users_to_add.push(*user_id);
                 } else {
                     users_already_in_group.push(*user_id);

@@ -1,9 +1,9 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::updates::create_group;
+use group_index_canister::create_group;
 use ic_cdk_macros::update;
 use log::error;
 use types::{CanisterId, GroupChatId};
-use user_canister::updates::create_group::{Response::*, *};
+use user_canister::create_group::{Response::*, *};
 
 #[update]
 async fn create_group(args: Args) -> Response {
@@ -52,6 +52,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
                 is_public: args.is_public,
                 creator_principal: runtime_state.env.caller(),
                 name: args.name,
+                description: args.description,
             };
             Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,

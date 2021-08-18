@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use notifications_canister::updates::remove_notifications::{Response::*, *};
+use notifications_canister::remove_notifications::{Response::*, *};
 
 #[update]
 fn remove_notifications(args: Args) -> Response {

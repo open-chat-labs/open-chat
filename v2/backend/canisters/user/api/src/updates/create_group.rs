@@ -2,13 +2,14 @@ use candid::CandidType;
 use serde::Deserialize;
 use types::GroupChatId;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
+    pub description: String,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     NameTaken,
@@ -17,7 +18,7 @@ pub enum Response {
     NotAuthorised,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
     pub group_chat_id: GroupChatId,
 }

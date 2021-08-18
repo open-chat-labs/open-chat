@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 pub struct MessageIndex(u32);
 
 impl MessageIndex {
+    pub fn one() -> MessageIndex {
+        MessageIndex(1)
+    }
+
     pub fn incr(&self) -> MessageIndex {
         MessageIndex(self.0 + 1)
     }

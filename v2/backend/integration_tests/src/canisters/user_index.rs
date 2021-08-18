@@ -1,91 +1,23 @@
-use crate::types::{CanisterId, CanisterWasm};
 use crate::utils::delay;
-use candid::{CandidType, Decode, Encode, Principal};
+use candid::{Decode, Encode, Principal};
 use ic_agent::Agent;
-use serde::Deserialize;
+use user_index_canister::*;
 
-generate_update_call!(submit_phone_number);
+// Queries
+generate_query_call!(current_user);
+generate_query_call!(metrics);
+generate_query_call!(search);
+generate_query_call!(sms_messages);
+generate_query_call!(user);
+generate_query_call!(users);
+
+// Updates
 generate_update_call!(confirm_phone_number);
 generate_update_call!(create_canister);
-
-pub mod init {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        // Only these principals can call update_wasm
-        pub service_principals: Vec<Principal>,
-
-        // Only these principals can call pending_sms_messages
-        pub sms_service_principals: Vec<Principal>,
-
-        // The wasm module for creating user canisters
-        pub user_canister_wasm: CanisterWasm,
-
-        pub group_index_canister_id: CanisterId,
-
-        pub notifications_canister_id: CanisterId,
-
-        // Accepts confirmation code 123456
-        pub test_mode: bool,
-    }
-}
-
-pub mod submit_phone_number {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        pub phone_number: UnvalidatedPhoneNumber,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct UnvalidatedPhoneNumber {
-        pub country_code: u16,
-        pub number: String,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Response {
-        Success,
-        AlreadyRegistered,
-        AlreadyRegisteredByOther,
-        InvalidPhoneNumber,
-    }
-}
-
-pub mod confirm_phone_number {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {
-        pub confirmation_code: String,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Response {
-        Success,
-        ConfirmationCodeIncorrect,
-        ConfirmationCodeExpired,
-        AlreadyClaimed,
-        UserNotFound,
-    }
-}
-
-pub mod create_canister {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Args {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub enum Response {
-        Success(CanisterId),
-        UserNotFound,
-        UserUnconfirmed,
-        UserAlreadyCreated,
-        CreationInProgress,
-        CyclesBalanceTooLow,
-        InternalError(String),
-    }
-}
+generate_update_call!(mark_as_online);
+generate_update_call!(remove_sms_messages);
+generate_update_call!(resend_code);
+generate_update_call!(set_username);
+generate_update_call!(submit_phone_number);
+generate_update_call!(update_wasm);
+generate_update_call!(upgrade_canister);

@@ -2,10 +2,10 @@ use candid::CandidType;
 use serde::Deserialize;
 use types::{CanisterCreationStatus, CanisterUpgradeStatus, UserId};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     UserNotFound,
     Unconfirmed(UnconfirmedResult),
@@ -14,29 +14,29 @@ pub enum Response {
     Created(CreatedResult),
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct PhoneNumber {
     pub country_code: u16,
     pub number: String,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct UnconfirmedResult {
     pub phone_number: PhoneNumber,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ConfirmedPendingUsernameResult {
     pub canister_creation_status: CanisterCreationStatus,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ConfirmedResult {
     pub username: String,
     pub canister_creation_status: CanisterCreationStatus,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct CreatedResult {
     pub user_id: UserId,
     pub username: String,

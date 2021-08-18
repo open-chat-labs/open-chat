@@ -3,7 +3,6 @@ use serde::Deserialize;
 use std::cmp::{max, min};
 use types::*;
 
-#[derive(Default)]
 pub struct Events {
     events: Vec<EventWrapper<DirectChatEventInternal>>,
     latest_message_event_index: EventIndex,
@@ -13,6 +12,7 @@ pub struct Events {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEventInternal {
     Message(MessageInternal),
+    DirectChatCreated(DirectChatCreated),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -33,6 +33,18 @@ pub struct PushMessageArgs {
 }
 
 impl Events {
+    pub fn new(now: TimestampMillis) -> Events {
+        let mut events = Events {
+            events: Vec::new(),
+            latest_message_event_index: EventIndex::default(),
+            latest_message_index: MessageIndex::default(),
+        };
+
+        events.push_event(DirectChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
+
+        events
+    }
+
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, DirectMessage) {
         let message_index = self.latest_message_index.incr();
         let message_internal = MessageInternal {
@@ -49,9 +61,10 @@ impl Events {
 
     pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.latest_event_index().incr();
-        let DirectChatEventInternal::Message(m) = &event;
-        self.latest_message_index = m.message_index;
-        self.latest_message_event_index = event_index;
+        if let DirectChatEventInternal::Message(m) = &event {
+            self.latest_message_index = m.message_index;
+            self.latest_message_event_index = event_index;
+        }
         self.events.push(EventWrapper {
             index: event_index,
             timestamp: now,
@@ -109,18 +122,23 @@ impl Events {
     }
 
     pub fn latest_message(&self) -> Option<EventWrapper<DirectMessage>> {
-        self.get_internal(self.latest_message_event_index).map(|e| {
-            let DirectChatEventInternal::Message(m) = &e.event;
-            EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                event: self.hydrate_message(m),
-            }
-        })
+        self.get_internal(self.latest_message_event_index)
+            .map(|e| {
+                if let DirectChatEventInternal::Message(m) = &e.event {
+                    Some(EventWrapper {
+                        index: e.index,
+                        timestamp: e.timestamp,
+                        event: self.hydrate_message(m),
+                    })
+                } else {
+                    None
+                }
+            })
+            .flatten()
     }
 
-    pub fn last(&self) -> Option<&EventWrapper<DirectChatEventInternal>> {
-        self.events.last()
+    pub fn last(&self) -> &EventWrapper<DirectChatEventInternal> {
+        self.events.last().unwrap()
     }
 
     pub fn latest_event_index(&self) -> EventIndex {
@@ -134,6 +152,7 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
             DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
+            DirectChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
         };
 
         EventWrapper {
@@ -160,14 +179,19 @@ impl Events {
                 event_index: reply_context.event_index,
             }))
         } else {
-            self.get_internal(reply_context.event_index).map(|e| {
-                let DirectChatEventInternal::Message(m) = &e.event;
-                DirectReplyContext::Standard(StandardReplyContext {
-                    event_index: e.index,
-                    sent_by_me: m.sent_by_me,
-                    content: m.content.clone(),
+            self.get_internal(reply_context.event_index)
+                .map(|e| {
+                    if let DirectChatEventInternal::Message(m) = &e.event {
+                        Some(DirectReplyContext::Standard(StandardReplyContext {
+                            event_index: e.index,
+                            sent_by_me: m.sent_by_me,
+                            content: m.content.clone(),
+                        }))
+                    } else {
+                        None
+                    }
                 })
-            })
+                .flatten()
         }
     }
 

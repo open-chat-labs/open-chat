@@ -1,7 +1,7 @@
 use candid::Principal;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{MessageIndex, ParticipantInternal, Role, TimestampMillis, UserId};
+use types::{MessageIndex, ParticipantInternal, Role, TimestampMillis, Updatable, UserId};
 
 #[derive(Default)]
 pub struct Participants {
@@ -16,8 +16,9 @@ impl Participants {
             user_id: creator_user_id,
             date_added: now,
             role: Role::Admin,
-            read_up_to: MessageIndex::default(),
+            read_up_to: Updatable::new(MessageIndex::default(), now),
             mute_notifications: false,
+            min_visible_message_id: MessageIndex::one(),
         };
 
         Participants {
@@ -43,8 +44,9 @@ impl Participants {
                         user_id,
                         date_added: now,
                         role: Role::Participant,
-                        read_up_to: latest_message_index,
+                        read_up_to: Updatable::new(latest_message_index, now),
                         mute_notifications: false,
+                        min_visible_message_id: MessageIndex::one(),
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
@@ -54,7 +56,20 @@ impl Participants {
         }
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&ParticipantInternal> {
+    pub fn iter(&self) -> impl Iterator<Item = &ParticipantInternal> {
+        self.by_principal.values()
+    }
+
+    pub fn get(&self, user_id_or_principal: Principal) -> Option<&ParticipantInternal> {
+        let principal = self
+            .user_id_to_principal_map
+            .get(&user_id_or_principal.into())
+            .unwrap_or(&user_id_or_principal);
+
+        self.by_principal.get(principal)
+    }
+
+    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&ParticipantInternal> {
         if let Some(p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal(p)
         } else {
@@ -62,7 +77,7 @@ impl Participants {
         }
     }
 
-    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
+    pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
         if let Some(&p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal_mut(&p)
         } else {

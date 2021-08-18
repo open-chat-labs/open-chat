@@ -30,22 +30,17 @@ export type BlockUserArgs = {};
 export type BlockUserResponse = { 'Success' : null };
 export type CanisterId = Principal;
 export type EventIndex = number;
-export interface EventWrapper {
-  'event' : GroupChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-}
 export interface EventsArgs {
   'to_index' : EventIndex,
   'from_index' : EventIndex,
 }
-export interface EventsByIndexArgs { 'events' : Array<EventWrapper> }
+export interface EventsByIndexArgs { 'events' : Array<GroupChatEventWrapper> }
 export type EventsByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-  'events' : Array<EventWrapper>,
+  'events' : Array<GroupChatEventWrapper>,
   'latest_event_index' : EventIndex,
 }
 export interface FileContent {
@@ -57,19 +52,6 @@ export interface FileContent {
 export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number }
 export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
-export type GetGroupArgs = {};
-export type GetGroupResponse = {
-    'Success' : {
-      'participants' : Array<UserId>,
-      'subject' : string,
-      'last_updated' : TimestampMillis,
-      'display_date' : TimestampMillis,
-      'latest_messages' : Array<Message>,
-      'min_visible_message_index' : MessageIndex,
-      'unread_by_me_message_id_ranges' : Array<Array<MessageIndex>>,
-      'unread_by_any_message_id_ranges' : Array<Array<MessageIndex>>,
-    }
-  };
 export type GroupChatEvent = {
     'GroupChatCreated' : {
       'name' : string,
@@ -78,7 +60,29 @@ export type GroupChatEvent = {
     }
   } |
   { 'Message' : Message };
+export interface GroupChatEventWrapper {
+  'event' : GroupChatEvent,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
+export interface GroupChatSummary {
+  'is_public' : boolean,
+  'participants' : Array<Participant>,
+  'name' : string,
+  'description' : string,
+  'latest_read_by_me' : MessageIndex,
+  'joined' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+  'min_visible_message_index' : MessageIndex,
+  'chat_id' : GroupId,
+  'latest_message' : [] | [GroupMessageEventWrapper],
+}
 export type GroupId = CanisterId;
+export interface GroupMessageEventWrapper {
+  'event' : Message,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export interface JoinGroupArgs { 'principal' : Principal }
 export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotPublic' : null } |
@@ -126,6 +130,11 @@ export interface MetricsResponse {
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
 }
+export interface Participant {
+  'role' : Role,
+  'user_id' : UserId,
+  'date_added' : TimestampMillis,
+}
 export interface PutChunkArgs {
   'blob_id' : bigint,
   'bytes' : Array<number>,
@@ -144,6 +153,8 @@ export interface ReplyContext {
   'message_index' : MessageIndex,
 }
 export interface ReplyContextArgs { 'message_id' : MessageId }
+export type Role = { 'Participant' : null } |
+  { 'Admin' : null };
 export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
@@ -180,6 +191,22 @@ export interface SetAvatarArgs { 'mime_type' : string, 'bytes' : Array<number> }
 export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'FileTooBig' : number } |
   { 'Success' : null };
+export type SummaryArgs = {};
+export type SummaryResponse = { 'Success' : GroupChatSummary } |
+  { 'NotInGroup' : null };
+export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
+export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |
+  { 'NotInGroup' : null };
+export interface SummaryUpdatesSuccess {
+  'participants_added_or_updated' : Array<Participant>,
+  'participants_removed' : Array<UserId>,
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'latest_read_by_me' : [] | [MessageIndex],
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : [] | [EventIndex],
+  'latest_message' : [] | [GroupMessageEventWrapper],
+}
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type UnblockUserArgs = {};
@@ -195,7 +222,6 @@ export interface _SERVICE {
       EventsByIndexResponse
     >,
   'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
-  'get_group' : (arg_0: GetGroupArgs) => Promise<GetGroupResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
@@ -211,5 +237,9 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'summary' : (arg_0: SummaryArgs) => Promise<SummaryResponse>,
+  'summary_updates' : (arg_0: SummaryUpdatesArgs) => Promise<
+      SummaryUpdatesResponse
+    >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
 }

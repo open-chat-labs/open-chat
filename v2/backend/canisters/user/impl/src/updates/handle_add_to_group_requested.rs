@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_canister::updates::handle_add_to_group_requested::{Response::*, *};
+use user_canister::handle_add_to_group_requested::{Response::*, *};
 
 #[update]
 fn handle_add_to_group_requested(args: Args) -> Response {

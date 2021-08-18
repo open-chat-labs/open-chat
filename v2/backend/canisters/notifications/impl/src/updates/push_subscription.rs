@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use notifications_canister::updates::push_subscription::{Response::*, *};
+use notifications_canister::push_subscription::{Response::*, *};
 
 #[update]
 fn push_subscription(args: Args) -> Response {

@@ -1,10 +1,10 @@
 use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use notifications_canister::updates::push_direct_message_notification;
+use notifications_canister::push_direct_message_notification;
 use shared::rand::get_random_item;
 use types::{CanisterId, DirectMessageNotification};
-use user_canister::updates::handle_message_received::{Response::*, *};
+use user_canister::handle_message_received::{Response::*, *};
 
 #[update]
 fn handle_message_received(args: Args) -> Response {

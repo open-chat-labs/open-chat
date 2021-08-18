@@ -1,7 +1,7 @@
 use crate::HashSet;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use notifications_canister::updates::remove_subscriptions::{Response::*, *};
+use notifications_canister::remove_subscriptions::{Response::*, *};
 use std::iter::FromIterator;
 
 #[update]

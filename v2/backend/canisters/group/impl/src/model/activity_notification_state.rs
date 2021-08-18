@@ -1,6 +1,6 @@
-use types::TimestampMillis;
+use types::{Milliseconds, TimestampMillis};
 
-const ACTIVITY_NOTIFICATION_INTERVAL_MILLIS: u64 = 5 * 60 * 1000; // 5 minutes
+const ONE_MINUTE: Milliseconds = 60 * 1000;
 
 pub struct ActivityNotificationState {
     /// When we last notified the group_index canister of activity in this group
@@ -16,10 +16,9 @@ impl ActivityNotificationState {
         }
     }
 
-    pub fn start_if_required(&mut self, now: TimestampMillis) -> bool {
-        if self.notification_in_progress
-            || self.last_notification_date > now.saturating_sub(ACTIVITY_NOTIFICATION_INTERVAL_MILLIS)
-        {
+    pub fn start_if_required(&mut self, now: TimestampMillis, mark_active_duration: Milliseconds) -> bool {
+        let interval = mark_active_duration - ONE_MINUTE;
+        if self.notification_in_progress || self.last_notification_date > now.saturating_sub(interval) {
             false
         } else {
             self.notification_in_progress = true;

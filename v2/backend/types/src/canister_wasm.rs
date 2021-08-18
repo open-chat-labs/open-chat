@@ -2,7 +2,7 @@ use crate::Version;
 use candid::CandidType;
 use serde::Deserialize;
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct CanisterWasm {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,

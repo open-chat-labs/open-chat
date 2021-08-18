@@ -7,8 +7,8 @@ use shared::canisters;
 use shared::canisters::create::CreateCanisterError;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
 use types::{CanisterCreationStatus, CanisterId, CanisterWasm, Version};
-use user_canister::lifecycle::init::Args as InitUserCanisterArgs;
-use user_index_canister::updates::create_canister::{Response::*, *};
+use user_canister::init::Args as InitUserCanisterArgs;
+use user_index_canister::create_canister::{Response::*, *};
 
 #[update]
 async fn create_canister(_args: Args) -> Response {

@@ -1,7 +1,9 @@
 use crate::canisters;
-use crate::setup::{create_and_install_service_canisters, register_user};
+use crate::setup::{create_and_install_service_canisters, create_group, register_user};
 use crate::utils::*;
+use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
+use types::{ChatSummary, GroupChatId, UserId};
 
 pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(create_group_test_impl(handle, ctx));
@@ -19,28 +21,53 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let user3_id = register_user(url.clone(), TestIdentity::User3, canister_ids.user_index).await;
 
     let user1_identity = build_identity(TestIdentity::User1);
+    let user1_agent = build_ic_agent(url.clone(), user1_identity).await;
+    let user2_identity = build_identity(TestIdentity::User2);
+    let user2_agent = build_ic_agent(url.clone(), user2_identity).await;
+    let user3_identity = build_identity(TestIdentity::User3);
+    let user3_agent = build_ic_agent(url.clone(), user3_identity).await;
 
-    let agent = build_ic_agent(url, user1_identity).await;
+    let name = "TEST_NAME".to_string();
+    let description = "TEST_DESCRIPTION".to_string();
 
-    let create_group_args = canisters::user::create_group::Args {
+    let args = user_canister::create_group::Args {
         is_public: false,
-        name: "TEST_GROUP".to_string(),
+        name: name.clone(),
+        description: description.clone(),
     };
-    let create_group_response = canisters::user::create_group(&agent, &user1_id, &create_group_args).await;
 
-    if let canisters::user::create_group::Response::Success(r) = create_group_response {
-        let add_participants_args = canisters::group::add_participants::Args {
-            user_ids: vec![user2_id.into(), user3_id.into()],
-        };
-        let add_participants_response =
-            canisters::group::add_participants(&agent, &r.group_chat_id.into(), &add_participants_args).await;
-        if !matches!(
-            add_participants_response,
-            canisters::group::add_participants::Response::Success
-        ) {
-            panic!("Add participants returned an error: {:?}", add_participants_response);
+    let group_chat_id = create_group(&user1_agent, user1_id, args, vec![user2_id, user3_id]).await;
+
+    match canisters::group::summary(&user1_agent, &group_chat_id.into(), &group_canister::summary::Args {}).await {
+        group_canister::summary::Response::Success(r) => {
+            assert_eq!(r.summary.chat_id, group_chat_id);
+            assert_eq!(r.summary.name, name);
+            assert_eq!(r.summary.description, description);
+            assert!(!r.summary.is_public);
+            assert_eq!(r.summary.participants.len(), 3);
         }
-    } else {
-        panic!("Create group returned an error: {:?}", create_group_response);
+        response => panic!("Summary returned an error: {:?}", response),
     }
+
+    let futures = [
+        ensure_user_canister_links_to_group(&user1_agent, user1_id, group_chat_id),
+        ensure_user_canister_links_to_group(&user2_agent, user2_id, group_chat_id),
+        ensure_user_canister_links_to_group(&user3_agent, user3_id, group_chat_id),
+    ];
+    futures::future::join_all(futures).await;
+}
+
+async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, group_chat_id: GroupChatId) {
+    let args = user_canister::updates::Args { updates_since: None };
+    match canisters::user::updates(agent, &user_id.into(), &args).await {
+        user_canister::updates::Response::Success(r) => {
+            assert_eq!(r.new_chats.len(), 1);
+            if let ChatSummary::Group(g) = r.new_chats.first().unwrap() {
+                assert_eq!(g.chat_id, group_chat_id);
+            } else {
+                panic!("Group chat not found");
+            }
+        }
+        response => panic!("Updates returned an error: {:?}", response),
+    };
 }

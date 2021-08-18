@@ -1,7 +1,7 @@
 use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
 use shared::env::canister::CanisterEnv;
-use user_index_canister::lifecycle::init::Args;
+use user_index_canister::init::Args;
 
 #[init]
 fn init(args: Args) {

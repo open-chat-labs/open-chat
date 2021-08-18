@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 use types::{CanisterId, CanisterWasm};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     // Only these principals can call update_wasm
     pub service_principals: Vec<Principal>,

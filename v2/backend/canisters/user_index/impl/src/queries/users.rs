@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use user_index_canister::queries::users::{Response::*, *};
+use user_index_canister::users::{Response::*, *};
 
 #[query]
 fn users(args: Args) -> Response {

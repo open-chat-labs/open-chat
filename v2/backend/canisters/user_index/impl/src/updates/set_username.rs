@@ -2,7 +2,7 @@ use crate::model::user::User;
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::updates::set_username::{Response::*, *};
+use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 2;

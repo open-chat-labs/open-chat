@@ -1,10 +1,9 @@
-use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
-use candid::{CandidType, Principal};
-use group_index_canister::updates::create_group::{Response::*, *};
+use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
+use group_index_canister::create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use shared::canisters;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
-use types::{CanisterWasm, GroupChatId, UserId, Version};
+use types::{CanisterWasm, GroupChatId, Version};
 
 #[update]
 async fn create_group(args: Args) -> Response {
@@ -47,7 +46,7 @@ async fn create_group(args: Args) -> Response {
 struct CreateCanisterArgs {
     canister_wasm: CanisterWasm,
     cycles_to_use: u64,
-    init_canister_args: InitGroupCanisterArgs,
+    init_canister_args: group_canister::init::Args,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
@@ -64,11 +63,13 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
         Err(NameTaken)
     } else {
         let canister_wasm = runtime_state.data.group_canister_wasm.clone();
-        let init_canister_args = InitGroupCanisterArgs {
+        let init_canister_args = group_canister::init::Args {
             is_public: args.is_public,
             name: args.name.clone(),
+            description: args.description.clone(),
             created_by_principal: args.creator_principal,
             created_by_user_id: user_id,
+            mark_active_duration: MARK_ACTIVE_DURATION,
             wasm_version: canister_wasm.version.clone(),
         };
 
@@ -99,13 +100,4 @@ fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
     if is_public {
         runtime_state.data.public_groups.handle_group_creation_failed(name);
     }
-}
-
-#[derive(CandidType)]
-struct InitGroupCanisterArgs {
-    is_public: bool,
-    name: String,
-    created_by_principal: Principal,
-    created_by_user_id: UserId,
-    wasm_version: Version,
 }

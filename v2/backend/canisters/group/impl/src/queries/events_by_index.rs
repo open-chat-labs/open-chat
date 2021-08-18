@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::queries::events_by_index::{Response::*, *};
+use group_canister::events_by_index::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]
@@ -16,6 +16,6 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             latest_event_index,
         })
     } else {
-        NotAuthorised
+        NotInGroup
     }
 }

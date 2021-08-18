@@ -3,7 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use phonenumber::Mode;
 use types::CanisterUpgradeStatus;
-use user_index_canister::queries::current_user::{Response::*, *};
+use user_index_canister::current_user::{Response::*, *};
 
 #[query]
 fn current_user(_args: Args) -> Response {

@@ -30,8 +30,8 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
 
     register_user(url.clone(), TestIdentity::User1, canister_ids.user_index).await;
 
-    let submit_phone_number_args = user_index::submit_phone_number::Args {
-        phone_number: user_index::submit_phone_number::UnvalidatedPhoneNumber {
+    let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
+        phone_number: user_index_canister::submit_phone_number::UnvalidatedPhoneNumber {
             country_code: 44,
             number: "07887123457".to_string(),
         },
@@ -44,6 +44,6 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
 
     assert!(matches!(
         submit_phone_number_response,
-        user_index::submit_phone_number::Response::AlreadyRegistered
+        user_index_canister::submit_phone_number::Response::AlreadyRegistered
     ));
 }

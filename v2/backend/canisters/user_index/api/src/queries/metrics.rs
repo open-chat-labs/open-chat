@@ -2,10 +2,10 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 use types::TimestampMillis;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Response {
     pub unconfirmed_user_count: u64,
     pub confirmed_user_count: u64,

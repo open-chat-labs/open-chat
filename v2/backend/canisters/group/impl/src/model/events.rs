@@ -3,7 +3,6 @@ use serde::Deserialize;
 use std::cmp::{max, min};
 use types::*;
 
-#[derive(Default)]
 pub struct Events {
     events: Vec<EventWrapper<GroupChatEventInternal>>,
     latest_message_event_index: EventIndex,
@@ -42,6 +41,25 @@ pub struct PushMessageArgs {
 }
 
 impl Events {
+    pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
+        let mut events = Events {
+            events: Vec::new(),
+            latest_message_event_index: EventIndex::default(),
+            latest_message_index: MessageIndex::default(),
+        };
+
+        events.push_event(
+            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
+                name,
+                description,
+                created_by,
+            }),
+            now,
+        );
+
+        events
+    }
+
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, GroupMessage) {
         let message_index = self.latest_message_index.incr();
         let message_internal = MessageInternal {
@@ -134,8 +152,8 @@ impl Events {
             .flatten()
     }
 
-    pub fn last(&self) -> Option<&EventWrapper<GroupChatEventInternal>> {
-        self.events.last()
+    pub fn last(&self) -> &EventWrapper<GroupChatEventInternal> {
+        self.events.last().unwrap()
     }
 
     pub fn latest_event_index(&self) -> EventIndex {
@@ -144,6 +162,20 @@ impl Events {
 
     pub fn latest_message_index(&self) -> MessageIndex {
         self.latest_message_index
+    }
+
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &EventWrapper<GroupChatEventInternal>> {
+        self.events.iter()
+    }
+
+    pub fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
+        GroupMessage {
+            message_index: message.message_index,
+            message_id: message.message_id,
+            sender: message.sender,
+            content: message.content.clone(),
+            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
+        }
     }
 
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {
@@ -164,16 +196,6 @@ impl Events {
             index: event.index,
             timestamp: event.timestamp,
             event: event_data,
-        }
-    }
-
-    fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
-        GroupMessage {
-            message_index: message.message_index,
-            message_id: message.message_id,
-            sender: message.sender,
-            content: message.content.clone(),
-            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
         }
     }
 
