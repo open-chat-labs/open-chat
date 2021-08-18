@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use notifications_canister::queries::subscription_exists::{Response::*, *};
+use notifications_canister::subscription_exists::{Response::*, *};
 
 #[query]
 fn subscription_exists(args: Args) -> Response {
