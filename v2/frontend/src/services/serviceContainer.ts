@@ -28,6 +28,7 @@ import type { IGroupClient } from "./group/group.client.interface";
 // import { GroupClient } from "./group/group.client";
 // import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 // import { Principal } from "@dfinity/principal";
+// import { DataClient } from "./data/data.client";
 import { GroupClientMock } from "./group/group.client.mock";
 import { CachingUserClient } from "./user/user.caching.client";
 import { CachingGroupClient } from "./group/group.caching.client";
@@ -35,10 +36,7 @@ import type { IDBPDatabase } from "idb";
 import { ChatSchema, openMessageCache } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
-import { UserClient } from "./user/user.client";
-import { Principal } from "@dfinity/principal";
 import { CachingDataClient } from "./data/data.caching.client";
-import { DataClient } from "./data/data.client";
 import type { IDataClient } from "./data/data.client.interface";
 import { DataClientMock } from "./data/data.client.mock";
 

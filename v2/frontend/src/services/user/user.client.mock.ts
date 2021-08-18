@@ -12,7 +12,6 @@ import type {
     EventWrapper,
     CandidateGroupChat,
     CreateGroupResponse,
-    BlobReference,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -265,9 +264,9 @@ export class UserClientMock implements IUserClient {
     }
 
     async getData(
-        blobId: bigint,
-        totalBytes?: number,
-        chunkSize?: number
+        _blobId: bigint,
+        _totalBytes?: number,
+        _chunkSize?: number
     ): Promise<Uint8Array | undefined> {
         return undefined;
     }
