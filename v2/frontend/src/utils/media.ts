@@ -182,8 +182,6 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     blobData: Promise.resolve(new Uint8Array(data)),
                     thumbnailData: extract.thumbnailUrl,
                 };
-
-                console.log(content.thumbnailData);
             } else {
                 content = {
                     kind: "file_content",
