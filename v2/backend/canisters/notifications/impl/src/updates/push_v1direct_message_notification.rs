@@ -1,6 +1,6 @@
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use notifications_canister::updates::push_v1direct_message_notification::{Response::*, *};
+use notifications_canister::push_v1direct_message_notification::{Response::*, *};
 use types::Notification;
 
 #[update]

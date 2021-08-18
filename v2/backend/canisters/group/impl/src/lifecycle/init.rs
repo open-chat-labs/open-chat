@@ -1,5 +1,5 @@
 use crate::{Data, RuntimeState, RUNTIME_STATE};
-use group_canister::lifecycle::init::Args;
+use group_canister::init::Args;
 use ic_cdk_macros::init;
 use shared::env::canister::CanisterEnv;
 use shared::env::Environment;

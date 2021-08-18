@@ -4,8 +4,7 @@ use garcon::ThrottleWaiter;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
-use notifications_canister::queries::notifications;
-use notifications_canister::updates::remove_notifications;
+use notifications_canister::{notifications, remove_notifications};
 use std::time::Duration;
 use types::CanisterId;
 
@@ -58,7 +57,7 @@ impl IcAgent {
     }
 
     pub async fn remove_notifications(&self, canister_id: CanisterId, up_to_notification_index: u64) -> Result<(), Error> {
-        let args = notifications_canister::updates::remove_notifications::Args {
+        let args = notifications_canister::remove_notifications::Args {
             up_to_notification_index,
         };
 

@@ -1,9 +1,9 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
-use group_canister::updates::join_group;
+use group_canister::join_group;
 use ic_cdk_macros::update;
 use types::GroupChatId;
-use user_canister::updates::join_group::{Response::*, *};
+use user_canister::join_group::{Response::*, *};
 
 #[update]
 async fn join_group(args: Args) -> Response {

@@ -7,7 +7,7 @@ use types::{
     CanisterId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatId, GroupChatSummary,
     GroupChatSummaryUpdates, TimestampMillis,
 };
-use user_canister::queries::updates::{Response::*, *};
+use user_canister::updates::{Response::*, *};
 
 // If the last sync was longer than a configurable time ago, get all the group chat summaries.
 // This is because we call into the group index canister to see which groups are active and if the
@@ -96,7 +96,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<GroupChatId>) -> Vec<GroupChatSu
     }
 
     let count = chat_ids.len();
-    let args = group_canister::queries::summary::Args {};
+    let args = group_canister::summary::Args {};
     let futures: Vec<_> = chat_ids
         .into_iter()
         .map(|g| group_canister_client::summary(g.into(), &args))
@@ -109,7 +109,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<GroupChatId>) -> Vec<GroupChatSu
     for response in responses.into_iter() {
         match response {
             Ok(result) => {
-                if let group_canister::queries::summary::Response::Success(r) = result {
+                if let group_canister::summary::Response::Success(r) = result {
                     summaries.push(r.summary);
                 };
             }
@@ -139,11 +139,11 @@ async fn get_group_chat_summary_updates(
             return Vec::new();
         }
 
-        let args = group_index_canister::queries::active_groups::Args {
+        let args = group_index_canister::active_groups::Args {
             group_ids: group_chats.iter().map(|g| g.0).collect(),
         };
         let active_groups = match group_index_canister_client::active_groups(group_index_canister_id, &args).await {
-            Ok(group_index_canister::queries::active_groups::Response::Success(r)) => r.active_groups,
+            Ok(group_index_canister::active_groups::Response::Success(r)) => r.active_groups,
             Err(error) => {
                 error!("Failed to get active groups. {:?}", error);
                 Vec::new()
@@ -161,8 +161,8 @@ async fn get_group_chat_summary_updates(
 
     async fn get_summary_updates(
         canister_id: CanisterId,
-        args: group_canister::queries::summary_updates::Args,
-    ) -> CallResult<group_canister::queries::summary_updates::Response> {
+        args: group_canister::summary_updates::Args,
+    ) -> CallResult<group_canister::summary_updates::Response> {
         group_canister_client::summary_updates(canister_id, &args).await
     }
 
@@ -170,7 +170,7 @@ async fn get_group_chat_summary_updates(
     let futures: Vec<_> = group_chats
         .into_iter()
         .map(|(g, t)| {
-            let args = group_canister::queries::summary_updates::Args { updates_since: t };
+            let args = group_canister::summary_updates::Args { updates_since: t };
             get_summary_updates(g.into(), args)
         })
         .collect();
@@ -182,7 +182,7 @@ async fn get_group_chat_summary_updates(
     for response in responses.into_iter() {
         match response {
             Ok(result) => {
-                if let group_canister::queries::summary_updates::Response::Success(r) = result {
+                if let group_canister::summary_updates::Response::Success(r) = result {
                     summary_updates.push(r.updates);
                 };
             }

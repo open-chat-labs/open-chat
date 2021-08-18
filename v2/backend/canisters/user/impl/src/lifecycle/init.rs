@@ -2,7 +2,7 @@ use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
 use shared::env::canister::CanisterEnv;
 use shared::env::Environment;
-use user_canister::lifecycle::init::Args;
+use user_canister::init::Args;
 
 #[init]
 fn init(args: Args) {

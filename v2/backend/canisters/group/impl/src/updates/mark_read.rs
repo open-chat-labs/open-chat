@@ -1,6 +1,6 @@
 use crate::updates::mark_read::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::updates::mark_read::*;
+use group_canister::mark_read::*;
 use ic_cdk_macros::update;
 use std::cmp::min;
 

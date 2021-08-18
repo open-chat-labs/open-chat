@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use user_index_canister::queries::sms_messages::{Response::*, *};
+use user_index_canister::sms_messages::{Response::*, *};
 
 const MAX_SMS_MESSAGES_PER_BATCH: u32 = 100;
 

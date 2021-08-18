@@ -2,7 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use std::cmp::min;
 use types::DirectChatId;
-use user_canister::updates::handle_mark_read::{Response::*, *};
+use user_canister::handle_mark_read::{Response::*, *};
 
 #[update]
 fn handle_mark_read(args: Args) -> Response {

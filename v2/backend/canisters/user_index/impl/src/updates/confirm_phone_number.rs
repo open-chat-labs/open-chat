@@ -3,7 +3,7 @@ use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use phonenumber::PhoneNumber;
 use types::CanisterCreationStatus;
-use user_index_canister::updates::confirm_phone_number::{Response::*, *};
+use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
 fn confirm_phone_number(args: Args) -> Response {

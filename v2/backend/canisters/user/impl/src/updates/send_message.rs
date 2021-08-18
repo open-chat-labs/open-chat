@@ -2,8 +2,8 @@ use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use types::CanisterId;
-use user_canister::updates::handle_message_received;
-use user_canister::updates::send_message::{Response::*, *};
+use user_canister::handle_message_received;
+use user_canister::send_message::{Response::*, *};
 
 #[update]
 fn send_message(args: Args) -> Response {

@@ -1,6 +1,6 @@
 use crate::model::events::GroupChatEventInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::queries::summary_updates::{Response::*, *};
+use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;

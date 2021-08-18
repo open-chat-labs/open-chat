@@ -1,8 +1,7 @@
 use crate::utils::delay;
 use candid::{Decode, Encode, Principal};
 use ic_agent::Agent;
-use user_index_canister::queries::*;
-use user_index_canister::updates::*;
+use user_index_canister::*;
 
 // Queries
 generate_query_call!(current_user);

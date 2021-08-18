@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::queries::active_groups::{Response::*, *};
+use group_index_canister::active_groups::{Response::*, *};
 use ic_cdk_macros::query;
 
 #[query]

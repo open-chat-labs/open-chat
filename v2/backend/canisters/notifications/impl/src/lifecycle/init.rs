@@ -1,6 +1,6 @@
 use crate::{Data, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::init;
-use notifications_canister::lifecycle::init::Args;
+use notifications_canister::init::Args;
 use shared::env::canister::CanisterEnv;
 
 #[init]

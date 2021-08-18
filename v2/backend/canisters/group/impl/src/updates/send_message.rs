@@ -1,9 +1,9 @@
 use crate::model::events::PushMessageArgs;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::updates::send_message::{Response::*, *};
+use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
-use notifications_canister::updates::push_group_message_notification;
+use notifications_canister::push_group_message_notification;
 use shared::rand::get_random_item;
 use types::{CanisterId, GroupMessageNotification};
 

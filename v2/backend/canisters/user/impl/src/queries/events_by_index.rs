@@ -1,7 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use types::DirectChatId;
-use user_canister::queries::events_by_index::{Response::*, *};
+use user_canister::events_by_index::{Response::*, *};
 
 #[query]
 fn events_by_index(args: Args) -> Response {

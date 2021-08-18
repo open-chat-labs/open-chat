@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::queries::summary::{Response::*, *};
+use group_canister::summary::{Response::*, *};
 use ic_cdk_macros::query;
 use types::GroupChatSummary;
 

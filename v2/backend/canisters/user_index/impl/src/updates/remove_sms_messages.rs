@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::updates::remove_sms_messages::{Response::*, *};
+use user_index_canister::remove_sms_messages::{Response::*, *};
 
 #[update]
 fn remove_sms_messages(args: Args) -> Response {

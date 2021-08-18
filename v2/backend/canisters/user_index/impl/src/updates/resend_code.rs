@@ -2,7 +2,7 @@ use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use types::ConfirmationCodeSms;
-use user_index_canister::updates::resend_code::{Response::*, *};
+use user_index_canister::resend_code::{Response::*, *};
 
 #[update]
 fn resend_code(_: Args) -> Response {

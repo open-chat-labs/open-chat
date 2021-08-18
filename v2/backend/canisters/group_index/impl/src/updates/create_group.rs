@@ -1,5 +1,5 @@
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
-use group_index_canister::updates::create_group::{Response::*, *};
+use group_index_canister::create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use shared::canisters;
 use shared::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -46,7 +46,7 @@ async fn create_group(args: Args) -> Response {
 struct CreateCanisterArgs {
     canister_wasm: CanisterWasm,
     cycles_to_use: u64,
-    init_canister_args: group_canister::lifecycle::init::Args,
+    init_canister_args: group_canister::init::Args,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
@@ -63,7 +63,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
         Err(NameTaken)
     } else {
         let canister_wasm = runtime_state.data.group_canister_wasm.clone();
-        let init_canister_args = group_canister::lifecycle::init::Args {
+        let init_canister_args = group_canister::init::Args {
             is_public: args.is_public,
             name: args.name.clone(),
             description: args.description.clone(),

@@ -1,8 +1,7 @@
 use crate::utils::delay;
 use candid::{Decode, Encode, Principal};
 use ic_agent::Agent;
-use notifications_canister::queries::*;
-use notifications_canister::updates::*;
+use notifications_canister::*;
 
 // Queries
 generate_query_call!(notifications);

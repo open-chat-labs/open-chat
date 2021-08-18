@@ -2,8 +2,7 @@ use ic_cdk::api::call::CallResult;
 use log::error;
 use shared::generate_c2c_call;
 use types::CanisterId;
-use user_index_canister::queries::*;
-use user_index_canister::updates::*;
+use user_index_canister::*;
 
 // Queries
 generate_c2c_call!(current_user);

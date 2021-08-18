@@ -20,7 +20,7 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
 
     let user_index_canister_wasm = get_canister_wasm(CanisterWasmName::UserIndex);
     let user_canister_wasm = get_canister_wasm(CanisterWasmName::User);
-    let user_index_init_args = user_index_canister::lifecycle::init::Args {
+    let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
         sms_service_principals: Vec::new(),
         user_canister_wasm,
@@ -38,7 +38,7 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
 
     let group_index_canister_wasm = get_canister_wasm(CanisterWasmName::GroupIndex);
     let group_canister_wasm = get_canister_wasm(CanisterWasmName::Group);
-    let group_index_init_args = group_index_canister::lifecycle::init::Args {
+    let group_index_init_args = group_index_canister::init::Args {
         group_canister_wasm,
         notifications_canister_id,
     };
@@ -51,7 +51,7 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     .await;
 
     let notifications_canister_wasm = get_canister_wasm(CanisterWasmName::Notifications);
-    let notifications_init_args = notifications_canister::lifecycle::init::Args {
+    let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
     };
     install_wasm(
@@ -80,8 +80,8 @@ pub async fn register_user(url: String, user_identity: TestIdentity, user_index_
     let identity = build_identity(user_identity);
     let agent = build_ic_agent(url, identity).await;
 
-    let submit_phone_number_args = user_index_canister::updates::submit_phone_number::Args {
-        phone_number: user_index_canister::updates::submit_phone_number::UnvalidatedPhoneNumber {
+    let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
+        phone_number: user_index_canister::submit_phone_number::UnvalidatedPhoneNumber {
             country_code: 44,
             number: format!("0711100000{}", phone_number_suffix),
         },
@@ -92,10 +92,10 @@ pub async fn register_user(url: String, user_identity: TestIdentity, user_index_
 
     assert!(matches!(
         submit_phone_number_response,
-        user_index_canister::updates::submit_phone_number::Response::Success
+        user_index_canister::submit_phone_number::Response::Success
     ));
 
-    let confirm_phone_number_args = user_index_canister::updates::confirm_phone_number::Args {
+    let confirm_phone_number_args = user_index_canister::confirm_phone_number::Args {
         confirmation_code: "123456".to_string(),
     };
 
@@ -104,15 +104,15 @@ pub async fn register_user(url: String, user_identity: TestIdentity, user_index_
 
     assert!(matches!(
         confirm_phone_number_response,
-        user_index_canister::updates::confirm_phone_number::Response::Success
+        user_index_canister::confirm_phone_number::Response::Success
     ));
 
-    let create_canister_args = user_index_canister::updates::create_canister::Args {};
+    let create_canister_args = user_index_canister::create_canister::Args {};
 
     let create_canister_response =
         canisters::user_index::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
 
-    if let user_index_canister::updates::create_canister::Response::Success(user_canister_id) = create_canister_response {
+    if let user_index_canister::create_canister::Response::Success(user_canister_id) = create_canister_response {
         user_canister_id
     } else {
         panic!("{:?}", create_canister_response);

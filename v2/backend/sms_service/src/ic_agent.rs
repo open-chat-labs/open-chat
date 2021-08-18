@@ -6,8 +6,7 @@ use ic_agent::{Agent, Identity};
 use lambda_runtime::Error;
 use std::time::Duration;
 use types::CanisterId;
-use user_index_canister::queries::sms_messages;
-use user_index_canister::updates::remove_sms_messages;
+use user_index_canister::{remove_sms_messages, sms_messages};
 
 const IC_URL: &str = "https://ic0.app";
 

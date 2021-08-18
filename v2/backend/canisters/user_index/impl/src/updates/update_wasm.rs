@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use user_index_canister::updates::update_wasm::{Response::*, *};
+use user_index_canister::update_wasm::{Response::*, *};
 
 #[update]
 fn update_wasm(args: Args) -> Response {

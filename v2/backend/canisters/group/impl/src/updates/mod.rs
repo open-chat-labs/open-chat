@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::updates::notify_activity;
+use group_index_canister::notify_activity;
 use types::CanisterId;
 
 mod add_participants;
