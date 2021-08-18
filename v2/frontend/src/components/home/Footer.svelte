@@ -22,8 +22,8 @@
         machine.send({ type: "ATTACH_FILE", data: ev.detail });
     }
 
-    function messageContentFromDataTransferItemList(items: DataTransferItemList) {
-        const file = [...items][0]?.getAsFile();
+    function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
+        const file = items[0]?.getAsFile();
         if (!file) return;
 
         messageContentFromFile(file)
@@ -33,14 +33,16 @@
 
     function onDrop(e: CustomEvent<DragEvent>) {
         if (e.detail.dataTransfer) {
-            messageContentFromDataTransferItemList(e.detail.dataTransfer.items);
+            messageContentFromDataTransferItemList([...e.detail.dataTransfer.items]);
             e.detail.preventDefault();
         }
     }
 
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
-            messageContentFromDataTransferItemList(e.clipboardData.items);
+            messageContentFromDataTransferItemList(
+                [...e.clipboardData.items].filter((item) => /image/.test(item.type))
+            );
             e.preventDefault();
         }
     }
