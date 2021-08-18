@@ -2,7 +2,7 @@ use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use shared::env::Environment;
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm};
+use types::{CanisterId, CanisterWasm, Milliseconds};
 
 mod lifecycle;
 mod model;
@@ -11,6 +11,7 @@ mod updates;
 
 pub const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
 pub const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
+pub const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();

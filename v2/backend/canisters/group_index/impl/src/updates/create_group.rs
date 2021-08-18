@@ -1,4 +1,4 @@
-use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
+use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use group_index_canister::create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use shared::canisters;
@@ -69,6 +69,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
             description: args.description.clone(),
             created_by_principal: args.creator_principal,
             created_by_user_id: user_id,
+            mark_active_duration: MARK_ACTIVE_DURATION,
             wasm_version: canister_wasm.version.clone(),
         };
 

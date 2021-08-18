@@ -19,6 +19,7 @@ fn init(args: Args) {
             args.created_by_principal,
             args.created_by_user_id,
             env.now(),
+            args.mark_active_duration,
             group_index_canister_id,
             args.wasm_version,
         );

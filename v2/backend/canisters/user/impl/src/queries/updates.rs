@@ -5,15 +5,9 @@ use log::error;
 use std::collections::{HashMap, HashSet};
 use types::{
     CanisterId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatId, GroupChatSummary,
-    GroupChatSummaryUpdates, TimestampMillis,
+    GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
 };
 use user_canister::updates::{Response::*, *};
-
-// If the last sync was longer than a configurable time ago, get all the group chat summary updates.
-// This is because we call into the group index canister to see which groups are active and if the
-// last sync was long enough ago there may be missed updates from groups which are now marked as
-// inactive.
-const GET_ALL_GROUP_CHATS_INTERVAL_MS: u64 = 5 * 60 * 1000;
 
 #[query]
 async fn updates(args: Args) -> Response {
@@ -23,35 +17,31 @@ async fn updates(args: Args) -> Response {
     };
 
     let summaries_future = get_group_chat_summaries(prepare_result.new_group_chats);
-    let updated_summaries_future = get_group_chat_summary_updates(
+    let summary_updates_future = get_group_chat_summary_updates(
         prepare_result.group_index_canister_id,
-        prepare_result.check_active_groups_only,
+        prepare_result.duration_since_last_sync,
         prepare_result.group_chats_to_check_for_updates,
     );
 
-    let (summaries, updated_summaries) = futures::future::join(summaries_future, updated_summaries_future).await;
+    let (summaries, summary_updates) = futures::future::join(summaries_future, summary_updates_future).await;
 
-    let result = RUNTIME_STATE.with(|state| finalize(args, summaries, updated_summaries, state.borrow().as_ref().unwrap()));
+    let result = RUNTIME_STATE.with(|state| finalize(args, summaries, summary_updates, state.borrow().as_ref().unwrap()));
 
     Success(result)
 }
 
 struct PrepareResult {
     group_index_canister_id: CanisterId,
-    check_active_groups_only: bool,
+    duration_since_last_sync: Milliseconds,
     group_chats_to_check_for_updates: Vec<(GroupChatId, TimestampMillis)>,
     new_group_chats: Vec<GroupChatId>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     if runtime_state.is_caller_owner() {
+        let now = runtime_state.env.now();
         if let Some(updates_since) = &args.updates_since {
-            let now = runtime_state.env.now();
-            let time_since_last_sync = now.saturating_sub(updates_since.timestamp);
-            let check_active_groups_only =
-                // Avoid going to group index canister if there are < 5 groups as it is a bottleneck
-                runtime_state.data.group_chats.len() >= 5 &&
-                time_since_last_sync < GET_ALL_GROUP_CHATS_INTERVAL_MS;
+            let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);
 
             let mut group_chats_to_check_for_updates = Vec::new();
             let mut new_group_chats = Vec::new();
@@ -61,6 +51,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 .map(|g| (g.chat_id, g.updates_since))
                 .collect();
 
+            // TODO handle groups that the user has been removed from
             for chat_id in runtime_state.data.group_chats.iter().map(|g| g.chat_id) {
                 if let Some(updates_since) = group_chat_args_map.get(&chat_id) {
                     group_chats_to_check_for_updates.push((chat_id, *updates_since));
@@ -69,22 +60,22 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 }
             }
 
-            return Ok(PrepareResult {
+            Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
-                check_active_groups_only,
+                duration_since_last_sync,
                 group_chats_to_check_for_updates,
                 new_group_chats,
-            });
+            })
+        } else {
+            let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
+
+            Ok(PrepareResult {
+                group_index_canister_id: runtime_state.data.group_index_canister_id,
+                duration_since_last_sync: now,
+                group_chats_to_check_for_updates: Vec::new(),
+                new_group_chats,
+            })
         }
-
-        let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
-
-        Ok(PrepareResult {
-            group_index_canister_id: runtime_state.data.group_index_canister_id,
-            check_active_groups_only: false,
-            group_chats_to_check_for_updates: Vec::new(),
-            new_group_chats,
-        })
     } else {
         Err(NotAuthorised)
     }
@@ -131,16 +122,17 @@ async fn get_group_chat_summaries(chat_ids: Vec<GroupChatId>) -> Vec<GroupChatSu
 
 async fn get_group_chat_summary_updates(
     group_index_canister_id: CanisterId,
-    active_only: bool,
+    duration_since_last_sync: Milliseconds,
     mut group_chats: Vec<(GroupChatId, TimestampMillis)>,
 ) -> Vec<GroupChatSummaryUpdates> {
-    if active_only {
+    if group_chats.len() >= 5 {
         if group_chats.is_empty() {
             return Vec::new();
         }
 
         let args = group_index_canister::active_groups::Args {
             group_ids: group_chats.iter().map(|g| g.0).collect(),
+            active_in_last: duration_since_last_sync,
         };
         let active_groups = match group_index_canister_client::active_groups(group_index_canister_id, &args).await {
             Ok(group_index_canister::active_groups::Response::Success(r)) => r.active_groups,

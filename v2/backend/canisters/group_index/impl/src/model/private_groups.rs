@@ -1,4 +1,4 @@
-use crate::model::GROUP_CHAT_ACTIVE_WINDOW_MILLIS;
+use crate::MARK_ACTIVE_DURATION;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{GroupChatId, TimestampMillis, Version};
@@ -33,7 +33,7 @@ impl PrivateGroups {
 pub struct PrivateGroupInfo {
     id: GroupChatId,
     created: TimestampMillis,
-    last_notification_of_activity: TimestampMillis,
+    marked_active_until: TimestampMillis,
     wasm_version: Version,
 }
 
@@ -42,7 +42,7 @@ impl PrivateGroupInfo {
         PrivateGroupInfo {
             id,
             created: now,
-            last_notification_of_activity: now,
+            marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
         }
     }
@@ -51,11 +51,11 @@ impl PrivateGroupInfo {
         self.id
     }
 
-    pub fn notify_activity(&mut self, now: TimestampMillis) {
-        self.last_notification_of_activity = now;
+    pub fn mark_active(&mut self, until: TimestampMillis) {
+        self.marked_active_until = until;
     }
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
-        now.saturating_sub(self.last_notification_of_activity) < GROUP_CHAT_ACTIVE_WINDOW_MILLIS
+        self.marked_active_until > now
     }
 }

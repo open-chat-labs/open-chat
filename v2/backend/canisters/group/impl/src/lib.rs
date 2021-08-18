@@ -4,7 +4,7 @@ use crate::model::participants::Participants;
 use candid::Principal;
 use shared::env::Environment;
 use std::cell::RefCell;
-use types::{CanisterId, TimestampMillis, Updatable, UserId, Version};
+use types::{CanisterId, Milliseconds, TimestampMillis, Updatable, UserId, Version};
 
 mod lifecycle;
 mod model;
@@ -37,6 +37,7 @@ pub struct Data {
     pub participants: Participants,
     pub events: Events,
     pub date_created: TimestampMillis,
+    pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
@@ -52,6 +53,7 @@ impl Data {
         creator_principal: Principal,
         creator_user_id: UserId,
         now: TimestampMillis,
+        mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
         wasm_version: Version,
     ) -> Data {
@@ -65,6 +67,7 @@ impl Data {
             participants,
             events,
             date_created: now,
+            mark_active_duration,
             group_index_canister_id,
             notification_canister_ids: Vec::new(),
             wasm_version,

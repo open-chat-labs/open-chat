@@ -8,4 +8,4 @@ generate_query_call!(active_groups);
 
 // Updates
 generate_update_call!(create_group);
-generate_update_call!(notify_activity);
+generate_update_call!(mark_active);
