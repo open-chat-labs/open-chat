@@ -39,14 +39,14 @@
         // things happen.
         // i.e. have the state machine update a store with an event (e.g. newMessagesLoaded)
         // and sub to that store in this component
-        setTimeout(() => {
+        tick().then(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
                     top: messagesDiv.scrollHeight,
                     behavior,
                 });
             }
-        }, 100);
+        });
     }
 
     function scrollToNew() {

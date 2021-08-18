@@ -15,7 +15,6 @@
     );
 
     onDestroy(() => {
-        console.log("destroying media url");
         blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
