@@ -13,16 +13,19 @@ fn summary_updates(args: Args) -> Response {
 
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
+        let mut has_updates = false;
 
         let name = if runtime_state.data.name.updated() > args.updates_since {
+            has_updates = true;
             Some(runtime_state.data.name.value().clone())
         } else {
             None
         };
 
         let description = if runtime_state.data.description.updated() > args.updates_since {
+            has_updates = true;
             Some(runtime_state.data.description.value().clone())
         } else {
             None
@@ -31,34 +34,49 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let (participants_added_or_updated, participants_removed) =
             get_participants_with_updates(args.updates_since, runtime_state);
 
+        if !participants_added_or_updated.is_empty() || !participants_removed.is_empty() {
+            has_updates = true;
+        }
+
         let mut latest_message = None;
         if let Some(m) = runtime_state.data.events.latest_message() {
             if m.timestamp > args.updates_since {
+                has_updates = true;
                 latest_message = Some(m);
             }
         }
 
         let latest_event = runtime_state.data.events.last();
-        let latest_event_index = if latest_event.timestamp > args.updates_since { Some(latest_event.index) } else { None };
+        let latest_event_index = if latest_event.timestamp > args.updates_since {
+            has_updates = true;
+            Some(latest_event.index)
+        } else {
+            None
+        };
 
         let latest_read_by_me = if participant.read_up_to.updated() > args.updates_since {
+            has_updates = true;
             Some(*participant.read_up_to.value())
         } else {
             None
         };
 
-        let updates = GroupChatSummaryUpdates {
-            chat_id: runtime_state.env.canister_id().into(),
-            timestamp: now,
-            name,
-            description,
-            participants_added_or_updated,
-            participants_removed,
-            latest_message,
-            latest_event_index,
-            latest_read_by_me,
-        };
-        Success(SuccessResult { updates })
+        if has_updates {
+            let updates = GroupChatSummaryUpdates {
+                chat_id: runtime_state.env.canister_id().into(),
+                timestamp: now,
+                name,
+                description,
+                participants_added_or_updated,
+                participants_removed,
+                latest_message,
+                latest_event_index,
+                latest_read_by_me,
+            };
+            Success(SuccessResult { updates })
+        } else {
+            SuccessNoUpdates
+        }
     } else {
         NotInGroup
     }
@@ -116,7 +134,7 @@ fn get_participants_with_updates(since: TimestampMillis, runtime_state: &Runtime
     for (user_id, removed) in participants_changed.into_iter() {
         if removed {
             participants_removed.push(user_id);
-        } else if let Some(p) = runtime_state.data.participants.get(&user_id) {
+        } else if let Some(p) = runtime_state.data.participants.get_by_user_id(&user_id) {
             participants_added_or_updated.push(p.into());
         }
     }

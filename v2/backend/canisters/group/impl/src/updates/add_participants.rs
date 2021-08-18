@@ -96,7 +96,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             for user_id in args.user_ids.iter() {
                 if runtime_state.data.participants.is_blocked(user_id) {
                     users_blocked_from_group.push(*user_id);
-                } else if runtime_state.data.participants.get(user_id).is_none() {
+                } else if runtime_state.data.participants.get_by_user_id(user_id).is_none() {
                     users_to_add.push(*user_id);
                 } else {
                     users_already_in_group.push(*user_id);

@@ -60,7 +60,15 @@ impl Participants {
         self.by_principal.values()
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&ParticipantInternal> {
+    pub fn get(&self, user_id_or_principal: Principal) -> Option<&ParticipantInternal> {
+        let principal = self.user_id_to_principal_map
+            .get(&user_id_or_principal.into())
+            .unwrap_or(&user_id_or_principal);
+
+        self.by_principal.get(principal)
+    }
+
+    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&ParticipantInternal> {
         if let Some(p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal(p)
         } else {
@@ -68,7 +76,7 @@ impl Participants {
         }
     }
 
-    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
+    pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
         if let Some(&p) = self.user_id_to_principal_map.get(user_id) {
             self.get_by_principal_mut(&p)
         } else {

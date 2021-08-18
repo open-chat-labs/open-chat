@@ -10,7 +10,7 @@ fn summary(_: Args) -> Response {
 
 fn summary_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(participant) = runtime_state.data.participants.get(caller) {
         let summary = GroupChatSummary {
             chat_id: runtime_state.env.canister_id().into(),
             name: runtime_state.data.name.value().clone(),

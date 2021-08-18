@@ -9,7 +9,7 @@ use types::{
 };
 use user_canister::updates::{Response::*, *};
 
-// If the last sync was longer than a configurable time ago, get all the group chat summaries.
+// If the last sync was longer than a configurable time ago, get all the group chat summary updates.
 // This is because we call into the group index canister to see which groups are active and if the
 // last sync was long enough ago there may be missed updates from groups which are now marked as
 // inactive.

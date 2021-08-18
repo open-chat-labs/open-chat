@@ -1,8 +1,8 @@
 use crate::canisters;
-use crate::setup::{create_and_install_service_canisters, register_user};
+use crate::setup::{create_and_install_service_canisters, register_user, send_direct_message};
 use crate::utils::*;
 use ic_fondue::ic_manager::IcHandle;
-use types::{MessageContent, MessageId, TextContent};
+use types::{MessageContent, TextContent};
 
 pub fn send_message_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(send_message_test_impl(handle, ctx));
@@ -23,26 +23,22 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let agent = build_ic_agent(url, user1_identity).await;
 
     let send_message_args = user_canister::send_message::Args {
-        message_id: MessageId::new(123),
-        recipient: user2_id.into(),
+        message_id: 123.into(),
+        recipient: user2_id,
         sender_name: "TEST!".to_string(),
         content: MessageContent::Text(TextContent { text: "abc".to_string() }),
         replies_to: None,
     };
-    let send_message_response = canisters::user::send_message(&agent, &user1_id, &send_message_args).await;
+    let send_message_result = send_direct_message(&agent, user1_id, &send_message_args).await;
 
-    if let user_canister::send_message::Response::Success(r) = send_message_response {
-        let events_args = user_canister::events_by_index::Args {
-            user_id: user2_id.into(),
-            events: vec![r.event_index],
-        };
-        let get_events_response = canisters::user::events_by_index(&agent, &user1_id, &events_args).await;
-        if let user_canister::events_by_index::Response::Success(r) = get_events_response {
-            assert_eq!(r.events.len(), 1);
-        } else {
-            panic!("No events returned");
-        }
+    let events_args = user_canister::events_by_index::Args {
+        user_id: user2_id,
+        events: vec![send_message_result.event_index],
+    };
+    let get_events_response = canisters::user::events_by_index(&agent, &user1_id.into(), &events_args).await;
+    if let user_canister::events_by_index::Response::Success(r) = get_events_response {
+        assert_eq!(r.events.len(), 1);
     } else {
-        panic!("Send message returned an error: {:?}", send_message_response);
+        panic!("No events returned");
     }
 }
