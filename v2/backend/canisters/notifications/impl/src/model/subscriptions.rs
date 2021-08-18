@@ -1,3 +1,4 @@
+use crate::HashSet;
 use candid::CandidType;
 use serde::Deserialize;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -49,6 +50,13 @@ impl Subscriptions {
                 .map(|s| s.iter().any(|s| s.last_active() >= active_since))
                 .is_some()
         })
+    }
+
+    pub fn remove(&mut self, user_id: UserId, p256dh_keys: HashSet<String>) {
+        if let Occupied(e) = self.subscriptions.entry(user_id) {
+            let subscriptions = e.into_mut();
+            subscriptions.retain(|s| !p256dh_keys.contains(&s.value().keys.p256dh));
+        }
     }
 }
 
