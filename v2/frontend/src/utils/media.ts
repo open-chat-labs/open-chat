@@ -1,6 +1,8 @@
 import type { Message, MessageContent } from "../domain/chat/chat";
 import { dataToBlobUrl } from "./blob";
 
+const THUMBNAIL_DIMS = dimensions(30, 30);
+const RESIZE_IMAGE_TO = 800;
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -29,20 +31,33 @@ function scaleToFit(toScale: Dimensions, maxDimensions: Dimensions): Dimensions 
     }
 }
 
-export async function extractImageThumbnail(blobUrl: string): Promise<MediaExtract> {
+export async function extractImageThumbnail(
+    blobUrl: string,
+    mimeType: string
+): Promise<MediaExtract> {
     return new Promise<MediaExtract>((resolve, _) => {
         const img = new Image();
-        img.onload = () => resolve(extractThumbnail(img, dimensions(img.width, img.height)));
+        img.onload = () =>
+            resolve(changeDimensions(img, mimeType, dimensions(img.width, img.height)));
         img.src = blobUrl;
     });
 }
 
-export async function extractVideoThumbnail(blobUrl: string): Promise<MediaExtract> {
+export async function extractVideoThumbnail(
+    blobUrl: string,
+    mimeType: string
+): Promise<MediaExtract> {
     return new Promise<MediaExtract>((resolve, _) => {
         const video = document.createElement("video");
         video.addEventListener("loadedmetadata", () => {
             video.addEventListener("seeked", () => {
-                resolve(extractThumbnail(video, dimensions(video.videoWidth, video.videoHeight)));
+                resolve(
+                    changeDimensions(
+                        video,
+                        mimeType,
+                        dimensions(video.videoWidth, video.videoHeight)
+                    )
+                );
             });
             video.currentTime = 1;
         });
@@ -50,26 +65,41 @@ export async function extractVideoThumbnail(blobUrl: string): Promise<MediaExtra
     });
 }
 
-function extractThumbnail(
+function changeDimensions(
     original: HTMLImageElement | HTMLVideoElement,
-    mediaDimensions: Dimensions
-): MediaExtract {
-    const { width, height } = scaleToFit(mediaDimensions, dimensions(20, 20));
+    mimeType: string,
+    originalDimensions: Dimensions,
+    newDimensions: Dimensions = THUMBNAIL_DIMS
+): Promise<MediaExtract> {
+    const { width, height } = scaleToFit(originalDimensions, newDimensions);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const context = canvas.getContext("2d")!;
     context.drawImage(original, 0, 0, canvas.width, canvas.height);
-    return {
-        dimensions: mediaDimensions,
-        thumbnailData: canvas.toDataURL(),
-    };
+
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const reader = new FileReader();
+                reader.addEventListener("loadend", () => {
+                    resolve({
+                        dimensions: originalDimensions,
+                        thumbnailUrl: canvas.toDataURL(mimeType),
+                        thumbnailData: reader.result as ArrayBuffer,
+                    });
+                });
+                reader.readAsArrayBuffer(blob);
+            }
+        }, mimeType);
+    });
 }
 
 type MediaExtract = {
     dimensions: Dimensions;
-    thumbnailData: string;
+    thumbnailUrl: string;
+    thumbnailData: ArrayBuffer;
 };
 
 export function fillMessage(msg: Message): boolean {
@@ -90,6 +120,25 @@ export function messageMetaData(content: MessageContent): Promise<string> | unde
     }
 }
 
+export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExtract> {
+    // if our image is too big, we'll just create a new version with fixed dimensions
+    // there's no very easy way to reduce it to a specific file size
+    return new Promise<MediaExtract>((resolve, _) => {
+        const img = new Image();
+        img.onload = () => {
+            resolve(
+                changeDimensions(
+                    img,
+                    mimeType,
+                    dimensions(img.width, img.height),
+                    dimensions(RESIZE_IMAGE_TO, RESIZE_IMAGE_TO)
+                )
+            );
+        };
+        img.src = blobUrl;
+    });
+}
+
 export async function messageContentFromFile(file: File): Promise<MessageContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -101,13 +150,10 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             const isImage = /^image/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
             const isFile = !(isImage || isVideo);
-            const data = e.target.result as ArrayBuffer;
+            let data = e.target.result as ArrayBuffer;
             let content: MessageContent;
 
-            if (isImage && data.byteLength > MAX_IMAGE_SIZE) {
-                reject("maxImageSize");
-                return;
-            } else if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
+            if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
                 reject("maxVideoSize");
                 return;
             } else if (isFile && data.byteLength > MAX_FILE_SIZE) {
@@ -119,8 +165,12 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                 const blobUrl = dataToBlobUrl(data, mimeType);
 
                 const extract = isImage
-                    ? await extractImageThumbnail(blobUrl)
-                    : await extractVideoThumbnail(blobUrl);
+                    ? await extractImageThumbnail(blobUrl, mimeType)
+                    : await extractVideoThumbnail(blobUrl, mimeType);
+
+                if (isImage && data.byteLength > MAX_IMAGE_SIZE) {
+                    data = (await resizeImage(blobUrl, mimeType)).thumbnailData;
+                }
 
                 URL.revokeObjectURL(blobUrl);
 
@@ -130,7 +180,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
                     blobData: Promise.resolve(new Uint8Array(data)),
-                    thumbnailData: extract.thumbnailData,
+                    thumbnailData: extract.thumbnailUrl,
                 };
             } else {
                 content = {
