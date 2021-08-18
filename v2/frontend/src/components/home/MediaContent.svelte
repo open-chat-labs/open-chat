@@ -36,6 +36,9 @@
         {/if}
     {/if}
 {/await}
+{#if content.caption !== undefined}
+    <p>{content.caption}</p>
+{/if}
 
 <style type="text/scss">
     img,
@@ -44,6 +47,7 @@
         width: auto;
         height: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
+        display: block;
 
         &.landscape {
             max-width: calc(var(--vh, 1vh) * 50);

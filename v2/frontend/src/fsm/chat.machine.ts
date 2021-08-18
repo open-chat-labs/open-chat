@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure, sendParent } from "xstate/lib/actions";
+import { ActionObject, createMachine, MachineConfig, MachineOptions } from "xstate";
+import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -12,7 +12,7 @@ import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
-    textMessage,
+    createMessage,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -257,9 +257,18 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     })),
                 },
                 ATTACH_FILE: {
-                    actions: assign((_, ev) => ({
-                        fileToAttach: ev.data,
-                    })),
+                    actions: pure((_, ev) => {
+                        // a lot of hideous type hints required here for some reason
+                        const actions: ActionObject<ChatContext, ChatEvents>[] = [
+                            assign<ChatContext, ChatEvents>({
+                                fileToAttach: ev.data,
+                            }),
+                        ];
+                        if (ev.data.kind === "file_content") {
+                            actions.push(send({ type: "SEND_MESSAGE" }));
+                        }
+                        return actions;
+                    }),
                 },
                 CLEAR_ATTACHMENT: {
                     actions: assign((_, _ev) => ({
@@ -307,7 +316,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: [
                                     ...ctx.events,
                                     {
-                                        event: textMessage(
+                                        event: createMessage(
                                             ctx.user!.userId,
                                             index + 1,
                                             ev.data,

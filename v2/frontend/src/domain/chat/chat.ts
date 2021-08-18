@@ -69,7 +69,6 @@ export interface StandardReplyContext {
     messageIndex: number;
 }
 
-// todo - removing some stuff from this interface until we can see clearly that we need it
 export interface Message {
     messageId: bigint;
     messageIndex: number;

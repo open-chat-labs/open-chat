@@ -50,8 +50,6 @@
         {#if $machine.context.fileToAttach !== undefined}
             {#if $machine.context.fileToAttach.kind === "media_content"}
                 <DraftMediaMessage draft={$machine.context.fileToAttach} />
-            {:else if $machine.context.fileToAttach.kind === "file_content"}
-                <div>File content preview</div>
             {:else if $machine.context.fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>
             {/if}

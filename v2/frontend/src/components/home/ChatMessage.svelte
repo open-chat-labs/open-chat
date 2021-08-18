@@ -22,6 +22,7 @@
     import { toShortTimeString } from "../../utils/date";
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
+    import { fillMessage, messageMetaData } from "../../utils/media";
     const dispatch = createEventDispatcher();
 
     export let chatSummary: ChatSummary;
@@ -41,6 +42,7 @@
     $: sender = userLookup[msg.sender];
     $: username = sender?.username;
     $: userStatus = getUserStatus(userLookup, msg.sender);
+    $: metaData = messageMetaData(msg.content);
 
     afterUpdate(() => {
         // todo - keep an eye on this
@@ -87,18 +89,32 @@
     function replyPrivately() {
         dispatch("replyPrivatelyTo", createReplyContext(true));
     }
+
+    // todo - I think perhaps ChatMessageContent cannot make all of the decisions about rendering the content
+    // ideally we want to make decisions at this level about padding and stuff based on the content type
+    // e.g. image / video with no caption should fill the whole chat bubble
 </script>
 
 <div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
-    <div class="chat-message" class:me class:last class:rtl={$rtlStore}>
+    <div
+        class="chat-message"
+        class:fill={fillMessage(msg)}
+        class:me
+        class:last
+        class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
 
-        <div class="content">
-            <ChatMessageContent content={msg.content} />
-        </div>
+        <ChatMessageContent {me} content={msg.content} />
 
+        {#if metaData}
+            {#await metaData then meta}
+                <div class="meta">
+                    {meta}
+                </div>
+            {/await}
+        {/if}
         <div class="time-and-ticks">
             <span class="time">
                 {toShortTimeString(new Date(Number(timestamp)))}
@@ -112,7 +128,6 @@
             {/if}
         </div>
 
-        <pre class="debug">({index})</pre>
         <div class="menu" class:rtl={$rtlStore}>
             <MenuIcon>
                 <div class="menu-icon" slot="icon">
@@ -154,16 +169,6 @@
 <style type="text/scss">
     $size: 10px;
 
-    .debug {
-        margin-top: 10px;
-    }
-
-    .typing {
-        position: absolute;
-        top: 13px;
-        left: 14px;
-    }
-
     :global(.time-and-ticks > svg) {
         width: 16px;
         height: 16px;
@@ -175,6 +180,13 @@
 
     :global(.chat-message .content ul) {
         margin: 0 $sp4;
+    }
+
+    .meta {
+        position: absolute;
+        bottom: $sp2;
+        left: $sp4;
+        @include font(light, normal, fs-60);
     }
 
     .time-and-ticks {
@@ -281,6 +293,17 @@
                 right: unset;
                 left: $sp3;
             }
+
+            .meta {
+                left: unset;
+                right: $sp4;
+            }
+        }
+
+        &.fill {
+            padding: 0;
+            overflow: hidden;
+            border: none;
         }
     }
 

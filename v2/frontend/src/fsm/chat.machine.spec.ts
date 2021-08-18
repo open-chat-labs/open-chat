@@ -4,13 +4,27 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
+    FileContent,
     GroupChatSummary,
     Message,
+    TextContent,
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
+
+const textMessageContent: TextContent = {
+    kind: "text_content",
+    text: "This is a message",
+};
+
+const fileMessageContent: FileContent = {
+    kind: "file_content",
+    name: "stuff_in_a_file.pdf",
+    blobData: Promise.resolve(undefined),
+    mimeType: "file/pdf",
+};
 
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
@@ -53,6 +67,39 @@ const testContext: ChatContext = {
 };
 
 describe("chat machine transitions", () => {
+    describe("attaching files", () => {
+        test("attach non file content", () => {
+            const ctx = testTransition(
+                chatMachine.withContext(testContext),
+                { user_states: "idle" },
+                { type: "ATTACH_FILE", data: textMessageContent },
+                { user_states: "idle" }
+            );
+            expect(ctx.fileToAttach).toEqual(textMessageContent);
+        });
+
+        test("clear attached file", () => {
+            const ctx = testTransition(
+                chatMachine.withContext({ ...testContext, fileToAttach: textMessageContent }),
+                { user_states: "idle" },
+                { type: "CLEAR_ATTACHMENT" },
+                { user_states: "idle" }
+            );
+            expect(ctx.fileToAttach).toBe(undefined);
+        });
+
+        test("attach file content", () => {
+            // todo - this doesn't really test that the send message event is sent
+            const ctx = testTransition(
+                chatMachine.withContext(testContext),
+                { user_states: "idle" },
+                { type: "ATTACH_FILE", data: fileMessageContent },
+                { user_states: "idle" }
+            );
+            expect(ctx.fileToAttach).toEqual(fileMessageContent);
+        });
+    });
+
     test("initiate loading previous messages", () => {
         testTransition(
             chatMachine.withContext(testContext),

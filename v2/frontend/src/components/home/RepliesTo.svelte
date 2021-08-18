@@ -1,11 +1,11 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ChatSummary, ReplyContext } from "../../domain/chat/chat";
+    import type { ChatSummary, MessageContent, ReplyContext } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import ChatMessageContent from "./ChatMessageContent.svelte";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
@@ -38,6 +38,14 @@
         return replyContext.messageIndex;
     }
 
+    function messageContentFromReplyContent(
+        replyContext: ReplyContext
+    ): MessageContent | undefined {
+        return replyContext.kind === "direct_private_reply_context"
+            ? undefined
+            : replyContext.content;
+    }
+
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
         if (replyContext.kind === "direct_standard_reply_context") {
             if (replyContext.sentByMe) {
@@ -54,6 +62,8 @@
         // for the private reply context - we do not currently have the message content or the userId - we need them both
         return "todo - someone else";
     }
+
+    $: content = messageContentFromReplyContent(repliesTo);
 </script>
 
 <Link on:click={zoomToMessage}>
@@ -61,8 +71,8 @@
         <h4 class="username">
             {getUsernameFromReplyContext(repliesTo)} ({getMessageIndex(repliesTo)})
         </h4>
-        {#if repliesTo.kind === "direct_standard_reply_context"}
-            {getContentAsText(repliesTo.content)}
+        {#if content !== undefined}
+            <ChatMessageContent {content} />
         {/if}
         {#if repliesTo.kind === "direct_private_reply_context"}
             {`Private reply to message from chatId ${repliesTo.chatId}`}

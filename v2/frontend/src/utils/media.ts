@@ -1,4 +1,4 @@
-import type { MessageContent } from "../domain/chat/chat";
+import type { Message, MessageContent } from "../domain/chat/chat";
 import { dataToBlobUrl } from "./blob";
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -71,6 +71,24 @@ type MediaExtract = {
     dimensions: Dimensions;
     thumbnailData: string;
 };
+
+export function fillMessage(msg: Message): boolean {
+    if (msg.content.kind === "media_content") {
+        return (
+            (msg.content.caption === undefined || msg.content.caption === "") &&
+            msg.repliesTo === undefined
+        );
+    }
+    return false;
+}
+
+export function messageMetaData(content: MessageContent): Promise<string> | undefined {
+    if (content.kind === "file_content") {
+        return content.blobData
+            .then((blob) => blob?.byteLength ?? content.blobReference?.blobSize ?? 0)
+            .then((size) => `${content.mimeType}-${(size / 1000).toFixed(2)}kb`);
+    }
+}
 
 export async function messageContentFromFile(file: File): Promise<MessageContent> {
     return new Promise((resolve, reject) => {

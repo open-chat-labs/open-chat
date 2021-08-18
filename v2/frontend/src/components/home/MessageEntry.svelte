@@ -29,7 +29,7 @@
 
     function sendMessage() {
         if (inp.textContent || $machine.context.fileToAttach) {
-            machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
+            machine.send({ type: "SEND_MESSAGE", data: inp.textContent ?? undefined });
             inp.textContent = "";
             showEmojiPicker = false;
         }

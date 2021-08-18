@@ -5,14 +5,11 @@
     import { createEventDispatcher } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import ChatMessageContent from "./ChatMessageContent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
-    import { extractImageThumbnail } from "../../utils/media";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
 
     const dispatch = createEventDispatcher();
-    const SIZE_LIMIT = 1000;
 
     export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary | undefined;
@@ -20,15 +17,6 @@
     $: me = replyingTo.sender?.userId === user?.userId;
 
     $: username = replyingTo.sender?.username ?? "unknown";
-
-    // todo - we might be able to do something nicer than this with pure css, but we just need to do
-    // *something* to make sure there a limit to the size of this box
-    function truncateTo(n: number, str: string): string {
-        if (str.length > n) {
-            return str.slice(0, n) + "...";
-        }
-        return str;
-    }
 
     function cancelReply() {
         dispatch("cancelReply");
@@ -45,11 +33,7 @@
         <h4 class="username">
             {username}
         </h4>
-        {#if replyingTo.content.kind === "media_content"}
-            <img src={replyingTo.content.thumbnailData} alt={replyingTo.content.caption} />
-        {:else}
-            {truncateTo(SIZE_LIMIT, getContentAsText(replyingTo.content))}
-        {/if}
+        <ChatMessageContent {me} truncate={true} content={replyingTo.content} />
     </div>
 </div>
 

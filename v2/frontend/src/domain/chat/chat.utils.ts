@@ -105,7 +105,11 @@ export function getParticipantsString(
         .join(", ");
 }
 
-export function textMessage(
+function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
+    return content.kind !== "text_content" ? { ...content, caption } : content;
+}
+
+export function createMessage(
     userId: string,
     messageIndex: number,
     content: string | undefined,
@@ -113,7 +117,7 @@ export function textMessage(
     fileToAttach: MessageContent | undefined
 ): Message {
     const msgContent = fileToAttach
-        ? fileToAttach
+        ? addCaption(content, fileToAttach)
         : ({
               kind: "text_content",
               text: content ?? "",

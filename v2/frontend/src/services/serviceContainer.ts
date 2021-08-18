@@ -112,7 +112,10 @@ export class ServiceContainer {
 
         resp.events = resp.events.map((e) => {
             if (e.event.kind === "message") {
-                if (e.event.content.kind === "media_content") {
+                if (
+                    e.event.content.kind === "media_content" ||
+                    e.event.content.kind === "file_content"
+                ) {
                     e.event.content.blobData = this.getMediaData(e.event.content.blobReference);
                 }
             }
