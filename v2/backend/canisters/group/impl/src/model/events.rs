@@ -168,6 +168,16 @@ impl Events {
         self.events.iter()
     }
 
+    pub fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
+        GroupMessage {
+            message_index: message.message_index,
+            message_id: message.message_id,
+            sender: message.sender,
+            content: message.content.clone(),
+            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
+        }
+    }
+
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
             GroupChatEventInternal::Message(m) => GroupChatEvent::Message(self.hydrate_message(m)),
@@ -186,16 +196,6 @@ impl Events {
             index: event.index,
             timestamp: event.timestamp,
             event: event_data,
-        }
-    }
-
-    fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
-        GroupMessage {
-            message_index: message.message_index,
-            message_id: message.message_id,
-            sender: message.sender,
-            content: message.content.clone(),
-            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
         }
     }
 

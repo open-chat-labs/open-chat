@@ -2,9 +2,8 @@ use crate::model::events::GroupChatEventInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
-use types::{GroupChatSummaryUpdates, Participant, TimestampMillis, UserId};
+use std::collections::HashSet;
+use types::{EventIndex, EventWrapper, GroupChatSummaryUpdates, GroupMessage, Participant, TimestampMillis, UserId};
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -15,62 +14,25 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let now = runtime_state.env.now();
-        let mut has_updates = false;
 
-        let name = if runtime_state.data.name.updated() > args.updates_since {
-            has_updates = true;
-            Some(runtime_state.data.name.value().clone())
-        } else {
-            None
-        };
-
-        let description = if runtime_state.data.description.updated() > args.updates_since {
-            has_updates = true;
-            Some(runtime_state.data.description.value().clone())
-        } else {
-            None
-        };
-
-        let (participants_added_or_updated, participants_removed) =
-            get_participants_with_updates(args.updates_since, runtime_state);
-
-        if !participants_added_or_updated.is_empty() || !participants_removed.is_empty() {
-            has_updates = true;
-        }
-
-        let mut latest_message = None;
-        if let Some(m) = runtime_state.data.events.latest_message() {
-            if m.timestamp > args.updates_since {
-                has_updates = true;
-                latest_message = Some(m);
-            }
-        }
-
-        let latest_event = runtime_state.data.events.last();
-        let latest_event_index = if latest_event.timestamp > args.updates_since {
-            has_updates = true;
-            Some(latest_event.index)
-        } else {
-            None
-        };
+        let updates_from_events = process_events(args.updates_since, runtime_state);
 
         let latest_read_by_me = if participant.read_up_to.updated() > args.updates_since {
-            has_updates = true;
             Some(*participant.read_up_to.value())
         } else {
             None
         };
 
-        if has_updates {
+        if updates_from_events.has_updates() || latest_read_by_me.is_some() {
             let updates = GroupChatSummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
                 timestamp: now,
-                name,
-                description,
-                participants_added_or_updated,
-                participants_removed,
-                latest_message,
-                latest_event_index,
+                name: updates_from_events.name,
+                description: updates_from_events.description,
+                participants_added_or_updated: updates_from_events.participants_added_or_updated,
+                participants_removed: updates_from_events.participants_removed,
+                latest_message: updates_from_events.latest_message,
+                latest_event_index: updates_from_events.latest_event_index,
                 latest_read_by_me,
             };
             Success(SuccessResult { updates })
@@ -82,62 +44,107 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 }
 
-fn get_participants_with_updates(since: TimestampMillis, runtime_state: &RuntimeState) -> (Vec<Participant>, Vec<UserId>) {
-    fn mark_participant_changed(map: &mut HashMap<UserId, bool>, user_id: UserId, removed: bool) {
-        if let Vacant(e) = map.entry(user_id) {
-            e.insert(removed);
-        }
-    }
+#[derive(Default)]
+struct UpdatesFromEvents {
+    name: Option<String>,
+    description: Option<String>,
+    participants_added_or_updated: Vec<Participant>,
+    participants_removed: Vec<UserId>,
+    latest_message: Option<EventWrapper<GroupMessage>>,
+    latest_event_index: Option<EventIndex>,
+}
 
-    let mut participants_changed = HashMap::new();
-    for event in runtime_state
-        .data
-        .events
-        .iter()
-        .rev()
-        .take_while(|e| e.timestamp > since)
-        .map(|e| &e.event)
-    {
-        match event {
+impl UpdatesFromEvents {
+    pub fn has_updates(&self) -> bool {
+        self.name.is_some()
+            || self.description.is_some()
+            || !self.participants_added_or_updated.is_empty()
+            || !self.participants_removed.is_empty()
+            || self.latest_message.is_some()
+            || self.latest_event_index.is_some()
+    }
+}
+
+fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> UpdatesFromEvents {
+    let mut updates = UpdatesFromEvents::default();
+
+    let mut participant_updates_handler = ParticipantUpdatesHandler {
+        runtime_state,
+        users_updated: HashSet::new(),
+    };
+
+    // Iterate through events starting from most recent
+    for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
+        if updates.latest_event_index.is_none() {
+            updates.latest_event_index = Some(event_wrapper.index);
+        }
+
+        match &event_wrapper.event {
+            GroupChatEventInternal::Message(m) => {
+                if updates.latest_message.is_none() {
+                    updates.latest_message = Some(EventWrapper {
+                        index: event_wrapper.index,
+                        timestamp: event_wrapper.timestamp,
+                        event: runtime_state.data.events.hydrate_message(m),
+                    })
+                }
+            }
+            GroupChatEventInternal::GroupNameChanged(n) => {
+                if updates.name.is_none() {
+                    updates.name = Some(n.new_name.clone());
+                }
+            }
+            GroupChatEventInternal::GroupDescriptionChanged(n) => {
+                if updates.description.is_none() {
+                    updates.description = Some(n.new_description.clone());
+                }
+            }
             GroupChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
-                    mark_participant_changed(&mut participants_changed, *user_id, false);
+                    participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }
             }
             GroupChatEventInternal::ParticipantsRemoved(p) => {
                 for user_id in p.user_ids.iter() {
-                    mark_participant_changed(&mut participants_changed, *user_id, true);
+                    participant_updates_handler.mark_user_updated(&mut updates, *user_id, true);
                 }
             }
             GroupChatEventInternal::ParticipantJoined(p) => {
-                mark_participant_changed(&mut participants_changed, p.user_id, false);
+                participant_updates_handler.mark_user_updated(&mut updates, p.user_id, false);
             }
             GroupChatEventInternal::ParticipantLeft(p) => {
-                mark_participant_changed(&mut participants_changed, p.user_id, true);
+                participant_updates_handler.mark_user_updated(&mut updates, p.user_id, true);
             }
             GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => {
                 for user_id in p.user_ids.iter() {
-                    mark_participant_changed(&mut participants_changed, *user_id, false);
+                    participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }
             }
             GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => {
                 for user_id in p.user_ids.iter() {
-                    mark_participant_changed(&mut participants_changed, *user_id, false);
+                    participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }
             }
             _ => {}
         }
     }
 
-    let mut participants_added_or_updated = Vec::new();
-    let mut participants_removed = Vec::new();
-    for (user_id, removed) in participants_changed.into_iter() {
-        if removed {
-            participants_removed.push(user_id);
-        } else if let Some(p) = runtime_state.data.participants.get_by_user_id(&user_id) {
-            participants_added_or_updated.push(p.into());
+    updates
+}
+
+struct ParticipantUpdatesHandler<'a> {
+    runtime_state: &'a RuntimeState,
+    users_updated: HashSet<UserId>,
+}
+
+impl<'a> ParticipantUpdatesHandler<'a> {
+    pub fn mark_user_updated(&mut self, updates: &mut UpdatesFromEvents, user_id: UserId, removed: bool) {
+        if self.users_updated.insert(user_id) {
+            if removed {
+                updates.participants_removed.push(user_id);
+            } else if let Some(participant) = self.runtime_state.data.participants.get_by_user_id(&user_id) {
+                updates.participants_added_or_updated.push(participant.into());
+            }
         }
     }
-
-    (participants_added_or_updated, participants_removed)
 }
