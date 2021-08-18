@@ -10,6 +10,10 @@ declare module "country-telephone-data" {
     declare const allCountries: Country[];
 }
 
+declare module "uuid" {
+    export function v1(): string;
+}
+
 declare module "svelte-easy-crop" {
     import { SvelteComponentTyped } from "svelte";
 
