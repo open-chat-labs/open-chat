@@ -1,9 +1,9 @@
 use crate::canisters;
 use crate::setup::{create_and_install_service_canisters, create_group, register_user};
 use crate::utils::*;
-use ic_fondue::ic_manager::IcHandle;
 use ic_agent::Agent;
-use types::{UserId, GroupChatId, ChatSummary};
+use ic_fondue::ic_manager::IcHandle;
+use types::{ChatSummary, GroupChatId, UserId};
 
 pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(create_group_test_impl(handle, ctx));
@@ -43,25 +43,23 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
             assert_eq!(r.summary.chat_id, group_chat_id);
             assert_eq!(r.summary.name, name);
             assert_eq!(r.summary.description, description);
-            assert_eq!(r.summary.is_public, false);
+            assert!(!r.summary.is_public);
             assert_eq!(r.summary.participants.len(), 3);
-        },
+        }
         response => panic!("Summary returned an error: {:?}", response),
     }
 
     let futures = [
         ensure_user_canister_links_to_group(&user1_agent, user1_id, group_chat_id),
         ensure_user_canister_links_to_group(&user2_agent, user2_id, group_chat_id),
-        ensure_user_canister_links_to_group(&user3_agent, user3_id, group_chat_id)
+        ensure_user_canister_links_to_group(&user3_agent, user3_id, group_chat_id),
     ];
     futures::future::join_all(futures).await;
 }
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, group_chat_id: GroupChatId) {
-    let args = user_canister::updates::Args {
-        updates_since: None,
-    };
-    match canisters::user::updates(&agent, &user_id.into(), &args).await {
+    let args = user_canister::updates::Args { updates_since: None };
+    match canisters::user::updates(agent, &user_id.into(), &args).await {
         user_canister::updates::Response::Success(r) => {
             assert_eq!(r.new_chats.len(), 1);
             if let ChatSummary::Group(g) = r.new_chats.first().unwrap() {
@@ -69,7 +67,7 @@ async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, gro
             } else {
                 panic!("Group chat not found");
             }
-        },
+        }
         response => panic!("Updates returned an error: {:?}", response),
     };
 }

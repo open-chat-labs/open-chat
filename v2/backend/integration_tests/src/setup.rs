@@ -3,7 +3,7 @@ use crate::utils::{
     build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName, TestIdentity,
 };
 use candid::{CandidType, Principal};
-use ic_agent::{Identity, Agent};
+use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use types::{CanisterId, GroupChatId, UserId};
@@ -125,12 +125,12 @@ pub async fn create_group(
     args: user_canister::create_group::Args,
     participants: Vec<UserId>,
 ) -> GroupChatId {
-    let create_group_response = canisters::user::create_group(&agent, &creator_id.into(), &args).await;
+    let create_group_response = canisters::user::create_group(agent, &creator_id.into(), &args).await;
 
     if let user_canister::create_group::Response::Success(r) = create_group_response {
         let add_participants_args = group_canister::add_participants::Args { user_ids: participants };
         let add_participants_response =
-            canisters::group::add_participants(&agent, &r.group_chat_id.into(), &add_participants_args).await;
+            canisters::group::add_participants(agent, &r.group_chat_id.into(), &add_participants_args).await;
         if !matches!(add_participants_response, group_canister::add_participants::Response::Success) {
             panic!("Add participants returned an error: {:?}", add_participants_response);
         }
@@ -141,14 +141,22 @@ pub async fn create_group(
     }
 }
 
-pub async fn send_direct_message(agent: &Agent, sender: UserId, args: &user_canister::send_message::Args) -> user_canister::send_message::SuccessResult {
+pub async fn send_direct_message(
+    agent: &Agent,
+    sender: UserId,
+    args: &user_canister::send_message::Args,
+) -> user_canister::send_message::SuccessResult {
     match canisters::user::send_message(agent, &sender.into(), args).await {
         user_canister::send_message::Response::Success(r) => r,
         response => panic!("Send direct message returned an error: {:?}", response),
     }
 }
 
-pub async fn send_group_message(agent: &Agent, group_chat_id: GroupChatId, args: &group_canister::send_message::Args) -> group_canister::send_message::SuccessResult {
+pub async fn send_group_message(
+    agent: &Agent,
+    group_chat_id: GroupChatId,
+    args: &group_canister::send_message::Args,
+) -> group_canister::send_message::SuccessResult {
     match canisters::group::send_message(agent, &group_chat_id.into(), args).await {
         group_canister::send_message::Response::Success(r) => r,
         response => panic!("Send group message returned an error: {:?}", response),

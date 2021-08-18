@@ -61,7 +61,8 @@ impl Participants {
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&ParticipantInternal> {
-        let principal = self.user_id_to_principal_map
+        let principal = self
+            .user_id_to_principal_map
             .get(&user_id_or_principal.into())
             .unwrap_or(&user_id_or_principal);
 

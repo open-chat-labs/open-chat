@@ -1,5 +1,7 @@
 use crate::canisters;
-use crate::setup::{create_and_install_service_canisters, register_user, create_group, send_group_message, send_direct_message};
+use crate::setup::{
+    create_and_install_service_canisters, create_group, register_user, send_direct_message, send_group_message,
+};
 use crate::utils::*;
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
@@ -74,9 +76,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     };
     let result4 = send_group_message(&user2_agent, group_chat_id2, &group_message_args2).await;
 
-    let updates_args1 = user_canister::updates::Args {
-        updates_since: None,
-    };
+    let updates_args1 = user_canister::updates::Args { updates_since: None };
     let updates_response1 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args1).await;
 
     if let user_canister::updates::Response::Success(r) = updates_response1 {
@@ -96,7 +96,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                         updates_since: result4.timestamp,
                     },
                 ],
-            })
+            }),
         };
         let updates_response2 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args2).await;
 
