@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure, sendParent } from "xstate/lib/actions";
+import { ActionObject, createMachine, MachineConfig, MachineOptions } from "xstate";
+import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
     EventWrapper,
     EnhancedReplyContext,
+    MessageContent,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
-    textMessage,
+    createMessage,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -32,6 +33,7 @@ export interface ChatContext {
     events: EventWrapper[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
+    fileToAttach?: MessageContent;
 }
 
 type LoadEventsResponse = {
@@ -44,7 +46,9 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: string }
+    | { type: "SEND_MESSAGE"; data?: string }
+    | { type: "ATTACH_FILE"; data: MessageContent }
+    | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
     | { type: "REPLY_TO"; data: EnhancedReplyContext }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
@@ -248,11 +252,28 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 GO_TO_MESSAGE_INDEX: {
                     target: ".loading_previous_messages",
-                    actions: assign((_, ev) => {
-                        return {
-                            focusIndex: ev.data,
-                        };
+                    actions: assign((_, ev) => ({
+                        focusIndex: ev.data,
+                    })),
+                },
+                ATTACH_FILE: {
+                    actions: pure((_, ev) => {
+                        // a lot of hideous type hints required here for some reason
+                        const actions: ActionObject<ChatContext, ChatEvents>[] = [
+                            assign<ChatContext, ChatEvents>({
+                                fileToAttach: ev.data,
+                            }),
+                        ];
+                        if (ev.data.kind === "file_content") {
+                            actions.push(send({ type: "SEND_MESSAGE" }));
+                        }
+                        return actions;
                     }),
+                },
+                CLEAR_ATTACHMENT: {
+                    actions: assign((_, _ev) => ({
+                        fileToAttach: undefined,
+                    })),
                 },
             },
             states: {
@@ -295,16 +316,19 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: [
                                     ...ctx.events,
                                     {
-                                        event: textMessage(
+                                        event: createMessage(
                                             ctx.user!.userId,
+                                            index + 1,
                                             ev.data,
-                                            ctx.replyingTo
+                                            ctx.replyingTo,
+                                            ctx.fileToAttach
                                         ),
                                         index: index + 1,
                                         timestamp: BigInt(+new Date() - index + 1),
                                     },
                                 ],
                                 replyingTo: undefined,
+                                fileToAttach: undefined,
                             };
                         }
                         return {};

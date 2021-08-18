@@ -1,21 +1,19 @@
 <script lang="ts">
-    import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import EmoticonHappyOutline from "svelte-material-icons/EmoticonHappyOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { onMount } from "svelte";
-    import Lazy from "../Lazy.svelte";
+    import FileAttacher from "./FileAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
+    import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
-    const EmojiPicker = () => import("./EmojiPicker.svelte");
-
     let inp: HTMLDivElement;
-    let showEmojiPicker = false;
+    export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
 
     onMount(() => {
@@ -29,16 +27,9 @@
         }
     }
 
-    function onPaste(e: ClipboardEvent) {
-        e.preventDefault();
-        const text = e.clipboardData?.getData("text/plain");
-        document.execCommand("insertText", false, text);
-        console.log(text);
-    }
-
     function sendMessage() {
-        if (inp.textContent) {
-            machine.send({ type: "SEND_MESSAGE", data: inp.textContent });
+        if (inp.textContent || $machine.context.fileToAttach) {
+            machine.send({ type: "SEND_MESSAGE", data: inp.textContent ?? undefined });
             inp.textContent = "";
             showEmojiPicker = false;
         }
@@ -66,6 +57,10 @@
         selection.addRange(selectedRange);
     }
 
+    function clearAttachment() {
+        machine.send({ type: "CLEAR_ATTACHMENT" });
+    }
+
     $: {
         if ($emojiStore !== undefined) {
             if ($emojiStore.native && inp) {
@@ -78,17 +73,17 @@
     }
 
     $: {
-        if ($machine.changed && $machine.context.replyingTo !== undefined) {
+        if (
+            $machine.changed &&
+            ($machine.context.replyingTo !== undefined ||
+                $machine.context.fileToAttach !== undefined)
+        ) {
             inp.focus();
         }
     }
 </script>
 
 <div class="message-entry">
-    {#if showEmojiPicker}
-        <Lazy component={EmojiPicker} />
-    {/if}
-
     <div class="emoji" on:click={toggleEmojiPicker}>
         {#if showEmojiPicker}
             <HoverIcon>
@@ -101,9 +96,10 @@
         {/if}
     </div>
     <div class="attach">
-        <HoverIcon>
-            <Paperclip size={"1.2em"} color={"#aaa"} />
-        </HoverIcon>
+        <FileAttacher
+            open={$machine.context.fileToAttach !== undefined}
+            on:fileSelected
+            on:close={clearAttachment} />
     </div>
     <div
         tabindex={0}
@@ -111,8 +107,10 @@
         on:blur={saveSelection}
         class="textbox"
         contenteditable={true}
-        on:paste={onPaste}
-        placeholder="Type a message"
+        on:paste
+        placeholder={$machine.context.fileToAttach !== undefined
+            ? $_("enterCaption")
+            : $_("enterMessage")}
         spellcheck={true}
         on:keypress={checkEnter} />
     <div class="send" on:click={sendMessage}>
@@ -155,5 +153,12 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         @include font(book, normal, fs-100);
+
+        &:empty:before {
+            content: attr(placeholder);
+            color: #ccc;
+            pointer-events: none;
+            display: block; /* For Firefox */
+        }
     }
 </style>

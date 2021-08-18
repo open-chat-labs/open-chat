@@ -79,7 +79,7 @@
 </Overlay>
 
 <input
-    style="display:none"
+    hidden={true}
     type="file"
     accept=".jpg, .jpeg, .png, .gif"
     on:change={onFileSelected}

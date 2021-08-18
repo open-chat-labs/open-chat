@@ -291,6 +291,32 @@ type RemoveNotificationsResponse =
         NotAuthorized;
     };
 
+type RemoveSubscriptionsArgs = 
+    record {
+        subscriptions_by_user: vec record {
+            user_id: UserId;
+            p256dh_keys: vec text;
+        };
+    };
+
+type RemoveSubscriptionsResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
+type SubscriptionExistsArgs =
+    record {
+        user_id: UserId;
+        p256dh_key: text;
+    };
+
+type SubscriptionExistsResponse =
+    variant {
+        Yes;
+        No;
+    };
+
 type InitArgs = 
     record {
         push_service_principals: vec principal;
@@ -304,5 +330,7 @@ service: (InitArgs) -> {
     push_v1group_message_notification: (PushV1GroupMessageNotificationArgs) -> (PushV1GroupMessageNotificationResponse);
     
     remove_notifications: (RemoveNotificationsArgs) -> (RemoveNotificationsResponse);
+    remove_subscriptions: (RemoveSubscriptionsArgs) -> (RemoveSubscriptionsResponse);
     notifications: (NotificationsArgs) -> (NotificationsResponse) query;
+    subscription_exists: (SubscriptionExistsArgs) -> (SubscriptionExistsResponse) query;
 }

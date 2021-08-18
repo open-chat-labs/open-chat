@@ -9,6 +9,7 @@ mod dummy_store;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    env_logger::init();
     let args: Vec<String> = std::env::args().collect();
     let command: &str = &args[1];
     let index = args[2].parse::<u64>().unwrap();

@@ -31,7 +31,7 @@ type TextContent =
 type BlobReference = 
     record {
         canister_id: CanisterId;
-        blob_id: text;
+        blob_id: nat;
         blob_size: nat32;
         chunk_size: nat32;
     };
@@ -99,7 +99,6 @@ type DirectMessage =
     record {
         message_index: MessageIndex;
         message_id: MessageId;
-        timestamp: TimestampMillis;
         sender: UserId;
         content: MessageContent;
         replies_to: opt DirectReplyContext;

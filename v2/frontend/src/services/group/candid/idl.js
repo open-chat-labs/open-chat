@@ -31,7 +31,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const BlobReference = IDL.Record({
     'blob_size' : IDL.Nat32,
-    'blob_id' : IDL.Text,
+    'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
     'chunk_size' : IDL.Nat32,
   });

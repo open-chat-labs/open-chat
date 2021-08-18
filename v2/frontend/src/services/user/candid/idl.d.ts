@@ -8,7 +8,8 @@ import {
     ChatSummary,
     GroupChatSummary,
     DirectChatSummary,
-    Message,
+    DirectMessage,
+    DirectChatEvent,
     UserId,
     ReplyContext,
     MessageContent,
@@ -27,6 +28,10 @@ import {
     EventsResponse,
     EventsSuccessResult,
     EventsArgs,
+    ChunkArgs,
+    ChunkResponse,
+    PutChunkArgs,
+    PutChunkResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -35,9 +40,10 @@ export {
     UpdatesArgs as ApiUpdatesArgs,
     UpdatesResponse as ApiUpdatesResponse,
     ChatSummary as ApiChatSummary,
+    DirectChatEvent as ApiDirectChatEvent,
     GroupChatSummary as ApiGroupChatSummary,
     DirectChatSummary as ApiDirectChatSummary,
-    Message as ApiMessage,
+    DirectMessage as ApiMessage,
     UserId as ApiUserId,
     ReplyContext as ApiReplyContext,
     MessageContent as ApiMessageContent,
@@ -56,7 +62,10 @@ export {
     EventsResponse as ApiEventsResponse,
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
+    ChunkArgs as ApiChunkArgs,
+    ChunkResponse as ApiChunkResponse,
+    PutChunkArgs as ApiPutChunkArgs,
+    PutChunkResponse as ApiPutChunkResponse,
 };
 
-declare const idlFactory: IDL.InterfaceFactory;
-export default idlFactory;
+export const idlFactory: IDL.InterfaceFactory;

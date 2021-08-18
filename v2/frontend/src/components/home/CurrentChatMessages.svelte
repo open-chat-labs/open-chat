@@ -34,12 +34,19 @@
     let fromBottom = 0;
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        if (messagesDiv) {
-            messagesDiv.scrollTo({
-                top: messagesDiv.scrollHeight,
-                behavior,
-            });
-        }
+        // todo - not at all happy about this settimeout. Going to revisit and see if
+        // we can create a store that will give us more precise control over when certain
+        // things happen.
+        // i.e. have the state machine update a store with an event (e.g. newMessagesLoaded)
+        // and sub to that store in this component
+        setTimeout(() => {
+            if (messagesDiv) {
+                messagesDiv.scrollTo({
+                    top: messagesDiv.scrollHeight,
+                    behavior,
+                });
+            }
+        }, 100);
     }
 
     function scrollToNew() {

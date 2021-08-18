@@ -5,12 +5,11 @@
     import { createEventDispatcher } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import ChatMessageContent from "./ChatMessageContent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
 
     const dispatch = createEventDispatcher();
-    const SIZE_LIMIT = 1000;
 
     export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary | undefined;
@@ -18,15 +17,6 @@
     $: me = replyingTo.sender?.userId === user?.userId;
 
     $: username = replyingTo.sender?.username ?? "unknown";
-
-    // todo - we might be able to do something nicer than this with pure css, but we just need to do
-    // *something* to make sure there a limit to the size of this box
-    function truncateTo(n: number, str: string): string {
-        if (str.length > n) {
-            return str.slice(0, n) + "...";
-        }
-        return str;
-    }
 
     function cancelReply() {
         dispatch("cancelReply");
@@ -43,15 +33,14 @@
         <h4 class="username">
             {username}
         </h4>
-        {truncateTo(SIZE_LIMIT, getContentAsText(replyingTo.content))}
+        <ChatMessageContent {me} truncate={true} content={replyingTo.content} />
     </div>
 </div>
 
 <style type="text/scss">
     .replying-wrapper {
-        border-radius: $sp3 $sp3 0 0;
+        border-radius: $sp4 $sp4 0 0;
         padding: 0 0 0 7px;
-        @include z-index("reply-to");
         box-shadow: 0 -6px 10px 0 rgba(25, 25, 25, 0.25);
 
         &.rtl {
@@ -61,12 +50,11 @@
 
     .replying {
         @include font(book, normal, fs-100);
-        border-radius: $sp3 $sp3 0 0;
+        border-radius: inherit;
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         box-shadow: -7px 0px 0px 0px var(--button-bg);
-        margin-top: -5px; // forgive me!
         position: relative;
 
         .close-icon {

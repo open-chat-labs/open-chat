@@ -13,9 +13,11 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
 } from "../../domain/chat/chat";
+import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
+export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 const numMessages = 1000;
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
@@ -89,6 +91,38 @@ function mockRepliesTo(index: number): ReplyContext {
     };
 }
 
+type MediaType = "image" | "video";
+let mediaType: MediaType = "image";
+
+function mockImageMessage(index: number): Message {
+    const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
+    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    mediaType = mediaType === "image" ? "video" : "image";
+    const mimeType = mediaType === "image" ? "image/jpg" : "video/mp4";
+    return {
+        kind: "message",
+        content: {
+            kind: "media_content",
+            caption: "A picture of a bird",
+            height: 201,
+            width: 250,
+            mimeType,
+            blobReference: {
+                blobSize: CHUNK_SIZE_BYTES * 2,
+                blobId: BigInt(mediaType === "image" ? 0 : 1),
+                canisterId: "doesnt_matter",
+                chunkSize: CHUNK_SIZE_BYTES,
+            },
+            blobData: Promise.resolve(undefined),
+            thumbnailData: "",
+        },
+        sender,
+        repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
+    };
+}
+
 function mockTextMessage(index: number): Message {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
@@ -100,6 +134,8 @@ function mockTextMessage(index: number): Message {
         },
         sender,
         repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
     };
 }
 
@@ -108,8 +144,10 @@ function mockEvent(index: number): EventWrapper {
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
 
+    const imageMsg = index % 5 === 0;
+
     return {
-        event: mockTextMessage(index),
+        event: imageMsg ? mockImageMessage(index) : mockTextMessage(index),
         timestamp: BigInt(+new Date(now - timeDiff)),
         index,
     };
@@ -223,5 +261,13 @@ export class UserClientMock implements IUserClient {
                 // });
             }, 5000);
         });
+    }
+
+    async getData(
+        _blobId: bigint,
+        _totalBytes?: number,
+        _chunkSize?: number
+    ): Promise<Uint8Array | undefined> {
+        return undefined;
     }
 }

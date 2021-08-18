@@ -1,4 +1,3 @@
-import type { Principal } from "@dfinity/principal";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
@@ -9,14 +8,18 @@ export interface CyclesContent {
     amount: bigint;
 }
 
-export interface MediaContent {
+interface DataContent {
+    caption?: string;
+    blobReference?: BlobReference;
+    blobData: Promise<Uint8Array | undefined>;
+    mimeType: string;
+}
+
+export interface MediaContent extends DataContent {
     kind: "media_content";
     height: number;
-    mimeType: string;
-    blobReference?: BlobReference;
-    thumbnailData: string;
-    caption?: string;
     width: number;
+    thumbnailData: string;
 }
 
 export interface TextContent {
@@ -24,18 +27,15 @@ export interface TextContent {
     text: string;
 }
 
-export interface FileContent {
+export interface FileContent extends DataContent {
     kind: "file_content";
     name: string;
-    mimeType: string;
-    blobReference?: BlobReference;
-    caption?: string;
 }
 
 export interface BlobReference {
     blobSize: number;
-    blobId: string;
-    canisterId: Principal;
+    blobId: bigint;
+    canisterId: string;
     chunkSize: number;
 }
 
@@ -69,14 +69,12 @@ export interface StandardReplyContext {
     messageIndex: number;
 }
 
-// todo - removing some stuff from this interface until we can see clearly that we need it
 export interface Message {
-    // messageId: bigint;
-    // messageIndex: number;
+    messageId: bigint;
+    messageIndex: number;
     kind: "message";
     content: MessageContent;
     sender: string;
-    // timestamp: bigint;
     repliesTo?: ReplyContext;
 }
 
