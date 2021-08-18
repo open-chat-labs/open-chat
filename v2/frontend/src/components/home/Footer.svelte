@@ -22,18 +22,25 @@
         machine.send({ type: "ATTACH_FILE", data: ev.detail });
     }
 
+    function messageContentFromDataTransferItemList(items: DataTransferItemList) {
+        const file = [...items][0]?.getAsFile();
+        if (!file) return;
+
+        messageContentFromFile(file)
+            .then((content) => machine.send({ type: "ATTACH_FILE", data: content }))
+            .catch((err) => toastStore.showFailureToast(err));
+    }
+
+    function onDrop(e: CustomEvent<DragEvent>) {
+        if (e.detail.dataTransfer) {
+            messageContentFromDataTransferItemList(e.detail.dataTransfer.items);
+            e.detail.preventDefault();
+        }
+    }
+
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
-            const imageFile = [...e.clipboardData.items]
-                .find((i) => {
-                    return /image/.test(i.type);
-                })
-                ?.getAsFile();
-            if (!imageFile) return;
-
-            messageContentFromFile(imageFile)
-                .then((content) => machine.send({ type: "ATTACH_FILE", data: content }))
-                .catch((err) => toastStore.showFailureToast(err));
+            messageContentFromDataTransferItemList(e.clipboardData.items);
             e.preventDefault();
         }
     }
@@ -61,6 +68,7 @@
     <MessageEntry
         bind:showEmojiPicker
         on:paste={onPaste}
+        on:drop={onDrop}
         on:fileSelected={fileSelected}
         {machine} />
 </div>

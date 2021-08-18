@@ -6,15 +6,18 @@
     import { onMount } from "svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
+    import { createEventDispatcher } from "svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
+    const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
+    let dragging: boolean = false;
 
     onMount(() => {
         inp.focus();
@@ -55,6 +58,11 @@
         const selection = window.getSelection()!;
         selection.removeAllRanges();
         selection.addRange(selectedRange);
+    }
+
+    function onDrop(e: DragEvent) {
+        dragging = false;
+        dispatch("drop", e);
     }
 
     function clearAttachment() {
@@ -106,12 +114,19 @@
         bind:this={inp}
         on:blur={saveSelection}
         class="textbox"
+        class:dragging
         contenteditable={true}
         on:paste
         placeholder={$machine.context.fileToAttach !== undefined
             ? $_("enterCaption")
+            : dragging
+            ? $_("dropFile")
             : $_("enterMessage")}
         spellcheck={true}
+        on:dragover={() => (dragging = true)}
+        on:dragenter={() => (dragging = true)}
+        on:dragleave={() => (dragging = false)}
+        on:drop={onDrop}
         on:keypress={checkEnter} />
     <div class="send" on:click={sendMessage}>
         <HoverIcon>
@@ -152,6 +167,7 @@
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        border: 1px solid transparent;
         @include font(book, normal, fs-100);
 
         &:empty:before {
@@ -159,6 +175,10 @@
             color: #ccc;
             pointer-events: none;
             display: block; /* For Firefox */
+        }
+
+        &.dragging {
+            border: 1px dashed var(--entry-input-txt);
         }
     }
 </style>

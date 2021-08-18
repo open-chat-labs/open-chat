@@ -35,6 +35,7 @@
     "downloadFile": "Download {name}",
     "enterCaption": "Enter a caption",
     "enterMessage": "Enter a message",
+    "dropFile": "Drop a file here",
     "cancel": "Cancel",
     "addGroupPhoto": "Add group photo",
     "public": "Public",
