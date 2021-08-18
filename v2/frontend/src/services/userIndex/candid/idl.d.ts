@@ -42,5 +42,4 @@ export {
     CreateCanisterResponse as ApiCreateCanisterResponse,
 };
 
-declare const idlFactory: IDL.InterfaceFactory;
-export default idlFactory;
+export const idlFactory: IDL.InterfaceFactory;

@@ -13,6 +13,7 @@ import type {
     ApiParticipant,
     ApiUpdatedChatSummary,
     ApiCreateGroupResponse,
+    ApiChunkResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -31,6 +32,18 @@ import type {
     CreateGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+import type { ChunkResponse } from "../../domain/data/data";
+
+export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
+    if ("NotFound" in candid) {
+        return undefined;
+    }
+    if ("Success" in candid) {
+        return new Uint8Array(candid.Success.bytes);
+    }
+
+    throw new Error(`Unexpected ApiChunkResponse type received: ${candid}`);
+}
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
     if ("Success" in candid) {
@@ -66,7 +79,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
             events: candid.Success.events.map((ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
         };
     }
@@ -101,7 +114,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
@@ -122,7 +135,7 @@ function updatedChatSummary(candid: ApiUpdatedChatSummary): UpdatedChatSummary {
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: message(ev.event),
+                event: message(ev.event.Message),
             })),
             latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
             latestEventIndex: candid.Direct.latest_event_index,
@@ -141,7 +154,7 @@ function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
                 return {
                     index: ev.index,
                     timestamp: ev.timestamp,
-                    event: message(ev.event),
+                    event: message(ev.event as ApiMessage),
                 };
             }),
             latestReadByMe: candid.Group.latest_read_by_me,
@@ -188,6 +201,8 @@ function message(candid: ApiMessage): Message {
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         repliesTo: optional(candid.replies_to, replyContext),
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
     };
 }
 
@@ -221,6 +236,7 @@ function mediaContent(candid: ApiMediaContent): MediaContent {
         height: candid.height,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
+        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
@@ -240,6 +256,7 @@ function fileContent(candid: ApiFileContent): FileContent {
         name: candid.name,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
+        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         caption: optional(candid.caption, identity),
     };
 }
@@ -248,7 +265,7 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     return {
         blobSize: candid.blob_size,
         blobId: candid.blob_id,
-        canisterId: candid.canister_id,
+        canisterId: candid.canister_id.toString(),
         chunkSize: candid.chunk_size,
     };
 }

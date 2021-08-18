@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
-import idlFactory, { GroupService } from "./candid/idl";
+import { idlFactory, GroupService } from "./candid/idl";
 import type { EventsResponse } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import { getMessagesResponse } from "./mappers";

@@ -10,6 +10,7 @@ import type {
     MessageContent,
     Participant,
     ReplyContext,
+    TextContent,
     UpdatedChatSummary,
     UpdatedDirectChatSummary,
     UpdatedGroupChatSummary,
@@ -17,8 +18,13 @@ import type {
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
+import { v1 as uuidv1 } from "uuid";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
+
+export function newMessageId(): bigint {
+    return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
+}
 
 export function getContentAsText(content: MessageContent): string {
     let text;
@@ -99,19 +105,30 @@ export function getParticipantsString(
         .join(", ");
 }
 
-export function textMessage(
+function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
+    return content.kind !== "text_content" ? { ...content, caption } : content;
+}
+
+export function createMessage(
     userId: string,
-    content: string,
-    replyingTo: ReplyContext | undefined
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: MessageContent | undefined
 ): Message {
+    const msgContent = fileToAttach
+        ? addCaption(content, fileToAttach)
+        : ({
+              kind: "text_content",
+              text: content ?? "",
+          } as TextContent);
     return {
         kind: "message",
-        content: {
-            kind: "text_content",
-            text: content,
-        },
+        content: msgContent,
         sender: userId,
         repliesTo: replyingTo,
+        messageId: newMessageId(),
+        messageIndex,
     };
 }
 

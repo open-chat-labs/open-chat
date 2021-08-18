@@ -22,7 +22,7 @@ export type AddParticipantsResponse = {
   { 'NotInGroup' : null };
 export interface BlobReference {
   'blob_size' : number,
-  'blob_id' : string,
+  'blob_id' : bigint,
   'canister_id' : CanisterId,
   'chunk_size' : number,
 }

@@ -6,7 +6,12 @@ import type {
     UpdatedDirectChatSummary,
     UpdatedGroupChatSummary,
 } from "./chat";
-import { getParticipantsString, mergeChatUpdates, userIdsFromChatSummaries } from "./chat.utils";
+import {
+    getParticipantsString,
+    mergeChatUpdates,
+    newMessageId,
+    userIdsFromChatSummaries,
+} from "./chat.utils";
 
 const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
@@ -200,6 +205,8 @@ describe("merging updates", () => {
                     },
                     sender: "2",
                     repliesTo: undefined,
+                    messageId: newMessageId(),
+                    messageIndex: 300,
                 },
                 index: 300,
                 timestamp: BigInt(400),
@@ -220,6 +227,8 @@ describe("merging updates", () => {
                     },
                     sender: "2",
                     repliesTo: undefined,
+                    messageId: newMessageId(),
+                    messageIndex: 300,
                 },
                 index: 300,
                 timestamp: BigInt(400),

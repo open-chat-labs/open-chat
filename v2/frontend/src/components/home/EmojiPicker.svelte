@@ -48,19 +48,6 @@
         display: none;
     }
 
-    :global(emoji-picker) {
-        @include z-index("emoji-picker");
-        position: absolute;
-        bottom: 54px;
-        left: 0;
-        right: 0;
-        width: 100%;
-
-        @include size-below(xs) {
-            bottom: 49px;
-        }
-    }
-
     :global(.emoji-mart-bar) {
         border: none;
     }

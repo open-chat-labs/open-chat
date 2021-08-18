@@ -40,5 +40,4 @@ export {
     GroupChatEvent as ApiGroupChatEvent,
 };
 
-declare const idlFactory: IDL.InterfaceFactory;
-export default idlFactory;
+export const idlFactory: IDL.InterfaceFactory;

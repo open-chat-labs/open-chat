@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import idlFactory, { UserIndexService } from "./candid/idl";
+import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     ConfirmPhoneNumberResponse,
     CurrentUserResponse,
