@@ -58,6 +58,13 @@ impl Subscriptions {
             subscriptions.retain(|s| !p256dh_keys.contains(&s.value().keys.p256dh));
         }
     }
+
+    pub fn exists(&self, user_id: &UserId, p256dh_key: String) -> bool {
+        match self.subscriptions.get(user_id) {
+            Some(subscriptions) => subscriptions.iter().any(|s| s.value().keys.p256dh == p256dh_key),
+            None => false,
+        }
+    }
 }
 
 #[cfg(test)]
