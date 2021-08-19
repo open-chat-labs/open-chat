@@ -150,7 +150,7 @@ function mergeUpdatedDirectChat(
     return chat;
 }
 
-export function mergeUpdated(
+export function mergeUpdates(
     chat: ChatSummary | undefined,
     updatedChat: ChatSummaryUpdates
 ): ChatSummary | undefined {
@@ -175,7 +175,7 @@ export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
 ): ChatSummary[] {
-    return mergeThings((c) => c.chatId, mergeUpdated, chatSummaries, {
+    return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
         removed: updateResponse.chatsRemoved,
