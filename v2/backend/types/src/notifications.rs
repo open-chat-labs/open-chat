@@ -47,6 +47,5 @@ pub struct V1GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub recipients: Vec<UserId>,
     pub message: v1_message::Message,
 }

@@ -13,7 +13,7 @@ fn push_v1group_message_notification_impl(args: Args, runtime_state: &mut Runtim
     if runtime_state
         .data
         .subscriptions
-        .contains_any(&args.notification.recipients, MAX_SUBSCRIPTION_AGE, now)
+        .contains_any(&args.recipients, MAX_SUBSCRIPTION_AGE, now)
     {
         runtime_state.data.notifications.add(NotificationEnvelope {
             recipients: args.recipients,
