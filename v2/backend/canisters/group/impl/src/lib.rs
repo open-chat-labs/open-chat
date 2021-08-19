@@ -2,9 +2,9 @@ use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
-use shared::env::Environment;
 use std::cell::RefCell;
 use types::{CanisterId, Milliseconds, TimestampMillis, Updatable, UserId, Version};
+use utils::env::Environment;
 
 mod lifecycle;
 mod model;

@@ -53,8 +53,8 @@ mod tests {
     use super::*;
     use crate::model::user::UnconfirmedUser;
     use crate::Data;
-    use shared::env::test::TestEnv;
     use std::str::FromStr;
+    use utils::env::test::TestEnv;
 
     #[test]
     fn correct_code_succeeds() {

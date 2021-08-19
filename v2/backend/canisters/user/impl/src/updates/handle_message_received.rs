@@ -2,9 +2,9 @@ use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
-use shared::rand::get_random_item;
 use types::{CanisterId, DirectMessageNotification, UserId};
 use user_canister::handle_message_received::{Response::*, *};
+use utils::rand::get_random_item;
 
 #[update]
 fn handle_message_received(args: Args) -> Response {
@@ -56,7 +56,7 @@ mod c2c {
     use super::*;
     use ic_cdk::api::call::CallResult;
     use log::error;
-    use shared::generate_c2c_call;
+    use utils::generate_c2c_call;
 
     pub mod notifications {
         use super::*;
