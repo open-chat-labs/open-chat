@@ -1,10 +1,10 @@
-use crate::canisters;
-use crate::setup::{
-    create_and_install_service_canisters, create_group, register_user, send_direct_message, send_group_message,
-};
-use crate::utils::*;
+use crate::block_on;
 use ic_fondue::ic_manager::IcHandle;
 use types::{MessageContent, TextContent};
+use canister_client::canisters;
+use canister_client::operations::*;
+use canister_client::TestIdentity;
+use canister_client::utils::{build_identity, build_ic_agent};
 
 pub fn get_updates_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(get_updates_test_impl(handle, ctx));

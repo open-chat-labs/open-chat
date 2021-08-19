@@ -2,14 +2,13 @@ use fondue::*;
 use ic_fondue::ic_manager::IcManager;
 use ic_fondue::internet_computer::InternetComputer;
 use ic_registry_subnet_type::SubnetType;
+use tokio::runtime::Runtime as TRuntime;
+use std::future::Future;
 
-mod canisters;
 mod create_group_test;
 mod get_updates_test;
 mod register_user_test;
 mod send_message_test;
-mod setup;
-mod utils;
 
 fn main() {
     let fondue_config = fondue::pot::execution::Config::default().random_pot_rng_seed();
@@ -52,4 +51,9 @@ fn print_rng_seed<ManCfg>(fondue_config: &fondue::pot::execution::Config<ManCfg>
 
 pub fn configure() -> InternetComputer {
     InternetComputer::new().add_fast_single_node_subnet(SubnetType::System)
+}
+
+pub fn block_on<F: Future>(f: F) -> F::Output {
+    let rt = TRuntime::new().unwrap_or_else(|err| panic!("Could not create tokio runtime: {}", err));
+    rt.block_on(f)
 }
