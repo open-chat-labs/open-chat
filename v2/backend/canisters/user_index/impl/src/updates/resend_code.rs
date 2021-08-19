@@ -35,9 +35,9 @@ mod tests {
     use crate::model::user::{ConfirmedUser, UnconfirmedUser};
     use crate::Data;
     use phonenumber::PhoneNumber;
-    use shared::env::test::TestEnv;
     use std::str::FromStr;
     use types::CanisterCreationStatus;
+    use utils::env::test::TestEnv;
 
     #[test]
     fn unconfirmed_user_succeeds() {

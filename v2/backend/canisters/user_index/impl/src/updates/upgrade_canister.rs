@@ -3,9 +3,9 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use ic_cdk_macros::update;
-use shared::canisters;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::upgrade_canister::{Response::*, *};
+use utils::canisters;
 
 #[update]
 async fn upgrade_canister(_args: Args) -> Response {

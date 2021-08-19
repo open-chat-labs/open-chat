@@ -15,12 +15,12 @@ members = [
     "backend/canisters/user_index/api",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/libraries/types",
+    "backend/libraries/utils",
     "backend/notification_service/aws",
     "backend/notification_service/shared",
     "backend/notification_service/cli",
-    "backend/shared",
     "backend/sms_service",
-    "backend/types",
 ]
 
 [profile.release]

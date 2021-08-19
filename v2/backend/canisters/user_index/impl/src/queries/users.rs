@@ -34,9 +34,9 @@ mod tests {
     use candid::Principal;
     use itertools::Itertools;
     use phonenumber::PhoneNumber;
-    use shared::env::test::TestEnv;
     use std::str::FromStr;
     use types::Version;
+    use utils::env::test::TestEnv;
 
     #[test]
     fn requested_users_returned() {

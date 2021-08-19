@@ -17,5 +17,5 @@ group_index_canister = { path = "../api" }
 ic-cdk = { version = "0.3.1", default-features = false }
 ic-cdk-macros = "0.3.1"
 serde = "1.0.126"
-shared = { path = "../../../shared" }
-types = { path = "../../../types" }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

@@ -15,10 +15,10 @@ ic-cdk = { version = "0.3.1", default-features = false }
 lambda_runtime = "0.3.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
-shared = { path = "../shared" }
 tokio = "1.8.1"
-types = { path = "../types" }
+types = { path = "../libraries/types" }
 user_index_canister = { path = "../canisters/user_index/api" }
+utils = { path = "../libraries/utils" }
 
 [[bin]]
 name = "bootstrap"

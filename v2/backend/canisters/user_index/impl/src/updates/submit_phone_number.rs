@@ -79,8 +79,8 @@ mod tests {
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
-    use shared::env::test::TestEnv;
     use types::CanisterCreationStatus;
+    use utils::env::test::TestEnv;
 
     #[test]
     fn new_user_succeeds() {
