@@ -16,7 +16,6 @@ function mockRepliesTo(index: number): ReplyContext {
         },
         userId: sender,
         messageIndex: jumpTo,
-        messageId: BigInt(0),
     };
 }
 

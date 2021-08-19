@@ -3,8 +3,8 @@ import type {
     DirectChatSummary,
     GroupChatSummary,
     Participant,
-    UpdatedDirectChatSummary,
-    UpdatedGroupChatSummary,
+    DirectChatSummaryUpdates,
+    GroupChatSummaryUpdates,
 } from "./chat";
 import {
     getParticipantsString,
@@ -189,11 +189,11 @@ describe("merging updates", () => {
     });
 
     describe("updated chats get merged correctly", () => {
-        const updatedDirect: UpdatedDirectChatSummary = {
+        const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
             latestReadByThem: 100,
             chatId: "4",
-            lastUpdated: BigInt(1000),
+            timestamp: BigInt(1000),
             latestReadByMe: 200,
             latestEventIndex: 300,
             latestMessage: {
@@ -213,10 +213,10 @@ describe("merging updates", () => {
             },
         };
 
-        const updatedGroup: UpdatedGroupChatSummary = {
+        const updatedGroup: GroupChatSummaryUpdates = {
             kind: "group_chat",
             chatId: "2",
-            lastUpdated: BigInt(1000),
+            timestamp: BigInt(1000),
             latestReadByMe: 200,
             latestMessage: {
                 event: {

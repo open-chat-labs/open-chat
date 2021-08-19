@@ -8,12 +8,12 @@ import type {
     ReplyContext,
     UpdateArgs,
     Participant,
-    UpdatedChatSummary,
+    ChatSummaryUpdates,
     EventWrapper,
     CandidateGroupChat,
     CreateGroupResponse,
 } from "../../domain/chat/chat";
-import { newMessageId } from "../../domain/chat/chat.utils";
+import { compareChats, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
@@ -59,7 +59,6 @@ function mockDirectChat(i: number): DirectChatSummary {
         kind: "direct_chat",
         them: others[i % 3],
         chatId: String(i),
-        lastUpdated: BigInt(time),
         latestReadByMe: us,
         latestReadByThem: 0,
         latestMessage: mockEvent(numMessages),
@@ -155,32 +154,30 @@ function mockEvent(index: number): EventWrapper {
 }
 
 // todo - initially just keep things mostly the same
-function updateChat(chat: ChatSummary, i: number): UpdatedChatSummary {
+function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
     const uppercase = i % 2 === 0;
 
     if (chat.kind === "group_chat") {
         const removeParticipant = chat.participants[randomNum(0, chat.participants.length - 1)];
         return {
             chatId: chat.chatId,
-            lastUpdated: BigInt(+new Date()),
+            timestamp: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
                 ? mockEvent(chat.latestMessage?.index + 2)
                 : undefined,
             kind: "group_chat",
-            participantsAdded: [],
+            participantsAddedOrUpdated: [],
             participantsRemoved: removeParticipant
                 ? new Set([removeParticipant.userId])
                 : new Set([]),
-            participantsUpdated: [],
             name: uppercase ? chat.name.toUpperCase() : chat.name.toLowerCase(),
             description: chat.description,
         };
     }
     return {
         chatId: chat.chatId,
-        lastUpdated: BigInt(+new Date()),
         latestReadByMe: chat.latestReadByMe,
         latestMessage: chat.latestMessage,
         latestEventIndex: chat.latestEventIndex,
@@ -224,14 +221,14 @@ export class UserClientMock implements IUserClient {
         const direct = fill(3, mockDirectChat);
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);
 
-        const add = args.lastUpdated
+        const add = args.updatesSince
             ? this.updateCycles % 5 === 0
                 ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
                 : []
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {
-            chatsUpdated: args.lastUpdated
+            chatsUpdated: args.updatesSince
                 ? this.previousChats.map((c) => updateChat(c, this.updateCycles))
                 : [],
             chatsAdded: add,
@@ -239,9 +236,7 @@ export class UserClientMock implements IUserClient {
             timestamp: BigInt(+new Date()),
         };
 
-        this.previousChats = [...this.previousChats, ...add].sort((a, b) =>
-            Number(a.lastUpdated - b.lastUpdated)
-        );
+        this.previousChats = [...this.previousChats, ...add].sort(compareChats);
 
         return new Promise((res) => {
             setTimeout(() => {
