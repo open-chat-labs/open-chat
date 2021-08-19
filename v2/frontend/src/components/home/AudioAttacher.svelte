@@ -44,11 +44,10 @@
                 .then((stream) => {
                     recording = true;
                     const mimeType = "audio/webm";
-                    const options = { mimeType };
                     const recordedChunks: Blob[] = [];
-                    mediaRecorder = new MediaRecorder(stream, options);
+                    mediaRecorder = new MediaRecorder(stream, { mimeType });
 
-                    mediaRecorder.addEventListener("dataavailable", function (e) {
+                    mediaRecorder.addEventListener("dataavailable", (e) => {
                         if (e.data.size > 0) recordedChunks.push(e.data);
                     });
 
@@ -73,7 +72,7 @@
 
                     mediaRecorder.start();
                 })
-                .catch(() => (supported = false));
+                .catch(() => (supported = false)); //catch the case where the user denies access
         }
     }
 </script>
