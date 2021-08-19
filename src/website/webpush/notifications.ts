@@ -114,7 +114,7 @@ export async function setSoftDisabled(disabled: boolean) : Promise<void> {
 }
 
 async function registerServiceWorker() : Promise<Option<ServiceWorkerRegistration>> {
-    const SW_PATH = "sw2.js";
+    const SW_PATH = "sw9.js";
 
     try {
         let registration = await navigator.serviceWorker.register(SW_PATH, { scope: "/webpush/" });

@@ -60,10 +60,14 @@ pub fn update(request: Request) -> Response {
             let chat_summary = chat.to_summary(&me, 0);
             let message_id = message.get_id();
 
+            // TODO: truncate the message text/caption to 200 chars.
+            // A notification can only be 3800 chars. Only the first 150 or so chars are rendered in any case.
+            
             if let Some(sender_name) = request.sender_name {
                 match chat {
                     ChatEnum::Direct(direct) => {
-                        let recipient = *direct.get_other(&me);
+                        let recipient = *direct.get_other(&me);  
+
                         let notification = push_direct_message_notification::Notification {
                             sender: me,
                             sender_name,
@@ -73,7 +77,12 @@ pub fn update(request: Request) -> Response {
                         push_direct_message_notification::fire_and_forget(recipient, notification);
                     }
                     ChatEnum::Group(group) => {
-                        let recipients = group.participants().iter().map(|p| p.user_id()).collect();
+                        let recipients = group
+                            .participants()
+                            .iter()
+                            .map(|p| p.user_id())
+                            .filter(|user_id| *user_id != me)
+                            .collect();
 
                         let notification = push_group_message_notification::Notification {
                             chat_id: group.get_id().0,

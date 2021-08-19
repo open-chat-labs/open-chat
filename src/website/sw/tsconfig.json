@@ -6,7 +6,7 @@
     "compilerOptions": {
         "lib": ["webworker", "es2015"]
     },
-    "include": ["."],
+    "include": [".", "../services/notifications/candid/**/*", "../utils/cyclesFunctions"],
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
 }
