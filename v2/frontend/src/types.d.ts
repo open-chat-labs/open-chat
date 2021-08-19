@@ -30,3 +30,11 @@ declare module "svelte-easy-crop" {
     }
     export default class Cropper extends SvelteComponentTyped<CropperProps, CropperEvents> {}
 }
+
+import * as dmr from "dom-mediacapture-record";
+
+// Using TypeScript's declaration merging, "extend" the existing
+// Window interface
+declare global {
+    interface Window extends dmr 
+}

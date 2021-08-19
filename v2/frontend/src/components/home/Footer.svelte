@@ -72,6 +72,7 @@
         on:paste={onPaste}
         on:drop={onDrop}
         on:fileSelected={fileSelected}
+        on:audioCaptured={fileSelected}
         {machine} />
 </div>
 

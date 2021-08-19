@@ -264,7 +264,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 fileToAttach: ev.data,
                             }),
                         ];
-                        if (ev.data.kind === "file_content") {
+                        if (
+                            ev.data.kind === "file_content" ||
+                            (ev.data.kind === "media_content" && /^audio/.test(ev.data.mimeType))
+                        ) {
                             actions.push(send({ type: "SEND_MESSAGE" }));
                         }
                         return actions;
