@@ -1,9 +1,9 @@
 use crate::block_on;
-use ic_fondue::ic_manager::IcHandle;
-use canister_client::TestIdentity;
 use canister_client::canisters;
 use canister_client::operations::*;
-use canister_client::utils::{build_identity, build_ic_agent};
+use canister_client::utils::{build_ic_agent, build_identity};
+use canister_client::TestIdentity;
+use ic_fondue::ic_manager::IcHandle;
 
 pub fn register_user_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(register_user_test_impl(handle, ctx));

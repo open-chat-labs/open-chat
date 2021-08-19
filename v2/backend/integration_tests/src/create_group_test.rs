@@ -1,11 +1,11 @@
 use crate::block_on;
+use canister_client::canisters;
+use canister_client::operations::*;
+use canister_client::utils::{build_ic_agent, build_identity};
+use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
 use types::{ChatSummary, GroupChatId, UserId};
-use canister_client::canisters;
-use canister_client::operations::*;
-use canister_client::TestIdentity;
-use canister_client::utils::{build_identity, build_ic_agent};
 
 pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(create_group_test_impl(handle, ctx));

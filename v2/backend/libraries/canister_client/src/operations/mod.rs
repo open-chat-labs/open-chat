@@ -1,8 +1,6 @@
 use crate::canisters::*;
+use crate::utils::{build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName};
 use crate::{CanisterIds, TestIdentity};
-use crate::utils::{
-    build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName,
-};
 use candid::{CandidType, Principal};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
@@ -110,8 +108,7 @@ pub async fn register_user(url: String, user_identity: TestIdentity, user_index_
 
     let create_canister_args = user_index_canister::create_canister::Args {};
 
-    let create_canister_response =
-        user_index::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
+    let create_canister_response = user_index::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
 
     if let user_index_canister::create_canister::Response::Success(user_canister_id) = create_canister_response {
         user_canister_id.into()
@@ -130,8 +127,7 @@ pub async fn create_group(
 
     if let user_canister::create_group::Response::Success(r) = create_group_response {
         let add_participants_args = group_canister::add_participants::Args { user_ids: participants };
-        let add_participants_response =
-            group::add_participants(agent, &r.group_chat_id.into(), &add_participants_args).await;
+        let add_participants_response = group::add_participants(agent, &r.group_chat_id.into(), &add_participants_args).await;
         if !matches!(add_participants_response, group_canister::add_participants::Response::Success) {
             panic!("Add participants returned an error: {:?}", add_participants_response);
         }

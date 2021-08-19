@@ -1,10 +1,10 @@
 use crate::block_on;
-use ic_fondue::ic_manager::IcHandle;
-use types::{MessageContent, TextContent};
 use canister_client::canisters;
 use canister_client::operations::*;
+use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
-use canister_client::utils::{build_identity, build_ic_agent};
+use ic_fondue::ic_manager::IcHandle;
+use types::{MessageContent, TextContent};
 
 pub fn get_updates_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(get_updates_test_impl(handle, ctx));

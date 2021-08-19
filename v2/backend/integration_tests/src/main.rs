@@ -2,8 +2,8 @@ use fondue::*;
 use ic_fondue::ic_manager::IcManager;
 use ic_fondue::internet_computer::InternetComputer;
 use ic_registry_subnet_type::SubnetType;
-use tokio::runtime::Runtime as TRuntime;
 use std::future::Future;
+use tokio::runtime::Runtime as TRuntime;
 
 mod create_group_test;
 mod get_updates_test;
