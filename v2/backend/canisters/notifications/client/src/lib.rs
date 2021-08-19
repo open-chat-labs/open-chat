@@ -1,8 +1,8 @@
 use ic_cdk::api::call::CallResult;
 use log::error;
 use notifications_canister::*;
-use shared::generate_c2c_call;
 use types::CanisterId;
+use utils::generate_c2c_call;
 
 // Queries
 generate_c2c_call!(notifications);

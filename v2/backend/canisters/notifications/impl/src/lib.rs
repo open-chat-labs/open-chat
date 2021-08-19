@@ -1,12 +1,12 @@
 use crate::model::subscriptions::Subscriptions;
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use shared::env::Environment;
-use shared::event_stream::EventStream;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::NotificationEnvelope;
+use utils::env::Environment;
+use utils::event_stream::EventStream;
 
 mod lifecycle;
 mod model;

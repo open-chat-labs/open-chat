@@ -8,7 +8,9 @@
 
     const dispatch = createEventDispatcher();
 
-    let recording: boolean = false;
+    export let recording: boolean = false;
+    export let percentRecorded: number = 0;
+
     let mediaRecorder: MediaRecorder | undefined;
     let supported = "mediaDevices" in navigator;
 
@@ -47,11 +49,13 @@
                     const recordedChunks: Blob[] = [];
                     let totalSize = 0;
                     let truncated = false;
+                    percentRecorded = 0;
                     mediaRecorder = new MediaRecorder(stream, { mimeType });
 
                     mediaRecorder.addEventListener("dataavailable", (e) => {
                         if (e.data.size > 0) recordedChunks.push(e.data);
                         totalSize += e.data.size;
+                        percentRecorded = (totalSize / MAX_AUDIO_SIZE) * 100;
                         if (totalSize >= MAX_AUDIO_SIZE) {
                             truncated = true;
                             stopRecording();
@@ -76,7 +80,7 @@
                         });
                     });
 
-                    mediaRecorder.start(1000);
+                    mediaRecorder.start(200);
                 })
                 .catch(() => (supported = false)); //catch the case where the user denies access
         }

@@ -5,7 +5,7 @@ const THUMBNAIL_DIMS = dimensions(30, 30);
 const RESIZE_IMAGE_TO = 800;
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
-export const MAX_AUDIO_SIZE = 1024 * 1024 * 5;
+export const MAX_AUDIO_SIZE = 1024 * 1024;
 const MAX_FILE_SIZE = 1024 * 1024;
 
 type Dimensions = {

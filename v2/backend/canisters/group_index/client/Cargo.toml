@@ -10,5 +10,5 @@ edition = "2018"
 group_index_canister = { path = "../api" }
 ic-cdk = { version = "0.3.1", default-features = false }
 log = "0.4.14"
-shared = { path = "../../../shared" }
-types = { path = "../../../types" }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

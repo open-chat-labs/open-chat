@@ -1,10 +1,10 @@
 use crate::model::user_map::UserMap;
 use candid::Principal;
-use shared::env::Environment;
-use shared::event_stream::EventStream;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
+use utils::env::Environment;
+use utils::event_stream::EventStream;
 
 mod lifecycle;
 mod model;

@@ -2,10 +2,10 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use candid::Principal;
 use serde_bytes::ByteBuf;
-use shared::env::Environment;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{CanisterId, UserId, Version};
+use utils::env::Environment;
 
 mod lifecycle;
 mod model;

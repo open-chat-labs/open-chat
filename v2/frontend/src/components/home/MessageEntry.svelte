@@ -11,6 +11,7 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { _ } from "svelte-i18n";
+    import Progress from "../Progress.svelte";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -19,6 +20,8 @@
     export let showEmojiPicker = false;
     let selectedRange: Range | undefined;
     let dragging: boolean = false;
+    let recording: boolean = false;
+    let percentRecorded: number = 0;
 
     onMount(() => {
         inp.focus();
@@ -110,11 +113,16 @@
             on:fileSelected
             on:close={clearAttachment} />
     </div>
+
+    {#if recording}
+        <Progress percent={percentRecorded} />
+    {/if}
     <div
         tabindex={0}
         bind:this={inp}
         on:blur={saveSelection}
         class="textbox"
+        class:recording
         class:dragging
         contenteditable={true}
         on:paste
@@ -130,7 +138,7 @@
         on:drop={onDrop}
         on:keypress={checkEnter} />
     <div class="record">
-        <AudioAttacher on:audioCaptured />
+        <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
     </div>
     <div class="send" on:click={sendMessage}>
         <HoverIcon>
@@ -183,6 +191,10 @@
 
         &.dragging {
             border: 1px dashed var(--entry-input-txt);
+        }
+
+        &.recording {
+            display: none;
         }
     }
 </style>
