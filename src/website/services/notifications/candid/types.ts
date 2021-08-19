@@ -15,7 +15,6 @@ export interface DirectMessage {
   'message_index' : MessageIndex,
 }
 export interface DirectMessageNotification {
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : DirectMessage,
   'sender_name' : string,
@@ -47,7 +46,6 @@ export interface GroupMessage {
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : GroupMessage,
   'sender_name' : string,
   'chat_id' : GroupId,
@@ -60,7 +58,7 @@ export interface GroupMessageReplyContext {
   'message_index' : MessageIndex,
 }
 export interface IndexedNotification {
-  'value' : Notification,
+  'value' : NotificationEnvelope,
   'index' : bigint,
 }
 export interface InitArgs { 'push_service_principals' : Array<Principal> }
@@ -84,6 +82,10 @@ export type Notification = {
   { 'GroupMessageNotification' : GroupMessageNotification } |
   { 'V1GroupMessageNotification' : V1GroupMessageNotification } |
   { 'V1DirectMessageNotification' : V1DirectMessageNotification };
+export interface NotificationEnvelope {
+  'notification' : Notification,
+  'recipients' : Array<UserId>,
+}
 export interface NotificationsArgs { 'from_notification_index' : bigint }
 export type NotificationsResponse = { 'NotAuthorized' : null } |
   { 'Success' : NotificationsSuccessResult };
@@ -92,11 +94,13 @@ export interface NotificationsSuccessResult {
   'notifications' : Array<IndexedNotification>,
 }
 export interface PushDirectMessageNotificationArgs {
+  'recipient' : UserId,
   'notification' : DirectMessageNotification,
 }
 export type PushDirectMessageNotificationResponse = { 'Success' : null };
 export interface PushGroupMessageNotificationArgs {
   'notification' : GroupMessageNotification,
+  'recipients' : Array<UserId>,
 }
 export type PushGroupMessageNotificationResponse = { 'Success' : null };
 export interface PushSubscriptionArgs {
@@ -105,11 +109,13 @@ export interface PushSubscriptionArgs {
 }
 export type PushSubscriptionResponse = { 'Success' : null };
 export interface PushV1DirectMessageNotificationArgs {
+  'recipient' : UserId,
   'notification' : V1DirectMessageNotification,
 }
 export type PushV1DirectMessageNotificationResponse = { 'Success' : null };
 export interface PushV1GroupMessageNotificationArgs {
   'notification' : V1GroupMessageNotification,
+  'recipients' : Array<UserId>,
 }
 export type PushV1GroupMessageNotificationResponse = { 'Success' : null };
 export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
@@ -130,7 +136,8 @@ export interface SubscriptionExistsArgs {
   'p256dh_key' : string,
   'user_id' : UserId,
 }
-export type SubscriptionExistsResponse = { 'No' : null } | { 'Yes' : null };
+export type SubscriptionExistsResponse = { 'No' : null } |
+  { 'Yes' : null };
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type UserId = CanisterId;
@@ -140,7 +147,6 @@ export interface V1CyclesContent {
   'amount' : bigint,
 }
 export interface V1DirectMessageNotification {
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
@@ -157,7 +163,6 @@ export interface V1FileContent {
 export type V1GroupId = bigint;
 export interface V1GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : V1Message,
   'sender_name' : string,
   'chat_id' : V1GroupId,

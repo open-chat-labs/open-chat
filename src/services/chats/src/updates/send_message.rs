@@ -58,15 +58,14 @@ pub fn update(request: Request) -> Response {
             if let Some(sender_name) = request.sender_name {            
                 match chat {
                     ChatEnum::Direct(direct) => {
-                        let them = direct.get_other(&me);
+                        let recipient = direct.get_other(&me).clone();
                         let notification = push_direct_message_notification::Notification {
                             sender: me,
                             sender_name,
-                            recipient: them.clone(),
                             message,
                         };
 
-                        push_direct_message_notification::fire_and_forget(notification);                          
+                        push_direct_message_notification::fire_and_forget(recipient, notification);                          
                     },
                     ChatEnum::Group(group) => {
                         let recipients = group
@@ -80,11 +79,10 @@ pub fn update(request: Request) -> Response {
                             group_name: group.subject().clone(),
                             sender: me,
                             sender_name,
-                            recipients,
                             message,
                         };
 
-                        push_group_message_notification::fire_and_forget(notification);        
+                        push_group_message_notification::fire_and_forget(recipients, notification);        
                     }
                 };
             }

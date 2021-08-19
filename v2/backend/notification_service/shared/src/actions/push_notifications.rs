@@ -7,7 +7,7 @@ use log::error;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::fs::File;
-use types::{CanisterId, IndexedEvent, Notification, UserId};
+use types::{CanisterId, IndexedEvent, Notification, NotificationEnvelope, UserId};
 use web_push::*;
 
 pub async fn run(
@@ -35,6 +35,7 @@ pub async fn run(
             handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_pem).await;
 
         let future1 = store.set_notification_index_processed_up_to(canister_id, latest_notification_index);
+
         let future2 = ic_agent.remove_subscriptions(canister_id, subscriptions_to_remove);
 
         let (result1, result2) = futures::future::join(future1, future2).await;
@@ -51,11 +52,11 @@ pub async fn run(
 }
 
 async fn handle_notifications(
-    notifications: Vec<IndexedEvent<Notification>>,
+    envelopes: Vec<IndexedEvent<NotificationEnvelope>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     vapid_private_pem: &str,
 ) -> HashMap<UserId, Vec<String>> {
-    let grouped_by_user = group_notifications_by_user(notifications);
+    let grouped_by_user = group_notifications_by_user(envelopes);
 
     let client = WebPushClient::new();
 
@@ -92,36 +93,25 @@ async fn handle_notifications(
     subscriptions_to_remove_by_user
 }
 
-fn group_notifications_by_user(notifications: Vec<IndexedEvent<Notification>>) -> HashMap<UserId, Vec<Notification>> {
+fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>>) -> HashMap<UserId, Vec<Notification>> {
     let mut grouped_by_user: HashMap<UserId, Vec<Notification>> = HashMap::new();
 
-    fn assign_notification_to_user(map: &mut HashMap<UserId, Vec<Notification>>, user_id: UserId, notification: Notification) {
+    fn assign_notification_to_user(
+        map: &mut HashMap<UserId, Vec<Notification>>,
+        user_id: UserId,
+        envelope: NotificationEnvelope,
+    ) {
         match map.entry(user_id) {
-            Occupied(e) => e.into_mut().push(notification),
+            Occupied(e) => e.into_mut().push(envelope.notification),
             Vacant(e) => {
-                e.insert(vec![notification]);
+                e.insert(vec![envelope.notification]);
             }
         };
     }
 
-    for n in notifications.into_iter() {
-        match &n.value {
-            Notification::DirectMessageNotification(d) => {
-                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.value.clone());
-            }
-            Notification::GroupMessageNotification(g) => {
-                for u in g.recipients.iter() {
-                    assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
-                }
-            }
-            Notification::V1DirectMessageNotification(d) => {
-                assign_notification_to_user(&mut grouped_by_user, d.recipient, n.value.clone());
-            }
-            Notification::V1GroupMessageNotification(g) => {
-                for u in g.recipients.iter() {
-                    assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
-                }
-            }
+    for n in envelopes.into_iter() {
+        for u in n.value.recipients.iter() {
+            assign_notification_to_user(&mut grouped_by_user, *u, n.value.clone());
         }
     }
 

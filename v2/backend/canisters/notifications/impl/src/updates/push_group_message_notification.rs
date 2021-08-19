@@ -1,7 +1,7 @@
 use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification::{Response::*, *};
-use types::Notification;
+use types::{Notification, NotificationEnvelope};
 
 #[update]
 fn push_group_message_notification(args: Args) -> Response {
@@ -13,12 +13,12 @@ fn push_group_message_notification_impl(args: Args, runtime_state: &mut RuntimeS
     if runtime_state
         .data
         .subscriptions
-        .contains_any(&args.notification.recipients, MAX_SUBSCRIPTION_AGE, now)
+        .contains_any(&args.recipients, MAX_SUBSCRIPTION_AGE, now)
     {
-        runtime_state
-            .data
-            .notifications
-            .add(Notification::GroupMessageNotification(args.notification));
+        runtime_state.data.notifications.add(NotificationEnvelope {
+            recipients: args.recipients,
+            notification: Notification::GroupMessageNotification(args.notification),
+        });
     }
 
     Success

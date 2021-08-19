@@ -8,8 +8,7 @@ use log::trace;
 use notifications_canister::{notifications, remove_notifications, remove_subscriptions};
 use std::collections::HashMap;
 use std::time::Duration;
-use types::CanisterId;
-use types::UserId;
+use types::{CanisterId, UserId};
 
 pub struct IcAgentConfig {
     pub ic_url: String,

@@ -5,7 +5,7 @@ use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
 use shared::rand::get_random_item;
-use types::{CanisterId, GroupMessageNotification};
+use types::{CanisterId, GroupMessageNotification, UserId};
 
 #[update]
 fn send_message(args: Args) -> Response {
@@ -38,10 +38,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 group_name: runtime_state.data.name.value().clone(),
                 sender: participant.user_id,
                 sender_name: args.sender_name,
-                recipients: runtime_state.data.participants.get_other_user_ids(participant.user_id),
                 message,
             };
-            ic_cdk::block_on(push_notification(*canister_id, notification));
+            let recipients = runtime_state.data.participants.get_other_user_ids(participant.user_id);
+
+            ic_cdk::block_on(push_notification(*canister_id, recipients, notification));
         }
 
         Success(SuccessResult {
@@ -54,7 +55,10 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-async fn push_notification(canister_id: CanisterId, notification: GroupMessageNotification) {
-    let args = push_group_message_notification::Args { notification };
+async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, notification: GroupMessageNotification) {
+    let args = push_group_message_notification::Args {
+        recipients,
+        notification,
+    };
     let _ = notifications_canister_client::push_group_message_notification(canister_id, &args).await;
 }

@@ -78,12 +78,13 @@ pub async fn update(request: Request) -> Response {
     let message_id = message.get_id();
 
     if let Some(sender_name) = request.sender_name {
-        push_direct_message_notification::fire_and_forget(Notification {
+        let recipient = request.recipient.into();
+        let notification = Notification {
             sender: me,
             sender_name,
-            recipient: request.recipient.into(),
             message,
-        });            
+        };
+        push_direct_message_notification::fire_and_forget(recipient, notification);            
     }
 
     Success(Result {

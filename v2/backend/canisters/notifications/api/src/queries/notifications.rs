@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 use std::collections::HashMap;
-use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
+use types::{IndexedEvent, NotificationEnvelope, SubscriptionInfo, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -16,6 +16,6 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub notifications: Vec<IndexedEvent<Notification>>,
+    pub notifications: Vec<IndexedEvent<NotificationEnvelope>>,
     pub subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
 }
