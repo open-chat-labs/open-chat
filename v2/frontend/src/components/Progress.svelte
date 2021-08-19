@@ -25,6 +25,7 @@
         transition: width 300ms;
         display: block;
         height: 100%;
+        border-radius: $progress-bar-x-large / 2;
         background-color: var(--button-bg);
         position: relative;
     }
