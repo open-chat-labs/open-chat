@@ -24,7 +24,7 @@
     });
 
     function stopRecording() {
-        if (mediaRecorder) {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
         }
     }
@@ -45,21 +45,25 @@
                     recording = true;
                     const mimeType = "audio/webm";
                     const recordedChunks: Blob[] = [];
+                    let totalSize = 0;
+                    let truncated = false;
                     mediaRecorder = new MediaRecorder(stream, { mimeType });
 
                     mediaRecorder.addEventListener("dataavailable", (e) => {
                         if (e.data.size > 0) recordedChunks.push(e.data);
+                        totalSize += e.data.size;
+                        if (totalSize >= MAX_AUDIO_SIZE) {
+                            truncated = true;
+                            stopRecording();
+                        }
                     });
 
                     mediaRecorder.addEventListener("stop", async () => {
-                        const blob = new Blob(recordedChunks);
-                        const truncated = blob.size > MAX_AUDIO_SIZE;
-                        const data = await (truncated
-                            ? blob.slice(0, MAX_AUDIO_SIZE).arrayBuffer()
-                            : blob.arrayBuffer());
+                        const data = await new Blob(recordedChunks).arrayBuffer();
                         mediaRecorder = undefined;
                         recording = false;
                         if (truncated) {
+                            // let the user know if we stopped recording prematurely
                             toastStore.showFailureToast("maxAudioSize");
                         }
                         dispatch("audioCaptured", {
@@ -72,7 +76,7 @@
                         });
                     });
 
-                    mediaRecorder.start();
+                    mediaRecorder.start(1000);
                 })
                 .catch(() => (supported = false)); //catch the case where the user denies access
         }
