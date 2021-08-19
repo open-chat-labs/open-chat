@@ -1,18 +1,21 @@
-use std::collections::{HashMap, hash_map::Entry::{Vacant, Occupied}};
 use ic_cdk::export::candid::CandidType;
 use serde::Deserialize;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
+use std::collections::{
+    hash_map::Entry::{Occupied, Vacant},
+    HashMap,
+};
 
 #[derive(CandidType, Deserialize)]
 pub struct AllConnectionDetails {
-    connection_details_per_user: HashMap<UserId, Vec<ConnectionDetails>>
+    connection_details_per_user: HashMap<UserId, Vec<ConnectionDetails>>,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
 pub enum ConnectionDetails {
     Offer(Offer),
-    Answer(Answer)
+    Answer(Answer),
 }
 
 #[derive(CandidType, Clone, Deserialize)]
@@ -22,7 +25,7 @@ pub struct Offer {
     to: UserId,
     connection_string: String,
     ice_candidates: Vec<String>,
-    timestamp: Timestamp
+    timestamp: Timestamp,
 }
 
 #[derive(CandidType, Clone, Deserialize)]
@@ -33,13 +36,13 @@ pub struct Answer {
     to: UserId,
     connection_string: String,
     ice_candidates: Vec<String>,
-    timestamp: Timestamp
+    timestamp: Timestamp,
 }
 
 #[derive(CandidType)]
 pub enum ConnectionDetailsSummary {
     Offer(OfferSummary),
-    Answer(AnswerSummary)
+    Answer(AnswerSummary),
 }
 
 #[derive(CandidType)]
@@ -48,7 +51,7 @@ pub struct OfferSummary {
     user_id: UserId,
     connection_string: String,
     ice_candidates: Vec<String>,
-    age_seconds: u32
+    age_seconds: u32,
 }
 
 #[derive(CandidType)]
@@ -58,7 +61,7 @@ pub struct AnswerSummary {
     user_id: UserId,
     connection_string: String,
     ice_candidates: Vec<String>,
-    age_seconds: u32
+    age_seconds: u32,
 }
 
 impl AllConnectionDetails {
@@ -69,31 +72,32 @@ impl AllConnectionDetails {
         them: UserId,
         connection_string: String,
         ice_candidates: Vec<String>,
-        now: Timestamp) -> Option<OfferSummary> {
-
+        now: Timestamp,
+    ) -> Option<OfferSummary> {
         // If the reverse offer already exists, return that
-        if let Occupied(e) = self.connection_details_per_user.entry(me.clone()) {
+        if let Occupied(e) = self.connection_details_per_user.entry(me) {
             if let Some(o) = e.get().iter().find_map(|c| match c {
-                ConnectionDetails::Offer(offer) => if offer.from == them { Some(offer) } else { None },
-                _ => None
+                ConnectionDetails::Offer(offer) => {
+                    if offer.from == them {
+                        Some(offer)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
             }) {
                 return Some(OfferSummary {
                     id: o.id.clone(),
                     user_id: them,
                     connection_string: o.connection_string.clone(),
                     ice_candidates: o.ice_candidates.to_vec(),
-                    age_seconds: ((now - o.timestamp) / 1000) as u32
+                    age_seconds: ((now - o.timestamp) / 1000) as u32,
                 });
             }
         }
 
-        let offer = ConnectionDetails::new_offer(
-            id,
-            me.clone(),
-            them.clone(),
-            connection_string,
-            ice_candidates,
-            now);
+        let offer =
+            ConnectionDetails::new_offer(id, me, them, connection_string, ice_candidates, now);
 
         self.add_connection_details(&me, them, offer);
 
@@ -108,21 +112,34 @@ impl AllConnectionDetails {
         them: UserId,
         connection_string: String,
         ice_candidates: Vec<String>,
-        now: Timestamp) {
-
-        let answer = ConnectionDetails::new_answer(id, offer_id, me.clone(), them.clone(), connection_string, ice_candidates, now);
+        now: Timestamp,
+    ) {
+        let answer = ConnectionDetails::new_answer(
+            id,
+            offer_id,
+            me,
+            them,
+            connection_string,
+            ice_candidates,
+            now,
+        );
 
         self.add_connection_details(&me, them, answer);
     }
 
-    pub fn get_connection_details(&self, to: &UserId, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<ConnectionDetailsSummary> {
+    pub fn get_connection_details(
+        &self,
+        to: &UserId,
+        updated_since: Option<Timestamp>,
+        now: Timestamp,
+    ) -> Vec<ConnectionDetailsSummary> {
         match self.connection_details_per_user.get(to) {
             Some(v) => v
                 .iter()
                 .filter(|c| updated_since.is_none() || c.get_timestamp() > updated_since.unwrap())
                 .map(|c| ConnectionDetailsSummary::new(c, now))
                 .collect(),
-            None => Vec::new()
+            None => Vec::new(),
         }
     }
 
@@ -140,12 +157,12 @@ impl AllConnectionDetails {
         &mut self,
         me: &UserId,
         them: UserId,
-        connection_details: ConnectionDetails) {
-
+        connection_details: ConnectionDetails,
+    ) {
         match self.connection_details_per_user.entry(them) {
             Vacant(e) => {
-                e.insert(vec!(connection_details));
-            },
+                e.insert(vec![connection_details]);
+            }
             Occupied(e) => {
                 let connections = e.into_mut();
                 connections.retain(|c| c.get_from_user() != me);
@@ -156,18 +173,33 @@ impl AllConnectionDetails {
 }
 
 impl ConnectionDetails {
-    pub fn new_offer(id: String, from: UserId, to: UserId, connection_string: String, ice_candidates: Vec<String>, timestamp: Timestamp) -> ConnectionDetails {
+    pub fn new_offer(
+        id: String,
+        from: UserId,
+        to: UserId,
+        connection_string: String,
+        ice_candidates: Vec<String>,
+        timestamp: Timestamp,
+    ) -> ConnectionDetails {
         ConnectionDetails::Offer(Offer {
             id,
             from,
             to,
             connection_string,
             ice_candidates,
-            timestamp
+            timestamp,
         })
     }
 
-    pub fn new_answer(id: String, offer_id: String, from: UserId, to: UserId, connection_string: String, ice_candidates: Vec<String>, timestamp: Timestamp) -> ConnectionDetails {
+    pub fn new_answer(
+        id: String,
+        offer_id: String,
+        from: UserId,
+        to: UserId,
+        connection_string: String,
+        ice_candidates: Vec<String>,
+        timestamp: Timestamp,
+    ) -> ConnectionDetails {
         ConnectionDetails::Answer(Answer {
             id,
             offer_id,
@@ -175,28 +207,28 @@ impl ConnectionDetails {
             to,
             connection_string,
             ice_candidates,
-            timestamp
+            timestamp,
         })
     }
 
     pub fn get_id(&self) -> &str {
         match self {
             ConnectionDetails::Offer(o) => &o.id,
-            ConnectionDetails::Answer(a) => &a.id
+            ConnectionDetails::Answer(a) => &a.id,
         }
     }
 
     pub fn get_from_user(&self) -> &UserId {
         match self {
             ConnectionDetails::Offer(o) => &o.from,
-            ConnectionDetails::Answer(a) => &a.from
+            ConnectionDetails::Answer(a) => &a.from,
         }
     }
 
     pub fn get_timestamp(&self) -> Timestamp {
         match self {
             ConnectionDetails::Offer(o) => o.timestamp,
-            ConnectionDetails::Answer(a) => a.timestamp
+            ConnectionDetails::Answer(a) => a.timestamp,
         }
     }
 }
@@ -204,25 +236,21 @@ impl ConnectionDetails {
 impl ConnectionDetailsSummary {
     pub fn new(connection_details: &ConnectionDetails, now: Timestamp) -> ConnectionDetailsSummary {
         match connection_details {
-            ConnectionDetails::Offer(o) => {
-                ConnectionDetailsSummary::Offer(OfferSummary {
-                    id: o.id.clone(),
-                    user_id: o.from.clone(),
-                    connection_string: o.connection_string.clone(),
-                    ice_candidates: o.ice_candidates.to_vec(),
-                    age_seconds: ((now - o.timestamp) / 1000) as u32
-                })
-            },
-            ConnectionDetails::Answer(a) => {
-                ConnectionDetailsSummary::Answer(AnswerSummary {
-                    id: a.id.clone(),
-                    offer_id: a.offer_id.clone(),
-                    user_id: a.from.clone(),
-                    connection_string: a.connection_string.clone(),
-                    ice_candidates: a.ice_candidates.to_vec(),
-                    age_seconds: ((now - a.timestamp) / 1000) as u32
-                })
-            }
+            ConnectionDetails::Offer(o) => ConnectionDetailsSummary::Offer(OfferSummary {
+                id: o.id.clone(),
+                user_id: o.from,
+                connection_string: o.connection_string.clone(),
+                ice_candidates: o.ice_candidates.to_vec(),
+                age_seconds: ((now - o.timestamp) / 1000) as u32,
+            }),
+            ConnectionDetails::Answer(a) => ConnectionDetailsSummary::Answer(AnswerSummary {
+                id: a.id.clone(),
+                offer_id: a.offer_id.clone(),
+                user_id: a.from,
+                connection_string: a.connection_string.clone(),
+                ice_candidates: a.ice_candidates.to_vec(),
+                age_seconds: ((now - a.timestamp) / 1000) as u32,
+            }),
         }
     }
 }
@@ -230,7 +258,7 @@ impl ConnectionDetailsSummary {
 impl Default for AllConnectionDetails {
     fn default() -> Self {
         AllConnectionDetails {
-            connection_details_per_user: HashMap::new()
+            connection_details_per_user: HashMap::new(),
         }
     }
 }

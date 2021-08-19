@@ -1,9 +1,9 @@
+use self::Response::*;
+use crate::domain::chat::{Chat, Message};
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
-use crate::domain::chat_list::ChatList;
-use crate::domain::chat::{Chat, Message};
-use self::Response::*;
 
 pub fn query(search_term: &str, max_results: u8) -> Response {
     let chat_list: &ChatList = storage::get();
@@ -15,7 +15,7 @@ pub fn query(search_term: &str, max_results: u8) -> Response {
         for message in chat.search_messages(search_term, &me) {
             matches.push(Match {
                 chat_id: chat.get_id(),
-                message
+                message,
             });
         }
     }
@@ -23,7 +23,7 @@ pub fn query(search_term: &str, max_results: u8) -> Response {
     matches.sort_unstable_by(|x, y| y.message.get_timestamp().cmp(&x.message.get_timestamp()));
 
     let result = Result {
-        matches: matches.into_iter().take(max_results as usize).collect()
+        matches: matches.into_iter().take(max_results as usize).collect(),
     };
 
     Success(result)
@@ -31,16 +31,16 @@ pub fn query(search_term: &str, max_results: u8) -> Response {
 
 #[derive(CandidType)]
 pub enum Response {
-    Success(Result)
+    Success(Result),
 }
 
 #[derive(CandidType)]
 pub struct Result {
-    matches: Vec<Match>
+    matches: Vec<Match>,
 }
 
 #[derive(CandidType)]
 pub struct Match {
     chat_id: ChatId,
-    message: Message
+    message: Message,
 }

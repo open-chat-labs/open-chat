@@ -1,8 +1,8 @@
+use self::Response::*;
+use crate::domain::connection_details::{AllConnectionDetails, ConnectionDetailsSummary};
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::timestamp::Timestamp;
-use self::Response::*;
-use crate::domain::connection_details::{AllConnectionDetails, ConnectionDetailsSummary};
 
 pub fn query(updated_since: Option<Timestamp>) -> Response {
     let me = shared::user_id::get_current();
@@ -13,7 +13,7 @@ pub fn query(updated_since: Option<Timestamp>) -> Response {
 
     let result = Result {
         connections,
-        timestamp: now
+        timestamp: now,
     };
 
     Success(result)
@@ -21,11 +21,11 @@ pub fn query(updated_since: Option<Timestamp>) -> Response {
 
 #[derive(CandidType)]
 pub enum Response {
-    Success(Result)
+    Success(Result),
 }
 
 #[derive(CandidType)]
 pub struct Result {
     connections: Vec<ConnectionDetailsSummary>,
-    timestamp: Timestamp
+    timestamp: Timestamp,
 }

@@ -1,11 +1,11 @@
 use shared::chat_id::ChatId;
 use shared::user_id::UserId;
-use std::collections::{HashSet, HashMap};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct UserToChatsMap {
-    map: HashMap<UserId, HashSet<ChatId>>
+    map: HashMap<UserId, HashSet<ChatId>>,
 }
 
 impl UserToChatsMap {
@@ -15,9 +15,7 @@ impl UserToChatsMap {
 
     pub fn link_chat_to_user(&mut self, chat_id: ChatId, user_id: UserId) -> bool {
         match self.map.entry(user_id) {
-            Occupied(e) => {
-                e.into_mut().insert(chat_id)
-            },
+            Occupied(e) => e.into_mut().insert(chat_id),
             Vacant(e) => {
                 let mut hs = HashSet::new();
                 hs.insert(chat_id);
@@ -39,13 +37,15 @@ impl UserToChatsMap {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
     use itertools::Itertools;
+    use std::str::FromStr;
 
     #[test]
     fn link_then_get_all_should_return_chats() {
         let mut map = UserToChatsMap::default();
-        let user_id = UserId::from_str("bngem-gzprz-dtr6o-xnali-fgmfi-fjgpb-rya7j-x2idk-3eh6u-4v7tx-hqe").unwrap();
+        let user_id =
+            UserId::from_str("bngem-gzprz-dtr6o-xnali-fgmfi-fjgpb-rya7j-x2idk-3eh6u-4v7tx-hqe")
+                .unwrap();
 
         for c in (0..10).map(|i| ChatId(i)) {
             map.link_chat_to_user(c, user_id.clone());
@@ -63,7 +63,9 @@ mod tests {
     #[test]
     fn unlink_then_get_all_should_not_return_unlinked_chats() {
         let mut map = UserToChatsMap::default();
-        let user_id = UserId::from_str("bngem-gzprz-dtr6o-xnali-fgmfi-fjgpb-rya7j-x2idk-3eh6u-4v7tx-hqe").unwrap();
+        let user_id =
+            UserId::from_str("bngem-gzprz-dtr6o-xnali-fgmfi-fjgpb-rya7j-x2idk-3eh6u-4v7tx-hqe")
+                .unwrap();
 
         for c in (0..10).map(|i| ChatId(i)) {
             map.link_chat_to_user(c, user_id.clone());

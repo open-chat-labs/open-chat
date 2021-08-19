@@ -1,10 +1,10 @@
+use self::Response::*;
+use crate::domain::user_store::{UserStore, UserSummary};
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
-use shared::{timestamp, timestamp::Timestamp};
 use shared::user_id::UserId;
-use crate::domain::user_store::{UserStore, UserSummary};
-use self::Response::*;
+use shared::{timestamp, timestamp::Timestamp};
 
 pub fn query(request: Request) -> Response {
     let me = shared::user_id::get_current();
@@ -15,7 +15,7 @@ pub fn query(request: Request) -> Response {
 
     let result = Result {
         users,
-        timestamp: now
+        timestamp: now,
     };
 
     Success(result)
@@ -24,16 +24,16 @@ pub fn query(request: Request) -> Response {
 #[derive(Deserialize)]
 pub struct Request {
     users: Vec<UserId>,
-    updated_since: Option<Timestamp>
+    updated_since: Option<Timestamp>,
 }
 
 #[derive(CandidType)]
 pub enum Response {
-    Success(Result)
+    Success(Result),
 }
 
 #[derive(CandidType)]
 pub struct Result {
     users: Vec<UserSummary>,
-    timestamp: Timestamp
+    timestamp: Timestamp,
 }

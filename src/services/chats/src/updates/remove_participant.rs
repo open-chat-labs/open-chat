@@ -1,11 +1,11 @@
+use self::Response::*;
+use crate::domain::chat::ChatEnum;
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
 use shared::timestamp;
 use shared::user_id::UserId;
-use crate::domain::chat::ChatEnum;
-use crate::domain::chat_list::ChatList;
-use self::Response::*;
 
 pub fn update(chat_id: ChatId, user: UserId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
@@ -26,12 +26,12 @@ pub fn update(chat_id: ChatId, user: UserId) -> Response {
                 true => {
                     chat_list.unlink_chat_from_user(&chat_id, &user);
                     Success
-                },
-                false => ParticipantNotFound
+                }
+                false => ParticipantNotFound,
             }
-        },
+        }
         Some(_) => NotGroupChat,
-        None => ChatNotFound
+        None => ChatNotFound,
     }
 }
 
@@ -42,5 +42,5 @@ pub enum Response {
     ParticipantNotFound,
     CannotRemoveSelfFromChat,
     ChatNotFound,
-    NotGroupChat
+    NotGroupChat,
 }

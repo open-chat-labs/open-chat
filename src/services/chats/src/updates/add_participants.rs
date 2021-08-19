@@ -1,12 +1,12 @@
+use self::Response::*;
+use crate::domain::blocked_users::{BlockedStatus, BlockedUsers};
+use crate::domain::chat::ChatEnum;
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
-use shared::user_id::UserId;
 use shared::timestamp;
-use crate::domain::chat::ChatEnum;
-use crate::domain::chat_list::ChatList;
-use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
-use self::Response::*;
+use shared::user_id::UserId;
 
 pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
@@ -28,7 +28,7 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
                 for u in users {
                     if blocked_users.blocked_status(&me, &u) != BlockedStatus::Unblocked {
                         blocked.push(u);
-                    } else if group_chat.add_participant(u.clone(), now) {
+                    } else if group_chat.add_participant(u, now) {
                         added.push(u);
                     }
                 }
@@ -43,20 +43,20 @@ pub fn update(chat_id: ChatId, users: Vec<UserId>) -> Response {
                 } else {
                     PartialSuccess(PartialSuccess {
                         count_added,
-                        blocked
+                        blocked,
                     })
                 }
             }
-        },
+        }
         Some(_) => NotGroupChat,
-        None => ChatNotFound
+        None => ChatNotFound,
     }
 }
 
 #[derive(CandidType)]
 pub struct PartialSuccess {
     count_added: u32,
-    blocked: Vec<UserId>
+    blocked: Vec<UserId>,
 }
 
 #[derive(CandidType)]
@@ -65,5 +65,5 @@ pub enum Response {
     PartialSuccess(PartialSuccess),
     Unauthorized,
     ChatNotFound,
-    NotGroupChat
+    NotGroupChat,
 }

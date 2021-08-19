@@ -1,10 +1,10 @@
+use self::Response::*;
+use crate::domain::chat::ChatEnum;
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
 use shared::timestamp;
-use crate::domain::chat::ChatEnum;
-use crate::domain::chat_list::ChatList;
-use self::Response::*;
 
 pub fn update(chat_id: ChatId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
@@ -17,7 +17,7 @@ pub fn update(chat_id: ChatId) -> Response {
             if group_chat.is_user_in_group(&me) {
                 AlreadyInGroup
             } else {
-                let added = group_chat.add_participant(me.clone(), now);
+                let added = group_chat.add_participant(me, now);
                 if added {
                     chat_list.link_chat_to_user(chat_id, me);
                     Success
@@ -25,9 +25,9 @@ pub fn update(chat_id: ChatId) -> Response {
                     GroupSizeLimitReached
                 }
             }
-        },
+        }
         Some(_) => NotGroupChat,
-        None => ChatNotFound
+        None => ChatNotFound,
     }
 }
 
@@ -37,5 +37,5 @@ pub enum Response {
     AlreadyInGroup,
     GroupSizeLimitReached,
     ChatNotFound,
-    NotGroupChat
+    NotGroupChat,
 }

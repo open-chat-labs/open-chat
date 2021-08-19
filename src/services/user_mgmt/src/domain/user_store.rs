@@ -13,7 +13,7 @@ const MIN_USERNAME_LENGTH: u16 = 2;
 
 #[derive(Default)]
 pub struct UserStore {
-    data: MultiMap<UserId, String, User>
+    data: MultiMap<UserId, String, User>,
 }
 
 pub struct Stats {
@@ -29,7 +29,7 @@ pub struct User {
     last_updated: Timestamp,
     account_balance: u128,
     image_id: Option<String>,
-    version: u32
+    version: u32,
 }
 
 #[derive(CandidType)]
@@ -38,7 +38,7 @@ pub struct MyProfile {
     username: String,
     account_balance: u128,
     image_id: Option<String>,
-    version: u32
+    version: u32,
 }
 
 #[derive(CandidType)]
@@ -48,7 +48,7 @@ pub struct UserSummary {
     seconds_since_last_online: u32,
     image_id: Option<String>,
     chat_id: ChatId,
-    version: u32
+    version: u32,
 }
 
 #[derive(CandidType)]
@@ -58,7 +58,7 @@ pub enum RegisterUserResponse {
     UsernameTaken,
     UsernameTooShort(u16),
     UsernameTooLong(u16),
-    UserLimitReached(u64)
+    UserLimitReached(u64),
 }
 
 #[derive(CandidType)]
@@ -76,16 +76,21 @@ pub enum TransferCyclesResponse {
     Success(TransferCyclesResult),
     UserNotFound,
     RecipientNotFound,
-    BalanceExceeded
+    BalanceExceeded,
 }
 
 #[derive(CandidType)]
 pub struct TransferCyclesResult {
-    new_balance: u128
+    new_balance: u128,
 }
 
 impl UserStore {
-    pub fn register_user(&mut self, user_id: UserId, username: String, now: Timestamp) -> RegisterUserResponse {
+    pub fn register_user(
+        &mut self,
+        user_id: UserId,
+        username: String,
+        now: Timestamp,
+    ) -> RegisterUserResponse {
         // Validation
         if username.len() > MAX_USERNAME_LENGTH as usize {
             return RegisterUserResponse::UsernameTooLong(MAX_USERNAME_LENGTH);
@@ -98,18 +103,22 @@ impl UserStore {
             return RegisterUserResponse::UserLimitReached(MAX_USERS);
         }
 
-        if self.data.contains_key(&user_id) { return RegisterUserResponse::UserExists; }
-        if self.data.contains_key_alt(&username) { return RegisterUserResponse::UsernameTaken; }
+        if self.data.contains_key(&user_id) {
+            return RegisterUserResponse::UserExists;
+        }
+        if self.data.contains_key_alt(&username) {
+            return RegisterUserResponse::UsernameTaken;
+        }
 
         let user = User {
-            id: user_id.clone(),
+            id: user_id,
             username: username.clone(),
             joined: now,
             last_online: now,
             last_updated: now,
             account_balance: 10_000_000_000_000,
             image_id: None,
-            version: 1
+            version: 1,
         };
 
         let my_profile = MyProfile::new(&user);
@@ -119,7 +128,12 @@ impl UserStore {
         RegisterUserResponse::Success(my_profile)
     }
 
-    pub fn update_username(&mut self, user_id: UserId, username: String, now: Timestamp) -> UpdateUsernameResponse {
+    pub fn update_username(
+        &mut self,
+        user_id: UserId,
+        username: String,
+        now: Timestamp,
+    ) -> UpdateUsernameResponse {
         // Validation
         if username.len() > MAX_USERNAME_LENGTH as usize {
             return UpdateUsernameResponse::UsernameTooLong(MAX_USERNAME_LENGTH);
@@ -150,7 +164,12 @@ impl UserStore {
         }
     }
 
-    pub fn set_profile_image(&mut self, user_id: &UserId, image_id: String, now: Timestamp) -> bool {
+    pub fn set_profile_image(
+        &mut self,
+        user_id: &UserId,
+        image_id: String,
+        now: Timestamp,
+    ) -> bool {
         match self.data.get_mut(user_id) {
             Some(user) => {
                 user.image_id = Some(image_id);
@@ -158,8 +177,8 @@ impl UserStore {
                 user.last_updated = now;
                 user.version += 1;
                 true
-            },
-            None => false
+            }
+            None => false,
         }
     }
 
@@ -170,33 +189,53 @@ impl UserStore {
     }
 
     pub fn get_user_id(&self, username: &String) -> Option<UserId> {
-        self.data.get_alt(username).map(|u| u.id.clone())
+        self.data.get_alt(username).map(|u| u.id)
     }
 
     pub fn get_my_profile(&self, user_id: &UserId) -> Option<MyProfile> {
         self.data.get(user_id).map(|u| MyProfile::new(u))
     }
 
-    pub fn get_users(&self, users: Vec<UserId>, me: &UserId, updated_since: Option<Timestamp>, now: Timestamp) -> Vec<UserSummary> {
+    pub fn get_users(
+        &self,
+        users: Vec<UserId>,
+        me: &UserId,
+        updated_since: Option<Timestamp>,
+        now: Timestamp,
+    ) -> Vec<UserSummary> {
         fn filter(user: &User, updated_since: Timestamp) -> bool {
             user.last_online > updated_since || user.last_updated > updated_since
         }
 
         users
             .iter()
-            .filter_map(|id| self.data.get(&id))
-            .filter(|u| if let Some(updated_since) = updated_since { filter(u, updated_since) } else { true })
+            .filter_map(|id| self.data.get(id))
+            .filter(|u| {
+                if let Some(updated_since) = updated_since {
+                    filter(u, updated_since)
+                } else {
+                    true
+                }
+            })
             .map(|u| UserSummary::new(u, me, Some(now)))
             .collect()
     }
 
-    pub fn search_users(&self, search_term: String, max_results: u8, me: &UserId, now: Timestamp) -> Vec<UserSummary> {
+    pub fn search_users(
+        &self,
+        search_term: String,
+        max_results: u8,
+        me: &UserId,
+        now: Timestamp,
+    ) -> Vec<UserSummary> {
         // Filter
         let search_term_lower = search_term.to_lowercase();
         let mut matches: Vec<&String> = self
             .data
             .iter()
-            .filter(|(user_id, (username, _))| UserStore::username_matches(&search_term_lower, username) && *user_id != me)
+            .filter(|(user_id, (username, _))| {
+                UserStore::username_matches(&search_term_lower, username) && *user_id != me
+            })
             .map(|(_, (username, _))| username)
             .collect();
 
@@ -212,8 +251,12 @@ impl UserStore {
             .collect()
     }
 
-    pub fn transfer_cycles(&mut self, my_id: &UserId, recipient_id: &UserId, amount: u128) -> TransferCyclesResponse {
-
+    pub fn transfer_cycles(
+        &mut self,
+        my_id: &UserId,
+        recipient_id: &UserId,
+        amount: u128,
+    ) -> TransferCyclesResponse {
         let new_balance: u128;
         {
             let me = self.data.get_mut(my_id);
@@ -229,14 +272,14 @@ impl UserStore {
             me.account_balance -= amount;
             new_balance = me.account_balance;
         }
-        
+
         {
             let recipient = self.data.get_mut(recipient_id);
             if recipient.is_none() {
                 return TransferCyclesResponse::RecipientNotFound;
             }
             let recipient = recipient.unwrap();
-            
+
             recipient.account_balance += amount;
         }
 
@@ -256,7 +299,7 @@ impl UserStore {
     fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
         let u1_starts = u1.starts_with(&search_term);
         let u2_starts = u2.starts_with(&search_term);
-    
+
         if u1_starts != u2_starts {
             if u1_starts {
                 Ordering::Less
@@ -266,45 +309,39 @@ impl UserStore {
         } else {
             match u1.len().cmp(&u2.len()) {
                 Ordering::Less => Ordering::Less,
-                Ordering::Equal => u1.cmp(&u2),
+                Ordering::Equal => u1.cmp(u2),
                 Ordering::Greater => Ordering::Greater,
             }
         }
     }
-    
 }
 
 impl StableState for UserStore {
     type State = Vec<User>;
 
     fn drain(self) -> Vec<User> {
-        self.data
-            .into_iter()
-            .map(|(_, (_, u))| u)
-            .collect()
+        self.data.into_iter().map(|(_, (_, u))| u).collect()
     }
-    
+
     fn fill(users: Vec<User>) -> UserStore {
         let mut data = MultiMap::with_capacity(users.len());
 
         for user in users {
-            data.insert(user.id.clone(), user.username.clone(), user);
+            data.insert(user.id, user.username.clone(), user);
         }
 
-        UserStore {
-            data
-        }
+        UserStore { data }
     }
 }
 
 impl MyProfile {
     fn new(user: &User) -> MyProfile {
         MyProfile {
-            id: user.id.clone(),
+            id: user.id,
             username: user.username.clone(),
             account_balance: user.account_balance,
             image_id: user.image_id.clone(),
-            version: user.version
+            version: user.version,
         }
     }
 }
@@ -319,12 +356,12 @@ impl UserSummary {
         }
 
         UserSummary {
-            id: user.id.clone(),
+            id: user.id,
             username: user.username.clone(),
             seconds_since_last_online,
             image_id: user.image_id.clone(),
             chat_id: ChatId::for_direct_chat(me, &user.id),
-            version: user.version
+            version: user.version,
         }
     }
 }

@@ -1,10 +1,10 @@
+use self::Response::*;
+use crate::domain::chat::Chat;
+use crate::domain::chat_list::ChatList;
+use crate::queries::get_messages::Result;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
-use crate::domain::chat_list::ChatList;
-use crate::domain::chat::Chat;
-use crate::queries::get_messages::Result;
-use self::Response::*;
 
 pub fn query(chat_id: ChatId, ids: Vec<u32>) -> Response {
     let chat_list: &ChatList = storage::get();
@@ -22,5 +22,5 @@ pub fn query(chat_id: ChatId, ids: Vec<u32>) -> Response {
 #[derive(CandidType)]
 pub enum Response {
     Success(Result),
-    ChatNotFound
+    ChatNotFound,
 }
