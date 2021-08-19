@@ -3,12 +3,12 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use ic_cdk_macros::update;
-use shared::canisters;
-use shared::canisters::create::CreateCanisterError;
-use shared::consts::CREATE_CANISTER_CYCLES_FEE;
 use types::{CanisterCreationStatus, CanisterId, CanisterWasm, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
+use utils::canisters;
+use utils::canisters::create::CreateCanisterError;
+use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
 async fn create_canister(_args: Args) -> Response {

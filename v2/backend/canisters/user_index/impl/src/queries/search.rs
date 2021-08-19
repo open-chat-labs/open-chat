@@ -69,9 +69,9 @@ mod tests {
     use crate::Data;
     use candid::Principal;
     use phonenumber::PhoneNumber;
-    use shared::env::test::TestEnv;
     use std::str::FromStr;
     use types::Version;
+    use utils::env::test::TestEnv;
 
     #[test]
     fn search_results_constrained_by_max_results() {

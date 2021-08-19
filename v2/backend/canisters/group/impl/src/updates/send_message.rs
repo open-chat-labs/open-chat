@@ -4,8 +4,8 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
-use shared::rand::get_random_item;
 use types::{CanisterId, GroupMessageNotification, UserId};
+use utils::rand::get_random_item;
 
 #[update]
 fn send_message(args: Args) -> Response {
