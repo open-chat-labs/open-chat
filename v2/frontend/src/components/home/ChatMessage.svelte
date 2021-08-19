@@ -107,6 +107,8 @@
 
         <ChatMessageContent {me} content={msg.content} />
 
+        <pre>{msg.messageIndex}</pre>
+
         {#if metaData}
             {#await metaData then meta}
                 <div class="meta">

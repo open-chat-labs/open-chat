@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ActionObject, createMachine, MachineConfig, MachineOptions } from "xstate";
+import {
+    ActionObject,
+    createMachine,
+    DoneEvent,
+    DoneInvokeEvent,
+    MachineConfig,
+    MachineOptions,
+} from "xstate";
 import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
@@ -21,6 +28,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { participantsMachine } from "./participants.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
+import { chatStore } from "../stores/chat";
 
 const PAGE_SIZE = 20;
 
@@ -214,7 +222,18 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         src: "loadEventsAndUsers",
                         onDone: {
                             target: "idle",
-                            actions: "assignEventsResponse",
+                            actions: [
+                                "assignEventsResponse",
+                                pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
+                                    if (ev.data.events.length > 0) {
+                                        chatStore.set({
+                                            chatId: ctx.chatSummary.chatId,
+                                            event: "loaded_new_messages",
+                                        });
+                                    }
+                                    return undefined;
+                                }),
+                            ],
                         },
                         onError: {
                             target: "error",
@@ -289,7 +308,18 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 src: "loadEventsAndUsers",
                                 onDone: {
                                     target: "#ui_idle",
-                                    actions: "assignEventsResponse",
+                                    actions: [
+                                        "assignEventsResponse",
+                                        pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
+                                            if (ev.data.events.length > 0) {
+                                                chatStore.set({
+                                                    chatId: ctx.chatSummary.chatId,
+                                                    event: "loaded_previous_messages",
+                                                });
+                                            }
+                                            return undefined;
+                                        }),
+                                    ],
                                 },
                                 onError: {
                                     target: "error",
@@ -311,6 +341,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     entry: assign((ctx, ev) => {
                         if (ev.type === "SEND_MESSAGE") {
                             // todo - this is obvious a huge simplification at the moment
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: "sending_message",
+                            });
                             const index = latestLoadedEventIndex(ctx.events) ?? 0;
                             return {
                                 events: [
