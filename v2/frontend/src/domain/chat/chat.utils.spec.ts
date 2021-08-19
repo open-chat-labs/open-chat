@@ -17,7 +17,6 @@ const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    lastUpdated: BigInt(0),
     latestReadByMe: 0,
     latestReadByThem: 0,
     latestMessage: undefined,
@@ -193,7 +192,6 @@ describe("merging updates", () => {
             kind: "direct_chat",
             latestReadByThem: 100,
             chatId: "4",
-            timestamp: BigInt(1000),
             latestReadByMe: 200,
             latestEventIndex: 300,
             latestMessage: {
@@ -234,9 +232,12 @@ describe("merging updates", () => {
                 timestamp: BigInt(400),
             },
             latestEventIndex: 300,
-            participantsAdded: [participant("4"), participant("5")],
+            participantsAddedOrUpdated: [
+                participant("4"),
+                participant("5"),
+                { ...participant("1"), role: "standard" },
+            ],
             participantsRemoved: new Set(["2"]),
-            participantsUpdated: [{ ...participant("1"), role: "standard" }],
             name: "stuff",
             description: "stuff",
         };
@@ -264,7 +265,6 @@ describe("merging updates", () => {
                 expect(merged.length).toEqual(5);
                 expect(updated?.latestReadByThem).toEqual(100);
                 expect(updated?.latestReadByMe).toEqual(200);
-                expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
