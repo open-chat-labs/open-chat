@@ -52,22 +52,25 @@
                     });
 
                     mediaRecorder.addEventListener("stop", async () => {
-                        const data = await new Blob(recordedChunks).arrayBuffer();
+                        const blob = new Blob(recordedChunks);
+                        console.log(blob.size);
+                        const truncated = blob.size > MAX_AUDIO_SIZE;
+                        const data = await (truncated
+                            ? blob.slice(0, MAX_AUDIO_SIZE).arrayBuffer()
+                            : blob.arrayBuffer());
                         mediaRecorder = undefined;
                         recording = false;
-
-                        if (data.byteLength > MAX_AUDIO_SIZE) {
+                        if (truncated) {
                             toastStore.showFailureToast("maxAudioSize");
-                        } else {
-                            dispatch("audioCaptured", {
-                                kind: "media_content",
-                                mimeType: mimeType,
-                                width: 0,
-                                height: 0,
-                                blobData: Promise.resolve(new Uint8Array(data)),
-                                thumbnailData: "",
-                            });
                         }
+                        dispatch("audioCaptured", {
+                            kind: "media_content",
+                            mimeType: mimeType,
+                            width: 0,
+                            height: 0,
+                            blobData: Promise.resolve(new Uint8Array(data)),
+                            thumbnailData: "",
+                        });
                     });
 
                     mediaRecorder.start();
