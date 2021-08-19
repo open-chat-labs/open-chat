@@ -1,16 +1,16 @@
+use crate::domain::blob_storage::BlobStorage;
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
+use shared::memory::get_memory_usage;
 use shared::timestamp;
 use shared::user_id::UserId;
-use shared::memory::get_memory_usage;
-use crate::domain::chat_list::ChatList;
-use crate::domain::blob_storage::BlobStorage;
 
 pub fn query() -> Stats {
     let chat_list: &ChatList = storage::get();
     let blob_storage: &BlobStorage = storage::get();
     let chat_stats = chat_list.get_stats();
-    
+
     Stats {
         memory_used: get_memory_usage(),
         timestamp: timestamp::now(),

@@ -8,7 +8,7 @@ const MAX_CHUNK_SIZE: u32 = 1024 * 1024; // 1MB
 #[derive(Default, CandidType, Deserialize)]
 pub struct BlobStorage {
     chunks: HashMap<(String, u32), ByteBuf>,
-    total_bytes: u64
+    total_bytes: u64,
 }
 
 impl BlobStorage {
@@ -44,6 +44,6 @@ impl BlobStorage {
     fn delete_chunk(&mut self, blob_id: &str, chunk_index: u32) {
         if let Some(chunk) = self.chunks.remove(&(blob_id.to_string(), chunk_index)) {
             self.total_bytes -= chunk.len() as u64;
-        }        
+        }
     }
 }

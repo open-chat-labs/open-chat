@@ -1,6 +1,6 @@
+use crate::domain::user_store::{RegisterUserResponse, UserStore};
 use ic_cdk::storage;
 use shared::timestamp;
-use crate::domain::user_store::{RegisterUserResponse, UserStore};
 
 pub fn update(username: String) -> RegisterUserResponse {
     let me = shared::user_id::get_current();

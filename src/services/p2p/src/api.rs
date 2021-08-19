@@ -19,6 +19,8 @@ pub fn remove_connection_details(request: remove_connection_details::Request) ->
 }
 
 #[query]
-pub fn get_connection_details(updated_since: Option<Timestamp>) -> get_connection_details::Response {
+pub fn get_connection_details(
+    updated_since: Option<Timestamp>,
+) -> get_connection_details::Response {
     get_connection_details::query(updated_since)
 }

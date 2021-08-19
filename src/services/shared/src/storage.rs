@@ -1,9 +1,9 @@
-use std::mem;
+use ic_cdk::api::stable;
+use ic_cdk::export::candid;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::de::DeserializeOwned;
-use ic_cdk::export::candid;
-use ic_cdk::api::stable;
+use std::mem;
 
 pub fn take_from_storage<T: 'static + Default>() -> T {
     let from_storage: &mut T = storage::get_mut();
@@ -24,15 +24,15 @@ pub fn stable_save<T: StableState>(value: T) {
 }
 
 pub fn stable_restore<T: StableState>() -> T {
-    let (saved,) : (T::State,) = stable_restore_hack().unwrap();
+    let (saved,): (T::State,) = stable_restore_hack().unwrap();
 
     T::fill(saved)
 }
 
 // This is exactly the same as the 'stable_restore' method in the cdk except we skip the 'de.done()' check
 pub fn stable_restore_hack<T>() -> Result<T, String>
-    where
-        T: for<'de> candid::de::ArgumentDecoder<'de>,
+where
+    T: for<'de> candid::de::ArgumentDecoder<'de>,
 {
     let bytes = stable::stable_bytes();
 

@@ -1,9 +1,9 @@
+use self::Response::*;
+use crate::domain::chat::ChatEnum;
+use crate::domain::chat_list::ChatList;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use shared::chat_id::ChatId;
-use crate::domain::chat::ChatEnum;
-use crate::domain::chat_list::ChatList;
-use self::Response::*;
 
 pub fn update(chat_id: ChatId) -> Response {
     let chat_list: &mut ChatList = storage::get_mut();
@@ -19,9 +19,9 @@ pub fn update(chat_id: ChatId) -> Response {
             }
             chat_list.delete_chat(chat_id);
             Success
-        },
+        }
         Some(_) => NotGroupChat,
-        None => ChatNotFound
+        None => ChatNotFound,
     }
 }
 
@@ -31,5 +31,5 @@ pub enum Response {
     Unauthorized,
     OnlyLastAdminCanDelete,
     ChatNotFound,
-    NotGroupChat
+    NotGroupChat,
 }

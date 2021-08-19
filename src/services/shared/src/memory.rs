@@ -1,4 +1,3 @@
-
 pub fn get_memory_usage() -> u64 {
     #[cfg(target_arch = "wasm32")]
     {

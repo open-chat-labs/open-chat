@@ -1,8 +1,8 @@
-use std::ops::Shl;
-use ic_cdk::export::candid::CandidType;
-use highway::{HighwayHasher, HighwayHash};
-use serde::{Deserialize, Serialize};
 use crate::user_id::UserId;
+use highway::{HighwayHash, HighwayHasher};
+use ic_cdk::export::candid::CandidType;
+use serde::{Deserialize, Serialize};
+use std::ops::Shl;
 
 #[derive(CandidType, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
 pub struct ChatId(pub u128);

@@ -1,17 +1,17 @@
-use ic_cdk::export::candid::CandidType;
-use ic_cdk::storage;
-use serde::Deserialize;
-use shared::chat_id::ChatId;
-use shared::timestamp::{self, Timestamp};
-use shared::user_id::UserId;
+use self::Response::*;
+use crate::domain::blocked_users::{BlockedStatus, BlockedUsers};
 use crate::domain::chat::{Chat, MessageContent, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::notifications::push_direct_message_notification;
 use crate::services::notifications::push_direct_message_notification::Notification;
 use crate::services::user_mgmt::*;
-use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
-use self::Response::*;
+use ic_cdk::export::candid::CandidType;
+use ic_cdk::storage;
+use serde::Deserialize;
+use shared::chat_id::ChatId;
+use shared::timestamp::{self, Timestamp};
+use shared::user_id::UserId;
 
 pub async fn update(request: Request) -> Response {
     // Validation
@@ -27,18 +27,17 @@ pub async fn update(request: Request) -> Response {
         BlockedStatus::Sender => return SenderBlocked,
         BlockedStatus::Recipient => return RecipientBlocked,
         BlockedStatus::Both => return RecipientBlocked,
-        BlockedStatus::Unblocked => ()
+        BlockedStatus::Unblocked => (),
     };
 
     let now = timestamp::now();
     let chat_id = ChatId::for_direct_chat(&me, &request.recipient);
 
     if let MessageContent::Cycles(cycle_content) = &request.content {
-
         let request = transfer_cycles::Request {
-            sender: me.clone(),
-            recipient: request.recipient.clone(),
-            amount: cycle_content.get_amount()
+            sender: me,
+            recipient: request.recipient,
+            amount: cycle_content.get_amount(),
         };
 
         let response = transfer_cycles::update(request).await;
@@ -47,7 +46,7 @@ pub async fn update(request: Request) -> Response {
             transfer_cycles::Response::Success(_) => (),
             transfer_cycles::Response::UserNotFound => return UserNotFound,
             transfer_cycles::Response::RecipientNotFound => return RecipientNotFound,
-            transfer_cycles::Response::BalanceExceeded => return BalanceExceeded
+            transfer_cycles::Response::BalanceExceeded => return BalanceExceeded,
         }
     }
 
@@ -57,40 +56,39 @@ pub async fn update(request: Request) -> Response {
     {
         let chat = chat_list.get(chat_id, &me);
         if chat.is_none() {
-            chat_list.create_direct_chat(
-                chat_id,
-                me.clone(),
-                request.recipient,
-                now);
+            chat_list.create_direct_chat(chat_id, me, request.recipient, now);
         }
     }
 
-    let message = chat_list.push_message(
-        chat_id, 
-        &me, 
-        request.client_message_id, 
-        request.content, 
-        request.replies_to, 
-        now).unwrap();
+    let message = chat_list
+        .push_message(
+            chat_id,
+            &me,
+            request.client_message_id,
+            request.content,
+            request.replies_to,
+            now,
+        )
+        .unwrap();
 
     let chat = chat_list.get(chat_id, &me).unwrap();
     let chat_summary = chat.to_summary(&me, 0).direct().unwrap();
     let message_id = message.get_id();
 
     if let Some(sender_name) = request.sender_name {
-        let recipient = request.recipient.into();
+        let recipient = request.recipient;
         let notification = Notification {
             sender: me,
             sender_name,
             message,
         };
-        push_direct_message_notification::fire_and_forget(recipient, notification);            
+        push_direct_message_notification::fire_and_forget(recipient, notification);
     }
 
     Success(Result {
         chat_summary,
         message_id,
-        timestamp: now
+        timestamp: now,
     })
 }
 
@@ -101,12 +99,12 @@ fn validate(request: &Request) -> Option<Response> {
     match request.content.validate() {
         MessageContentValidationResponse::MessageTooLong(max) => return Some(MessageTooLong(max)),
         MessageContentValidationResponse::Invalid => return Some(InvalidRequest),
-        MessageContentValidationResponse::Valid => ()
+        MessageContentValidationResponse::Valid => (),
     }
     if let Some(reply) = &request.replies_to {
         match reply.get_content().validate() {
             MessageContentValidationResponse::Valid => (),
-            _ => return Some(InvalidRequest)
+            _ => return Some(InvalidRequest),
         }
     }
     None
@@ -118,7 +116,7 @@ pub struct Request {
     sender_name: Option<String>,
     client_message_id: String,
     content: MessageContent,
-    replies_to: Option<ReplyContext>
+    replies_to: Option<ReplyContext>,
 }
 
 #[derive(CandidType)]
@@ -130,7 +128,7 @@ pub enum Response {
     MessageTooLong(u32),
     InvalidRequest,
     SenderBlocked,
-    RecipientBlocked
+    RecipientBlocked,
 }
 
 #[derive(CandidType)]

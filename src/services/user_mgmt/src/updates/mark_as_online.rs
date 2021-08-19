@@ -1,6 +1,6 @@
+use crate::domain::user_store::UserStore;
 use ic_cdk::storage;
 use shared::timestamp;
-use crate::domain::user_store::UserStore;
 
 pub fn update() {
     let me = shared::user_id::get_current();

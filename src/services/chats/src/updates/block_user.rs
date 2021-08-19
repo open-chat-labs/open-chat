@@ -1,6 +1,6 @@
-use shared::user_id::UserId;
-use ic_cdk::storage;
 use crate::domain::blocked_users::BlockedUsers;
+use ic_cdk::storage;
+use shared::user_id::UserId;
 
 pub fn update(user: UserId, unblock: bool) {
     let me = shared::user_id::get_current();

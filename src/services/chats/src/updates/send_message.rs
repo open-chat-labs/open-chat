@@ -1,14 +1,16 @@
+use self::Response::*;
+use crate::domain::blocked_users::{BlockedStatus, BlockedUsers};
+use crate::domain::chat::{
+    Chat, ChatEnum, ChatSummary, MessageContent, MessageContentValidationResponse, ReplyContext,
+};
+use crate::domain::chat_list::ChatList;
+use crate::services::notifications::push_direct_message_notification;
+use crate::services::notifications::push_group_message_notification;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::{timestamp, timestamp::Timestamp};
-use crate::domain::chat::{Chat, MessageContent, ChatSummary, ChatEnum, MessageContentValidationResponse, ReplyContext};
-use crate::domain::chat_list::ChatList;
-use crate::domain::blocked_users::{BlockedUsers, BlockedStatus};
-use crate::services::notifications::push_direct_message_notification;
-use crate::services::notifications::push_group_message_notification;
-use self::Response::*;
 
 pub fn update(request: Request) -> Response {
     // Validation
@@ -17,8 +19,8 @@ pub fn update(request: Request) -> Response {
     }
 
     let me = shared::user_id::get_current();
-    let chat_list: &mut ChatList = storage::get_mut();    
-    
+    let chat_list: &mut ChatList = storage::get_mut();
+
     {
         // Try to find the requested chat
         let chat = chat_list.get(request.chat_id, &me);
@@ -35,7 +37,7 @@ pub fn update(request: Request) -> Response {
                 BlockedStatus::Sender => return SenderBlocked,
                 BlockedStatus::Recipient => return RecipientBlocked,
                 BlockedStatus::Both => return RecipientBlocked,
-                BlockedStatus::Unblocked => ()
+                BlockedStatus::Unblocked => (),
             };
         }
     }
@@ -43,36 +45,35 @@ pub fn update(request: Request) -> Response {
     {
         let now = timestamp::now();
 
-        let message = chat_list.push_message(
-            request.chat_id, 
-            &me, 
-            request.client_message_id, 
-            request.content, 
-            request.replies_to, 
-            now).unwrap();
+        let message = chat_list
+            .push_message(
+                request.chat_id,
+                &me,
+                request.client_message_id,
+                request.content,
+                request.replies_to,
+                now,
+            )
+            .unwrap();
 
         if let Some(chat) = chat_list.get(request.chat_id, &me) {
             let chat_summary = chat.to_summary(&me, 0);
             let message_id = message.get_id();
 
-            if let Some(sender_name) = request.sender_name {            
+            if let Some(sender_name) = request.sender_name {
                 match chat {
                     ChatEnum::Direct(direct) => {
-                        let recipient = direct.get_other(&me).clone();
+                        let recipient = *direct.get_other(&me);
                         let notification = push_direct_message_notification::Notification {
                             sender: me,
                             sender_name,
                             message,
                         };
 
-                        push_direct_message_notification::fire_and_forget(recipient, notification);                          
-                    },
+                        push_direct_message_notification::fire_and_forget(recipient, notification);
+                    }
                     ChatEnum::Group(group) => {
-                        let recipients = group
-                            .participants()
-                            .iter()
-                            .map(|p| p.user_id())
-                            .collect();
+                        let recipients = group.participants().iter().map(|p| p.user_id()).collect();
 
                         let notification = push_group_message_notification::Notification {
                             chat_id: group.get_id().0,
@@ -82,7 +83,7 @@ pub fn update(request: Request) -> Response {
                             message,
                         };
 
-                        push_group_message_notification::fire_and_forget(recipients, notification);        
+                        push_group_message_notification::fire_and_forget(recipients, notification);
                     }
                 };
             }
@@ -101,12 +102,12 @@ fn validate(request: &Request) -> Option<Response> {
     match request.content.validate() {
         MessageContentValidationResponse::MessageTooLong(max) => return Some(MessageTooLong(max)),
         MessageContentValidationResponse::Invalid => return Some(InvalidRequest),
-        MessageContentValidationResponse::Valid => ()
+        MessageContentValidationResponse::Valid => (),
     }
     if let Some(reply) = &request.replies_to {
         match reply.get_content().validate() {
             MessageContentValidationResponse::Valid => (),
-            _ => return Some(InvalidRequest)
+            _ => return Some(InvalidRequest),
         }
     }
     None
@@ -118,7 +119,7 @@ pub struct Request {
     sender_name: Option<String>,
     client_message_id: String,
     content: MessageContent,
-    replies_to: Option<ReplyContext>
+    replies_to: Option<ReplyContext>,
 }
 
 #[derive(CandidType)]
@@ -128,7 +129,7 @@ pub enum Response {
     MessageTooLong(u32),
     InvalidRequest,
     SenderBlocked,
-    RecipientBlocked
+    RecipientBlocked,
 }
 
 #[derive(CandidType)]

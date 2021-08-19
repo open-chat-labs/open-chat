@@ -1,6 +1,6 @@
+use crate::domain::user_store::UserStore;
 use ic_cdk_macros::*;
 use shared::storage;
-use crate::domain::user_store::UserStore;
 
 #[pre_upgrade]
 fn pre_upgrade() {

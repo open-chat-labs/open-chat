@@ -1,8 +1,13 @@
-use std::cmp::{max, min};
-use itertools::Itertools;
 use crate::domain::chat::Message;
+use itertools::Itertools;
+use std::cmp::{max, min};
 
-pub fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32, min_visible_message_id_for_user: u32) -> Vec<Message> {
+pub fn get_messages(
+    messages: &[Message],
+    from_id: u32,
+    page_size: u32,
+    min_visible_message_id_for_user: u32,
+) -> Vec<Message> {
     if messages.is_empty() {
         return Vec::new();
     }
@@ -26,7 +31,11 @@ pub fn get_messages(messages: &Vec<Message>, from_id: u32, page_size: u32, min_v
     messages[from_index..to_index].to_vec()
 }
 
-pub fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>, min_visible_message_id_for_user: u32) -> Vec<Message> {
+pub fn get_messages_by_id(
+    messages: &[Message],
+    ids: Vec<u32>,
+    min_visible_message_id_for_user: u32,
+) -> Vec<Message> {
     if messages.is_empty() {
         return Vec::new();
     }
@@ -34,8 +43,7 @@ pub fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>, min_visible_me
     let earliest_id = messages.first().unwrap().get_id();
     let latest_id = messages.last().unwrap().get_id();
 
-    ids
-        .into_iter()
+    ids.into_iter()
         .sorted()
         .skip_while(|id| *id < min_visible_message_id_for_user)
         .take_while(|id| *id <= latest_id)
@@ -43,7 +51,7 @@ pub fn get_messages_by_id(messages: &Vec<Message>, ids: Vec<u32>, min_visible_me
         .collect()
 }
 
-pub fn get_latest_message_id(messages: &Vec<Message>) -> u32 {
+pub fn get_latest_message_id(messages: &[Message]) -> u32 {
     if messages.is_empty() {
         0
     } else {

@@ -1,7 +1,9 @@
-use ic_cdk_macros::*;
-use crate::domain::user_store::{RegisterUserResponse, TransferCyclesResponse, UpdateUsernameResponse};
+use crate::domain::user_store::{
+    RegisterUserResponse, TransferCyclesResponse, UpdateUsernameResponse,
+};
 use crate::queries::*;
 use crate::updates::*;
+use ic_cdk_macros::*;
 
 #[update]
 pub fn register_user(username: String) -> RegisterUserResponse {

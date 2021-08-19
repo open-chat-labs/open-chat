@@ -1,12 +1,12 @@
+use self::Response::*;
+use crate::domain::chat_list::ChatList;
+use crate::domain::group_chat::GroupChatSummary;
 use ic_cdk::export::candid::CandidType;
 use ic_cdk::storage;
 use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::timestamp;
 use shared::user_id::UserId;
-use crate::domain::chat_list::ChatList;
-use crate::domain::group_chat::GroupChatSummary;
-use self::Response::*;
 
 const MIN_GROUP_SUBJECT_LENGTH: u8 = 2;
 const MAX_GROUP_SUBJECT_LENGTH: u8 = 25;
@@ -24,16 +24,17 @@ pub fn update(request: Request) -> Response {
     let now = timestamp::now();
 
     let chat_summary = chat_list.create_group_chat(
-        me, 
-        request.chat_id, 
-        request.subject, 
-        request.participants, 
-        request.chat_history_visible_to_new_joiners, 
-        now);
+        me,
+        request.chat_id,
+        request.subject,
+        request.participants,
+        request.chat_history_visible_to_new_joiners,
+        now,
+    );
 
     match chat_summary {
         Some(cs) => Success(cs),
-        None => ChatAlreadyExists
+        None => ChatAlreadyExists,
     }
 }
 
@@ -42,7 +43,7 @@ pub struct Request {
     chat_id: ChatId,
     subject: String,
     participants: Vec<UserId>,
-    chat_history_visible_to_new_joiners: bool
+    chat_history_visible_to_new_joiners: bool,
 }
 
 #[derive(CandidType)]
@@ -50,5 +51,5 @@ pub enum Response {
     Success(GroupChatSummary),
     ChatAlreadyExists,
     SubjectTooShort(u8),
-    SubjectTooLong(u8)
+    SubjectTooLong(u8),
 }

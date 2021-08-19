@@ -1,7 +1,7 @@
+use crate::domain::connection_details::AllConnectionDetails;
 use ic_cdk::storage;
 use serde::Deserialize;
 use shared::user_id::UserId;
-use crate::domain::connection_details::AllConnectionDetails;
 
 pub fn update(request: Request) -> u32 {
     let me = shared::user_id::get_current();
@@ -18,11 +18,11 @@ pub fn update(request: Request) -> u32 {
 
 #[derive(Deserialize)]
 pub struct Request {
-    connections: Vec<RemoveSingleConnectionRequest>
+    connections: Vec<RemoveSingleConnectionRequest>,
 }
 
 #[derive(Deserialize)]
 pub struct RemoveSingleConnectionRequest {
     user_id: UserId,
-    id: String
+    id: String,
 }

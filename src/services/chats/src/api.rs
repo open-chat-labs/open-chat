@@ -1,9 +1,9 @@
+use crate::queries::*;
+use crate::updates::*;
 use ic_cdk_macros::*;
 use serde_bytes::ByteBuf;
 use shared::chat_id::ChatId;
 use shared::user_id::UserId;
-use crate::queries::*;
-use crate::updates::*;
 
 #[update]
 fn create_group_chat(request: create_group_chat::Request) -> create_group_chat::Response {
@@ -11,7 +11,9 @@ fn create_group_chat(request: create_group_chat::Request) -> create_group_chat::
 }
 
 #[update]
-async fn send_direct_message(request: send_direct_message::Request) -> send_direct_message::Response {
+async fn send_direct_message(
+    request: send_direct_message::Request,
+) -> send_direct_message::Response {
     send_direct_message::update(request).await
 }
 
@@ -94,4 +96,3 @@ fn search_all_messages(search_term: String, max_results: u8) -> search_all_messa
 fn stats() -> stats::Stats {
     stats::query()
 }
-

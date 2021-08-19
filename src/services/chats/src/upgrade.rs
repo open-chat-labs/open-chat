@@ -1,11 +1,11 @@
+use crate::domain::blob_storage::BlobStorage;
+use crate::domain::blocked_users::BlockedUsers;
+use crate::domain::chat_list::{ChatList, ChatListState};
 use ic_cdk::export::candid::CandidType;
 use ic_cdk_macros::*;
 use serde::Deserialize;
-use shared::storage::StableState;
 use shared::storage;
-use crate::domain::blob_storage::BlobStorage;
-use crate::domain::chat_list::{ChatList, ChatListState};
-use crate::domain::blocked_users::BlockedUsers;
+use shared::storage::StableState;
 
 #[pre_upgrade]
 fn pre_upgrade() {
