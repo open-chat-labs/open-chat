@@ -53,7 +53,6 @@
 
                     mediaRecorder.addEventListener("stop", async () => {
                         const blob = new Blob(recordedChunks);
-                        console.log(blob.size);
                         const truncated = blob.size > MAX_AUDIO_SIZE;
                         const data = await (truncated
                             ? blob.slice(0, MAX_AUDIO_SIZE).arrayBuffer()
