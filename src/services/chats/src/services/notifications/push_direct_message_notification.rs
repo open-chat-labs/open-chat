@@ -11,12 +11,12 @@ use shared::c2c::call_with_logging;
 pub struct Notification {
     pub sender: UserId,
     pub sender_name: String,
-    pub recipient: UserId,
     pub message: Message,
 }
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
+    pub recipient: UserId,
     pub notification: Notification,
 }
 
@@ -25,15 +25,15 @@ pub enum Response {
     Success,
 }
 
-pub fn fire_and_forget(notification: Notification) {
+pub fn fire_and_forget(recipient: UserId, notification: Notification) {
 
-    async fn do_push(notification: Notification) {
+    async fn do_push(recipient: UserId, notification: Notification) {
         let canister_id = Principal::from_text(NOTIFICATIONS_CANISTER_ID).unwrap();
-        let args = Args { notification };
+        let args = Args { recipient, notification };
         let _: CallResult<(Response,)> =
             call_with_logging(canister_id, "push_v1direct_message_notification", (args,)).await;    
     }
      
-    let push_notification_future = do_push(notification);
+    let push_notification_future = do_push(recipient, notification);
     ic_cdk::block_on(push_notification_future);
 }

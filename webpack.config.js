@@ -2,7 +2,6 @@ const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
 const NOTIFICATIONS_CANISTER_ID = "qhbym-qaaaa-aaaaa-aaafq-cai";
@@ -166,7 +165,7 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: "sw.js",
+      filename: "sw2.js",
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {

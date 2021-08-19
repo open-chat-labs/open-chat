@@ -2,7 +2,7 @@ use crate::{RuntimeState, MAX_SUBSCRIPTION_AGE, RUNTIME_STATE};
 use ic_cdk_macros::query;
 use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
-use types::{IndexedEvent, Notification, SubscriptionInfo, UserId};
+use types::{IndexedEvent, NotificationEnvelope, SubscriptionInfo, UserId};
 
 const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
 
@@ -25,44 +25,22 @@ fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 }
 
-fn add_subscriptions(notifications: Vec<IndexedEvent<Notification>>, runtime_state: &RuntimeState) -> SuccessResult {
+fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, runtime_state: &RuntimeState) -> SuccessResult {
     let now = runtime_state.env.now();
 
-    let mut active_notifications: Vec<IndexedEvent<Notification>> = Vec::new();
+    let mut active_notifications: Vec<IndexedEvent<NotificationEnvelope>> = Vec::new();
     let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
     for n in notifications.into_iter() {
         let mut has_subscriptions = false;
-        match &n.value {
-            Notification::DirectMessageNotification(d) => {
-                if let Some(s) = runtime_state.data.subscriptions.get(&d.recipient, MAX_SUBSCRIPTION_AGE, now) {
-                    subscriptions.insert(d.recipient, s);
-                    has_subscriptions = true;
-                }
-            }
-            Notification::GroupMessageNotification(g) => {
-                for u in g.recipients.iter() {
-                    if let Some(s) = runtime_state.data.subscriptions.get(u, MAX_SUBSCRIPTION_AGE, now) {
-                        subscriptions.insert(*u, s);
-                        has_subscriptions = true;
-                    }
-                }
-            }
-            Notification::V1DirectMessageNotification(d) => {
-                if let Some(s) = runtime_state.data.subscriptions.get(&d.recipient, MAX_SUBSCRIPTION_AGE, now) {
-                    subscriptions.insert(d.recipient, s);
-                    has_subscriptions = true;
-                }
-            }
-            Notification::V1GroupMessageNotification(g) => {
-                for u in g.recipients.iter() {
-                    if let Some(s) = runtime_state.data.subscriptions.get(u, MAX_SUBSCRIPTION_AGE, now) {
-                        subscriptions.insert(*u, s);
-                        has_subscriptions = true;
-                    }
-                }
+
+        for u in n.value.recipients.iter() {
+            if let Some(s) = runtime_state.data.subscriptions.get(u, MAX_SUBSCRIPTION_AGE, now) {
+                subscriptions.insert(*u, s);
+                has_subscriptions = true;
             }
         }
+
         if has_subscriptions {
             active_notifications.push(n);
         }

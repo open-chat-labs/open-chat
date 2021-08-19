@@ -5,6 +5,12 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct NotificationEnvelope {
+    pub recipients: Vec<UserId>,
+    pub notification: Notification,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Notification {
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
@@ -16,7 +22,6 @@ pub enum Notification {
 pub struct DirectMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
-    pub recipient: UserId,
     pub message: message::DirectMessage,
 }
 
@@ -26,7 +31,6 @@ pub struct GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub recipients: Vec<UserId>,
     pub message: message::GroupMessage,
 }
 
@@ -34,7 +38,6 @@ pub struct GroupMessageNotification {
 pub struct V1DirectMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
-    pub recipient: UserId,
     pub message: v1_message::Message,
 }
 

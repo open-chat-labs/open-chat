@@ -6,7 +6,7 @@ use shared::event_stream::EventStream;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::Notification;
+use types::NotificationEnvelope;
 
 mod lifecycle;
 mod model;
@@ -37,7 +37,7 @@ impl RuntimeState {
 #[derive(CandidType, Deserialize)]
 pub struct Data {
     pub push_service_principals: HashSet<Principal>,
-    pub notifications: EventStream<Notification>,
+    pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
 }
 

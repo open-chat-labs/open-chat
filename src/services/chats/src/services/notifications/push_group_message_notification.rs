@@ -13,12 +13,12 @@ pub struct Notification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub recipients: Vec<UserId>,
     pub message: Message,
 }
 
 #[derive(CandidType, Deserialize)]
 pub struct Args {
+    pub recipients: Vec<UserId>,
     pub notification: Notification,
 }
 
@@ -27,15 +27,15 @@ pub enum Response {
     Success,
 }
 
-pub fn fire_and_forget(notification: Notification) {
+pub fn fire_and_forget(recipients: Vec<UserId>, notification: Notification) {
 
-    async fn do_push(notification: Notification) {
+    async fn do_push(recipients: Vec<UserId>, notification: Notification) {
         let canister_id = Principal::from_text(NOTIFICATIONS_CANISTER_ID).unwrap();
-        let args = Args { notification };
+        let args = Args { recipients, notification };
         let _: CallResult<(Response,)> =
             call_with_logging(canister_id, "push_v1group_message_notification", (args,)).await;    
     }
      
-    let push_notification_future = do_push(notification);
+    let push_notification_future = do_push(recipients, notification);
     ic_cdk::block_on(push_notification_future);
 }

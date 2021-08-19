@@ -3,7 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use shared::rand::get_random_item;
-use types::{CanisterId, DirectMessageNotification};
+use types::{CanisterId, DirectMessageNotification, UserId};
 use user_canister::handle_message_received::{Response::*, *};
 
 #[update]
@@ -35,19 +35,20 @@ fn handle_message_received_impl(args: Args, runtime_state: &mut RuntimeState) ->
         let notification = DirectMessageNotification {
             sender: sender_user_id,
             sender_name: args.sender_name,
-            recipient: runtime_state.env.canister_id().into(),
             message,
         };
 
-        let push_notification_future = push_notification(*canister_id, notification);
+        let recipient = runtime_state.env.canister_id().into();
+
+        let push_notification_future = push_notification(*canister_id, recipient, notification);
         ic_cdk::block_on(push_notification_future);
     }
 
     Success
 }
 
-async fn push_notification(canister_id: CanisterId, notification: DirectMessageNotification) {
-    let args = push_direct_message_notification::Args { notification };
+async fn push_notification(canister_id: CanisterId, recipient: UserId, notification: DirectMessageNotification) {
+    let args = push_direct_message_notification::Args { recipient, notification };
     let _ = notifications_canister_client::push_direct_message_notification(canister_id, &args).await;
 }
 

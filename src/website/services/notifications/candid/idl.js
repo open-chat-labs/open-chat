@@ -62,7 +62,6 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const DirectMessageNotification = IDL.Record({
-    'recipient' : UserId,
     'sender' : UserId,
     'message' : DirectMessage,
     'sender_name' : IDL.Text,
@@ -82,7 +81,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupMessageNotification = IDL.Record({
     'sender' : UserId,
-    'recipients' : IDL.Vec(UserId),
     'message' : GroupMessage,
     'sender_name' : IDL.Text,
     'chat_id' : GroupId,
@@ -138,14 +136,12 @@ export const idlFactory = ({ IDL }) => {
   const V1GroupId = IDL.Nat;
   const V1GroupMessageNotification = IDL.Record({
     'sender' : UserId,
-    'recipients' : IDL.Vec(UserId),
     'message' : V1Message,
     'sender_name' : IDL.Text,
     'chat_id' : V1GroupId,
     'group_name' : IDL.Text,
   });
   const V1DirectMessageNotification = IDL.Record({
-    'recipient' : UserId,
     'sender' : UserId,
     'message' : V1Message,
     'sender_name' : IDL.Text,
@@ -156,8 +152,12 @@ export const idlFactory = ({ IDL }) => {
     'V1GroupMessageNotification' : V1GroupMessageNotification,
     'V1DirectMessageNotification' : V1DirectMessageNotification,
   });
+  const NotificationEnvelope = IDL.Record({
+    'notification' : Notification,
+    'recipients' : IDL.Vec(UserId),
+  });
   const IndexedNotification = IDL.Record({
-    'value' : Notification,
+    'value' : NotificationEnvelope,
     'index' : IDL.Nat64,
   });
   const NotificationsSuccessResult = IDL.Record({
@@ -169,6 +169,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : NotificationsSuccessResult,
   });
   const PushDirectMessageNotificationArgs = IDL.Record({
+    'recipient' : UserId,
     'notification' : DirectMessageNotification,
   });
   const PushDirectMessageNotificationResponse = IDL.Variant({
@@ -176,6 +177,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PushGroupMessageNotificationArgs = IDL.Record({
     'notification' : GroupMessageNotification,
+    'recipients' : IDL.Vec(UserId),
   });
   const PushGroupMessageNotificationResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -186,6 +188,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PushSubscriptionResponse = IDL.Variant({ 'Success' : IDL.Null });
   const PushV1DirectMessageNotificationArgs = IDL.Record({
+    'recipient' : UserId,
     'notification' : V1DirectMessageNotification,
   });
   const PushV1DirectMessageNotificationResponse = IDL.Variant({
@@ -193,6 +196,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PushV1GroupMessageNotificationArgs = IDL.Record({
     'notification' : V1GroupMessageNotification,
+    'recipients' : IDL.Vec(UserId),
   });
   const PushV1GroupMessageNotificationResponse = IDL.Variant({
     'Success' : IDL.Null,

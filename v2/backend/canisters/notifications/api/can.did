@@ -175,6 +175,7 @@ type PushSubscriptionResponse =
 
 type PushDirectMessageNotificationArgs =
     record {
+        recipient: UserId;
         notification: DirectMessageNotification;
     };
 
@@ -185,6 +186,7 @@ type PushDirectMessageNotificationResponse =
 
 type PushGroupMessageNotificationArgs =
     record {
+        recipients: vec UserId;
         notification: GroupMessageNotification;
     };
 
@@ -195,6 +197,7 @@ type PushGroupMessageNotificationResponse =
 
 type PushV1GroupMessageNotificationArgs =
     record {
+        recipients: vec UserId;
         notification: V1GroupMessageNotification;
     };
 
@@ -205,6 +208,7 @@ type PushV1GroupMessageNotificationResponse =
 
 type PushV1DirectMessageNotificationArgs =
     record {
+        recipient: UserId;
         notification: V1DirectMessageNotification;
     };
 
@@ -213,11 +217,16 @@ type PushV1DirectMessageNotificationResponse =
         Success;
     };
 
+type NotificationEnvelope =
+    record {
+        recipients: vec UserId;
+        notification: Notification;
+    };
+
 type DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
-        recipient: UserId;
         message: DirectMessage;
     };
 
@@ -227,7 +236,6 @@ type GroupMessageNotification =
         group_name: text;
         sender: UserId;
         sender_name: text;
-        recipients: vec UserId;
         message: GroupMessage;
     };
 
@@ -235,7 +243,6 @@ type V1DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
-        recipient: UserId;
         message: V1Message;
     };
 
@@ -245,7 +252,6 @@ type V1GroupMessageNotification =
         group_name: text;
         sender: UserId;
         sender_name: text;
-        recipients: vec UserId;
         message: V1Message;
     };
 
@@ -260,7 +266,7 @@ type Notification =
 type IndexedNotification =
     record {
         index: nat64;
-        value: Notification;
+        value: NotificationEnvelope;
     };
 
 type NotificationsSuccessResult =
