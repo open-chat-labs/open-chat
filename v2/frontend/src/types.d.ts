@@ -36,5 +36,6 @@ import * as dmr from "dom-mediacapture-record";
 // Using TypeScript's declaration merging, "extend" the existing
 // Window interface
 declare global {
-    interface Window extends dmr 
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface Window extends dmr {}
 }
