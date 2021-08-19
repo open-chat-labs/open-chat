@@ -42,6 +42,3 @@
         <input bind:this={fileinput} hidden={true} type="file" on:change={onFileSelected} />
     </HoverIcon>
 </div>
-
-<style type="text/scss">
-</style>

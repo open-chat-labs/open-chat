@@ -5,6 +5,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { onMount } from "svelte";
     import FileAttacher from "./FileAttacher.svelte";
+    import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
@@ -128,6 +129,9 @@
         on:dragleave={() => (dragging = false)}
         on:drop={onDrop}
         on:keypress={checkEnter} />
+    <div class="record">
+        <AudioAttacher on:audioCaptured />
+    </div>
     <div class="send" on:click={sendMessage}>
         <HoverIcon>
             <Send size={"1.2em"} color={"#aaa"} />
