@@ -5,7 +5,6 @@ import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import TextField from '@material-ui/core/TextField';
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
-import Link from "@material-ui/core/Link";
 import getCurrentUser, { GetCurrentUserOutcome } from "../../actions/users/getCurrentUser";
 import { formatCycles } from "../../formatters/cycles";
 import { UserSummary } from "../../domain/model/users";

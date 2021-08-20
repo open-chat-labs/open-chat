@@ -165,15 +165,25 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: "sw2.js",
+      filename: "sw9.js",
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {
       rules: [
         {
-          test: /\.(ts|tsx|jsx)$/,
+          test: /\.ts$/,
           use: "ts-loader",
           include: path.join(sourceDir, "sw"),
+        },
+        {
+          test: /\.ts$/,
+          use: "ts-loader",
+          include: path.join(sourceDir, "services/notifications/candid"),
+        },
+        {
+          test: /\.ts$/,
+          use: "ts-loader",
+          include: path.join(sourceDir, "utils/cycleFunctions"),
         },
       ]
     },
