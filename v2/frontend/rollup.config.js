@@ -9,7 +9,6 @@ import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import css from "rollup-plugin-css-only";
 import dfxJson from "../dfx.json";
-import path from "path";
 import inject from "rollup-plugin-inject";
 import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
@@ -26,18 +25,6 @@ const production = !process.env.ROLLUP_WATCH;
 
 console.log("PROD", production);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
-
-// const aliases = ["controller", "group", "group_index", "phone_index", "user", "user_index"].map(
-//     (name) => {
-//         const find = `api-canisters/${name}/canister`;
-//         const replacement = path.join(__dirname, "..", "backend", "canisters", name, "canister");
-
-//         return {
-//             find,
-//             replacement,
-//         };
-//     }
-// );
 
 function serve() {
     return dev({
@@ -61,7 +48,6 @@ export default {
     plugins: [
         alias({
             entries: [
-                // ...aliases,
                 {
                     find: "react",
                     replacement: require.resolve("preact/compat"),

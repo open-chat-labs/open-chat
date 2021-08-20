@@ -17,5 +17,5 @@
     ],
     "name": "OpenChat",
     "short_name": "OpenChat",
-    "start_url": "/index.html"
+    "start_url": "/#/"
 }

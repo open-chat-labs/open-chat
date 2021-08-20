@@ -10,6 +10,7 @@
     import Loading from "../Loading.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
+    import { chatStore } from "../../stores/chat";
     import {
         addDays,
         getStartOfToday,
@@ -34,19 +35,14 @@
     let fromBottom = 0;
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        // todo - not at all happy about this settimeout. Going to revisit and see if
-        // we can create a store that will give us more precise control over when certain
-        // things happen.
-        // i.e. have the state machine update a store with an event (e.g. newMessagesLoaded)
-        // and sub to that store in this component
-        tick().then(() => {
+        setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
                     top: messagesDiv.scrollHeight,
                     behavior,
                 });
             }
-        });
+        }, 100);
     }
 
     function scrollToNew() {
@@ -117,23 +113,6 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
-    function finishedLoadingPreviousMessages() {
-        return (
-            $machine.matches({ user_states: "idle" }) &&
-            $machine.history !== undefined &&
-            $machine.history.matches({ user_states: "loading_previous_messages" })
-        );
-    }
-
-    function shouldShowNewMessages() {
-        return (
-            $machine.matches({ loading_new_messages: "idle" }) &&
-            $machine.history !== undefined &&
-            $machine.history.matches({ loading_new_messages: "loading" }) &&
-            fromBottom < FROM_BOTTOM_THRESHOLD
-        );
-    }
-
     function goToMessage(ev: CustomEvent<number>) {
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
@@ -168,34 +147,34 @@
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
-    // this is a horrible hack but I can't find any other solution to this problem
-    let previous: any;
     $: {
-        if ($machine !== previous) {
-            if ($machine.context.chatSummary.chatId !== currentChatId) {
-                currentChatId = $machine.context.chatSummary.chatId;
-                initialised = false;
-            }
+        if ($machine.context.chatSummary.chatId !== currentChatId) {
+            currentChatId = $machine.context.chatSummary.chatId;
+            initialised = false;
+        }
 
-            if (finishedLoadingPreviousMessages()) {
-                tick().then(resetScroll);
-            }
+        if (messagesDiv) {
+            scrollHeight = messagesDiv.scrollHeight;
+            scrollTop = messagesDiv.scrollTop;
+        }
 
-            if (shouldShowNewMessages()) {
-                tick().then(() => scrollBottom("smooth"));
+        if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
+            switch ($chatStore.event) {
+                case "loaded_previous_messages":
+                    tick().then(resetScroll);
+                    chatStore.clear();
+                    break;
+                case "loaded_new_messages":
+                    if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                        scrollBottom("smooth");
+                    }
+                    chatStore.clear();
+                    break;
+                case "sending_message":
+                    scrollBottom("smooth");
+                    chatStore.clear();
+                    break;
             }
-
-            if ($machine.matches({ user_states: "sending_message" })) {
-                tick().then(() => scrollBottom("smooth"));
-            }
-
-            // capture the current scrollheight and scrollTop just before the new messages get rendered
-            if (messagesDiv) {
-                scrollHeight = messagesDiv.scrollHeight;
-                scrollTop = messagesDiv.scrollTop;
-            }
-
-            previous = $machine;
         }
     }
 
