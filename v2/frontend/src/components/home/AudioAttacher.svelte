@@ -16,12 +16,16 @@
 
     onMount(() => {
         if (supported) {
-            navigator.permissions.query({ name: "microphone" }).then(function (result) {
-                if (result.state === "denied") {
-                    // if they already said no, don't be rude
-                    supported = false;
-                }
-            });
+            // TODO - there are problems with this whole thing on safari.
+            // in particular, there is no access to the permissions api
+            if ("permissions" in navigator) {
+                navigator.permissions.query({ name: "microphone" }).then(function (result) {
+                    if (result.state === "denied") {
+                        // if they already said no, don't be rude
+                        supported = false;
+                    }
+                });
+            }
         }
     });
 
