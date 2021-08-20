@@ -2,6 +2,7 @@ use crate::model::events::GroupChatEventInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
+use std::cmp::max;
 use std::collections::HashSet;
 use types::{EventIndex, EventWrapper, GroupChatSummaryUpdates, GroupMessage, Participant, TimestampMillis, UserId};
 
@@ -13,8 +14,6 @@ fn summary_updates(args: Args) -> Response {
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
-        let now = runtime_state.env.now();
-
         let updates_from_events = process_events(args.updates_since, runtime_state);
 
         let latest_read_by_me = if participant.read_up_to.updated() > args.updates_since {
@@ -23,10 +22,13 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             None
         };
 
-        if updates_from_events.has_updates() || latest_read_by_me.is_some() {
+        if updates_from_events.latest_update.is_some() || latest_read_by_me.is_some() {
             let updates = GroupChatSummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
-                timestamp: now,
+                last_updated: max(
+                    updates_from_events.latest_update.unwrap_or(0),
+                    participant.read_up_to.updated(),
+                ),
                 name: updates_from_events.name,
                 description: updates_from_events.description,
                 participants_added_or_updated: updates_from_events.participants_added_or_updated,
@@ -46,23 +48,13 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
 #[derive(Default)]
 struct UpdatesFromEvents {
+    latest_update: Option<TimestampMillis>,
     name: Option<String>,
     description: Option<String>,
     participants_added_or_updated: Vec<Participant>,
     participants_removed: Vec<UserId>,
     latest_message: Option<EventWrapper<GroupMessage>>,
     latest_event_index: Option<EventIndex>,
-}
-
-impl UpdatesFromEvents {
-    pub fn has_updates(&self) -> bool {
-        self.name.is_some()
-            || self.description.is_some()
-            || !self.participants_added_or_updated.is_empty()
-            || !self.participants_removed.is_empty()
-            || self.latest_message.is_some()
-            || self.latest_event_index.is_some()
-    }
 }
 
 fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> UpdatesFromEvents {
@@ -76,6 +68,7 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
     // Iterate through events starting from most recent
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
+            updates.latest_update = Some(event_wrapper.timestamp);
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
