@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.4"
+candid = "0.7.5"
 garcon = "0.2.3"
 group_canister = { path = "../../canisters/group/api" }
 group_index_canister = { path = "../../canisters/group_index/api" }

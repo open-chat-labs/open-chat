@@ -28,32 +28,30 @@ export const idlFactory = ({ IDL }) => {
     'country_code' : IDL.Nat16,
     'number' : IDL.Text,
   });
+  const CanisterCreationStatus = IDL.Variant({
+    'InProgress' : IDL.Null,
+    'Created' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
   const UserId = CanisterId;
+  const CanisterUpgradeStatus = IDL.Variant({
+    'Required' : IDL.Null,
+    'NotRequired' : IDL.Null,
+    'InProgress' : IDL.Null,
+  });
   const CurrentUserResponse = IDL.Variant({
     'Unconfirmed' : IDL.Record({ 'phone_number' : PhoneNumber }),
     'Confirmed' : IDL.Record({
       'username' : IDL.Text,
-      'canister_creation_status' : IDL.Variant({
-        'InProgress' : IDL.Null,
-        'Created' : IDL.Null,
-        'Pending' : IDL.Null,
-      }),
+      'canister_creation_status' : CanisterCreationStatus,
     }),
     'ConfirmedPendingUsername' : IDL.Record({
-      'canister_creation_status' : IDL.Variant({
-        'InProgress' : IDL.Null,
-        'Created' : IDL.Null,
-        'Pending' : IDL.Null,
-      }),
+      'canister_creation_status' : CanisterCreationStatus,
     }),
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
-      'canister_upgrade_status' : IDL.Variant({
-        'Required' : IDL.Null,
-        'NotRequired' : IDL.Null,
-        'InProgress' : IDL.Null,
-      }),
+      'canister_upgrade_status' : CanisterUpgradeStatus,
       'account_balance' : IDL.Nat,
     }),
     'UserNotFound' : IDL.Null,
@@ -116,13 +114,13 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat64,
     'from_index' : IDL.Nat64,
   });
-  const SmsNotification = IDL.Record({
-    'message' : IDL.Text,
+  const ConfirmationCodeSms = IDL.Record({
+    'confirmation_code' : IDL.Text,
     'phone_number' : IDL.Text,
   });
   const SmsMessagesResponse = IDL.Variant({
     'Success' : IDL.Record({
-      'notifications' : IDL.Vec(SmsNotification),
+      'notifications' : IDL.Vec(ConfirmationCodeSms),
       'latest_index' : IDL.Nat64,
     }),
   });
