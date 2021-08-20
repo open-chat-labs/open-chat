@@ -42,7 +42,7 @@
             </audio>
         {/if}
     {:else}
-        <pre>no url</pre>
+        <pre>Not loaded yet</pre>
         <img class:landscape src={content.thumbnailData} alt={content.caption} />
     {/if}
 {/await}

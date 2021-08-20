@@ -132,7 +132,7 @@ function mockFileMessage(index: number): Message {
             kind: "file_content",
             caption: "A picture of a bird",
             mimeType: "application/pdf",
-            name: "somefile.pdf",
+            name: "somefile_for_us_to_download.pdf",
             blobReference: {
                 blobSize: CHUNK_SIZE_BYTES * 2,
                 blobId: BigInt(2),

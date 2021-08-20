@@ -4,7 +4,7 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type { ChatSummary, DataContent, EventWrapper } from "../../domain/chat/chat";
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
@@ -25,6 +25,7 @@
         on:goToMessage
         on:replyPrivatelyTo
         on:replyTo
+        on:downloadData
         index={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

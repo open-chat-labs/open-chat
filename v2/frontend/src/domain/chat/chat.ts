@@ -8,7 +8,7 @@ export interface CyclesContent {
     amount: bigint;
 }
 
-interface DataContent {
+export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
     blobData: Promise<Uint8Array | undefined>;

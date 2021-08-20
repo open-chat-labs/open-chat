@@ -2,7 +2,6 @@
 import {
     ActionObject,
     createMachine,
-    DoneEvent,
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,

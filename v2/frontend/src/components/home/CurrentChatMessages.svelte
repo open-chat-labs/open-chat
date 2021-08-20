@@ -17,7 +17,7 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { EventWrapper, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type { EventWrapper, EnhancedReplyContext, DataContent } from "../../domain/chat/chat";
     import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
 
@@ -111,6 +111,11 @@
         }
         const useDayNameOnly = date >= addDays(startOfToday, -6);
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
+    }
+
+    function downloadData(ev: CustomEvent<DataContent>) {
+        console.log("go off and download the content");
+        machine.send({ type: "DOWNLOAD_DATA", data: ev.detail });
     }
 
     function goToMessage(ev: CustomEvent<number>) {
@@ -207,6 +212,7 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
+                        on:downloadData={downloadData}
                         on:goToMessage={goToMessage}
                         event={evt} />
                 {/each}
