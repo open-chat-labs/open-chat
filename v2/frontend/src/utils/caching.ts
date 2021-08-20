@@ -2,6 +2,7 @@ import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     EventsResponse,
     EventWrapper,
+    FileContent,
     MediaContent,
     MessageContent,
 } from "../domain/chat/chat";
@@ -11,6 +12,8 @@ type Database = Promise<IDBPDatabase<ChatSchema>>;
 
 type CacheableMessageContent<T extends MessageContent> = T extends MediaContent
     ? Omit<MediaContent, "blobData">
+    : T extends FileContent
+    ? Omit<FileContent, "blobData">
     : T;
 
 type MakeCacheable<T> = {
@@ -115,6 +118,21 @@ function makeSerialisable(ev: EventWrapper): MakeCacheable<EventWrapper> {
                     mimeType: ev.event.content.mimeType,
                     blobReference: ev.event.content.blobReference,
                     thumbnailData: ev.event.content.thumbnailData,
+                },
+            },
+        };
+    }
+    if (ev.event.kind === "message" && ev.event.content.kind === "file_content") {
+        return {
+            ...ev,
+            event: {
+                ...ev.event,
+                content: {
+                    kind: "file_content",
+                    caption: ev.event.content.caption,
+                    mimeType: ev.event.content.mimeType,
+                    name: ev.event.content.name,
+                    blobReference: ev.event.content.blobReference,
                 },
             },
         };

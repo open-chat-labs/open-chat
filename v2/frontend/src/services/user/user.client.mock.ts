@@ -123,6 +123,31 @@ function mockImageMessage(index: number): Message {
     };
 }
 
+function mockFileMessage(index: number): Message {
+    const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
+    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    return {
+        kind: "message",
+        content: {
+            kind: "file_content",
+            caption: "A picture of a bird",
+            mimeType: "application/pdf",
+            name: "somefile.pdf",
+            blobReference: {
+                blobSize: CHUNK_SIZE_BYTES * 2,
+                blobId: BigInt(2),
+                canisterId: "doesnt_matter",
+                chunkSize: CHUNK_SIZE_BYTES,
+            },
+            blobData: Promise.resolve(undefined),
+        },
+        sender,
+        repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
+    };
+}
+
 function mockTextMessage(index: number): Message {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
@@ -144,10 +169,16 @@ function mockEvent(index: number): EventWrapper {
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
 
-    const imageMsg = index % 5 === 0;
+    const n = randomNum(0, 2);
+    const msg =
+        n === 0
+            ? mockTextMessage(index)
+            : n === 1
+            ? mockImageMessage(index)
+            : mockFileMessage(index);
 
     return {
-        event: imageMsg ? mockImageMessage(index) : mockTextMessage(index),
+        event: msg,
         timestamp: BigInt(+new Date(now - timeDiff)),
         index,
     };

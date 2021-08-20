@@ -8,10 +8,21 @@ export class DataClientMock implements IDataClient {
         _totalBytes?: number,
         _chunkSize?: number
     ): Promise<Uint8Array | undefined> {
-        const url =
-            blobId === BigInt(0)
-                ? "https://natureconservancy-h.assetsadobe.com/is/image/content/dam/tnc/nature/en/photos/australia/Quokka_Sam-West.jpg?crop=0,886,2365,1773&wid=640&hei=480&scl=3.6953125"
-                : "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        let url = "";
+        switch (blobId) {
+            case BigInt(0):
+                url =
+                    "https://natureconservancy-h.assetsadobe.com/is/image/content/dam/tnc/nature/en/photos/australia/Quokka_Sam-West.jpg?crop=0,886,2365,1773&wid=640&hei=480&scl=3.6953125";
+                break;
+            case BigInt(1):
+                url =
+                    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+                break;
+            case BigInt(2):
+                url =
+                    "https://file-examples-com.github.io/uploads/2017/10/file-example_PDF_500_kB.pdf";
+                break;
+        }
         return fetch(url)
             .then((resp) => resp.arrayBuffer())
             .then((bytes) => new Uint8Array(bytes));

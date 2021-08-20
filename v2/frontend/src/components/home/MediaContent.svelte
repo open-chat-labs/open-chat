@@ -41,6 +41,9 @@
                 {$_("noAudio")}
             </audio>
         {/if}
+    {:else}
+        <pre>no url</pre>
+        <img class:landscape src={content.thumbnailData} alt={content.caption} />
     {/if}
 {/await}
 {#if content.caption !== undefined}
@@ -62,5 +65,8 @@
             height: auto;
             max-height: none;
         }
+    }
+    audio {
+        max-width: 230px;
     }
 </style>

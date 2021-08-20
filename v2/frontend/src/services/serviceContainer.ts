@@ -110,6 +110,17 @@ export class ServiceContainer {
 
         resp.events = resp.events.map((e) => {
             if (e.event.kind === "message") {
+                // if (
+                //     e.event.content.kind === "media_content" &&
+                //     /^image/.test(e.event.content.mimeType)
+                // ) {
+                //     e.event.content.blobData = this.getMediaData(e.event.content.blobReference);
+                // } else if (
+                //     e.event.content.kind === "media_content" ||
+                //     e.event.content.kind === "file_content"
+                // ) {
+                //     e.event.content.blobData = Promise.resolve(undefined);
+                // }
                 if (
                     e.event.content.kind === "media_content" ||
                     e.event.content.kind === "file_content"
