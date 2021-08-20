@@ -180,7 +180,7 @@ type GroupChatSummary =
 type GroupChatSummaryUpdates =
     record {
         chat_id: GroupChatId;
-        timestamp: TimestampMillis;
+        last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
         participants_added_or_updated: vec Participant;

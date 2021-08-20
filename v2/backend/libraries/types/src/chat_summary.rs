@@ -75,7 +75,7 @@ pub struct DirectChatSummaryUpdates {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: GroupChatId,
-    pub timestamp: TimestampMillis,
+    pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
     pub participants_added_or_updated: Vec<Participant>,
