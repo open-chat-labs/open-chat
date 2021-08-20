@@ -1,121 +1,8 @@
-// This is the canister for an individual user.
-// It holds all the user's direct chats and links to their group chats.
-// For now it also holds the file data for any direct messages sent by the user.
-
-type TimestampMillis = nat64;
-type CanisterId = principal;
-type UserId = CanisterId;
-type DirectChatId = principal;
-type GroupId = CanisterId;
-type EventIndex = nat32;
-type MessageIndex = nat32;
-type MessageId = nat;
-
-type EventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        event: DirectChatEvent;
-    };
-
-type DirectChatEvent =
-    variant {
-        Message: DirectMessage;
-    };
-
-type TextContent =
-    record {
-        text: text;
-    };
-
-type BlobReference = 
-    record {
-        canister_id: CanisterId;
-        blob_id: nat;
-        blob_size: nat32;
-        chunk_size: nat32;
-    };
-
-type MediaContent =
-    record {
-        width: nat32;
-        height: nat32;
-        thumbnail_data: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type FileContent =
-    record {
-        name: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type CyclesContent =
-    record {
-        amount: nat;
-        caption: opt text;
-    };
-
-type MessageContent =
-    variant {
-        Text: TextContent;
-        Media: MediaContent;
-        File: FileContent;
-        Cycles: CyclesContent;
-    };
-
-type PrivateReplyDetails =
-    record {
-        group_chat_id: GroupId;
-        user_id: UserId;
-        content: MessageContent;
-    };
-
-type DirectReplyContext =
-    variant {
-        Standard: record {
-            message_index: MessageIndex;
-            sent_by_me: bool;
-            content: MessageContent;
-        };
-        Private: record {
-            chat_id: GroupId;
-            message_index: MessageIndex;
-        };
-    };
-
-type GroupReplyContext =
-    record {
-        event_index: EventIndex;
-        user_id: UserId;
-        content: MessageContent;
-    };
-
-type DirectMessage =
-    record {
-        message_index: MessageIndex;
-        message_id: MessageId;
-        sender: UserId;
-        content: MessageContent;
-        replies_to: opt DirectReplyContext;
-    };
-
-type GroupMessage =
-    record {
-        message_index: MessageIndex;
-        message_id: MessageId;
-        sender: UserId;
-        content: MessageContent;
-        replies_to: opt GroupReplyContext;
-    };
+import "../../../libraries/types/can.did";
 
 type ReplyContextArgs =
     record {
-        chat_id_if_other: opt GroupId;
+        chat_id_if_other: opt GroupChatId;
         message_index: MessageIndex;
     };
 
@@ -214,7 +101,7 @@ type CreateGroupResponse =
 
 type JoinGroupArgs =
     record {
-        group_chat_id: GroupId;
+        chat_id: GroupChatId;
     };
 
 type JoinGroupResponse =
@@ -230,7 +117,7 @@ type JoinGroupResponse =
 
 type GroupChatUpdatesSince =
     record {
-        chat_id: GroupId;
+        chat_id: GroupChatId;
         updates_since: TimestampMillis;
     };
 
@@ -245,52 +132,6 @@ type UpdatesArgs =
         updates_since: opt UpdatesSince;
     };
 
-type Participant =
-    record {
-        user_id: UserId;
-        date_added: TimestampMillis;
-        role: variant {
-            Standard;
-            Admin;
-        };
-    };
-
-type ChatSummaryUpdates =
-    variant {
-        Direct: DirectChatSummaryUpdates;
-        Group: GroupChatSummaryUpdates;
-    };
-
-type DirectChatSummaryUpdates =
-    record {
-        chat_id: DirectChatId;
-        latest_message: opt record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            event: DirectMessage;
-        };
-        latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
-        latest_read_by_them: opt MessageIndex;
-    };
-
-type GroupChatSummaryUpdates =
-    record {
-        chat_id: GroupId;
-        timestamp: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        participants_added_or_updated: vec Participant;
-        participants_removed: vec UserId;
-        latest_message: opt record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            event: GroupMessage;
-        };
-        latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
-    };
-
 type UpdatesResponse =
     variant {
         Success: record {
@@ -301,56 +142,9 @@ type UpdatesResponse =
         }
     };
 
-type ChatSummary =
-    variant {
-        Direct: DirectChatSummary;
-        Group: GroupChatSummary;
-    };
-
-type DirectChatSummary =
-    record {
-        chat_id: DirectChatId;
-        them: UserId;
-        latest_message: record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            event: DirectMessage;
-        };
-        latest_event_index: EventIndex;
-        date_created: TimestampMillis;
-        latest_read_by_me: MessageIndex;
-        latest_read_by_them: MessageIndex;
-        last_updated: TimestampMillis;
-    };
-
-type GroupChatSummary =
-    record {
-        chat_id: GroupId;
-        name: text;
-        description: text;
-        is_public: bool;
-        min_visible_message_index: MessageIndex;
-        participants: vec Participant;
-        latest_message: opt record {
-            index: EventIndex;
-            timestamp: TimestampMillis;
-            event: GroupMessage;
-        };
-        latest_event_index: EventIndex;
-        latest_read_by_me: MessageIndex;
-        joined: TimestampMillis;
-        last_updated: TimestampMillis;
-    };
-
-type ChatId =
-    variant { 
-        Direct: DirectChatId; 
-        Group: GroupId; 
-    };
-
 type EventsSuccessResult =
     record {
-        events: vec EventWrapper;
+        events: vec DirectChatEventWrapper;
         latest_event_index: EventIndex;
     };
 

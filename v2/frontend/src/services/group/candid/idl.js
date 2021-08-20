@@ -29,6 +29,25 @@ export const idlFactory = ({ IDL }) => {
     'to_index' : EventIndex,
     'from_index' : EventIndex,
   });
+  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const GroupDescriptionChanged = IDL.Record({
+    'new_description' : IDL.Opt(IDL.Text),
+    'previous_description' : IDL.Opt(IDL.Text),
+    'changed_by' : UserId,
+  });
+  const GroupChatCreated = IDL.Record({
+    'name' : IDL.Text,
+    'description' : IDL.Opt(IDL.Text),
+    'created_by' : UserId,
+  });
+  const ParticipantsPromotedToAdmin = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'promoted_by' : UserId,
+  });
+  const ParticipantsRemoved = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'removed_by' : UserId,
+  });
   const BlobReference = IDL.Record({
     'blob_size' : IDL.Nat32,
     'blob_id' : IDL.Nat,
@@ -50,33 +69,51 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const CyclesContent = IDL.Record({
+    'caption' : IDL.Opt(IDL.Text),
+    'amount' : IDL.Nat,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
-    'Text' : TextContent,
+    'text' : TextContent,
     'Media' : MediaContent,
+    'Cycles' : CyclesContent,
   });
   const MessageId = IDL.Nat;
-  const MessageIndex = IDL.Nat32;
-  const ReplyContext = IDL.Record({
+  const GroupReplyContext = IDL.Record({
     'content' : MessageContent,
     'user_id' : UserId,
-    'message_id' : MessageId,
-    'message_index' : MessageIndex,
+    'event_index' : EventIndex,
   });
-  const Message = IDL.Record({
+  const MessageIndex = IDL.Nat32;
+  const GroupMessage = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContext),
+    'replies_to' : IDL.Opt(GroupReplyContext),
     'message_index' : MessageIndex,
   });
+  const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
+  const GroupNameChanged = IDL.Record({
+    'changed_by' : UserId,
+    'new_name' : IDL.Text,
+    'previous_name' : IDL.Text,
+  });
+  const ParticipantsAdded = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'added_by' : UserId,
+  });
   const GroupChatEvent = IDL.Variant({
-    'GroupChatCreated' : IDL.Record({
-      'name' : IDL.Text,
-      'description' : IDL.Opt(IDL.Text),
-      'created_by' : UserId,
-    }),
-    'Message' : Message,
+    'ParticipantJoined' : ParticipantJoined,
+    'GroupDescriptionChanged' : GroupDescriptionChanged,
+    'GroupChatCreated' : GroupChatCreated,
+    'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
+    'ParticipantsRemoved' : ParticipantsRemoved,
+    'Message' : GroupMessage,
+    'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin,
+    'ParticipantLeft' : ParticipantLeft,
+    'GroupNameChanged' : GroupNameChanged,
+    'ParticipantsAdded' : ParticipantsAdded,
   });
   const TimestampMillis = IDL.Nat64;
   const GroupChatEventWrapper = IDL.Record({
@@ -155,7 +192,7 @@ export const idlFactory = ({ IDL }) => {
   const SearchMessagesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'matches' : IDL.Vec(
-        IDL.Record({ 'score' : IDL.Nat32, 'message' : Message })
+        IDL.Record({ 'score' : IDL.Nat32, 'message' : GroupMessage })
       ),
     }),
     'Failure' : IDL.Null,
@@ -166,17 +203,35 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContextArgs),
   });
+  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
+  const Participant = IDL.Record({
+    'role' : Role,
+    'user_id' : UserId,
+    'date_added' : TimestampMillis,
+  });
+  const GroupChatId = IDL.Vec(IDL.Nat8);
+  const GroupMessageEventWrapper = IDL.Record({
+    'event' : GroupMessage,
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
+  const GroupChatSummary = IDL.Record({
+    'is_public' : IDL.Bool,
+    'participants' : IDL.Vec(Participant),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'latest_read_by_me' : MessageIndex,
+    'joined' : TimestampMillis,
+    'latest_event_index' : EventIndex,
+    'min_visible_message_index' : MessageIndex,
+    'chat_id' : GroupChatId,
+    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+  });
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
-      'chat_summary' : IDL.Record({
-        'last_updated' : TimestampMillis,
-        'display_date' : TimestampMillis,
-        'min_visible_message_index' : MessageIndex,
-        'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
-        'unread_by_any_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
-      }),
+      'chat_summary' : GroupChatSummary,
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,
@@ -195,37 +250,13 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
-  const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
-  const Participant = IDL.Record({
-    'role' : Role,
-    'user_id' : UserId,
-    'date_added' : TimestampMillis,
-  });
-  const GroupId = CanisterId;
-  const GroupMessageEventWrapper = IDL.Record({
-    'event' : Message,
-    'timestamp' : TimestampMillis,
-    'index' : EventIndex,
-  });
-  const GroupChatSummary = IDL.Record({
-    'is_public' : IDL.Bool,
-    'participants' : IDL.Vec(Participant),
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'latest_read_by_me' : MessageIndex,
-    'joined' : TimestampMillis,
-    'latest_event_index' : EventIndex,
-    'min_visible_message_index' : MessageIndex,
-    'chat_id' : GroupId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
-  });
   const SummaryResponse = IDL.Variant({
     'Success' : GroupChatSummary,
     'SuccessNoUpdates' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
-  const SummaryUpdatesSuccess = IDL.Record({
+  const GroupChatSummaryUpdates = IDL.Record({
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
@@ -233,10 +264,15 @@ export const idlFactory = ({ IDL }) => {
     'latest_read_by_me' : IDL.Opt(MessageIndex),
     'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Opt(EventIndex),
+    'chat_id' : GroupChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+  });
+  const SummaryUpdatesSuccess = IDL.Record({
+    'updates' : GroupChatSummaryUpdates,
   });
   const SummaryUpdatesResponse = IDL.Variant({
     'Success' : SummaryUpdatesSuccess,
+    'SuccessNoUpdates' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({});

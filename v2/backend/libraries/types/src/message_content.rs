@@ -51,7 +51,7 @@ pub enum MessageContentType {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReference {
     canister_id: CanisterId,
-    blob_id: String,
+    blob_id: u128,
     blob_size: u32,
     chunk_size: u32,
 }

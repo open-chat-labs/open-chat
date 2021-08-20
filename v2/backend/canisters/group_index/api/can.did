@@ -1,12 +1,4 @@
-// Maintains a store of groups
-// In heartbeat function do zero or one of the following:
-// 1. upgrade group canisters as needed
-// 2. top-up group canisters with cycles as needed
-// 3. notify the "controller" canister if this canister's cycle balance is getting low
-
-type TimestampMillis = nat64;
-type CanisterId = principal;
-type GroupId = CanisterId;
+import "../../../libraries/types/can.did";
 
 type CreateArgs =
     record {
@@ -42,7 +34,7 @@ type UpgradeResponse =
 
 type DeleteArgs =
     record {
-        group_id: GroupId;
+        chat_id: GroupChatId;
     };
 
 type DeleteResponse =
@@ -62,7 +54,7 @@ type SearchResponse =
     variant {
         Success: record {
             groups: vec record {
-                group_id: GroupId;
+                chat_id: GroupChatId;
                 name: text;
                 score: nat32;
             };

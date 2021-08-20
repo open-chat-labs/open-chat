@@ -10,7 +10,7 @@ type UserId = CanisterId;
 type BlobReference =
     record {
         canister_id: CanisterId;
-        blob_id: text;
+        blob_id: nat;
         blob_size: nat32;
         chunk_size: nat32;
     };
@@ -35,10 +35,22 @@ type CanisterWasm =
         version: Version;
     };
 
+type ChatId =
+    variant {
+        Direct: DirectChatId;
+        Group: GroupChatId;
+    };
+
 type ChatSummary =
     variant {
         Direct: DirectChatSummary;
         Group: GroupChatSummary;
+    };
+
+type ChatSummaryUpdates =
+    variant {
+        Direct: DirectChatSummaryUpdates;
+        Group: GroupChatSummaryUpdates;
     };
 
 type ConfirmationCodeSms =
@@ -58,6 +70,13 @@ type DirectChatEvent =
         Message: DirectMessage;
     };
 
+type DirectChatEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: DirectChatEvent;
+    };
+
 type DirectChatSummary =
     record {
         chat_id: DirectChatId;
@@ -67,6 +86,15 @@ type DirectChatSummary =
         date_created: TimestampMillis;
         latest_read_by_me: MessageIndex;
         latest_read_by_them: MessageIndex;
+    };
+
+type DirectChatSummaryUpdates =
+    record {
+        chat_id: DirectChatId;
+        latest_message: opt DirectMessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        latest_read_by_me: opt MessageIndex;
+        latest_read_by_them: opt MessageIndex;
     };
 
 type DirectMessage =
@@ -107,6 +135,13 @@ type FileContent =
         blob_reference: opt BlobReference;
     };
 
+type GroupChatCreated =
+    record {
+        name: text;
+        description: opt text;
+        created_by: UserId;
+    };
+
 type GroupChatEvent =
     variant {
         Message: GroupMessage;
@@ -119,6 +154,13 @@ type GroupChatEvent =
         ParticipantLeft: ParticipantLeft;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsPromotedToAdmin;
+    };
+
+type GroupChatEventWrapper =
+    record {
+        index: EventIndex;
+        timestamp: TimestampMillis;
+        event: GroupChatEvent;
     };
 
 type GroupChatSummary =
@@ -135,11 +177,17 @@ type GroupChatSummary =
         latest_read_by_me: MessageIndex;
     };
 
-type GroupChatCreated =
+type GroupChatSummaryUpdates =
     record {
-        name: text;
+        chat_id: GroupChatId;
+        timestamp: TimestampMillis;
+        name: opt text;
         description: opt text;
-        created_by: UserId;
+        participants_added_or_updated: vec Participant;
+        participants_removed: vec UserId;
+        latest_message: opt GroupMessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        latest_read_by_me: opt MessageIndex;
     };
 
 type GroupDescriptionChanged =
@@ -189,6 +237,12 @@ type GroupReplyContext =
         content: MessageContent;
     };
 
+type IndexedNotification =
+    record {
+        index: nat64;
+        value: NotificationEnvelope;
+    };
+
 type MediaContent =
     record {
         width: nat32;
@@ -213,6 +267,12 @@ type Notification =
         GroupMessageNotification: GroupMessageNotification;
         V1DirectMessageNotification: V1DirectMessageNotification;
         V1GroupMessageNotification: V1GroupMessageNotification;
+    };
+
+type NotificationEnvelope =
+    record {
+        recipients: vec UserId;
+        notification: Notification;
     };
 
 type Participant =
@@ -298,12 +358,99 @@ type TextContent =
         text: text;
     };
 
+type UserSummary =
+    record {
+        user_id: UserId;
+        username: text;
+        seconds_since_last_online: nat32;
+    };
+
+type PartialUserSummary =
+    record {
+        user_id: UserId;
+        username: opt text;
+        seconds_since_last_online: nat32;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
+
+// TODO Delete the V1 stuff below
+
+type V1GroupId = nat;
+type V1ChatId = nat;
+
+type V1TextContent =
+    record {
+        text: text;
+    };
+
+type V1MediaContent =
+    record {
+        caption: opt text;
+        mime_type: text;
+        width: nat32;
+        height: nat32;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+        thumbnail_data: text;
+        blob_deleted: bool;
+    };
+
+type V1FileContent =
+    record {
+        caption: opt text;
+        name: text;
+        mime_type: text;
+        blob_id: text;
+        blob_size: nat32;
+        chunk_size: nat32;
+        blob_deleted: bool;
+    };
+
+type V1CyclesContent =
+    record {
+        amount: nat;
+        caption: opt text;
+    };
+
+type V1MessageContent =
+    variant {
+        Text: V1TextContent;
+        Media: V1MediaContent;
+        File: V1FileContent;
+        Cycles: V1CyclesContent;
+    };
+
+type V1ReplyContext =
+    record {
+        chat_id: V1ChatId;
+        user_id: UserId;
+        message_id: nat32;
+        content: V1MessageContent;
+    };
+
+type V1Message =
+    record {
+        id: nat32;
+        client_message_id: text;
+        timestamp: TimestampMillis;
+        sender: UserId;
+        content: V1MessageContent;
+        replies_to: opt V1ReplyContext;
+    };
+
 type V1DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
         recipient: UserId;
-        message: reserved;
+        message: V1Message;
     };
 
 type V1GroupMessageNotification =
@@ -313,12 +460,8 @@ type V1GroupMessageNotification =
         sender: UserId;
         sender_name: text;
         recipients: vec UserId;
-        message: reserved;
+        message: V1Message;
     };
 
-type Version =
-    record {
-        major: nat32;
-        minor: nat32;
-        patch: nat32;
-    };
+
+
