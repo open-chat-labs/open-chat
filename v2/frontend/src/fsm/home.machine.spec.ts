@@ -8,7 +8,6 @@ const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
     chatId: "abcdefg",
-    lastUpdated: BigInt(0),
     latestReadByMe: 0,
     latestReadByThem: 0,
     latestMessage: undefined,

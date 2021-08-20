@@ -67,7 +67,6 @@
                 kind: "group_reply_context",
                 content: msg.content,
                 userId: msg.sender,
-                messageId: BigInt(0), //todo - don't have this at the moment
                 messageIndex: index,
                 sender,
             };

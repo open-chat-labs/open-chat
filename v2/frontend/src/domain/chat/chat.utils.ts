@@ -11,9 +11,9 @@ import type {
     Participant,
     ReplyContext,
     TextContent,
-    UpdatedChatSummary,
-    UpdatedDirectChatSummary,
-    UpdatedGroupChatSummary,
+    ChatSummaryUpdates,
+    DirectChatSummaryUpdates,
+    GroupChatSummaryUpdates,
     UpdatesResponse,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
@@ -141,17 +141,21 @@ export function getDisplayDate(chat: ChatSummary): bigint {
 
 function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
-    updatedChat: UpdatedDirectChatSummary
+    updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
     chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestReadByThem = updatedChat.latestReadByThem ?? chat.latestReadByThem;
-    chat.lastUpdated = updatedChat.lastUpdated;
-    chat.latestEventIndex = updatedChat.latestEventIndex;
+    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     return chat;
 }
 
-export function mergeUpdated(chat: ChatSummary, updatedChat: UpdatedChatSummary): ChatSummary {
+export function mergeUpdates(
+    chat: ChatSummary | undefined,
+    updatedChat: ChatSummaryUpdates
+): ChatSummary | undefined {
+    if (!chat) return undefined;
+
     if (chat.chatId !== updatedChat.chatId) {
         throw new Error("Cannot update chat from a chat with a different chat id");
     }
@@ -171,31 +175,30 @@ export function mergeChatUpdates(
     chatSummaries: ChatSummary[],
     updateResponse: UpdatesResponse
 ): ChatSummary[] {
-    return mergeThings((c) => c.chatId, mergeUpdated, chatSummaries, {
+    return mergeThings((c) => c.chatId, mergeUpdates, chatSummaries, {
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
         removed: updateResponse.chatsRemoved,
     });
 }
 
-function mergeParticipants(existing: Participant, updated: Participant) {
-    existing.role = updated.role;
-    return existing;
+function mergeParticipants(_: Participant | undefined, updated: Participant) {
+    return updated;
 }
 
 function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
-    updatedChat: UpdatedGroupChatSummary
+    updatedChat: GroupChatSummaryUpdates
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
     chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
-    chat.lastUpdated = updatedChat.lastUpdated;
-    chat.latestEventIndex = updatedChat.latestEventIndex;
+    chat.lastUpdated = updatedChat.timestamp;
+    chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
-        added: updatedChat.participantsAdded,
-        updated: updatedChat.participantsUpdated,
+        added: [],
+        updated: updatedChat.participantsAddedOrUpdated,
         removed: updatedChat.participantsRemoved,
     });
     return chat;
@@ -212,7 +215,7 @@ function toLookup<T>(keyFn: (t: T) => string, things: T[]): Record<string, T> {
 // within a group chat
 function mergeThings<A, U>(
     keyFn: (a: A | U) => string,
-    mergeFn: (existing: A, updated: U) => A,
+    mergeFn: (existing: A | undefined, updated: U) => A | undefined,
     things: A[],
     updates: { added: A[]; updated: U[]; removed: Set<string> }
 ): A[] {
@@ -220,8 +223,9 @@ function mergeThings<A, U>(
     const dict = toLookup(keyFn, remaining);
     const updated = updates.updated.reduce((dict, updated) => {
         const key = keyFn(updated);
-        if (dict[key]) {
-            dict[key] = mergeFn(dict[key], updated);
+        const merged = mergeFn(dict[key], updated);
+        if (merged) {
+            dict[key] = merged;
         }
         return dict;
     }, dict);
@@ -264,4 +268,16 @@ export function identity<T>(x: T): T {
 
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
     return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
+}
+
+export function compareChats(a: ChatSummary, b: ChatSummary): number {
+    return latestActivity(a) - latestActivity(b);
+}
+
+function latestActivity(chat: ChatSummary): number {
+    if (chat.latestMessage) {
+        return Number(chat.latestMessage.timestamp);
+    } else {
+        return Number(chat.kind === "direct_chat" ? chat.dateCreated : chat.joined);
+    }
 }

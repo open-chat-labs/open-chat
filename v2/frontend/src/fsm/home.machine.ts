@@ -87,12 +87,22 @@ async function getUpdates(
     directChatsLastUpdate?: bigint
 ): Promise<ChatsResponse> {
     try {
-        const chatsResponse = await serviceContainer.getUpdates(userId, {
-            lastUpdated: directChatsLastUpdate,
-            groups: chatSummaries
-                .filter((c) => c.kind === "group_chat")
-                .map((g) => ({ chatId: g.chatId, lastUpdated: g.lastUpdated })),
-        });
+        const chatsResponse = await serviceContainer.getUpdates(
+            userId,
+            directChatsLastUpdate
+                ? {
+                      updatesSince: {
+                          timestamp: directChatsLastUpdate,
+                          groupChats: chatSummaries
+                              .filter((c) => c.kind === "group_chat")
+                              .map((g) => ({
+                                  chatId: g.chatId,
+                                  lastUpdated: (g as GroupChatSummary).lastUpdated,
+                              })),
+                      },
+                  }
+                : { updatesSince: undefined }
+        );
         const userIds = userIdsFromChatSummaries(chatsResponse.chatsAdded, false);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),
@@ -393,7 +403,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 kind: "direct_chat",
                                 them: ev.data.sender!.userId,
                                 chatId: String(ctx.chatSummaries.length + 1),
-                                lastUpdated: BigInt(+new Date()),
                                 latestReadByMe: 0,
                                 latestReadByThem: 0,
                                 latestMessage: undefined,
@@ -416,7 +425,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             kind: "direct_chat",
                             them: ev.data,
                             chatId: String(ctx.chatSummaries.length + 1),
-                            lastUpdated: BigInt(+new Date()),
                             latestReadByMe: 0,
                             latestReadByThem: 0,
                             latestMessage: undefined,
@@ -501,7 +509,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     kind: "direct_chat",
                                     them: ev.data.userId,
                                     chatId: String(ctx.chatSummaries.length + 1),
-                                    lastUpdated: BigInt(+new Date()),
                                     latestReadByMe: 0,
                                     latestReadByThem: 0,
                                     latestMessage: undefined,

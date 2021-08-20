@@ -193,6 +193,7 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'Success' : null };
 export type SummaryArgs = {};
 export type SummaryResponse = { 'Success' : GroupChatSummary } |
+  { 'SuccessNoUpdates' : null } |
   { 'NotInGroup' : null };
 export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |

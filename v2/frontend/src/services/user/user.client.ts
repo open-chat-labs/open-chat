@@ -60,11 +60,17 @@ export class UserClient extends CandidService implements IUserClient {
     getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
         return this.handleResponse(
             this.userService.updates({
-                groups: args.groups.map((g) => ({
-                    last_updated: g.lastUpdated,
-                    chat_id: Principal.fromText(g.chatId),
-                })),
-                last_updated: args.lastUpdated ? [args.lastUpdated] : [],
+                updates_since: args.updatesSince
+                    ? [
+                          {
+                              timestamp: args.updatesSince.timestamp,
+                              group_chats: args.updatesSince.groupChats.map((g) => ({
+                                  chat_id: Principal.fromText(g.chatId),
+                                  updates_since: g.lastUpdated,
+                              })),
+                          },
+                      ]
+                    : [],
             }),
             (resp) => getUpdatesResponse(userId, resp)
         );

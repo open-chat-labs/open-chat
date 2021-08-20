@@ -43,7 +43,6 @@ export type GroupChatReplyContext = {
     kind: "group_reply_context";
     content: MessageContent;
     userId: string;
-    messageId: bigint;
     messageIndex: number;
 };
 
@@ -103,38 +102,46 @@ export type EventsSuccessResult = {
     events: EventWrapper[];
 };
 
+export type GroupChatUpdatesSince = {
+    updatesSince: bigint;
+    chatId: string;
+};
+
+export type UpdatesSince = {
+    groupChats: { lastUpdated: bigint; chatId: string }[];
+    timestamp: bigint;
+};
+
 export type UpdateArgs = {
-    groups: { lastUpdated: bigint; chatId: string }[];
-    lastUpdated?: bigint;
+    updatesSince?: UpdatesSince;
 };
 
 export type UpdatesResponse = {
-    chatsUpdated: UpdatedChatSummary[];
+    chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
     timestamp: bigint;
 };
 
-export type UpdatedChatSummary = UpdatedDirectChatSummary | UpdatedGroupChatSummary;
+export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
 
-type UpdatedChatSummaryCommon = {
+type ChatSummaryUpdatesCommon = {
     chatId: string;
-    lastUpdated: bigint;
     latestReadByMe?: number;
     latestMessage?: EventWrapper;
-    latestEventIndex: number;
+    latestEventIndex?: number;
 };
 
-export type UpdatedDirectChatSummary = UpdatedChatSummaryCommon & {
+export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
     latestReadByThem?: number;
 };
 
-export type UpdatedGroupChatSummary = UpdatedChatSummaryCommon & {
+export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "group_chat";
-    participantsAdded: Participant[];
+    participantsAddedOrUpdated: Participant[];
     participantsRemoved: Set<string>;
-    participantsUpdated: Participant[];
+    timestamp: bigint;
     name?: string;
     description?: string;
 };
@@ -155,7 +162,6 @@ type ChatSummaryCommon = {
     latestReadByMe: number;
     latestMessage?: EventWrapper;
     latestEventIndex: number;
-    lastUpdated: bigint;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -173,6 +179,7 @@ export type GroupChatSummary = ChatSummaryCommon & {
     public: boolean;
     joined: bigint;
     minVisibleMessageIndex: number;
+    lastUpdated: bigint;
 };
 
 export type CandidateParticipant = {

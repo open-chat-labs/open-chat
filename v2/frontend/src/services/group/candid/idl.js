@@ -221,6 +221,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SummaryResponse = IDL.Variant({
     'Success' : GroupChatSummary,
+    'SuccessNoUpdates' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
