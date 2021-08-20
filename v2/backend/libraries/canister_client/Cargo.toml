@@ -1,0 +1,20 @@
+[package]
+name = "canister_client"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = "0.7.4"
+garcon = "0.2.3"
+group_canister = { path = "../../canisters/group/api" }
+group_index_canister = { path = "../../canisters/group_index/api" }
+ic-agent = "0.7.0"
+ic-utils = "0.5.0"
+notifications_canister = { path = "../../canisters/notifications/api" }
+serde = "1.0.126"
+types = { path = "../types", default-features = false }
+user_canister = { path = "../../canisters/user/api" }
+user_index_canister = { path = "../../canisters/user_index/api" }

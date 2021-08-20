@@ -1,3 +1,4 @@
+use crate::TestIdentity;
 use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -5,24 +6,14 @@ use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use std::fs::File;
-use std::future::Future;
 use std::io::Read;
 use std::path::PathBuf;
-use tokio::runtime::Runtime as TRuntime;
 use types::{CanisterWasm, Version};
 
 const CONTROLLER_PEM: &str = include_str!("../keys/controller.pem");
 const USER1_PEM: &str = include_str!("../keys/user1.pem");
 const USER2_PEM: &str = include_str!("../keys/user2.pem");
 const USER3_PEM: &str = include_str!("../keys/user3.pem");
-
-#[allow(dead_code)]
-pub enum TestIdentity {
-    Controller,
-    User1,
-    User2,
-    User3,
-}
 
 pub enum CanisterWasmName {
     Group,
@@ -98,9 +89,4 @@ pub fn delay() -> garcon::Delay {
         .throttle(std::time::Duration::from_millis(500))
         .timeout(std::time::Duration::from_secs(60 * 5))
         .build()
-}
-
-pub fn block_on<F: Future>(f: F) -> F::Output {
-    let rt = TRuntime::new().unwrap_or_else(|err| panic!("Could not create tokio runtime: {}", err));
-    rt.block_on(f)
 }

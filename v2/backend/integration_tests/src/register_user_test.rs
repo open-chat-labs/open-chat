@@ -1,6 +1,8 @@
-use crate::canisters::user_index;
-use crate::setup::{create_and_install_service_canisters, register_user};
-use crate::utils::*;
+use crate::block_on;
+use canister_client::canisters;
+use canister_client::operations::*;
+use canister_client::utils::{build_ic_agent, build_identity};
+use canister_client::TestIdentity;
 use ic_fondue::ic_manager::IcHandle;
 
 pub fn register_user_test(handle: IcHandle, ctx: &fondue::pot::Context) {
@@ -40,7 +42,7 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     let identity = build_identity(TestIdentity::User1);
     let agent = build_ic_agent(url, identity).await;
     let submit_phone_number_response =
-        user_index::submit_phone_number(&agent, &canister_ids.user_index, &submit_phone_number_args).await;
+        canisters::user_index::submit_phone_number(&agent, &canister_ids.user_index, &submit_phone_number_args).await;
 
     assert!(matches!(
         submit_phone_number_response,

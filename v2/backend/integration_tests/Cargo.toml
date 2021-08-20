@@ -10,6 +10,7 @@ edition = "2018"
 
 [dependencies]
 candid = "0.7.4"
+canister_client = { path = "../libraries/canister_client" }
 fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 futures = "0.3.16"
 garcon = "0.2.3"
