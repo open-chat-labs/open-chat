@@ -1,10 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, onDestroy } from "svelte";
+    import { afterUpdate, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MediaContent } from "../../domain/chat/chat";
-    import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
+    import MusicNote from "svelte-material-icons/MusicNote.svelte";
+    import CloudDownloadOutline from "svelte-material-icons/CloudDownloadOutline.svelte";
+    import Pause from "svelte-material-icons/Pause.svelte";
     import { dataToBlobUrl } from "../../utils/blob";
     import { DataClient } from "../../services/data/data.client";
 
@@ -13,13 +15,25 @@
     let landscape = content.height < content.width;
     let downloaded: boolean = false;
     let audioPlayer: HTMLAudioElement;
+    let playing: boolean = false;
 
-    $: blobUrl = content.blobData.then((data) =>
-        data ? dataToBlobUrl(data, content.mimeType) : undefined
-    );
+    $: blobUrl = content.blobData.then((data) => {
+        if (data) {
+            downloaded = true;
+            return dataToBlobUrl(data, content.mimeType);
+        }
+        return undefined;
+    });
 
     function download() {
-        if (downloaded) return;
+        if (downloaded) {
+            if (playing) {
+                audioPlayer.pause();
+            } else {
+                audioPlayer.play();
+            }
+            return;
+        }
 
         if (content.blobReference) {
             // we need to overwrite the whole content object so that we trigger a re-render
@@ -36,19 +50,18 @@
         }
     }
 
-    afterUpdate(() => {
-        if (downloaded && audioPlayer) {
-            audioPlayer.play();
-        }
-    });
-
     onDestroy(() => {
         blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
 
-<div class="thumbnail" on:click={download}>
-    <audio bind:this={audioPlayer} poster={content.thumbnailData} class:landscape controls>
+<div class="audio" on:click={download}>
+    <audio
+        on:ended={() => (playing = false)}
+        on:play={() => (playing = true)}
+        on:pause={() => (playing = false)}
+        bind:this={audioPlayer}
+        class:landscape>
         <track kind="captions" />
         {#await blobUrl then url}
             {#if url}
@@ -57,17 +70,31 @@
         {/await}
     </audio>
     {#await blobUrl}
-        <span class="icon loading" />
-    {:then url}
-        {#if !url}
-            <span class="icon">
-                <PlayCircleOutline size={"4em"} color={"#fff"} />
-            </span>
+        <CloudDownloadOutline size={"3em"} color={"#fff"} />
+    {:then _url}
+        {#if playing}
+            <Pause size={"3em"} color={"#fff"} />
+        {:else}
+            <MusicNote size={"3em"} color={"#fff"} />
         {/if}
     {/await}
 </div>
 
 <style type="text/scss">
+    $size: 80px;
+
+    .audio {
+        position: relative;
+        cursor: pointer;
+        width: $size;
+        height: $size;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: $sp4;
+        border-radius: 50%;
+        background: linear-gradient(#ef5da8, #22a7f2);
+    }
     audio {
         max-width: 230px;
     }

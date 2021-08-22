@@ -36,18 +36,12 @@
         }
     }
 
-    afterUpdate(() => {
-        if (downloaded && videoPlayer) {
-            videoPlayer.play();
-        }
-    });
-
     onDestroy(() => {
         blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
 
-<div class="thumbnail" on:click={download}>
+<div class="video" on:click={download}>
     <video bind:this={videoPlayer} poster={content.thumbnailData} class:landscape controls>
         <track kind="captions" />
         {#await blobUrl then url}
@@ -68,23 +62,24 @@
 </div>
 
 <style type="text/scss">
-    video {
-        max-width: none;
-        width: auto;
-        height: 100%;
-        max-height: calc(var(--vh, 1vh) * 50);
-        display: block;
-
-        &.landscape {
-            max-width: calc(var(--vh, 1vh) * 50);
-            width: 100%;
-            height: auto;
-            max-height: none;
-        }
-    }
-    .thumbnail {
+    .video {
         position: relative;
         cursor: pointer;
+
+        video {
+            max-width: none;
+            width: auto;
+            height: 100%;
+            max-height: calc(var(--vh, 1vh) * 50);
+            display: block;
+
+            &.landscape {
+                max-width: calc(var(--vh, 1vh) * 50);
+                width: 100%;
+                height: auto;
+                max-height: none;
+            }
+        }
     }
     .icon {
         position: absolute !important;
