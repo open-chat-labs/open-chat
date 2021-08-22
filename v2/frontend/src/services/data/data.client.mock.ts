@@ -1,15 +1,12 @@
+import type { BlobReference } from "../../domain/chat/chat";
 import type { IDataClient } from "./data.client.interface";
 
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 
 export class DataClientMock implements IDataClient {
-    async getData(
-        blobId: bigint,
-        _totalBytes?: number,
-        _chunkSize?: number
-    ): Promise<Uint8Array | undefined> {
+    async getData(blobRef: BlobReference): Promise<Uint8Array | undefined> {
         let url = "";
-        switch (blobId) {
+        switch (blobRef.blobId) {
             case BigInt(0):
                 url =
                     "https://natureconservancy-h.assetsadobe.com/is/image/content/dam/tnc/nature/en/photos/australia/Quokka_Sam-West.jpg?crop=0,886,2365,1773&wid=640&hei=480&scl=3.6953125";

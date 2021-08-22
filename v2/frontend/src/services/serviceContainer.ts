@@ -33,12 +33,10 @@ import { GroupClientMock } from "./group/group.client.mock";
 import { CachingUserClient } from "./user/user.caching.client";
 import { CachingGroupClient } from "./group/group.caching.client";
 import type { IDBPDatabase } from "idb";
-import { ChatSchema, openMessageCache } from "../utils/caching";
+import { ChatSchema, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
-import { CachingDataClient } from "./data/data.caching.client";
-import type { IDataClient } from "./data/data.client.interface";
-import { DataClientMock } from "./data/data.client.mock";
+import { DataClient } from "./data/data.client";
 
 export class ServiceContainer {
     private userIndexClient: IUserIndexClient;
@@ -51,7 +49,7 @@ export class ServiceContainer {
         this.userIndexClient = new UserIndexClientMock();
         this.groupIndexClient = new GroupIndexClientMock();
         this._groupClients = {};
-        this.db = openMessageCache();
+        this.db = db;
     }
 
     createUserClient(_userId: string): ServiceContainer {
@@ -136,17 +134,7 @@ export class ServiceContainer {
 
     private getMediaData(blobRef?: BlobReference): Promise<Uint8Array | undefined> {
         if (!blobRef) return Promise.resolve(undefined);
-
-        // todo - swap this when we have the real service
-        // let client: IDataClient = new DataClient(
-        //     this.identity,
-        //     Principal.fromText(blobRef.canisterId)
-        // );
-        let client: IDataClient = new DataClientMock();
-        if (this.db) {
-            client = new CachingDataClient(this.db, client);
-        }
-        return Promise.resolve(client.getData(blobRef.blobId, blobRef.blobSize, blobRef.chunkSize));
+        return DataClient.create(blobRef.canisterId).getData(blobRef);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {

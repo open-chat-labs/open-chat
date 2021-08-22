@@ -10,12 +10,7 @@
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type {
-        ChatSummary,
-        Message,
-        EnhancedReplyContext,
-        DataContent,
-    } from "../../domain/chat/chat";
+    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -28,7 +23,6 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
-    import Loading from "../Loading.svelte";
     const dispatch = createEventDispatcher();
 
     export let chatSummary: ChatSummary;
@@ -111,7 +105,7 @@
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
 
-        <ChatMessageContent on:downloadData {me} content={msg.content} />
+        <ChatMessageContent {me} content={msg.content} />
 
         <pre>{msg.messageIndex}</pre>
 

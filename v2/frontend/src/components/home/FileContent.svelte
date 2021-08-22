@@ -2,30 +2,45 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
     import { dataToBlobUrl } from "../../utils/blob";
-    import { onDestroy } from "svelte";
-    const dispatch = createEventDispatcher();
+    import { afterUpdate, onDestroy } from "svelte";
+    import { DataClient } from "../../services/data/data.client";
 
     export let content: FileContent;
     export let me: boolean = false;
+    let downloaded: boolean = false;
+    let anchor: HTMLAnchorElement;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
-    let blobUrl = content.blobData.then((data) =>
+    $: blobUrl = content.blobData.then((data) =>
         data ? dataToBlobUrl(data, content.mimeType) : undefined
     );
 
-    // to allow this to be lazy loaded means that the component is no longer immutable
-    // so we need to be super carefull with that.
+    afterUpdate(() => {
+        if (downloaded && anchor) {
+            anchor.click();
+        }
+    });
+
     function download() {
-        dispatch("downloadData", content);
+        if (content.blobReference) {
+            // we need to overwrite the whole content object so that we trigger a re-render
+            content = {
+                ...content,
+                blobData: DataClient.create(content.blobReference.canisterId)
+                    .getData(content.blobReference)
+                    .then((data) => {
+                        downloaded = true;
+                        return data;
+                    }),
+            };
+        }
     }
 
     onDestroy(() => {
-        console.log("destroying file url");
         blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
@@ -36,6 +51,7 @@
             href={url}
             title={$_("downloadFile", { values: { name: content.name } })}
             download={content.name}
+            bind:this={anchor}
             role="button"
             class="file-content">
             <span class="icon" class:rtl={$rtlStore}>
@@ -63,6 +79,7 @@
 <style type="text/scss">
     .file-content {
         display: block;
+        cursor: pointer;
         @include ellipsis();
     }
 

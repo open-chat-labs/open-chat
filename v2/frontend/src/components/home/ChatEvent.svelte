@@ -25,7 +25,6 @@
         on:goToMessage
         on:replyPrivatelyTo
         on:replyTo
-        on:downloadData
         index={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

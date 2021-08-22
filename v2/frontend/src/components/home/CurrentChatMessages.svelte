@@ -113,11 +113,6 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
-    function downloadData(ev: CustomEvent<DataContent>) {
-        console.log("go off and download the content");
-        machine.send({ type: "DOWNLOAD_DATA", data: ev.detail });
-    }
-
     function goToMessage(ev: CustomEvent<number>) {
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
@@ -212,7 +207,6 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
-                        on:downloadData={downloadData}
                         on:goToMessage={goToMessage}
                         event={evt} />
                 {/each}

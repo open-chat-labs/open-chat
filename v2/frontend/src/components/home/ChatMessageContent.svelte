@@ -29,7 +29,7 @@
 {:else if content.kind === "media_content"}
     <MediaContent {content} />
 {:else if content.kind === "file_content"}
-    <FileContent on:downloadData {me} {content} />
+    <FileContent {me} {content} />
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
 {/if}

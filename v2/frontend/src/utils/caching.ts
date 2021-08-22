@@ -156,3 +156,5 @@ export function setCachedMessages(
         return resp;
     };
 }
+
+export const db = openMessageCache();
