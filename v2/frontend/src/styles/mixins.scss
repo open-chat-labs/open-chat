@@ -301,4 +301,19 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @if $size {
         @include font-size($size);
     }
-} ;
+}
+
+@mixin media-dimensions($landscape) {
+    max-width: none;
+    width: auto;
+    height: 100%;
+    max-height: calc(var(--vh, 1vh) * 50);
+    display: block;
+
+    @if $landscape {
+        max-width: calc(var(--vh, 1vh) * 50);
+        width: 100%;
+        height: auto;
+        max-height: none;
+    }
+}

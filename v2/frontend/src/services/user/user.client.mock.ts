@@ -90,14 +90,19 @@ function mockRepliesTo(index: number): ReplyContext {
     };
 }
 
-type MediaType = "image" | "video";
-let mediaType: MediaType = "image";
+type MimeType = "image/jpg" | "video/mp4" | "audio/mp3";
 
-function mockImageMessage(index: number): Message {
+function mockMediaMessage(index: number, mimeType: MimeType): Message {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
-    mediaType = mediaType === "image" ? "video" : "image";
-    const mimeType = mediaType === "image" ? "image/jpg" : "video/mp4";
+    const blobId =
+        mimeType === "image/jpg"
+            ? BigInt(0)
+            : mimeType === "video/mp4"
+            ? BigInt(1)
+            : mimeType === "audio/mp3"
+            ? BigInt(3)
+            : BigInt(4);
     return {
         kind: "message",
         content: {
@@ -108,7 +113,7 @@ function mockImageMessage(index: number): Message {
             mimeType,
             blobReference: {
                 blobSize: CHUNK_SIZE_BYTES * 2,
-                blobId: BigInt(mediaType === "image" ? 0 : 1),
+                blobId,
                 canisterId: "doesnt_matter",
                 chunkSize: CHUNK_SIZE_BYTES,
             },
@@ -169,13 +174,17 @@ function mockEvent(index: number): EventWrapper {
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
 
-    const n = randomNum(0, 2);
+    const n = randomNum(0, 4);
     const msg =
         n === 0
             ? mockTextMessage(index)
             : n === 1
-            ? mockImageMessage(index)
-            : mockFileMessage(index);
+            ? mockMediaMessage(index, "image/jpg")
+            : n === 2
+            ? mockFileMessage(index)
+            : n === 3
+            ? mockMediaMessage(index, "video/mp4")
+            : mockMediaMessage(index, "audio/mp3");
 
     return {
         event: msg,
