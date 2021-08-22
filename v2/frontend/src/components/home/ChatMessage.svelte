@@ -251,7 +251,7 @@
         padding: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
         max-width: 90%;
-        min-width: 25%;
+        min-width: 50%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
