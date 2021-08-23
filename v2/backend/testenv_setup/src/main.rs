@@ -1,6 +1,6 @@
 use canister_client::operations::{create_group, send_direct_message, send_group_message};
 use canister_client::utils::{build_ic_agent, build_identity};
-use canister_client::TestIdentity;
+use canister_client::{CanisterIds, TestIdentity};
 use clap::{AppSettings, Clap};
 use ic_agent::Agent;
 use rand::rngs::StdRng;
@@ -16,70 +16,80 @@ async fn main() {
     let canister_ids = canister_client::operations::create_and_install_service_canisters(opts.url.clone()).await;
 
     if let Some(username) = opts.username {
-        let other_users = register_test_users(opts.url, canister_ids.user_index).await;
-        let target_user =
-            wait_for_target_user_to_be_registered(&other_users.first().unwrap().0, username, canister_ids.user_index).await;
-        let mut all_user_ids: Vec<_> = other_users.iter().map(|(_, u, _)| u).cloned().collect();
-        all_user_ids.push(target_user);
+        run_data_generator(opts.url, canister_ids, username, opts.seed, opts.max_groups).await;
+    }
+}
 
-        let mut actions: Vec<_> = other_users
-            .iter()
-            .map(|(a, u, n)| Action::SendDirectMessage(a.clone(), *u, n.clone()))
-            .collect();
+async fn run_data_generator(
+    url: String,
+    canister_ids: CanisterIds,
+    username: String,
+    seed: Option<u32>,
+    max_groups: Option<u32>,
+) {
+    let other_users = register_test_users(url, canister_ids.user_index).await;
+    let target_user =
+        wait_for_target_user_to_be_registered(&other_users.first().unwrap().0, username, canister_ids.user_index).await;
+    let mut all_user_ids: Vec<_> = other_users.iter().map(|(_, u, _)| u).cloned().collect();
+    all_user_ids.push(target_user);
 
-        let max_groups = opts.max_groups.unwrap_or(10);
-        if max_groups > 0 {
-            actions.append(
-                &mut other_users
-                    .iter()
-                    .map(|(a, u, _)| Action::CreateGroup(a.clone(), *u))
-                    .collect(),
-            );
-        }
+    let mut actions: Vec<_> = other_users
+        .iter()
+        .map(|(a, u, n)| Action::SendDirectMessage(a.clone(), *u, n.clone()))
+        .collect();
 
-        let mut rng = build_rng(opts.seed);
-        let mut groups_created = 0;
+    let max_groups = max_groups.unwrap_or(10);
+    if max_groups > 0 {
+        actions.append(
+            &mut other_users
+                .iter()
+                .map(|(a, u, _)| Action::CreateGroup(a.clone(), *u))
+                .collect(),
+        );
+    }
 
-        loop {
-            match get_next_action(&actions, rng.next_u32()) {
-                Action::SendDirectMessage(a, u, n) => {
-                    let args = user_canister::send_message::Args {
-                        message_id: (rng.next_u64() as u128).into(),
-                        recipient: target_user,
-                        sender_name: n,
-                        content: MessageContent::Text(build_text_content(&mut rng)),
-                        replies_to: None,
-                    };
-                    send_direct_message(&a, u, &args).await;
-                }
-                Action::SendGroupMessage(a, g, n) => {
-                    let args = group_canister::send_message::Args {
-                        message_id: (rng.next_u64() as u128).into(),
-                        sender_name: n,
-                        content: MessageContent::Text(build_text_content(&mut rng)),
-                        replies_to: None,
-                    };
-                    send_group_message(&a, g, &args).await;
-                }
-                Action::CreateGroup(a, u) => {
-                    let args = user_canister::create_group::Args {
-                        is_public: rng.next_u32() % 2 == 0,
-                        name: lipsum::lipsum_words_from_seed(2, rng.next_u64()),
-                        description: lipsum::lipsum_words_from_seed(15, rng.next_u64()),
-                    };
-                    let participants = all_user_ids.iter().filter(|&id| *id != u).cloned().collect();
-                    let group_chat_id = create_group(&a, u, &args, participants).await;
-                    groups_created += 1;
-                    actions.append(
-                        &mut other_users
-                            .iter()
-                            .map(|(a, _, n)| Action::SendGroupMessage(a.clone(), group_chat_id, n.clone()))
-                            .collect(),
-                    );
+    let mut rng = build_rng(seed);
+    let mut groups_created = 0;
 
-                    if groups_created == max_groups {
-                        actions.retain(|a| !matches!(a, Action::CreateGroup(_, _)));
-                    }
+    loop {
+        match get_next_action(&actions, rng.next_u32()) {
+            Action::SendDirectMessage(a, u, n) => {
+                let args = user_canister::send_message::Args {
+                    message_id: (rng.next_u64() as u128).into(),
+                    recipient: target_user,
+                    sender_name: n,
+                    content: MessageContent::Text(build_text_content(&mut rng)),
+                    replies_to: None,
+                };
+                send_direct_message(&a, u, &args).await;
+            }
+            Action::SendGroupMessage(a, g, n) => {
+                let args = group_canister::send_message::Args {
+                    message_id: (rng.next_u64() as u128).into(),
+                    sender_name: n,
+                    content: MessageContent::Text(build_text_content(&mut rng)),
+                    replies_to: None,
+                };
+                send_group_message(&a, g, &args).await;
+            }
+            Action::CreateGroup(a, u) => {
+                let args = user_canister::create_group::Args {
+                    is_public: rng.next_u32() % 2 == 0,
+                    name: lipsum::lipsum_words_from_seed(2, rng.next_u64()),
+                    description: lipsum::lipsum_words_from_seed(15, rng.next_u64()),
+                };
+                let participants = all_user_ids.iter().filter(|&id| *id != u).cloned().collect();
+                let group_chat_id = create_group(&a, u, &args, participants).await;
+                groups_created += 1;
+                actions.append(
+                    &mut other_users
+                        .iter()
+                        .map(|(a, _, n)| Action::SendGroupMessage(a.clone(), group_chat_id, n.clone()))
+                        .collect(),
+                );
+
+                if groups_created == max_groups {
+                    actions.retain(|a| !matches!(a, Action::CreateGroup(_, _)));
                 }
             }
         }
