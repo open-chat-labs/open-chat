@@ -77,7 +77,7 @@
     {/await}
 </audio>
 
-<div class="circular" on:click={download}>
+<div class="circular" role="button" on:click={download}>
     <div class="inner" />
     <div class="number">
         {#await blobUrl}
@@ -125,7 +125,8 @@
             height: $inner;
             width: $inner;
             margin: $margin 0 0 $margin;
-            background: linear-gradient(#ef5da8, #22a7f2);
+            // background: linear-gradient(#ef5da8, #22a7f2);
+            background: radial-gradient(#22a7f2, #ef5da8);
             // opacity: 0.8;
             border-radius: 100%;
         }
