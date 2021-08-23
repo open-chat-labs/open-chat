@@ -125,18 +125,20 @@ async fn push_notifications_to_user(
     notifications: Vec<Notification>,
     subscriptions: Vec<SubscriptionInfo>,
 ) -> Result<(UserId, Vec<String>), Error> {
-    let serialized = serde_json::to_string(&notifications)?;
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
-        // TODO: Should not happen inside the loop! But VapidSignatureBuilder::from_pem
-        // doesn't like taking a &file
-        // But really we want to get the private key from a string in the environment
-        let file = File::open(vapid_private_pem).unwrap();
-        let sig_builder = VapidSignatureBuilder::from_pem(file, subscription)?;
-        let mut builder = WebPushMessageBuilder::new(subscription)?;
-        builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
-        builder.set_vapid_signature(sig_builder.build()?);
-        messages.push(builder.build()?);
+        for notification in &notifications {
+            let serialized = serde_json::to_string(&notification)?;
+            // TODO: This should happen once on app start! But VapidSignatureBuilder::from_pem
+            // doesn't like taking a string
+            let file = File::open(vapid_private_pem).unwrap();
+            let sig_builder = VapidSignatureBuilder::from_pem(file, subscription)?;
+            let vapid_signature = sig_builder.build()?;
+            let mut builder = WebPushMessageBuilder::new(subscription)?;
+            builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
+            builder.set_vapid_signature(vapid_signature);
+            messages.push(builder.build()?);
+        }
     }
 
     let futures: Vec<_> = messages.into_iter().map(|m| client.send(m)).collect();
