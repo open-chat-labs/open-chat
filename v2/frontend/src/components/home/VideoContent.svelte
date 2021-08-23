@@ -25,14 +25,14 @@
             // we need to overwrite the whole content object so that we trigger a re-render
             content = {
                 ...content,
-                blobData: DataClient.create(content.blobReference.canisterId).getData(
-                    content.blobReference
-                ),
+                blobData: DataClient.create(content.blobReference.canisterId)
+                    .getData(content.blobReference)
+                    .then((data) => {
+                        downloaded = true;
+                        videoPlayer.play();
+                        return data;
+                    }),
             };
-            content.blobData.then(() => {
-                downloaded = true;
-                videoPlayer.play();
-            });
         }
     }
 
