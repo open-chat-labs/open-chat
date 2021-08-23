@@ -194,7 +194,7 @@ function mergeUpdatedGroupChat(
     chat.description = updatedChat.description ?? chat.description;
     chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
-    chat.lastUpdated = updatedChat.timestamp;
+    chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
         added: [],

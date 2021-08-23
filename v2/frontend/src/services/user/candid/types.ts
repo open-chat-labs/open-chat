@@ -129,6 +129,7 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
+  'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,

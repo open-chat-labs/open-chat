@@ -214,7 +214,7 @@ describe("merging updates", () => {
         const updatedGroup: GroupChatSummaryUpdates = {
             kind: "group_chat",
             chatId: "2",
-            timestamp: BigInt(1000),
+            lastUpdated: BigInt(1000),
             latestReadByMe: 200,
             latestMessage: {
                 event: {

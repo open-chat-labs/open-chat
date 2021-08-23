@@ -201,7 +201,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         const removeParticipant = chat.participants[randomNum(0, chat.participants.length - 1)];
         return {
             chatId: chat.chatId,
-            timestamp: BigInt(+new Date()),
+            lastUpdated: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage

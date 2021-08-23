@@ -292,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'participants' : IDL.Vec(Participant),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,

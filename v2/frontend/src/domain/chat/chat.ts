@@ -141,7 +141,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "group_chat";
     participantsAddedOrUpdated: Participant[];
     participantsRemoved: Set<string>;
-    timestamp: bigint;
+    lastUpdated: bigint;
     name?: string;
     description?: string;
 };

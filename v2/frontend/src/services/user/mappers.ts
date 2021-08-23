@@ -111,7 +111,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         return {
             kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
-            timestamp: candid.Group.timestamp,
+            lastUpdated: candid.Group.last_updated,
             latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
