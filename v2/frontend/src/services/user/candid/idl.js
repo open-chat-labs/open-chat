@@ -56,7 +56,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
-    'text' : TextContent,
+    'Text' : TextContent,
     'Media' : MediaContent,
     'Cycles' : CyclesContent,
   });
@@ -292,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'participants' : IDL.Vec(Participant),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,

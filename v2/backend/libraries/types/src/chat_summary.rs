@@ -40,6 +40,7 @@ impl DirectChatSummary {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: GroupChatId,
+    pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
     pub is_public: bool,

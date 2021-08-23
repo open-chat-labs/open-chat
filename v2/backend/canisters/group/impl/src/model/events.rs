@@ -75,7 +75,7 @@ impl Events {
     }
 
     pub fn push_event(&mut self, event: GroupChatEventInternal, now: TimestampMillis) -> EventIndex {
-        let event_index = self.latest_event_index().incr();
+        let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index).incr();
         if let GroupChatEventInternal::Message(m) = &event {
             self.latest_message_index = m.message_index;
             self.latest_message_event_index = event_index;
@@ -154,10 +154,6 @@ impl Events {
 
     pub fn last(&self) -> &EventWrapper<GroupChatEventInternal> {
         self.events.last().unwrap()
-    }
-
-    pub fn latest_event_index(&self) -> EventIndex {
-        self.events.last().map_or(EventIndex::default(), |e| e.index)
     }
 
     pub fn latest_message_index(&self) -> MessageIndex {
