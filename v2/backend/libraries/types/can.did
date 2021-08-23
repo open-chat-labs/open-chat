@@ -65,9 +65,14 @@ type CyclesContent =
         caption: opt text;
     };
 
+type DirectChatCreated =
+    record {
+    };
+
 type DirectChatEvent =
     variant {
         Message: DirectMessage;
+        DirectChatCreated: DirectChatCreated;
     };
 
 type DirectChatEventWrapper =
