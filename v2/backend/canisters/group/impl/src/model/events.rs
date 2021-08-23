@@ -48,16 +48,14 @@ impl Events {
             latest_message_index: MessageIndex::default(),
         };
 
-        let event = GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
-            name,
-            description,
-            created_by,
-        });
-        events.events.push(EventWrapper {
-            index: EventIndex::default(),
-            timestamp: now,
-            event,
-        });
+        events.push_event(
+            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
+                name,
+                description,
+                created_by,
+            }),
+            now,
+        );
 
         events
     }
@@ -77,7 +75,7 @@ impl Events {
     }
 
     pub fn push_event(&mut self, event: GroupChatEventInternal, now: TimestampMillis) -> EventIndex {
-        let event_index = self.last().index.incr();
+        let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index).incr();
         if let GroupChatEventInternal::Message(m) = &event {
             self.latest_message_index = m.message_index;
             self.latest_message_event_index = event_index;
