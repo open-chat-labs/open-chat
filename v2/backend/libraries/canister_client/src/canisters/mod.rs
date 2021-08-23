@@ -1,5 +1,3 @@
-use candid::Principal;
-
 #[macro_use]
 mod macros {
     macro_rules! generate_update_call {
@@ -59,9 +57,3 @@ pub mod user;
 
 #[allow(dead_code)]
 pub mod user_index;
-
-pub struct CanisterIds {
-    pub user_index: Principal,
-    pub group_index: Principal,
-    pub notifications: Principal,
-}

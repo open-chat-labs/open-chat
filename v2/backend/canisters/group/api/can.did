@@ -1,82 +1,4 @@
-type TimestampMillis = nat64;
-type CanisterId = principal;
-type UserId = CanisterId;
-type GroupId = CanisterId;
-type EventIndex = nat32;
-type MessageIndex = nat32;
-type MessageId = nat;
-
-type GroupChatEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        event: GroupChatEvent;
-    };
-
-type GroupChatEvent =
-    variant {
-        Message: Message;
-        GroupChatCreated: record {
-            name: text;
-            description: opt text;
-            created_by: UserId;
-        };
-    };
-
-type TextContent =
-    record {
-        text: text;
-    };
-
-type BlobReference = 
-    record {
-        canister_id: CanisterId;
-        blob_id: nat;
-        blob_size: nat32;
-        chunk_size: nat32;
-    };
-
-type MediaContent =
-    record {
-        width: nat32;
-        height: nat32;
-        thumbnail_data: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type FileContent =
-    record {
-        name: text;
-        caption: opt text;
-        mime_type: text;
-        blob_reference: opt BlobReference;
-    };
-
-type MessageContent =
-    variant {
-        Text: TextContent;
-        Media: MediaContent;
-        File: FileContent;
-    };
-
-type ReplyContext =
-    record {
-        message_id: MessageId;
-        message_index: MessageIndex;
-        user_id: UserId;
-        content: MessageContent;
-    };
-
-type Message =
-    record {
-        message_index: MessageIndex;
-        message_id: MessageId;
-        sender: UserId;
-        content: MessageContent;
-        replies_to: opt ReplyContext;
-    };
+import "../../../libraries/types/can.did";
 
 type ReplyContextArgs =
     record {
@@ -93,13 +15,7 @@ type SendMessageArgs =
 type SendMessageResponse =
     variant {
         Success: record {
-            chat_summary: record {
-                display_date: TimestampMillis;
-                last_updated: TimestampMillis;
-                min_visible_message_index: MessageIndex;
-                unread_by_me_message_id_ranges: vec vec nat32;
-                unread_by_any_message_id_ranges: vec vec nat32;
-            };
+            chat_summary: GroupChatSummary;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
         };
@@ -259,40 +175,6 @@ type PutChunkResponse =
         Full;
     };
 
-type Role =
-    variant {
-        Admin;
-        Participant;
-    };
-
-type Participant =
-    record {
-        user_id: UserId;
-        date_added: TimestampMillis;
-        role: Role;
-    };
-
-type GroupMessageEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        event: Message;
-    };
-
-type GroupChatSummary =
-    record {
-        chat_id: GroupId;
-        name: text;
-        description: text;
-        is_public: bool;
-        min_visible_message_index: MessageIndex;
-        participants: vec Participant;
-        latest_message: opt GroupMessageEventWrapper;
-        latest_event_index: EventIndex;
-        joined: TimestampMillis;
-        latest_read_by_me: MessageIndex;
-    };
-
 type SummaryArgs =
     record {
     };
@@ -311,19 +193,13 @@ type SummaryUpdatesArgs =
 
 type SummaryUpdatesSuccess =
     record {
-        timestamp: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        participants_added_or_updated: vec Participant;
-        participants_removed: vec UserId;
-        latest_message: opt GroupMessageEventWrapper;
-        latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
+        updates: GroupChatSummaryUpdates;
     };
 
 type SummaryUpdatesResponse =
     variant {
         Success: SummaryUpdatesSuccess;
+        SuccessNoUpdates;
         NotInGroup;
     };
 
@@ -380,7 +256,7 @@ type SearchMessagesResponse =
     variant {
         Success: record {
             matches: vec record {
-                message: Message;
+                message: GroupMessage;
                 score: nat32;
             };
         };

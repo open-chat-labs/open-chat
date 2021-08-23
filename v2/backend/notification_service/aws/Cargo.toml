@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 async-trait = "0.1.51"
 aws-sdk-dynamodb = { git = "https://github.com/awslabs/aws-sdk-rust", tag = "v0.0.11-alpha", package = "aws-sdk-dynamodb" }
-candid = "0.7.4"
+candid = "0.7.5"
 lambda_runtime = "0.3.0"
 serde = "1.0.126"
 shared = { path = "../shared" }

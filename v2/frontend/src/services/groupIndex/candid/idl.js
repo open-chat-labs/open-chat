@@ -9,8 +9,8 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : IDL.Nat16,
     'GroupLimitExceeded' : IDL.Null,
   });
-  const GroupId = CanisterId;
-  const DeleteArgs = IDL.Record({ 'group_id' : GroupId });
+  const GroupChatId = IDL.Vec(IDL.Nat8);
+  const DeleteArgs = IDL.Record({ 'chat_id' : GroupChatId });
   const DeleteResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Null,
@@ -43,7 +43,7 @@ export const idlFactory = ({ IDL }) => {
         IDL.Record({
           'name' : IDL.Text,
           'score' : IDL.Nat32,
-          'group_id' : GroupId,
+          'chat_id' : GroupChatId,
         })
       ),
     }),
