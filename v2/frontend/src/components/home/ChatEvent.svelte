@@ -4,8 +4,18 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type {
+        ChatEvent,
+        ChatSummary,
+        DirectChatEvent,
+        DirectChatSummary,
+        EventWrapper,
+        GroupChatEvent,
+    } from "../../domain/chat/chat";
 
+    // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
+    // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
+    // I am *sure* there must be a way to do it.
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;

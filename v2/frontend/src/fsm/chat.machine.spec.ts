@@ -2,11 +2,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type {
     DirectChatSummary,
+    DirectMessage,
     EnhancedReplyContext,
     EventWrapper,
     FileContent,
     GroupChatSummary,
-    Message,
+    GroupMessage,
+    ReplyContext,
     TextContent,
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
@@ -52,9 +54,22 @@ const groupChat: GroupChatSummary = {
     latestEventIndex: 0,
 };
 
-const testContext: ChatContext = {
+const directContext: ChatContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: directChat,
+    userLookup: {},
+    events: [],
+    user: {
+        userId: "abcdef",
+        username: "julian_jelfs",
+        secondsSinceLastOnline: 10,
+    },
+    replyingTo: undefined,
+};
+
+const groupContext: ChatContext = {
+    serviceContainer: {} as ServiceContainer,
+    chatSummary: groupChat,
     userLookup: {},
     events: [],
     user: {
@@ -69,7 +84,7 @@ describe("chat machine transitions", () => {
     describe("attaching files", () => {
         test("attach non file content", () => {
             const ctx = testTransition(
-                chatMachine.withContext(testContext),
+                chatMachine.withContext(directContext),
                 { user_states: "idle" },
                 { type: "ATTACH_FILE", data: textMessageContent },
                 { user_states: "idle" }
@@ -79,7 +94,7 @@ describe("chat machine transitions", () => {
 
         test("clear attached file", () => {
             const ctx = testTransition(
-                chatMachine.withContext({ ...testContext, fileToAttach: textMessageContent }),
+                chatMachine.withContext({ ...directContext, fileToAttach: textMessageContent }),
                 { user_states: "idle" },
                 { type: "CLEAR_ATTACHMENT" },
                 { user_states: "idle" }
@@ -90,7 +105,7 @@ describe("chat machine transitions", () => {
         test("attach file content", () => {
             // todo - this doesn't really test that the send message event is sent
             const ctx = testTransition(
-                chatMachine.withContext(testContext),
+                chatMachine.withContext(directContext),
                 { user_states: "idle" },
                 { type: "ATTACH_FILE", data: fileMessageContent },
                 { user_states: "idle" }
@@ -101,7 +116,7 @@ describe("chat machine transitions", () => {
 
     test("initiate loading previous messages", () => {
         testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "LOAD_PREVIOUS_MESSAGES" },
             { user_states: "loading_previous_messages" }
@@ -110,7 +125,7 @@ describe("chat machine transitions", () => {
     test("reply to", () => {
         const msg = repliesTo();
         const ctx = testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "REPLY_TO", data: msg },
             { user_states: "idle" }
@@ -119,7 +134,7 @@ describe("chat machine transitions", () => {
     });
     test("send messages", () => {
         const ctx = testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "SEND_MESSAGE", data: "hello world" },
             { user_states: "sending_message" }
@@ -128,7 +143,7 @@ describe("chat machine transitions", () => {
     });
     test("cancel reply to", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...testContext, replyingTo: repliesTo() }),
+            chatMachine.withContext({ ...directContext, replyingTo: repliesTo() }),
             { user_states: "idle" },
             { type: "CANCEL_REPLY_TO" },
             { user_states: "idle" }
@@ -137,7 +152,7 @@ describe("chat machine transitions", () => {
     });
     test("send messages clears replyto", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...testContext, replyingTo: repliesTo() }),
+            chatMachine.withContext({ ...directContext, replyingTo: repliesTo() }),
             { user_states: "idle" },
             { type: "SEND_MESSAGE", data: "hello world" },
             { user_states: "sending_message" }
@@ -146,7 +161,7 @@ describe("chat machine transitions", () => {
     });
     test("show participants", () => {
         testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "SHOW_PARTICIPANTS" },
             { user_states: "showing_participants" }
@@ -154,7 +169,7 @@ describe("chat machine transitions", () => {
     });
     test("add participants", () => {
         testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "ADD_PARTICIPANT" },
             { user_states: "showing_participants" }
@@ -162,7 +177,7 @@ describe("chat machine transitions", () => {
     });
     test("clear focus index", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...testContext, focusIndex: 123 }),
+            chatMachine.withContext({ ...directContext, focusIndex: 123 }),
             { user_states: "idle" },
             { type: "CLEAR_FOCUS_INDEX" },
             { user_states: "idle" }
@@ -171,7 +186,7 @@ describe("chat machine transitions", () => {
     });
     test("clear focus index", () => {
         const ctx = testTransition(
-            chatMachine.withContext(testContext),
+            chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "GO_TO_MESSAGE_INDEX", data: 123 },
             { user_states: "loading_previous_messages" }
@@ -180,15 +195,20 @@ describe("chat machine transitions", () => {
     });
 });
 
-function eventMessage(index: number): EventWrapper {
+type MessageKind = "group_message" | "direct_message";
+
+function eventMessage<T extends GroupMessage | DirectMessage>(
+    kind: MessageKind,
+    index: number
+): EventWrapper<T> {
     return {
-        event: textMessage(index),
+        event: textMessage<T>(kind, index),
         index,
         timestamp: BigInt(+new Date()),
     };
 }
 
-function repliesTo(): EnhancedReplyContext {
+function repliesTo(): EnhancedReplyContext<ReplyContext> {
     return {
         kind: "direct_standard_reply_context",
         content: {
@@ -200,18 +220,30 @@ function repliesTo(): EnhancedReplyContext {
     };
 }
 
-function textMessage(index: number): Message {
-    return {
-        kind: "message",
-        content: {
-            kind: "text_content",
-            text: "some text",
-        },
-        sender: "abcdefg",
-        repliesTo: undefined,
-        messageId: newMessageId(),
-        messageIndex: index,
-    };
+function textMessage<T extends GroupMessage | DirectMessage>(kind: MessageKind, index: number): T {
+    return kind === "direct_message"
+        ? ({
+              kind,
+              content: {
+                  kind: "text_content",
+                  text: "some text",
+              },
+              sentByMe: true,
+              repliesTo: undefined,
+              messageId: newMessageId(),
+              messageIndex: index,
+          } as T)
+        : ({
+              kind,
+              content: {
+                  kind: "text_content",
+                  text: "some text",
+              },
+              sender: "abcdef",
+              repliesTo: undefined,
+              messageId: newMessageId(),
+              messageIndex: index,
+          } as T);
 }
 
 describe("required message range calculation", () => {
@@ -225,11 +257,11 @@ describe("required message range calculation", () => {
          */
         test("from equals to", () => {
             const ctx = {
-                ...testContext,
-                events: [eventMessage(100)],
+                ...directContext,
+                events: [eventMessage<DirectMessage>("direct_message", 100)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage(101),
+                    latestMessage: eventMessage<DirectMessage>("direct_message", 101),
                     latestEventIndex: 101,
                 },
             };
@@ -238,33 +270,33 @@ describe("required message range calculation", () => {
         test("from greater than to", () => {
             // this is not really a valid scenario, but we should deal with it
             const ctx = {
-                ...testContext,
-                events: [eventMessage(200)],
+                ...directContext,
+                events: [eventMessage<DirectMessage>("direct_message", 200)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage(101),
+                    latestMessage: eventMessage<DirectMessage>("direct_message", 101),
                     latestEventIndex: 101,
                 },
             };
             expect(newMessagesRange(ctx)).toBe(undefined);
         });
         test("no messages loaded", () => {
-            expect(newMessagesRange(testContext)).toBe(undefined);
+            expect(newMessagesRange(directContext)).toBe(undefined);
         });
         test("no latest message on chat", () => {
             const ctx = {
-                ...testContext,
-                events: [eventMessage(200)],
+                ...directContext,
+                events: [eventMessage<DirectMessage>("direct_message", 200)],
             };
             expect(newMessagesRange(ctx)).toBe(undefined);
         });
         test("normal scenario", () => {
             const ctx = {
-                ...testContext,
-                events: [eventMessage(100)],
+                ...directContext,
+                events: [eventMessage<DirectMessage>("direct_message", 100)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage(110),
+                    latestMessage: eventMessage<DirectMessage>("direct_message", 110),
                     latestEventIndex: 110,
                 },
             };
@@ -276,10 +308,10 @@ describe("required message range calculation", () => {
         describe("when we have not loaded any chats", () => {
             test("cannot go back beyond zero for direct chat", () => {
                 const ctx = {
-                    ...testContext,
+                    ...directContext,
                     chatSummary: {
                         ...directChat,
-                        latestMessage: eventMessage(9),
+                        latestMessage: eventMessage<DirectMessage>("direct_message", 9),
                         latestEventIndex: 9,
                     },
                 };
@@ -287,11 +319,11 @@ describe("required message range calculation", () => {
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
-                    ...testContext,
+                    ...groupContext,
                     chatSummary: {
                         ...groupChat,
                         minVisibleMessageIndex: 90,
-                        latestMessage: eventMessage(100),
+                        latestMessage: eventMessage<GroupMessage>("group_message", 100),
                         latestEventIndex: 100,
                     },
                 };
@@ -300,11 +332,11 @@ describe("required message range calculation", () => {
             test("takes into account focus index", () => {
                 // should go to focusIndex - page_size
                 const ctx: ChatContext = {
-                    ...testContext,
+                    ...directContext,
                     focusIndex: 70,
                     chatSummary: {
                         ...directChat,
-                        latestMessage: eventMessage(100),
+                        latestMessage: eventMessage<DirectMessage>("direct_message", 100),
                         latestEventIndex: 100,
                     },
                 };
@@ -312,10 +344,10 @@ describe("required message range calculation", () => {
             });
             test("limited by page size if nothing else", () => {
                 const ctx: ChatContext = {
-                    ...testContext,
+                    ...directContext,
                     chatSummary: {
                         ...directChat,
-                        latestMessage: eventMessage(100),
+                        latestMessage: eventMessage<DirectMessage>("direct_message", 100),
                         latestEventIndex: 100,
                     },
                 };
@@ -326,15 +358,15 @@ describe("required message range calculation", () => {
         describe("when we have already got some chats", () => {
             test("cannot go back beyond zero for direct chat", () => {
                 const ctx = {
-                    ...testContext,
-                    events: [eventMessage(10)],
+                    ...directContext,
+                    events: [eventMessage<DirectMessage>("direct_message", 10)],
                 };
                 expect(previousMessagesRange(ctx)).toEqual([0, 9]);
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
-                    ...testContext,
-                    events: [eventMessage(101)],
+                    ...directContext,
+                    events: [eventMessage<DirectMessage>("direct_message", 101)],
                     chatSummary: {
                         ...groupChat,
                         minVisibleMessageIndex: 90,
@@ -345,8 +377,8 @@ describe("required message range calculation", () => {
             test("takes into account focus index", () => {
                 // should go to focusIndex - page_size
                 const ctx: ChatContext = {
-                    ...testContext,
-                    events: [eventMessage(101)],
+                    ...directContext,
+                    events: [eventMessage<DirectMessage>("direct_message", 101)],
                     focusIndex: 70,
                     chatSummary: { ...directChat },
                 };
@@ -354,8 +386,8 @@ describe("required message range calculation", () => {
             });
             test("limited by page size if nothing else", () => {
                 const ctx: ChatContext = {
-                    ...testContext,
-                    events: [eventMessage(101)],
+                    ...directContext,
+                    events: [eventMessage<DirectMessage>("direct_message", 101)],
                     chatSummary: { ...directChat },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([80, 100]);
