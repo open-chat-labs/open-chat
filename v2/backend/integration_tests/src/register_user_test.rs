@@ -33,7 +33,7 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     register_user(
         url.clone(),
         TestIdentity::User1,
-        Some("Alpha".to_string()),
+        Some("Andy".to_string()),
         canister_ids.user_index,
     )
     .await;
