@@ -20,7 +20,7 @@ members = [
     "backend/notification_service/aws",
     "backend/notification_service/shared",
     "backend/notification_service/cli",
-    "backend/sms_service",
+    "backend/sms_service"
 ]
 
 [profile.release]

@@ -1,4 +1,4 @@
-use candid::Principal;
+use types::CanisterId;
 
 pub mod canisters;
 pub mod operations;
@@ -12,8 +12,9 @@ pub enum TestIdentity {
     User3,
 }
 
+#[derive(Debug)]
 pub struct CanisterIds {
-    pub user_index: Principal,
-    pub group_index: Principal,
-    pub notifications: Principal,
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub notifications: CanisterId,
 }

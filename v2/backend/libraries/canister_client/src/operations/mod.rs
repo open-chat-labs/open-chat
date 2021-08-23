@@ -1,11 +1,11 @@
 use crate::canisters::*;
 use crate::utils::{build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName};
 use crate::{CanisterIds, TestIdentity};
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::{CanisterId, GroupChatId, UserId};
+use types::{CanisterId, GroupChatId, UserId, UserSummary};
 
 pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     let identity = build_identity(TestIdentity::Controller);
@@ -13,9 +13,14 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
-    let user_index_canister_id = create_empty_canister(&management_canister).await;
-    let group_index_canister_id = create_empty_canister(&management_canister).await;
-    let notifications_canister_id = create_empty_canister(&management_canister).await;
+    let (user_index_canister_id, group_index_canister_id, notifications_canister_id) = futures::future::join3(
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister),
+        create_empty_canister(&management_canister)).await;
+
+    println!("user_index canister id: {}", user_index_canister_id.to_string());
+    println!("group_index canister id: {}", group_index_canister_id.to_string());
+    println!("notifications canister id: {}", notifications_canister_id.to_string());
 
     let user_index_canister_wasm = get_canister_wasm(CanisterWasmName::UserIndex);
     let user_canister_wasm = get_canister_wasm(CanisterWasmName::User);
@@ -27,13 +32,6 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
         notifications_canister_id,
         test_mode: true,
     };
-    install_wasm(
-        &management_canister,
-        &user_index_canister_id,
-        &user_index_canister_wasm.module,
-        user_index_init_args,
-    )
-    .await;
 
     let group_index_canister_wasm = get_canister_wasm(CanisterWasmName::GroupIndex);
     let group_canister_wasm = get_canister_wasm(CanisterWasmName::Group);
@@ -41,25 +39,33 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
         group_canister_wasm,
         notifications_canister_id,
     };
-    install_wasm(
-        &management_canister,
-        &group_index_canister_id,
-        &group_index_canister_wasm.module,
-        group_index_init_args,
-    )
-    .await;
 
     let notifications_canister_wasm = get_canister_wasm(CanisterWasmName::Notifications);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
     };
-    install_wasm(
-        &management_canister,
-        &notifications_canister_id,
-        &notifications_canister_wasm.module,
-        notifications_init_args,
-    )
-    .await;
+
+    futures::future::join3(
+        install_wasm(
+            &management_canister,
+            &user_index_canister_id,
+            &user_index_canister_wasm.module,
+            user_index_init_args,
+        ),
+        install_wasm(
+            &management_canister,
+            &group_index_canister_id,
+            &group_index_canister_wasm.module,
+            group_index_init_args,
+        ),
+        install_wasm(
+            &management_canister,
+            &notifications_canister_id,
+            &notifications_canister_wasm.module,
+            notifications_init_args,
+        )).await;
+
+    println!("Canister wasms installed");
 
     CanisterIds {
         user_index: user_index_canister_id,
@@ -68,7 +74,12 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     }
 }
 
-pub async fn register_user(url: String, user_identity: TestIdentity, user_index_canister_id: CanisterId) -> UserId {
+pub async fn register_user(
+    url: String,
+    user_identity: TestIdentity,
+    username: Option<String>,
+    user_index_canister_id: CanisterId,
+) -> UserId {
     let phone_number_suffix = match &user_identity {
         TestIdentity::User1 => "1",
         TestIdentity::User2 => "2",
@@ -111,19 +122,30 @@ pub async fn register_user(url: String, user_identity: TestIdentity, user_index_
     let create_canister_response = user_index::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
 
     if let user_index_canister::create_canister::Response::Success(user_canister_id) = create_canister_response {
+        if let Some(username) = username {
+            set_username(&agent, username, user_index_canister_id).await;
+        }
         user_canister_id.into()
     } else {
         panic!("{:?}", create_canister_response);
     }
 }
 
+pub async fn set_username(agent: &Agent, username: String, user_index_canister_id: CanisterId) {
+    let args = user_index_canister::set_username::Args { username };
+    let response = user_index::set_username(agent, &user_index_canister_id, &args).await;
+    if !matches!(response, user_index_canister::set_username::Response::Success) {
+        panic!("{:?}", response);
+    }
+}
+
 pub async fn create_group(
     agent: &Agent,
     creator_id: UserId,
-    args: user_canister::create_group::Args,
+    args: &user_canister::create_group::Args,
     participants: Vec<UserId>,
 ) -> GroupChatId {
-    let create_group_response = user::create_group(agent, &creator_id.into(), &args).await;
+    let create_group_response = user::create_group(agent, &creator_id.into(), args).await;
 
     if let user_canister::create_group::Response::Success(r) = create_group_response {
         let add_participants_args = group_canister::add_participants::Args { user_ids: participants };
@@ -160,7 +182,20 @@ pub async fn send_group_message(
     }
 }
 
-async fn create_empty_canister(management_canister: &Canister<'_, ManagementCanister>) -> Principal {
+pub async fn get_user(
+    agent: &Agent,
+    user_id: Option<UserId>,
+    username: Option<String>,
+    user_index_canister_id: CanisterId,
+) -> Option<UserSummary> {
+    let args = user_index_canister::user::Args { user_id, username };
+    match user_index::user(agent, &user_index_canister_id, &args).await {
+        user_index_canister::user::Response::Success(r) => Some(r),
+        _ => None,
+    }
+}
+
+async fn create_empty_canister(management_canister: &Canister<'_, ManagementCanister>) -> CanisterId {
     let (canister_id,) = management_canister
         .create_canister()
         .as_provisional_create_with_amount(None)
@@ -173,7 +208,7 @@ async fn create_empty_canister(management_canister: &Canister<'_, ManagementCani
 
 async fn install_wasm<A: CandidType + Sync + Send>(
     management_canister: &Canister<'_, ManagementCanister>,
-    canister_id: &Principal,
+    canister_id: &CanisterId,
     wasm_bytes: &[u8],
     init_args: A,
 ) {
