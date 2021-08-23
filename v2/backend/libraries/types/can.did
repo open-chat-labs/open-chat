@@ -166,6 +166,7 @@ type GroupChatEventWrapper =
 type GroupChatSummary =
     record {
         chat_id: GroupChatId;
+        last_updated: TimestampMillis;
         name: text;
         description: text;
         is_public: bool;
@@ -256,7 +257,7 @@ type MediaContent =
 
 type MessageContent =
     variant {
-        text: TextContent;
+        Text: TextContent;
         Media: MediaContent;
         File: FileContent;
         Cycles: CyclesContent;

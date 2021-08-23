@@ -213,7 +213,7 @@ export interface MediaContent {
   'width' : number,
 }
 export type MessageContent = { 'File' : FileContent } |
-  { 'text' : TextContent } |
+  { 'Text' : TextContent } |
   { 'Media' : MediaContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;

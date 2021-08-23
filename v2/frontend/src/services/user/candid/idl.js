@@ -56,7 +56,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
-    'text' : TextContent,
+    'Text' : TextContent,
     'Media' : MediaContent,
     'Cycles' : CyclesContent,
   });
