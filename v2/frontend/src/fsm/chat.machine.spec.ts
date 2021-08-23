@@ -196,7 +196,7 @@ function repliesTo(): EnhancedReplyContext {
             text: "some text",
         },
         sentByMe: true,
-        messageIndex: 0,
+        eventIndex: 0,
     };
 }
 

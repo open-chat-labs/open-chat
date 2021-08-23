@@ -75,7 +75,7 @@ function mockRepliesTo(index: number): ReplyContext {
         // todo - private reply context does not contain content so what are we supposed to display?
         return {
             kind: "direct_private_reply_context",
-            messageIndex: jumpTo,
+            eventIndex: jumpTo,
             chatId: "1000",
         };
     }
@@ -86,7 +86,7 @@ function mockRepliesTo(index: number): ReplyContext {
             text: randomPara(),
         },
         sentByMe,
-        messageIndex: jumpTo,
+        eventIndex: jumpTo,
     };
 }
 

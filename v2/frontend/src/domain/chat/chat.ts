@@ -43,7 +43,7 @@ export type GroupChatReplyContext = {
     kind: "group_reply_context";
     content: MessageContent;
     userId: string;
-    messageIndex: number;
+    eventIndex: number;
 };
 
 export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
@@ -58,14 +58,14 @@ export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
 export interface PrivateReplyContext {
     kind: "direct_private_reply_context";
     chatId: string;
-    messageIndex: number;
+    eventIndex: number;
 }
 
 export interface StandardReplyContext {
     kind: "direct_standard_reply_context";
     content: MessageContent;
     sentByMe: boolean;
-    messageIndex: number;
+    eventIndex: number;
 }
 
 export interface Message {

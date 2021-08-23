@@ -3,10 +3,10 @@ import type {
     ApiEventsResponse,
     ApiEventWrapper,
     ApiFileContent,
+    ApiGroupMessage,
+    ApiGroupReplyContext,
     ApiMediaContent,
-    ApiMessage,
     ApiMessageContent,
-    ApiReplyContext,
     ApiTextContent,
 } from "./candid/idl";
 import type {
@@ -64,7 +64,7 @@ function event(candid: ApiEventWrapper): EventWrapper {
     throw new Error(`Unexpected ApiEventWrapper type received: ${candid}`);
 }
 
-function message(candid: ApiMessage): Message {
+function message(candid: ApiGroupMessage): Message {
     return {
         kind: "message",
         content: messageContent(candid.content),
@@ -128,11 +128,11 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     };
 }
 
-function replyContext(candid: ApiReplyContext): ReplyContext {
+function replyContext(candid: ApiGroupReplyContext): ReplyContext {
     return {
         kind: "group_reply_context",
         content: messageContent(candid.content),
         userId: candid.user_id.toString(),
-        messageIndex: candid.message_index,
+        eventIndex: candid.event_index,
     };
 }

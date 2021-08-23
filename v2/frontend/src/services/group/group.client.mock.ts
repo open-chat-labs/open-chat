@@ -15,7 +15,7 @@ function mockRepliesTo(index: number): ReplyContext {
             text: randomPara(),
         },
         userId: sender,
-        messageIndex: jumpTo,
+        eventIndex: jumpTo,
     };
 }
 

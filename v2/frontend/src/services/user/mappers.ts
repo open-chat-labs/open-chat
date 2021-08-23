@@ -285,7 +285,7 @@ function groupReplyContext(candid: ApiGroupReplyContext): ReplyContext {
         kind: "group_reply_context",
         content: messageContent(candid.content),
         userId: candid.user_id.toString(),
-        messageIndex: candid.event_index,
+        eventIndex: candid.event_index,
     };
 }
 
@@ -294,7 +294,7 @@ function directReplyContext(candid: ApiDirectReplyContext): ReplyContext {
         return {
             kind: "direct_private_reply_context",
             chatId: candid.Private.chat_id.toString(),
-            messageIndex: candid.Private.message_index,
+            eventIndex: candid.Private.event_index,
         };
     }
 
@@ -303,7 +303,7 @@ function directReplyContext(candid: ApiDirectReplyContext): ReplyContext {
             kind: "direct_standard_reply_context",
             content: messageContent(candid.Standard.content),
             sentByMe: candid.Standard.sent_by_me,
-            messageIndex: candid.Standard.message_index,
+            eventIndex: candid.Standard.event_index,
         };
     }
 

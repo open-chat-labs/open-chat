@@ -176,7 +176,6 @@ type GroupChatSummary =
         latest_event_index: EventIndex;
         joined: TimestampMillis;
         latest_read_by_me: MessageIndex;
-        last_updated: TimestampMillis;
     };
 
 type GroupChatSummaryUpdates =
