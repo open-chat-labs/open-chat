@@ -14,7 +14,7 @@ show_help() {
     echo ""
     echo "Compiles the replica and nodemanager, sets the binaries up then runs the tests"
     echo ""
-    echo "This script must be ran from 'backend/integration_tests'. "
+    echo "This script must be run from 'backend/integration_tests'. "
     echo ""
     echo "For information on the fondue options run this script with '-- -h'."
     echo ""
