@@ -111,6 +111,7 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'name' : string,
   'description' : string,
+  'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -177,7 +178,7 @@ export interface MediaContent {
   'width' : number,
 }
 export type MessageContent = { 'File' : FileContent } |
-  { 'text' : TextContent } |
+  { 'Text' : TextContent } |
   { 'Media' : MediaContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
