@@ -25,13 +25,16 @@ import type {
     UpdatesResponse,
     EventsResponse,
     MediaContent,
-    Message,
     MessageContent,
-    ReplyContext,
     TextContent,
     Participant,
     ChatSummaryUpdates,
     CreateGroupResponse,
+    DirectChatEvent,
+    GroupMessage,
+    DirectMessage,
+    GroupChatReplyContext,
+    DirectChatReplyContext,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
@@ -75,7 +78,7 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     throw new Error(`Unexpected ApiCreateGroupResponse type received: ${candid}`);
 }
 
-export function getEventsResponse(candid: ApiEventsResponse): EventsResponse {
+export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map((ev) => ({
@@ -194,9 +197,9 @@ function participant(candid: ApiParticipant): Participant {
     };
 }
 
-function groupMessage(candid: ApiGroupMessage): Message {
+function groupMessage(candid: ApiGroupMessage): GroupMessage {
     return {
-        kind: "message",
+        kind: "group_message",
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         repliesTo: optional(candid.replies_to, groupReplyContext),
@@ -205,11 +208,11 @@ function groupMessage(candid: ApiGroupMessage): Message {
     };
 }
 
-function directMessage(candid: ApiDirectMessage): Message {
+function directMessage(candid: ApiDirectMessage): DirectMessage {
     return {
-        kind: "message",
+        kind: "direct_message",
         content: messageContent(candid.content),
-        sender: candid.sender.toString(),
+        sentByMe: candid.sent_by_me,
         repliesTo: optional(candid.replies_to, directReplyContext),
         messageId: candid.message_id,
         messageIndex: candid.message_index,
@@ -280,7 +283,7 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     };
 }
 
-function groupReplyContext(candid: ApiGroupReplyContext): ReplyContext {
+function groupReplyContext(candid: ApiGroupReplyContext): GroupChatReplyContext {
     return {
         kind: "group_reply_context",
         content: messageContent(candid.content),
@@ -289,7 +292,7 @@ function groupReplyContext(candid: ApiGroupReplyContext): ReplyContext {
     };
 }
 
-function directReplyContext(candid: ApiDirectReplyContext): ReplyContext {
+function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyContext {
     if ("Private" in candid) {
         return {
             kind: "direct_private_reply_context",

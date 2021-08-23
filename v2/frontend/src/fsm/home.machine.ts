@@ -13,9 +13,11 @@ import {
 import type { ServiceContainer } from "../services/serviceContainer";
 import type {
     ChatSummary,
+    DirectChatReplyContext,
     DirectChatSummary,
     EnhancedReplyContext,
     GroupChatSummary,
+    ReplyContext,
 } from "../domain/chat/chat";
 import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
@@ -44,7 +46,7 @@ export interface HomeContext {
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     directChatsLastUpdate?: bigint;
-    replyingTo?: EnhancedReplyContext;
+    replyingTo?: EnhancedReplyContext<ReplyContext>;
 }
 
 export type HomeEvents =
@@ -57,7 +59,7 @@ export type HomeEvents =
     | { type: "GROUP_CHAT_CREATED"; data: GroupChatSummary }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
-    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
+    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -399,7 +401,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             };
                         } else {
                             // todo - this is just temporary obvs
-                            const newChat: ChatSummary = {
+                            const newChat: DirectChatSummary = {
                                 kind: "direct_chat",
                                 them: ev.data.sender!.userId,
                                 chatId: String(ctx.chatSummaries.length + 1),

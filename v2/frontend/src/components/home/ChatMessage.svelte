@@ -10,7 +10,13 @@
     import MenuItem from "../MenuItem.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type {
+        ChatSummary,
+        DirectMessage,
+        EnhancedReplyContext,
+        GroupMessage,
+        ReplyContext,
+    } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -27,7 +33,7 @@
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
-    export let msg: Message;
+    export let msg: GroupMessage | DirectMessage;
     export let me: boolean;
     export let userLookup: UserLookup;
     export let index: number;
@@ -38,27 +44,38 @@
     let read: boolean = true; // todo - where does this come from
     let msgElement: HTMLElement;
 
-    $: groupChat = chatSummary.kind === "group_chat";
-    $: sender = userLookup[msg.sender];
-    $: username = sender?.username;
-    $: userStatus = getUserStatus(userLookup, msg.sender);
-    $: metaData = messageMetaData(msg.content);
+    let senderId = getSenderId();
+    let groupChat = chatSummary.kind === "group_chat";
+    let sender = userLookup[senderId];
+    let username = sender?.username;
+    let userStatus = getUserStatus(userLookup, senderId);
+    let metaData = messageMetaData(msg.content);
 
     afterUpdate(() => {
         // todo - keep an eye on this
         console.log("updating ChatMessage component");
     });
 
-    function chatWithUser() {
-        dispatch("chatWith", msg.sender);
+    function getSenderId() {
+        if (msg.kind === "direct_message" && chatSummary.kind === "direct_chat") {
+            return msg.sentByMe ? user!.userId : chatSummary.them;
+        }
+        if (msg.kind === "group_message") {
+            return msg.sender;
+        }
+        throw Error("Unable to determine sender Id");
     }
 
-    function createReplyContext(privately: boolean): EnhancedReplyContext {
+    function chatWithUser() {
+        dispatch("chatWith", senderId);
+    }
+
+    function createReplyContext(privately: boolean): EnhancedReplyContext<ReplyContext> {
         if (privately) {
             return {
                 kind: "direct_private_reply_context",
                 chatId: chatSummary.chatId,
-                messageIndex: index,
+                eventIndex: index,
                 content: msg.content,
                 sender,
             };
@@ -66,8 +83,8 @@
             return {
                 kind: "group_reply_context",
                 content: msg.content,
-                userId: msg.sender,
-                messageIndex: index,
+                userId: senderId,
+                eventIndex: index,
                 sender,
             };
         } else {
@@ -75,7 +92,7 @@
                 kind: "direct_standard_reply_context",
                 content: msg.content,
                 sentByMe: me,
-                messageIndex: index,
+                eventIndex: index,
                 sender,
             };
         }
@@ -159,7 +176,7 @@
     <Link on:click={chatWithUser}>
         <div class="avatar-section">
             <div class="avatar">
-                <Avatar url={avatarUrl(msg.sender)} status={userStatus} size={AvatarSize.Tiny} />
+                <Avatar url={avatarUrl(senderId)} status={userStatus} size={AvatarSize.Tiny} />
             </div>
 
             <h4 class="username">{username}</h4>

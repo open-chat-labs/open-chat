@@ -1,5 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
+    ChatEvent,
     EventsResponse,
     EventWrapper,
     FileContent,
@@ -25,7 +26,7 @@ type MakeCacheable<T> = {
 export interface ChatSchema extends DBSchema {
     chat_messages: {
         key: string;
-        value: MakeCacheable<EventWrapper>;
+        value: MakeCacheable<EventWrapper<ChatEvent>>;
     };
     media_data: {
         key: string;
@@ -69,12 +70,12 @@ export async function getCachedData(db: Database, blobId: bigint): Promise<Uint8
     return (await db).get("media_data", blobId.toString());
 }
 
-export async function getCachedMessages(
+export async function getCachedMessages<T extends ChatEvent>(
     db: Database,
     chatId: string,
     fromIndex: number,
     toIndex: number
-): Promise<EventsResponse | undefined> {
+): Promise<EventsResponse<T> | undefined> {
     const cachedMsgs = await (
         await db
     ).getAll(
@@ -88,7 +89,7 @@ export async function getCachedMessages(
 
         // we tell typescript a little white lie here because blobData will be undefined on any MediaContent
         // records
-        return { events: cachedMsgs as EventWrapper[] };
+        return { events: cachedMsgs as EventWrapper<T>[] };
     }
 }
 
@@ -104,8 +105,10 @@ export function setCachedData(
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
-function makeSerialisable(ev: EventWrapper): MakeCacheable<EventWrapper> {
-    if (ev.event.kind === "message" && ev.event.content.kind === "media_content") {
+function makeSerialisable(ev: EventWrapper<ChatEvent>): MakeCacheable<EventWrapper<ChatEvent>> {
+    if (ev.event.kind !== "group_message" && ev.event.kind !== "direct_message") return ev;
+
+    if (ev.event.content.kind === "media_content") {
         return {
             ...ev,
             event: {
@@ -122,7 +125,7 @@ function makeSerialisable(ev: EventWrapper): MakeCacheable<EventWrapper> {
             },
         };
     }
-    if (ev.event.kind === "message" && ev.event.content.kind === "file_content") {
+    if (ev.event.content.kind === "file_content") {
         return {
             ...ev,
             event: {
@@ -140,11 +143,11 @@ function makeSerialisable(ev: EventWrapper): MakeCacheable<EventWrapper> {
     return ev;
 }
 
-export function setCachedMessages(
+export function setCachedMessages<T extends ChatEvent>(
     db: Database,
     chatId: string
-): (resp: EventsResponse) => Promise<EventsResponse> {
-    return async (resp: EventsResponse) => {
+): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
+    return async (resp: EventsResponse<T>) => {
         if (resp === "chat_not_found") return Promise.resolve(resp);
         if (resp === "not_authorised") return Promise.resolve(resp);
         const tx = (await db).transaction("chat_messages", "readwrite");

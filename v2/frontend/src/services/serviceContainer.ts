@@ -21,6 +21,9 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
     BlobReference,
+    DirectChatEvent,
+    GroupChatEvent,
+    ChatEvent,
 } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
@@ -89,17 +92,25 @@ export class ServiceContainer {
         return this.userClient.createGroup(candidate);
     }
 
-    directChatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
+    directChatEvents(
+        userId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateMediaData(this.userClient.chatEvents(userId, fromIndex, toIndex));
     }
 
-    groupChatEvents(chatId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
+    groupChatEvents(
+        chatId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
     }
 
-    private async rehydrateMediaData(
-        eventsPromise: Promise<EventsResponse>
-    ): Promise<EventsResponse> {
+    private async rehydrateMediaData<T extends ChatEvent>(
+        eventsPromise: Promise<EventsResponse<T>>
+    ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
         if (resp === "chat_not_found" || resp === "not_authorised") {
@@ -107,7 +118,7 @@ export class ServiceContainer {
         }
 
         resp.events = resp.events.map((e) => {
-            if (e.event.kind === "message") {
+            if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
                 if (
                     e.event.content.kind === "media_content" &&
                     /^image/.test(e.event.content.mimeType)

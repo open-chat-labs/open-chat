@@ -4,17 +4,17 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatSummary, DataContent, EventWrapper } from "../../domain/chat/chat";
+    import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
-    export let event: EventWrapper;
+    export let event: EventWrapper<ChatEvent>;
     export let last: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
 </script>
 
-{#if event.event.kind === "message"}
+{#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
         {chatSummary}
         {user}

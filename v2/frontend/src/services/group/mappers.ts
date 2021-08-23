@@ -14,11 +14,12 @@ import type {
     FileContent,
     EventsResponse,
     MediaContent,
-    Message,
     MessageContent,
-    ReplyContext,
     TextContent,
     EventWrapper,
+    GroupChatEvent,
+    GroupMessage,
+    GroupChatReplyContext,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 
@@ -26,7 +27,7 @@ import { identity, optional } from "../../utils/mapping";
 // some aspects actually different so we will map them independently for the time being
 // this means that we may not be able to just have a /domain/chat module - it might not be that simple
 
-export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse {
+export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
@@ -41,7 +42,7 @@ export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse {
     throw new Error(`Unexpected ApiEventsResponse type received: ${candid}`);
 }
 
-function event(candid: ApiEventWrapper): EventWrapper {
+function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
     if ("Message" in candid.event) {
         return {
             event: message(candid.event.Message),
@@ -64,9 +65,9 @@ function event(candid: ApiEventWrapper): EventWrapper {
     throw new Error(`Unexpected ApiEventWrapper type received: ${candid}`);
 }
 
-function message(candid: ApiGroupMessage): Message {
+function message(candid: ApiGroupMessage): GroupMessage {
     return {
-        kind: "message",
+        kind: "group_message",
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         repliesTo: optional(candid.replies_to, replyContext),
@@ -128,7 +129,7 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     };
 }
 
-function replyContext(candid: ApiGroupReplyContext): ReplyContext {
+function replyContext(candid: ApiGroupReplyContext): GroupChatReplyContext {
     return {
         kind: "group_reply_context",
         content: messageContent(candid.content),

@@ -6,15 +6,19 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MediaContent,
-    Message,
     MessageContent,
     Participant,
-    ReplyContext,
     TextContent,
     ChatSummaryUpdates,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     UpdatesResponse,
+    ChatEvent,
+    GroupMessage,
+    DirectMessage,
+    GroupChatReplyContext,
+    DirectChatReplyContext,
+    ReplyContext,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -77,8 +81,7 @@ export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
-    if (latestMessage?.event.kind !== "message") return "";
-    return getContentAsText(latestMessage.event.content);
+    return latestMessage?.event ? getContentAsText(latestMessage.event.content) : "";
 }
 
 export function compareByDate(a: ChatSummary, b: ChatSummary): number {
@@ -109,22 +112,56 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
     return content.kind !== "text_content" ? { ...content, caption } : content;
 }
 
-export function createMessage(
-    userId: string,
-    messageIndex: number,
+function getMessageContent(
     content: string | undefined,
-    replyingTo: ReplyContext | undefined,
     fileToAttach: MessageContent | undefined
-): Message {
-    const msgContent = fileToAttach
+): MessageContent {
+    return fileToAttach
         ? addCaption(content, fileToAttach)
         : ({
               kind: "text_content",
               text: content ?? "",
           } as TextContent);
+}
+
+export function createDirectMessage(
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: MessageContent | undefined
+): DirectMessage {
+    // todo - this is awful but it is hopefully temporary
+    if (
+        replyingTo &&
+        replyingTo.kind !== "direct_private_reply_context" &&
+        replyingTo.kind !== "direct_standard_reply_context"
+    ) {
+        throw new Error("Trying to create a direct message with the wrong kind of reply context");
+    }
     return {
-        kind: "message",
-        content: msgContent,
+        kind: "direct_message",
+        content: getMessageContent(content, fileToAttach),
+        sentByMe: true,
+        repliesTo: replyingTo,
+        messageId: newMessageId(),
+        messageIndex,
+    };
+}
+
+export function createGroupMessage(
+    userId: string,
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: MessageContent | undefined
+): GroupMessage {
+    // todo - this is awful but it is hopefully temporary
+    if (replyingTo && replyingTo.kind !== "group_reply_context") {
+        throw new Error("Trying to create a group message with the wrong kind of reply context");
+    }
+    return {
+        kind: "group_message",
+        content: getMessageContent(content, fileToAttach),
         sender: userId,
         repliesTo: replyingTo,
         messageId: newMessageId(),
@@ -232,29 +269,41 @@ function mergeThings<A, U>(
     return [...Object.values(updated), ...updates.added];
 }
 
-function sameUser(a: EventWrapper, b: EventWrapper): boolean {
-    if (a.event.kind !== "message" || b.event.kind !== "message") {
-        return false;
+function sameUser<T extends ChatEvent>(a: EventWrapper<T>, b: EventWrapper<T>): boolean {
+    if (a.event.kind === b.event.kind) {
+        if (a.event.kind === "direct_message" && b.event.kind === "direct_message") {
+            return (
+                a.event.sentByMe === b.event.sentByMe &&
+                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            );
+        }
+        if (a.event.kind === "group_message" && b.event.kind === "group_message") {
+            return (
+                a.event.sender === b.event.sender &&
+                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            );
+        }
     }
-    return (
-        a.event.sender === b.event.sender &&
-        b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-    );
+    return false;
 }
 
-function groupBySender(events: EventWrapper[]): EventWrapper[][] {
+function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
     return groupWhile(sameUser, events);
 }
 
-export function groupEvents(events: EventWrapper[]): EventWrapper[][][] {
+export function groupEvents<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][][] {
     return groupWhile(sameDate, events).map(groupBySender);
 }
 
-export function earliestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+export function earliestLoadedEventIndex<T extends ChatEvent>(
+    events: EventWrapper<T>[]
+): number | undefined {
     return events[0]?.index;
 }
 
-export function latestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+export function latestLoadedEventIndex<T extends ChatEvent>(
+    events: EventWrapper<T>[]
+): number | undefined {
     return events[events.length - 1]?.index;
 }
 

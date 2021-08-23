@@ -4,6 +4,7 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
+    DirectChatEvent,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
@@ -16,8 +17,17 @@ import type { IDBPDatabase } from "idb";
 export class CachingUserClient implements IUserClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
-    async chatEvents(userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
-        const cachedMsgs = await getCachedMessages(this.db, userId, fromIndex, toIndex);
+    async chatEvents(
+        userId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        const cachedMsgs = await getCachedMessages<DirectChatEvent>(
+            this.db,
+            userId,
+            fromIndex,
+            toIndex
+        );
         return (
             cachedMsgs ??
             this.client
@@ -26,7 +36,10 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
-    chatEventsByIndex(userId: string, indexes: Set<number>): Promise<EventsResponse> {
+    chatEventsByIndex(
+        userId: string,
+        indexes: Set<number>
+    ): Promise<EventsResponse<DirectChatEvent>> {
         return this.client.chatEventsByIndex(userId, indexes);
     }
 

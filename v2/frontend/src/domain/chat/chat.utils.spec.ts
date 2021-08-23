@@ -19,7 +19,20 @@ const defaultDirectChat: DirectChatSummary = {
     chatId: "abc",
     latestReadByMe: 0,
     latestReadByThem: 0,
-    latestMessage: undefined,
+    latestMessage: {
+        event: {
+            kind: "direct_message",
+            sentByMe: true,
+            messageId: newMessageId(),
+            messageIndex: 0,
+            content: {
+                kind: "text_content",
+                text: "some message",
+            },
+        },
+        timestamp: BigInt(0),
+        index: 0,
+    },
     latestEventIndex: 0,
     dateCreated: BigInt(0),
 };
@@ -196,12 +209,12 @@ describe("merging updates", () => {
             latestEventIndex: 300,
             latestMessage: {
                 event: {
-                    kind: "message",
+                    kind: "direct_message",
                     content: {
                         kind: "text_content",
                         text: "test message",
                     },
-                    sender: "2",
+                    sentByMe: true,
                     repliesTo: undefined,
                     messageId: newMessageId(),
                     messageIndex: 300,
@@ -218,7 +231,7 @@ describe("merging updates", () => {
             latestReadByMe: 200,
             latestMessage: {
                 event: {
-                    kind: "message",
+                    kind: "group_message",
                     content: {
                         kind: "text_content",
                         text: "test message",
