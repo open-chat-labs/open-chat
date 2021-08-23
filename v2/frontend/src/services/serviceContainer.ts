@@ -119,13 +119,6 @@ export class ServiceContainer {
                 ) {
                     e.event.content.blobData = Promise.resolve(undefined);
                 }
-
-                // if (
-                //     e.event.content.kind === "media_content" ||
-                //     e.event.content.kind === "file_content"
-                // ) {
-                //     e.event.content.blobData = this.getMediaData(e.event.content.blobReference);
-                // }
             }
             return e;
         });
