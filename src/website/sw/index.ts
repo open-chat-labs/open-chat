@@ -1,42 +1,97 @@
-import { Notification, V1MessageContent } from "../services/notifications/candid/types";
+import { Notification, UserId, V1GroupId, V1MessageContent } from "../services/notifications/candid/types";
 import * as cycleFunctions from "../utils/cycleFunctions";
 
 declare var self: ServiceWorkerGlobalScope;
 export {};
 
 self.addEventListener('push', function(event: PushEvent) {
-    console.log(event.data?.json());
+    event.waitUntil(handlePushNotification(event));
+});
+
+self.addEventListener('notificationclick', function(event: NotificationEvent) {
+    event.waitUntil(handleNotificationClick(event));
+});
+
+async function handlePushNotification(event: PushEvent) : Promise<void> {
+    // Try to extract the typed notification from the event
     const notification = event.data?.json() as Notification;
     if (!notification) {
         return;
     }
 
-    event.waitUntil(showNotifications(notification, event.timeStamp));
-});
+    // If an OC browser window already has the focus then don't show a notification
+    if (await isClientFocused()) {
+        return;
+    }    
 
-async function showNotifications(notificationVariant: Notification, _timestamp: number) : Promise<void> {
+    await showNotification(notification);
+}
+
+async function handleNotificationClick(event: NotificationEvent) : Promise<void> {
+    event.notification.close();  
+
+    let windowClients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+    });
+
+    if (windowClients.length > 0) {
+        let window = windowClients[0];
+        await window.focus();
+    } else {
+        const urlToOpen = new URL(self.location.origin).href;
+        await self.clients.openWindow(urlToOpen);
+    }
+}
+
+async function isClientFocused() : Promise<boolean> {    
+    const windowClients = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
+
+    return windowClients.some((wc) => wc.focused);
+}
+
+async function showNotification(notificationVariant: Notification) : Promise<void> {
     let title = "OpenChat - ";
     let body: string;
     let icon: undefined | string;
+    let sender: UserId;
+    let groupId: undefined | V1GroupId;
+    let messageId: number;
     if ("V1DirectMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1DirectMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.sender_name;
         body = content.text;
         icon = content.image;
+        sender = notification.sender;
+        messageId = notification.message.id;
     } else if ("V1GroupMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1GroupMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.group_name;
         body = `${notification.sender_name}: ${content.text}`;
         icon = content.image;
+        sender = notification.sender;
+        groupId = notification.chat_id;
+        messageId = notification.message.id;
     } else {
         console.log("Unexpected notification type");
         console.log(notificationVariant);
         return;
     }
 
-    await self.registration.showNotification(title, {body, icon});
+    await self.registration.showNotification(title, {
+        body, 
+        icon, 
+        data: {
+            sender,
+            groupId,
+            messageId,           
+        }
+    });
 }
 
 type ContentExtract = {
