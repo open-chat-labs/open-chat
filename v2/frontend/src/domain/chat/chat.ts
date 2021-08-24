@@ -11,7 +11,7 @@ export interface CyclesContent {
 export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
-    blobData: Promise<Uint8Array | undefined>;
+    blobData?: Promise<Uint8Array | undefined>;
     mimeType: string;
 }
 
@@ -130,6 +130,11 @@ export type UpdatesSince = {
 
 export type UpdateArgs = {
     updatesSince?: UpdatesSince;
+};
+
+export type MergedUpdatesResponse = {
+    chatSummaries: ChatSummary[];
+    timestamp: bigint;
 };
 
 export type UpdatesResponse = {

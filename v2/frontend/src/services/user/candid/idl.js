@@ -61,7 +61,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
   });
   const MessageId = IDL.Nat;
-  const GroupChatId = IDL.Vec(IDL.Nat8);
+  const GroupChatId = IDL.Principal;
   const PrivateReplyContext = IDL.Record({
     'chat_id' : GroupChatId,
     'event_index' : EventIndex,
@@ -274,7 +274,7 @@ export const idlFactory = ({ IDL }) => {
     'chat_id' : GroupChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
-  const DirectChatId = IDL.Vec(IDL.Nat8);
+  const DirectChatId = IDL.Principal;
   const DirectMessageEventWrapper = IDL.Record({
     'event' : DirectMessage,
     'timestamp' : TimestampMillis,

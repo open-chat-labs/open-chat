@@ -15,7 +15,6 @@ import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type {
-    UpdatesResponse,
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
@@ -24,6 +23,8 @@ import type {
     DirectChatEvent,
     GroupChatEvent,
     ChatEvent,
+    ChatSummary,
+    MergedUpdatesResponse,
 } from "../domain/chat/chat";
 // import { UserClient } from "./user/user.client";
 import { UserClientMock } from "./user/user.client.mock";
@@ -149,8 +150,8 @@ export class ServiceContainer {
         return this.userIndexClient.getUsers(userIds, since);
     }
 
-    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
-        return this.userClient.getUpdates(userId, args);
+    getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
+        return this.userClient.getUpdates(chatSummaries, args);
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

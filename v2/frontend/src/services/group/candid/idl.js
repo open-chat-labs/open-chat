@@ -209,7 +209,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const GroupChatId = IDL.Vec(IDL.Nat8);
+  const GroupChatId = IDL.Principal;
   const GroupMessageEventWrapper = IDL.Record({
     'event' : GroupMessage,
     'timestamp' : TimestampMillis,

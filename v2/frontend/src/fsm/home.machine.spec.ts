@@ -54,7 +54,7 @@ describe("home machine transitions", () => {
                     chatSummaries: [],
                     userLookup: {},
                     usersLastUpdate: BigInt(0),
-                    directChatsLastUpdate: BigInt(0),
+                    chatUpdatesSince: BigInt(0),
                 },
             },
             { loaded_chats: "no_chat_selected" }
@@ -173,7 +173,7 @@ describe("home machine transitions", () => {
                 type: "CHATS_UPDATED",
                 data: {
                     chatSummaries: [directChat],
-                    directChatsLastUpdate: BigInt(200),
+                    chatUpdatesSince: BigInt(200),
                     userLookup: {
                         "123": { userId: "123", username: "me", secondsSinceLastOnline: 10 },
                     },
@@ -188,6 +188,6 @@ describe("home machine transitions", () => {
         expect(ctx.usersLastUpdate).toBe(BigInt(100));
         expect(ctx.userLookup["123"].username).toBe("me");
         expect(ctx.chatSummaries[0]).toEqual(directChat);
-        expect(ctx.directChatsLastUpdate).toBe(BigInt(200));
+        expect(ctx.chatUpdatesSince).toBe(BigInt(200));
     });
 });

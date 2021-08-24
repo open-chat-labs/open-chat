@@ -15,9 +15,9 @@
     let anchor: HTMLAnchorElement;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
-    $: blobUrl = content.blobData.then((data) =>
-        data ? dataToBlobUrl(data, content.mimeType) : undefined
-    );
+    $: blobUrl =
+        content.blobData &&
+        content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
 
     afterUpdate(() => {
         if (downloaded && anchor) {
@@ -41,7 +41,7 @@
     }
 
     onDestroy(() => {
-        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
 

@@ -19,13 +19,15 @@
     let leftRotation: number = 0;
     let rightRotation: number = 0;
 
-    $: blobUrl = content.blobData.then((data) => {
-        if (data) {
-            downloaded = true;
-            return dataToBlobUrl(data, content.mimeType);
-        }
-        return undefined;
-    });
+    $: blobUrl =
+        content.blobData &&
+        content.blobData.then((data) => {
+            if (data) {
+                downloaded = true;
+                return dataToBlobUrl(data, content.mimeType);
+            }
+            return undefined;
+        });
 
     function download() {
         if (downloaded) {
@@ -53,7 +55,7 @@
     }
 
     onDestroy(() => {
-        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 
     function timeupdate() {
