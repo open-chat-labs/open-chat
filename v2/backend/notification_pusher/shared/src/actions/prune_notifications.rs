@@ -4,7 +4,11 @@ use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
 use types::CanisterId;
 
-pub async fn run(config: IcAgentConfig, canister_id: CanisterId, store: Box<dyn Store + Send + Sync>) -> Result<(), Error> {
+pub async fn run(
+    config: &IcAgentConfig,
+    canister_id: CanisterId,
+    store: &mut Box<dyn Store + Send + Sync>,
+) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
     let maybe_notification_index_processed_up_to = store.get_notification_index_processed_up_to(canister_id).await?;
 

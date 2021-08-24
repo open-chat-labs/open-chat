@@ -21,8 +21,8 @@ pub struct IcAgent {
 }
 
 impl IcAgent {
-    pub async fn build(config: IcAgentConfig) -> Result<IcAgent, Error> {
-        let transport = ReqwestHttpReplicaV2Transport::create(config.ic_url)?;
+    pub async fn build(config: &IcAgentConfig) -> Result<IcAgent, Error> {
+        let transport = ReqwestHttpReplicaV2Transport::create(&config.ic_url)?;
         let timeout = std::time::Duration::from_secs(60 * 5);
 
         let agent = Agent::builder()

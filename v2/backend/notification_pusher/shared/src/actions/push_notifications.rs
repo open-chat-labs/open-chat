@@ -9,11 +9,11 @@ use std::collections::HashMap;
 use types::{CanisterId, IndexedEvent, Notification, NotificationEnvelope, UserId};
 use web_push::*;
 
-pub async fn run(
-    config: IcAgentConfig,
+pub async fn run<'a>(
+    config: &'a IcAgentConfig,
     canister_id: CanisterId,
-    mut store: Box<dyn Store + Send + Sync>,
-    vapid_private_pem: &str,
+    store: &'a mut Box<dyn Store + Send + Sync>,
+    vapid_private_pem: &'a str,
 ) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
     let from_notification_index = store
