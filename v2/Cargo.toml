@@ -17,9 +17,9 @@ members = [
     "backend/canisters/user_index/impl",
     "backend/libraries/types",
     "backend/libraries/utils",
-    "backend/notification_service/aws",
-    "backend/notification_service/shared",
-    "backend/notification_service/cli",
+    "backend/notification_pusher/aws",
+    "backend/notification_pusher/shared",
+    "backend/notification_pusher/cli",
     "backend/sms_service"
 ]
 

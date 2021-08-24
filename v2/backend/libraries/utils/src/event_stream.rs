@@ -9,6 +9,7 @@ const MAX_EVENTS: usize = 100_000;
 #[derive(CandidType, Deserialize)]
 pub struct EventStream<T: CandidType + Clone> {
     events: VecDeque<IndexedEvent<T>>,
+    latest_event_index: u64,
 }
 
 impl<T: CandidType + Clone> EventStream<T> {
@@ -20,7 +21,6 @@ impl<T: CandidType + Clone> EventStream<T> {
             }
 
             let from_event_index = max(from_event_index, earliest_event_index);
-
             let start_index = (from_event_index - earliest_event_index) as usize;
             let end_index = min(start_index + (max_events as usize), self.events.len());
 
@@ -31,9 +31,9 @@ impl<T: CandidType + Clone> EventStream<T> {
     }
 
     pub fn add(&mut self, event: T) -> u64 {
-        let event_index = self.events.back().map(|e| e.index + 1).unwrap_or(1);
+        self.latest_event_index += 1;
         self.events.push_back(IndexedEvent {
-            index: event_index,
+            index: self.latest_event_index,
             value: event,
         });
 
@@ -41,7 +41,7 @@ impl<T: CandidType + Clone> EventStream<T> {
             self.events.pop_front();
         }
 
-        event_index
+        self.latest_event_index
     }
 
     pub fn remove(&mut self, up_to_event_index: u64) -> u32 {
@@ -68,6 +68,7 @@ impl<T: CandidType + Clone> Default for EventStream<T> {
     fn default() -> Self {
         Self {
             events: VecDeque::default(),
+            latest_event_index: 0,
         }
     }
 }
