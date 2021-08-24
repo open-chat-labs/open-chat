@@ -5,7 +5,6 @@ const TerserPlugin = require("terser-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
 const NOTIFICATIONS_CANISTER_ID = "qhbym-qaaaa-aaaaa-aaafq-cai";
-const ENABLE_NOTIFICATIONS = false;
 
 const isDevelopment = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
@@ -145,7 +144,6 @@ function generateWebpackConfigForCanister(name, info) {
         USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
         NOTIFICATIONS_CANISTER_ID,
         IDP_URL,
-        ENABLE_NOTIFICATIONS,
       }),  
       new webpack.ProvidePlugin({
         Buffer: [require.resolve('buffer/'), 'Buffer'],

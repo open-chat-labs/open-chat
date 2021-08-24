@@ -4,7 +4,7 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { RootState } from "../reducers";
 import CancelButton from "./shared/CloseButton";
-import * as notifications from "../webpush/notifications";
+import * as notifications from "../notifications";
 import Backdrop from "@material-ui/core/Backdrop";
 
 export type Props = {
@@ -45,9 +45,6 @@ function NotificationBar(props: Props): JSX.Element {
 
     useEffect(() => {
         (async () => {
-            if (!process.env.ENABLE_NOTIFICATIONS) {
-                return;
-            }
             let status = await notifications.status();
             if (status === notifications.Status.Prompt) {
                 renderBar(true);
