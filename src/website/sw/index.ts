@@ -6,39 +6,37 @@ export {};
 
 self.addEventListener('push', function(event: PushEvent) {
     console.log(event.data?.json());
-    const notifications = event.data?.json() as Notification[];
-    if (!notifications) {
+    const notification = event.data?.json() as Notification;
+    if (!notification) {
         return;
     }
 
-    event.waitUntil(showNotifications(notifications, event.timeStamp));
+    event.waitUntil(showNotifications(notification, event.timeStamp));
 });
 
-async function showNotifications(notifications: Notification[], _timestamp: number) : Promise<void> {
-    for (let notificationVariant of notifications) {
-        let title = "OpenChat - ";
-        let body: string;
-        let icon: undefined | string;
-        if ("V1DirectMessageNotification" in notificationVariant) {
-            let notification = notificationVariant.V1DirectMessageNotification;
-            let content = extractContent(notification.message.content);
-            title += notification.sender_name;
-            body = content.text;
-            icon = content.image;
-        } else if ("V1GroupMessageNotification" in notificationVariant) {
-            let notification = notificationVariant.V1GroupMessageNotification;
-            let content = extractContent(notification.message.content);
-            title += notification.group_name;
-            body = `${notification.sender_name}: ${content.text}`;
-            icon = content.image;
-        } else {
-            console.log("Unexpected notification type");
-            console.log(notifications);
-            return;
-        }
-
-        await self.registration.showNotification(title, {body, icon});
+async function showNotifications(notificationVariant: Notification, _timestamp: number) : Promise<void> {
+    let title = "OpenChat - ";
+    let body: string;
+    let icon: undefined | string;
+    if ("V1DirectMessageNotification" in notificationVariant) {
+        let notification = notificationVariant.V1DirectMessageNotification;
+        let content = extractContent(notification.message.content);
+        title += notification.sender_name;
+        body = content.text;
+        icon = content.image;
+    } else if ("V1GroupMessageNotification" in notificationVariant) {
+        let notification = notificationVariant.V1GroupMessageNotification;
+        let content = extractContent(notification.message.content);
+        title += notification.group_name;
+        body = `${notification.sender_name}: ${content.text}`;
+        icon = content.image;
+    } else {
+        console.log("Unexpected notification type");
+        console.log(notificationVariant);
+        return;
     }
+
+    await self.registration.showNotification(title, {body, icon});
 }
 
 type ContentExtract = {

@@ -75,7 +75,7 @@ pub fn update(request: Request) -> Response {
                         };
 
                         push_direct_message_notification::fire_and_forget(recipient, notification);
-                    }
+                    },
                     ChatEnum::Group(group) => {
                         let recipients = group
                             .participants()

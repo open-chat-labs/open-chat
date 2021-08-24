@@ -165,7 +165,7 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: "sw9.js",
+      filename: "sw10.js",
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {
