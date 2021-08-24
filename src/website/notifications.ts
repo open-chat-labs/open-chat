@@ -1,24 +1,24 @@
-import { PUBLIC_VAPID_KEY } from "../constants";
-import { Option } from "../domain/model/common";
-import { UserId } from "../domain/model/users";
-import notificationsService from "../services/notifications/service";
-import * as base64 from "../utils/base64Functions";
+import { PUBLIC_VAPID_KEY } from "./constants";
+import { Option } from "./domain/model/common";
+import { UserId } from "./domain/model/users";
+import notificationsService from "./services/notifications/service";
+import * as base64 from "./utils/base64Functions";
 
 // https://web-push-book.gauntface.com/common-notification-patterns/
 // - Once subscribed send the user an initial notification a la slack "Nice, notifications are enabled!"
 // https://www.youtube.com/watch?v=_dXBibRO0SM&t=103s
 
 export enum Status {
-    Disabled,
+    Unsupported,
     Prompt,
     Denied,
     Granted,
 }
 
 export async function status() : Promise<Status> {
-    // Does the browser have all the support needed for web push
+    // Does the browser and environment have all the support needed for web push
     if (!supported()) {
-        return Status.Disabled;
+        return Status.Unsupported;
     }
 
     // If the user has explicitly soft-disabled notifications, then don't show bar
@@ -37,7 +37,21 @@ export async function status() : Promise<Status> {
 }
 
 export function supported() : boolean {
-    return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    if (!("serviceWorker" in navigator && "PushManager" in window && "Notification" in window)) {
+        return false;
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+        return true;
+    }
+
+    // Atm it is not possible to install a service worker on <canister_id>.ic0.app
+    // only on <canister_id>.raw.ic0.app
+    return window
+        .location
+        .hostname
+        .toLowerCase()
+        .includes(".raw.ic0.app");
 }
 
 export async function trySubscribe(userId: UserId) : Promise<boolean> {
