@@ -132,6 +132,11 @@ export type UpdateArgs = {
     updatesSince?: UpdatesSince;
 };
 
+export type MergedUpdatesResponse = {
+    chatSummaries: ChatSummary[];
+    timestamp: bigint;
+};
+
 export type UpdatesResponse = {
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];

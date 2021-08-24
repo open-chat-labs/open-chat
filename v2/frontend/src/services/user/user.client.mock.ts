@@ -1,7 +1,6 @@
 import type {
     ChatSummary,
     DirectChatSummary,
-    UpdatesResponse,
     EventsResponse,
     GroupChatSummary,
     UpdateArgs,
@@ -15,8 +14,9 @@ import type {
     DirectMessage,
     GroupChatReplyContext,
     DirectChatReplyContext,
+    MergedUpdatesResponse,
 } from "../../domain/chat/chat";
-import { compareChats, createDirectMessage, newMessageId } from "../../domain/chat/chat.utils";
+import { mergeChatUpdates, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
@@ -284,33 +284,32 @@ export class UserClientMock implements IUserClient {
 
     private updateCycles = -1;
 
-    private previousChats: ChatSummary[] = [];
-
-    getUpdates(_userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
+    getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
         this.updateCycles += 1;
         const direct = fill(3, mockDirectChat);
         const group = fill(3, mockGroupChat, (i: number) => i + 1000);
 
         const add = args.updatesSince
             ? this.updateCycles % 5 === 0
-                ? fill(1, mockDirectChat, (i) => i + this.previousChats.length)
+                ? fill(1, mockDirectChat, (i) => i + chatSummaries.length)
                 : []
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {
             chatsUpdated: args.updatesSince
-                ? this.previousChats.map((c) => updateChat(c, this.updateCycles))
+                ? chatSummaries.map((c) => updateChat(c, this.updateCycles))
                 : [],
             chatsAdded: add,
             chatsRemoved: new Set([]),
             timestamp: BigInt(+new Date()),
         };
 
-        this.previousChats = [...this.previousChats, ...add].sort(compareChats);
-
         return new Promise((res) => {
             setTimeout(() => {
-                res(resp);
+                res({
+                    chatSummaries: mergeChatUpdates(chatSummaries, resp),
+                    timestamp: resp.timestamp,
+                });
             }, 500);
         });
     }

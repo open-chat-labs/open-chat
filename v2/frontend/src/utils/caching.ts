@@ -1,10 +1,12 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
+    ChatSummary,
     EventsResponse,
     EventWrapper,
     FileContent,
     MediaContent,
+    MergedUpdatesResponse,
     MessageContent,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
@@ -24,6 +26,13 @@ type MakeCacheable<T> = {
 };
 
 export interface ChatSchema extends DBSchema {
+    chats: {
+        key: "cached_chats";
+        value: {
+            timestamp: bigint;
+            chats: MakeCacheable<ChatSummary>[];
+        };
+    };
     chat_messages: {
         key: string;
         value: MakeCacheable<EventWrapper<ChatEvent>>;
@@ -44,7 +53,7 @@ export function createCacheKey(chatId: string, index: number): string {
 
 export function openMessageCache(): Database | undefined {
     try {
-        return openDB<ChatSchema>("openchat_db", 5, {
+        return openDB<ChatSchema>("openchat_db", 6, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -53,8 +62,12 @@ export function openMessageCache(): Database | undefined {
                     if (db.objectStoreNames.contains("media_data")) {
                         db.deleteObjectStore("media_data");
                     }
+                    if (db.objectStoreNames.contains("chats")) {
+                        db.deleteObjectStore("chats");
+                    }
                     db.createObjectStore("chat_messages");
                     db.createObjectStore("media_data");
+                    db.createObjectStore("chats");
                 } catch (err) {
                     rollbar.error("Unable to upgrade indexDB", err);
                 }
@@ -68,6 +81,32 @@ export function openMessageCache(): Database | undefined {
 // this returns cached binary data used for media messages etc
 export async function getCachedData(db: Database, blobId: bigint): Promise<Uint8Array | undefined> {
     return (await db).get("media_data", blobId.toString());
+}
+
+export async function getCachedChats(db: Database): Promise<MergedUpdatesResponse | undefined> {
+    return (await db).get("chats", "cached_chats") as Promise<MergedUpdatesResponse | undefined>;
+}
+
+export function setCachedChats(
+    db: Database
+): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
+    return async (data: MergedUpdatesResponse) => {
+        const serialisable = data.chatSummaries.map((c) => {
+            return {
+                ...c,
+                latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
+            };
+        });
+        (await db).put(
+            "chats",
+            {
+                chats: serialisable,
+                timestamp: data.timestamp,
+            },
+            "cached_chats"
+        );
+        return data;
+    };
 }
 
 export async function getCachedMessages<T extends ChatEvent>(

@@ -1,13 +1,20 @@
 import type {
-    UpdatesResponse,
     EventsResponse,
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
     DirectChatEvent,
+    ChatSummary,
+    MergedUpdatesResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
-import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
+import {
+    ChatSchema,
+    getCachedChats,
+    getCachedMessages,
+    setCachedChats,
+    setCachedMessages,
+} from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 
 /**
@@ -36,8 +43,18 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
-    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
-        return this.client.getUpdates(userId, args);
+    async getUpdates(
+        chatSummaries: ChatSummary[],
+        args: UpdateArgs
+    ): Promise<MergedUpdatesResponse> {
+        if (!args.updatesSince) {
+            const cachedChats = await getCachedChats(this.db);
+            return (
+                cachedChats ??
+                this.client.getUpdates(chatSummaries, args).then(setCachedChats(this.db))
+            );
+        }
+        return this.client.getUpdates(chatSummaries, args).then(setCachedChats(this.db));
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {

@@ -116,11 +116,11 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
     throw new Error("Unexpected ApiDirectChatEventWrapper type received");
 }
 
-export function getUpdatesResponse(userId: string, candid: ApiUpdatesResponse): UpdatesResponse {
+export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
-            chatsAdded: candid.Success.chats_added.map((c) => chatSummary(userId, c)),
+            chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
             timestamp: candid.Success.timestamp,
         };
@@ -166,7 +166,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
 }
 
-function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
+function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Group" in candid) {
         const participants = candid.Group.participants.map(participant);
         return {

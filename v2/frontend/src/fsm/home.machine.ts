@@ -19,7 +19,7 @@ import type {
     GroupChatSummary,
     ReplyContext,
 } from "../domain/chat/chat";
-import { mergeChatUpdates, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
@@ -45,7 +45,7 @@ export interface HomeContext {
     userLookup: UserLookup; // a lookup of user summaries
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
-    directChatsLastUpdate?: bigint;
+    chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext<ReplyContext>;
 }
 
@@ -75,7 +75,7 @@ type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 
 type ChatsResponse = {
     chatSummaries: ChatSummary[];
-    directChatsLastUpdate: bigint;
+    chatUpdatesSince: bigint;
     userLookup: UserLookup;
     usersLastUpdate: bigint;
 };
@@ -86,15 +86,15 @@ async function getUpdates(
     serviceContainer: ServiceContainer,
     userLookup: UserLookup,
     chatSummaries: ChatSummary[],
-    directChatsLastUpdate?: bigint
+    chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
     try {
         const chatsResponse = await serviceContainer.getUpdates(
-            userId,
-            directChatsLastUpdate
+            chatSummaries,
+            chatUpdatesSince
                 ? {
                       updatesSince: {
-                          timestamp: directChatsLastUpdate,
+                          timestamp: chatUpdatesSince,
                           groupChats: chatSummaries
                               .filter((c) => c.kind === "group_chat")
                               .map((g) => ({
@@ -105,15 +105,15 @@ async function getUpdates(
                   }
                 : { updatesSince: undefined }
         );
-        const userIds = userIdsFromChatSummaries(chatsResponse.chatsAdded, false);
+        const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),
             BigInt(0)
         );
 
         return {
-            chatSummaries: mergeChatUpdates(chatSummaries, chatsResponse),
-            directChatsLastUpdate: chatsResponse.timestamp,
+            chatSummaries: chatsResponse.chatSummaries,
+            chatUpdatesSince: chatsResponse.timestamp,
             userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
         };
@@ -143,11 +143,11 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 ctx.serviceContainer!,
                 ctx.userLookup,
                 ctx.chatSummaries,
-                ctx.directChatsLastUpdate
+                ctx.chatUpdatesSince
             ),
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
-            let { userLookup, chatSummaries, directChatsLastUpdate } = ctx;
+            let { userLookup, chatSummaries, chatUpdatesSince } = ctx;
             let intervalId: NodeJS.Timeout | undefined;
 
             const unsubBackground = background.subscribe((hidden) => {
@@ -160,7 +160,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (ev.type === "SYNC_WITH_POLLER") {
                     userLookup = ev.data.userLookup;
                     chatSummaries = ev.data.chatSummaries;
-                    directChatsLastUpdate = ev.data.directChatsLastUpdate;
+                    chatUpdatesSince = ev.data.chatUpdatesSince;
                 }
             });
 
@@ -174,7 +174,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                             ctx.serviceContainer!,
                             userLookup,
                             chatSummaries,
-                            directChatsLastUpdate
+                            chatUpdatesSince
                         ),
                     });
                 }, interval);

@@ -1,14 +1,15 @@
 import type {
-    UpdatesResponse,
     EventsResponse,
     UpdateArgs,
     CreateGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
+    ChatSummary,
+    MergedUpdatesResponse,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
-    getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse>;
+    getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
     chatEvents(
         userId: string,
         fromIndex: number,

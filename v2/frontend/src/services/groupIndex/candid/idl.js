@@ -9,7 +9,7 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : IDL.Nat16,
     'GroupLimitExceeded' : IDL.Null,
   });
-  const GroupChatId = IDL.Vec(IDL.Nat8);
+  const GroupChatId = IDL.Principal;
   const DeleteArgs = IDL.Record({ 'chat_id' : GroupChatId });
   const DeleteResponse = IDL.Variant({
     'NotFound' : IDL.Null,

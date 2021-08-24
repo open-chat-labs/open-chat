@@ -43,7 +43,7 @@ export interface DirectChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export type DirectChatId = Array<number>;
+export type DirectChatId = Principal;
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
@@ -107,7 +107,7 @@ export interface GroupChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export type GroupChatId = Array<number>;
+export type GroupChatId = Principal;
 export interface GroupChatSummary {
   'is_public' : boolean,
   'participants' : Array<Participant>,
