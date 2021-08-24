@@ -3,7 +3,7 @@
 
     import { saveSeletedTheme } from "../theme/themes";
 
-    function setDir(dir) {
+    function setDir(dir: string) {
         document.dir = dir;
     }
 </script>

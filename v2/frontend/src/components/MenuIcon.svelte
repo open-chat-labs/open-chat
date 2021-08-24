@@ -5,7 +5,7 @@
     let pos: { x: number; y: number } | undefined;
     let menu: HTMLElement;
 
-    async function showMenu(e: MouseEvent): Promise<void> {
+    async function showMenu(_e: MouseEvent): Promise<void> {
         if (pos) {
             closeMenu();
         }

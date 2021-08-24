@@ -22,20 +22,16 @@
 
     function zoomToMessage() {
         if (repliesTo.kind === "direct_standard_reply_context") {
-            dispatch("goToMessage", repliesTo.messageIndex);
+            dispatch("goToMessage", repliesTo.eventIndex);
         }
 
         if (repliesTo.kind === "direct_private_reply_context") {
-            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
+            push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);
         }
 
         if (repliesTo.kind === "group_reply_context") {
-            dispatch("goToMessage", repliesTo.messageIndex);
+            dispatch("goToMessage", repliesTo.eventIndex);
         }
-    }
-
-    function getMessageIndex(replyContext: ReplyContext): number {
-        return replyContext.messageIndex;
     }
 
     function messageContentFromReplyContent(
@@ -69,7 +65,7 @@
 <Link on:click={zoomToMessage}>
     <div class="reply-wrapper" class:me={sentByMe(repliesTo)} class:rtl={$rtlStore}>
         <h4 class="username">
-            {getUsernameFromReplyContext(repliesTo)} ({getMessageIndex(repliesTo)})
+            {getUsernameFromReplyContext(repliesTo)} ({repliesTo.eventIndex})
         </h4>
         {#if content !== undefined}
             <ChatMessageContent {content} />

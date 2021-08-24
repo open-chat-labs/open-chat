@@ -142,12 +142,16 @@
         if (first.event.kind === "direct_message") {
             return `${first.event.sentByMe}_${first.index}`;
         }
+        if (first.event.kind === "direct_chat_created") {
+            return `${first.event.kind}_${first.index}`;
+        }
         if (first.event.kind === "group_message") {
             return `${first.event.sender}_${first.index}`;
         }
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
+
         throw new UnsupportedValueError("Unexpected event type received", first.event);
     }
 
@@ -190,6 +194,9 @@
         if (evt.event.kind === "direct_message") {
             return evt.event.sentByMe;
         }
+        if (evt.event.kind === "direct_chat_created") {
+            return false;
+        }
         if (evt.event.kind === "group_message") {
             return evt.event.sender === $machine.context.user?.userId;
         }
@@ -208,12 +215,12 @@
             <Loading />
         </div>
     {/if}
-    {#each groupedEvents as dayGroup, di (dateGroupKey(dayGroup))}
+    {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
-            {#each dayGroup as userGroup, ui (userGroupKey(userGroup))}
+            {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (evt.index)}
                     {#if evt.index === $machine.context.chatSummary.latestReadByMe + 1}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>

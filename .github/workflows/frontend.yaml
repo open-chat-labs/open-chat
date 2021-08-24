@@ -24,7 +24,8 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: ci
-      - name: run lint and unit tests
+      - name: run lint, check and unit tests
         run: |
           npm run lint
+          npm run validate
           npm test

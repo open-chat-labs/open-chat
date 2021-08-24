@@ -77,10 +77,6 @@
 </div>
 
 <style type="text/scss">
-    .pasted-img {
-        max-width: 400px;
-    }
-
     .footer {
         position: relative;
     }
