@@ -11,7 +11,7 @@ export interface CyclesContent {
 export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
-    blobData: Promise<Uint8Array | undefined>;
+    blobData?: Promise<Uint8Array | undefined>;
     mimeType: string;
 }
 

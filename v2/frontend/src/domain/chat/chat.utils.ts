@@ -17,6 +17,7 @@ import type {
     GroupMessage,
     DirectMessage,
     ReplyContext,
+    UpdateArgs,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -324,4 +325,18 @@ function latestActivity(chat: ChatSummary): number {
     } else {
         return Number(chat.kind === "direct_chat" ? chat.dateCreated : chat.joined);
     }
+}
+
+export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummary[]): UpdateArgs {
+    return {
+        updatesSince: {
+            timestamp,
+            groupChats: chatSummaries
+                .filter((c) => c.kind === "group_chat")
+                .map((g) => ({
+                    chatId: g.chatId,
+                    lastUpdated: (g as GroupChatSummary).lastUpdated,
+                })),
+        },
+    };
 }

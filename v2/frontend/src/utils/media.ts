@@ -115,7 +115,7 @@ export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
 }
 
 export function messageMetaData(content: MessageContent): Promise<string> | undefined {
-    if (content.kind === "file_content") {
+    if (content.kind === "file_content" && content.blobData) {
         return content.blobData
             .then((blob) => blob?.byteLength ?? content.blobReference?.blobSize ?? 0)
             .then((size) => `${content.mimeType}-${(size / 1000).toFixed(2)}kb`);

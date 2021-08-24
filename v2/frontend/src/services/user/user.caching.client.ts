@@ -16,6 +16,7 @@ import {
     setCachedMessages,
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
+import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -49,10 +50,15 @@ export class CachingUserClient implements IUserClient {
     ): Promise<MergedUpdatesResponse> {
         if (!args.updatesSince) {
             const cachedChats = await getCachedChats(this.db);
-            return (
-                cachedChats ??
-                this.client.getUpdates(chatSummaries, args).then(setCachedChats(this.db))
-            );
+            // if we have cached chats we will rebuild the UpdateArgs from that cached data
+            if (cachedChats) {
+                return this.client
+                    .getUpdates(
+                        cachedChats.chatSummaries,
+                        updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries)
+                    )
+                    .then(setCachedChats(this.db));
+            }
         }
         return this.client.getUpdates(chatSummaries, args).then(setCachedChats(this.db));
     }

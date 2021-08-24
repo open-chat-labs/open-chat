@@ -19,7 +19,7 @@ import type {
     GroupChatSummary,
     ReplyContext,
 } from "../domain/chat/chat";
-import { userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import { updateArgsFromChats, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
@@ -92,17 +92,7 @@ async function getUpdates(
         const chatsResponse = await serviceContainer.getUpdates(
             chatSummaries,
             chatUpdatesSince
-                ? {
-                      updatesSince: {
-                          timestamp: chatUpdatesSince,
-                          groupChats: chatSummaries
-                              .filter((c) => c.kind === "group_chat")
-                              .map((g) => ({
-                                  chatId: g.chatId,
-                                  lastUpdated: (g as GroupChatSummary).lastUpdated,
-                              })),
-                      },
-                  }
+                ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
                 : { updatesSince: undefined }
         );
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);

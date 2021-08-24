@@ -9,12 +9,12 @@
 
     let landscape = content.height < content.width;
 
-    $: blobUrl = content.blobData.then((data) =>
-        data ? dataToBlobUrl(data, content.mimeType) : undefined
-    );
+    $: blobUrl =
+        content.blobData &&
+        content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
 
     onDestroy(() => {
-        blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
 

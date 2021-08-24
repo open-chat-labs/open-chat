@@ -1,41 +1,22 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
-    ChatSummary,
     EventsResponse,
     EventWrapper,
-    FileContent,
-    MediaContent,
     MergedUpdatesResponse,
-    MessageContent,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
 type Database = Promise<IDBPDatabase<ChatSchema>>;
 
-type CacheableMessageContent<T extends MessageContent> = T extends MediaContent
-    ? Omit<MediaContent, "blobData">
-    : T extends FileContent
-    ? Omit<FileContent, "blobData">
-    : T;
-
-type MakeCacheable<T> = {
-    [Prop in keyof T]: T[Prop] extends MessageContent
-        ? CacheableMessageContent<T[Prop]>
-        : MakeCacheable<T[Prop]>;
-};
-
 export interface ChatSchema extends DBSchema {
     chats: {
         key: "cached_chats";
-        value: {
-            timestamp: bigint;
-            chats: MakeCacheable<ChatSummary>[];
-        };
+        value: MergedUpdatesResponse;
     };
     chat_messages: {
         key: string;
-        value: MakeCacheable<EventWrapper<ChatEvent>>;
+        value: EventWrapper<ChatEvent>;
     };
     media_data: {
         key: string;
@@ -91,16 +72,26 @@ export function setCachedChats(
     db: Database
 ): (data: MergedUpdatesResponse) => Promise<MergedUpdatesResponse> {
     return async (data: MergedUpdatesResponse) => {
+        // irritating hoop jumping to keep typescript happy here
         const serialisable = data.chatSummaries.map((c) => {
-            return {
-                ...c,
-                latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
-            };
+            if (c.kind === "direct_chat") {
+                return {
+                    ...c,
+                    latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
+                };
+            }
+            if (c.kind === "group_chat") {
+                return {
+                    ...c,
+                    latestMessage: c.latestMessage ? makeSerialisable(c.latestMessage) : undefined,
+                };
+            }
+            return c;
         });
         (await db).put(
             "chats",
             {
-                chats: serialisable,
+                chatSummaries: serialisable,
                 timestamp: data.timestamp,
             },
             "cached_chats"
@@ -144,7 +135,7 @@ export function setCachedData(
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
-function makeSerialisable(ev: EventWrapper<ChatEvent>): MakeCacheable<EventWrapper<ChatEvent>> {
+function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrapper<T> {
     if (ev.event.kind !== "group_message" && ev.event.kind !== "direct_message") return ev;
 
     if (ev.event.content.kind === "media_content") {
@@ -153,13 +144,8 @@ function makeSerialisable(ev: EventWrapper<ChatEvent>): MakeCacheable<EventWrapp
             event: {
                 ...ev.event,
                 content: {
-                    kind: "media_content",
-                    caption: ev.event.content.caption,
-                    height: ev.event.content.height,
-                    width: ev.event.content.width,
-                    mimeType: ev.event.content.mimeType,
-                    blobReference: ev.event.content.blobReference,
-                    thumbnailData: ev.event.content.thumbnailData,
+                    ...ev.event.content,
+                    blobData: undefined,
                 },
             },
         };
@@ -170,11 +156,8 @@ function makeSerialisable(ev: EventWrapper<ChatEvent>): MakeCacheable<EventWrapp
             event: {
                 ...ev.event,
                 content: {
-                    kind: "file_content",
-                    caption: ev.event.content.caption,
-                    mimeType: ev.event.content.mimeType,
-                    name: ev.event.content.name,
-                    blobReference: ev.event.content.blobReference,
+                    ...ev.event.content,
+                    blobData: undefined,
                 },
             },
         };
@@ -192,7 +175,7 @@ export function setCachedMessages<T extends ChatEvent>(
         const tx = (await db).transaction("chat_messages", "readwrite");
         const store = tx.objectStore("chat_messages");
         resp.events.forEach(async (event) => {
-            await store.put(makeSerialisable(event), createCacheKey(chatId, event.index));
+            await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
         });
         await tx.done;
         return resp;
