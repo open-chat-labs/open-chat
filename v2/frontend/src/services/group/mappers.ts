@@ -20,8 +20,11 @@ import type {
     GroupChatEvent,
     GroupMessage,
     GroupChatReplyContext,
+    CyclesContent,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
+import { UnsupportedValueError } from "../../utils/error";
+import type { ApiCyclesContent } from "../user/candid/idl";
 
 // todo - these message data types look very similar to the direct chat counterparts but they are logically separate and in
 // some aspects actually different so we will map them independently for the time being
@@ -39,7 +42,7 @@ export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse<G
     if ("NotAuthorised" in candid) {
         return "not_authorised";
     }
-    throw new Error(`Unexpected ApiEventsResponse type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
 function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
@@ -62,7 +65,8 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
             timestamp: candid.timestamp,
         };
     }
-    throw new Error(`Unexpected ApiEventWrapper type received: ${candid}`);
+    // todo - we know there are other event types that we are not dealing with yet
+    throw new Error("Unexpected ApiEventWrapper type received");
 }
 
 function message(candid: ApiGroupMessage): GroupMessage {
@@ -86,7 +90,10 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Media" in candid) {
         return mediaContent(candid.Media);
     }
-    throw new Error(`Unexpected MessageContent received: ${candid}`);
+    if ("Cycles" in candid) {
+        return cyclesContent(candid.Cycles);
+    }
+    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
 function mediaContent(candid: ApiMediaContent): MediaContent {
@@ -99,6 +106,14 @@ function mediaContent(candid: ApiMediaContent): MediaContent {
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
+    };
+}
+
+function cyclesContent(candid: ApiCyclesContent): CyclesContent {
+    return {
+        kind: "cycles_content",
+        caption: optional(candid.caption, identity),
+        amount: candid.amount,
     };
 }
 

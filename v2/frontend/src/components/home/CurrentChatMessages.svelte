@@ -26,6 +26,7 @@
     } from "../../domain/chat/chat";
     import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
+    import { UnsupportedValueError } from "../../utils/error";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -147,7 +148,7 @@
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
-        throw new Error("Unexpected event type");
+        throw new UnsupportedValueError("Unexpected event type received", first.event);
     }
 
     $: groupedEvents = groupEvents($machine.context.events);
@@ -195,7 +196,7 @@
         if (evt.event.kind === "group_chat_created") {
             return evt.event.created_by === $machine.context.user?.userId;
         }
-        throw new Error("Unexpected event type received");
+        throw new UnsupportedValueError("Unexpected event type received", evt.event);
     }
 
     // then we need to integrate web rtc

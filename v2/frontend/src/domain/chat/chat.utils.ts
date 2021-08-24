@@ -16,13 +16,12 @@ import type {
     ChatEvent,
     GroupMessage,
     DirectMessage,
-    GroupChatReplyContext,
-    DirectChatReplyContext,
     ReplyContext,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
+import { UnsupportedValueError } from "../../utils/error";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -42,7 +41,7 @@ export function getContentAsText(content: MessageContent): string {
         // todo - format cycles
         text = "cycles_content";
     } else {
-        throw new Error(`Unrecognised content type - ${content}`);
+        throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
 }
@@ -269,7 +268,7 @@ function mergeThings<A, U>(
     return [...Object.values(updated), ...updates.added];
 }
 
-function sameUser<T extends ChatEvent>(a: EventWrapper<T>, b: EventWrapper<T>): boolean {
+function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
     if (a.event.kind === b.event.kind) {
         if (a.event.kind === "direct_message" && b.event.kind === "direct_message") {
             return (
@@ -287,23 +286,19 @@ function sameUser<T extends ChatEvent>(a: EventWrapper<T>, b: EventWrapper<T>): 
     return false;
 }
 
-function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][] {
+function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][] {
     return groupWhile(sameUser, events);
 }
 
-export function groupEvents<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[][][] {
+export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events).map(groupBySender);
 }
 
-export function earliestLoadedEventIndex<T extends ChatEvent>(
-    events: EventWrapper<T>[]
-): number | undefined {
+export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[0]?.index;
 }
 
-export function latestLoadedEventIndex<T extends ChatEvent>(
-    events: EventWrapper<T>[]
-): number | undefined {
+export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[events.length - 1]?.index;
 }
 

@@ -38,6 +38,7 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
+import { UnsupportedValueError } from "../../utils/error";
 
 export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
     if ("NotFound" in candid) {
@@ -47,7 +48,7 @@ export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
         return new Uint8Array(candid.Success.bytes);
     }
 
-    throw new Error(`Unexpected ApiChunkResponse type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiChunkResponse type received", candid);
 }
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
@@ -75,7 +76,7 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "unknown_error" };
     }
 
-    throw new Error(`Unexpected ApiCreateGroupResponse type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
@@ -94,7 +95,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("NotAuthorised" in candid) {
         return "not_authorised";
     }
-    throw new Error(`Unexpected GetMessagesResponse type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
 export function getUpdatesResponse(userId: string, candid: ApiUpdatesResponse): UpdatesResponse {
@@ -106,7 +107,7 @@ export function getUpdatesResponse(userId: string, candid: ApiUpdatesResponse): 
             timestamp: candid.Success.timestamp,
         };
     }
-    throw new Error(`Unexpected GetChatsResponse type received: ${candid}`);
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
 function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
@@ -144,7 +145,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
         };
     }
-    throw new Error(`Unexpected ChatSummary type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
 }
 
 function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
@@ -187,7 +188,7 @@ function chatSummary(userId: string, candid: ApiChatSummary): ChatSummary {
             dateCreated: candid.Direct.date_created,
         };
     }
-    throw new Error(`Unexpected ChatSummary type received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);
 }
 
 function participant(candid: ApiParticipant): Participant {
@@ -232,7 +233,7 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
     }
-    throw new Error(`Unexpected MessageContent received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
 function cyclesContent(candid: ApiCyclesContent): CyclesContent {
@@ -310,5 +311,5 @@ function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyConte
         };
     }
 
-    throw new Error(`Unexpected ReplyContext received: ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiDirectReplyContext type received", candid);
 }
