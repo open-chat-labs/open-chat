@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "testenv_setup"
+name = "canister_installer"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
@@ -11,12 +11,5 @@ edition = "2018"
 [dependencies]
 canister_client = { path = "../libraries/canister_client" }
 clap = "3.0.0-beta.4"
-futures = "0.3.16"
-group_canister = { path = "../canisters/group/api" }
-ic-agent = "0.7.0"
-lipsum = "0.8.0"
-rand = "0.7.3"
 tokio = { version = "1.10.0", features = ["full"] }
 types = { path = "../libraries/types" }
-user_canister = { path = "../canisters/user/api" }
-utils = { path = "../libraries/utils" }

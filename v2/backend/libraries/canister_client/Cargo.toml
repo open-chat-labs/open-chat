@@ -1,3 +1,5 @@
+[workspace]
+
 [package]
 name = "canister_client"
 version = "0.1.0"
@@ -8,6 +10,7 @@ edition = "2018"
 
 [dependencies]
 candid = "0.7.5"
+dirs = "3.0.2"
 futures = "0.3.16"
 garcon = "0.2.3"
 group_canister = { path = "../../canisters/group/api" }

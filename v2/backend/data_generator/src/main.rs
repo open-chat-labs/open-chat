@@ -13,11 +13,13 @@ use utils::rand::get_random_item;
 async fn main() {
     let opts = Opts::parse();
 
-    let canister_ids = canister_client::operations::create_and_install_service_canisters(opts.url.clone()).await;
+    let canister_ids = CanisterIds {
+        user_index: opts.user_index,
+        group_index: opts.group_index,
+        notifications: opts.notifications,
+    };
 
-    if let Some(username) = opts.username {
-        run_data_generator(opts.url, canister_ids, username, opts.seed, opts.max_groups).await;
-    }
+    run_data_generator(opts.url, canister_ids, opts.username, opts.seed, opts.max_groups).await;
 }
 
 async fn run_data_generator(
@@ -177,7 +179,10 @@ fn build_rng(seed: Option<u32>) -> StdRng {
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     pub url: String,
-    pub username: Option<String>,
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub notifications: CanisterId,
+    pub username: String,
     pub seed: Option<u32>,
     pub max_groups: Option<u32>,
 }
