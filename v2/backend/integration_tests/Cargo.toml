@@ -26,7 +26,7 @@ nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958
 notifications_canister = { path = "../canisters/notifications/api" }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
-tokio = { version = "1.9.0", features = ["full"] }
+tokio = { version = "1.10.0", features = ["full"] }
 types = { path = "../../backend/libraries/types", default-features = false }
 url = "2.2.2"
 user_canister = { path = "../canisters/user/api" }

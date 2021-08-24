@@ -11,4 +11,4 @@ candid = "0.7.5"
 lambda_runtime = "0.3.0"
 serde = "1.0.126"
 shared = { path = "../shared" }
-tokio = "1.8.1"
+tokio = "1.10.0"

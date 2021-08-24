@@ -17,8 +17,21 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let canister_ids = create_and_install_service_canisters(url.clone()).await;
 
-    let user1_id = register_user(url.clone(), TestIdentity::User1, canister_ids.user_index).await;
-    let user2_id = register_user(url.clone(), TestIdentity::User2, canister_ids.user_index).await;
+    let (user1_id, user2_id) = futures::future::join(
+        register_user(
+            url.clone(),
+            TestIdentity::User1,
+            Some("Andy".to_string()),
+            canister_ids.user_index,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User2,
+            Some("Bob".to_string()),
+            canister_ids.user_index,
+        ),
+    )
+    .await;
 
     let user1_identity = build_identity(TestIdentity::User1);
 

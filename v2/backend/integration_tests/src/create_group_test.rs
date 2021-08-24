@@ -18,16 +18,38 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let canister_ids = create_and_install_service_canisters(url.clone()).await;
 
-    let user1_id = register_user(url.clone(), TestIdentity::User1, canister_ids.user_index).await;
-    let user2_id = register_user(url.clone(), TestIdentity::User2, canister_ids.user_index).await;
-    let user3_id = register_user(url.clone(), TestIdentity::User3, canister_ids.user_index).await;
+    let (user1_id, user2_id, user3_id) = futures::future::join3(
+        register_user(
+            url.clone(),
+            TestIdentity::User1,
+            Some("Andy".to_string()),
+            canister_ids.user_index,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User2,
+            Some("Bob".to_string()),
+            canister_ids.user_index,
+        ),
+        register_user(
+            url.clone(),
+            TestIdentity::User3,
+            Some("Charlie".to_string()),
+            canister_ids.user_index,
+        ),
+    )
+    .await;
 
     let user1_identity = build_identity(TestIdentity::User1);
-    let user1_agent = build_ic_agent(url.clone(), user1_identity).await;
     let user2_identity = build_identity(TestIdentity::User2);
-    let user2_agent = build_ic_agent(url.clone(), user2_identity).await;
     let user3_identity = build_identity(TestIdentity::User3);
-    let user3_agent = build_ic_agent(url.clone(), user3_identity).await;
+
+    let (user1_agent, user2_agent, user3_agent) = futures::future::join3(
+        build_ic_agent(url.clone(), user1_identity),
+        build_ic_agent(url.clone(), user2_identity),
+        build_ic_agent(url.clone(), user3_identity),
+    )
+    .await;
 
     let name = "TEST_NAME".to_string();
     let description = "TEST_DESCRIPTION".to_string();
@@ -38,7 +60,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: description.clone(),
     };
 
-    let group_chat_id = create_group(&user1_agent, user1_id, args, vec![user2_id, user3_id]).await;
+    let group_chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
 
     match canisters::group::summary(&user1_agent, &group_chat_id.into(), &group_canister::summary::Args {}).await {
         group_canister::summary::Response::Success(r) => {
@@ -51,12 +73,12 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         response => panic!("Summary returned an error: {:?}", response),
     }
 
-    let futures = [
+    futures::future::join3(
         ensure_user_canister_links_to_group(&user1_agent, user1_id, group_chat_id),
         ensure_user_canister_links_to_group(&user2_agent, user2_id, group_chat_id),
         ensure_user_canister_links_to_group(&user3_agent, user3_id, group_chat_id),
-    ];
-    futures::future::join_all(futures).await;
+    )
+    .await;
 }
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, group_chat_id: GroupChatId) {

@@ -10,12 +10,11 @@ if [[ ${TMPDIR-/tmp} == /run/* ]]; then
 fi
 
 show_help() {
-    echo "Usage: ./setup-and-cargo-test.sh [OPTIONS] [-- FONDUE_OPTIONS]"
+    echo "Usage: ./run.sh [OPTIONS] [-- FONDUE_OPTIONS]"
     echo ""
-    echo "Compiles the replica and nodemanager, sets the binaries up then"
-    echo "runs system-tests"
+    echo "Compiles the replica and nodemanager, sets the binaries up then runs the tests"
     echo ""
-    echo "This script must be ran from 'rs/tests'. "
+    echo "This script must be run from 'backend/integration_tests'. "
     echo ""
     echo "For information on the fondue options run this script with '-- -h'."
     echo ""
