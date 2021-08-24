@@ -15,7 +15,7 @@
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import { toastStore, ToastType } from "../../stores/toast";
+    import { toastStore } from "../../stores/toast";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher } from "svelte";

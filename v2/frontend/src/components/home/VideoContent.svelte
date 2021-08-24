@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { afterUpdate, onDestroy } from "svelte";
+    import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MediaContent } from "../../domain/chat/chat";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";

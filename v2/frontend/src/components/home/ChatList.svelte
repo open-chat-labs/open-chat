@@ -14,7 +14,7 @@
 
     export let machine: ActorRefFrom<HomeMachine>;
 
-    function filterChats(event: { detail: string }) {}
+    function filterChats(_event: { detail: string }) {}
 </script>
 
 {#if $machine.context.user}
@@ -25,7 +25,7 @@
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#each $machine.context.chatSummaries as chatSummary, i (chatSummary.chatId)}
+                {#each $machine.context.chatSummaries as chatSummary, _i (chatSummary.chatId)}
                     <div
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>

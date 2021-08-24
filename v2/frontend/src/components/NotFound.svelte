@@ -9,7 +9,7 @@
     <div class="content">
         <div>
             <h1 class="msg">404</h1>
-            <Link underline={true} on:click={() => push("/")}>{$_("home")}</Link>
+            <Link underline={"always"} on:click={() => push("/")}>{$_("home")}</Link>
         </div>
     </div>
 </ModalPage>

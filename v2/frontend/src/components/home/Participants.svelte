@@ -2,7 +2,6 @@
     import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import Participant from "./Participant.svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { PartialUserSummary } from "../../domain/user/user";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
     import VirtualList from "../VirtualList.svelte";
     import type { FullParticipant } from "../../domain/chat/chat";

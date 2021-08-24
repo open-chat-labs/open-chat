@@ -35,7 +35,7 @@
     </span>
     <span class="phone-number">{phoneNumberToString(phoneNumber)}</span>
     <span>
-        <Link underline={true} on:click={changePhoneNumber}>({$_("change")})</Link>
+        <Link underline={"always"} on:click={changePhoneNumber}>({$_("change")})</Link>
     </span>
 </p>
 
@@ -83,15 +83,5 @@
 
     .code-wrapper {
         max-width: 200px;
-    }
-
-    a {
-        text-decoration: underline;
-        text-decoration-color: var(--link-underline);
-        text-underline-offset: $sp2;
-        cursor: pointer;
-        &:hover {
-            text-decoration-thickness: 2px;
-        }
     }
 </style>

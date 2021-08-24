@@ -54,7 +54,7 @@
 <div class="participants">
     <div class="form-fields">
         <div class="selected">
-            {#each $machine.context.candidateGroup.participants as participant, pi (participant.user.userId)}
+            {#each $machine.context.candidateGroup.participants as participant, _pi (participant.user.userId)}
                 <div
                     class="pill"
                     in:pop={{ duration: 500 }}

@@ -7,7 +7,7 @@
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
-    import { onMount, tick } from "svelte";
+    import { onMount } from "svelte";
     import type { ActorRefFrom } from "xstate";
     import type { UserSearchMachine } from "../fsm/userSearch.machine";
     export let machine: ActorRefFrom<UserSearchMachine>;
@@ -62,7 +62,7 @@
     {#if $machine.matches("searching_users")}
         <Loading />
     {:else}
-        {#each $machine.context.users as user, i (user.userId)}
+        {#each $machine.context.users as user, _i (user.userId)}
             <div class="user" on:click={() => onSelect(user)}>
                 <span class="avatar">
                     <Avatar

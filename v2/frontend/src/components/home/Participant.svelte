@@ -32,7 +32,7 @@
         dispatch("dismissAsAdmin", participant.userId);
     }
 
-    function participantSelected(e: MouseEvent) {
+    function participantSelected(_e: MouseEvent) {
         if (!me) {
             dispatch("chatWith", participant.userId);
             dispatch("close");
