@@ -14,6 +14,7 @@ import type {
     ApiChunkResponse,
     ApiChatSummaryUpdates,
     ApiGroupMessage,
+    ApiDirectChatEventWrapper,
     ApiDirectReplyContext,
     ApiDirectMessage,
 } from "./candid/idl";
@@ -24,6 +25,7 @@ import type {
     FileContent,
     UpdatesResponse,
     EventsResponse,
+    EventWrapper,
     MediaContent,
     MessageContent,
     TextContent,
@@ -82,11 +84,7 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
         return {
-            events: candid.Success.events.map((ev) => ({
-                index: ev.index,
-                timestamp: ev.timestamp,
-                event: directMessage(ev.event.Message),
-            })),
+            events: candid.Success.events.map(event),
         };
     }
     if ("ChatNotFound" in candid) {
@@ -96,6 +94,26 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
+}
+
+function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
+    if ("Message" in candid.event) {
+        return {
+            event: directMessage(candid.event.Message),
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    if ("DirectChatCreated" in candid.event) {
+        return {
+            event: {
+                kind: "direct_chat_created",
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    throw new Error("Unexpected ApiDirectChatEventWrapper type received");
 }
 
 export function getUpdatesResponse(userId: string, candid: ApiUpdatesResponse): UpdatesResponse {

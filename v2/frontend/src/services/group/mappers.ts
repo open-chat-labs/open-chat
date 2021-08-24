@@ -30,7 +30,7 @@ import type { ApiCyclesContent } from "../user/candid/idl";
 // some aspects actually different so we will map them independently for the time being
 // this means that we may not be able to just have a /domain/chat module - it might not be that simple
 
-export function getMessagesResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
+export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
