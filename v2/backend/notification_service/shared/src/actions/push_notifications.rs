@@ -6,7 +6,6 @@ use futures::future;
 use log::error;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use std::fs::File;
 use types::{CanisterId, IndexedEvent, Notification, NotificationEnvelope, UserId};
 use web_push::*;
 
@@ -129,10 +128,7 @@ async fn push_notifications_to_user(
     for subscription in subscriptions.iter() {
         for notification in &notifications {
             let serialized = serde_json::to_string(&notification)?;
-            // TODO: This should happen once on app start! But VapidSignatureBuilder::from_pem
-            // doesn't like taking a string
-            let file = File::open(vapid_private_pem).unwrap();
-            let sig_builder = VapidSignatureBuilder::from_pem(file, subscription)?;
+            let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
             let vapid_signature = sig_builder.build()?;
             let mut builder = WebPushMessageBuilder::new(subscription)?;
             builder.set_payload(ContentEncoding::AesGcm, serialized.as_bytes());
