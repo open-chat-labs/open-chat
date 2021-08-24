@@ -18,6 +18,7 @@
     "confirmParticipants": "Confirm participants",
     "groupCreationFailed": "Sorry we were unable to create your group",
     "groupCreatedBy": "Group created by",
+    "directChatCreatedAt": "Chat created at",
     "skip": "Skip",
     "historyVisible": "visible chat history",
     "historyOnInfo": "Full chat history will be visible to new joiners. Careful now! 🤐",

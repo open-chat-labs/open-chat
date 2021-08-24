@@ -16,7 +16,7 @@ import type {
     GroupChatReplyContext,
     DirectChatReplyContext,
 } from "../../domain/chat/chat";
-import { compareChats, newMessageId } from "../../domain/chat/chat.utils";
+import { compareChats, createDirectMessage, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
 import type { IUserClient } from "./user.client.interface";
 
@@ -184,6 +184,19 @@ function mockTextMessage<T extends GroupMessage | DirectMessage>(
     } as T;
 }
 
+function directChatCreated(index: number): EventWrapper<DirectChatEvent> {
+    const now = +new Date();
+    const numIntervals = numMessages - index;
+    const timeDiff = interval * numIntervals;
+    return {
+        event: {
+            kind: "direct_chat_created",
+        },
+        timestamp: BigInt(+new Date(now - timeDiff)),
+        index,
+    };
+}
+
 function mockEvent<T extends GroupMessage | DirectMessage>(
     kind: MessageKind,
     index: number
@@ -253,25 +266,13 @@ export class UserClientMock implements IUserClient {
         const n = toIndex - fromIndex;
         const events = fill(
             n + 1,
-            (i: number) => mockEvent<DirectMessage>("direct_message", i),
+            (i: number) => {
+                return fromIndex + i === 0
+                    ? directChatCreated(i)
+                    : mockEvent<DirectMessage>("direct_message", i);
+            },
             (i: number) => fromIndex + i
         );
-        return new Promise((res) => {
-            setTimeout(() => {
-                res({
-                    events,
-                });
-            }, 300);
-        });
-    }
-
-    chatEventsByIndex(
-        _userId: string,
-        indexes: Set<number>
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const events = [...indexes].map((i) => {
-            return mockEvent<DirectMessage>("direct_message", i);
-        });
         return new Promise((res) => {
             setTimeout(() => {
                 res({

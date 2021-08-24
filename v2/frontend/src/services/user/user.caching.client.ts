@@ -36,13 +36,6 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
-    chatEventsByIndex(
-        userId: string,
-        indexes: Set<number>
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.client.chatEventsByIndex(userId, indexes);
-    }
-
     getUpdates(userId: string, args: UpdateArgs): Promise<UpdatesResponse> {
         return this.client.getUpdates(userId, args);
     }

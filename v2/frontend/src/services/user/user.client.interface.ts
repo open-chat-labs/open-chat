@@ -14,9 +14,5 @@ export interface IUserClient {
         fromIndex: number,
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>>;
-    chatEventsByIndex(
-        userId: string,
-        indexes: Set<number>
-    ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
 }
