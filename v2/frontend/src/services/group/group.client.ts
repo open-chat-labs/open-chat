@@ -3,7 +3,7 @@ import type { Principal } from "@dfinity/principal";
 import { idlFactory, GroupService } from "./candid/idl";
 import type { EventsResponse } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { getMessagesResponse } from "./mappers";
+import { getEventsResponse } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 
 export class GroupClient extends CandidService implements IGroupClient {
@@ -20,7 +20,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 to_index: toIndex,
                 from_index: fromIndex,
             }),
-            getMessagesResponse
+            getEventsResponse
         );
     }
 }

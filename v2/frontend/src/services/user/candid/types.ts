@@ -35,7 +35,9 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'NameTooLong' : number } |
   { 'GroupLimitExceeded' : number };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
-export type DirectChatEvent = { 'Message' : DirectMessage };
+export type DirectChatCreated = {};
+export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
   'timestamp' : TimestampMillis,

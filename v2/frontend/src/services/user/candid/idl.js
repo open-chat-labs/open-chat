@@ -83,7 +83,11 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(DirectReplyContext),
     'message_index' : MessageIndex,
   });
-  const DirectChatEvent = IDL.Variant({ 'Message' : DirectMessage });
+  const DirectChatCreated = IDL.Record({});
+  const DirectChatEvent = IDL.Variant({
+    'Message' : DirectMessage,
+    'DirectChatCreated' : DirectChatCreated,
+  });
   const TimestampMillis = IDL.Nat64;
   const DirectChatEventWrapper = IDL.Record({
     'event' : DirectChatEvent,

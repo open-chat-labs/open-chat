@@ -61,7 +61,9 @@ export type CurrentUserResponse = {
   } |
   { 'UserNotFound' : null };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
-export type DirectChatEvent = { 'Message' : DirectMessage };
+export type DirectChatCreated = {};
+export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
   'timestamp' : TimestampMillis,

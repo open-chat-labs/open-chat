@@ -91,11 +91,15 @@ export type EventsResponse<T extends ChatEvent> =
     | "not_authorised"
     | EventsSuccessResult<T>;
 
-export type DirectChatEvent = DirectMessage;
+export type DirectChatEvent = DirectMessage | DirectChatCreated;
 
 export type GroupChatEvent = GroupMessage | GroupChatCreated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
+
+export type DirectChatCreated = {
+    kind: "direct_chat_created";
+};
 
 export type GroupChatCreated = {
     kind: "group_chat_created";

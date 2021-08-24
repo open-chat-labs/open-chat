@@ -220,7 +220,7 @@ fn finalize(
                 chat_id: direct_chat.chat_id,
                 them: direct_chat.them,
                 latest_message: direct_chat.events.latest_message().unwrap(),
-                latest_event_index: direct_chat.events.latest_event_index(),
+                latest_event_index: direct_chat.events.last().index,
                 date_created: direct_chat.date_created,
                 latest_read_by_me: *direct_chat.latest_read_by_me.value(),
                 latest_read_by_them: *direct_chat.latest_read_by_them.value(),

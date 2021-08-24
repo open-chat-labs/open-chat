@@ -35,7 +35,9 @@ export interface DeleteArgs { 'chat_id' : GroupChatId }
 export type DeleteResponse = { 'NotFound' : null } |
   { 'Success' : null } |
   { 'NotAdmin' : null };
-export type DirectChatEvent = { 'Message' : DirectMessage };
+export type DirectChatCreated = {};
+export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
   'timestamp' : TimestampMillis,
