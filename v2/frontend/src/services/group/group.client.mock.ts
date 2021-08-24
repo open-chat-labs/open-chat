@@ -1,11 +1,17 @@
-import type { EventsResponse, EventWrapper, Message, ReplyContext } from "../../domain/chat/chat";
+import type {
+    EventsResponse,
+    EventWrapper,
+    GroupChatEvent,
+    GroupChatReplyContext,
+    GroupMessage,
+} from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
 export const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 
-function mockRepliesTo(index: number): ReplyContext {
+function mockRepliesTo(index: number): GroupChatReplyContext {
     const jumpTo = randomNum(index - 100, index - 1);
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
@@ -15,13 +21,13 @@ function mockRepliesTo(index: number): ReplyContext {
             text: randomPara(),
         },
         userId: sender,
-        messageIndex: jumpTo,
+        eventIndex: jumpTo,
     };
 }
 
 const now = +new Date();
 
-function mockEvent(index: number): EventWrapper {
+function mockEvent(index: number): EventWrapper<GroupChatEvent> {
     const imageMsg = index % 5 === 0;
 
     if (index === 0) {
@@ -43,11 +49,11 @@ function mockEvent(index: number): EventWrapper {
     };
 }
 
-function mockImageMessage(index: number): Message {
+function mockImageMessage(index: number): GroupMessage {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
-        kind: "message",
+        kind: "group_message",
         content: {
             kind: "media_content",
             caption: "A picture of a bird",
@@ -70,11 +76,11 @@ function mockImageMessage(index: number): Message {
     };
 }
 
-function mockTextMessage(index: number): Message {
+function mockTextMessage(index: number): GroupMessage {
     const sender = index % 4 === 0 ? "abcdefg" : "qwxyz";
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     return {
-        kind: "message",
+        kind: "group_message",
         content: {
             kind: "text_content",
             text: randomPara(),
@@ -87,7 +93,7 @@ function mockTextMessage(index: number): Message {
 }
 
 export class GroupClientMock implements IGroupClient {
-    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse> {
+    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
         const n = toIndex - fromIndex;
         const events = fill(n + 1, mockEvent, (i: number) => fromIndex + i);
         return new Promise((res) => {

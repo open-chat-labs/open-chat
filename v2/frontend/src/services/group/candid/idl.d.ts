@@ -1,7 +1,8 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
-    Message,
+    GroupMessage,
+    GroupReplyContext,
     UserId,
     ReplyContext,
     MessageContent,
@@ -21,9 +22,9 @@ import {
 } from "./types";
 export {
     _SERVICE as GroupService,
-    Message as ApiMessage,
+    GroupMessage as ApiGroupMessage,
     UserId as ApiUserId,
-    ReplyContext as ApiReplyContext,
+    GroupReplyContext as ApiGroupReplyContext,
     MessageContent as ApiMessageContent,
     FileContent as ApiFileContent,
     TextContent as ApiTextContent,

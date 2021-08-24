@@ -2,7 +2,6 @@
 import {
     ActionObject,
     createMachine,
-    DoneEvent,
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,
@@ -14,12 +13,16 @@ import type {
     EventWrapper,
     EnhancedReplyContext,
     MessageContent,
+    ChatEvent,
+    ReplyContext,
+    DirectChatReplyContext,
 } from "../domain/chat/chat";
 import {
+    createDirectMessage,
+    createGroupMessage,
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
-    createMessage,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -38,19 +41,22 @@ export interface ChatContext {
     userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
-    events: EventWrapper[];
+    events: EventWrapper<ChatEvent>[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
-    replyingTo?: EnhancedReplyContext;
+    replyingTo?: EnhancedReplyContext<ReplyContext>;
     fileToAttach?: MessageContent;
 }
 
 type LoadEventsResponse = {
     userLookup: UserLookup;
-    events: EventWrapper[];
+    events: EventWrapper<ChatEvent>[];
 };
 
 export type ChatEvents =
-    | { type: "done.invoke.loadEventsAndUsers"; data: LoadEventsResponse }
+    | {
+          type: "done.invoke.loadEventsAndUsers";
+          data: LoadEventsResponse;
+      }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
@@ -58,8 +64,14 @@ export type ChatEvents =
     | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
-    | { type: "REPLY_TO"; data: EnhancedReplyContext }
-    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
+    | {
+          type: "REPLY_TO";
+          data: EnhancedReplyContext<ReplyContext>;
+      }
+    | {
+          type: "REPLY_PRIVATELY_TO";
+          data: EnhancedReplyContext<DirectChatReplyContext>;
+      }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
@@ -86,7 +98,7 @@ function loadEvents(
     chatSummary: ChatSummary,
     earliestRequiredEventIndex: number,
     earliestLoadedEventIndex: number
-): Promise<EventsResponse> {
+): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
         return serviceContainer.directChatEvents(
             chatSummary.them,
@@ -350,13 +362,21 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: [
                                     ...ctx.events,
                                     {
-                                        event: createMessage(
-                                            ctx.user!.userId,
-                                            index + 1,
-                                            ev.data,
-                                            ctx.replyingTo,
-                                            ctx.fileToAttach
-                                        ),
+                                        event:
+                                            ctx.chatSummary.kind === "direct_chat"
+                                                ? createDirectMessage(
+                                                      index + 1,
+                                                      ev.data,
+                                                      ctx.replyingTo,
+                                                      ctx.fileToAttach
+                                                  )
+                                                : createGroupMessage(
+                                                      ctx.user!.userId,
+                                                      index + 1,
+                                                      ev.data,
+                                                      ctx.replyingTo,
+                                                      ctx.fileToAttach
+                                                  ),
                                         index: index + 1,
                                         timestamp: BigInt(+new Date() - index + 1),
                                     },

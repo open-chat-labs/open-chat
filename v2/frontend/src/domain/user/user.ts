@@ -107,6 +107,7 @@ export type SetUsernameResponse =
     | "no_change"
     | "username_taken"
     | "user_not_found"
+    | "user_unconfirmed"
     | "username_too_short"
     | "username_too_long"
     | "username_invalid";

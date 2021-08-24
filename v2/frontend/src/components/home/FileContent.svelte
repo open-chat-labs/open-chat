@@ -6,18 +6,41 @@
     import type { FileContent } from "../../domain/chat/chat";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
     import { dataToBlobUrl } from "../../utils/blob";
-    import { onDestroy } from "svelte";
+    import { afterUpdate, onDestroy } from "svelte";
+    import { DataClient } from "../../services/data/data.client";
 
     export let content: FileContent;
     export let me: boolean = false;
+    let downloaded: boolean = false;
+    let anchor: HTMLAnchorElement;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
-    let blobUrl = content.blobData.then((data) =>
+    $: blobUrl = content.blobData.then((data) =>
         data ? dataToBlobUrl(data, content.mimeType) : undefined
     );
 
+    afterUpdate(() => {
+        if (downloaded && anchor) {
+            anchor.click();
+        }
+    });
+
+    function download() {
+        if (content.blobReference) {
+            // we need to overwrite the whole content object so that we trigger a re-render
+            content = {
+                ...content,
+                blobData: DataClient.create(content.blobReference.canisterId)
+                    .getData(content.blobReference)
+                    .then((data) => {
+                        downloaded = true;
+                        return data;
+                    }),
+            };
+        }
+    }
+
     onDestroy(() => {
-        console.log("destroying file url");
         blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
     });
 </script>
@@ -28,6 +51,7 @@
             href={url}
             title={$_("downloadFile", { values: { name: content.name } })}
             download={content.name}
+            bind:this={anchor}
             role="button"
             class="file-content">
             <span class="icon" class:rtl={$rtlStore}>
@@ -37,12 +61,25 @@
                 {content.name}
             </span>
         </a>
+    {:else}
+        <div
+            on:click={download}
+            title={$_("downloadFile", { values: { name: content.name } })}
+            class="file-content">
+            <span class="icon" class:rtl={$rtlStore}>
+                <FileDownload size={"1.7em"} {color} />
+            </span>
+            <span class="name">
+                {content.name}
+            </span>
+        </div>
     {/if}
 {/await}
 
 <style type="text/scss">
     .file-content {
         display: block;
+        cursor: pointer;
         @include ellipsis();
     }
 

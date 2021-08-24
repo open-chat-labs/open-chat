@@ -17,9 +17,16 @@
         toDayOfWeekString,
         toLongDateString,
     } from "../../utils/date";
-    import type { EventWrapper, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type {
+        EventWrapper,
+        EnhancedReplyContext,
+        ReplyContext,
+        ChatEvent as ChatEventType,
+        DirectChatReplyContext,
+    } from "../../domain/chat/chat";
     import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
+    import { UnsupportedValueError } from "../../utils/error";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -117,30 +124,31 @@
         machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+    function replyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
         machine.send({ type: "REPLY_TO", data: ev.detail });
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext<DirectChatReplyContext>>) {
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
-    function dateGroupKey(group: EventWrapper[][]): string {
+    function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function userGroupKey(group: EventWrapper[]): string {
+    function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
         const first = group[0]!;
-        if (first.event.kind !== "message") {
-            if (first.event.kind === "group_chat_created") {
-                return `${first.event.created_by}_${first.index}`;
-            }
-            // todo - we will have to implement this as we get more events
-            // we will have things like people joining and leaving the group
-            throw new Error("Unexpected event type");
+        if (first.event.kind === "direct_message") {
+            return `${first.event.sentByMe}_${first.index}`;
         }
-        return `${first.event.sender}_${first.index}`;
+        if (first.event.kind === "group_message") {
+            return `${first.event.sender}_${first.index}`;
+        }
+        if (first.event.kind === "group_chat_created") {
+            return `${first.event.created_by}_${first.index}`;
+        }
+        throw new UnsupportedValueError("Unexpected event type received", first.event);
     }
 
     $: groupedEvents = groupEvents($machine.context.events);
@@ -178,6 +186,19 @@
         }
     }
 
+    function isMe(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message") {
+            return evt.event.sentByMe;
+        }
+        if (evt.event.kind === "group_message") {
+            return evt.event.sender === $machine.context.user?.userId;
+        }
+        if (evt.event.kind === "group_chat_created") {
+            return evt.event.created_by === $machine.context.user?.userId;
+        }
+        throw new UnsupportedValueError("Unexpected event type received", evt.event);
+    }
+
     // then we need to integrate web rtc
 </script>
 
@@ -200,8 +221,7 @@
                     <ChatEvent
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
-                        me={evt.event.kind === "message" &&
-                            $machine.context.user?.userId === evt.event.sender}
+                        me={isMe(evt)}
                         last={i + 1 === userGroup.length}
                         userLookup={$machine.context.userLookup}
                         on:chatWith

@@ -1,7 +1,5 @@
+import type { BlobReference } from "../../domain/chat/chat";
+
 export interface IDataClient {
-    getData(
-        blobId: bigint,
-        totalBytes?: number,
-        chunkSize?: number
-    ): Promise<Uint8Array | undefined>;
+    getData(blobRef: BlobReference): Promise<Uint8Array | undefined>;
 }

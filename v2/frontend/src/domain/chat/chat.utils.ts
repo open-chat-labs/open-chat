@@ -6,19 +6,22 @@ import type {
     EventWrapper,
     GroupChatSummary,
     MediaContent,
-    Message,
     MessageContent,
     Participant,
-    ReplyContext,
     TextContent,
     ChatSummaryUpdates,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     UpdatesResponse,
+    ChatEvent,
+    GroupMessage,
+    DirectMessage,
+    ReplyContext,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
+import { UnsupportedValueError } from "../../utils/error";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -38,7 +41,7 @@ export function getContentAsText(content: MessageContent): string {
         // todo - format cycles
         text = "cycles_content";
     } else {
-        throw new Error(`Unrecognised content type - ${content}`);
+        throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
 }
@@ -77,8 +80,7 @@ export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
-    if (latestMessage?.event.kind !== "message") return "";
-    return getContentAsText(latestMessage.event.content);
+    return latestMessage?.event ? getContentAsText(latestMessage.event.content) : "";
 }
 
 export function compareByDate(a: ChatSummary, b: ChatSummary): number {
@@ -109,22 +111,56 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
     return content.kind !== "text_content" ? { ...content, caption } : content;
 }
 
-export function createMessage(
-    userId: string,
-    messageIndex: number,
+function getMessageContent(
     content: string | undefined,
-    replyingTo: ReplyContext | undefined,
     fileToAttach: MessageContent | undefined
-): Message {
-    const msgContent = fileToAttach
+): MessageContent {
+    return fileToAttach
         ? addCaption(content, fileToAttach)
         : ({
               kind: "text_content",
               text: content ?? "",
           } as TextContent);
+}
+
+export function createDirectMessage(
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: MessageContent | undefined
+): DirectMessage {
+    // todo - this is awful but it is hopefully temporary
+    if (
+        replyingTo &&
+        replyingTo.kind !== "direct_private_reply_context" &&
+        replyingTo.kind !== "direct_standard_reply_context"
+    ) {
+        throw new Error("Trying to create a direct message with the wrong kind of reply context");
+    }
     return {
-        kind: "message",
-        content: msgContent,
+        kind: "direct_message",
+        content: getMessageContent(content, fileToAttach),
+        sentByMe: true,
+        repliesTo: replyingTo,
+        messageId: newMessageId(),
+        messageIndex,
+    };
+}
+
+export function createGroupMessage(
+    userId: string,
+    messageIndex: number,
+    content: string | undefined,
+    replyingTo: ReplyContext | undefined,
+    fileToAttach: MessageContent | undefined
+): GroupMessage {
+    // todo - this is awful but it is hopefully temporary
+    if (replyingTo && replyingTo.kind !== "group_reply_context") {
+        throw new Error("Trying to create a group message with the wrong kind of reply context");
+    }
+    return {
+        kind: "group_message",
+        content: getMessageContent(content, fileToAttach),
         sender: userId,
         repliesTo: replyingTo,
         messageId: newMessageId(),
@@ -194,7 +230,7 @@ function mergeUpdatedGroupChat(
     chat.description = updatedChat.description ?? chat.description;
     chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
-    chat.lastUpdated = updatedChat.timestamp;
+    chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     chat.participants = mergeThings((p) => p.userId, mergeParticipants, chat.participants, {
         added: [],
@@ -232,29 +268,37 @@ function mergeThings<A, U>(
     return [...Object.values(updated), ...updates.added];
 }
 
-function sameUser(a: EventWrapper, b: EventWrapper): boolean {
-    if (a.event.kind !== "message" || b.event.kind !== "message") {
-        return false;
+function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
+    if (a.event.kind === b.event.kind) {
+        if (a.event.kind === "direct_message" && b.event.kind === "direct_message") {
+            return (
+                a.event.sentByMe === b.event.sentByMe &&
+                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            );
+        }
+        if (a.event.kind === "group_message" && b.event.kind === "group_message") {
+            return (
+                a.event.sender === b.event.sender &&
+                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+            );
+        }
     }
-    return (
-        a.event.sender === b.event.sender &&
-        b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-    );
+    return false;
 }
 
-function groupBySender(events: EventWrapper[]): EventWrapper[][] {
+function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][] {
     return groupWhile(sameUser, events);
 }
 
-export function groupEvents(events: EventWrapper[]): EventWrapper[][][] {
+export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events).map(groupBySender);
 }
 
-export function earliestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[0]?.index;
 }
 
-export function latestLoadedEventIndex(events: EventWrapper[]): number | undefined {
+export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[events.length - 1]?.index;
 }
 

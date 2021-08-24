@@ -24,5 +24,5 @@ export abstract class CandidService {
         return mapper(response);
     }
 
-    constructor(private identity: Identity) {}
+    constructor(private identity?: Identity) {}
 }

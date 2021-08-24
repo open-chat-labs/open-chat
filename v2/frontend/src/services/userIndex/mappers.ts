@@ -26,6 +26,7 @@ import type {
     ApiUserSummary,
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
+import { UnsupportedValueError } from "../../utils/error";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -76,19 +77,25 @@ export function submitPhoneNumberResponse(
         return { kind: "invalid_phone_number" };
     }
 
-    throw new Error(`Unknown UserIndex.SubmitPhoneNumberResponse of ${candid}`);
+    throw new UnsupportedValueError(
+        "Unexpected ApiSubmitPhoneNumberResponse type received",
+        candid
+    );
 }
 
 export function confirmPhoneNumber(
     candid: ApiConfirmPhoneNumberResponse
 ): ConfirmPhoneNumberResponse {
     if ("Success" in candid) return "success";
-    if ("NotFound" in candid) return "not_found";
+    if ("UserNotFound" in candid) return "not_found";
     if ("AlreadyClaimed" in candid) return "already_claimed";
     if ("ConfirmationCodeExpired" in candid) return "code_expired";
     if ("ConfirmationCodeIncorrect" in candid) return "code_incorrect";
 
-    throw new Error(`Unknown UserIndex.ConfirmPhoneNumberResponse of ${candid}`);
+    throw new UnsupportedValueError(
+        "Unexpected ApiConfirmPhoneNumberResponse type received",
+        candid
+    );
 }
 
 export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
@@ -106,7 +113,7 @@ export function createCanisterResponse(candid: ApiCreateCanisterResponse): Creat
     if ("UserUnconfirmed" in candid) return "user_unconfirmed";
     if ("UserNotFound" in candid) return "user_not_found";
 
-    throw new Error(`Unknown UserIndex.CreateCanisterResponse of ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiCreateCanisterResponse type received", candid);
 }
 
 export function upgradeCanisterResponse(
@@ -119,7 +126,7 @@ export function upgradeCanisterResponse(
     if ("InternalError" in candid) return "internal_error";
     if ("UserNotFound" in candid) return "user_not_found";
 
-    throw new Error(`Unknown UserIndex.UpgradeCanisterResponse of ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiUpgradeCanisterResponse type received", candid);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
@@ -172,7 +179,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
         return { kind: "unknown_user" };
     }
 
-    throw new Error(`Unknown UserIndex.GetCurrentUserResponse of ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiCurrentUserResponse type received", candid);
 }
 
 export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsernameResponse {
@@ -197,7 +204,10 @@ export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsername
     if ("UsernameInvalid" in candid) {
         return "username_invalid";
     }
-    throw new Error(`Unknown UserIndex.SetUsernameResponse of ${candid}`);
+    if ("UserUnconfirmed" in candid) {
+        return "user_unconfirmed";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
 }
 
 export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeResponse {
@@ -210,5 +220,5 @@ export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeRes
     if ("UserNotFound" in candid) {
         return "user_not_found";
     }
-    throw new Error(`Unknown UserIndex.ResendCodeResponse of ${candid}`);
+    throw new UnsupportedValueError("Unexpected ApiResendCodeResponse type received", candid);
 }

@@ -8,7 +8,7 @@ export interface CyclesContent {
     amount: bigint;
 }
 
-interface DataContent {
+export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
     blobData: Promise<Uint8Array | undefined>;
@@ -39,51 +39,63 @@ export interface BlobReference {
     chunkSize: number;
 }
 
+export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
+
 export type GroupChatReplyContext = {
     kind: "group_reply_context";
     content: MessageContent;
     userId: string;
-    messageIndex: number;
+    eventIndex: number;
 };
 
 export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
 
-export type EnhancedReplyContext = ReplyContext & {
+export type EnhancedReplyContext<T extends ReplyContext> = T & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };
 
-export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
-
 export interface PrivateReplyContext {
     kind: "direct_private_reply_context";
     chatId: string;
-    messageIndex: number;
+    eventIndex: number;
 }
 
 export interface StandardReplyContext {
     kind: "direct_standard_reply_context";
     content: MessageContent;
     sentByMe: boolean;
-    messageIndex: number;
+    eventIndex: number;
 }
 
-export interface Message {
+export type MessageCommon = {
     messageId: bigint;
     messageIndex: number;
-    kind: "message";
     content: MessageContent;
+};
+
+export type DirectMessage = MessageCommon & {
+    kind: "direct_message";
+    sentByMe: boolean;
+    repliesTo?: DirectChatReplyContext;
+};
+
+export type GroupMessage = MessageCommon & {
+    kind: "group_message";
     sender: string;
-    repliesTo?: ReplyContext;
-}
+    repliesTo?: GroupChatReplyContext;
+};
 
-export type ChatEvent = DirectChatEvent | GroupChatEvent | Message;
+export type EventsResponse<T extends ChatEvent> =
+    | "chat_not_found"
+    | "not_authorised"
+    | EventsSuccessResult<T>;
 
-export type EventsResponse = "chat_not_found" | "not_authorised" | EventsSuccessResult;
+export type DirectChatEvent = DirectMessage;
 
-export type DirectChatEvent = Message;
+export type GroupChatEvent = GroupMessage | GroupChatCreated;
 
-export type GroupChatEvent = Message | GroupChatCreated;
+export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
 export type GroupChatCreated = {
     kind: "group_chat_created";
@@ -92,14 +104,14 @@ export type GroupChatCreated = {
     created_by: string;
 };
 
-export type EventWrapper = {
-    event: ChatEvent;
+export type EventWrapper<T extends ChatEvent> = {
+    event: T;
     timestamp: bigint;
     index: number;
 };
 
-export type EventsSuccessResult = {
-    events: EventWrapper[];
+export type EventsSuccessResult<T extends ChatEvent> = {
+    events: EventWrapper<T>[];
 };
 
 export type GroupChatUpdatesSince = {
@@ -128,22 +140,23 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 type ChatSummaryUpdatesCommon = {
     chatId: string;
     latestReadByMe?: number;
-    latestMessage?: EventWrapper;
     latestEventIndex?: number;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
     latestReadByThem?: number;
+    latestMessage?: EventWrapper<DirectMessage>;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "group_chat";
     participantsAddedOrUpdated: Participant[];
     participantsRemoved: Set<string>;
-    timestamp: bigint;
+    lastUpdated: bigint;
     name?: string;
     description?: string;
+    latestMessage?: EventWrapper<GroupMessage>;
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -160,7 +173,6 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
     latestReadByMe: number;
-    latestMessage?: EventWrapper;
     latestEventIndex: number;
 };
 
@@ -169,6 +181,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
     them: string;
     latestReadByThem: number;
     dateCreated: bigint;
+    latestMessage?: EventWrapper<DirectMessage>;
 };
 
 export type GroupChatSummary = ChatSummaryCommon & {
@@ -180,6 +193,7 @@ export type GroupChatSummary = ChatSummaryCommon & {
     joined: bigint;
     minVisibleMessageIndex: number;
     lastUpdated: bigint;
+    latestMessage?: EventWrapper<GroupMessage>;
 };
 
 export type CandidateParticipant = {

@@ -4,14 +4,17 @@ import type {
     UpdatesResponse,
     EventsResponse,
     GroupChatSummary,
-    Message,
-    ReplyContext,
     UpdateArgs,
     Participant,
     ChatSummaryUpdates,
     EventWrapper,
     CandidateGroupChat,
     CreateGroupResponse,
+    DirectChatEvent,
+    GroupMessage,
+    DirectMessage,
+    GroupChatReplyContext,
+    DirectChatReplyContext,
 } from "../../domain/chat/chat";
 import { compareChats, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -22,6 +25,8 @@ const numMessages = 1000;
 const oneDay = 1000 * 60 * 60 * 24;
 let time = +new Date() + oneDay;
 const interval = 1000 * 60 * 60 * 8; // 8 hours
+
+type MessageKind = "group_message" | "direct_message";
 
 function mockGroupChat(i: number): GroupChatSummary {
     time -= oneDay;
@@ -44,7 +49,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         chatId: String(i),
         lastUpdated: BigInt(time),
         latestReadByMe: numMessages,
-        latestMessage: mockEvent(numMessages),
+        latestMessage: mockEvent<GroupMessage>("group_message", numMessages),
         latestEventIndex: numMessages,
         participants,
     };
@@ -61,13 +66,13 @@ function mockDirectChat(i: number): DirectChatSummary {
         chatId: String(i),
         latestReadByMe: us,
         latestReadByThem: 0,
-        latestMessage: mockEvent(numMessages),
+        latestMessage: mockEvent("direct_message", numMessages),
         latestEventIndex: numMessages,
         dateCreated: BigInt(time),
     };
 }
 
-function mockRepliesTo(index: number): ReplyContext {
+function mockRepliesTo(index: number): GroupChatReplyContext | DirectChatReplyContext {
     const jumpTo = randomNum(index - 100, index - 1);
     const sentByMe = index % 4 === 0;
     const privateReply = index % 3 === 0;
@@ -75,7 +80,7 @@ function mockRepliesTo(index: number): ReplyContext {
         // todo - private reply context does not contain content so what are we supposed to display?
         return {
             kind: "direct_private_reply_context",
-            messageIndex: jumpTo,
+            eventIndex: jumpTo,
             chatId: "1000",
         };
     }
@@ -86,20 +91,29 @@ function mockRepliesTo(index: number): ReplyContext {
             text: randomPara(),
         },
         sentByMe,
-        messageIndex: jumpTo,
+        eventIndex: jumpTo,
     };
 }
 
-type MediaType = "image" | "video";
-let mediaType: MediaType = "image";
+type MimeType = "image/jpg" | "video/mp4" | "audio/mp3";
 
-function mockImageMessage(index: number): Message {
+function mockMediaMessage<T extends GroupMessage | DirectMessage>(
+    kind: MessageKind,
+    index: number,
+    mimeType: MimeType
+): T {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
-    mediaType = mediaType === "image" ? "video" : "image";
-    const mimeType = mediaType === "image" ? "image/jpg" : "video/mp4";
+    const blobId =
+        mimeType === "image/jpg"
+            ? BigInt(0)
+            : mimeType === "video/mp4"
+            ? BigInt(1)
+            : mimeType === "audio/mp3"
+            ? BigInt(3)
+            : BigInt(4);
     return {
-        kind: "message",
+        kind,
         content: {
             kind: "media_content",
             caption: "A picture of a bird",
@@ -108,7 +122,7 @@ function mockImageMessage(index: number): Message {
             mimeType,
             blobReference: {
                 blobSize: CHUNK_SIZE_BYTES * 2,
-                blobId: BigInt(mediaType === "image" ? 0 : 1),
+                blobId,
                 canisterId: "doesnt_matter",
                 chunkSize: CHUNK_SIZE_BYTES,
             },
@@ -120,14 +134,45 @@ function mockImageMessage(index: number): Message {
         repliesTo,
         messageId: newMessageId(),
         messageIndex: index,
-    };
+    } as T;
 }
 
-function mockTextMessage(index: number): Message {
+function mockFileMessage<T extends GroupMessage | DirectMessage>(
+    kind: MessageKind,
+    index: number
+): T {
     const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
     const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
     return {
-        kind: "message",
+        kind,
+        content: {
+            kind: "file_content",
+            caption: "A picture of a bird",
+            mimeType: "application/pdf",
+            name: "somefile_for_us_to_download.pdf",
+            blobReference: {
+                blobSize: CHUNK_SIZE_BYTES * 2,
+                blobId: BigInt(2),
+                canisterId: "doesnt_matter",
+                chunkSize: CHUNK_SIZE_BYTES,
+            },
+            blobData: Promise.resolve(undefined),
+        },
+        sender,
+        repliesTo,
+        messageId: newMessageId(),
+        messageIndex: index,
+    } as T;
+}
+
+function mockTextMessage<T extends GroupMessage | DirectMessage>(
+    kind: MessageKind,
+    index: number
+): T {
+    const repliesTo = index % 10 === 0 && index > 100 ? mockRepliesTo(index) : undefined;
+    const sender = index % 3 === 0 ? "abcdefg" : "qwxyz";
+    return {
+        kind,
         content: {
             kind: "text_content",
             text: randomPara(),
@@ -136,18 +181,31 @@ function mockTextMessage(index: number): Message {
         repliesTo,
         messageId: newMessageId(),
         messageIndex: index,
-    };
+    } as T;
 }
 
-function mockEvent(index: number): EventWrapper {
+function mockEvent<T extends GroupMessage | DirectMessage>(
+    kind: MessageKind,
+    index: number
+): EventWrapper<T> {
     const now = +new Date();
     const numIntervals = numMessages - index;
     const timeDiff = interval * numIntervals;
 
-    const imageMsg = index % 5 === 0;
+    const n = randomNum(0, 4);
+    const msg =
+        n === 0
+            ? mockTextMessage<T>(kind, index)
+            : n === 1
+            ? mockMediaMessage<T>(kind, index, "image/jpg")
+            : n === 2
+            ? mockFileMessage<T>(kind, index)
+            : n === 3
+            ? mockMediaMessage<T>(kind, index, "video/mp4")
+            : mockMediaMessage<T>(kind, index, "audio/mp3");
 
     return {
-        event: imageMsg ? mockImageMessage(index) : mockTextMessage(index),
+        event: msg as T,
         timestamp: BigInt(+new Date(now - timeDiff)),
         index,
     };
@@ -161,11 +219,11 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         const removeParticipant = chat.participants[randomNum(0, chat.participants.length - 1)];
         return {
             chatId: chat.chatId,
-            timestamp: BigInt(+new Date()),
+            lastUpdated: BigInt(+new Date()),
             latestReadByMe: chat.latestReadByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
-                ? mockEvent(chat.latestMessage?.index + 2)
+                ? mockEvent<GroupMessage>("group_message", chat.latestMessage?.index + 2)
                 : undefined,
             kind: "group_chat",
             participantsAddedOrUpdated: [],
@@ -187,9 +245,17 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
 }
 
 export class UserClientMock implements IUserClient {
-    chatEvents(_userId: string, fromIndex: number, toIndex: number): Promise<EventsResponse> {
+    chatEvents(
+        _userId: string,
+        fromIndex: number,
+        toIndex: number
+    ): Promise<EventsResponse<DirectChatEvent>> {
         const n = toIndex - fromIndex;
-        const events = fill(n + 1, mockEvent, (i: number) => fromIndex + i);
+        const events = fill(
+            n + 1,
+            (i: number) => mockEvent<DirectMessage>("direct_message", i),
+            (i: number) => fromIndex + i
+        );
         return new Promise((res) => {
             setTimeout(() => {
                 res({
@@ -199,9 +265,12 @@ export class UserClientMock implements IUserClient {
         });
     }
 
-    chatEventsByIndex(_userId: string, indexes: Set<number>): Promise<EventsResponse> {
+    chatEventsByIndex(
+        _userId: string,
+        indexes: Set<number>
+    ): Promise<EventsResponse<DirectChatEvent>> {
         const events = [...indexes].map((i) => {
-            return mockEvent(i);
+            return mockEvent<DirectMessage>("direct_message", i);
         });
         return new Promise((res) => {
             setTimeout(() => {

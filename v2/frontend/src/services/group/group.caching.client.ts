@@ -1,4 +1,4 @@
-import type { EventsResponse } from "../../domain/chat/chat";
+import type { EventsResponse, GroupChatEvent } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
@@ -14,8 +14,13 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
 
-    async chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse> {
-        const cachedMsgs = await getCachedMessages(this.db, this.chatId, fromIndex, toIndex);
+    async chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
+        const cachedMsgs = await getCachedMessages<GroupChatEvent>(
+            this.db,
+            this.chatId,
+            fromIndex,
+            toIndex
+        );
         return (
             cachedMsgs ??
             this.client.chatEvents(fromIndex, toIndex).then(setCachedMessages(this.db, this.chatId))
