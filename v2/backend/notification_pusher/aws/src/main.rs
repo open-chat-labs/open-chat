@@ -13,7 +13,6 @@ mod dynamodb;
 
 #[derive(Deserialize)]
 struct Request {
-    canister_id: Principal,
     run_mode: Mode,
 }
 
@@ -34,6 +33,7 @@ async fn main() -> Result<(), Error> {
 async fn my_handler(request: Request, _: Context) -> Result<(), Error> {
     let mut dynamodb_client: Box<dyn Store + Send + Sync> = Box::new(DynamoDbClient::build());
     let vapid_private_pem = read_env_var("VAPID_PRIVATE_PEM")?;
+    let canister_id = Principal::from_text(read_env_var("NOTIFICATIONS_CANISTER_ID")?).unwrap();
     let ic_url = read_env_var("IC_URL")?;
     let ic_identity_pem = read_env_var("IC_IDENTITY_PEM")?;
     let is_production = bool::from_str(&read_env_var("IS_PRODUCTION")?).unwrap();
@@ -47,12 +47,12 @@ async fn my_handler(request: Request, _: Context) -> Result<(), Error> {
     match request.run_mode {
         Mode::PushNotifications => push_notifications::run(
             &ic_agent_config,
-            request.canister_id, 
+            canister_id, 
             &mut dynamodb_client,
             &vapid_private_pem).await,
         Mode::PruneNotifications => prune_notifications::run(
             &ic_agent_config,
-            request.canister_id, 
+            canister_id, 
             &mut dynamodb_client).await,
     }
 }
