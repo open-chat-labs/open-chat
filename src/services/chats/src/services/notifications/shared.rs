@@ -1,1 +1,1 @@
-pub const NOTIFICATIONS_CANISTER_ID: &str = "qhbym-qaaaa-aaaaa-aaafq-cai";
+pub const NOTIFICATIONS_CANISTER_ID: &str = "6vuwk-zaaaa-aaaaf-aaagq-cai";
