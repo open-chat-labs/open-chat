@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 group_canister = { path = "../api" }
-ic-cdk = { version = "0.3.1", default-features = false }
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677", default-features = false }
 log = "0.4.14"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

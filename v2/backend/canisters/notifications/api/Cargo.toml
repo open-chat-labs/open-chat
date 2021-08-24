@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 candid = "0.7.5"
-ic-cdk = { version = "0.3.1", default-features = false }
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677", default-features = false }
 serde = "1.0.126"
 types = { path = "../../../libraries/types" }

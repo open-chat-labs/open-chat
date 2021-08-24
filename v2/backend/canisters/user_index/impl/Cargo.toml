@@ -12,8 +12,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.7.5"
-ic-cdk = { version = "0.3.1", default-features = false }
-ic-cdk-macros = "0.3.1"
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677", default-features = false }
+ic-cdk-macros = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677" }
 itertools = "0.10.1"
 phonenumber = "0.3.1"
 serde = "1.0.126"

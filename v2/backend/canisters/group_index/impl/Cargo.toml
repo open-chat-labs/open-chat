@@ -14,8 +14,8 @@ crate-type = ["cdylib"]
 candid = "0.7.5"
 group_canister = { path = "../../group/api" }
 group_index_canister = { path = "../api" }
-ic-cdk = { version = "0.3.1", default-features = false }
-ic-cdk-macros = "0.3.1"
+ic-cdk = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677", default-features = false }
+ic-cdk-macros = { git = "https://github.com/dfinity/cdk-rs", rev = "2e6452cf280e4334bf5ac6d08c07525eddaf0677" }
 serde = "1.0.126"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }
