@@ -16,7 +16,7 @@ async fn updates(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let summaries_future = get_group_chat_summaries(prepare_result.new_group_chats);
+    let summaries_future = get_group_chat_summaries(prepare_result.group_chats_added);
     let summary_updates_future = get_group_chat_summary_updates(
         prepare_result.group_index_canister_id,
         prepare_result.duration_since_last_sync,
@@ -34,7 +34,7 @@ struct PrepareResult {
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
     group_chats_to_check_for_updates: Vec<(GroupChatId, TimestampMillis)>,
-    new_group_chats: Vec<GroupChatId>,
+    group_chats_added: Vec<GroupChatId>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -44,7 +44,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);
 
             let mut group_chats_to_check_for_updates = Vec::new();
-            let mut new_group_chats = Vec::new();
+            let mut group_chats_added = Vec::new();
             let group_chat_args_map: HashMap<_, _> = updates_since
                 .group_chats
                 .iter()
@@ -56,7 +56,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 if let Some(updates_since) = group_chat_args_map.get(&chat_id) {
                     group_chats_to_check_for_updates.push((chat_id, *updates_since));
                 } else {
-                    new_group_chats.push(chat_id);
+                    group_chats_added.push(chat_id);
                 }
             }
 
@@ -64,7 +64,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 duration_since_last_sync,
                 group_chats_to_check_for_updates,
-                new_group_chats,
+                group_chats_added,
             })
         } else {
             let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
@@ -73,7 +73,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 duration_since_last_sync: now,
                 group_chats_to_check_for_updates: Vec::new(),
-                new_group_chats,
+                group_chats_added: new_group_chats,
             })
         }
     } else {
@@ -196,8 +196,8 @@ async fn get_group_chat_summary_updates(
 
 fn finalize(
     args: Args,
-    new_group_chats: Vec<GroupChatSummary>,
-    updated_group_chats: Vec<GroupChatSummaryUpdates>,
+    group_chats_added: Vec<GroupChatSummary>,
+    group_chats_updated: Vec<GroupChatSummaryUpdates>,
     runtime_state: &RuntimeState,
 ) -> SuccessResult {
     let now = runtime_state.env.now();
@@ -206,9 +206,9 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut new_chats: Vec<_> = new_group_chats.into_iter().map(ChatSummary::Group).collect();
+    let mut chats_added: Vec<_> = group_chats_added.into_iter().map(ChatSummary::Group).collect();
 
-    let mut updated_chats: Vec<_> = updated_group_chats.into_iter().map(ChatSummaryUpdates::Group).collect();
+    let mut chats_updated: Vec<_> = group_chats_updated.into_iter().map(ChatSummaryUpdates::Group).collect();
 
     for direct_chat in runtime_state
         .data
@@ -216,7 +216,7 @@ fn finalize(
         .get_all(args.updates_since.map(|s| s.timestamp))
     {
         if direct_chat.date_created > updates_since {
-            new_chats.push(ChatSummary::Direct(DirectChatSummary {
+            chats_added.push(ChatSummary::Direct(DirectChatSummary {
                 chat_id: direct_chat.chat_id,
                 them: direct_chat.them,
                 latest_message: direct_chat.events.latest_message().unwrap(),
@@ -248,7 +248,7 @@ fn finalize(
                 None
             };
 
-            updated_chats.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
+            chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.chat_id,
                 latest_message,
                 latest_event_index,
@@ -259,8 +259,8 @@ fn finalize(
     }
 
     SuccessResult {
-        chats_added: new_chats,
-        chats_updated: updated_chats,
+        chats_added,
+        chats_updated,
         chats_removed: Vec::new(), // TODO
         timestamp: now,
     }
