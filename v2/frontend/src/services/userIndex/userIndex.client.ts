@@ -85,7 +85,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        console.log("we are in current user");
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }
 
