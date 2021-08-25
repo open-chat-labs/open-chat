@@ -28,7 +28,7 @@ export const idlFactory = ({ IDL }) => {
     'PublicGroupAlreadyExists' : IDL.Null,
     'DescriptionTooLong' : CreateGroupFieldTooLongResult,
     'Throttled' : IDL.Null,
-    'NotAuthorised' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : CreateGroupFieldTooLongResult,
     'InternalError' : IDL.Null,
@@ -109,7 +109,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
-    'NotAuthorised' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({

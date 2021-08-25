@@ -21,7 +21,7 @@ pub enum Response {
     PublicGroupAlreadyExists,
     Throttled,
     InternalError,
-    NotAuthorised,
+    NotAuthorized,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

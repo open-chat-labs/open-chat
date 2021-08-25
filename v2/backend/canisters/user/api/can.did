@@ -107,7 +107,7 @@ type CreateGroupResponse =
         PublicGroupAlreadyExists;
         Throttled;
         InternalError;
-        NotAuthorised;
+        NotAuthorized;
     };
 
 type JoinGroupArgs =
@@ -170,7 +170,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
-        NotAuthorised;
+        NotAuthorized;
     };
 
 type EventsByIndexArgs =

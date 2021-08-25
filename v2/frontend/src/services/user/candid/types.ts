@@ -37,7 +37,7 @@ export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
   { 'Throttled' : null } |
-  { 'NotAuthorised' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : CreateGroupSuccessResult } |
   { 'NameTooLong' : CreateGroupFieldTooLongResult } |
   { 'InternalError' : null };
@@ -101,7 +101,7 @@ export interface EventsByIndexArgs {
 export type EventsByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export type EventsResponse = { 'ChatNotFound' : null } |
-  { 'NotAuthorised' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<DirectChatEventWrapper>,

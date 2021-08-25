@@ -74,7 +74,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             })
         }
     } else {
-        Err(NotAuthorised)
+        Err(NotAuthorized)
     }
 }
 
