@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { UserLookup } from "../../domain/user/user";
@@ -27,6 +28,7 @@
 
     export let selectedChatSummary: ChatSummary;
     export let users: UserLookup;
+    export let user: UserSummary | undefined;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -76,7 +78,7 @@
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
-            subtext: getParticipantsString(users, chatSummary, $_("unknownUser"), $_("you")),
+            subtext: getParticipantsString(user!, users, chatSummary, $_("unknownUser"), $_("you")),
         };
     }
 

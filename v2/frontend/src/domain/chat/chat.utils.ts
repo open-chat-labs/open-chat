@@ -1,4 +1,4 @@
-import type { UserLookup } from "../user/user";
+import type { UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
 import type {
     ChatSummary,
@@ -91,6 +91,7 @@ export function compareByDate(a: ChatSummary, b: ChatSummary): number {
 }
 
 export function getParticipantsString(
+    user: UserSummary,
     userLookup: UserLookup,
     { participants }: GroupChatSummary,
     unknownUser: string,
@@ -98,13 +99,12 @@ export function getParticipantsString(
 ): string {
     if (participants.length > 5) {
         const numberOnline = participants.filter((p) => userIsOnline(userLookup, p.userId)).length;
-        return `${participants.length + 1} members (${numberOnline + 1} online)`;
+        return `${participants.length} members (${numberOnline} online)`;
     }
     return participants
         .map((p) => userLookup[p.userId] ?? nullUser(unknownUser))
         .sort(compareUsersOnlineFirst)
-        .map((p) => p.username)
-        .concat([you])
+        .map((p) => (p.userId === user.userId ? you : p.username))
         .join(", ");
 }
 

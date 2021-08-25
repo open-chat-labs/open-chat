@@ -95,6 +95,7 @@ async function getUpdates(
                 ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
                 : { updatesSince: undefined }
         );
+        console.log(chatsResponse);
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),
@@ -443,14 +444,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 new_group: {
                     on: {
-                        // todo - bit worried that there may be a race condition here
-                        GROUP_CHAT_CREATED: {
-                            actions: assign((ctx, ev) => {
-                                return {
-                                    chatSummaries: [ev.data, ...ctx.chatSummaries],
-                                };
-                            }),
-                        },
+                        GROUP_CHAT_CREATED: {},
                     },
                     invoke: {
                         id: "groupMachine",

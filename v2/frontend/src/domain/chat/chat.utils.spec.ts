@@ -1,4 +1,4 @@
-import type { UserLookup } from "../user/user";
+import type { UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
@@ -119,6 +119,7 @@ describe("get participants string for group chat", () => {
             participant("c"),
             participant("d"),
             participant("e"),
+            participant("z"),
         ],
     };
     const withUnknown = {
@@ -129,6 +130,7 @@ describe("get participants string for group chat", () => {
             participant("z"),
             participant("d"),
             participant("e"),
+            participant("z"),
         ],
     };
     const withMoreThanSix = {
@@ -141,6 +143,7 @@ describe("get participants string for group chat", () => {
             participant("e"),
             participant("f"),
             participant("g"),
+            participant("z"),
         ],
     };
     const lookup: UserLookup = {
@@ -151,17 +154,39 @@ describe("get participants string for group chat", () => {
         e: { userId: "e", username: "Mr E", secondsSinceLastOnline: 10 },
         f: { userId: "f", username: "Mr F", secondsSinceLastOnline: 10 },
         g: { userId: "g", username: "Mr G", secondsSinceLastOnline: 10 },
+        z: { userId: "z", username: "Mr Z", secondsSinceLastOnline: 10 },
     };
+
+    const user = lookup.z as UserSummary;
+
     test("up to five participants get listed", () => {
-        const participants = getParticipantsString(lookup, withFewerThanSix, "Unknown User", "You");
+        const participants = getParticipantsString(
+            user,
+            lookup,
+            withFewerThanSix,
+            "Unknown User",
+            "You"
+        );
         expect(participants).toEqual("Mr B, Mr C, Mr D, Mr E, Mr A, You");
     });
     test("with unknown users", () => {
-        const participants = getParticipantsString(lookup, withUnknown, "Unknown User", "You");
+        const participants = getParticipantsString(
+            user,
+            lookup,
+            withUnknown,
+            "Unknown User",
+            "You"
+        );
         expect(participants).toEqual("Mr B, Mr D, Mr E, Mr A, Unknown User, You");
     });
     test("with more than 5 participants", () => {
-        const participants = getParticipantsString(lookup, withMoreThanSix, "Unknown User", "You");
+        const participants = getParticipantsString(
+            user,
+            lookup,
+            withMoreThanSix,
+            "Unknown User",
+            "You"
+        );
         expect(participants).toEqual("8 members (7 online)");
     });
 });
