@@ -1,6 +1,6 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use types::{CanisterCreationStatus, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
+use types::{CanisterCreationStatusInternal, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -37,7 +37,11 @@ impl User {
     pub fn get_user_id(&self) -> Option<UserId> {
         match self {
             User::Unconfirmed(_) => None,
-            User::Confirmed(u) => u.user_id,
+            User::Confirmed(u) => match u.canister_creation_status {
+                CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
+                CanisterCreationStatusInternal::Created(canister_id, _) => Some(canister_id.into()),
+                _ => None,
+            },
             User::Created(u) => Some(u.user_id),
         }
     }
@@ -73,7 +77,7 @@ impl User {
         true
     }
 
-    pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatus) -> bool {
+    pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatusInternal) -> bool {
         match self {
             User::Confirmed(u) => u.canister_creation_status = canister_creation_status,
             _ => return false,
@@ -93,14 +97,6 @@ impl User {
         }
         true
     }
-
-    pub fn set_user_id(&mut self, user_id: UserId) -> bool {
-        match self {
-            User::Confirmed(u) => u.user_id = Some(user_id),
-            _ => return false,
-        }
-        true
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -116,9 +112,8 @@ pub struct UnconfirmedUser {
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
-    pub user_id: Option<UserId>,
     pub username: Option<String>,
-    pub canister_creation_status: CanisterCreationStatus,
+    pub canister_creation_status: CanisterCreationStatusInternal,
     pub date_confirmed: TimestampMillis,
 }
 

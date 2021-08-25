@@ -1,7 +1,8 @@
-use crate::model::user::User;
+use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
+use types::CanisterCreationStatusInternal;
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -34,17 +35,41 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 
     if let Some(user) = runtime_state.data.users.get_by_principal(caller) {
-        if matches!(user, User::Unconfirmed(_)) {
-            UserUnconfirmed
-        } else {
-            let mut user = user.clone();
-            user.set_username(username, now);
-            match runtime_state.data.users.update(user) {
-                UpdateUserResult::Success => Success,
-                UpdateUserResult::PhoneNumberTaken => panic!("PhoneNumberTaken returned when updating username"),
-                UpdateUserResult::UsernameTaken => UsernameTaken,
-                UpdateUserResult::UserNotFound => UserNotFound,
+        let user_to_update = match user {
+            User::Unconfirmed(_) => {
+                return UserUnconfirmed;
             }
+            User::Confirmed(user) => {
+                if let CanisterCreationStatusInternal::Created(canister_id, wasm_version) = &user.canister_creation_status {
+                    let created_user = CreatedUser {
+                        principal: user.principal,
+                        phone_number: user.phone_number.clone(),
+                        user_id: (*canister_id).into(),
+                        username,
+                        date_created: now,
+                        date_updated: now,
+                        last_online: now,
+                        wasm_version: *wasm_version,
+                        upgrade_in_progress: false,
+                    };
+                    User::Created(created_user)
+                } else {
+                    let mut user = user.clone();
+                    user.username = Some(username);
+                    User::Confirmed(user)
+                }
+            }
+            User::Created(user) => {
+                let mut user = user.clone();
+                user.username = username;
+                User::Created(user)
+            }
+        };
+        match runtime_state.data.users.update(user_to_update) {
+            UpdateUserResult::Success => Success,
+            UpdateUserResult::PhoneNumberTaken => panic!("PhoneNumberTaken returned when updating username"),
+            UpdateUserResult::UsernameTaken => UsernameTaken,
+            UpdateUserResult::UserNotFound => UserNotFound,
         }
     } else {
         UserNotFound

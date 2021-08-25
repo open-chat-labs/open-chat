@@ -25,11 +25,11 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             User::Confirmed(u) => {
                 if u.username.is_none() {
                     ConfirmedPendingUsername(ConfirmedPendingUsernameResult {
-                        canister_creation_status: u.canister_creation_status,
+                        canister_creation_status: u.canister_creation_status.into(),
                     })
                 } else {
                     Confirmed(ConfirmedResult {
-                        canister_creation_status: u.canister_creation_status,
+                        canister_creation_status: u.canister_creation_status.into(),
                         username: u.username.as_ref().unwrap().clone(),
                     })
                 }
