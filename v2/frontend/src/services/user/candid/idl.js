@@ -14,7 +14,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
-    'description' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
   });
   const GroupChatId = IDL.Principal;
@@ -276,7 +276,7 @@ export const idlFactory = ({ IDL }) => {
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
-    'description' : IDL.Opt(IDL.Opt(IDL.Text)),
+    'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'latest_read_by_me' : IDL.Opt(MessageIndex),
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -304,7 +304,7 @@ export const idlFactory = ({ IDL }) => {
     'is_public' : IDL.Bool,
     'participants' : IDL.Vec(Participant),
     'name' : IDL.Text,
-    'description' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,

@@ -9,7 +9,7 @@ pub const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
 pub struct Args {
     pub is_public: bool,
     pub name: String,
-    pub description: Option<String>,
+    pub description: String,
     pub history_visible_to_new_joiners: bool,
 }
 

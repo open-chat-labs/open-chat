@@ -30,7 +30,7 @@ export interface ConfirmationCodeSms {
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'name' : string,
-  'description' : [] | [string],
+  'description' : string,
   'history_visible_to_new_joiners' : boolean,
 }
 export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
@@ -138,7 +138,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'participants' : Array<Participant>,
   'name' : string,
-  'description' : [] | [string],
+  'description' : string,
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
@@ -151,7 +151,7 @@ export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
-  'description' : [] | [[] | [string]],
+  'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],

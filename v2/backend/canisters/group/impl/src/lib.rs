@@ -33,7 +33,7 @@ impl RuntimeState {
 pub struct Data {
     pub is_public: bool,
     pub name: String,
-    pub description: Option<String>,
+    pub description: String,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
     pub events: Events,
@@ -50,7 +50,7 @@ impl Data {
     pub fn new(
         is_public: bool,
         name: String,
-        description: Option<String>,
+        description: String,
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,

@@ -41,7 +41,7 @@ pub struct PushMessageArgs {
 }
 
 impl Events {
-    pub fn new(name: String, description: Option<String>, created_by: UserId, now: TimestampMillis) -> Events {
+    pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
         let mut events = Events {
             events: Vec::new(),
             latest_message_event_index: EventIndex::default(),

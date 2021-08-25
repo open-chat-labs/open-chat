@@ -83,7 +83,7 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
     }
 
     if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" }
+        return { kind: "not_authorized" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -98,7 +98,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
-    if ("NotAuthorised" in candid) {
+    if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
@@ -189,7 +189,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             }),
             latestReadByMe: candid.Group.latest_read_by_me,
             name: candid.Group.name,
-            description: optional(candid.Group.description, identity),
+            description: candid.Group.description,
             participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,

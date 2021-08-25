@@ -164,7 +164,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     participantsRemoved: Set<string>;
     lastUpdated: bigint;
     name?: string;
-    description?: string | null;
+    description?: string;
     latestMessage?: EventWrapper<GroupMessage>;
 };
 
@@ -196,7 +196,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
 export type GroupChatSummary = ChatSummaryCommon & {
     kind: "group_chat";
     name: string;
-    description?: string;
+    description: string;
     participants: Participant[];
     public: boolean;
     joined: bigint;
@@ -212,7 +212,7 @@ export type CandidateParticipant = {
 
 export type CandidateGroupChat = {
     name: string;
-    description?: string;
+    description: string;
     historyVisible: boolean;
     isPublic: boolean;
     participants: CandidateParticipant[];

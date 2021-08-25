@@ -20,7 +20,7 @@ pub enum GroupChatEvent {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatCreated {
     pub name: String,
-    pub description: Option<String>,
+    pub description: String,
     pub created_by: UserId,
 }
 
@@ -33,8 +33,8 @@ pub struct GroupNameChanged {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupDescriptionChanged {
-    pub new_description: Option<String>,
-    pub previous_description: Option<String>,
+    pub new_description: String,
+    pub previous_description: String,
     pub changed_by: UserId,
 }
 

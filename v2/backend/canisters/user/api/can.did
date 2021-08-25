@@ -85,7 +85,7 @@ type CreateGroupArgs =
     record {
         is_public: bool;
         name: text;
-        description: opt text;
+        description: text;
         history_visible_to_new_joiners: bool;
     };
 
