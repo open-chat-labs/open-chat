@@ -50,7 +50,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 struct UpdatesFromEvents {
     latest_update: Option<TimestampMillis>,
     name: Option<String>,
-    description: Option<String>,
+    description: Option<Option<String>>,
     participants_added_or_updated: Vec<Participant>,
     participants_removed: Vec<UserId>,
     latest_message: Option<EventWrapper<GroupMessage>>,

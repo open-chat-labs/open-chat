@@ -16,6 +16,7 @@ fn init(args: Args) {
             args.is_public,
             args.name,
             args.description,
+            args.history_visible_to_new_joiners,
             args.created_by_principal,
             args.created_by_user_id,
             env.now(),

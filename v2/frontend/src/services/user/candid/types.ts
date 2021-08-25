@@ -27,13 +27,23 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export interface CreateGroupArgs { 'is_public' : boolean, 'name' : string }
-export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
-  { 'UnknownError' : null } |
-  { 'Success' : { 'canister_id' : CanisterId } } |
-  { 'InvalidName' : null } |
-  { 'NameTooLong' : number } |
-  { 'GroupLimitExceeded' : number };
+export interface CreateGroupArgs {
+  'is_public' : boolean,
+  'name' : string,
+  'description' : [] | [string],
+  'history_visible_to_new_joiners' : boolean,
+}
+export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
+export type CreateGroupResponse = {
+    'DescriptionTooLong' : CreateGroupFieldTooLongResult
+  } |
+  { 'Throttled' : null } |
+  { 'NotAuthorised' : null } |
+  { 'Success' : CreateGroupSuccessResult } |
+  { 'NameTooLong' : CreateGroupFieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'InternalError' : null };
+export interface CreateGroupSuccessResult { 'group_chat_id' : GroupChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
@@ -130,7 +140,7 @@ export interface GroupChatSummary {
   'is_public' : boolean,
   'participants' : Array<Participant>,
   'name' : string,
-  'description' : string,
+  'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
@@ -143,7 +153,7 @@ export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
-  'description' : [] | [string],
+  'description' : [] | [[] | [string]],
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],

@@ -173,7 +173,7 @@ type GroupChatSummary =
         chat_id: GroupChatId;
         last_updated: TimestampMillis;
         name: text;
-        description: text;
+        description: opt text;
         is_public: bool;
         min_visible_message_index: MessageIndex;
         participants: vec Participant;
@@ -188,7 +188,7 @@ type GroupChatSummaryUpdates =
         chat_id: GroupChatId;
         last_updated: TimestampMillis;
         name: opt text;
-        description: opt text;
+        description: opt opt text;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;
