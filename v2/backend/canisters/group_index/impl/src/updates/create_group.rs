@@ -70,7 +70,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
             created_by_principal: args.creator_principal,
             created_by_user_id: user_id,
             mark_active_duration: MARK_ACTIVE_DURATION,
-            wasm_version: canister_wasm.version.clone(),
+            wasm_version: canister_wasm.version,
         };
 
         Ok(CreateCanisterArgs {
