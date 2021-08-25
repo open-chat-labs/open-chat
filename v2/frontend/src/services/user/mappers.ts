@@ -189,7 +189,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             }),
             latestReadByMe: candid.Group.latest_read_by_me,
             name: candid.Group.name,
-            description: optional(candid.Group.description, (d) => d),
+            description: optional(candid.Group.description, identity),
             participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,
