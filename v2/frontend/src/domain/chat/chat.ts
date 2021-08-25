@@ -252,3 +252,39 @@ export type CreateGroupPublicGroupAlreadyExists = {
 export type CreateGroupLimitExceeded = {
     kind: "group_limit_exceeded";
 };
+
+export type AddParticipantsResponse =
+    | AddParticipantsSuccess
+    | AddParticipantsNotAuthorised
+    | AddParticipantsPartialSuccess
+    | AddParticipantsFailed
+    | AddParticipantsNotInGroup;
+
+export type AddParticipantsSuccess = {
+    kind: "add_participants_success";
+};
+
+export type AddParticipantsNotInGroup = {
+    kind: "add_participants_not_in_group";
+};
+
+export type AddParticipantsNotAuthorised = {
+    kind: "add_participants_not_authorised";
+};
+
+export type AddParticipantsPartialSuccess = {
+    kind: "add_participants_partial_success";
+    usersAdded: string[];
+    usersAlreadyInGroup: string[];
+    usersBlockedFromGroup: string[];
+    usersWhoBlockedRequest: string[];
+    errors: string[];
+};
+
+export type AddParticipantsFailed = {
+    kind: "add_participants_failed";
+    usersAlreadyInGroup: string[];
+    usersBlockedFromGroup: string[];
+    usersWhoBlockedRequest: string[];
+    errors: string[];
+};

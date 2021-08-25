@@ -5,6 +5,9 @@ import { toHttpError } from "./httpError";
 export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory, canisterId: string): T {
         const agent = new HttpAgent({ identity: this.identity });
+        if (process.env.NODE_ENV !== "production") {
+            agent.fetchRootKey();
+        }
         return Actor.createActor<T>(factory, {
             agent,
             canisterId,
@@ -18,7 +21,9 @@ export abstract class CandidService {
         let response: From;
         try {
             response = await service;
+            console.log("and are we getting here", response);
         } catch (e) {
+            console.log("Error", e);
             throw toHttpError(e);
         }
         return mapper(response);

@@ -2,6 +2,11 @@
 
 # Pass in the dfx identity name
 # eg './deploy-local openchat'
+./generate-wasm.sh group_canister_impl
+./generate-wasm.sh group_index_canister_impl
+./generate-wasm.sh notifications_canister_impl
+./generate-wasm.sh user_canister_impl
+./generate-wasm.sh user_index_canister_impl
 
 dfx --identity $1 canister --no-wallet create user_index
 dfx --identity $1 canister --no-wallet create group_index

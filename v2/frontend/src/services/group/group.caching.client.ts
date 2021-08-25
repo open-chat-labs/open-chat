@@ -1,4 +1,8 @@
-import type { EventsResponse, GroupChatEvent } from "../../domain/chat/chat";
+import type {
+    AddParticipantsResponse,
+    EventsResponse,
+    GroupChatEvent,
+} from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
@@ -25,5 +29,9 @@ export class CachingGroupClient implements IGroupClient {
             cachedMsgs ??
             this.client.chatEvents(fromIndex, toIndex).then(setCachedMessages(this.db, this.chatId))
         );
+    }
+
+    addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
+        return this.client.addParticipants(userIds);
     }
 }

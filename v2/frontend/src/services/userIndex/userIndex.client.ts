@@ -26,16 +26,26 @@ import {
     createCanisterResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
+import { UserIndexClientMock } from "./userIndex.client.mock";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
 
-    constructor(identity: Identity) {
+    private constructor(identity: Identity) {
         super(identity);
+
         this.userService = this.createServiceClient<UserIndexService>(
             idlFactory,
-            "user_index_canister_id" // todo - where does this come from - probably an env var
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            "process.env.USER_INDEX_CANISTER"
         );
+    }
+
+    static create(identity: Identity): IUserIndexClient {
+        if (process.env.MOCK_SERVICES) {
+            return new UserIndexClientMock();
+        }
+        return new UserIndexClient(identity);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {
@@ -75,6 +85,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
+        console.log("we are in current user");
         return this.handleResponse(this.userService.current_user({}), currentUserResponse);
     }
 

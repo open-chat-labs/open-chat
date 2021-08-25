@@ -20,13 +20,25 @@ import {
 import type { IUserClient } from "./user.client.interface";
 import type { ChunkResponse } from "../../domain/data/data";
 import { mergeChatUpdates } from "../../domain/chat/chat.utils";
+import type { Database } from "../../utils/caching";
+import { UserClientMock } from "./user.client.mock";
+import { CachingUserClient } from "./user.caching.client";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
 
-    constructor(identity: Identity, userId: Principal) {
+    constructor(identity: Identity, userId: string) {
         super(identity);
-        this.userService = this.createServiceClient<UserService>(idlFactory, userId.toString());
+        this.userService = this.createServiceClient<UserService>(idlFactory, userId);
+    }
+
+    static create(userId: string, identity: Identity, db?: Database): IUserClient {
+        if (process.env.MOCK_SERVICES) {
+            return db ? new CachingUserClient(db, new UserClientMock()) : new UserClientMock();
+        }
+        return db
+            ? new CachingUserClient(db, new UserClient(identity, userId))
+            : new UserClient(identity, userId);
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
