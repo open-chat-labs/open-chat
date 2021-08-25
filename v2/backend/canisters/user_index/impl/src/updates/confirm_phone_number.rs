@@ -128,9 +128,8 @@ mod tests {
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            user_id: None,
             username: None,
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             date_confirmed: env.now,
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
