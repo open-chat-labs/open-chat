@@ -24,6 +24,7 @@ enum Mode {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    env_logger::init();
     let func = handler_fn(my_handler);
     lambda_runtime::run(func).await?;
     Ok(())
