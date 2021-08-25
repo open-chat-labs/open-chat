@@ -54,6 +54,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         is_public: false,
         name: "TEST_NAME1".to_string(),
         description: "TEST_DESCRIPTION1".to_string(),
+        history_visible_to_new_joiners: false,
     };
     let group_chat_id1 = create_group(&user1_agent, user1_id, &create_group_args1, vec![user2_id, user3_id]).await;
 
@@ -61,6 +62,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         is_public: false,
         name: "TEST_NAME2".to_string(),
         description: "TEST_DESCRIPTION2".to_string(),
+        history_visible_to_new_joiners: false,
     };
     let group_chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
 
@@ -102,8 +104,8 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let updates_response1 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args1).await;
 
     if let user_canister::updates::Response::Success(r) = updates_response1 {
-        assert!(r.updated_chats.is_empty());
-        assert_eq!(r.new_chats.len(), 3);
+        assert!(r.chats_updated.is_empty());
+        assert_eq!(r.chats_added.len(), 3);
 
         let updates_args2 = user_canister::updates::Args {
             updates_since: Some(user_canister::updates::UpdatesSince {
@@ -123,8 +125,8 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         let updates_response2 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args2).await;
 
         if let user_canister::updates::Response::Success(r) = updates_response2 {
-            assert_eq!(r.updated_chats.len(), 2, "{:?}", r);
-            assert!(r.new_chats.is_empty(), "{:?}", r);
+            assert_eq!(r.chats_updated.len(), 2, "{:?}", r);
+            assert!(r.chats_added.is_empty(), "{:?}", r);
         } else {
             panic!("Updates returned an error: {:?}", updates_response2);
         }
