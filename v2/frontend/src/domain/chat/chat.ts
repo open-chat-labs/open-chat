@@ -196,7 +196,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
 export type GroupChatSummary = ChatSummaryCommon & {
     kind: "group_chat";
     name: string;
-    description: string;
+    description?: string;
     participants: Participant[];
     public: boolean;
     joined: bigint;
