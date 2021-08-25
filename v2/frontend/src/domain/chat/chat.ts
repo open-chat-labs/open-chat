@@ -212,7 +212,7 @@ export type CandidateParticipant = {
 
 export type CandidateGroupChat = {
     name: string;
-    description: string;
+    description?: string;
     historyVisible: boolean;
     isPublic: boolean;
     participants: CandidateParticipant[];
