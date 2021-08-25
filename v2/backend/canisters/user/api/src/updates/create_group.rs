@@ -18,7 +18,7 @@ pub enum Response {
     Success(SuccessResult),
     NameTooLong(FieldTooLongResult),
     DescriptionTooLong(FieldTooLongResult),
-    NameTaken,
+    PublicGroupAlreadyExists,
     Throttled,
     InternalError,
     NotAuthorised,

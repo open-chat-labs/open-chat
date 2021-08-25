@@ -55,7 +55,7 @@ export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
     if ("Success" in candid) {
-        return { kind: "success", canisterId: candid.Success.canister_id.toString() };
+        return { kind: "success", canisterId: candid.Success.group_chat_id.toString() };
     }
 
     if ("PublicGroupAlreadyExists" in candid) {

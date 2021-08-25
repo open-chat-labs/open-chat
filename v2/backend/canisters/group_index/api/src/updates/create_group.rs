@@ -14,7 +14,7 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NameTaken,
+    PublicGroupAlreadyExists,
     CyclesBalanceTooLow,
     InternalError,
 }

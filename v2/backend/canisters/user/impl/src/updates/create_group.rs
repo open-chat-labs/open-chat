@@ -22,7 +22,7 @@ async fn create_group(args: Args) -> Response {
                     group_chat_id: r.group_id,
                 })
             }
-            create_group::Response::NameTaken => NameTaken,
+            create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
             create_group::Response::CyclesBalanceTooLow => InternalError,
             create_group::Response::InternalError => InternalError,
         },

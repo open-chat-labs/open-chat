@@ -104,7 +104,7 @@ type CreateGroupResponse =
         Success: CreateGroupSuccessResult;
         NameTooLong: CreateGroupFieldTooLongResult;
         DescriptionTooLong: CreateGroupFieldTooLongResult;
-        NameTaken;
+        PublicGroupAlreadyExists;
         Throttled;
         InternalError;
         NotAuthorised;
