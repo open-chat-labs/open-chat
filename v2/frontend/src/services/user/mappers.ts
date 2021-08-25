@@ -70,6 +70,10 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "name_too_long" };
     }
 
+    if ("DescriptionTooLong" in candid) {
+        return { kind: "description_too_long" };
+    }
+
     if ("GroupLimitExceeded" in candid) {
         return { kind: "group_limit_exceeded" };
     }

@@ -25,12 +25,12 @@ export const idlFactory = ({ IDL }) => {
     'group_chat_id' : GroupChatId,
   });
   const CreateGroupResponse = IDL.Variant({
+    'PublicGroupAlreadyExists' : IDL.Null,
     'DescriptionTooLong' : CreateGroupFieldTooLongResult,
     'Throttled' : IDL.Null,
     'NotAuthorised' : IDL.Null,
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : CreateGroupFieldTooLongResult,
-    'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;

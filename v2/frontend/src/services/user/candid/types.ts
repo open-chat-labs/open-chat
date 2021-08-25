@@ -34,14 +34,12 @@ export interface CreateGroupArgs {
   'history_visible_to_new_joiners' : boolean,
 }
 export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
-export type CreateGroupResponse = {
-    'DescriptionTooLong' : CreateGroupFieldTooLongResult
-  } |
+export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
+  { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
   { 'Throttled' : null } |
   { 'NotAuthorised' : null } |
   { 'Success' : CreateGroupSuccessResult } |
   { 'NameTooLong' : CreateGroupFieldTooLongResult } |
-  { 'NameTaken' : null } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'group_chat_id' : GroupChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }

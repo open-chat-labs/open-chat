@@ -164,7 +164,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     participantsRemoved: Set<string>;
     lastUpdated: bigint;
     name?: string;
-    description?: string;
+    description?: string | null;
     latestMessage?: EventWrapper<GroupMessage>;
 };
 
@@ -225,6 +225,7 @@ export type CreateGroupResponse =
     | CreateGroupUnknownError
     | CreateGroupInvalidName
     | CreateGroupNameTooLong
+    | CreateGroupDescriptionTooLong
     | CreateGroupPublicGroupAlreadyExists
     | CreateGroupLimitExceeded;
 
@@ -243,6 +244,10 @@ export type CreateGroupInvalidName = {
 
 export type CreateGroupNameTooLong = {
     kind: "name_too_long";
+};
+
+export type CreateGroupDescriptionTooLong = {
+    kind: "description_too_long";
 };
 
 export type CreateGroupPublicGroupAlreadyExists = {
