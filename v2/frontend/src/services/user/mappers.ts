@@ -74,12 +74,16 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "description_too_long" };
     }
 
-    if ("GroupLimitExceeded" in candid) {
-        return { kind: "group_limit_exceeded" };
+    if ("Throttled" in candid) {
+        return { kind: "throttled" };
     }
 
-    if ("UnknownError" in candid) {
-        return { kind: "unknown_error" };
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorized" }
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
