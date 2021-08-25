@@ -16,6 +16,7 @@ notifications_canister = { path = "../../canisters/notifications/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
+tokio = { version = "1.10.0", features = ["macros", "time"] }
 types = { path = "../../libraries/types" }
 utils = { path = "../../libraries/utils" }
 web-push = { git = "https://github.com/pimeys/rust-web-push", rev = "85870ec55badfb95d74d1c7bd354a0deb5193481" }

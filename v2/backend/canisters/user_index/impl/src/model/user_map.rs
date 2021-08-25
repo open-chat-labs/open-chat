@@ -172,7 +172,7 @@ mod tests {
     use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
     use std::str::FromStr;
-    use types::{CanisterCreationStatus, Version};
+    use types::{CanisterCreationStatusInternal, Version};
 
     #[test]
     fn add_with_no_clashes() {
@@ -188,8 +188,8 @@ mod tests {
         let username2 = "2".to_string();
         let username3 = "3".to_string();
 
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
+        let user_id2: UserId = Principal::from_slice(&[2, 2]).into();
+        let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal: principal1,
@@ -203,9 +203,8 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
             phone_number: phone_number2.clone(),
-            user_id: Some(user_id2),
             username: Some(username2.clone()),
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2.into())),
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());
@@ -272,7 +271,7 @@ mod tests {
         let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
         let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
 
-        let user_id = Principal::from_slice(&[1, 1]).into();
+        let user_id: UserId = Principal::from_slice(&[1, 1]).into();
 
         let unconfirmed = User::Unconfirmed(UnconfirmedUser {
             principal,
@@ -286,9 +285,8 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal,
             phone_number: phone_number2.clone(),
-            user_id: Some(user_id),
             username: Some("2".to_string()),
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id.into())),
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::AlreadyExists));
@@ -317,9 +315,8 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
             phone_number,
-            user_id: Some(user_id),
             username: Some("2".to_string()),
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id).into()),
             date_confirmed: 2,
         });
         assert!(matches!(user_map.add(confirmed), AddUserResult::PhoneNumberTaken));
@@ -343,9 +340,8 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal1,
             phone_number: phone_number1,
-            user_id: Some(user_id1),
             username: Some(username.clone()),
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
             date_confirmed: 2,
         });
         user_map.add(confirmed);
@@ -526,9 +522,8 @@ mod tests {
         let confirmed = User::Confirmed(ConfirmedUser {
             principal: principal2,
             phone_number: phone_number2.clone(),
-            user_id: Some(user_id2),
             username: Some(username2.clone()),
-            canister_creation_status: CanisterCreationStatus::Pending,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id2).into()),
             date_confirmed: 2,
         });
         user_map.add(confirmed.clone());

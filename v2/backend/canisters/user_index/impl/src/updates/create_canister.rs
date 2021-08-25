@@ -3,7 +3,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use ic_cdk_macros::update;
-use types::{CanisterCreationStatus, CanisterId, CanisterWasm, Version};
+use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
 use utils::canisters;
@@ -64,17 +64,16 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
             User::Unconfirmed(_) => UserUnconfirmed,
             User::Created(_) => UserAlreadyCreated,
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
-                CanisterCreationStatus::Pending => {
+                CanisterCreationStatusInternal::Pending(canister_id) => {
                     let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
                     let current_cycles_balance = ic_cdk::api::canister_balance();
                     if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
                         return Err(CyclesBalanceTooLow);
                     }
 
-                    let canister_id = confirmed_user.user_id.map(|u| u.into());
                     let user_principal = confirmed_user.principal;
                     let mut user = user.clone();
-                    user.set_canister_creation_status(CanisterCreationStatus::InProgress);
+                    user.set_canister_creation_status(CanisterCreationStatusInternal::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
                             let canister_wasm = runtime_state.data.user_canister_wasm.clone();
@@ -82,7 +81,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                                 owner: user_principal,
                                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                                 notification_canister_ids: Vec::new(),
-                                wasm_version: canister_wasm.version.clone(),
+                                wasm_version: canister_wasm.version,
                             };
                             return Ok(InitOk {
                                 caller,
@@ -94,8 +93,8 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                         _ => InternalError("Failed to update user".to_string()),
                     }
                 }
-                CanisterCreationStatus::InProgress => CreationInProgress,
-                CanisterCreationStatus::Created => UserAlreadyCreated,
+                CanisterCreationStatusInternal::InProgress => CreationInProgress,
+                CanisterCreationStatusInternal::Created(_, _) => UserAlreadyCreated,
             },
         };
     } else {
@@ -109,7 +108,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
     let now = runtime_state.env.now();
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
-            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status {
+            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status.into() {
                 let user_to_update = match &confirmed_user.username {
                     Some(username) => {
                         let created_user = CreatedUser {
@@ -127,8 +126,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
                     }
                     None => {
                         let mut user = user.clone();
-                        user.set_canister_creation_status(CanisterCreationStatus::Created);
-                        user.set_user_id(canister_id.into());
+                        user.set_canister_creation_status(CanisterCreationStatusInternal::Created(canister_id, wasm_version));
                         user
                     }
                 };
@@ -141,12 +139,12 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, run
 fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
-            if let CanisterCreationStatus::InProgress = confirmed_user.canister_creation_status {
+            if matches!(
+                confirmed_user.canister_creation_status,
+                CanisterCreationStatusInternal::InProgress
+            ) {
                 let mut user = user.clone();
-                user.set_canister_creation_status(CanisterCreationStatus::Pending);
-                if let Some(canister_id) = canister_id {
-                    user.set_user_id(canister_id.into());
-                }
+                user.set_canister_creation_status(CanisterCreationStatusInternal::Pending(canister_id));
                 runtime_state.data.users.update(user);
             }
         }

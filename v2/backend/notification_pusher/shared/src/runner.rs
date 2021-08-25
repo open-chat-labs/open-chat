@@ -1,9 +1,9 @@
+use crate::actions::{prune_notifications, push_notifications};
+use crate::error::Error;
+use crate::ic_agent::IcAgentConfig;
+use crate::store::Store;
 use candid::Principal;
-use log::error;
-use shared::actions::{prune_notifications, push_notifications};
-use shared::error::Error;
-use shared::ic_agent::IcAgentConfig;
-use shared::store::Store;
+use log::{error, info};
 use tokio::time;
 
 pub async fn run(
@@ -12,6 +12,8 @@ pub async fn run(
     store: &mut Box<dyn Store + Send + Sync>,
     vapid_private_pem: &str,
 ) -> Result<(), Error> {
+    info!("Starting runner");
+
     let mut interval = time::interval(time::Duration::from_secs(2));
     loop {
         for _ in 0..30 {

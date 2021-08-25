@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::{Blob, Client};
 use candid::Principal;
+use log::info;
 use shared::error::Error;
 use shared::store::Store;
 use std::str::FromStr;
@@ -15,6 +16,8 @@ impl DynamoDbClient {
         let config = aws_sdk_dynamodb::Config::builder().build();
 
         let client = Client::from_conf(config);
+
+        info!("DynamoDbClient created");
 
         DynamoDbClient { client }
     }
