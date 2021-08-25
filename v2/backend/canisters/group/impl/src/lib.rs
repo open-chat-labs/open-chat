@@ -3,7 +3,7 @@ use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
 use std::cell::RefCell;
-use types::{CanisterId, Milliseconds, TimestampMillis, Updatable, UserId, Version};
+use types::{CanisterId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::env::Environment;
 
 mod lifecycle;
@@ -32,8 +32,9 @@ impl RuntimeState {
 
 pub struct Data {
     pub is_public: bool,
-    pub name: Updatable<String>,
-    pub description: Updatable<String>,
+    pub name: String,
+    pub description: String,
+    pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
     pub events: Events,
     pub date_created: TimestampMillis,
@@ -50,6 +51,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
+        history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
         now: TimestampMillis,
@@ -62,8 +64,9 @@ impl Data {
 
         Data {
             is_public,
-            name: Updatable::new(name, now),
-            description: Updatable::new(description, now),
+            name,
+            description,
+            history_visible_to_new_joiners,
             participants,
             events,
             date_created: now,

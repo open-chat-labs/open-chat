@@ -60,13 +60,15 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
     let user_id = runtime_state.env.caller().into();
 
     if args.is_public && !runtime_state.data.public_groups.reserve_name(args.name.clone(), now) {
-        Err(NameTaken)
+        Err(PublicGroupAlreadyExists)
     } else {
         let canister_wasm = runtime_state.data.group_canister_wasm.clone();
         let init_canister_args = group_canister::init::Args {
             is_public: args.is_public,
             name: args.name.clone(),
             description: args.description.clone(),
+            // History is always visible on public groups
+            history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
             created_by_principal: args.creator_principal,
             created_by_user_id: user_id,
             mark_active_duration: MARK_ACTIVE_DURATION,

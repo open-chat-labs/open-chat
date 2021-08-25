@@ -222,19 +222,21 @@ export type CandidateGroupChat = {
 // todo - there are all sorts of error conditions here that we need to deal with but - later
 export type CreateGroupResponse =
     | CreateGroupSuccess
-    | CreateGroupUnknownError
+    | CreateGroupInternalError
     | CreateGroupInvalidName
     | CreateGroupNameTooLong
+    | CreateGroupDescriptionTooLong
     | CreateGroupPublicGroupAlreadyExists
-    | CreateGroupLimitExceeded;
+    | CreateGroupThrottled
+    | CreateGroupNotAuthorized;
 
 export type CreateGroupSuccess = {
     kind: "success";
     canisterId: string;
 };
 
-export type CreateGroupUnknownError = {
-    kind: "unknown_error";
+export type CreateGroupInternalError = {
+    kind: "internal_error";
 };
 
 export type CreateGroupInvalidName = {
@@ -245,10 +247,18 @@ export type CreateGroupNameTooLong = {
     kind: "name_too_long";
 };
 
+export type CreateGroupDescriptionTooLong = {
+    kind: "description_too_long";
+};
+
 export type CreateGroupPublicGroupAlreadyExists = {
     kind: "public_group_already_exists";
 };
 
-export type CreateGroupLimitExceeded = {
-    kind: "group_limit_exceeded";
+export type CreateGroupThrottled = {
+    kind: "throttled";
+};
+
+export type CreateGroupNotAuthorized = {
+    kind: "not_authorized";
 };

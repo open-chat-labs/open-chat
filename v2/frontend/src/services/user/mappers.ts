@@ -55,7 +55,7 @@ export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
     if ("Success" in candid) {
-        return { kind: "success", canisterId: candid.Success.canister_id.toString() };
+        return { kind: "success", canisterId: candid.Success.group_chat_id.toString() };
     }
 
     if ("PublicGroupAlreadyExists" in candid) {
@@ -70,12 +70,20 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "name_too_long" };
     }
 
-    if ("GroupLimitExceeded" in candid) {
-        return { kind: "group_limit_exceeded" };
+    if ("DescriptionTooLong" in candid) {
+        return { kind: "description_too_long" };
     }
 
-    if ("UnknownError" in candid) {
-        return { kind: "unknown_error" };
+    if ("Throttled" in candid) {
+        return { kind: "throttled" };
+    }
+
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorized" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -90,7 +98,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
-    if ("NotAuthorised" in candid) {
+    if ("NotAuthorized" in candid) {
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

@@ -22,7 +22,7 @@ pub struct GroupChatUpdatesSince {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorised,
+    NotAuthorized,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

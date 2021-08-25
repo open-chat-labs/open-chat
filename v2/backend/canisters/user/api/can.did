@@ -83,20 +83,31 @@ type PutChunkResponse =
 
 type CreateGroupArgs =
     record {
-        name: text;
         is_public: bool;
+        name: text;
+        description: text;
+        history_visible_to_new_joiners: bool;
+    };
+
+type CreateGroupFieldTooLongResult =
+    record {
+        group_chat_id: GroupChatId;
+    };
+
+type CreateGroupSuccessResult =
+    record {
+        group_chat_id: GroupChatId;
     };
 
 type CreateGroupResponse =
     variant {
-        Success: record {
-            canister_id: CanisterId;
-        };
+        Success: CreateGroupSuccessResult;
+        NameTooLong: CreateGroupFieldTooLongResult;
+        DescriptionTooLong: CreateGroupFieldTooLongResult;
         PublicGroupAlreadyExists;
-        GroupLimitExceeded: nat16;
-        InvalidName;
-        NameTooLong: nat16;
-        UnknownError;
+        Throttled;
+        InternalError;
+        NotAuthorized;
     };
 
 type JoinGroupArgs =
@@ -159,7 +170,7 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
-        NotAuthorised;
+        NotAuthorized;
     };
 
 type EventsByIndexArgs =

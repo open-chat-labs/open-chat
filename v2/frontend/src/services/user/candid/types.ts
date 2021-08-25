@@ -27,13 +27,21 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export interface CreateGroupArgs { 'is_public' : boolean, 'name' : string }
+export interface CreateGroupArgs {
+  'is_public' : boolean,
+  'name' : string,
+  'description' : string,
+  'history_visible_to_new_joiners' : boolean,
+}
+export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
-  { 'UnknownError' : null } |
-  { 'Success' : { 'canister_id' : CanisterId } } |
-  { 'InvalidName' : null } |
-  { 'NameTooLong' : number } |
-  { 'GroupLimitExceeded' : number };
+  { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
+  { 'Throttled' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : CreateGroupSuccessResult } |
+  { 'NameTooLong' : CreateGroupFieldTooLongResult } |
+  { 'InternalError' : null };
+export interface CreateGroupSuccessResult { 'group_chat_id' : GroupChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
@@ -93,7 +101,7 @@ export interface EventsByIndexArgs {
 export type EventsByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export type EventsResponse = { 'ChatNotFound' : null } |
-  { 'NotAuthorised' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<DirectChatEventWrapper>,

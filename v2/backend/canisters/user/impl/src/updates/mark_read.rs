@@ -31,7 +31,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             ChatNotFound
         }
     } else {
-        NotAuthorised
+        NotAuthorized
     }
 }
 

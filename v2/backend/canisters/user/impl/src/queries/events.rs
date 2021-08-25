@@ -20,6 +20,6 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             ChatNotFound
         }
     } else {
-        NotAuthorised
+        NotAuthorized
     }
 }
