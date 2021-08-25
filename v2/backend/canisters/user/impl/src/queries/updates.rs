@@ -259,8 +259,9 @@ fn finalize(
     }
 
     SuccessResult {
-        new_chats,
-        updated_chats,
+        chats_added: new_chats,
+        chats_updated: updated_chats,
+        chats_removed: Vec::new(), // TODO
         timestamp: now,
     }
 }
