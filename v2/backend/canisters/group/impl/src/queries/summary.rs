@@ -18,8 +18,8 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
         let summary = GroupChatSummary {
             chat_id: runtime_state.env.canister_id().into(),
             last_updated,
-            name: runtime_state.data.name.value().clone(),
-            description: runtime_state.data.description.value().clone(),
+            name: runtime_state.data.name.clone(),
+            description: runtime_state.data.description.clone(),
             is_public: runtime_state.data.is_public,
             min_visible_message_index: participant.min_visible_message_id,
             participants: runtime_state.data.participants.iter().map(|p| p.into()).collect(),

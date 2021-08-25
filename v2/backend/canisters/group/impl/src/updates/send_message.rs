@@ -35,7 +35,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
             let notification = GroupMessageNotification {
                 chat_id: runtime_state.env.canister_id().into(),
-                group_name: runtime_state.data.name.value().clone(),
+                group_name: runtime_state.data.name.clone(),
                 sender: participant.user_id,
                 sender_name: args.sender_name,
                 message,

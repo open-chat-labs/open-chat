@@ -22,7 +22,7 @@ async fn create_group(args: Args) -> Response {
                     group_chat_id: r.group_id,
                 })
             }
-            create_group::Response::NameTaken => NameTaken,
+            create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
             create_group::Response::CyclesBalanceTooLow => InternalError,
             create_group::Response::InternalError => InternalError,
         },
@@ -47,12 +47,24 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
     if runtime_state.is_caller_owner() {
         if is_throttled() {
             Err(Throttled)
+        } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
+            Err(NameTooLong(FieldTooLongResult {
+                length_provided: args.name.len() as u32,
+                max_length: MAX_GROUP_NAME_LENGTH,
+            }))
         } else {
+            if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
+                return Err(DescriptionTooLong(FieldTooLongResult {
+                    length_provided: args.description.len() as u32,
+                    max_length: MAX_GROUP_DESCRIPTION_LENGTH,
+                }));
+            }
             let create_group_args = create_group::Args {
                 is_public: args.is_public,
                 creator_principal: runtime_state.env.caller(),
                 name: args.name,
                 description: args.description,
+                history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             };
             Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
@@ -60,7 +72,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             })
         }
     } else {
-        Err(NotAuthorised)
+        Err(NotAuthorized)
     }
 }
 

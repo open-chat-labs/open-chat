@@ -14,14 +14,24 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
+    'description' : IDL.Text,
+    'history_visible_to_new_joiners' : IDL.Bool,
+  });
+  const GroupChatId = IDL.Principal;
+  const CreateGroupFieldTooLongResult = IDL.Record({
+    'group_chat_id' : GroupChatId,
+  });
+  const CreateGroupSuccessResult = IDL.Record({
+    'group_chat_id' : GroupChatId,
   });
   const CreateGroupResponse = IDL.Variant({
     'PublicGroupAlreadyExists' : IDL.Null,
-    'UnknownError' : IDL.Null,
-    'Success' : IDL.Record({ 'canister_id' : CanisterId }),
-    'InvalidName' : IDL.Null,
-    'NameTooLong' : IDL.Nat16,
-    'GroupLimitExceeded' : IDL.Nat16,
+    'DescriptionTooLong' : CreateGroupFieldTooLongResult,
+    'Throttled' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : CreateGroupSuccessResult,
+    'NameTooLong' : CreateGroupFieldTooLongResult,
+    'InternalError' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
@@ -61,7 +71,6 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
   });
   const MessageId = IDL.Nat;
-  const GroupChatId = IDL.Principal;
   const PrivateReplyContext = IDL.Record({
     'chat_id' : GroupChatId,
     'event_index' : EventIndex,
@@ -100,7 +109,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
-    'NotAuthorised' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({

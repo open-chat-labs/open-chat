@@ -46,6 +46,8 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.create_group({
                 is_public: group.isPublic,
                 name: group.name,
+                description: group.description,
+                history_visible_to_new_joiners: group.historyVisible,
             }),
             createGroupResponse
         );
