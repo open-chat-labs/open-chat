@@ -216,7 +216,7 @@ export function mergeChatUpdates(
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
         removed: updateResponse.chatsRemoved,
-    });
+    }).sort(compareChats);
 }
 
 function mergeParticipants(_: Participant | undefined, updated: Participant) {
@@ -316,7 +316,7 @@ function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
 }
 
 export function compareChats(a: ChatSummary, b: ChatSummary): number {
-    return latestActivity(a) - latestActivity(b);
+    return latestActivity(b) - latestActivity(a);
 }
 
 function latestActivity(chat: ChatSummary): number {

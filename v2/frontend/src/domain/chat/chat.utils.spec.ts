@@ -111,8 +111,8 @@ describe("extract userids from chat summaries", () => {
 });
 
 describe("get participants string for group chat", () => {
-    const withFewerThanSix = ["a", "b", "c", "d", "e", "z"];
-    const withUnknown = ["a", "b", "x", "d", "e", "z"];
+    const withFewerThanSix = ["a", "b", "c", "d", "z"];
+    const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
     const lookup: UserLookup = {
         a: { userId: "a", username: "Mr A", secondsSinceLastOnline: 200 },
@@ -135,7 +135,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr C, Mr D, Mr E, Mr A, You");
+        expect(participants).toEqual("Mr B, Mr C, Mr D, You, Mr A");
     });
     test("with unknown users", () => {
         const participants = getParticipantsString(
@@ -145,7 +145,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("Mr B, Mr D, Mr E, Mr A, Unknown User, You");
+        expect(participants).toEqual("Mr B, Mr D, You, Mr A, Unknown User");
     });
     test("with more than 5 participants", () => {
         const participants = getParticipantsString(
@@ -155,7 +155,7 @@ describe("get participants string for group chat", () => {
             "Unknown User",
             "You"
         );
-        expect(participants).toEqual("8 members (7 online)");
+        expect(participants).toEqual("8 members (8 online)");
     });
 });
 
