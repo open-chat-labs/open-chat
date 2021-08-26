@@ -3,15 +3,15 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use types::{CanisterId, DirectMessageNotification, UserId};
-use user_canister::handle_message_received::{Response::*, *};
+use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
 #[update]
-fn handle_message_received(args: Args) -> Response {
-    RUNTIME_STATE.with(|state| handle_message_received_impl(args, state.borrow_mut().as_mut().unwrap()))
+fn c2c_send_message(args: Args) -> Response {
+    RUNTIME_STATE.with(|state| c2c_send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn handle_message_received_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     // TODO validate that this request came from an OpenChat canister
     let sender_user_id = runtime_state.env.caller().into();
 

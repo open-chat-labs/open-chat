@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::mark_active;
+use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
 mod add_participants;
@@ -28,10 +28,10 @@ fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
     }
 
     async fn call_group_index_canister(canister_id: CanisterId, mark_active_duration: Milliseconds) {
-        let args = mark_active::Args {
+        let args = c2c_mark_active::Args {
             duration: mark_active_duration,
         };
-        let response = group_index_canister_client::mark_active(canister_id, &args).await;
+        let response = group_index_canister_client::c2c_mark_active(canister_id, &args).await;
         RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
     }
 

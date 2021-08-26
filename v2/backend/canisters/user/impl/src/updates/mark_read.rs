@@ -2,7 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use std::cmp::min;
 use types::{CanisterId, DirectChatId, MessageIndex};
-use user_canister::handle_mark_read;
+use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
 
 #[update]
@@ -36,6 +36,6 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 }
 
 async fn mark_read_on_recipients_canister(canister_id: CanisterId, up_to_message_index: MessageIndex) {
-    let args = handle_mark_read::Args { up_to_message_index };
-    let _ = user_canister_client::handle_mark_read(canister_id, &args).await;
+    let args = c2c_mark_read::Args { up_to_message_index };
+    let _ = user_canister_client::c2c_mark_read(canister_id, &args).await;
 }

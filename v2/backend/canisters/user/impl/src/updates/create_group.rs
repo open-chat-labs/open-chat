@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_index_canister::create_group;
+use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use log::error;
 use types::{CanisterId, GroupChatId};
@@ -12,19 +12,22 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match group_index_canister_client::create_group(prepare_result.group_index_canister_id, &prepare_result.create_group_args)
-        .await
+    match group_index_canister_client::c2c_create_group(
+        prepare_result.group_index_canister_id,
+        &prepare_result.create_group_args,
+    )
+    .await
     {
         Ok(response) => match response {
-            create_group::Response::Success(r) => {
+            c2c_create_group::Response::Success(r) => {
                 RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
                 Success(SuccessResult {
                     group_chat_id: r.group_id,
                 })
             }
-            create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
-            create_group::Response::CyclesBalanceTooLow => InternalError,
-            create_group::Response::InternalError => InternalError,
+            c2c_create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
+            c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
+            c2c_create_group::Response::InternalError => InternalError,
         },
         Err(error) => {
             error!("Error calling create group: {:?}", error);
@@ -35,7 +38,7 @@ async fn create_group(args: Args) -> Response {
 
 struct PrepareResult {
     group_index_canister_id: CanisterId,
-    create_group_args: create_group::Args,
+    create_group_args: c2c_create_group::Args,
 }
 
 fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -58,7 +61,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
                 max_length: MAX_GROUP_DESCRIPTION_LENGTH,
             }))
         } else {
-            let create_group_args = create_group::Args {
+            let create_group_args = c2c_create_group::Args {
                 is_public: args.is_public,
                 creator_principal: runtime_state.env.caller(),
                 name: args.name,
