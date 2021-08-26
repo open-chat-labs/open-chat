@@ -2,7 +2,7 @@ use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use types::CanisterId;
-use user_canister::handle_message_received;
+use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
 #[update]
@@ -42,8 +42,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-fn build_c2c_args(args: Args) -> (CanisterId, handle_message_received::Args) {
-    let c2c_args = handle_message_received::Args {
+fn build_c2c_args(args: Args) -> (CanisterId, c2c_send_message::Args) {
+    let c2c_args = c2c_send_message::Args {
         message_id: args.message_id,
         sender_name: args.sender_name,
         content: args.content,
@@ -53,6 +53,6 @@ fn build_c2c_args(args: Args) -> (CanisterId, handle_message_received::Args) {
     (args.recipient.into(), c2c_args)
 }
 
-async fn send_to_recipients_canister(canister_id: CanisterId, args: handle_message_received::Args) {
-    let _ = user_canister_client::handle_message_received(canister_id, &args).await;
+async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_message::Args) {
+    let _ = user_canister_client::c2c_send_message(canister_id, &args).await;
 }

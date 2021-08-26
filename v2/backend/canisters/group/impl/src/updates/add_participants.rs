@@ -6,7 +6,7 @@ use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
 use types::{EventIndex, ParticipantsAdded, UserId};
-use user_canister::handle_add_to_group_requested;
+use user_canister::c2c_try_add_to_group;
 
 #[update]
 async fn add_participants(args: Args) -> Response {
@@ -19,14 +19,14 @@ async fn add_participants(args: Args) -> Response {
     let mut users_who_blocked_request = Vec::new();
     let mut errors = Vec::new();
     if !prepare_result.users_to_add.is_empty() {
-        let c2c_args = handle_add_to_group_requested::Args {
+        let c2c_args = c2c_try_add_to_group::Args {
             added_by: prepare_result.added_by,
         };
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
             .cloned()
-            .map(|u| user_canister_client::handle_add_to_group_requested(u.into(), &c2c_args))
+            .map(|u| user_canister_client::c2c_try_add_to_group(u.into(), &c2c_args))
             .collect();
 
         let responses = futures::future::join_all(futures).await;
@@ -35,8 +35,8 @@ async fn add_participants(args: Args) -> Response {
             let user_id = *prepare_result.users_to_add.get(index).unwrap();
             match response {
                 Ok(result) => match result {
-                    handle_add_to_group_requested::Response::Success(r) => users_added.push((user_id, r.principal)),
-                    handle_add_to_group_requested::Response::Blocked => users_who_blocked_request.push(user_id),
+                    c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
+                    c2c_try_add_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
                 },
                 Err(error) => {
                     error!("{:?}", error);

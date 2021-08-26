@@ -1,12 +1,12 @@
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
-use group_index_canister::create_group::{Response::*, *};
+use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterWasm, GroupChatId, Version};
 use utils::canisters;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
-async fn create_group(args: Args) -> Response {
+async fn c2c_create_group(args: Args) -> Response {
     let canister_args = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow_mut().as_mut().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,
