@@ -5,6 +5,7 @@ use types::{CanisterId, Milliseconds};
 mod add_participants;
 mod join_group;
 mod mark_read;
+mod remove_participant;
 mod send_message;
 
 // If needed, notify the group index canister that there has been activity in this group
