@@ -175,7 +175,7 @@ type GroupChatSummary =
         name: text;
         description: text;
         is_public: bool;
-        min_visible_message_index: MessageIndex;
+        min_visible_event_index: EventIndex;
         participants: vec Participant;
         latest_message: opt GroupMessageEventWrapper;
         latest_event_index: EventIndex;

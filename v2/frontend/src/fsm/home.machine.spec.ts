@@ -27,7 +27,7 @@ const groupChat: GroupChatSummary = {
     ],
     public: true,
     joined: BigInt(+new Date()),
-    minVisibleMessageIndex: 0,
+    minVisibleEventIndex: 0,
     chatId: "123456",
     latestReadByMe: 0,
     latestMessage: undefined,

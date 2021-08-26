@@ -45,7 +45,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         description: randomPara(20),
         public: false,
         joined: BigInt(time),
-        minVisibleMessageIndex: 0,
+        minVisibleEventIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
         latestReadByMe: numMessages,

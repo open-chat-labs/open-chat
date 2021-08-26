@@ -193,7 +193,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,
-            minVisibleMessageIndex: candid.Group.min_visible_message_index,
+            minVisibleEventIndex: candid.Group.min_visible_event_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
         };

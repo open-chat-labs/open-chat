@@ -52,13 +52,12 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
                 length_provided: args.name.len() as u32,
                 max_length: MAX_GROUP_NAME_LENGTH,
             }))
+        } else if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
+            Err(DescriptionTooLong(FieldTooLongResult {
+                length_provided: args.description.len() as u32,
+                max_length: MAX_GROUP_DESCRIPTION_LENGTH,
+            }))
         } else {
-            if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
-                return Err(DescriptionTooLong(FieldTooLongResult {
-                    length_provided: args.description.len() as u32,
-                    max_length: MAX_GROUP_DESCRIPTION_LENGTH,
-                }));
-            }
             let create_group_args = create_group::Args {
                 is_public: args.is_public,
                 creator_principal: runtime_state.env.caller(),

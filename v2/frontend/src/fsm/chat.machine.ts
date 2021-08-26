@@ -119,7 +119,7 @@ export function moreMessagesAvailable(ctx: ChatContext): boolean {
 }
 
 export function earliestAvailableMessageIndex(ctx: ChatContext): number {
-    return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleMessageIndex : 0;
+    return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleEventIndex : 0;
 }
 
 export function earliestIndex(ctx: ChatContext): number {

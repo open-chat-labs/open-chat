@@ -58,6 +58,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         is_public: false,
         name: name.clone(),
         description: description.clone(),
+        history_visible_to_new_joiners: false,
     };
 
     let group_chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
@@ -85,8 +86,8 @@ async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, gro
     let args = user_canister::updates::Args { updates_since: None };
     match canisters::user::updates(agent, &user_id.into(), &args).await {
         user_canister::updates::Response::Success(r) => {
-            assert_eq!(r.new_chats.len(), 1);
-            if let ChatSummary::Group(g) = r.new_chats.first().unwrap() {
+            assert_eq!(r.chats_added.len(), 1);
+            if let ChatSummary::Group(g) = r.chats_added.first().unwrap() {
                 assert_eq!(g.chat_id, group_chat_id);
             } else {
                 panic!("Group chat not found");

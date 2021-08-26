@@ -11,7 +11,7 @@ const groupChat: GroupChatSummary = {
     description: "And this is what it is all about",
     public: true,
     joined: BigInt(100),
-    minVisibleMessageIndex: 50,
+    minVisibleEventIndex: 50,
     chatId: "chat_id",
     lastUpdated: BigInt(200),
     latestReadByMe: 0,

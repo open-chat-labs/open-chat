@@ -48,7 +48,7 @@ const defaultGroupChat: GroupChatSummary = {
     latestMessage: undefined,
     public: true,
     joined: BigInt(0),
-    minVisibleMessageIndex: 0,
+    minVisibleEventIndex: 0,
     latestEventIndex: 0,
 };
 

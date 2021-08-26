@@ -79,6 +79,7 @@ async fn run_data_generator(
                     is_public: rng.next_u32() % 2 == 0,
                     name: lipsum::lipsum_words_from_seed(2, rng.next_u64()),
                     description: lipsum::lipsum_words_from_seed(15, rng.next_u64()),
+                    history_visible_to_new_joiners: false,
                 };
                 let participants = all_user_ids.iter().filter(|&id| *id != u).cloned().collect();
                 let group_chat_id = create_group(&a, u, &args, participants).await;

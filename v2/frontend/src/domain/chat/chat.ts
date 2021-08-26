@@ -206,7 +206,7 @@ export type GroupChatSummary = ChatSummaryCommon & {
     participants: Participant[];
     public: boolean;
     joined: bigint;
-    minVisibleMessageIndex: number;
+    minVisibleEventIndex: number;
     lastUpdated: bigint;
     latestMessage?: EventWrapper<GroupMessage>;
 };

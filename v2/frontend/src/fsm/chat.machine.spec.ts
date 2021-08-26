@@ -45,7 +45,7 @@ const groupChat: GroupChatSummary = {
     description: "this is a group chat",
     public: true,
     joined: BigInt(0),
-    minVisibleMessageIndex: 0,
+    minVisibleEventIndex: 0,
     chatId: "abcdef",
     lastUpdated: BigInt(0),
     latestReadByMe: 0,
@@ -322,7 +322,7 @@ describe("required message range calculation", () => {
                     ...groupContext,
                     chatSummary: {
                         ...groupChat,
-                        minVisibleMessageIndex: 90,
+                        minVisibleEventIndex: 90,
                         latestMessage: eventMessage<GroupMessage>("group_message", 100),
                         latestEventIndex: 100,
                     },
@@ -369,7 +369,7 @@ describe("required message range calculation", () => {
                     events: [eventMessage<DirectMessage>("direct_message", 101)],
                     chatSummary: {
                         ...groupChat,
-                        minVisibleMessageIndex: 90,
+                        minVisibleEventIndex: 90,
                     },
                 };
                 expect(previousMessagesRange(ctx)).toEqual([90, 100]);
