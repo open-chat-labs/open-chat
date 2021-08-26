@@ -2,6 +2,8 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
+    GroupMessage,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -33,5 +35,9 @@ export class CachingGroupClient implements IGroupClient {
 
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
         return this.client.addParticipants(userIds);
+    }
+
+    sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+        return this.client.sendMessage(senderName, message);
     }
 }

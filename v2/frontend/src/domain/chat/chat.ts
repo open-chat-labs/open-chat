@@ -304,3 +304,45 @@ export type AddParticipantsFailed = {
     usersWhoBlockedRequest: string[];
     errors: string[];
 };
+
+export type SendMessageResponse =
+    | SendMessageSuccess
+    | SendMessageRecipientBlocked
+    | SendMessageInvalidRequest
+    | SendMessageSenderBlocked
+    | SendMessageTooLong
+    | SendMessageBalanceExceeded
+    | SendMessageRecipientNotFound;
+
+export type SendMessageSuccess = {
+    kind: "send_message_success";
+    timestamp: bigint;
+    messageIndex: number;
+    eventIndex: number;
+};
+
+export type SendMessageRecipientBlocked = {
+    kind: "send_message_recipient_blocked";
+};
+
+export type SendMessageInvalidRequest = {
+    kind: "send_message_invalid_request";
+};
+
+export type SendMessageSenderBlocked = {
+    kind: "send_message_sender_blocked";
+};
+
+export type SendMessageTooLong = {
+    kind: "send_message_too_long";
+};
+
+export type SendMessageRecipientNotFound = {
+    kind: "send_message_recipient_not_found";
+};
+
+export type SendMessageBalanceExceeded = {
+    kind: "send_message_balance_exceeded";
+};
+
+export type PutChunkResponse = "put_chunk_success" | "put_chunk_full";

@@ -30,7 +30,13 @@
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
         <Logo />
-        <h1 class="title">{$_("register.registerAs")}</h1>
+        <h1 class="title">
+            {#if state === "awaitingCanister"}
+                {$_("register.preparingUser")}
+            {:else}
+                {$_("register.registerAs")}
+            {/if}
+        </h1>
 
         {#if state === "awaitingPhoneNumber"}
             <EnterPhoneNumber {error} on:submitPhoneNumber />

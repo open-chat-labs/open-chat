@@ -49,9 +49,11 @@
             case "resending_code":
             case "checking_registration_code":
             case "checking_phone_number":
-            case "awaiting_canister":
             case "registering_user":
                 uiState = "verifying";
+                break;
+            case "awaiting_canister":
+                uiState = "awaitingCanister";
                 break;
             default:
                 uiState = { error: $machine.context.error?.message ?? "" };
