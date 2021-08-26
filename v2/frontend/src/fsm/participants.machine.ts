@@ -48,6 +48,14 @@ const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents
                 }, 1000);
             });
         },
+        addParticipant: (ctx, ev) => {
+            if (ev.type === "done.invoke.userSearchMachine") {
+                return ctx.serviceContainer.addParticipants(ctx.chatSummary.chatId, [
+                    ev.data.userId,
+                ]);
+            }
+            throw new Error("Unexpected event type provided to ParticipantsMachine.addParticipant");
+        },
     },
 };
 
@@ -77,56 +85,67 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
         },
         idle: { id: "showing_participants_idle", entry: assign((_ctx, _ev) => ({ add: false })) },
         adding_participant: {
+            initial: "choosing_participant",
+            states: {
+                choosing_participant: {
+                    invoke: {
+                        id: "userSearchMachine",
+                        src: userSearchMachine,
+                        data: (ctx, _) => {
+                            return {
+                                serviceContainer: ctx.serviceContainer,
+                                searchTerm: "",
+                                users: [],
+                                error: undefined,
+                            };
+                        },
+                        onDone: {
+                            target: "saving_participant",
+                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
+                                    return {
+                                        userLookup: {
+                                            ...ctx.userLookup,
+                                            [ev.data.userId]: ev.data,
+                                        },
+                                    };
+                                }
+                                return {};
+                            }),
+                        },
+                        onError: {
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
+                    },
+                },
+                saving_participant: {
+                    invoke: {
+                        id: "addParticipant",
+                        src: "addParticipant",
+                        onDone: {
+                            target: "..idle",
+                        },
+                        onError: {
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
+                        },
+                    },
+                },
+            },
             on: {
                 CANCEL_ADD_PARTICIPANT: "idle",
                 "error.platform.userSearchMachine": "..unexpected_error",
-            },
-            invoke: {
-                id: "userSearchMachine",
-                src: userSearchMachine,
-                data: (ctx, _) => {
-                    return {
-                        serviceContainer: ctx.serviceContainer,
-                        searchTerm: "",
-                        users: [],
-                        error: undefined,
-                    };
-                },
-                onDone: {
-                    target: "idle",
-                    actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                        if (ctx.chatSummary.kind === "group_chat" && ev.data) {
-                            // todo - we will need to make some subsequent call to actually add the user to the group properly
-                            console.log("selected user from search machine: ", ev.data);
-                            return {
-                                userLookup: {
-                                    ...ctx.userLookup,
-                                    [ev.data.userId]: ev.data,
-                                },
-                                chatSummary: {
-                                    ...ctx.chatSummary,
-                                    participants: [
-                                        {
-                                            userId: ev.data.userId,
-                                            role: "standard",
-                                        },
-                                        ...ctx.chatSummary.participants,
-                                    ],
-                                },
-                            };
-                        }
-                        return {};
-                    }),
-                },
-                onError: {
-                    internal: true,
-                    target: "..unexpected_error",
-                    actions: [
-                        assign({
-                            error: (_, { data }) => data,
-                        }),
-                    ],
-                },
             },
         },
         dismissing_participant: {

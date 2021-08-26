@@ -4,6 +4,7 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
+    import ParticipantsAddedEvent from "./ParticipantsAddedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
 
@@ -36,6 +37,8 @@
     <GroupChatCreatedEvent event={event.event} {me} {userLookup} timestamp={event.timestamp} />
 {:else if event.event.kind === "direct_chat_created"}
     <DirectChatCreatedEvent timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_added"}
+    <ParticipantsAddedEvent {user} event={event.event} {userLookup} timestamp={event.timestamp} />
 {:else}
     <div>Unexpected event type</div>
 {/if}

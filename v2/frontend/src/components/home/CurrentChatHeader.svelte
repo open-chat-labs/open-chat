@@ -74,11 +74,18 @@
                 subtext: "When user was last online | typing",
             };
         }
+        const participantIds = chatSummary.participants.map((p) => p.userId);
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
-            subtext: getParticipantsString(user!, users, chatSummary, $_("unknownUser"), $_("you")),
+            subtext: getParticipantsString(
+                user!,
+                users,
+                participantIds,
+                $_("unknownUser"),
+                $_("you")
+            ),
         };
     }
 

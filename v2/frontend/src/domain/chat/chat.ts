@@ -93,12 +93,18 @@ export type EventsResponse<T extends ChatEvent> =
 
 export type DirectChatEvent = DirectMessage | DirectChatCreated;
 
-export type GroupChatEvent = GroupMessage | GroupChatCreated;
+export type GroupChatEvent = GroupMessage | GroupChatCreated | ParticipantsAdded;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
 export type DirectChatCreated = {
     kind: "direct_chat_created";
+};
+
+export type ParticipantsAdded = {
+    kind: "participants_added";
+    userIds: string[];
+    addedBy: string;
 };
 
 export type GroupChatCreated = {

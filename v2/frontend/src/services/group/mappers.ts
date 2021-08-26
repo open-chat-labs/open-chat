@@ -115,8 +115,19 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
             timestamp: candid.timestamp,
         };
     }
+    if ("ParticipantsAdded" in candid.event) {
+        return {
+            event: {
+                kind: "participants_added",
+                userIds: candid.event.ParticipantsAdded.user_ids.map((p) => p.toString()),
+                addedBy: candid.event.ParticipantsAdded.added_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
-    throw new Error("Unexpected ApiEventWrapper type received");
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid.event)}`);
 }
 
 function message(candid: ApiGroupMessage): GroupMessage {

@@ -111,41 +111,9 @@ describe("extract userids from chat summaries", () => {
 });
 
 describe("get participants string for group chat", () => {
-    const withFewerThanSix = {
-        ...defaultGroupChat,
-        participants: [
-            participant("a"),
-            participant("b"),
-            participant("c"),
-            participant("d"),
-            participant("e"),
-            participant("z"),
-        ],
-    };
-    const withUnknown = {
-        ...defaultGroupChat,
-        participants: [
-            participant("a"),
-            participant("b"),
-            participant("z"),
-            participant("d"),
-            participant("e"),
-            participant("z"),
-        ],
-    };
-    const withMoreThanSix = {
-        ...defaultGroupChat,
-        participants: [
-            participant("a"),
-            participant("b"),
-            participant("c"),
-            participant("d"),
-            participant("e"),
-            participant("f"),
-            participant("g"),
-            participant("z"),
-        ],
-    };
+    const withFewerThanSix = ["a", "b", "c", "d", "e", "z"];
+    const withUnknown = ["a", "b", "x", "d", "e", "z"];
+    const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
     const lookup: UserLookup = {
         a: { userId: "a", username: "Mr A", secondsSinceLastOnline: 200 },
         b: { userId: "b", username: "Mr B", secondsSinceLastOnline: 20 },

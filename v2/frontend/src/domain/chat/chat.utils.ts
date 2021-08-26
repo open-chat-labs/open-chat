@@ -93,16 +93,16 @@ export function compareByDate(a: ChatSummary, b: ChatSummary): number {
 export function getParticipantsString(
     user: UserSummary,
     userLookup: UserLookup,
-    { participants }: GroupChatSummary,
+    participantIds: string[],
     unknownUser: string,
     you: string
 ): string {
-    if (participants.length > 5) {
-        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p.userId)).length;
-        return `${participants.length} members (${numberOnline} online)`;
+    if (participantIds.length > 5) {
+        const numberOnline = participantIds.map((id) => userIsOnline(userLookup, id)).length;
+        return `${participantIds.length} members (${numberOnline} online)`;
     }
-    return participants
-        .map((p) => userLookup[p.userId] ?? nullUser(unknownUser))
+    return participantIds
+        .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersOnlineFirst)
         .map((p) => (p.userId === user.userId ? you : p.username))
         .join(", ");
