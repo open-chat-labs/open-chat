@@ -18,7 +18,6 @@ import filesize from "rollup-plugin-filesize";
 // import cleaner from 'rollup-plugin-cleaner';
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
-import canisterIds from "../.dfx/local/canister_ids.json";
 
 dotenv.config();
 
@@ -100,13 +99,9 @@ export default {
             "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
             "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
             "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
-            // todo - we can't really leave this like this, but it's ok for now
-            "process.env.USER_INDEX_CANISTER":
-                process.env.USER_INDEX_CANISTER || canisterIds.user_index.local,
-            "process.env.GROUP_INDEX_CANISTER":
-                process.env.GROUP_INDEX_CANISTER || canisterIds.group_index.local,
-            "process.env.NOTIFICATIONS_CANISTER":
-                process.env.NOTIFICATIONS_CANISTER || canisterIds.notifications.local,
+            "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
+            "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
+            "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
         }),
 
         // In dev mode, call `npm run start` once
