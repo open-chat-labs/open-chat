@@ -16,10 +16,8 @@ import type {
     ChatEvent,
     ReplyContext,
     DirectChatReplyContext,
-    SendMessageResponse,
 } from "../domain/chat/chat";
 import {
-    createDirectMessage,
     createGroupMessage,
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
@@ -33,7 +31,6 @@ import { participantsMachine } from "./participants.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
-import { invoke } from "xstate/lib/actionTypes";
 
 const PAGE_SIZE = 20;
 
@@ -60,10 +57,6 @@ export type ChatEvents =
           data: LoadEventsResponse;
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
-    | {
-          type: "done.invoke.sendMessage";
-          data: SendMessageResponse;
-      }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
@@ -181,26 +174,6 @@ export function requiredMessageRange(
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {},
     services: {
-        sendMessage: (ctx, ev) => {
-            if (ev.type === "SEND_MESSAGE") {
-                if (ctx.chatSummary.kind === "group_chat") {
-                    const index = latestLoadedEventIndex(ctx.events) ?? 0;
-                    const msg = createGroupMessage(
-                        ctx.user!.userId,
-                        index + 1,
-                        ev.data,
-                        ctx.replyingTo,
-                        ctx.fileToAttach
-                    );
-                    return ctx.serviceContainer.sendGroupMessage(
-                        ctx.chatSummary.chatId,
-                        ctx.user!.username,
-                        msg
-                    );
-                }
-            }
-            return Promise.resolve();
-        },
         loadEventsAndUsers: async (ctx, ev) => {
             const range = requiredMessageRange(ctx, ev);
 
