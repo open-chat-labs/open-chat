@@ -44,7 +44,7 @@ pub struct GroupChatSummary {
     pub name: String,
     pub description: String,
     pub is_public: bool,
-    pub min_visible_message_index: MessageIndex,
+    pub min_visible_event_index: EventIndex,
     pub participants: Vec<Participant>,
     pub latest_message: Option<EventWrapper<message::GroupMessage>>,
     pub latest_event_index: EventIndex,

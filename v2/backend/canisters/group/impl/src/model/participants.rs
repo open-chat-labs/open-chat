@@ -1,7 +1,7 @@
 use candid::Principal;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{MessageIndex, ParticipantInternal, Role, TimestampMillis, Updatable, UserId};
+use types::{EventIndex, MessageIndex, ParticipantInternal, Role, TimestampMillis, Updatable, UserId};
 
 #[derive(Default)]
 pub struct Participants {
@@ -18,7 +18,7 @@ impl Participants {
             role: Role::Admin,
             read_up_to: Updatable::new(MessageIndex::default(), now),
             mute_notifications: false,
-            min_visible_message_id: MessageIndex::one(),
+            min_visible_event_index: EventIndex::default(),
         };
 
         Participants {
@@ -34,6 +34,7 @@ impl Participants {
         principal: Principal,
         now: TimestampMillis,
         latest_message_index: MessageIndex,
+        min_visible_event_index: EventIndex,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -46,7 +47,7 @@ impl Participants {
                         role: Role::Participant,
                         read_up_to: Updatable::new(latest_message_index, now),
                         mute_notifications: false,
-                        min_visible_message_id: MessageIndex::one(),
+                        min_visible_event_index,
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success

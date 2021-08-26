@@ -218,13 +218,13 @@ export const idlFactory = ({ IDL }) => {
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'participants' : IDL.Vec(Participant),
+    'min_visible_event_index' : EventIndex,
     'name' : IDL.Text,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'min_visible_message_index' : MessageIndex,
     'chat_id' : GroupChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });

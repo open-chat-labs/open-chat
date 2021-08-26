@@ -5,7 +5,7 @@ use candid::Principal;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use types::{ParticipantsAdded, UserId};
+use types::{EventIndex, ParticipantsAdded, UserId};
 use user_canister::handle_add_to_group_requested;
 
 #[update]
@@ -119,11 +119,17 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let latest_message_index = runtime_state.data.events.latest_message_index();
+    let min_visible_event_index = if runtime_state.data.history_visible_to_new_joiners {
+        EventIndex::default()
+    } else {
+        runtime_state.data.events.last().index
+    };
+
     for (user_id, principal) in users.iter().cloned() {
         runtime_state
             .data
             .participants
-            .add(user_id, principal, now, latest_message_index);
+            .add(user_id, principal, now, latest_message_index, min_visible_event_index);
     }
 
     let event = ParticipantsAdded {

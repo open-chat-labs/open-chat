@@ -137,13 +137,13 @@ export type GroupChatId = Principal;
 export interface GroupChatSummary {
   'is_public' : boolean,
   'participants' : Array<Participant>,
+  'min_visible_event_index' : EventIndex,
   'name' : string,
   'description' : string,
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'min_visible_message_index' : MessageIndex,
   'chat_id' : GroupChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
