@@ -6,6 +6,7 @@ import { RootState } from "../reducers";
 import CancelButton from "./shared/CloseButton";
 import * as notifications from "../notifications";
 import Backdrop from "@material-ui/core/Backdrop";
+import { ViewMode } from "../domain/model/viewMode";
 
 export type Props = {
     onRender: (render: boolean) => void,
@@ -13,12 +14,13 @@ export type Props = {
 
 export default React.memo(NotificationBar);
 
-const useStyles = makeStyles((_theme: Theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
     topBar: {
         display: "flex",
         height: 32,
         padding: 4,
         textAlign: "center",
+        alignItems: "center",
         backgroundColor: "#dea941",
         color: "white",
         "& button": {
@@ -30,6 +32,9 @@ const useStyles = makeStyles((_theme: Theme) => ({
     },
     message: {
         flex: "1 0 auto",
+        [theme.breakpoints.down('sm')]: {
+            fontSize: "14px"
+        },        
     },  
     cancelButton: {
         width: 0,
@@ -42,6 +47,7 @@ function NotificationBar(props: Props): JSX.Element {
     const myUserId = useSelector((state: RootState) => state.usersState.me?.userId!);
     const [showBar, setShowBar] = useState(false);
     const [showBackdrop, setShowBackdrop] = useState(false);
+    const viewMode = useSelector((state: RootState) => state.appState.viewMode);
 
     useEffect(() => {
         (async () => {
@@ -72,6 +78,8 @@ function NotificationBar(props: Props): JSX.Element {
         }
     }
 
+    const message = viewMode == ViewMode.Mobile ? "Give permission to " : "OpenChat needs your permission to ";
+
     return (
         <>
             <Backdrop
@@ -80,7 +88,7 @@ function NotificationBar(props: Props): JSX.Element {
             ></Backdrop>        
             { showBar ? 
             <div className={classes.topBar}>
-                <div className={classes.message}>OpenChat needs your permission to <button onClick={onEnable}>enable notifications</button>.</div>
+                <div className={classes.message}>{message}<button onClick={onEnable}>enable notifications</button></div>
                 <CancelButton onClick={() => setShowBar(false)} className={classes.cancelButton} />
             </div> : null }
         </>

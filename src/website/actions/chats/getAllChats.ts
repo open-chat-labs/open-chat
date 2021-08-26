@@ -52,6 +52,10 @@ export default function() {
 
                 }
             } as GetAllChatsSucceededEvent;
+
+            if (chats.length == 0) {
+                alertDialog(ABOUT_US);
+            }
         } else {
             outcomeEvent = {
                 type: GET_ALL_CHATS_FAILED,
@@ -60,8 +64,6 @@ export default function() {
         }
 
         dispatch(outcomeEvent);
-
-        alertDialog(ABOUT_US);
     }
 }
 
