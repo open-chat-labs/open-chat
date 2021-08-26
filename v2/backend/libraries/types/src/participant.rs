@@ -1,5 +1,5 @@
 use crate::role::Role;
-use crate::{MessageIndex, UserId};
+use crate::{EventIndex, MessageIndex, UserId};
 use crate::{TimestampMillis, Updatable};
 use candid::CandidType;
 use serde::Deserialize;
@@ -18,7 +18,7 @@ pub struct ParticipantInternal {
     pub role: Role,
     pub read_up_to: Updatable<MessageIndex>,
     pub mute_notifications: bool,
-    pub min_visible_message_id: MessageIndex,
+    pub min_visible_event_index: EventIndex,
 }
 
 impl From<ParticipantInternal> for Participant {
