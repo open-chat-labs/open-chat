@@ -87,7 +87,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                                             participants: [],
                                             public: ctx.candidateGroup.isPublic,
                                             joined: now,
-                                            minVisibleMessageIndex: 0,
+                                            minVisibleEventIndex: 0,
                                             chatId: ev.data.canisterId,
                                             latestReadByMe: 0,
                                             latestMessage: undefined,
