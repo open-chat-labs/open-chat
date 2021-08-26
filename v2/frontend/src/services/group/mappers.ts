@@ -89,9 +89,6 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
-    if ("NotAuthorised" in candid) {
-        return "not_authorised";
-    }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
@@ -108,7 +105,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
             event: {
                 kind: "group_chat_created",
                 name: candid.event.GroupChatCreated.name,
-                description: optional(candid.event.GroupChatCreated.description, identity),
+                description: candid.event.GroupChatCreated.description,
                 created_by: candid.event.GroupChatCreated.created_by.toString(),
             },
             index: candid.index,

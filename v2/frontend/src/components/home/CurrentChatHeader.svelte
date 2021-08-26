@@ -22,7 +22,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "../../domain/chat/chat";
+    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
@@ -89,6 +89,10 @@
         };
     }
 
+    function canAdminister(chat: GroupChatSummary): boolean {
+        return chat.participants.find((p) => p.userId === user!.userId)?.role === "admin";
+    }
+
     $: chat = normaliseChatSummary(selectedChatSummary);
 
     // for direct chats we want to either show when the user was last online or if they are typing
@@ -149,10 +153,12 @@
                             <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("copyInviteCode")}</div>
                         </MenuItem>
-                        <MenuItem on:click={addParticipant}>
-                            <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("addParticipant")}</div>
-                        </MenuItem>
+                        {#if canAdminister(selectedChatSummary)}
+                            <MenuItem on:click={addParticipant}>
+                                <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("addParticipant")}</div>
+                            </MenuItem>
+                        {/if}
                     </Menu>
                 {/if}
             </div>

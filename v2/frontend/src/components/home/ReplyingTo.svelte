@@ -16,7 +16,7 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: username = replyingTo.sender?.username ?? "unknown";
+    $: username = replyingTo.sender?.username ?? "unknownUser";
 
     function cancelReply() {
         dispatch("cancelReply");

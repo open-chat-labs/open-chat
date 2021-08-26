@@ -37,7 +37,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupChatCreated = IDL.Record({
     'name' : IDL.Text,
-    'description' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
     'created_by' : UserId,
   });
   const ParticipantsPromotedToAdmin = IDL.Record({

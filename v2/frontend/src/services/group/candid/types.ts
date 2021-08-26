@@ -117,7 +117,7 @@ export type GetChunkResponse = { 'NotFound' : null } |
   { 'Success' : { 'bytes' : Array<number> } };
 export interface GroupChatCreated {
   'name' : string,
-  'description' : [] | [string],
+  'description' : string,
   'created_by' : UserId,
 }
 export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |

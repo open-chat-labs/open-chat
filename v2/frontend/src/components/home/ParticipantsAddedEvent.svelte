@@ -12,12 +12,14 @@
     export let event: ParticipantsAdded;
     export let timestamp: bigint;
 
+    $: me = event.addedBy === user?.userId;
+    $: addedBy = me ? $_("you") : userLookup[event.addedBy]?.username ?? $_("unknownUser");
     $: date = new Date(Number(timestamp));
     $: participants = getParticipantsString(
         user!,
         userLookup,
         event.userIds,
-        $_("unknown"),
+        $_("unknownUser"),
         $_("you")
     );
 </script>
@@ -27,7 +29,7 @@
         {$_("addedBy", {
             values: {
                 added: participants,
-                addedBy: userLookup[event.addedBy]?.username ?? $_("unknown"),
+                addedBy,
             },
         })}
     </p>
@@ -38,7 +40,7 @@
     .participants-added {
         padding: $sp2;
         background-color: var(--timeline-bg);
-        margin: auto;
+        margin: $sp5 auto;
         text-align: center;
         color: var(--timeline-txt);
         @include font(book, normal, fs-70);

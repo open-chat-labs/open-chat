@@ -110,7 +110,7 @@ export type ParticipantsAdded = {
 export type GroupChatCreated = {
     kind: "group_chat_created";
     name: string;
-    description?: string;
+    description: string;
     created_by: string;
 };
 

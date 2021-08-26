@@ -129,7 +129,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                         id: "addParticipant",
                         src: "addParticipant",
                         onDone: {
-                            target: "..idle",
+                            target: "choosing_participant",
                         },
                         onError: {
                             internal: true,
