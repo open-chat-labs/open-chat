@@ -56,7 +56,6 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
-    | { type: "GROUP_CHAT_CREATED"; data: GroupChatSummary }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
@@ -442,16 +441,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     },
                 },
                 new_group: {
-                    on: {
-                        // todo - bit worried that there may be a race condition here
-                        GROUP_CHAT_CREATED: {
-                            actions: assign((ctx, ev) => {
-                                return {
-                                    chatSummaries: [ev.data, ...ctx.chatSummaries],
-                                };
-                            }),
-                        },
-                    },
                     invoke: {
                         id: "groupMachine",
                         src: groupMachine,

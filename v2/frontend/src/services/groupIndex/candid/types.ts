@@ -89,7 +89,7 @@ export interface FileContent {
 }
 export interface GroupChatCreated {
   'name' : string,
-  'description' : [] | [string],
+  'description' : string,
   'created_by' : UserId,
 }
 export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |

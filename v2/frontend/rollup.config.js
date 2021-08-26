@@ -21,6 +21,8 @@ import replace from "@rollup/plugin-replace";
 
 dotenv.config();
 
+// todo - we should add some code here to validate that the env vars we are expecting are actually present
+
 const production = !process.env.ROLLUP_WATCH;
 
 console.log("PROD", production);
@@ -95,6 +97,11 @@ export default {
             "process.env.NODE_ENV": process.env.NODE_ENV,
             "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
             "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
+            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
+            "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
+            "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
+            "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
+            "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
         }),
 
         // In dev mode, call `npm run start` once

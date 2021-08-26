@@ -93,7 +93,7 @@ export type EventsResponse<T extends ChatEvent> =
 
 export type DirectChatEvent = DirectMessage | DirectChatCreated;
 
-export type GroupChatEvent = GroupMessage | GroupChatCreated;
+export type GroupChatEvent = GroupMessage | GroupChatCreated | ParticipantsAdded;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -101,10 +101,16 @@ export type DirectChatCreated = {
     kind: "direct_chat_created";
 };
 
+export type ParticipantsAdded = {
+    kind: "participants_added";
+    userIds: string[];
+    addedBy: string;
+};
+
 export type GroupChatCreated = {
     kind: "group_chat_created";
     name: string;
-    description?: string;
+    description: string;
     created_by: string;
 };
 
@@ -261,4 +267,40 @@ export type CreateGroupThrottled = {
 
 export type CreateGroupNotAuthorized = {
     kind: "not_authorized";
+};
+
+export type AddParticipantsResponse =
+    | AddParticipantsSuccess
+    | AddParticipantsNotAuthorised
+    | AddParticipantsPartialSuccess
+    | AddParticipantsFailed
+    | AddParticipantsNotInGroup;
+
+export type AddParticipantsSuccess = {
+    kind: "add_participants_success";
+};
+
+export type AddParticipantsNotInGroup = {
+    kind: "add_participants_not_in_group";
+};
+
+export type AddParticipantsNotAuthorised = {
+    kind: "add_participants_not_authorised";
+};
+
+export type AddParticipantsPartialSuccess = {
+    kind: "add_participants_partial_success";
+    usersAdded: string[];
+    usersAlreadyInGroup: string[];
+    usersBlockedFromGroup: string[];
+    usersWhoBlockedRequest: string[];
+    errors: string[];
+};
+
+export type AddParticipantsFailed = {
+    kind: "add_participants_failed";
+    usersAlreadyInGroup: string[];
+    usersBlockedFromGroup: string[];
+    usersWhoBlockedRequest: string[];
+    errors: string[];
 };

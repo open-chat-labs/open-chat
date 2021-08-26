@@ -19,6 +19,7 @@ import {
     EventsSuccessResult,
     EventsArgs,
     GroupChatEvent,
+    AddParticipantsResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -39,6 +40,7 @@ export {
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
     GroupChatEvent as ApiGroupChatEvent,
+    AddParticipantsResponse as ApiAddParticipantsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

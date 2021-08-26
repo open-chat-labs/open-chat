@@ -1,4 +1,5 @@
 import type {
+    ApiAddParticipantsResponse,
     ApiBlobReference,
     ApiEventsResponse,
     ApiEventWrapper,
@@ -21,14 +22,63 @@ import type {
     GroupMessage,
     GroupChatReplyContext,
     CyclesContent,
+    AddParticipantsResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import type { ApiCyclesContent } from "../user/candid/idl";
+import type { Principal } from "@dfinity/principal";
 
 // todo - these message data types look very similar to the direct chat counterparts but they are logically separate and in
 // some aspects actually different so we will map them independently for the time being
 // this means that we may not be able to just have a /domain/chat module - it might not be that simple
+
+function principalToString(p: Principal): string {
+    return p.toString();
+}
+
+export function addParticipantsResponse(
+    candid: ApiAddParticipantsResponse
+): AddParticipantsResponse {
+    if ("Failed" in candid) {
+        return {
+            kind: "add_participants_failed",
+            usersAlreadyInGroup: candid.Failed.users_already_in_group.map(principalToString),
+            usersBlockedFromGroup: candid.Failed.users_blocked_from_group.map(principalToString),
+            usersWhoBlockedRequest: candid.Failed.users_who_blocked_request.map(principalToString),
+            errors: candid.Failed.errors.map(principalToString),
+        };
+    }
+    if ("PartialSuccess" in candid) {
+        return {
+            kind: "add_participants_partial_success",
+            usersAdded: candid.PartialSuccess.users_added.map(principalToString),
+            usersAlreadyInGroup:
+                candid.PartialSuccess.users_already_in_group.map(principalToString),
+            usersBlockedFromGroup:
+                candid.PartialSuccess.users_blocked_from_group.map(principalToString),
+            usersWhoBlockedRequest:
+                candid.PartialSuccess.users_who_blocked_request.map(principalToString),
+            errors: candid.PartialSuccess.errors.map(principalToString),
+        };
+    }
+    if ("NotAuthorized" in candid) {
+        return {
+            kind: "add_participants_not_authorised",
+        };
+    }
+    if ("Success" in candid) {
+        return {
+            kind: "add_participants_success",
+        };
+    }
+    if ("NotInGroup" in candid) {
+        return {
+            kind: "add_participants_not_in_group",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
+}
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
@@ -38,9 +88,6 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
     }
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
-    }
-    if ("NotAuthorised" in candid) {
-        return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
@@ -58,15 +105,26 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
             event: {
                 kind: "group_chat_created",
                 name: candid.event.GroupChatCreated.name,
-                description: optional(candid.event.GroupChatCreated.description, identity),
+                description: candid.event.GroupChatCreated.description,
                 created_by: candid.event.GroupChatCreated.created_by.toString(),
             },
             index: candid.index,
             timestamp: candid.timestamp,
         };
     }
+    if ("ParticipantsAdded" in candid.event) {
+        return {
+            event: {
+                kind: "participants_added",
+                userIds: candid.event.ParticipantsAdded.user_ids.map((p) => p.toString()),
+                addedBy: candid.event.ParticipantsAdded.added_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
-    throw new Error("Unexpected ApiEventWrapper type received");
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid.event)}`);
 }
 
 function message(candid: ApiGroupMessage): GroupMessage {

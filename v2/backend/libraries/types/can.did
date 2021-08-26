@@ -143,7 +143,7 @@ type FileContent =
 type GroupChatCreated =
     record {
         name: text;
-        description: opt text;
+        description: text;
         created_by: UserId;
     };
 

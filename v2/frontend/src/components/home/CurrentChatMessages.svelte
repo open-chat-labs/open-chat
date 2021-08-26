@@ -151,6 +151,9 @@
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
+        if (first.event.kind === "participants_added") {
+            return `${first.timestamp}_${first.index}`;
+        }
 
         throw new UnsupportedValueError("Unexpected event type received", first.event);
     }
@@ -195,6 +198,9 @@
             return evt.event.sentByMe;
         }
         if (evt.event.kind === "direct_chat_created") {
+            return false;
+        }
+        if (evt.event.kind === "participants_added") {
             return false;
         }
         if (evt.event.kind === "group_message") {

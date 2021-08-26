@@ -11,7 +11,6 @@ import type {
     UpgradeCanisterResponse,
     CreateCanisterResponse,
 } from "../domain/user/user";
-import { UserIndexClientMock } from "./userIndex/userIndex.client.mock";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type {
@@ -25,59 +24,39 @@ import type {
     ChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
+    AddParticipantsResponse,
 } from "../domain/chat/chat";
-// import { UserClient } from "./user/user.client";
-import { UserClientMock } from "./user/user.client.mock";
 import type { IGroupClient } from "./group/group.client.interface";
-// import { GroupClient } from "./group/group.client";
-// import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-// import { Principal } from "@dfinity/principal";
-// import { DataClient } from "./data/data.client";
-import { GroupClientMock } from "./group/group.client.mock";
-import { CachingUserClient } from "./user/user.caching.client";
-import { CachingGroupClient } from "./group/group.caching.client";
-import type { IDBPDatabase } from "idb";
-import { ChatSchema, db } from "../utils/caching";
+import { Database, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
 import { DataClient } from "./data/data.client";
+import { UserIndexClient } from "./userIndex/userIndex.client";
+import { UserClient } from "./user/user.client";
+import { GroupClient } from "./group/group.client";
 
 export class ServiceContainer {
-    private userIndexClient: IUserIndexClient;
-    private groupIndexClient: IGroupIndexClient;
+    private _userIndexClient: IUserIndexClient;
+    private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _groupClients: Record<string, IGroupClient>;
-    private db?: Promise<IDBPDatabase<ChatSchema>>;
+    private db?: Database;
 
     constructor(private identity: Identity) {
-        this.userIndexClient = new UserIndexClientMock();
-        this.groupIndexClient = new GroupIndexClientMock();
+        this._userIndexClient = UserIndexClient.create(identity);
+        this._groupIndexClient = new GroupIndexClientMock();
         this._groupClients = {};
         this.db = db;
     }
 
-    createUserClient(_userId: string): ServiceContainer {
-        if (this.db) {
-            this._userClient = new CachingUserClient(this.db, new UserClientMock());
-        } else {
-            this._userClient = new UserClientMock();
-        }
-        // this._userClient = new CachingUserClient(new UserClient(this.identity, userId));
+    createUserClient(userId: string): ServiceContainer {
+        this._userClient = UserClient.create(userId, this.identity, this.db);
         return this;
     }
 
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
-            // this._groupClients[chatId] = new GroupClient(this.identity, Principal.fromText(chatId));
-            if (this.db) {
-                this._groupClients[chatId] = new CachingGroupClient(
-                    this.db,
-                    chatId,
-                    new GroupClientMock()
-                );
-            } else {
-                this._groupClients[chatId] = new GroupClientMock();
-            }
+            this._groupClients[chatId] = GroupClient.create(chatId, this.identity, this.db);
         }
         return this._groupClients[chatId];
     }
@@ -91,6 +70,10 @@ export class ServiceContainer {
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.userClient.createGroup(candidate);
+    }
+
+    addParticipants(chatId: string, userIds: string[]): Promise<AddParticipantsResponse> {
+        return this.getGroupClient(chatId).addParticipants(userIds);
     }
 
     directChatEvents(
@@ -143,11 +126,11 @@ export class ServiceContainer {
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {
-        return this.userIndexClient.searchUsers(searchTerm);
+        return this._userIndexClient.searchUsers(searchTerm);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
-        return this.userIndexClient.getUsers(userIds, since);
+        return this._userIndexClient.getUsers(userIds, since);
     }
 
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
@@ -155,30 +138,30 @@ export class ServiceContainer {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.userIndexClient.getCurrentUser();
+        return this._userIndexClient.getCurrentUser();
     }
 
     upgradeUser(): Promise<UpgradeCanisterResponse> {
-        return this.userIndexClient.upgradeUser();
+        return this._userIndexClient.upgradeUser();
     }
 
     submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.userIndexClient.submitPhoneNumber(phoneNumber);
+        return this._userIndexClient.submitPhoneNumber(phoneNumber);
     }
 
     resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this.userIndexClient.resendRegistrationCode();
+        return this._userIndexClient.resendRegistrationCode();
     }
 
     confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.userIndexClient.confirmPhoneNumber(code);
+        return this._userIndexClient.confirmPhoneNumber(code);
     }
 
     setUsername(username: string): Promise<SetUsernameResponse> {
-        return this.userIndexClient.setUsername(username);
+        return this._userIndexClient.setUsername(username);
     }
 
     createCanister(): Promise<CreateCanisterResponse> {
-        return this.userIndexClient.createCanister();
+        return this._userIndexClient.createCanister();
     }
 }

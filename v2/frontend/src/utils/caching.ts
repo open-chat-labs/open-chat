@@ -7,7 +7,7 @@ import type {
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
-type Database = Promise<IDBPDatabase<ChatSchema>>;
+export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
 export interface ChatSchema extends DBSchema {
     chats: {

@@ -134,19 +134,6 @@ describe("home machine transitions", () => {
         });
     });
 
-    test("new group received", () => {
-        const ctx = testTransition(
-            homeMachine,
-            { loaded_chats: "new_group" },
-            { type: "GROUP_CHAT_CREATED", data: groupChat },
-            { loaded_chats: "new_group" }
-        );
-        expect(ctx.chatSummaries.length).toBe(1);
-        expect(ctx.chatSummaries[0]).toMatchObject({
-            chatId: "123456",
-        });
-    });
-
     test("cancel new chat", () => {
         testTransition(homeMachine, { loaded_chats: "new_chat" }, "CANCEL_NEW_CHAT", {
             loaded_chats: "no_chat_selected",

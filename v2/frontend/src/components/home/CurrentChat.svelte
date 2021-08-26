@@ -19,6 +19,7 @@
 <div class="wrapper">
     <CurrentChatHeader
         users={$machine.context.userLookup}
+        user={$machine.context.user}
         on:clearSelection
         on:blockUser
         on:addParticipant={addParticipant}

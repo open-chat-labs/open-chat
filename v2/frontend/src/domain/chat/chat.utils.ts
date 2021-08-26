@@ -1,4 +1,4 @@
-import type { UserLookup } from "../user/user";
+import type { UserLookup, UserSummary } from "../user/user";
 import { compareUsersOnlineFirst, nullUser, userIsOnline } from "../user/user.utils";
 import type {
     ChatSummary,
@@ -91,20 +91,20 @@ export function compareByDate(a: ChatSummary, b: ChatSummary): number {
 }
 
 export function getParticipantsString(
+    user: UserSummary,
     userLookup: UserLookup,
-    { participants }: GroupChatSummary,
+    participantIds: string[],
     unknownUser: string,
     you: string
 ): string {
-    if (participants.length > 5) {
-        const numberOnline = participants.filter((p) => userIsOnline(userLookup, p.userId)).length;
-        return `${participants.length + 1} members (${numberOnline + 1} online)`;
+    if (participantIds.length > 5) {
+        const numberOnline = participantIds.map((id) => userIsOnline(userLookup, id)).length;
+        return `${participantIds.length} members (${numberOnline} online)`;
     }
-    return participants
-        .map((p) => userLookup[p.userId] ?? nullUser(unknownUser))
+    return participantIds
+        .map((id) => userLookup[id] ?? nullUser(unknownUser))
         .sort(compareUsersOnlineFirst)
-        .map((p) => p.username)
-        .concat([you])
+        .map((p) => (p.userId === user.userId ? you : p.username))
         .join(", ");
 }
 
@@ -216,7 +216,7 @@ export function mergeChatUpdates(
         added: updateResponse.chatsAdded,
         updated: updateResponse.chatsUpdated,
         removed: updateResponse.chatsRemoved,
-    });
+    }).sort(compareChats);
 }
 
 function mergeParticipants(_: Participant | undefined, updated: Participant) {
@@ -316,7 +316,7 @@ function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
 }
 
 export function compareChats(a: ChatSummary, b: ChatSummary): number {
-    return latestActivity(a) - latestActivity(b);
+    return latestActivity(b) - latestActivity(a);
 }
 
 function latestActivity(chat: ChatSummary): number {

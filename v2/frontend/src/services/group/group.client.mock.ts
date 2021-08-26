@@ -1,4 +1,5 @@
 import type {
+    AddParticipantsResponse,
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
@@ -102,6 +103,12 @@ export class GroupClientMock implements IGroupClient {
                     events,
                 });
             }, 300);
+        });
+    }
+
+    addParticipants(_userIds: string[]): Promise<AddParticipantsResponse> {
+        return Promise.resolve({
+            kind: "add_participants_success",
         });
     }
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import type { UserLookup } from "../../domain/user/user";
@@ -21,12 +22,13 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "../../domain/chat/chat";
+    import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
     export let users: UserLookup;
+    export let user: UserSummary | undefined;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -72,12 +74,23 @@
                 subtext: "When user was last online | typing",
             };
         }
+        const participantIds = chatSummary.participants.map((p) => p.userId);
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: "assets/group.svg",
-            subtext: getParticipantsString(users, chatSummary, $_("unknownUser"), $_("you")),
+            subtext: getParticipantsString(
+                user!,
+                users,
+                participantIds,
+                $_("unknownUser"),
+                $_("you")
+            ),
         };
+    }
+
+    function canAdminister(chat: GroupChatSummary): boolean {
+        return chat.participants.find((p) => p.userId === user!.userId)?.role === "admin";
     }
 
     $: chat = normaliseChatSummary(selectedChatSummary);
@@ -140,10 +153,12 @@
                             <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("copyInviteCode")}</div>
                         </MenuItem>
-                        <MenuItem on:click={addParticipant}>
-                            <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("addParticipant")}</div>
-                        </MenuItem>
+                        {#if canAdminister(selectedChatSummary)}
+                            <MenuItem on:click={addParticipant}>
+                                <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("addParticipant")}</div>
+                            </MenuItem>
+                        {/if}
                     </Menu>
                 {/if}
             </div>

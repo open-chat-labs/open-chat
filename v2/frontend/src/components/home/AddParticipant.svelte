@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
     import SectionHeader from "../SectionHeader.svelte";
+    import Loading from "../Loading.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import FindUser from "../FindUser.svelte";
@@ -15,6 +16,8 @@
     function cancelAddParticipant() {
         machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
     }
+
+    $: console.log("part machine: ", $machine.value);
 </script>
 
 <SectionHeader>
@@ -26,7 +29,11 @@
     <h4>{$_("addParticipant")}</h4>
 </SectionHeader>
 
-{#if $machine.matches({ showing_participants: { adding_participant: "unexpected_error" } })}
+{#if $machine.matches({ adding_participant: "saving_participant" })}
+    <Loading />
+{/if}
+
+{#if $machine.matches({ adding_participant: "unexpected_error" })}
     <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
 {/if}
 

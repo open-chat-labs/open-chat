@@ -28,7 +28,7 @@
     .created-group {
         padding: $sp2;
         background-color: var(--timeline-bg);
-        margin: auto;
+        margin: $sp5 auto;
         text-align: center;
         color: var(--timeline-txt);
     }

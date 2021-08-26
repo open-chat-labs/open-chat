@@ -14,7 +14,7 @@ export class DataClient extends CandidService implements IDataClient {
     static create(_canisterId: string): IDataClient {
         // todo - replace this with the real thing
         let client: IDataClient = new DataClientMock();
-        if (db) {
+        if (db && process.env.CLIENT_CACHING) {
             client = new CachingDataClient(db, client);
         }
         return client;

@@ -23,9 +23,11 @@ Make a note of the canister ID created for the internet-identity.
 This should look something like this:
 
 ```bash
-INTERNET_IDENTITY_URL=http://rwlgt-iiaaa-aaaaa-aaaaa-cai.localhost:8000/
+INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rwlgt-iiaaa-aaaaa-aaaaa-cai
 DFX_NETWORK=local
 ROLLBAR_ACCESS_TOKEN=3194bdfb0c064240911a79b287765413
+SHOW_XSTATE_INSPECTOR=false
+MOCK_SERVICES=false
 ```
 
 Where the INTERNET_IDENTITY value should be replaced with a value containing the correct internet identity canister ID for your local environment.
