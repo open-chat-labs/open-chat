@@ -27,7 +27,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 ? new CachingGroupClient(db, chatId, new GroupClientMock())
                 : new GroupClientMock();
         }
-        return db
+        return db && process.env.CLIENT_CACHING
             ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
             : new GroupClient(identity, chatId);
     }
@@ -45,7 +45,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
         return this.handleResponse(
             this.groupService.add_participants({
-                user_ids: userIds.map(Principal.fromText),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
             addParticipantsResponse
         );

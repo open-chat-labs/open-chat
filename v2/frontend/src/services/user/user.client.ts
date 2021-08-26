@@ -36,7 +36,7 @@ export class UserClient extends CandidService implements IUserClient {
         if (process.env.MOCK_SERVICES) {
             return db ? new CachingUserClient(db, new UserClientMock()) : new UserClientMock();
         }
-        return db
+        return db && process.env.CLIENT_CACHING
             ? new CachingUserClient(db, new UserClient(identity, userId))
             : new UserClient(identity, userId);
     }

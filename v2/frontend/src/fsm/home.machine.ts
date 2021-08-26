@@ -95,7 +95,6 @@ async function getUpdates(
                 ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
                 : { updatesSince: undefined }
         );
-        console.log(chatsResponse);
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),

@@ -9,8 +9,9 @@ import type {
     CreateGroupResponse,
     GroupChatSummary,
 } from "../domain/chat/chat";
-import { pure, sendParent } from "xstate/lib/actions";
+import { pure } from "xstate/lib/actions";
 import { push } from "svelte-spa-router";
+import type { ApiAddParticipantsResponse } from "../services/group/candid/idl";
 
 export interface GroupContext {
     user: UserSummary;
@@ -38,12 +39,20 @@ export type GroupEvents =
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error }
     | { type: "done.invoke.createGroup"; data: CreateGroupResponse }
-    | { type: "error.platform.createGroup"; data: Error };
+    | { type: "error.platform.createGroup"; data: Error }
+    | { type: "done.invoke.addParticipants"; data: ApiAddParticipantsResponse }
+    | { type: "error.platform.addParticipants"; data: Error };
 
 const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
     services: {
         createGroup: (ctx, _) => {
             return ctx.serviceContainer.createGroupChat(ctx.candidateGroup);
+        },
+        addParticipants: (ctx, _) => {
+            return ctx.serviceContainer.addParticipants(
+                ctx.createdGroup!.chatId,
+                ctx.candidateGroup.participants.map((p) => p.user.userId)
+            );
         },
     },
 };
@@ -210,29 +219,28 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                     },
                 },
                 adding_participants: {
-                    // todo - we still need to make an actual api call here to update the group with the participants
-                    after: {
-                        3000: {
+                    invoke: {
+                        id: "addParticipants",
+                        src: "addParticipants",
+                        onDone: {
                             target: "done",
                             actions: pure((ctx, _) => {
+                                // todo - there is a bunch of error handling missing here
+                                // we are currently assuming success
                                 if (ctx.createdGroup) {
                                     push(`/${ctx.createdGroup.chatId}`); // trigger the selection of the chat
-                                    return sendParent({
-                                        type: "GROUP_CHAT_CREATED",
-                                        data: {
-                                            ...ctx.createdGroup,
-                                            participants: [
-                                                { role: "admin", userId: ctx.user.userId },
-                                                ...ctx.candidateGroup.participants.map((p) => ({
-                                                    role: p.role,
-                                                    userId: p.user.userId,
-                                                })),
-                                            ],
-                                        },
-                                    });
                                 }
                                 return undefined;
                             }),
+                        },
+                        onError: {
+                            internal: true,
+                            target: "..unexpected_error",
+                            actions: [
+                                assign({
+                                    error: (_, { data }) => data,
+                                }),
+                            ],
                         },
                     },
                 },

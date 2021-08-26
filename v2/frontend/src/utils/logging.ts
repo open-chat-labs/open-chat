@@ -8,3 +8,8 @@ export const rollbar = Rollbar.init({
         environment: "process.env.NODE_ENV",
     },
 });
+
+export function debug<T>(msg: T): T {
+    console.log(msg);
+    return msg;
+}

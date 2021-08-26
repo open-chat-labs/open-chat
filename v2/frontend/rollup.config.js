@@ -98,6 +98,7 @@ export default {
             "process.env.NODE_ENV": process.env.NODE_ENV,
             "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
             "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
+            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
             "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
             // todo - we can't really leave this like this, but it's ok for now
             "process.env.USER_INDEX_CANISTER":

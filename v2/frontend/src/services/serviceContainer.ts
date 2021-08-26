@@ -24,6 +24,7 @@ import type {
     ChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
+    AddParticipantsResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -69,6 +70,10 @@ export class ServiceContainer {
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.userClient.createGroup(candidate);
+    }
+
+    addParticipants(chatId: string, userIds: string[]): Promise<AddParticipantsResponse> {
+        return this.getGroupClient(chatId).addParticipants(userIds);
     }
 
     directChatEvents(
