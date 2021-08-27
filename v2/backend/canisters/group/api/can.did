@@ -53,11 +53,6 @@ type SetAvatarResponse =
         InvalidMimeType: nat32;
     };
 
-type JoinGroupArgs =
-    record {
-        "principal": principal;
-    };
-
 type JoinGroupResponse =
     variant {
         Success: record {};
@@ -208,20 +203,6 @@ type SummaryUpdatesResponse =
         NotInGroup;
     };
 
-type GetChunkArgs =
-    record {
-        blob_id: nat;
-        index: nat32;
-    };
-
-type GetChunkResponse =
-    variant {
-        Success: record {
-            bytes: vec nat8;
-        };
-        NotFound;
-    };
-
 type EventsArgs =
     record {
         from_index: EventIndex;
@@ -268,6 +249,20 @@ type SearchMessagesResponse =
         Failure;
     }; 
 
+type ChunkArgs =
+    record {
+        blob_id: nat;
+        index: nat32;
+    };
+
+type ChunkResponse =
+    variant {
+        Success: record {
+            bytes: vec nat8;
+        };
+        NotFound;
+    };
+
 type MetricsArgs =
     record {
     };
@@ -288,45 +283,28 @@ type MetricsResponse =
     };
 
 service: {
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
-    mark_read: (MarkReadArgs) -> (MarkReadResponse);
-
     // Admin only
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-
-    // Public only
-    join_group: (JoinGroupArgs) -> (JoinGroupResponse);
-    
-    // Admin only - public only
-    block_user: (BlockUserArgs) -> (BlockUserResponse); 
-
-    // Admin only - public only
-    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-
-    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
-
-    // Admin only - Private only
+    block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
+    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
+    make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
+    remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
 
-    // Admin only
-    make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
+    // Can be called by admins or regular users of public groups
+    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
 
-    // Admin only
-    remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
-
+    // Regular users
+    send_message: (SendMessageArgs) -> (SendMessageResponse);
+    mark_read: (MarkReadArgs) -> (MarkReadResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
-
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
-
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
-
-    // Use Tantivy
-    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;
-    
-    get_chunk: (GetChunkArgs) -> (GetChunkResponse) query;
+    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
+    chunk: (ChunkArgs) -> (ChunkResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

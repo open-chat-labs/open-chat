@@ -3,7 +3,7 @@ use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
 mod add_participants;
-mod join_group;
+mod c2c_join_group;
 mod mark_read;
 mod remove_participant;
 mod send_message;
