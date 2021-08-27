@@ -57,6 +57,16 @@ impl Participants {
         }
     }
 
+    pub fn remove(&mut self, user_id: UserId) -> bool {
+        match self.user_id_to_principal_map.remove(&user_id) {
+            None => false,
+            Some(principal) => {
+                self.by_principal.remove(&principal);
+                true
+            }
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &ParticipantInternal> {
         self.by_principal.values()
     }

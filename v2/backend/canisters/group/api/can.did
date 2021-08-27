@@ -118,15 +118,19 @@ type AddParticipantsFailedResult =
         errors: vec UserId;
     };
 
-// TODO
-type RemoveParticipantsArgs =
+type RemoveParticipantArgs =
     record {
+        user_id: UserId;
     };
 
-// TODO
-type RemoveParticipantsResponse =
+type RemoveParticipantResponse =
     variant {
-        Success;
+        Success,
+        CallerNotInGroup,
+        CannotRemoveSelf,
+        InternalError,
+        NotAuthorized,
+        UserNotInGroup,
     }; 
 
 // TODO
@@ -301,7 +305,7 @@ service: {
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Admin only - Private only
-    remove_participants: (RemoveParticipantsArgs) -> (RemoveParticipantsResponse);
+    remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
 
     // Admin only
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);

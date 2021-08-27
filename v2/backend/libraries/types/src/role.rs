@@ -11,4 +11,8 @@ impl Role {
     pub fn can_add_participants(&self, is_public_group: bool) -> bool {
         is_public_group || matches!(self, Role::Admin)
     }
+
+    pub fn can_remove_participants(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
 }

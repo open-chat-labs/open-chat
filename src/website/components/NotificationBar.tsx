@@ -78,7 +78,7 @@ function NotificationBar(props: Props): JSX.Element {
         }
     }
 
-    const message = viewMode == ViewMode.Mobile ? "Give permission to " : "OpenChat needs your permission to ";
+    const message = viewMode === ViewMode.Mobile ? "Give permission to " : "OpenChat needs your permission to ";
 
     return (
         <>
