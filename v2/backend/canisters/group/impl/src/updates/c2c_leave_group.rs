@@ -19,7 +19,6 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     match runtime_state.data.participants.remove(user_id) {
         true => {
             let event = ParticipantLeft { user_id };
-
             runtime_state
                 .data
                 .events

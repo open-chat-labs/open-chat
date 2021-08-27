@@ -1,3 +1,4 @@
+use crate::updates::handle_activity_notification;
 use crate::updates::unblock_user::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::unblock_user::*;
@@ -17,6 +18,7 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             CannotUnblockSelf
         } else if caller_participant.role.can_unblock_user() {
             runtime_state.data.participants.unblock(&args.user_id);
+            handle_activity_notification();
             Success
         } else {
             NotAuthorized

@@ -72,7 +72,7 @@ type BlockUserResponse =
         CallerNotInGroup;
         CannotBlockSelf;
         GroupNotPublic;
-        InternalError;
+        InternalError: text;
         NotAuthorized;
         UserNotInGroup;
     }; 
@@ -132,7 +132,7 @@ type RemoveParticipantResponse =
         Success;
         CallerNotInGroup;
         CannotRemoveSelf;
-        InternalError;
+        InternalError: text;
         NotAuthorized;
         UserNotInGroup;
     }; 

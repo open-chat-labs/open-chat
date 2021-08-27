@@ -12,7 +12,7 @@ pub enum Response {
     Success,
     CallerNotInGroup,
     CannotRemoveSelf,
-    InternalError,
+    InternalError(String),
     NotAuthorized,
     UserNotInGroup,
 }
