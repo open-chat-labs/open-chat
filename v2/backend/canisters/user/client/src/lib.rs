@@ -18,4 +18,5 @@ generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(create_group);
 generate_c2c_call!(join_group);
 generate_c2c_call!(mark_read);
+generate_c2c_call!(put_chunk);
 generate_c2c_call!(send_message);
