@@ -77,15 +77,18 @@ type BlockUserResponse =
         UserNotInGroup;
     }; 
 
-// TODO
 type UnblockUserArgs =
     record {
+        user_id: UserId;
     };
 
-// TODO
 type UnblockUserResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        CannotUnblockSelf;
+        GroupNotPublic;
+        NotAuthorized;
     }; 
 
 type AddParticipantsArgs =

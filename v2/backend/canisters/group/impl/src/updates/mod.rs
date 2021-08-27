@@ -9,6 +9,7 @@ mod make_admin;
 mod mark_read;
 mod remove_participant;
 mod send_message;
+mod unblock_user;
 
 // If needed, notify the group index canister that there has been activity in this group
 pub fn handle_activity_notification() {

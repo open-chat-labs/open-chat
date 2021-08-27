@@ -6,3 +6,4 @@ pub mod mark_read;
 pub mod remove_admin;
 pub mod remove_participant;
 pub mod send_message;
+pub mod unblock_user;

@@ -19,3 +19,4 @@ generate_c2c_call!(mark_read);
 generate_c2c_call!(remove_admin);
 generate_c2c_call!(remove_participant);
 generate_c2c_call!(send_message);
+generate_c2c_call!(unblock_user);
