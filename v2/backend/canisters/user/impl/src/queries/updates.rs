@@ -258,10 +258,13 @@ fn finalize(
         }
     }
 
+    let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
+
     SuccessResult {
         chats_added,
         chats_updated,
         chats_removed: Vec::new(), // TODO
         timestamp: now,
+        blocked_users,
     }
 }

@@ -1,3 +1,4 @@
+pub mod block_user;
 pub mod c2c_mark_read;
 pub mod c2c_remove_from_group;
 pub mod c2c_send_message;
@@ -8,3 +9,4 @@ pub mod leave_group;
 pub mod mark_read;
 pub mod put_chunk;
 pub mod send_message;
+pub mod unblock_user;

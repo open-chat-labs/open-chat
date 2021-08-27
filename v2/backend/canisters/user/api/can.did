@@ -27,7 +27,6 @@ type SendMessageResponse =
         BalanceExceeded;
         MessageTooLong: nat32;
         InvalidRequest;
-        SenderBlocked;
         RecipientBlocked;
     }; 
 
@@ -63,10 +62,20 @@ type BlockUserArgs =
         user_id: UserId;        
     };
 
+type BlockUserResponse
+    variant {
+        Success;
+    }; 
+
 type UnblockUserArgs =
     record {
         user_id: UserId;        
     };
+
+type UnblockUserResponse
+    variant {
+        Success;
+    }; 
 
 type PutChunkArgs =
     record {
@@ -165,6 +174,7 @@ type UpdatesResponse =
             chats_added: vec ChatSummary;
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
+            blocked_users: vec UserId;
         }
     };
 
@@ -264,8 +274,8 @@ service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    block_user: (BlockUserArgs) -> ();
-    unblock_user: (UnblockUserArgs) -> ();
+    block_user: (BlockUserArgs) -> (BlockUserResponse);
+    unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
