@@ -16,6 +16,7 @@ generate_c2c_call!(c2c_mark_read);
 generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(create_group);
+generate_c2c_call!(leave_group);
 generate_c2c_call!(join_group);
 generate_c2c_call!(mark_read);
 generate_c2c_call!(put_chunk);

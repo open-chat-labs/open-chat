@@ -163,17 +163,6 @@ type RemoveAdminResponse =
         UserNotInGroup;
     }; 
 
-// TODO
-type LeaveGroupArgs =
-    record {
-    };
-
-// TODO
-type LeaveGroupResponse =
-    variant {
-        Success;
-    }; 
-
 type PutChunkArgs =
     record {
         blob_id: nat;
@@ -310,7 +299,6 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
-    leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;

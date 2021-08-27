@@ -19,8 +19,8 @@ impl GroupChats {
         }
     }
 
-    pub fn remove(&mut self, group_chat_id: GroupChatId) {
-        self.group_chats.remove(&group_chat_id);
+    pub fn remove(&mut self, group_chat_id: &GroupChatId) {
+        self.group_chats.remove(group_chat_id);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {

@@ -5,6 +5,7 @@ use types::{CanisterId, Milliseconds};
 mod add_participants;
 mod block_user;
 mod c2c_join_group;
+mod c2c_leave_group;
 mod make_admin;
 mod mark_read;
 mod put_chunk;

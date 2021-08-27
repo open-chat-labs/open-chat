@@ -113,19 +113,33 @@ type CreateGroupResponse =
 
 type JoinGroupArgs =
     record {
-        chat_id: GroupChatId;
+        group_chat_id: GroupChatId;
     };
 
 type JoinGroupResponse =
     variant {
         Success;
         AlreadyInGroup;
+        Blocked;
         GroupNotFound;
         GroupNotPublic;
-        Blocked;
-        NotAuthorized;
         InternalError: text;
+        NotAuthorized;
     };
+
+type LeaveGroupArgs =
+    record {
+        group_chat_id: GroupChatId;
+    };
+
+type LeaveGroupResponse =
+    variant {
+        Success;
+        GroupNotFound;
+        InternalError: text;
+        NotAuthorized;
+        NotInGroup;
+    }; 
 
 type GroupChatUpdatesSince =
     record {
@@ -255,6 +269,7 @@ service: (InitArgs) -> {
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
