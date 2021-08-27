@@ -178,7 +178,7 @@ type PutChunkArgs =
     record {
         blob_id: nat;
         index: nat32;
-        bytes: vec nat8;
+        bytes: blob;
     };
 
 type PutChunkResponse =
@@ -271,7 +271,7 @@ type ChunkArgs =
 type ChunkResponse =
     variant {
         Success: record {
-            bytes: vec nat8;
+            bytes: blob;
         };
         NotFound;
     };
