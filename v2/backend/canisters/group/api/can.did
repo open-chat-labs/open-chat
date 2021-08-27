@@ -61,15 +61,20 @@ type JoinGroupResponse =
         Blocked;
     }; 
 
-// TODO
 type BlockUserArgs =
     record {
+        user_id: UserId;
     };
 
-// TODO
 type BlockUserResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        CannotBlockSelf;
+        GroupNotPublic;
+        InternalError;
+        NotAuthorized;
+        UserNotInGroup;
     }; 
 
 // TODO

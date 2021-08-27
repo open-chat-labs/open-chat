@@ -23,4 +23,8 @@ impl Role {
     pub fn can_remove_admin(&self) -> bool {
         matches!(self, Role::Admin)
     }
+
+    pub fn can_block_user(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
 }

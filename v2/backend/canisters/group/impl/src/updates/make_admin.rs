@@ -11,14 +11,14 @@ fn make_admin(args: Args) -> Response {
 
 fn make_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
-    if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
         if caller_participant.role.can_make_admin() {
             match runtime_state.data.participants.get_by_user_id_mut(&args.user_id) {
                 None => UserNotInGroup,
                 Some(participant) => {
                     participant.role = Role::Admin;
                     Success
-                },
+                }
             }
         } else {
             NotAuthorized
