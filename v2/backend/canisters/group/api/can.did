@@ -184,6 +184,7 @@ type PutChunkArgs =
 type PutChunkResponse =
     variant {
         Success;
+        ChunkTooBig;
         Full;
     };
 

@@ -7,6 +7,7 @@ mod block_user;
 mod c2c_join_group;
 mod make_admin;
 mod mark_read;
+mod put_chunk;
 mod remove_participant;
 mod send_message;
 mod unblock_user;

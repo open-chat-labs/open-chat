@@ -4,12 +4,15 @@ use crate::model::participants::Participants;
 use candid::Principal;
 use std::cell::RefCell;
 use types::{CanisterId, Milliseconds, TimestampMillis, UserId, Version};
+use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
 mod lifecycle;
 mod model;
 mod queries;
 mod updates;
+
+const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
@@ -43,6 +46,7 @@ pub struct Data {
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
+    pub blob_storage: BlobStorage,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -75,6 +79,7 @@ impl Data {
             notification_canister_ids: Vec::new(),
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
+            blob_storage: BlobStorage::new(MAX_STORAGE),
         }
     }
 }
