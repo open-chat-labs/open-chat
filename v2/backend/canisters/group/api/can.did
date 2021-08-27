@@ -121,23 +121,25 @@ type RemoveParticipantArgs =
 
 type RemoveParticipantResponse =
     variant {
-        Success,
-        CallerNotInGroup,
-        CannotRemoveSelf,
-        InternalError,
-        NotAuthorized,
-        UserNotInGroup,
+        Success;
+        CallerNotInGroup;
+        CannotRemoveSelf;
+        InternalError;
+        NotAuthorized;
+        UserNotInGroup;
     }; 
 
-// TODO
 type MakeAdminArgs =
     record {
+        user_id: UserId;
     };
 
-// TODO
 type MakeAdminResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        NotAuthorized;
+        UserNotInGroup;
     }; 
 
 // TODO
