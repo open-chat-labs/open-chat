@@ -25,6 +25,8 @@ import type {
     ChatSummary,
     MergedUpdatesResponse,
     AddParticipantsResponse,
+    GroupMessage,
+    SendMessageResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -66,6 +68,14 @@ export class ServiceContainer {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    sendGroupMessage(
+        chatId: string,
+        senderName: string,
+        message: GroupMessage
+    ): Promise<SendMessageResponse> {
+        return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {

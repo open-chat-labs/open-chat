@@ -5,6 +5,7 @@ import type {
     GroupChatEvent,
     GroupChatReplyContext,
     GroupMessage,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
@@ -109,6 +110,15 @@ export class GroupClientMock implements IGroupClient {
     addParticipants(_userIds: string[]): Promise<AddParticipantsResponse> {
         return Promise.resolve({
             kind: "add_participants_success",
+        });
+    }
+
+    sendMessage(_senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+        return Promise.resolve({
+            kind: "send_message_success",
+            timestamp: BigInt(Number(+new Date())),
+            messageIndex: message.messageIndex,
+            eventIndex: message.messageIndex,
         });
     }
 }

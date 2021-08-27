@@ -18,7 +18,6 @@ import type {
     DirectChatReplyContext,
 } from "../domain/chat/chat";
 import {
-    createDirectMessage,
     createGroupMessage,
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
@@ -58,6 +57,7 @@ export type ChatEvents =
           data: LoadEventsResponse;
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
+    | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data?: string }
@@ -264,7 +264,56 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parent state for all states that the user cares about or the UI should reflect",
             initial: "loading_previous_messages",
             on: {
-                SEND_MESSAGE: ".sending_message",
+                SEND_MESSAGE: {
+                    actions: [
+                        assign((ctx, ev) => {
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: "sending_message",
+                            });
+                            const index = latestLoadedEventIndex(ctx.events) ?? 0;
+                            if (ctx.chatSummary.kind === "group_chat") {
+                                const msg = createGroupMessage(
+                                    ctx.user!.userId,
+                                    index + 1,
+                                    ev.data,
+                                    ctx.replyingTo,
+                                    ctx.fileToAttach
+                                );
+
+                                // todo - this is fire and forget at the moment
+                                // doesn't seem right - need to figure out what we do if it fails
+                                // I think it might be simpler and indeed better to deal with this
+                                // inside the relevant svelte component. That way on error we
+                                // can simply fire another message into the state machine to have
+                                // it remove the candidate message. I don't think we can safely
+                                // modify context from this catch block as it stands
+                                ctx.serviceContainer
+                                    .sendGroupMessage(
+                                        ctx.chatSummary.chatId,
+                                        ctx.user!.username,
+                                        msg
+                                    )
+                                    .catch((_err) =>
+                                        toastStore.showFailureToast("errorSendingMessage")
+                                    );
+                                return {
+                                    events: [
+                                        ...ctx.events,
+                                        {
+                                            event: msg,
+                                            index: index + 1,
+                                            timestamp: BigInt(+new Date() - index + 1),
+                                        },
+                                    ],
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                };
+                            }
+                            return {};
+                        }),
+                    ],
+                },
                 SHOW_PARTICIPANTS: ".showing_participants",
                 ADD_PARTICIPANT: ".showing_participants",
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
@@ -347,52 +396,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 return undefined;
                             }),
                         },
-                    },
-                },
-                sending_message: {
-                    entry: assign((ctx, ev) => {
-                        if (ev.type === "SEND_MESSAGE") {
-                            // todo - this is obvious a huge simplification at the moment
-                            chatStore.set({
-                                chatId: ctx.chatSummary.chatId,
-                                event: "sending_message",
-                            });
-                            const index = latestLoadedEventIndex(ctx.events) ?? 0;
-                            return {
-                                events: [
-                                    ...ctx.events,
-                                    {
-                                        event:
-                                            ctx.chatSummary.kind === "direct_chat"
-                                                ? createDirectMessage(
-                                                      index + 1,
-                                                      ev.data,
-                                                      ctx.replyingTo,
-                                                      ctx.fileToAttach
-                                                  )
-                                                : createGroupMessage(
-                                                      ctx.user!.userId,
-                                                      index + 1,
-                                                      ev.data,
-                                                      ctx.replyingTo,
-                                                      ctx.fileToAttach
-                                                  ),
-                                        index: index + 1,
-                                        timestamp: BigInt(+new Date() - index + 1),
-                                    },
-                                ],
-                                replyingTo: undefined,
-                                fileToAttach: undefined,
-                            };
-                        }
-                        return {};
-                    }),
-                    after: {
-                        // simulate the actual api call delay
-                        // todo - this will cause us to skip messages that are entered if they are < 2000 ms since the last
-                        // one. Don't worry about that for now.
-                        // although - not sure *why*
-                        100: "idle",
                     },
                 },
                 showing_participants: {

@@ -200,9 +200,33 @@ export const idlFactory = ({ IDL }) => {
   const ReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
+    'sender_name' : IDL.Text,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContextArgs),
   });
+  const SendMessageResponse = IDL.Variant({
+    'BalanceExceeded' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'message_index' : MessageIndex,
+    }),
+    'RecipientBlocked' : IDL.Null,
+    'InvalidRequest' : IDL.Null,
+    'SenderBlocked' : IDL.Null,
+    'MessageTooLong' : IDL.Nat32,
+    'RecipientNotFound' : IDL.Null,
+  });
+  const SetAvatarArgs = IDL.Record({
+    'mime_type' : IDL.Text,
+    'bytes' : IDL.Vec(IDL.Nat8),
+  });
+  const SetAvatarResponse = IDL.Variant({
+    'InvalidMimeType' : IDL.Nat32,
+    'FileTooBig' : IDL.Nat32,
+    'Success' : IDL.Null,
+  });
+  const SummaryArgs = IDL.Record({});
   const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
   const Participant = IDL.Record({
     'role' : Role,
@@ -228,29 +252,6 @@ export const idlFactory = ({ IDL }) => {
     'chat_id' : GroupChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
-  const SendMessageResponse = IDL.Variant({
-    'BalanceExceeded' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'chat_summary' : GroupChatSummary,
-      'message_index' : MessageIndex,
-    }),
-    'RecipientBlocked' : IDL.Null,
-    'InvalidRequest' : IDL.Null,
-    'SenderBlocked' : IDL.Null,
-    'MessageTooLong' : IDL.Nat32,
-    'RecipientNotFound' : IDL.Null,
-  });
-  const SetAvatarArgs = IDL.Record({
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
-  });
-  const SetAvatarResponse = IDL.Variant({
-    'InvalidMimeType' : IDL.Nat32,
-    'FileTooBig' : IDL.Nat32,
-    'Success' : IDL.Null,
-  });
-  const SummaryArgs = IDL.Record({});
   const SummaryResponse = IDL.Variant({
     'Success' : GroupChatSummary,
     'SuccessNoUpdates' : IDL.Null,

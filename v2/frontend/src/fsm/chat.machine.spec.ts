@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import type { Identity } from "@dfinity/agent";
 import type {
     DirectChatSummary,
     DirectMessage,
@@ -12,7 +13,7 @@ import type {
     TextContent,
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
-import type { ServiceContainer } from "../services/serviceContainer";
+import { ServiceContainer } from "../services/serviceContainer";
 import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
 
@@ -67,8 +68,10 @@ const directContext: ChatContext = {
     replyingTo: undefined,
 };
 
+const serviceContainer = new ServiceContainer({} as Identity);
+
 const groupContext: ChatContext = {
-    serviceContainer: {} as ServiceContainer,
+    serviceContainer,
     chatSummary: groupChat,
     userLookup: {},
     events: [],
@@ -133,11 +136,15 @@ describe("chat machine transitions", () => {
         expect(ctx.replyingTo).toEqual(msg);
     });
     test("send messages", () => {
+        // todo - temporary hack, I will revisit this
+        serviceContainer.sendGroupMessage = jest
+            .fn()
+            .mockResolvedValue({ kind: "send_message_too_long" });
         const ctx = testTransition(
-            chatMachine.withContext(directContext),
+            chatMachine.withContext(groupContext),
             { user_states: "idle" },
             { type: "SEND_MESSAGE", data: "hello world" },
-            { user_states: "sending_message" }
+            { user_states: "idle" }
         );
         expect(ctx.events.length).toEqual(1);
     });
@@ -151,11 +158,15 @@ describe("chat machine transitions", () => {
         expect(ctx.replyingTo).toBe(undefined);
     });
     test("send messages clears replyto", () => {
+        // todo - temporary hack, I will revisit this
+        serviceContainer.sendGroupMessage = jest
+            .fn()
+            .mockResolvedValue({ kind: "send_message_too_long" });
         const ctx = testTransition(
-            chatMachine.withContext({ ...directContext, replyingTo: repliesTo() }),
+            chatMachine.withContext({ ...groupContext, replyingTo: repliesToGroup() }),
             { user_states: "idle" },
             { type: "SEND_MESSAGE", data: "hello world" },
-            { user_states: "sending_message" }
+            { user_states: "idle" }
         );
         expect(ctx.replyingTo).toBe(undefined);
     });
@@ -216,6 +227,18 @@ function repliesTo(): EnhancedReplyContext<ReplyContext> {
             text: "some text",
         },
         sentByMe: true,
+        eventIndex: 0,
+    };
+}
+
+function repliesToGroup(): EnhancedReplyContext<ReplyContext> {
+    return {
+        kind: "group_reply_context",
+        content: {
+            kind: "text_content",
+            text: "some text",
+        },
+        userId: "abcdef",
         eventIndex: 0,
     };
 }

@@ -9,14 +9,15 @@ type SendMessageArgs =
     record {
         message_id: MessageId;
         content: MessageContent;
+        sender_name: text;
         replies_to: opt ReplyContextArgs;
     };
 
 type SendMessageResponse =
     variant {
         Success: record {
-            chat_summary: GroupChatSummary;
             message_index: MessageIndex;
+            event_index: EventIndex;
             timestamp: TimestampMillis;
         };
         RecipientNotFound;

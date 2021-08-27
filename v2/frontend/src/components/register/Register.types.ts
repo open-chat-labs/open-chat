@@ -6,4 +6,5 @@ export type RegisterState =
     | "verifying"
     | "awaitingUsername"
     | "awaitingCompletion"
+    | "awaitingCanister"
     | { error: string };

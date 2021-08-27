@@ -70,6 +70,7 @@
     "failedToLeaveGroup": "There was an error typing to remove you from the group",
     "inviteCodeCopied": "Invite code copied to your clipboard",
     "errorSearchingForUser": "An unexpected error occurred when searching for users",
+    "errorSendingMessage": "An unexpected error occurred sending your message",
     "chatSummary": {
         "unread": "{count} unread message(s)"
     },
@@ -81,6 +82,7 @@
     },
     "register": {
         "tellUsWho": "Tell us who you are ...",
+        "preparingUser": "Preparing user ...",
         "registerAs": "To register as a user",
         "enterCodeSentTo": "code sent to ",
         "enterPhone": "please enter your phone number below",

@@ -20,9 +20,17 @@ import {
     EventsArgs,
     GroupChatEvent,
     AddParticipantsResponse,
+    SendMessageArgs,
+    SendMessageResponse,
+    PutChunkArgs,
+    PutChunkResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
+    PutChunkArgs as ApiPutChunkArgs,
+    PutChunkResponse as ApiPutChunkResponse,
+    SendMessageArgs as ApiSendMessageArgs,
+    SendMessageResponse as ApiSendMessageResponse,
     GroupMessage as ApiGroupMessage,
     UserId as ApiUserId,
     GroupReplyContext as ApiGroupReplyContext,

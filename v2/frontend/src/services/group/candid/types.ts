@@ -308,6 +308,7 @@ export type SearchMessagesResponse = {
   { 'Failure' : null };
 export interface SendMessageArgs {
   'content' : MessageContent,
+  'sender_name' : string,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContextArgs],
 }
@@ -315,7 +316,7 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
-      'chat_summary' : GroupChatSummary,
+      'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
   } |
