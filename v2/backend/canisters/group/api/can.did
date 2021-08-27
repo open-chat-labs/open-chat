@@ -142,15 +142,17 @@ type MakeAdminResponse =
         UserNotInGroup;
     }; 
 
-// TODO
 type RemoveAdminArgs =
     record {
+        user_id: UserId;
     };
 
-// TODO
 type RemoveAdminResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        NotAuthorized;
+        UserNotInGroup;
     }; 
 
 // TODO
