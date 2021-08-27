@@ -212,7 +212,7 @@ type ChunkArgs =
 type ChunkResponse =
     variant {
         Success: record {
-            bytes: vec nat8;
+            bytes: blob;
         };
         NotFound;
     };

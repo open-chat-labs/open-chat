@@ -29,7 +29,7 @@ impl BlobStorage {
 
     pub fn put_chunk(&mut self, blob_id: u128, chunk_index: u32, data: ByteBuf) -> PutChunkResult {
         let byte_count = data.len() as u64;
-        
+
         if byte_count > MAX_CHUNK_SIZE {
             return PutChunkResult::ChunkTooBig;
         }

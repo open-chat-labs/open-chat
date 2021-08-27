@@ -5,6 +5,7 @@ use user_canister::*;
 use utils::generate_c2c_call;
 
 // Queries
+generate_c2c_call!(chunk);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
 generate_c2c_call!(updates);
