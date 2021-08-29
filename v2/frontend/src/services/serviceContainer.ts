@@ -27,6 +27,7 @@ import type {
     AddParticipantsResponse,
     GroupMessage,
     SendMessageResponse,
+    DirectMessage,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -76,6 +77,14 @@ export class ServiceContainer {
         message: GroupMessage
     ): Promise<SendMessageResponse> {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
+    }
+
+    sendDirectMessage(
+        recipientId: string,
+        senderName: string,
+        message: DirectMessage
+    ): Promise<SendMessageResponse> {
+        return this.userClient.sendMessage(recipientId, senderName, message);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {

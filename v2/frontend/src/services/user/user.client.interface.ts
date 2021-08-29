@@ -6,6 +6,8 @@ import type {
     DirectChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
+    DirectMessage,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
@@ -16,4 +18,9 @@ export interface IUserClient {
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
+    sendMessage(
+        recipientId: string,
+        senderName: string,
+        message: DirectMessage
+    ): Promise<SendMessageResponse>;
 }

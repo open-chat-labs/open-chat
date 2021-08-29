@@ -11,8 +11,6 @@ import type {
 import { CandidService } from "../candidService";
 import {
     addParticipantsResponse,
-    apiMessageContent,
-    apiOptional,
     getEventsResponse,
     putChunkResponse,
     sendMessageResponse,
@@ -23,6 +21,7 @@ import { GroupClientMock } from "./group.client.mock";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { v1 as uuidv1 } from "uuid";
+import { apiMessageContent, apiOptional } from "../common/chatMappers";
 
 const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 

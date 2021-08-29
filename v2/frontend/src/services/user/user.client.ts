@@ -9,6 +9,8 @@ import type {
     DirectChatEvent,
     MergedUpdatesResponse,
     ChatSummary,
+    DirectMessage,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -16,6 +18,7 @@ import {
     createGroupResponse,
     getEventsResponse,
     getUpdatesResponse,
+    sendMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import type { ChunkResponse } from "../../domain/data/data";
@@ -23,6 +26,7 @@ import { mergeChatUpdates } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { UserClientMock } from "./user.client.mock";
 import { CachingUserClient } from "./user.caching.client";
+import { apiMessageContent, apiOptional } from "../common/chatMappers";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -108,6 +112,30 @@ export class UserClient extends CandidService implements IUserClient {
                 index: chunkIndex,
             }),
             chunkResponse
+        );
+    }
+
+    sendMessage(
+        recipientId: string,
+        senderName: string,
+        message: DirectMessage
+    ): Promise<SendMessageResponse> {
+        return this.handleResponse(
+            this.userService.send_message({
+                content: apiMessageContent(message.content),
+                recipient: Principal.fromText(recipientId),
+                sender_name: senderName,
+                message_id: message.messageId,
+                replies_to: apiOptional(
+                    // todo - this is all kinds of wrong at the moment
+                    (_replyContext) => ({
+                        chat_id_if_other: [],
+                        message_index: 0,
+                    }),
+                    message.repliesTo
+                ),
+            }),
+            sendMessageResponse
         );
     }
 }

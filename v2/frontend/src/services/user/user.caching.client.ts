@@ -6,6 +6,8 @@ import type {
     DirectChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
+    DirectMessage,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -65,5 +67,13 @@ export class CachingUserClient implements IUserClient {
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.client.createGroup(group);
+    }
+
+    sendMessage(
+        recipientId: string,
+        senderName: string,
+        message: DirectMessage
+    ): Promise<SendMessageResponse> {
+        return this.client.sendMessage(recipientId, senderName, message);
     }
 }

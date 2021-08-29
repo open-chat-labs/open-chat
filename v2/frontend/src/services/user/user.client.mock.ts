@@ -15,6 +15,7 @@ import type {
     GroupChatReplyContext,
     DirectChatReplyContext,
     MergedUpdatesResponse,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import { mergeChatUpdates, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -334,5 +335,18 @@ export class UserClientMock implements IUserClient {
         _chunkSize?: number
     ): Promise<Uint8Array | undefined> {
         return undefined;
+    }
+
+    sendMessage(
+        _recipientId: string,
+        _senderName: string,
+        message: DirectMessage
+    ): Promise<SendMessageResponse> {
+        return Promise.resolve({
+            kind: "send_message_success",
+            timestamp: BigInt(Number(+new Date())),
+            messageIndex: message.messageIndex,
+            eventIndex: message.messageIndex,
+        });
     }
 }

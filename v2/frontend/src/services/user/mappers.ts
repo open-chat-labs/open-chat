@@ -17,6 +17,7 @@ import type {
     ApiDirectChatEventWrapper,
     ApiDirectReplyContext,
     ApiDirectMessage,
+    ApiSendMessageResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -37,10 +38,42 @@ import type {
     DirectMessage,
     GroupChatReplyContext,
     DirectChatReplyContext,
+    SendMessageResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+    if ("BalanceExceeded" in candid) {
+        return { kind: "send_message_balance_exceeded" };
+    }
+    if ("Success" in candid) {
+        return {
+            // todo - the response type for direct messages is actually different and we need to resolve that
+            kind: "send_message_success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: 0,
+        };
+    }
+    if ("RecipientBlocked" in candid) {
+        return { kind: "send_message_recipient_blocked" };
+    }
+    if ("InvalidRequest" in candid) {
+        return { kind: "send_message_invalid_request" };
+    }
+    if ("SenderBlocked" in candid) {
+        return { kind: "send_message_sender_blocked" };
+    }
+    if ("MessageTooLong" in candid) {
+        return { kind: "send_message_too_long" };
+    }
+    if ("RecipientNotFound" in candid) {
+        return { kind: "send_message_recipient_not_found" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
 
 export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
     if ("NotFound" in candid) {

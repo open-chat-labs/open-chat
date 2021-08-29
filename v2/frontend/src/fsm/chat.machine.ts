@@ -18,6 +18,7 @@ import type {
     DirectChatReplyContext,
 } from "../domain/chat/chat";
 import {
+    createDirectMessage,
     createGroupMessage,
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
@@ -291,6 +292,36 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 ctx.serviceContainer
                                     .sendGroupMessage(
                                         ctx.chatSummary.chatId,
+                                        ctx.user!.username,
+                                        msg
+                                    )
+                                    .catch((_err) =>
+                                        toastStore.showFailureToast("errorSendingMessage")
+                                    );
+                                return {
+                                    events: [
+                                        ...ctx.events,
+                                        {
+                                            event: msg,
+                                            index: index + 1,
+                                            timestamp: BigInt(+new Date() - index + 1),
+                                        },
+                                    ],
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                };
+                            }
+                            if (ctx.chatSummary.kind === "direct_chat") {
+                                const msg = createDirectMessage(
+                                    index + 1,
+                                    ev.data,
+                                    ctx.replyingTo,
+                                    ctx.fileToAttach
+                                );
+
+                                ctx.serviceContainer
+                                    .sendDirectMessage(
+                                        ctx.chatSummary.them,
                                         ctx.user!.username,
                                         msg
                                     )
