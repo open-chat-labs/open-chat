@@ -16,6 +16,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
@@ -32,6 +35,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
@@ -48,6 +54,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
       - uses: actions-rs/cargo@v1
         with:
           command: test
