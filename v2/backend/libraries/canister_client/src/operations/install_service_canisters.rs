@@ -1,12 +1,12 @@
 use crate::utils::{build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName};
 use crate::{CanisterIds, TestIdentity};
 use candid::{CandidType, Principal};
+use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use types::CanisterId;
-use ic_agent::identity::BasicIdentity;
 use std::path::Path;
+use types::CanisterId;
 
 pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     let identity = build_identity(TestIdentity::Controller);
@@ -17,7 +17,9 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     let (user_index_canister_id, group_index_canister_id, notifications_canister_id) = futures::future::join3(
         create_empty_canister(&management_canister),
         create_empty_canister(&management_canister),
-        create_empty_canister(&management_canister)).await;
+        create_empty_canister(&management_canister),
+    )
+    .await;
 
     println!("user_index canister id: {}", user_index_canister_id.to_string());
     println!("group_index canister id: {}", group_index_canister_id.to_string());
@@ -48,8 +50,8 @@ pub async fn install_service_canisters(url: String, controller: String, canister
 async fn install_service_canisters_impl(
     principal: Principal,
     canister_ids: &CanisterIds,
-    management_canister: &Canister<'_, ManagementCanister>)
-{
+    management_canister: &Canister<'_, ManagementCanister>,
+) {
     let user_index_canister_wasm = get_canister_wasm(CanisterWasmName::UserIndex);
     let user_canister_wasm = get_canister_wasm(CanisterWasmName::User);
     let user_index_init_args = user_index_canister::init::Args {
@@ -75,23 +77,25 @@ async fn install_service_canisters_impl(
 
     futures::future::join3(
         install_wasm(
-            &management_canister,
+            management_canister,
             &canister_ids.user_index,
             &user_index_canister_wasm.module,
             user_index_init_args,
         ),
         install_wasm(
-            &management_canister,
+            management_canister,
             &canister_ids.group_index,
             &group_index_canister_wasm.module,
             group_index_init_args,
         ),
         install_wasm(
-            &management_canister,
+            management_canister,
             &canister_ids.notifications,
             &notifications_canister_wasm.module,
             notifications_init_args,
-        )).await;
+        ),
+    )
+    .await;
 
     println!("Canister wasms installed");
 }
