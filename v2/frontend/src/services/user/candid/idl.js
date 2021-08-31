@@ -1,5 +1,6 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
+  const ChatId = CanisterId;
   const InitArgs = IDL.Record({
     'owner' : IDL.Principal,
     'notification_canister_ids' : IDL.Vec(CanisterId),
@@ -17,12 +18,11 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
   });
-  const GroupChatId = IDL.Principal;
   const CreateGroupFieldTooLongResult = IDL.Record({
-    'group_chat_id' : GroupChatId,
+    'chat_id' : ChatId,
   });
   const CreateGroupSuccessResult = IDL.Record({
-    'group_chat_id' : GroupChatId,
+    'chat_id' : ChatId,
   });
   const CreateGroupResponse = IDL.Variant({
     'PublicGroupAlreadyExists' : IDL.Null,
@@ -72,7 +72,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MessageId = IDL.Nat;
   const PrivateReplyContext = IDL.Record({
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
     'event_index' : EventIndex,
   });
   const StandardReplyContext = IDL.Record({
@@ -137,7 +137,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const ReplyContextArgs = IDL.Record({
-    'chat_id_if_other' : IDL.Opt(GroupChatId),
+    'chat_id_if_other' : IDL.Opt(ChatId),
     'message_index' : MessageIndex,
   });
   const HandleMessageReceivedArgs = IDL.Record({
@@ -147,7 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContextArgs),
   });
   const HandleMessageReceivedResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const JoinGroupArgs = IDL.Record({ 'chat_id' : GroupChatId });
+  const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const JoinGroupResponse = IDL.Variant({
     'Blocked' : IDL.Null,
     'GroupNotFound' : IDL.Null,
@@ -242,7 +242,7 @@ export const idlFactory = ({ IDL }) => {
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const GroupChatUpdatesSince = IDL.Record({
     'updates_since' : TimestampMillis,
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
   });
   const UpdatesSince = IDL.Record({
     'group_chats' : IDL.Vec(GroupChatUpdatesSince),
@@ -280,10 +280,9 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'latest_read_by_me' : IDL.Opt(MessageIndex),
     'latest_event_index' : IDL.Opt(EventIndex),
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
-  const DirectChatId = IDL.Principal;
   const DirectMessageEventWrapper = IDL.Record({
     'event' : DirectMessage,
     'timestamp' : TimestampMillis,
@@ -292,7 +291,7 @@ export const idlFactory = ({ IDL }) => {
   const DirectChatSummaryUpdates = IDL.Record({
     'latest_read_by_me' : IDL.Opt(MessageIndex),
     'latest_event_index' : IDL.Opt(EventIndex),
-    'chat_id' : DirectChatId,
+    'chat_id' : ChatId,
     'latest_read_by_them' : IDL.Opt(MessageIndex),
     'latest_message' : IDL.Opt(DirectMessageEventWrapper),
   });
@@ -310,7 +309,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
@@ -318,17 +317,13 @@ export const idlFactory = ({ IDL }) => {
     'them' : UserId,
     'latest_read_by_me' : MessageIndex,
     'latest_event_index' : EventIndex,
-    'chat_id' : DirectChatId,
+    'chat_id' : ChatId,
     'latest_read_by_them' : MessageIndex,
     'latest_message' : DirectMessageEventWrapper,
   });
   const ChatSummary = IDL.Variant({
     'Group' : GroupChatSummary,
     'Direct' : DirectChatSummary,
-  });
-  const ChatId = IDL.Variant({
-    'Group' : GroupChatId,
-    'Direct' : DirectChatId,
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({

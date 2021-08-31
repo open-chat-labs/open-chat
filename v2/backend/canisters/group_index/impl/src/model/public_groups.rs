@@ -1,22 +1,22 @@
 use crate::MARK_ACTIVE_DURATION;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{GroupChatId, TimestampMillis, Version};
+use types::{ChatId, TimestampMillis, Version};
 
 #[derive(Default)]
 pub struct PublicGroups {
-    groups: HashMap<GroupChatId, PublicGroupInfo>,
-    name_to_id_map: HashMap<String, GroupChatId>,
+    groups: HashMap<ChatId, PublicGroupInfo>,
+    name_to_id_map: HashMap<String, ChatId>,
     groups_pending: HashMap<String, TimestampMillis>,
 }
 
 impl PublicGroups {
-    pub fn get(&self, group_id: &GroupChatId) -> Option<&PublicGroupInfo> {
-        self.groups.get(group_id)
+    pub fn get(&self, chat_id: &ChatId) -> Option<&PublicGroupInfo> {
+        self.groups.get(chat_id)
     }
 
-    pub fn get_mut(&mut self, group_id: &GroupChatId) -> Option<&mut PublicGroupInfo> {
-        self.groups.get_mut(group_id)
+    pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut PublicGroupInfo> {
+        self.groups.get_mut(chat_id)
     }
 
     pub fn reserve_name(&mut self, name: String, now: TimestampMillis) -> bool {
@@ -33,18 +33,12 @@ impl PublicGroups {
         }
     }
 
-    pub fn handle_group_created(
-        &mut self,
-        group_id: GroupChatId,
-        name: String,
-        now: TimestampMillis,
-        wasm_version: Version,
-    ) -> bool {
+    pub fn handle_group_created(&mut self, chat_id: ChatId, name: String, now: TimestampMillis, wasm_version: Version) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(group_id, name.clone(), now, wasm_version);
+            let group_info = PublicGroupInfo::new(chat_id, name.clone(), now, wasm_version);
 
-            self.name_to_id_map.insert(name, group_id);
-            self.groups.insert(group_id, group_info);
+            self.name_to_id_map.insert(name, chat_id);
+            self.groups.insert(chat_id, group_info);
             true
         } else {
             false
@@ -58,7 +52,7 @@ impl PublicGroups {
 
 #[allow(dead_code)]
 pub struct PublicGroupInfo {
-    id: GroupChatId,
+    id: ChatId,
     name: String,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
@@ -66,7 +60,7 @@ pub struct PublicGroupInfo {
 }
 
 impl PublicGroupInfo {
-    pub fn new(id: GroupChatId, name: String, now: TimestampMillis, wasm_version: Version) -> PublicGroupInfo {
+    pub fn new(id: ChatId, name: String, now: TimestampMillis, wasm_version: Version) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
             name,
@@ -76,7 +70,7 @@ impl PublicGroupInfo {
         }
     }
 
-    pub fn id(&self) -> GroupChatId {
+    pub fn id(&self) -> ChatId {
         self.id
     }
 

@@ -1,8 +1,8 @@
 use crate::model::events::Events;
-use types::{DirectChatId, MessageIndex, TimestampMillis, Updatable, UserId};
+use types::{ChatId, MessageIndex, TimestampMillis, Updatable, UserId};
 
 pub struct DirectChat {
-    pub chat_id: DirectChatId,
+    pub chat_id: ChatId,
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: Events,
@@ -11,7 +11,7 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(chat_id: DirectChatId, them: UserId, now: TimestampMillis) -> DirectChat {
+    pub fn new(chat_id: ChatId, them: UserId, now: TimestampMillis) -> DirectChat {
         DirectChat {
             chat_id,
             them,

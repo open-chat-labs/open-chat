@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::GroupChatId;
+use types::ChatId;
 
 pub const MAX_GROUP_NAME_LENGTH: u32 = 25;
 pub const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
@@ -26,7 +26,7 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub group_chat_id: GroupChatId,
+    pub chat_id: ChatId,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

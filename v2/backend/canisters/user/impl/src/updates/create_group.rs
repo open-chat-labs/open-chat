@@ -2,7 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, GroupChatId};
+use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
@@ -20,10 +20,8 @@ async fn create_group(args: Args) -> Response {
     {
         Ok(response) => match response {
             c2c_create_group::Response::Success(r) => {
-                RUNTIME_STATE.with(|state| commit(r.group_id, state.borrow_mut().as_mut().unwrap()));
-                Success(SuccessResult {
-                    group_chat_id: r.group_id,
-                })
+                RUNTIME_STATE.with(|state| commit(r.chat_id, state.borrow_mut().as_mut().unwrap()));
+                Success(SuccessResult { chat_id: r.chat_id })
             }
             c2c_create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
             c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
@@ -78,6 +76,6 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
     }
 }
 
-fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.group_chats.add(group_chat_id);
+fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
+    runtime_state.data.group_chats.add(chat_id);
 }

@@ -1,7 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_index_canister::c2c_mark_active::{Response::*, *};
 use ic_cdk_macros::update;
-use types::GroupChatId;
+use types::ChatId;
 
 #[update]
 fn c2c_mark_active(args: Args) -> Response {
@@ -9,7 +9,7 @@ fn c2c_mark_active(args: Args) -> Response {
 }
 
 fn c2c_mark_active_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let chat_id = GroupChatId::from(runtime_state.env.caller());
+    let chat_id = ChatId::from(runtime_state.env.caller());
     let now = runtime_state.env.now();
 
     if let Some(g) = runtime_state.data.private_groups.get_mut(&chat_id) {

@@ -5,7 +5,7 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
-use types::{ChatSummary, GroupChatId, UserId};
+use types::{ChatSummary, ChatId, UserId};
 
 pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(create_group_test_impl(handle, ctx));
@@ -61,11 +61,11 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         history_visible_to_new_joiners: false,
     };
 
-    let group_chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
+    let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
 
-    match canisters::group::summary(&user1_agent, &group_chat_id.into(), &group_canister::summary::Args {}).await {
+    match canisters::group::summary(&user1_agent, &chat_id.into(), &group_canister::summary::Args {}).await {
         group_canister::summary::Response::Success(r) => {
-            assert_eq!(r.summary.chat_id, group_chat_id);
+            assert_eq!(r.summary.chat_id, chat_id);
             assert_eq!(r.summary.name, name);
             assert_eq!(r.summary.description, description);
             assert!(!r.summary.is_public);
@@ -75,20 +75,20 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     }
 
     futures::future::join3(
-        ensure_user_canister_links_to_group(&user1_agent, user1_id, group_chat_id),
-        ensure_user_canister_links_to_group(&user2_agent, user2_id, group_chat_id),
-        ensure_user_canister_links_to_group(&user3_agent, user3_id, group_chat_id),
+        ensure_user_canister_links_to_group(&user1_agent, user1_id, chat_id),
+        ensure_user_canister_links_to_group(&user2_agent, user2_id, chat_id),
+        ensure_user_canister_links_to_group(&user3_agent, user3_id, chat_id),
     )
     .await;
 }
 
-async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, group_chat_id: GroupChatId) {
+async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, chat_id: ChatId) {
     let args = user_canister::updates::Args { updates_since: None };
     match canisters::user::updates(agent, &user_id.into(), &args).await {
         user_canister::updates::Response::Success(r) => {
             assert_eq!(r.chats_added.len(), 1);
             if let ChatSummary::Group(g) = r.chats_added.first().unwrap() {
-                assert_eq!(g.chat_id, group_chat_id);
+                assert_eq!(g.chat_id, chat_id);
             } else {
                 panic!("Group chat not found");
             }

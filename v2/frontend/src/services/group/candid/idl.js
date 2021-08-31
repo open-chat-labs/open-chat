@@ -1,5 +1,6 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
+  const ChatId = CanisterId;
   const UserId = CanisterId;
   const AddParticipantsArgs = IDL.Record({ 'user_ids' : IDL.Vec(UserId) });
   const AddParticipantsFailedResult = IDL.Record({
@@ -233,7 +234,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const GroupChatId = IDL.Principal;
   const GroupMessageEventWrapper = IDL.Record({
     'event' : GroupMessage,
     'timestamp' : TimestampMillis,
@@ -249,7 +249,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_read_by_me' : MessageIndex,
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
   const SummaryResponse = IDL.Variant({
@@ -266,7 +266,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'latest_read_by_me' : IDL.Opt(MessageIndex),
     'latest_event_index' : IDL.Opt(EventIndex),
-    'chat_id' : GroupChatId,
+    'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
   const SummaryUpdatesSuccess = IDL.Record({

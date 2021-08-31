@@ -56,7 +56,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: "TEST_DESCRIPTION1".to_string(),
         history_visible_to_new_joiners: false,
     };
-    let group_chat_id1 = create_group(&user1_agent, user1_id, &create_group_args1, vec![user2_id, user3_id]).await;
+    let chat_id1 = create_group(&user1_agent, user1_id, &create_group_args1, vec![user2_id, user3_id]).await;
 
     let create_group_args2 = user_canister::create_group::Args {
         is_public: false,
@@ -64,7 +64,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         description: "TEST_DESCRIPTION2".to_string(),
         history_visible_to_new_joiners: false,
     };
-    let group_chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
+    let chat_id2 = create_group(&user1_agent, user1_id, &create_group_args2, vec![user2_id, user3_id]).await;
 
     let direct_message_args1 = user_canister::send_message::Args {
         message_id: 1.into(),
@@ -90,7 +90,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         sender_name: user2_name.clone(),
         replies_to: None,
     };
-    let result3 = send_group_message(&user2_agent, group_chat_id1, &group_message_args1).await;
+    let result3 = send_group_message(&user2_agent, chat_id1, &group_message_args1).await;
 
     let group_message_args2 = group_canister::send_message::Args {
         message_id: 4.into(),
@@ -98,7 +98,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         sender_name: user2_name.clone(),
         replies_to: None,
     };
-    let result4 = send_group_message(&user2_agent, group_chat_id2, &group_message_args2).await;
+    let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
     let updates_args1 = user_canister::updates::Args { updates_since: None };
     let updates_response1 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args1).await;
@@ -112,11 +112,11 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 timestamp: result1.timestamp,
                 group_chats: vec![
                     user_canister::updates::GroupChatUpdatesSince {
-                        chat_id: group_chat_id1,
+                        chat_id: chat_id1,
                         updates_since: result3.timestamp - 1,
                     },
                     user_canister::updates::GroupChatUpdatesSince {
-                        chat_id: group_chat_id2,
+                        chat_id: chat_id2,
                         updates_since: result4.timestamp,
                     },
                 ],
