@@ -1,5 +1,3 @@
-[workspace]
-
 [package]
 name = "canister_installer"
 version = "0.1.0"
