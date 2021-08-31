@@ -14,11 +14,7 @@ mod send_message;
 mod unblock_user;
 
 // If needed, notify the group index canister that there has been activity in this group
-pub fn handle_activity_notification() {
-    RUNTIME_STATE.with(|state| handle_activity_notification_impl(state.borrow_mut().as_mut().unwrap()));
-}
-
-fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
+fn handle_activity_notification(runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let mark_active_duration = runtime_state.data.mark_active_duration;
 

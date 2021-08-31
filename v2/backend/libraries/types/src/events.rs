@@ -15,6 +15,8 @@ pub enum GroupChatEvent {
     ParticipantLeft(ParticipantLeft),
     ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
     ParticipantsDismissedAsAdmin(ParticipantsPromotedToAdmin),
+    UsersBlocked(UsersBlocked),
+    UsersUnblocked(UsersUnblocked),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -48,6 +50,18 @@ pub struct ParticipantsAdded {
 pub struct ParticipantsRemoved {
     pub user_ids: Vec<UserId>,
     pub removed_by: UserId,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct UsersBlocked {
+    pub user_ids: Vec<UserId>,
+    pub blocked_by: UserId,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct UsersUnblocked {
+    pub user_ids: Vec<UserId>,
+    pub unblocked_by: UserId,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]

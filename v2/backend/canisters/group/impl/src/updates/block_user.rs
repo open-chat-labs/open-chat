@@ -4,7 +4,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use types::{ParticipantsRemoved, UserId};
+use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
@@ -21,8 +21,6 @@ async fn block_user(args: Args) -> Response {
     }
 
     RUNTIME_STATE.with(|state| commit(prepare_result.blocked_by, args.user_id, state.borrow_mut().as_mut().unwrap()));
-
-    handle_activity_notification();
 
     Success
 }
@@ -53,19 +51,21 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
+fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
     runtime_state.data.participants.block(user_id);
     runtime_state.data.participants.remove(user_id);
 
-    let event = ParticipantsRemoved {
+    let event = UsersBlocked {
         user_ids: vec![user_id],
-        removed_by,
+        blocked_by,
     };
 
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::ParticipantsRemoved(event), now);
+        .push_event(GroupChatEventInternal::UsersBlocked(event), now);
+
+    handle_activity_notification(runtime_state);
 }

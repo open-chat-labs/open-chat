@@ -53,14 +53,6 @@ type SetAvatarResponse =
         InvalidMimeType: nat32;
     };
 
-type JoinGroupResponse =
-    variant {
-        Success: record {};
-        AlreadyInGroup;
-        GroupNotPublic;
-        Blocked;
-    }; 
-
 type BlockUserArgs =
     record {
         user_id: UserId;

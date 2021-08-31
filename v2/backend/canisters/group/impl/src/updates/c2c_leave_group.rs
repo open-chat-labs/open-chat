@@ -8,7 +8,6 @@ use types::ParticipantLeft;
 // Called via the user's user canister
 #[update]
 fn c2c_leave_group(_args: Args) -> Response {
-    handle_activity_notification();
     RUNTIME_STATE.with(|state| c2c_leave_group_impl(state.borrow_mut().as_mut().unwrap()))
 }
 
@@ -23,6 +22,8 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
                 .data
                 .events
                 .push_event(GroupChatEventInternal::ParticipantLeft(event), now);
+
+            handle_activity_notification(runtime_state);
 
             Success(SuccessResult {})
         }

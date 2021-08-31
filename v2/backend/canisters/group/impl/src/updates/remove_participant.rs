@@ -22,8 +22,6 @@ async fn remove_participant(args: Args) -> Response {
 
     RUNTIME_STATE.with(|state| commit(prepare_result.removed_by, args.user_id, state.borrow_mut().as_mut().unwrap()));
 
-    handle_activity_notification();
-
     Success
 }
 
@@ -65,4 +63,6 @@ fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
         .data
         .events
         .push_event(GroupChatEventInternal::ParticipantsRemoved(event), now);
+
+    handle_activity_notification(runtime_state);
 }

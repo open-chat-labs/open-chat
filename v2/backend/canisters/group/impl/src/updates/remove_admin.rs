@@ -31,7 +31,7 @@ fn remove_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         .events
                         .push_event(GroupChatEventInternal::ParticipantsDismissedAsAdmin(event), now);
 
-                    handle_activity_notification();
+                    handle_activity_notification(runtime_state);
                     Success
                 },
             }

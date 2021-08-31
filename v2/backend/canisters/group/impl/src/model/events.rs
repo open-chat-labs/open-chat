@@ -21,6 +21,8 @@ pub enum GroupChatEventInternal {
     ParticipantLeft(ParticipantLeft),
     ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
     ParticipantsDismissedAsAdmin(ParticipantsPromotedToAdmin),
+    UsersBlocked(UsersBlocked),
+    UsersUnblocked(UsersUnblocked),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -186,6 +188,8 @@ impl Events {
             GroupChatEventInternal::ParticipantLeft(p) => GroupChatEvent::ParticipantLeft(p.clone()),
             GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(p.clone()),
             GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(p.clone()),
+            GroupChatEventInternal::UsersBlocked(p) => GroupChatEvent::UsersBlocked(p.clone()),
+            GroupChatEventInternal::UsersUnblocked(p) => GroupChatEvent::UsersUnblocked(p.clone()),
         };
 
         EventWrapper {
