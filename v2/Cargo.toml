@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "backend/canister_installer",
     "backend/canisters/group/api",
     "backend/canisters/group/client",
     "backend/canisters/group/impl",
@@ -15,6 +16,9 @@ members = [
     "backend/canisters/user_index/api",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/data_generator",
+    "backend/integration_tests",
+    "backend/libraries/canister_client",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -27,3 +31,6 @@ members = [
 lto = true
 opt-level = "z"
 codegen-units = 1
+
+[patch."https://github.com/dfinity-lab/lmdb-rs"]
+lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }

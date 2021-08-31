@@ -5,7 +5,7 @@ use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
 use ic_agent::Agent;
 use ic_fondue::ic_manager::IcHandle;
-use types::{ChatSummary, ChatId, UserId};
+use types::{ChatId, ChatSummary, UserId};
 
 pub fn create_group_test(handle: IcHandle, ctx: &fondue::pot::Context) {
     block_on(create_group_test_impl(handle, ctx));
