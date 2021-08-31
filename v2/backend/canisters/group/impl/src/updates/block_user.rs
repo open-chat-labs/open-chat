@@ -1,14 +1,14 @@
 use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::remove_participant::{Response::*, *};
+use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use types::{ParticipantsRemoved, UserId};
+use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
-async fn remove_participant(args: Args) -> Response {
+async fn block_user(args: Args) -> Response {
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -20,25 +20,27 @@ async fn remove_participant(args: Args) -> Response {
         return InternalError(format!("{:?}", error));
     }
 
-    RUNTIME_STATE.with(|state| commit(prepare_result.removed_by, args.user_id, state.borrow_mut().as_mut().unwrap()));
+    RUNTIME_STATE.with(|state| commit(prepare_result.blocked_by, args.user_id, state.borrow_mut().as_mut().unwrap()));
 
     Success
 }
 
 struct PrepareResult {
-    removed_by: UserId,
+    blocked_by: UserId,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if !runtime_state.data.is_public {
+        Err(GroupNotPublic)
+    } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.user_id == args.user_id {
-            Err(CannotRemoveSelf)
-        } else if participant.role.can_remove_participants() {
+            Err(CannotBlockSelf)
+        } else if participant.role.can_block_user() {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
                 Some(_) => Ok(PrepareResult {
-                    removed_by: participant.user_id,
+                    blocked_by: participant.user_id,
                 }),
             }
         } else {
@@ -49,20 +51,21 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
+fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
+    runtime_state.data.participants.block(user_id);
     runtime_state.data.participants.remove(user_id);
 
-    let event = ParticipantsRemoved {
+    let event = UsersBlocked {
         user_ids: vec![user_id],
-        removed_by,
+        blocked_by,
     };
 
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::ParticipantsRemoved(event), now);
+        .push_event(GroupChatEventInternal::UsersBlocked(event), now);
 
     handle_activity_notification(runtime_state);
 }

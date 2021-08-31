@@ -11,8 +11,6 @@ pub struct Args {
 pub enum Response {
     Success,
     CallerNotInGroup,
-    CannotRemoveSelf,
-    InternalError(String),
     NotAuthorized,
     UserNotInGroup,
 }

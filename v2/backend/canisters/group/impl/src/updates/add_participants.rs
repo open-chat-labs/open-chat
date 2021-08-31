@@ -50,8 +50,6 @@ async fn add_participants(args: Args) -> Response {
         RUNTIME_STATE.with(|state| commit(prepare_result.added_by, &users_added, state.borrow_mut().as_mut().unwrap()));
     }
 
-    handle_activity_notification();
-
     if users_added.len() == args.user_ids.len() {
         Success
     } else {
@@ -140,4 +138,6 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
         .data
         .events
         .push_event(GroupChatEventInternal::ParticipantsAdded(event), now);
+
+    handle_activity_notification(runtime_state);
 }

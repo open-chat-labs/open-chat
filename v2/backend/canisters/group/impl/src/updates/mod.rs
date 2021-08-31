@@ -3,17 +3,18 @@ use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
 mod add_participants;
-mod join_group;
+mod block_user;
+mod c2c_join_group;
+mod c2c_leave_group;
+mod make_admin;
 mod mark_read;
+mod put_chunk;
 mod remove_participant;
 mod send_message;
+mod unblock_user;
 
 // If needed, notify the group index canister that there has been activity in this group
-pub fn handle_activity_notification() {
-    RUNTIME_STATE.with(|state| handle_activity_notification_impl(state.borrow_mut().as_mut().unwrap()));
-}
-
-fn handle_activity_notification_impl(runtime_state: &mut RuntimeState) {
+fn handle_activity_notification(runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let mark_active_duration = runtime_state.data.mark_active_duration;
 

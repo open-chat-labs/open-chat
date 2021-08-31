@@ -10,9 +10,4 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    CallerNotInGroup,
-    CannotRemoveSelf,
-    InternalError(String),
-    NotAuthorized,
-    UserNotInGroup,
 }

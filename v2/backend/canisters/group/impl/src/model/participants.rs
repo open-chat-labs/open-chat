@@ -67,6 +67,14 @@ impl Participants {
         }
     }
 
+    pub fn block(&mut self, user_id: UserId) {
+        self.blocked.insert(user_id);
+    }
+
+    pub fn unblock(&mut self, user_id: &UserId) {
+        self.blocked.remove(user_id);
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &ParticipantInternal> {
         self.by_principal.values()
     }

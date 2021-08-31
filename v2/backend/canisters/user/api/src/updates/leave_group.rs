@@ -1,18 +1,18 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::UserId;
+use types::GroupChatId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: UserId,
+    pub group_chat_id: GroupChatId,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    CallerNotInGroup,
-    CannotRemoveSelf,
+    GroupNotFound,
+    GroupNotPublic,
     InternalError(String),
     NotAuthorized,
-    UserNotInGroup,
+    NotInGroup,
 }

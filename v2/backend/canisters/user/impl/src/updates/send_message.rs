@@ -12,6 +12,12 @@ fn send_message(args: Args) -> Response {
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_owner() {
+        let my_user_id = runtime_state.env.canister_id().into();
+
+        if runtime_state.data.blocked_users.contains(&my_user_id) {
+            return RecipientBlocked;
+        }
+
         let now = runtime_state.env.now();
         let push_message_args = PushMessageArgs {
             message_id: args.message_id,
@@ -21,7 +27,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        let my_user_id = runtime_state.env.canister_id().into();
         let (direct_chat_id, event_index, message) =
             runtime_state
                 .data
@@ -54,5 +59,8 @@ fn build_c2c_args(args: Args) -> (CanisterId, c2c_send_message::Args) {
 }
 
 async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_message::Args) {
+    // Note: We ignore any Block response - it means the sender won't know they're blocked
+    // but maybe that is not so bad. Otherwise we would have to wait for the call to the
+    // recipient canister which would double the latency of every message.
     let _ = user_canister_client::c2c_send_message(canister_id, &args).await;
 }

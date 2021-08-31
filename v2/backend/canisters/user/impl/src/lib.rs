@@ -5,12 +5,15 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{CanisterId, UserId, Version};
+use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
 mod lifecycle;
 mod model;
 mod queries;
 mod updates;
+
+const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
@@ -41,6 +44,7 @@ pub struct Data {
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
+    pub blob_storage: BlobStorage,
 }
 
 impl Data {
@@ -61,6 +65,7 @@ impl Data {
             group_index_canister_id,
             notification_canister_ids,
             wasm_version,
+            blob_storage: BlobStorage::new(MAX_STORAGE),
         }
     }
 }

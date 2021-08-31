@@ -15,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
+    RecipientBlocked,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
