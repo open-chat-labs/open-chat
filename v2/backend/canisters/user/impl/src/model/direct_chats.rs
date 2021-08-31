@@ -2,18 +2,18 @@ use crate::model::direct_chat::DirectChat;
 use crate::model::events::PushMessageArgs;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{DirectChatId, DirectMessage, EventIndex, TimestampMillis, UserId};
+use types::{ChatId, DirectMessage, EventIndex, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct DirectChats {
-    direct_chats: HashMap<DirectChatId, DirectChat>,
+    direct_chats: HashMap<ChatId, DirectChat>,
 }
 
 impl DirectChats {
-    pub fn get(&self, chat_id: &DirectChatId) -> Option<&DirectChat> {
+    pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }
-    pub fn get_mut(&mut self, chat_id: &DirectChatId) -> Option<&mut DirectChat> {
+    pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut DirectChat> {
         self.direct_chats.get_mut(chat_id)
     }
 
@@ -27,13 +27,8 @@ impl DirectChats {
         })
     }
 
-    pub fn push_message(
-        &mut self,
-        my_user_id: UserId,
-        their_user_id: UserId,
-        args: PushMessageArgs,
-    ) -> (DirectChatId, EventIndex, DirectMessage) {
-        let chat_id = DirectChatId::from((&my_user_id, &their_user_id));
+    pub fn push_message(&mut self, their_user_id: UserId, args: PushMessageArgs) -> (ChatId, EventIndex, DirectMessage) {
+        let chat_id = ChatId::from(their_user_id);
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),

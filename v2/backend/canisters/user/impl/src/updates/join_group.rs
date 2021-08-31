@@ -1,8 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
-use group_canister::join_group;
+use group_canister::c2c_join_group;
 use ic_cdk_macros::update;
-use types::GroupChatId;
+use types::ChatId;
 use user_canister::join_group::{Response::*, *};
 
 #[update]
@@ -12,19 +12,19 @@ async fn join_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let c2c_args = join_group::Args {
+    let c2c_args = c2c_join_group::Args {
         principal: prepare_ok.principal,
     };
 
-    match group_canister_client::join_group(args.group_chat_id.into(), &c2c_args).await {
+    match group_canister_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
-            join_group::Response::Success(_) => {
-                RUNTIME_STATE.with(|state| commit(args.group_chat_id, state.borrow_mut().as_mut().unwrap()));
+            c2c_join_group::Response::Success(_) => {
+                RUNTIME_STATE.with(|state| commit(args.chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success
             }
-            join_group::Response::AlreadyInGroup => AlreadyInGroup,
-            join_group::Response::GroupNotPublic => GroupNotPublic,
-            join_group::Response::Blocked => Blocked,
+            c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
+            c2c_join_group::Response::GroupNotPublic => GroupNotPublic,
+            c2c_join_group::Response::Blocked => Blocked,
         },
         Err(error) => InternalError(format!("{:?}", error)),
     }
@@ -44,6 +44,6 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-fn commit(group_chat_id: GroupChatId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.group_chats.add(group_chat_id);
+fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
+    runtime_state.data.group_chats.add(chat_id);
 }

@@ -15,11 +15,12 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     NotAuthorized,
+    RecipientBlocked,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub direct_chat_id: DirectChatId,
+    pub chat_id: ChatId,
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,

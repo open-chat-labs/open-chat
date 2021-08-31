@@ -9,8 +9,6 @@ use utils::rand::get_random_item;
 
 #[update]
 fn send_message(args: Args) -> Response {
-    handle_activity_notification();
-
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
@@ -18,9 +16,10 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let now = runtime_state.env.now();
+        let sender = participant.user_id;
 
         let push_message_args = PushMessageArgs {
-            sender: participant.user_id,
+            sender,
             message_id: args.message_id,
             content: args.content,
             replies_to: args.replies_to,
@@ -28,6 +27,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         };
 
         let (event_index, message) = runtime_state.data.events.push_message(push_message_args);
+
+        handle_activity_notification(runtime_state);
+
         let message_index = message.message_index;
 
         let random = runtime_state.env.random_u32() as usize;
@@ -36,11 +38,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             let notification = GroupMessageNotification {
                 chat_id: runtime_state.env.canister_id().into(),
                 group_name: runtime_state.data.name.clone(),
-                sender: participant.user_id,
+                sender,
                 sender_name: args.sender_name,
                 message,
             };
-            let recipients = runtime_state.data.participants.get_other_user_ids(participant.user_id);
+            let recipients = runtime_state.data.participants.get_other_user_ids(sender);
 
             ic_cdk::block_on(push_notification(*canister_id, recipients, notification));
         }

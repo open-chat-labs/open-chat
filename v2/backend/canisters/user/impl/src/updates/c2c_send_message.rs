@@ -15,6 +15,10 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     // TODO validate that this request came from an OpenChat canister
     let sender_user_id = runtime_state.env.caller().into();
 
+    if runtime_state.data.blocked_users.contains(&sender_user_id) {
+        return Blocked;
+    }
+
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sent_by_me: false,
@@ -23,11 +27,10 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         now: runtime_state.env.now(),
     };
 
-    let my_user_id = runtime_state.env.canister_id().into();
     let (_, _, message) = runtime_state
         .data
         .direct_chats
-        .push_message(my_user_id, sender_user_id, push_message_args);
+        .push_message(sender_user_id, push_message_args);
 
     let random = runtime_state.env.random_u32() as usize;
 

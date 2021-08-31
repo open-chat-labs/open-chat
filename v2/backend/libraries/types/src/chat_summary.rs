@@ -1,4 +1,4 @@
-use crate::chat_id::{DirectChatId, GroupChatId};
+use crate::chat_id::ChatId;
 use crate::participant::Participant;
 use crate::TimestampMillis;
 use crate::{message, EventIndex, EventWrapper, MessageIndex, UserId};
@@ -22,7 +22,7 @@ impl ChatSummary {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
-    pub chat_id: DirectChatId,
+    pub chat_id: ChatId,
     pub them: UserId,
     pub latest_message: EventWrapper<message::DirectMessage>,
     pub latest_event_index: EventIndex,
@@ -39,7 +39,7 @@ impl DirectChatSummary {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
-    pub chat_id: GroupChatId,
+    pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
@@ -66,7 +66,7 @@ pub enum ChatSummaryUpdates {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
-    pub chat_id: DirectChatId,
+    pub chat_id: ChatId,
     pub latest_message: Option<EventWrapper<message::DirectMessage>>,
     pub latest_event_index: Option<EventIndex>,
     pub latest_read_by_me: Option<MessageIndex>,
@@ -75,7 +75,7 @@ pub struct DirectChatSummaryUpdates {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
-    pub chat_id: GroupChatId,
+    pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,

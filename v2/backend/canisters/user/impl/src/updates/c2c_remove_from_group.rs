@@ -8,7 +8,7 @@ fn c2c_remove_from_group(_args: Args) -> Response {
 }
 
 fn c2c_remove_from_group_impl(runtime_state: &mut RuntimeState) -> Response {
-    let group_chat_id = runtime_state.env.caller().into();
-    runtime_state.data.group_chats.remove(group_chat_id);
+    let chat_id = runtime_state.env.caller().into();
+    runtime_state.data.group_chats.remove(&chat_id);
     Success
 }

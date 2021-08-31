@@ -4,7 +4,7 @@ use ic_cdk_macros::query;
 use log::error;
 use std::collections::{HashMap, HashSet};
 use types::{
-    CanisterId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatId, GroupChatSummary,
+    CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
     GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
 };
 use user_canister::updates::{Response::*, *};
@@ -33,8 +33,8 @@ async fn updates(args: Args) -> Response {
 struct PrepareResult {
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
-    group_chats_to_check_for_updates: Vec<(GroupChatId, TimestampMillis)>,
-    group_chats_added: Vec<GroupChatId>,
+    group_chats_to_check_for_updates: Vec<(ChatId, TimestampMillis)>,
+    group_chats_added: Vec<ChatId>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -81,7 +81,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-async fn get_group_chat_summaries(chat_ids: Vec<GroupChatId>) -> Vec<GroupChatSummary> {
+async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummary> {
     if chat_ids.is_empty() {
         return Vec::new();
     }
@@ -123,7 +123,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<GroupChatId>) -> Vec<GroupChatSu
 async fn get_group_chat_summary_updates(
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
-    mut group_chats: Vec<(GroupChatId, TimestampMillis)>,
+    mut group_chats: Vec<(ChatId, TimestampMillis)>,
 ) -> Vec<GroupChatSummaryUpdates> {
     if group_chats.len() >= 5 {
         if group_chats.is_empty() {
@@ -131,7 +131,7 @@ async fn get_group_chat_summary_updates(
         }
 
         let args = group_index_canister::active_groups::Args {
-            group_ids: group_chats.iter().map(|g| g.0).collect(),
+            chat_ids: group_chats.iter().map(|g| g.0).collect(),
             active_in_last: duration_since_last_sync,
         };
         let active_groups = match group_index_canister_client::active_groups(group_index_canister_id, &args).await {
@@ -258,10 +258,13 @@ fn finalize(
         }
     }
 
+    let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
+
     SuccessResult {
         chats_added,
         chats_updated,
         chats_removed: Vec::new(), // TODO
         timestamp: now,
+        blocked_users,
     }
 }

@@ -34,7 +34,7 @@ type UpgradeResponse =
 
 type DeleteArgs =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
     };
 
 type DeleteResponse =
@@ -54,7 +54,7 @@ type SearchResponse =
     variant {
         Success: record {
             groups: vec record {
-                chat_id: GroupChatId;
+                chat_id: ChatId;
                 name: text;
                 score: nat32;
             };
