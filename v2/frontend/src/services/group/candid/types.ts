@@ -26,8 +26,14 @@ export interface BlobReference {
   'canister_id' : CanisterId,
   'chunk_size' : number,
 }
-export type BlockUserArgs = {};
-export type BlockUserResponse = { 'Success' : null };
+export interface BlockUserArgs { 'user_id' : UserId }
+export type BlockUserResponse = { 'GroupNotPublic' : null } |
+  { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'CannotBlockSelf' : null };
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
@@ -41,6 +47,9 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
+export type ChunkResponse = { 'NotFound' : null } |
+  { 'Success' : { 'bytes' : Array<number> } };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -110,9 +119,6 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
-export interface GetChunkArgs { 'blob_id' : bigint, 'index' : number }
-export type GetChunkResponse = { 'NotFound' : null } |
-  { 'Success' : { 'bytes' : Array<number> } };
 export interface GroupChatCreated {
   'name' : string,
   'description' : string,
@@ -196,15 +202,11 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface JoinGroupArgs { 'principal' : Principal }
-export type JoinGroupResponse = { 'Blocked' : null } |
-  { 'GroupNotPublic' : null } |
-  { 'AlreadyInGroup' : null } |
-  { 'Success' : {} };
-export type LeaveGroupArgs = {};
-export type LeaveGroupResponse = { 'Success' : null };
-export type MakeAdminArgs = {};
-export type MakeAdminResponse = { 'Success' : null };
+export interface MakeAdminArgs { 'user_id' : UserId }
+export type MakeAdminResponse = { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface MarkReadArgs { 'up_to_message_index' : MessageIndex }
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'Success' : null } |
@@ -285,11 +287,20 @@ export interface PutChunkArgs {
   'index' : number,
 }
 export type PutChunkResponse = { 'Full' : null } |
+  { 'Success' : null } |
+  { 'ChunkTooBig' : null };
+export interface RemoveAdminArgs { 'user_id' : UserId }
+export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null };
-export type RemoveAdminArgs = {};
-export type RemoveAdminResponse = { 'Success' : null };
-export type RemoveParticipantsArgs = {};
-export type RemoveParticipantsResponse = { 'Success' : null };
+export interface RemoveParticipantArgs { 'user_id' : UserId }
+export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'CannotRemoveSelf' : null } |
+  { 'InternalError' : string };
 export interface ReplyContextArgs { 'message_id' : MessageId }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
@@ -351,8 +362,12 @@ export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |
 export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
-export type UnblockUserArgs = {};
-export type UnblockUserResponse = { 'Success' : null };
+export interface UnblockUserArgs { 'user_id' : UserId }
+export type UnblockUserResponse = { 'GroupNotPublic' : null } |
+  { 'CannotUnblockSelf' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
@@ -428,20 +443,18 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
       EventsByIndexResponse
     >,
-  'get_chunk' : (arg_0: GetChunkArgs) => Promise<GetChunkResponse>,
-  'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
-  'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
-  'remove_participants' : (arg_0: RemoveParticipantsArgs) => Promise<
-      RemoveParticipantsResponse
+  'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
+      RemoveParticipantResponse
     >,
   'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
       SearchMessagesResponse
