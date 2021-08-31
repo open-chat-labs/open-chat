@@ -345,4 +345,4 @@ export type SendMessageBalanceExceeded = {
     kind: "send_message_balance_exceeded";
 };
 
-export type PutChunkResponse = "put_chunk_success" | "put_chunk_full";
+export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";

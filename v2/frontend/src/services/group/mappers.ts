@@ -45,6 +45,9 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
     if ("Full" in candid) {
         return "put_chunk_full";
     }
+    if ("ChunkTooBig" in candid) {
+        return "put_chunk_too_big";
+    }
     if ("Success" in candid) {
         return "put_chunk_success";
     }
