@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
+candid = "0.7.5"
+canister_client_macros = { path = "../../../libraries/canister_client_macros", features = ["ingress"] }
+ic-agent = "0.7.0"
 log = "0.4.14"
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../api" }
-utils = { path = "../../../libraries/utils" }

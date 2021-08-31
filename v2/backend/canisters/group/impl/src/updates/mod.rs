@@ -33,7 +33,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         let args = c2c_mark_active::Args {
             duration: mark_active_duration,
         };
-        let response = group_index_canister_client::c2c_mark_active(canister_id, &args).await;
+        let response = group_index_canister_c2c_client::c2c_mark_active(canister_id, &args).await;
         RUNTIME_STATE.with(|state| handle_response(response.is_ok(), state.borrow_mut().as_mut().unwrap()));
     }
 

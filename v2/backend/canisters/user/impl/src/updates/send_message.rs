@@ -61,5 +61,5 @@ async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_mes
     // Note: We ignore any Block response - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
-    let _ = user_canister_client::c2c_send_message(canister_id, &args).await;
+    let _ = user_canister_c2c_client::c2c_send_message(canister_id, &args).await;
 }

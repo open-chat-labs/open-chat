@@ -52,18 +52,5 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
 async fn push_notification(canister_id: CanisterId, recipient: UserId, notification: DirectMessageNotification) {
     let args = push_direct_message_notification::Args { recipient, notification };
-    let _ = notifications_canister_client::push_direct_message_notification(canister_id, &args).await;
-}
-
-mod c2c {
-    use super::*;
-    use ic_cdk::api::call::CallResult;
-    use log::error;
-    use utils::generate_c2c_call;
-
-    pub mod notifications {
-        use super::*;
-
-        generate_c2c_call!(push_direct_message_notification);
-    }
+    let _ = notifications_canister_c2c_client::push_direct_message_notification(canister_id, &args).await;
 }

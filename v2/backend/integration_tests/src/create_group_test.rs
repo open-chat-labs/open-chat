@@ -1,5 +1,4 @@
 use crate::block_on;
-use canister_client::canisters;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
@@ -63,7 +62,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;
 
-    match canisters::group::summary(&user1_agent, &chat_id.into(), &group_canister::summary::Args {}).await {
+    match group_canister_client::summary(&user1_agent, &chat_id.into(), &group_canister::summary::Args {}).await {
         group_canister::summary::Response::Success(r) => {
             assert_eq!(r.summary.chat_id, chat_id);
             assert_eq!(r.summary.name, name);
@@ -84,7 +83,7 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
 
 async fn ensure_user_canister_links_to_group(agent: &Agent, user_id: UserId, chat_id: ChatId) {
     let args = user_canister::updates::Args { updates_since: None };
-    match canisters::user::updates(agent, &user_id.into(), &args).await {
+    match user_canister_client::updates(agent, &user_id.into(), &args).await {
         user_canister::updates::Response::Success(r) => {
             assert_eq!(r.chats_added.len(), 1);
             if let ChatSummary::Group(g) = r.chats_added.first().unwrap() {

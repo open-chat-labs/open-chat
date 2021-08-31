@@ -1,4 +1,3 @@
-use crate::canisters::*;
 use crate::utils::{build_ic_agent, build_identity};
 use crate::TestIdentity;
 use types::{CanisterId, UserId};
@@ -27,7 +26,7 @@ pub async fn register_user(
     };
 
     let submit_phone_number_response =
-        user_index::submit_phone_number(&agent, &user_index_canister_id, &submit_phone_number_args).await;
+        user_index_canister_client::submit_phone_number(&agent, &user_index_canister_id, &submit_phone_number_args).await;
 
     assert!(matches!(
         submit_phone_number_response,
@@ -39,7 +38,7 @@ pub async fn register_user(
     };
 
     let confirm_phone_number_response =
-        user_index::confirm_phone_number(&agent, &user_index_canister_id, &confirm_phone_number_args).await;
+        user_index_canister_client::confirm_phone_number(&agent, &user_index_canister_id, &confirm_phone_number_args).await;
 
     assert!(matches!(
         confirm_phone_number_response,
@@ -48,7 +47,8 @@ pub async fn register_user(
 
     let create_canister_args = user_index_canister::create_canister::Args {};
 
-    let create_canister_response = user_index::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
+    let create_canister_response =
+        user_index_canister_client::create_canister(&agent, &user_index_canister_id, &create_canister_args).await;
 
     if let user_index_canister::create_canister::Response::Success(user_canister_id) = create_canister_response {
         if let Some(username) = username {
