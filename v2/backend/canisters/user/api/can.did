@@ -62,7 +62,7 @@ type BlockUserArgs =
         user_id: UserId;        
     };
 
-type BlockUserResponse
+type BlockUserResponse =
     variant {
         Success;
     }; 
@@ -72,7 +72,7 @@ type UnblockUserArgs =
         user_id: UserId;        
     };
 
-type UnblockUserResponse
+type UnblockUserResponse =
     variant {
         Success;
     }; 

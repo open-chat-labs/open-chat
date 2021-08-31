@@ -1,6 +1,5 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
-  const ChatId = CanisterId;
   const UserId = CanisterId;
   const AddParticipantsArgs = IDL.Record({ 'user_ids' : IDL.Vec(UserId) });
   const AddParticipantsFailedResult = IDL.Record({
@@ -23,8 +22,21 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const BlockUserArgs = IDL.Record({});
-  const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
+  const BlockUserResponse = IDL.Variant({
+    'GroupNotPublic' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'CannotBlockSelf' : IDL.Null,
+  });
+  const ChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
+  const ChunkResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
+  });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'to_index' : EventIndex,
@@ -137,22 +149,13 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
-  const GetChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
-  const GetChunkResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
+  const MakeAdminArgs = IDL.Record({ 'user_id' : UserId });
+  const MakeAdminResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
   });
-  const JoinGroupArgs = IDL.Record({ 'principal' : IDL.Principal });
-  const JoinGroupResponse = IDL.Variant({
-    'Blocked' : IDL.Null,
-    'GroupNotPublic' : IDL.Null,
-    'AlreadyInGroup' : IDL.Null,
-    'Success' : IDL.Record({}),
-  });
-  const LeaveGroupArgs = IDL.Record({});
-  const LeaveGroupResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const MakeAdminArgs = IDL.Record({});
-  const MakeAdminResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MarkReadArgs = IDL.Record({ 'up_to_message_index' : MessageIndex });
   const MarkReadResponse = IDL.Variant({
     'SuccessNoChange' : IDL.Null,
@@ -181,11 +184,24 @@ export const idlFactory = ({ IDL }) => {
   const PutChunkResponse = IDL.Variant({
     'Full' : IDL.Null,
     'Success' : IDL.Null,
+    'ChunkTooBig' : IDL.Null,
   });
-  const RemoveAdminArgs = IDL.Record({});
-  const RemoveAdminResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const RemoveParticipantsArgs = IDL.Record({});
-  const RemoveParticipantsResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const RemoveAdminArgs = IDL.Record({ 'user_id' : UserId });
+  const RemoveAdminResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
+  const RemoveParticipantArgs = IDL.Record({ 'user_id' : UserId });
+  const RemoveParticipantResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'CannotRemoveSelf' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -234,6 +250,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
+  const ChatId = CanisterId;
   const GroupMessageEventWrapper = IDL.Record({
     'event' : GroupMessage,
     'timestamp' : TimestampMillis,
@@ -277,8 +294,14 @@ export const idlFactory = ({ IDL }) => {
     'SuccessNoUpdates' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const UnblockUserArgs = IDL.Record({});
-  const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
+  const UnblockUserResponse = IDL.Variant({
+    'GroupNotPublic' : IDL.Null,
+    'CannotUnblockSelf' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   return IDL.Service({
     'add_participants' : IDL.Func(
         [AddParticipantsArgs],
@@ -286,23 +309,21 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'chunk' : IDL.Func([ChunkArgs], [ChunkResponse], ['query']),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
         [EventsByIndexResponse],
         ['query'],
       ),
-    'get_chunk' : IDL.Func([GetChunkArgs], [GetChunkResponse], ['query']),
-    'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
-    'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
-    'remove_participants' : IDL.Func(
-        [RemoveParticipantsArgs],
-        [RemoveParticipantsResponse],
+    'remove_participant' : IDL.Func(
+        [RemoveParticipantArgs],
+        [RemoveParticipantResponse],
         [],
       ),
     'search_messages' : IDL.Func(

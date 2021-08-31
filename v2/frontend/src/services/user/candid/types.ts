@@ -6,6 +6,7 @@ export interface BlobReference {
   'chunk_size' : number,
 }
 export interface BlockUserArgs { 'user_id' : UserId }
+export type BlockUserResponse = { 'Success' : null };
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
   { 'Pending' : null };
@@ -194,23 +195,6 @@ export interface GroupReplyContext {
   'user_id' : UserId,
   'event_index' : EventIndex,
 }
-export interface HandleAddToGroupRequestedArgs { 'added_by' : UserId }
-export type HandleAddToGroupRequestedResponse = { 'Blocked' : null } |
-  { 'Success' : HandleAddToGroupRequestedSuccessResult };
-export interface HandleAddToGroupRequestedSuccessResult {
-  'principal' : Principal,
-}
-export interface HandleMarkReadArgs { 'up_to_message_index' : MessageIndex }
-export type HandleMarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : null };
-export interface HandleMessageReceivedArgs {
-  'content' : MessageContent,
-  'sender_name' : string,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContextArgs],
-}
-export type HandleMessageReceivedResponse = { 'Success' : null };
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
@@ -227,6 +211,12 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface LeaveGroupArgs { 'chat_id' : ChatId }
+export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'NotInGroup' : null };
 export interface MarkReadArgs {
   'up_to_message_index' : MessageIndex,
   'user_id' : UserId,
@@ -314,7 +304,8 @@ export interface PutChunkArgs {
   'index' : number,
 }
 export type PutChunkResponse = { 'Full' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'ChunkTooBig' : null };
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [ChatId],
   'message_index' : MessageIndex,
@@ -355,7 +346,6 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
   } |
   { 'RecipientBlocked' : null } |
   { 'InvalidRequest' : null } |
-  { 'SenderBlocked' : null } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
 export interface SetAvatarArgs { 'mime_type' : string, 'bytes' : Array<number> }
@@ -379,10 +369,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
+export type UnblockUserResponse = { 'Success' : null };
 export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }
 export type UpdatesResponse = {
     'Success' : {
       'chats_updated' : Array<ChatSummaryUpdates>,
+      'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
@@ -463,23 +455,15 @@ export interface Version {
   'patch' : number,
 }
 export interface _SERVICE {
-  'block_user' : (arg_0: BlockUserArgs) => Promise<undefined>,
+  'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
       EventsByIndexResponse
     >,
-  'handle_add_to_group_requested' : (
-      arg_0: HandleAddToGroupRequestedArgs,
-    ) => Promise<HandleAddToGroupRequestedResponse>,
-  'handle_mark_read' : (arg_0: HandleMarkReadArgs) => Promise<
-      HandleMarkReadResponse
-    >,
-  'handle_message_received' : (arg_0: HandleMessageReceivedArgs) => Promise<
-      HandleMessageReceivedResponse
-    >,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
+  'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
@@ -488,6 +472,6 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
-  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<undefined>,
+  'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

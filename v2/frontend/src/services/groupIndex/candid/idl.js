@@ -1,7 +1,6 @@
 export const idlFactory = ({ IDL }) => {
   const CreateArgs = IDL.Record({ 'is_public' : IDL.Bool, 'name' : IDL.Text });
   const CanisterId = IDL.Principal;
-  const ChatId = CanisterId;
   const CreateResponse = IDL.Variant({
     'PublicGroupAlreadyExists' : IDL.Null,
     'UnknownError' : IDL.Null,
@@ -10,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
     'NameTooLong' : IDL.Nat16,
     'GroupLimitExceeded' : IDL.Null,
   });
+  const ChatId = CanisterId;
   const DeleteArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteResponse = IDL.Variant({
     'NotFound' : IDL.Null,
