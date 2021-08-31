@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatId, ChatSummary, ChatSummaryUpdates, GroupChatId, TimestampMillis, UserId};
+use types::{ChatId, ChatSummary, ChatSummaryUpdates, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -15,7 +15,7 @@ pub struct UpdatesSince {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct GroupChatUpdatesSince {
-    pub chat_id: GroupChatId,
+    pub chat_id: ChatId,
     pub updates_since: TimestampMillis,
 }
 

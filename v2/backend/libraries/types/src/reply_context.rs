@@ -1,4 +1,4 @@
-use crate::chat_id::GroupChatId;
+use crate::chat_id::ChatId;
 use crate::message_content::MessageContent;
 use crate::{EventIndex, UserId};
 use candid::CandidType;
@@ -19,7 +19,7 @@ pub struct StandardReplyContext {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrivateReplyContext {
-    pub chat_id: GroupChatId,
+    pub chat_id: ChatId,
     pub event_index: EventIndex,
 }
 
@@ -32,7 +32,7 @@ pub struct GroupReplyContext {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectReplyContextInternal {
-    pub chat_id_if_other: Option<GroupChatId>,
+    pub chat_id_if_other: Option<ChatId>,
     pub event_index: EventIndex,
 }
 

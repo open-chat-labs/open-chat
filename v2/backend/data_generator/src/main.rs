@@ -6,7 +6,7 @@ use ic_agent::Agent;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use types::{CanisterId, GroupChatId, MessageContent, TextContent, UserId};
+use types::{CanisterId, ChatId, MessageContent, TextContent, UserId};
 use utils::rand::get_random_item;
 
 #[tokio::main]
@@ -82,12 +82,12 @@ async fn run_data_generator(
                     history_visible_to_new_joiners: false,
                 };
                 let participants = all_user_ids.iter().filter(|&id| *id != u).cloned().collect();
-                let group_chat_id = create_group(&a, u, &args, participants).await;
+                let chat_id = create_group(&a, u, &args, participants).await;
                 groups_created += 1;
                 actions.append(
                     &mut other_users
                         .iter()
-                        .map(|(a, _, n)| Action::SendGroupMessage(a.clone(), group_chat_id, n.clone()))
+                        .map(|(a, _, n)| Action::SendGroupMessage(a.clone(), chat_id, n.clone()))
                         .collect(),
                 );
 
@@ -191,6 +191,6 @@ struct Opts {
 #[derive(Clone)]
 enum Action {
     SendDirectMessage(Agent, UserId, String),
-    SendGroupMessage(Agent, GroupChatId, String),
+    SendGroupMessage(Agent, ChatId, String),
     CreateGroup(Agent, UserId),
 }

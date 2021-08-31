@@ -1,43 +1,24 @@
 use crate::{CanisterId, UserId};
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
-const DIRECT_CHAT_ID_LENGTH_BYTES: usize = 29; // Same length as Principal
-
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum ChatId {
-    Direct(DirectChatId),
-    Group(GroupChatId),
-}
+pub struct ChatId(pub(crate) CanisterId);
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct DirectChatId([u8; DIRECT_CHAT_ID_LENGTH_BYTES]);
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct GroupChatId(CanisterId);
-
-impl From<(&UserId, &UserId)> for DirectChatId {
-    fn from((my_user_id, their_user_id): (&UserId, &UserId)) -> Self {
-        let s1 = my_user_id.0.as_slice();
-        let s2 = their_user_id.0.as_slice();
-
-        let mut xor_bytes = [0; DIRECT_CHAT_ID_LENGTH_BYTES];
-        for (i, byte) in xor_bytes.iter_mut().enumerate() {
-            *byte = s1.get(i).unwrap_or(&0) ^ s2.get(i).unwrap_or(&0);
-        }
-
-        DirectChatId(xor_bytes)
+impl From<Principal> for ChatId {
+    fn from(principal: Principal) -> Self {
+        ChatId(principal)
     }
 }
 
-impl From<CanisterId> for GroupChatId {
-    fn from(canister_id: CanisterId) -> Self {
-        GroupChatId(canister_id)
+impl From<ChatId> for CanisterId {
+    fn from(chat_id: ChatId) -> Self {
+        chat_id.0
     }
 }
 
-impl From<GroupChatId> for CanisterId {
-    fn from(group_chat_id: GroupChatId) -> Self {
-        group_chat_id.0
+impl From<UserId> for ChatId {
+    fn from(user_id: UserId) -> Self {
+        user_id.0.into()
     }
 }

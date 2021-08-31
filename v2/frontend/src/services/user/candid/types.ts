@@ -14,8 +14,7 @@ export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'NotRequired' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
-export type ChatId = { 'Group' : GroupChatId } |
-  { 'Direct' : DirectChatId };
+export type ChatId = CanisterId;
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
@@ -33,7 +32,7 @@ export interface CreateGroupArgs {
   'description' : string,
   'history_visible_to_new_joiners' : boolean,
 }
-export interface CreateGroupFieldTooLongResult { 'group_chat_id' : GroupChatId }
+export interface CreateGroupFieldTooLongResult { 'chat_id' : ChatId }
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
   { 'Throttled' : null } |
@@ -41,7 +40,7 @@ export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'Success' : CreateGroupSuccessResult } |
   { 'NameTooLong' : CreateGroupFieldTooLongResult } |
   { 'InternalError' : null };
-export interface CreateGroupSuccessResult { 'group_chat_id' : GroupChatId }
+export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
@@ -51,20 +50,19 @@ export interface DirectChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export type DirectChatId = Principal;
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
   'latest_read_by_me' : MessageIndex,
   'latest_event_index' : EventIndex,
-  'chat_id' : DirectChatId,
+  'chat_id' : ChatId,
   'latest_read_by_them' : MessageIndex,
   'latest_message' : DirectMessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
   'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],
-  'chat_id' : DirectChatId,
+  'chat_id' : ChatId,
   'latest_read_by_them' : [] | [MessageIndex],
   'latest_message' : [] | [DirectMessageEventWrapper],
 }
@@ -133,7 +131,6 @@ export interface GroupChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export type GroupChatId = Principal;
 export interface GroupChatSummary {
   'is_public' : boolean,
   'participants' : Array<Participant>,
@@ -144,7 +141,7 @@ export interface GroupChatSummary {
   'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'chat_id' : GroupChatId,
+  'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
@@ -155,12 +152,12 @@ export interface GroupChatSummaryUpdates {
   'last_updated' : TimestampMillis,
   'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],
-  'chat_id' : GroupChatId,
+  'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupChatUpdatesSince {
   'updates_since' : TimestampMillis,
-  'chat_id' : GroupChatId,
+  'chat_id' : ChatId,
 }
 export interface GroupDescriptionChanged {
   'new_description' : [] | [string],
@@ -184,7 +181,7 @@ export interface GroupMessageNotification {
   'recipients' : Array<UserId>,
   'message' : GroupMessage,
   'sender_name' : string,
-  'chat_id' : GroupChatId,
+  'chat_id' : ChatId,
   'group_name' : string,
 }
 export interface GroupNameChanged {
@@ -222,7 +219,7 @@ export interface InitArgs {
   'owner' : Principal,
   'notification_canister_ids' : Array<CanisterId>,
 }
-export interface JoinGroupArgs { 'chat_id' : GroupChatId }
+export interface JoinGroupArgs { 'chat_id' : ChatId }
 export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
@@ -308,7 +305,7 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export interface PrivateReplyContext {
-  'chat_id' : GroupChatId,
+  'chat_id' : ChatId,
   'event_index' : EventIndex,
 }
 export interface PutChunkArgs {
@@ -319,7 +316,7 @@ export interface PutChunkArgs {
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null };
 export interface ReplyContextArgs {
-  'chat_id_if_other' : [] | [GroupChatId],
+  'chat_id_if_other' : [] | [ChatId],
   'message_index' : MessageIndex,
 }
 export type Role = { 'Participant' : null } |

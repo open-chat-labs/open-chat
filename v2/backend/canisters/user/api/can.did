@@ -2,7 +2,7 @@ import "../../../libraries/types/can.did";
 
 type ReplyContextArgs =
     record {
-        chat_id_if_other: opt GroupChatId;
+        chat_id_if_other: opt ChatId;
         message_index: MessageIndex;
     };
 
@@ -101,12 +101,12 @@ type CreateGroupArgs =
 
 type CreateGroupFieldTooLongResult =
     record {
-        group_chat_id: GroupChatId;
+        chat_id: ChatId;
     };
 
 type CreateGroupSuccessResult =
     record {
-        group_chat_id: GroupChatId;
+        chat_id: ChatId;
     };
 
 type CreateGroupResponse =
@@ -122,7 +122,7 @@ type CreateGroupResponse =
 
 type JoinGroupArgs =
     record {
-        group_chat_id: GroupChatId;
+        chat_id: ChatId;
     };
 
 type JoinGroupResponse =
@@ -138,7 +138,7 @@ type JoinGroupResponse =
 
 type LeaveGroupArgs =
     record {
-        group_chat_id: GroupChatId;
+        chat_id: ChatId;
     };
 
 type LeaveGroupResponse =
@@ -152,7 +152,7 @@ type LeaveGroupResponse =
 
 type GroupChatUpdatesSince =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
         updates_since: TimestampMillis;
     };
 

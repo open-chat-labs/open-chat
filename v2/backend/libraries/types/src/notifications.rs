@@ -1,4 +1,4 @@
-use crate::chat_id::GroupChatId;
+use crate::chat_id::ChatId;
 use crate::UserId;
 use crate::{message, v1_message};
 use candid::CandidType;
@@ -27,7 +27,7 @@ pub struct DirectMessageNotification {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMessageNotification {
-    pub chat_id: GroupChatId,
+    pub chat_id: ChatId,
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,

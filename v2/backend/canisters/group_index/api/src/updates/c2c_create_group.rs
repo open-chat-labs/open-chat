@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::GroupChatId;
+use types::ChatId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -21,5 +21,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub group_id: GroupChatId,
+    pub chat_id: ChatId,
 }

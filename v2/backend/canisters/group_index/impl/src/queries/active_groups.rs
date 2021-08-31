@@ -10,7 +10,7 @@ fn active_groups(args: Args) -> Response {
 fn active_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let now = runtime_state.env.now();
     let active_groups = args
-        .group_ids
+        .chat_ids
         .into_iter()
         .filter_map(|id| {
             if let Some(g) = runtime_state.data.private_groups.get(&id) {

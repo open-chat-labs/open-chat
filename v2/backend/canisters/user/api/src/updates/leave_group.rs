@@ -1,10 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::GroupChatId;
+use types::ChatId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub group_chat_id: GroupChatId,
+    pub chat_id: ChatId,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

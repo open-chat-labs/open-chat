@@ -1,10 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{GroupChatId, Milliseconds};
+use types::{ChatId, Milliseconds};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub group_ids: Vec<GroupChatId>,
+    pub chat_ids: Vec<ChatId>,
     pub active_in_last: Milliseconds,
 }
 
@@ -15,5 +15,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub active_groups: Vec<GroupChatId>,
+    pub active_groups: Vec<ChatId>,
 }

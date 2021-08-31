@@ -1,7 +1,7 @@
 type CanisterId = principal;
-type DirectChatId = principal;
+type ChatId = principal;
 type EventIndex = nat32;
-type GroupChatId = principal;
+type ChatId = CanisterId;
 type MessageId = nat;
 type MessageIndex = nat32;
 type TimestampMillis = nat64;
@@ -33,12 +33,6 @@ type CanisterWasm =
     record {
         module: vec nat8;
         version: Version;
-    };
-
-type ChatId =
-    variant {
-        Direct: DirectChatId;
-        Group: GroupChatId;
     };
 
 type ChatSummary =
@@ -84,7 +78,7 @@ type DirectChatEventWrapper =
 
 type DirectChatSummary =
     record {
-        chat_id: DirectChatId;
+        chat_id: ChatId;
         them: UserId;
         latest_message: DirectMessageEventWrapper;
         latest_event_index: EventIndex;
@@ -95,7 +89,7 @@ type DirectChatSummary =
 
 type DirectChatSummaryUpdates =
     record {
-        chat_id: DirectChatId;
+        chat_id: ChatId;
         latest_message: opt DirectMessageEventWrapper;
         latest_event_index: opt EventIndex;
         latest_read_by_me: opt MessageIndex;
@@ -170,7 +164,7 @@ type GroupChatEventWrapper =
 
 type GroupChatSummary =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
         last_updated: TimestampMillis;
         name: text;
         description: text;
@@ -185,7 +179,7 @@ type GroupChatSummary =
 
 type GroupChatSummaryUpdates =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
@@ -221,7 +215,7 @@ type GroupMessageEventWrapper =
 
 type GroupMessageNotification =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
         group_name: text;
         sender: UserId;
         sender_name: text;
@@ -324,7 +318,7 @@ type ParticipantsRemoved =
 
 type PrivateReplyContext =
     record {
-        chat_id: GroupChatId;
+        chat_id: ChatId;
         event_index: EventIndex;
     };
 

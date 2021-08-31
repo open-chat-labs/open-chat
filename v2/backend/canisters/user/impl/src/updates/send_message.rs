@@ -27,17 +27,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        let (direct_chat_id, event_index, message) =
-            runtime_state
-                .data
-                .direct_chats
-                .push_message(my_user_id, args.recipient, push_message_args);
+        let (chat_id, event_index, message) = runtime_state
+            .data
+            .direct_chats
+            .push_message(args.recipient, push_message_args);
 
         let (canister_id, c2c_args) = build_c2c_args(args);
         ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
 
         Success(SuccessResult {
-            direct_chat_id,
+            chat_id,
             event_index,
             message_index: message.message_index,
             timestamp: now,
