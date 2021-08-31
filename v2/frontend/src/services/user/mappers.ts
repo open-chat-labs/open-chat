@@ -160,6 +160,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
+            blockedUsers: candid.Success.blocked_users.map((u) => u.toString()),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),

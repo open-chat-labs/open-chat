@@ -297,6 +297,7 @@ export class UserClientMock implements IUserClient {
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {
+            blockedUsers: [],
             chatsUpdated: args.updatesSince
                 ? chatSummaries.map((c) => updateChat(c, this.updateCycles))
                 : [],

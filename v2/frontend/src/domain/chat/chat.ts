@@ -144,6 +144,7 @@ export type MergedUpdatesResponse = {
 };
 
 export type UpdatesResponse = {
+    blockedUsers: string[];
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
