@@ -1,47 +1,19 @@
 import "../../../libraries/types/can.did";
 
-type CreateArgs =
+type ActiveGroupsArgs =
     record {
-        name: text;
-        is_public: bool;
+        chat_ids: vec ChatId;
+        active_in_last: Milliseconds;
     };
 
-type CreateResponse =
+type ActiveGroupsResponse =
     variant {
-        Success: record {
-            canister_id: CanisterId;
-        };
-        PublicGroupAlreadyExists;
-        GroupLimitExceeded;
-        InvalidName;
-        NameTooLong: nat16;
-        UnknownError;
+        Success: ActiveGroupsSuccessResult;
     };
 
-type UpgradeArgs =
+type ActiveGroupsSuccessResult = 
     record {
-        wasm: vec nat8;
-        version: text;
-    };
-
-type UpgradeResponse =
-    variant {
-        Success: record {
-            canister_id: CanisterId;
-        };
-        Failure; // Need to enumerate these
-    };
-
-type DeleteArgs =
-    record {
-        chat_id: ChatId;
-    };
-
-type DeleteResponse =
-    variant {
-        Success;
-        NotAdmin;
-        NotFound;
+        active_groups: vec ChatId;
     };
 
 type SearchArgs =
@@ -52,21 +24,22 @@ type SearchArgs =
 
 type SearchResponse =
     variant {
-        Success: record {
-            groups: vec record {
-                chat_id: ChatId;
-                name: text;
-                score: nat32;
-            };
-        };
-        TermTooShort: nat16;
-        TermTooLong: nat16;
+        Success: SearchSuccessResult;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
         InvalidTerm;
     };
 
-type NotifyBalanceArgs =
+type SearchSuccessResult =
     record {
-        balance: nat;
+        matches: vec GroupMatch;
+    };
+
+type GroupMatch =
+    record {
+        chat_id: ChatId;
+        name: text;
+        description: text;
     };
 
 type MetricsArgs =
@@ -89,20 +62,7 @@ type MetricsResponse =
     };
 
 service: {
-    // Called by a user canister - costs 0.2T
-    create: (CreateArgs) -> (CreateResponse);
-    
-    // Takes a new Group canister WASM and schedules a rolling upgrade
-    upgrade: (UpgradeArgs) -> (UpgradeResponse);
-    
-    // Any group admin can delete the group
-    delete: (DeleteArgs) -> (DeleteResponse);
-
-    // Search for public groups
-    search: (SearchArgs) -> (SearchResponse) query;
-
-    // Called by a group canister when it is low on cycles
-    notify_balance: (NotifyBalanceArgs) -> ();
-
+    active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
+    search: (SearchArgs) -> (SearchResponse) query;
 }

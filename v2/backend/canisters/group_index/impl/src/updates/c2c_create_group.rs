@@ -29,6 +29,7 @@ async fn c2c_create_group(args: Args) -> Response {
                     args.is_public,
                     chat_id,
                     args.name,
+                    args.description,
                     wasm_version,
                     state.borrow_mut().as_mut().unwrap(),
                 )
@@ -83,13 +84,20 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
     }
 }
 
-fn commit(is_public: bool, chat_id: ChatId, name: String, wasm_version: Version, runtime_state: &mut RuntimeState) {
+fn commit(
+    is_public: bool,
+    chat_id: ChatId,
+    name: String,
+    description: String,
+    wasm_version: Version,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
     if is_public {
         runtime_state
             .data
             .public_groups
-            .handle_group_created(chat_id, name, now, wasm_version);
+            .handle_group_created(chat_id, name, description, now, wasm_version);
     } else {
         runtime_state
             .data

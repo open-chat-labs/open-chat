@@ -1,3 +1,6 @@
+#[cfg(test)]
+use candid::Principal;
+
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use std::cell::RefCell;
@@ -42,6 +45,18 @@ impl Data {
             private_groups: PrivateGroups::default(),
             group_canister_wasm,
             notifications_canister_id,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for Data {
+    fn default() -> Data {
+        Data {
+            public_groups: PublicGroups::default(),
+            private_groups: PrivateGroups::default(),
+            group_canister_wasm: CanisterWasm::default(),
+            notifications_canister_id: Principal::anonymous(),
         }
     }
 }
