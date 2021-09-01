@@ -325,9 +325,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         ctx.user!.username,
                                         msg
                                     )
-                                    .catch((_err) =>
-                                        toastStore.showFailureToast("errorSendingMessage")
-                                    );
+                                    .catch((err) => {
+                                        console.log(err);
+                                        toastStore.showFailureToast("errorSendingMessage");
+                                    });
                                 return {
                                     events: [
                                         ...ctx.events,

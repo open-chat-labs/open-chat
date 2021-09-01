@@ -51,10 +51,11 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("Success" in candid) {
         return {
             // todo - the response type for direct messages is actually different and we need to resolve that
+            // the difference is that is contains chat_id
             kind: "send_message_success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
-            eventIndex: 0,
+            eventIndex: candid.Success.event_index,
         };
     }
     if ("RecipientBlocked" in candid) {

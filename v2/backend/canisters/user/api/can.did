@@ -18,10 +18,10 @@ type SendMessageArgs =
 type SendMessageResponse =
     variant {
         Success: record {
+            chat_id: ChatId;
+            event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            latest_read_by_me: MessageIndex;
-            latest_read_by_them: MessageIndex;
         };
         RecipientNotFound;
         BalanceExceeded;
@@ -181,7 +181,6 @@ type UpdatesResponse =
 type EventsSuccessResult =
     record {
         events: vec DirectChatEventWrapper;
-        latest_event_index: EventIndex;
     };
 
 type EventsArgs =
