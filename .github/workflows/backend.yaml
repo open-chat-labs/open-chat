@@ -39,6 +39,9 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: rustup component add clippy
+      - uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: ./v2
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
@@ -57,6 +60,9 @@ jobs:
       - uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: ./v2
       - uses: actions-rs/cargo@v1
         with:
           command: test
