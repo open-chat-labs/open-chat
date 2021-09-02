@@ -16,6 +16,8 @@ import type {
     ChatEvent,
     ReplyContext,
     DirectChatReplyContext,
+    DirectMessage,
+    GroupMessage,
 } from "../domain/chat/chat";
 import {
     createDirectMessage,
@@ -272,11 +274,12 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 chatId: ctx.chatSummary.chatId,
                                 event: "sending_message",
                             });
-                            const index = latestLoadedEventIndex(ctx.events) ?? 0;
+                            const nextIndex = (latestLoadedEventIndex(ctx.events) ?? -1) + 1;
+                            let msg: GroupMessage | DirectMessage | undefined;
                             if (ctx.chatSummary.kind === "group_chat") {
-                                const msg = createGroupMessage(
+                                msg = createGroupMessage(
                                     ctx.user!.userId,
-                                    index + 1,
+                                    nextIndex,
                                     ev.data,
                                     ctx.replyingTo,
                                     ctx.fileToAttach
@@ -298,22 +301,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     .catch((_err) =>
                                         toastStore.showFailureToast("errorSendingMessage")
                                     );
-                                return {
-                                    events: [
-                                        ...ctx.events,
-                                        {
-                                            event: msg,
-                                            index: index + 1,
-                                            timestamp: BigInt(+new Date() - index + 1),
-                                        },
-                                    ],
-                                    replyingTo: undefined,
-                                    fileToAttach: undefined,
-                                };
                             }
                             if (ctx.chatSummary.kind === "direct_chat") {
-                                const msg = createDirectMessage(
-                                    index + 1,
+                                msg = createDirectMessage(
+                                    nextIndex,
                                     ev.data,
                                     ctx.replyingTo,
                                     ctx.fileToAttach
@@ -329,20 +320,21 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         console.log(err);
                                         toastStore.showFailureToast("errorSendingMessage");
                                     });
-                                return {
-                                    events: [
-                                        ...ctx.events,
-                                        {
-                                            event: msg,
-                                            index: index + 1,
-                                            timestamp: BigInt(+new Date() - index + 1),
-                                        },
-                                    ],
-                                    replyingTo: undefined,
-                                    fileToAttach: undefined,
-                                };
                             }
-                            return {};
+                            return msg
+                                ? {
+                                      events: [
+                                          ...ctx.events,
+                                          {
+                                              event: msg,
+                                              index: nextIndex,
+                                              timestamp: BigInt(+new Date()),
+                                          },
+                                      ],
+                                      replyingTo: undefined,
+                                      fileToAttach: undefined,
+                                  }
+                                : {};
                         }),
                     ],
                 },

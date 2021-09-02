@@ -55,9 +55,6 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
-    if ("BalanceExceeded" in candid) {
-        return { kind: "send_message_balance_exceeded" };
-    }
     if ("Success" in candid) {
         return {
             kind: "send_message_success",
@@ -66,20 +63,8 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             eventIndex: candid.Success.event_index,
         };
     }
-    if ("RecipientBlocked" in candid) {
-        return { kind: "send_message_recipient_blocked" };
-    }
-    if ("InvalidRequest" in candid) {
-        return { kind: "send_message_invalid_request" };
-    }
-    if ("SenderBlocked" in candid) {
-        return { kind: "send_message_sender_blocked" };
-    }
-    if ("MessageTooLong" in candid) {
-        return { kind: "send_message_too_long" };
-    }
-    if ("RecipientNotFound" in candid) {
-        return { kind: "send_message_recipient_not_found" };
+    if ("NotInGroup" in candid) {
+        return { kind: "send_message_not_in_group" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }

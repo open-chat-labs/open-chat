@@ -222,17 +222,12 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(ReplyContextArgs),
   });
   const SendMessageResponse = IDL.Variant({
-    'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
-    'RecipientBlocked' : IDL.Null,
-    'InvalidRequest' : IDL.Null,
-    'SenderBlocked' : IDL.Null,
-    'MessageTooLong' : IDL.Nat32,
-    'RecipientNotFound' : IDL.Null,
+    'NotInGroup' : IDL.Null,
   });
   const SetAvatarArgs = IDL.Record({
     'mime_type' : IDL.Text,

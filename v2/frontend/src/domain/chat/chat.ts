@@ -310,10 +310,10 @@ export type SendMessageResponse =
     | SendMessageSuccess
     | SendMessageRecipientBlocked
     | SendMessageInvalidRequest
-    | SendMessageSenderBlocked
     | SendMessageTooLong
     | SendMessageBalanceExceeded
-    | SendMessageRecipientNotFound;
+    | SendMessageRecipientNotFound
+    | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
     kind: "send_message_success";
@@ -330,10 +330,6 @@ export type SendMessageInvalidRequest = {
     kind: "send_message_invalid_request";
 };
 
-export type SendMessageSenderBlocked = {
-    kind: "send_message_sender_blocked";
-};
-
 export type SendMessageTooLong = {
     kind: "send_message_too_long";
 };
@@ -344,6 +340,10 @@ export type SendMessageRecipientNotFound = {
 
 export type SendMessageBalanceExceeded = {
     kind: "send_message_balance_exceeded";
+};
+
+export type SendMessageNotInGroup = {
+    kind: "send_message_not_in_group";
 };
 
 export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";

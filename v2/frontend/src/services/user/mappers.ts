@@ -18,6 +18,7 @@ import type {
     ApiDirectReplyContext,
     ApiDirectMessage,
     ApiSendMessageResponse,
+    ApiPutChunkResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -39,10 +40,24 @@ import type {
     GroupChatReplyContext,
     DirectChatReplyContext,
     SendMessageResponse,
+    PutChunkResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
+    if ("Full" in candid) {
+        return "put_chunk_full";
+    }
+    if ("ChunkTooBig" in candid) {
+        return "put_chunk_too_big";
+    }
+    if ("Success" in candid) {
+        return "put_chunk_success";
+    }
+    throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
+}
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("BalanceExceeded" in candid) {
@@ -63,9 +78,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     }
     if ("InvalidRequest" in candid) {
         return { kind: "send_message_invalid_request" };
-    }
-    if ("SenderBlocked" in candid) {
-        return { kind: "send_message_sender_blocked" };
     }
     if ("MessageTooLong" in candid) {
         return { kind: "send_message_too_long" };
