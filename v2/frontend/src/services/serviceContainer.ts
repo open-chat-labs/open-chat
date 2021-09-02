@@ -28,6 +28,8 @@ import type {
     GroupMessage,
     SendMessageResponse,
     DirectMessage,
+    ReplyContext,
+    MessageContent,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -37,6 +39,8 @@ import { DataClient } from "./data/data.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
+import { createDirectMessage, createGroupMessage } from "../domain/chat/chat.utils";
+import { UnsupportedValueError } from "../utils/error";
 
 export class ServiceContainer {
     private _userIndexClient: IUserIndexClient;
@@ -71,7 +75,21 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    sendGroupMessage(
+    sendMessage(
+        chat: ChatSummary,
+        user: UserSummary,
+        msg: GroupMessage | DirectMessage
+    ): Promise<SendMessageResponse> {
+        if (chat.kind === "group_chat" && msg.kind === "group_message") {
+            return this.sendGroupMessage(chat.chatId, user.username, msg);
+        }
+        if (chat.kind === "direct_chat" && msg.kind === "direct_message") {
+            return this.sendDirectMessage(chat.them, user.username, msg);
+        }
+        throw new Error(`Unexpected chat type and msg type combination: ${chat.kind}, ${msg.kind}`);
+    }
+
+    private sendGroupMessage(
         chatId: string,
         senderName: string,
         message: GroupMessage
@@ -79,7 +97,7 @@ export class ServiceContainer {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
-    sendDirectMessage(
+    private sendDirectMessage(
         recipientId: string,
         senderName: string,
         message: DirectMessage

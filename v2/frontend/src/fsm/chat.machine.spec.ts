@@ -29,6 +29,15 @@ const fileMessageContent: FileContent = {
     mimeType: "file/pdf",
 };
 
+const testDirectMessage: DirectMessage = {
+    kind: "direct_message",
+    sentByMe: true,
+    repliesTo: undefined,
+    messageId: newMessageId(),
+    messageIndex: 100,
+    content: textMessageContent,
+};
+
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
@@ -136,17 +145,67 @@ describe("chat machine transitions", () => {
         expect(ctx.replyingTo).toEqual(msg);
     });
     test("send messages", () => {
-        // todo - temporary hack, I will revisit this
-        serviceContainer.sendGroupMessage = jest
-            .fn()
-            .mockResolvedValue({ kind: "send_message_too_long" });
         const ctx = testTransition(
             chatMachine.withContext(groupContext),
             { user_states: "idle" },
-            { type: "SEND_MESSAGE", data: "hello world" },
+            { type: "SEND_MESSAGE", data: { message: testDirectMessage, index: 100 } },
             { user_states: "idle" }
         );
         expect(ctx.events.length).toEqual(1);
+        expect(ctx.events[0].event).toEqual(testDirectMessage);
+    });
+    test("update message", () => {
+        const ctx = testTransition(
+            chatMachine.withContext({
+                ...directContext,
+                events: [
+                    {
+                        event: testDirectMessage,
+                        timestamp: BigInt(0),
+                        index: 100,
+                    },
+                ],
+            }),
+            { user_states: "idle" },
+            {
+                type: "UPDATE_MESSAGE",
+                data: {
+                    candidate: testDirectMessage,
+                    resp: {
+                        kind: "send_message_success",
+                        timestamp: BigInt(100),
+                        messageIndex: 200,
+                        eventIndex: 200,
+                    },
+                },
+            },
+            { user_states: "idle" }
+        );
+        expect(ctx.events.length).toEqual(1);
+        expect(ctx.events[0].event).toMatchObject({
+            messageIndex: 200,
+        });
+    });
+    test("remove message", () => {
+        const ctx = testTransition(
+            chatMachine.withContext({
+                ...directContext,
+                events: [
+                    {
+                        event: testDirectMessage,
+                        timestamp: BigInt(0),
+                        index: 100,
+                    },
+                ],
+            }),
+            { user_states: "idle" },
+            {
+                type: "REMOVE_MESSAGE",
+                data: testDirectMessage,
+            },
+            { user_states: "idle" }
+        );
+        expect(ctx.events.length).toEqual(0);
     });
     test("cancel reply to", () => {
         const ctx = testTransition(
@@ -159,13 +218,13 @@ describe("chat machine transitions", () => {
     });
     test("send messages clears replyto", () => {
         // todo - temporary hack, I will revisit this
-        serviceContainer.sendGroupMessage = jest
+        serviceContainer.sendMessage = jest
             .fn()
             .mockResolvedValue({ kind: "send_message_too_long" });
         const ctx = testTransition(
             chatMachine.withContext({ ...groupContext, replyingTo: repliesToGroup() }),
             { user_states: "idle" },
-            { type: "SEND_MESSAGE", data: "hello world" },
+            { type: "SEND_MESSAGE", data: { message: testDirectMessage, index: 100 } },
             { user_states: "idle" }
         );
         expect(ctx.replyingTo).toBe(undefined);
