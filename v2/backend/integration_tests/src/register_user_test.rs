@@ -1,5 +1,4 @@
 use crate::block_on;
-use canister_client::canisters;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
@@ -48,7 +47,7 @@ async fn register_existing_user_test_impl(handle: IcHandle, ctx: &fondue::pot::C
     let identity = build_identity(TestIdentity::User1);
     let agent = build_ic_agent(url, identity).await;
     let submit_phone_number_response =
-        canisters::user_index::submit_phone_number(&agent, &canister_ids.user_index, &submit_phone_number_args).await;
+        user_index_canister_client::submit_phone_number(&agent, &canister_ids.user_index, &submit_phone_number_args).await;
 
     assert!(matches!(
         submit_phone_number_response,

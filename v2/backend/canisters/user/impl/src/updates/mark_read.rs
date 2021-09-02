@@ -37,5 +37,5 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn mark_read_on_recipients_canister(canister_id: CanisterId, up_to_message_index: MessageIndex) {
     let args = c2c_mark_read::Args { up_to_message_index };
-    let _ = user_canister_client::c2c_mark_read(canister_id, &args).await;
+    let _ = user_canister_c2c_client::c2c_mark_read(canister_id, &args).await;
 }

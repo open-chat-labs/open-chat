@@ -12,7 +12,7 @@ async fn create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match group_index_canister_client::c2c_create_group(
+    match group_index_canister_c2c_client::c2c_create_group(
         prepare_result.group_index_canister_id,
         &prepare_result.create_group_args,
     )

@@ -1,25 +1,20 @@
-use ic_cdk::api::call::CallResult;
-use log::error;
-use types::CanisterId;
+use candid::{Decode, Encode, Principal};
+use canister_client_macros::*;
+use ic_agent::Agent;
 use user_canister::*;
-use utils::generate_c2c_call;
 
 // Queries
-generate_c2c_call!(chunk);
-generate_c2c_call!(events);
-generate_c2c_call!(events_by_index);
-generate_c2c_call!(updates);
+generate_query_call!(chunk);
+generate_query_call!(events);
+generate_query_call!(events_by_index);
+generate_query_call!(updates);
 
 // Updates
-generate_c2c_call!(block_user);
-generate_c2c_call!(c2c_try_add_to_group);
-generate_c2c_call!(c2c_mark_read);
-generate_c2c_call!(c2c_remove_from_group);
-generate_c2c_call!(c2c_send_message);
-generate_c2c_call!(create_group);
-generate_c2c_call!(leave_group);
-generate_c2c_call!(join_group);
-generate_c2c_call!(mark_read);
-generate_c2c_call!(put_chunk);
-generate_c2c_call!(send_message);
-generate_c2c_call!(unblock_user);
+generate_update_call!(block_user);
+generate_update_call!(create_group);
+generate_update_call!(leave_group);
+generate_update_call!(join_group);
+generate_update_call!(mark_read);
+generate_update_call!(put_chunk);
+generate_update_call!(send_message);
+generate_update_call!(unblock_user);

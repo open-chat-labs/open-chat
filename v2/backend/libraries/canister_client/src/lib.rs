@@ -1,6 +1,5 @@
 use types::CanisterId;
 
-pub mod canisters;
 pub mod operations;
 pub mod utils;
 
