@@ -22,6 +22,7 @@ members = [
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
     "backend/data_generator",
+    "backend/integration_tests",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/types",
