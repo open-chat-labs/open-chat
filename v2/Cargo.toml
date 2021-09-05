@@ -24,6 +24,7 @@ members = [
     "backend/data_generator",
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
+    "backend/libraries/cycles_utils",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -36,6 +37,3 @@ members = [
 lto = true
 opt-level = "z"
 codegen-units = 1
-
-[patch."https://github.com/dfinity-lab/lmdb-rs"]
-lmdb-rkv = { git = "https://github.com/hpeebles/lmdb-rs", rev = "04f94c27f607b28e181d3965bdebc330c1489c87" }

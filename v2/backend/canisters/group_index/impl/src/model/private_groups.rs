@@ -1,7 +1,7 @@
 use crate::MARK_ACTIVE_DURATION;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, TimestampMillis, Version};
+use types::{ChatId, CyclesTopUp, TimestampMillis, Version};
 
 #[derive(Default)]
 pub struct PrivateGroups {
@@ -35,6 +35,7 @@ pub struct PrivateGroupInfo {
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
     wasm_version: Version,
+    cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl PrivateGroupInfo {
@@ -44,6 +45,7 @@ impl PrivateGroupInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
+            cycle_top_ups: Vec::new(),
         }
     }
 
@@ -57,5 +59,9 @@ impl PrivateGroupInfo {
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
         self.marked_active_until > now
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up)
     }
 }

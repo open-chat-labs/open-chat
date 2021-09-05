@@ -4,7 +4,7 @@ use candid::Principal;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Milliseconds};
+use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
 use utils::env::Environment;
 
 mod lifecycle;
@@ -14,6 +14,7 @@ mod updates;
 
 pub const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
 pub const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
+pub const GROUP_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
 pub const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
 thread_local! {
@@ -46,6 +47,10 @@ impl Data {
             group_canister_wasm,
             notifications_canister_id,
         }
+    }
+
+    pub fn chat_exists(&self, chat_id: &ChatId) -> bool {
+        self.private_groups.get(chat_id).is_some() || self.public_groups.get(chat_id).is_some()
     }
 }
 

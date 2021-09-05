@@ -2,12 +2,15 @@ use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::updates::make_admin::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::make_admin::*;
 use ic_cdk_macros::update;
 use types::{ParticipantsPromotedToAdmin, Role};
 
 #[update]
 fn make_admin(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| make_admin_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 

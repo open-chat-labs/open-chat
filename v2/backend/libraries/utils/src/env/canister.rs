@@ -48,6 +48,10 @@ impl Environment for CanisterEnv {
         self.rng.next_u32()
     }
 
+    fn cycles_balance(&self) -> u64 {
+        ic_cdk::api::canister_balance()
+    }
+
     fn test_mode(&self) -> bool {
         self.test_mode
     }

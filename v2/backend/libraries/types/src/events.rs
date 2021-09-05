@@ -14,7 +14,7 @@ pub enum GroupChatEvent {
     ParticipantJoined(ParticipantJoined),
     ParticipantLeft(ParticipantLeft),
     ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
-    ParticipantsDismissedAsAdmin(ParticipantsPromotedToAdmin),
+    ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
 }
