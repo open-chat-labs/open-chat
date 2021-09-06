@@ -8,15 +8,21 @@ edition = "2018"
 
 [dependencies]
 candid = "0.7.5"
+canister_client_macros = { path = "../canister_client_macros", features = ["ingress"] }
 dirs = "3.0.2"
 futures = "0.3.16"
 garcon = "0.2.3"
 group_canister = { path = "../../canisters/group/api" }
+group_canister_client = { path = "../../canisters/group/client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
+group_index_canister_client = { path = "../../canisters/group_index/client" }
 ic-agent = "0.7.0"
 ic-utils = "0.5.0"
 notifications_canister = { path = "../../canisters/notifications/api" }
+notifications_canister_client = { path = "../../canisters/notifications/client" }
 serde = "1.0.126"
 types = { path = "../types", default-features = false }
 user_canister = { path = "../../canisters/user/api" }
+user_canister_client = { path = "../../canisters/user/client" }
 user_index_canister = { path = "../../canisters/user_index/api" }
+user_index_canister_client = { path = "../../canisters/user_index/client" }

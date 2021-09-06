@@ -12,7 +12,7 @@ async fn leave_group(args: Args) -> Response {
 
     let c2c_args = c2c_leave_group::Args {};
 
-    match group_canister_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
+    match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
             c2c_leave_group::Response::Success(_) => {
                 RUNTIME_STATE.with(|state| commit(&args.chat_id, state.borrow_mut().as_mut().unwrap()));

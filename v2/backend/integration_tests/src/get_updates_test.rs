@@ -1,5 +1,4 @@
 use crate::block_on;
-use canister_client::canisters;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
@@ -101,7 +100,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let result4 = send_group_message(&user2_agent, chat_id2, &group_message_args2).await;
 
     let updates_args1 = user_canister::updates::Args { updates_since: None };
-    let updates_response1 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args1).await;
+    let updates_response1 = user_canister_client::updates(&user1_agent, &user1_id.into(), &updates_args1).await;
 
     if let user_canister::updates::Response::Success(r) = updates_response1 {
         assert!(r.chats_updated.is_empty());
@@ -122,7 +121,7 @@ async fn get_updates_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
                 ],
             }),
         };
-        let updates_response2 = canisters::user::updates(&user1_agent, &user1_id.into(), &updates_args2).await;
+        let updates_response2 = user_canister_client::updates(&user1_agent, &user1_id.into(), &updates_args2).await;
 
         if let user_canister::updates::Response::Success(r) = updates_response2 {
             assert_eq!(r.chats_updated.len(), 2, "{:?}", r);

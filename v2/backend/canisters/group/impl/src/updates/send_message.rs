@@ -62,5 +62,5 @@ async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, not
         recipients,
         notification,
     };
-    let _ = notifications_canister_client::push_group_message_notification(canister_id, &args).await;
+    let _ = notifications_canister_c2c_client::push_group_message_notification(canister_id, &args).await;
 }

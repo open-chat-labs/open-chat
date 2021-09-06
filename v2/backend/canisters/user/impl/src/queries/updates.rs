@@ -90,7 +90,7 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummary
     let args = group_canister::summary::Args {};
     let futures: Vec<_> = chat_ids
         .into_iter()
-        .map(|g| group_canister_client::summary(g.into(), &args))
+        .map(|g| group_canister_c2c_client::summary(g.into(), &args))
         .collect();
 
     let responses = futures::future::join_all(futures).await;
@@ -134,7 +134,7 @@ async fn get_group_chat_summary_updates(
             chat_ids: group_chats.iter().map(|g| g.0).collect(),
             active_in_last: duration_since_last_sync,
         };
-        let active_groups = match group_index_canister_client::active_groups(group_index_canister_id, &args).await {
+        let active_groups = match group_index_canister_c2c_client::active_groups(group_index_canister_id, &args).await {
             Ok(group_index_canister::active_groups::Response::Success(r)) => r.active_groups,
             Err(error) => {
                 error!("Failed to get active groups. {:?}", error);
@@ -155,7 +155,7 @@ async fn get_group_chat_summary_updates(
         canister_id: CanisterId,
         args: group_canister::summary_updates::Args,
     ) -> CallResult<group_canister::summary_updates::Response> {
-        group_canister_client::summary_updates(canister_id, &args).await
+        group_canister_c2c_client::summary_updates(canister_id, &args).await
     }
 
     let count = group_chats.len();

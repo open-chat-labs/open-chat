@@ -1,5 +1,4 @@
 use crate::block_on;
-use canister_client::canisters;
 use canister_client::operations::*;
 use canister_client::utils::{build_ic_agent, build_identity};
 use canister_client::TestIdentity;
@@ -50,7 +49,7 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         user_id: user2_id,
         events: vec![send_message_result.event_index],
     };
-    let get_events_response = canisters::user::events_by_index(&agent, &user1_id.into(), &events_args).await;
+    let get_events_response = user_canister_client::events_by_index(&agent, &user1_id.into(), &events_args).await;
     if let user_canister::events_by_index::Response::Success(r) = get_events_response {
         assert_eq!(r.events.len(), 1);
     } else {

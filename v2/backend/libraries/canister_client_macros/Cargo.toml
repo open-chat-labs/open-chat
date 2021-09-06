@@ -1,0 +1,13 @@
+[package]
+name = "canister_client_macros"
+version = "0.1.0"
+authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+garcon = { version = "0.2.3", optional = true }
+
+[features]
+ingress = ["garcon"]

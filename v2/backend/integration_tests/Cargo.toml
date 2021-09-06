@@ -1,5 +1,7 @@
+[workspace]
+
 [package]
-name = "tests"
+name = "integration_tests"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
@@ -13,12 +15,12 @@ fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e
 futures = "0.3.16"
 garcon = "0.2.3"
 group_canister = { path = "../canisters/group/api" }
+group_canister_client = { path = "../canisters/group/client" }
 group_index_canister = { path = "../canisters/group_index/api" }
 ic-agent = "0.7.0"
 ic-fondue = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-registry-subnet-type = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-replica = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
-ic-rosetta-api = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 ic-utils = "0.5.0"
 nodemanager = { git = "ssh://github.com/dfinity-lab/dfinity", rev = "e2ae8ea3958cf16e5116acae513cacb7cb6c6b92" }
 notifications_canister = { path = "../canisters/notifications/api" }
@@ -28,4 +30,6 @@ tokio = { version = "1.10.0", features = ["full"] }
 types = { path = "../../backend/libraries/types", default-features = false }
 url = "2.2.2"
 user_canister = { path = "../canisters/user/api" }
+user_canister_client = { path = "../canisters/user/client" }
 user_index_canister = { path = "../canisters/user_index/api" }
+user_index_canister_client = { path = "../canisters/user_index/client" }

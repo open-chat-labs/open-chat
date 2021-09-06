@@ -14,7 +14,7 @@ async fn block_user(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let response = user_canister_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group::Args {}).await;
+    let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group::Args {}).await;
     if let Err(error) = response {
         error!("{:?}", error);
         return InternalError(format!("{:?}", error));

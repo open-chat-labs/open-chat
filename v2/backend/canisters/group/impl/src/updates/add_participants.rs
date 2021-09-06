@@ -26,7 +26,7 @@ async fn add_participants(args: Args) -> Response {
             .users_to_add
             .iter()
             .cloned()
-            .map(|u| user_canister_client::c2c_try_add_to_group(u.into(), &c2c_args))
+            .map(|u| user_canister_c2c_client::c2c_try_add_to_group(u.into(), &c2c_args))
             .collect();
 
         let responses = futures::future::join_all(futures).await;
