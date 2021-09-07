@@ -10,7 +10,10 @@ const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.
 const authClient = AuthClient.create();
 
 export function getIdentity(): Promise<Identity> {
-    return authClient.then((c) => c.getIdentity());
+    return authClient.then((c) => {
+        console.log("Principal", c.getIdentity().getPrincipal().toText());
+        return c.getIdentity();
+    });
 }
 
 export function isAuthenticated(): Promise<boolean> {
@@ -35,6 +38,7 @@ export function login(): Promise<Identity> {
             c.login({
                 identityProvider: addDataRequirements(IDENTITY_URL),
                 onSuccess: () => {
+                    console.log("Principal", c.getIdentity().getPrincipal().toText());
                     resolve(c.getIdentity());
                 },
                 onError: (err) => reject(err),
