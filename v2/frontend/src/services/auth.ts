@@ -17,11 +17,23 @@ export function isAuthenticated(): Promise<boolean> {
     return authClient.then((c) => c.isAuthenticated());
 }
 
+function addDataRequirements(url: string): string {
+    const seperator = url.indexOf("?") >= 0 ? "&" : "?";
+    return `${url}${seperator}requirements=${encodeURIComponent(
+        JSON.stringify({
+            from: "openchat",
+            requirements: {
+                phone: "exists",
+            },
+        })
+    )}`;
+}
+
 export function login(): Promise<Identity> {
     return authClient.then((c) => {
         return new Promise((resolve, reject) => {
             c.login({
-                identityProvider: IDENTITY_URL,
+                identityProvider: addDataRequirements(IDENTITY_URL),
                 onSuccess: () => {
                     resolve(c.getIdentity());
                 },

@@ -19,6 +19,7 @@
     </p>
     <Button disabled={loading} {loading} on:click={() => dispatch("login")}
         >{$_("login.signIn")}</Button>
+    <iframe class:loading id={"privicFrame"} title="PrivIC iframe" height="100%" width="100%" />
 </ModalPage>
 
 <style type="text/scss">
@@ -42,5 +43,16 @@
         text-decoration-color: var(--link-underline);
         text-underline-offset: $sp1;
         cursor: pointer;
+    }
+
+    iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        border-radius: $sp5;
+        &:not(.loading) {
+            display: none;
+        }
     }
 </style>

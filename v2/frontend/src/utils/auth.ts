@@ -274,7 +274,10 @@ export class AuthClient {
         window.addEventListener("message", this._eventHandler);
 
         // Open a new window with the IDP provider.
-        this._idpWindow = window.open(identityProviderUrl.toString(), "privicWindow") ?? undefined;
+        // this._idpWindow = window.open(identityProviderUrl.toString(), "privicWindow") ?? undefined;
+        const frame = document.getElementById("privicFrame") as HTMLIFrameElement;
+        frame.src = identityProviderUrl.toString();
+        this._idpWindow = frame.contentWindow || undefined;
     }
 
     private _getEventHandler(identityProviderUrl: URL, options?: AuthClientLoginOptions) {
