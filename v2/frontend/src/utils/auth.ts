@@ -20,7 +20,7 @@ const IDENTITY_PROVIDER_DEFAULT = "https://identity.ic0.app";
 const IDENTITY_PROVIDER_ENDPOINT = "#authorize";
 
 /**
- * List of options for creating an {@link AuthClient}.
+ * List of options for creating an {@link PrivICClient}.
  */
 export interface AuthClientCreateOptions {
     /**
@@ -32,6 +32,25 @@ export interface AuthClientCreateOptions {
      */
     storage?: AuthClientStorage;
 }
+
+export type PhoneNumber = {
+    countryCode: number;
+    number: string;
+};
+
+export type DataRequirement = "exists" | "full-access";
+
+export type DataRequirementResponse<T> = "exists" | T;
+
+export type DataRequest = {
+    email?: DataRequirement;
+    phone?: DataRequirement;
+};
+
+export type DataResponse = {
+    email?: DataRequirementResponse<string>;
+    phone?: DataRequirementResponse<PhoneNumber>;
+};
 
 export interface AuthClientLoginOptions {
     /**
@@ -45,11 +64,13 @@ export interface AuthClientLoginOptions {
     /**
      * Callback once login has completed
      */
-    onSuccess?: () => void;
+    onSuccess?: (resp: DataResponse) => void;
     /**
      * Callback in case authentication fails
      */
     onError?: (error?: string) => void;
+
+    dataRequest: DataRequest;
 }
 
 /**
@@ -67,6 +88,7 @@ interface InternetIdentityAuthRequest {
     kind: "authorize-client";
     sessionPublicKey: Uint8Array;
     maxTimeToLive?: bigint;
+    dataRequest: DataRequest;
 }
 
 interface InternetIdentityAuthResponseSuccess {
@@ -80,6 +102,7 @@ interface InternetIdentityAuthResponseSuccess {
         signature: Uint8Array;
     }[];
     userPublicKey: Uint8Array;
+    dataResponse: DataResponse;
 }
 
 async function _deleteStorage(storage: AuthClientStorage) {
@@ -141,6 +164,7 @@ interface AuthResponseSuccess {
         signature: Uint8Array;
     }[];
     userPublicKey: Uint8Array;
+    dataResponse: DataResponse;
 }
 
 interface AuthResponseFailure {
@@ -151,8 +175,8 @@ interface AuthResponseFailure {
 type IdentityServiceResponseMessage = AuthReadyMessage | AuthResponse;
 type AuthResponse = AuthResponseSuccess | AuthResponseFailure;
 
-export class AuthClient {
-    public static async create(options: AuthClientCreateOptions = {}): Promise<AuthClient> {
+export class PrivICClient {
+    public static async create(options: AuthClientCreateOptions = {}): Promise<PrivICClient> {
         const storage = options.storage ?? new LocalStorage("ic-");
 
         let key: null | SignIdentity = null;
@@ -210,7 +234,10 @@ export class AuthClient {
         private _eventHandler?: (event: MessageEvent) => void
     ) {}
 
-    private _handleSuccess(message: InternetIdentityAuthResponseSuccess, onSuccess?: () => void) {
+    private _handleSuccess(
+        message: InternetIdentityAuthResponseSuccess,
+        onSuccess?: (dataResp: DataResponse) => void
+    ) {
         const delegations = message.delegations.map((signedDelegation) => {
             return {
                 delegation: new Delegation(
@@ -236,7 +263,7 @@ export class AuthClient {
         this._identity = DelegationIdentity.fromDelegation(key, this._chain);
 
         this._idpWindow?.close();
-        onSuccess?.();
+        onSuccess?.(message.dataResponse);
         this._removeEventListener();
     }
 
@@ -298,6 +325,7 @@ export class AuthClient {
                             this._key?.getPublicKey().toDer() as ArrayBuffer
                         ),
                         maxTimeToLive: options?.maxTimeToLive,
+                        dataRequest: options?.dataRequest ?? {},
                     };
                     this._idpWindow?.postMessage(request, identityProviderUrl.origin);
                     break;

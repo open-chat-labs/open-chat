@@ -199,7 +199,7 @@
         text-decoration: underline;
     }
 
-    :global(.chat-message .content ul) {
+    :global(.chat-message ul) {
         margin: 0 $sp4;
     }
 

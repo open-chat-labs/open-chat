@@ -1,5 +1,5 @@
 import type { Identity } from "@dfinity/agent";
-import { AuthClient } from "../utils/auth";
+import { PrivICClient } from "../utils/auth";
 import { DelegationIdentity } from "@dfinity/identity";
 
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -7,48 +7,41 @@ const ONE_MINUTE_MILLIS = 60 * 1000;
 // Use your local .env file to direct this to the local IC replica
 const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
 
-const authClient = AuthClient.create();
+const privicClient = PrivICClient.create();
 
 export function getIdentity(): Promise<Identity> {
-    return authClient.then((c) => {
+    return privicClient.then((c) => {
         console.log("Principal", c.getIdentity().getPrincipal().toText());
         return c.getIdentity();
     });
 }
 
 export function isAuthenticated(): Promise<boolean> {
-    return authClient.then((c) => c.isAuthenticated());
-}
-
-function addDataRequirements(url: string): string {
-    const seperator = url.indexOf("?") >= 0 ? "&" : "?";
-    return `${url}${seperator}requirements=${encodeURIComponent(
-        JSON.stringify({
-            from: "openchat",
-            requirements: {
-                phone: "exists",
-            },
-        })
-    )}`;
+    return privicClient.then((c) => c.isAuthenticated());
 }
 
 export function login(): Promise<Identity> {
-    return authClient.then((c) => {
+    return privicClient.then((c) => {
         return new Promise((resolve, reject) => {
             c.login({
-                identityProvider: addDataRequirements(IDENTITY_URL),
-                onSuccess: () => {
+                // identityProvider: addDataRequirements(IDENTITY_URL),
+                identityProvider: IDENTITY_URL,
+                onSuccess: (resp) => {
+                    console.log("received data from privic", resp);
                     console.log("Principal", c.getIdentity().getPrincipal().toText());
                     resolve(c.getIdentity());
                 },
                 onError: (err) => reject(err),
+                dataRequest: {
+                    phone: "exists",
+                },
             });
         });
     });
 }
 
 export function logout(): Promise<void> {
-    return authClient.then((c) => c.logout());
+    return privicClient.then((c) => c.logout());
 }
 
 export function startSession(identity: Identity): Promise<void> {
