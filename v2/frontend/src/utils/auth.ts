@@ -1,10 +1,4 @@
-import {
-    AnonymousIdentity,
-    DerEncodedPublicKey,
-    Identity,
-    Signature,
-    SignIdentity,
-} from "@dfinity/agent";
+import { AnonymousIdentity, Identity, SignIdentity } from "@dfinity/agent";
 import { isDelegationValid } from "@dfinity/authentication";
 import {
     Delegation,
@@ -13,6 +7,7 @@ import {
     Ed25519KeyIdentity,
 } from "@dfinity/identity";
 import type { Principal } from "@dfinity/principal";
+import { blobFromUint8Array, derBlobFromBlob } from "@dfinity/candid";
 
 const KEY_LOCALSTORAGE_KEY = "identity";
 const KEY_LOCALSTORAGE_DELEGATION = "delegation";
@@ -241,17 +236,17 @@ export class PrivICClient {
         const delegations = message.delegations.map((signedDelegation) => {
             return {
                 delegation: new Delegation(
-                    signedDelegation.delegation.pubkey,
+                    blobFromUint8Array(signedDelegation.delegation.pubkey),
                     signedDelegation.delegation.expiration,
                     signedDelegation.delegation.targets
                 ),
-                signature: signedDelegation.signature.buffer as Signature,
+                signature: blobFromUint8Array(signedDelegation.signature),
             };
         });
 
         const delegationChain = DelegationChain.fromDelegations(
             delegations,
-            message.userPublicKey.buffer as DerEncodedPublicKey
+            derBlobFromBlob(blobFromUint8Array(message.userPublicKey))
         );
 
         const key = this._key;
