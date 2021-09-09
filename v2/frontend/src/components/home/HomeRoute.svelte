@@ -4,15 +4,12 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import { identityService } from "../../fsm/identity.machine";
     const { state, send } = identityService;
+    import { logout } from "../../stores/appState";
 
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
         messageIndex: undefined,
     };
-
-    function logout() {
-        send({ type: "LOGOUT" });
-    }
 
     $: machine = $state.children.homeMachine as ActorRefFrom<HomeMachine>;
 </script>

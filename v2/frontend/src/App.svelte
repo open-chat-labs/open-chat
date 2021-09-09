@@ -5,8 +5,8 @@
     import { loadSavedTheme } from "./theme/themes";
     import { rtlStore } from "./stores/rtl";
     import { _ } from "svelte-i18n";
-    import { identityService } from "./fsm/identity.machine";
-    const { state, send } = identityService;
+    // import { identityService } from "./fsm/identity.machine";
+    // const { state, send } = identityService;
     import Router from "svelte-spa-router";
     import { routes } from "./routes";
     import Login from "./components/Login.svelte";
@@ -18,10 +18,12 @@
     import type { ActorRefFrom } from "xstate";
     import type { RegisterMachine } from "./fsm/register.machine";
     import Lazy from "./components/Lazy.svelte";
+    import { appState, checkUser, registering, startLogin } from "./stores/appState";
 
     onMount(() => {
         loadSavedTheme();
         calculateHeight();
+        checkUser();
     });
 
     function calculateHeight() {
@@ -30,11 +32,15 @@
         document.documentElement.style.setProperty("--vh", `${vh}px`);
     }
 
-    $: regMachine = $state.children.registerMachine as ActorRefFrom<RegisterMachine>;
+    // $: regMachine = $state.children.registerMachine as ActorRefFrom<RegisterMachine>;
 
     $: {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
+    }
+
+    $: {
+        console.log($appState);
     }
 
     // todo - we have a problem here in that, by design, we repeatedly re-enter the register machine while
@@ -43,6 +49,21 @@
     // which will not exist all of the time.
 </script>
 
+{#if $appState.kind === "not_authenticated"}
+    <Login loading={$appState.signingIn} on:login={startLogin} />
+{:else if registering($appState)}
+    <Lazy component={Register} />
+{:else if $appState.kind === "verified_user"}
+    <Router {routes} />
+{:else if $appState.kind === "fatal_error"}
+    <UnexpectedError error={$appState.error} />
+{:else if $appState.kind === "session_expired"}
+    <SessionExpired on:login={startLogin} />
+{:else}
+    <Loading />
+{/if}
+
+<!-- {/if}
 {#if $state.matches("login") || $state.matches("logging_in")}
     <Login loading={$state.matches("logging_in")} on:login={() => send({ type: "LOGIN" })} />
 {:else if $state.matches("register_user") && regMachine}
@@ -57,6 +78,6 @@
     <Upgrading />
 {:else}
     <Loading />
-{/if}
+{/if} -->
 
 <svelte:window on:resize={calculateHeight} />

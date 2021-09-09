@@ -108,7 +108,7 @@
         "userNotFound": "User not found",
         "usernameTooShort": "That username is too short",
         "usernameTooLong": "That username is too long",
-        "claimExpired": "The code you entered has expired",
+        "codeExpired": "The code you entered has expired",
         "phoneAlreadyRegisterd": "The phone number is already registered",
         "phoneAlreadyRegisterdByAnother": "The phone number is already registered by someone else",
         "phoneInvalid": "The phone number is invalid"

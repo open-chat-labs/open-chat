@@ -6,16 +6,14 @@
     import Complete from "./Complete.svelte";
     import EnterUsername from "./EnterUsername.svelte";
     import EnterCode from "./EnterCode.svelte";
-    import type { RegisterState } from "./Register.types";
-    import type { PhoneNumber } from "../../domain/user/user";
-    export let state: RegisterState;
-    export let username: string = "";
-    export let phoneNumber: PhoneNumber | undefined;
-    export let error: string | undefined = undefined;
+    import { registerState as state } from "../../stores/registerState";
     let bgClass: "underwater" | "sunset" = "underwater";
+
+    $: error = $state.error?.message;
+
     $: {
-        switch (state) {
-            case "awaitingCompletion":
+        switch ($state.kind) {
+            case "awaiting_completion":
                 bgClass = "sunset";
                 break;
             default:
@@ -25,27 +23,32 @@
 </script>
 
 <ModalPage {bgClass} minHeight="380px">
-    {#if state === "awaitingCompletion"}
+    {#if $state.kind === "awaiting_completion"}
         <Complete on:complete />
     {:else}
         <h4 class="subtitle">{$_("register.tellUsWho")}</h4>
         <Logo />
         <h1 class="title">
-            {#if state === "awaitingCanister"}
+            {#if $state.kind === "awaiting_canister"}
                 {$_("register.preparingUser")}
             {:else}
                 {$_("register.registerAs")}
             {/if}
         </h1>
 
-        {#if state === "awaitingPhoneNumber"}
+        {#if $state.kind === "awaiting_phone_number"}
             <EnterPhoneNumber {error} on:submitPhoneNumber />
-        {:else if state === "awaitingCode" && phoneNumber}
-            <EnterCode {phoneNumber} {error} on:submitCode on:resendCode on:changePhoneNumber />
-        {:else if state === "verifying"}
+        {:else if $state.kind === "awaiting_code"}
+            <EnterCode
+                phoneNumber={$state.phoneNumber}
+                {error}
+                on:submitCode
+                on:resendCode
+                on:changePhoneNumber />
+        {:else if $state.kind === "verifying"}
             <div class="spinner" />
-        {:else if state === "awaitingUsername"}
-            <EnterUsername {username} {error} on:submitUsername />
+        {:else if $state.kind === "awaiting_username"}
+            <EnterUsername {error} on:submitUsername />
         {/if}
     {/if}
 </ModalPage>
