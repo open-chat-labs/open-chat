@@ -125,10 +125,18 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                     },
                 },
                 saving_participant: {
+                    // todo - we want to come up with a strategy that treats *all* updates as succesfull until
+                    // proven otherwise rather than waiting. Otherwise everything is going to feel very slow.
+                    // so the pattern will be invoke + entry action to update state as if successful. OnDone for
+                    // the invoke, if not successful, revert the state change
+                    // the problem with this is that we cannot have a significant *state* that means the operation
+                    // is in progress. But then we potentially don't need one.
                     invoke: {
                         id: "addParticipant",
                         src: "addParticipant",
                         onDone: {
+                            // todo - here we need to check for any failure and if it fails,
+                            // remove the participant we added and toast (and log) the error
                             target: "choosing_participant",
                         },
                         onError: {
@@ -141,6 +149,24 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                             ],
                         },
                     },
+                    entry: assign((ctx, ev) => {
+                        // todo - optimistically add the participant assuming the api call will work
+                        if (ev.type === "done.invoke.userSearchMachine") {
+                            return {
+                                chatSummary: {
+                                    ...ctx.chatSummary,
+                                    participants: [
+                                        {
+                                            userId: ev.data.userId,
+                                            role: "standard",
+                                        },
+                                        ...ctx.chatSummary.participants,
+                                    ],
+                                },
+                            };
+                        }
+                        return {};
+                    }),
                 },
             },
             on: {

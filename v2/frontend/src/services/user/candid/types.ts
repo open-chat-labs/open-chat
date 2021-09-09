@@ -104,7 +104,6 @@ export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<DirectChatEventWrapper>,
-  'latest_event_index' : EventIndex,
 }
 export interface FileContent {
   'name' : string,
@@ -338,9 +337,9 @@ export interface SendMessageArgs {
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {
     'Success' : {
-      'latest_read_by_me' : MessageIndex,
       'timestamp' : TimestampMillis,
-      'latest_read_by_them' : MessageIndex,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
   } |

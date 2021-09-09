@@ -411,22 +411,27 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 CREATE_DIRECT_CHAT: {
                     internal: true,
-                    actions: assign((ctx, ev) => {
-                        const dummyChat: DirectChatSummary = {
-                            kind: "direct_chat",
-                            them: ev.data,
-                            chatId: String(ctx.chatSummaries.length + 1),
-                            latestReadByMe: 0,
-                            latestReadByThem: 0,
-                            latestMessage: undefined,
-                            latestEventIndex: 0,
-                            dateCreated: BigInt(+new Date()),
-                        };
-                        push(`/${dummyChat.chatId}`);
-                        return {
-                            chatSummaries: [dummyChat, ...ctx.chatSummaries],
-                        };
-                    }),
+                    actions: [
+                        assign((ctx, ev) => {
+                            const dummyChat: DirectChatSummary = {
+                                kind: "direct_chat",
+                                them: ev.data,
+                                chatId: String(ctx.chatSummaries.length + 1),
+                                latestReadByMe: 0,
+                                latestReadByThem: 0,
+                                latestMessage: undefined,
+                                latestEventIndex: 0,
+                                dateCreated: BigInt(+new Date()),
+                            };
+                            push(`/${dummyChat.chatId}`);
+                            return {
+                                chatSummaries: [dummyChat, ...ctx.chatSummaries],
+                            };
+                        }),
+                        send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                            to: "updateChatsPoller",
+                        }),
+                    ],
                 },
             },
             states: {

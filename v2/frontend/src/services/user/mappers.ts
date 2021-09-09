@@ -17,6 +17,8 @@ import type {
     ApiDirectChatEventWrapper,
     ApiDirectReplyContext,
     ApiDirectMessage,
+    ApiSendMessageResponse,
+    ApiPutChunkResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -37,10 +39,54 @@ import type {
     DirectMessage,
     GroupChatReplyContext,
     DirectChatReplyContext,
+    SendMessageResponse,
+    PutChunkResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
+    if ("Full" in candid) {
+        return "put_chunk_full";
+    }
+    if ("ChunkTooBig" in candid) {
+        return "put_chunk_too_big";
+    }
+    if ("Success" in candid) {
+        return "put_chunk_success";
+    }
+    throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
+}
+
+export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
+    if ("BalanceExceeded" in candid) {
+        return { kind: "send_message_balance_exceeded" };
+    }
+    if ("Success" in candid) {
+        return {
+            // todo - the response type for direct messages is actually different and we need to resolve that
+            // the difference is that is contains chat_id
+            kind: "send_message_success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
+        };
+    }
+    if ("RecipientBlocked" in candid) {
+        return { kind: "send_message_recipient_blocked" };
+    }
+    if ("InvalidRequest" in candid) {
+        return { kind: "send_message_invalid_request" };
+    }
+    if ("MessageTooLong" in candid) {
+        return { kind: "send_message_too_long" };
+    }
+    if ("RecipientNotFound" in candid) {
+        return { kind: "send_message_recipient_not_found" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
 
 export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
     if ("NotFound" in candid) {
@@ -127,6 +173,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
+            blockedUsers: candid.Success.blocked_users.map((u) => u.toString()),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),

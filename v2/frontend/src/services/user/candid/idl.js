@@ -102,7 +102,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsSuccessResult = IDL.Record({
     'events' : IDL.Vec(DirectChatEventWrapper),
-    'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
@@ -202,9 +201,9 @@ export const idlFactory = ({ IDL }) => {
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,
     'Success' : IDL.Record({
-      'latest_read_by_me' : MessageIndex,
       'timestamp' : TimestampMillis,
-      'latest_read_by_them' : MessageIndex,
+      'chat_id' : ChatId,
+      'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,

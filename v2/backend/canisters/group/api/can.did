@@ -20,12 +20,7 @@ type SendMessageResponse =
             event_index: EventIndex;
             timestamp: TimestampMillis;
         };
-        RecipientNotFound;
-        BalanceExceeded;
-        MessageTooLong: nat32;
-        InvalidRequest;
-        SenderBlocked;
-        RecipientBlocked;
+        NotInGroup;
     }; 
 
 type MarkReadArgs =

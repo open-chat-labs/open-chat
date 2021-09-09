@@ -170,6 +170,7 @@ describe("merging updates", () => {
 
     test("removed chats get removed", () => {
         const updatesResponse = {
+            blockedUsers: [],
             chatsUpdated: [],
             chatsRemoved: new Set(["1", "3", "5"]),
             chatsAdded: [],
@@ -183,6 +184,7 @@ describe("merging updates", () => {
 
     test("added chats get added", () => {
         const updatesResponse = {
+            blockedUsers: [],
             chatsUpdated: [],
             chatsRemoved: new Set([]),
             chatsAdded: [directChatId(6), directChatId(7)],
@@ -250,6 +252,7 @@ describe("merging updates", () => {
 
         test("attempting to update with a mismatched kind throws error", () => {
             const updatesResponse = {
+                blockedUsers: [],
                 chatsUpdated: [{ ...updatedDirect, chatId: "1" }],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
@@ -260,6 +263,7 @@ describe("merging updates", () => {
 
         test("direct chats get merged correctly", () => {
             const updatesResponse = {
+                blockedUsers: [],
                 chatsUpdated: [updatedDirect],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
@@ -279,6 +283,7 @@ describe("merging updates", () => {
 
         test("updated group chats get merged correctly", () => {
             const updatesResponse = {
+                blockedUsers: [],
                 chatsUpdated: [updatedGroup],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],

@@ -16,9 +16,11 @@ import type {
     ChatEvent,
     ReplyContext,
     DirectChatReplyContext,
+    DirectMessage,
+    GroupMessage,
+    SendMessageSuccess,
 } from "../domain/chat/chat";
 import {
-    createGroupMessage,
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
@@ -60,7 +62,12 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data?: string }
+    | { type: "SEND_MESSAGE"; data: { message: GroupMessage | DirectMessage; index: number } }
+    | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
+    | {
+          type: "UPDATE_MESSAGE";
+          data: { candidate: GroupMessage | DirectMessage; resp: SendMessageSuccess };
+      }
     | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
     | { type: "CLEAR_FOCUS_INDEX" }
@@ -265,54 +272,40 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             initial: "loading_previous_messages",
             on: {
                 SEND_MESSAGE: {
-                    actions: [
-                        assign((ctx, ev) => {
-                            chatStore.set({
-                                chatId: ctx.chatSummary.chatId,
-                                event: "sending_message",
-                            });
-                            const index = latestLoadedEventIndex(ctx.events) ?? 0;
-                            if (ctx.chatSummary.kind === "group_chat") {
-                                const msg = createGroupMessage(
-                                    ctx.user!.userId,
-                                    index + 1,
-                                    ev.data,
-                                    ctx.replyingTo,
-                                    ctx.fileToAttach
-                                );
-
-                                // todo - this is fire and forget at the moment
-                                // doesn't seem right - need to figure out what we do if it fails
-                                // I think it might be simpler and indeed better to deal with this
-                                // inside the relevant svelte component. That way on error we
-                                // can simply fire another message into the state machine to have
-                                // it remove the candidate message. I don't think we can safely
-                                // modify context from this catch block as it stands
-                                ctx.serviceContainer
-                                    .sendGroupMessage(
-                                        ctx.chatSummary.chatId,
-                                        ctx.user!.username,
-                                        msg
-                                    )
-                                    .catch((_err) =>
-                                        toastStore.showFailureToast("errorSendingMessage")
-                                    );
+                    actions: assign((ctx, ev) => ({
+                        events: [
+                            ...ctx.events,
+                            {
+                                event: ev.data.message,
+                                index: ev.data.index,
+                                timestamp: BigInt(+new Date()),
+                            },
+                        ],
+                        replyingTo: undefined,
+                        fileToAttach: undefined,
+                    })),
+                },
+                UPDATE_MESSAGE: {
+                    actions: assign((ctx, ev) => ({
+                        events: ctx.events.map((e) => {
+                            if (e.event === ev.data.candidate) {
                                 return {
-                                    events: [
-                                        ...ctx.events,
-                                        {
-                                            event: msg,
-                                            index: index + 1,
-                                            timestamp: BigInt(+new Date() - index + 1),
-                                        },
-                                    ],
-                                    replyingTo: undefined,
-                                    fileToAttach: undefined,
+                                    event: {
+                                        ...e.event,
+                                        messageIndex: ev.data.resp.messageIndex,
+                                    },
+                                    index: ev.data.resp.eventIndex,
+                                    timestamp: ev.data.resp.timestamp,
                                 };
                             }
-                            return {};
+                            return e;
                         }),
-                    ],
+                    })),
+                },
+                REMOVE_MESSAGE: {
+                    actions: assign((ctx, ev) => ({
+                        events: ctx.events.filter((e) => e.event !== ev.data),
+                    })),
                 },
                 SHOW_PARTICIPANTS: ".showing_participants",
                 ADD_PARTICIPANT: ".showing_participants",

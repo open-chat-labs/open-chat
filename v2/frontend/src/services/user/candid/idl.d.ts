@@ -38,9 +38,13 @@ import {
     ChunkResponse,
     PutChunkArgs,
     PutChunkResponse,
+    SendMessageArgs,
+    SendMessageResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
+    SendMessageArgs as ApiSendMessageArgs,
+    SendMessageResponse as ApiSendMessageResponse,
     GroupMessage as ApiGroupMessage,
     GroupReplyContext as ApiGroupReplyContext,
     DirectReplyContext as ApiDirectReplyContext,

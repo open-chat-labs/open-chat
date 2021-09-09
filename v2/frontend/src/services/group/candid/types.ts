@@ -320,19 +320,14 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContextArgs],
 }
-export type SendMessageResponse = { 'BalanceExceeded' : null } |
-  {
+export type SendMessageResponse = {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
   } |
-  { 'RecipientBlocked' : null } |
-  { 'InvalidRequest' : null } |
-  { 'SenderBlocked' : null } |
-  { 'MessageTooLong' : number } |
-  { 'RecipientNotFound' : null };
+  { 'NotInGroup' : null };
 export interface SetAvatarArgs { 'mime_type' : string, 'bytes' : Array<number> }
 export type SetAvatarResponse = { 'InvalidMimeType' : number } |
   { 'FileTooBig' : number } |
