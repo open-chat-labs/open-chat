@@ -37,6 +37,10 @@
         document.dir = $rtlStore ? "rtl" : "ltr";
     }
 
+    $: console.log("identity state", $state.value);
+
+    $: console.log("reg state", $regMachine?.value);
+
     // todo - we have a problem here in that, by design, we repeatedly re-enter the register machine while
     // waiting for the user's canister to be created. This created UI jankiness which is unpleasant.
     // It's not that easy to solve though because the RegisterController component *requires* a register machine

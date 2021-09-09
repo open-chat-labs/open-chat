@@ -110,7 +110,7 @@
         "usernameTooLong": "That username is too long",
         "claimExpired": "The code you entered has expired",
         "phoneAlreadyRegisterd": "The phone number is already registered",
-        "phoneAlreadyRegisterdByAnother": "The phone number is already registered by someone else",
+        "phoneAlreadyRegisteredByAnother": "The phone number is already registered by someone else",
         "phoneInvalid": "The phone number is invalid"
     }
 }

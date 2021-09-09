@@ -80,6 +80,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         },
         userIsNotRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
+                console.log("user:", ev.data);
                 return (
                     ev.data.kind === "confirmed_user" ||
                     ev.data.kind === "unknown_user" ||
@@ -240,7 +241,33 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         phoneNumber,
                     };
                 },
-                onDone: "loading_user",
+                onDone: [
+                    {
+                        target: "logged_in",
+                        cond: "userIsRegistered",
+                        actions: assign({
+                            serviceContainer: (
+                                { serviceContainer },
+                                ev: DoneInvokeEvent<CurrentUserResponse>
+                            ) => {
+                                console.log("Response from reg machine", ev);
+                                if (ev.type === "done.invoke.getUser") {
+                                    if (ev.data.kind === "created_user") {
+                                        return serviceContainer!.createUserClient(ev.data.userId);
+                                    }
+                                }
+                                return serviceContainer;
+                            },
+                            user: (_, ev: DoneInvokeEvent<CurrentUserResponse>) => {
+                                if (ev.type === "done.invoke.getUser") {
+                                    if (ev.data.kind === "created_user") {
+                                        return { ...ev.data };
+                                    }
+                                }
+                            },
+                        }),
+                    },
+                ],
                 onError: {
                     target: "unexpected_error",
                     actions: assign({
@@ -330,15 +357,17 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                 src: "logout",
                 onDone: {
                     target: "login",
-                    actions: assign({
-                        identity: (_, _ev) => undefined,
-                    }),
+                    actions: assign((_, _ev) => ({
+                        identity: undefined,
+                        user: undefined,
+                    })),
                 },
                 onError: {
                     target: "unexpected_error",
-                    actions: assign({
-                        identity: (_, _ev) => undefined,
-                    }),
+                    actions: assign((_, _ev) => ({
+                        identity: undefined,
+                        user: undefined,
+                    })),
                 },
             },
         },
