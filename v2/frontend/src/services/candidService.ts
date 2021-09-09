@@ -23,7 +23,7 @@ export abstract class CandidService {
             response = await service;
         } catch (e) {
             console.log(e);
-            throw toHttpError(e);
+            throw toHttpError(e as Error);
         }
         return mapper(response);
     }

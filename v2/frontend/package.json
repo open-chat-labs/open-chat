@@ -69,7 +69,7 @@
     },
     "dependencies": {
         "@dfinity/agent": "^0.9.0",
-        "@dfinity/auth-client": "^0.9.0",
+        "@dfinity/auth-client": "^0.9.3",
         "@dfinity/authentication": "^0.9.0",
         "@dfinity/candid": "^0.9.1",
         "@dfinity/identity": "^0.9.0",
