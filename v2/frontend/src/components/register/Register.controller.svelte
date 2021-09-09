@@ -3,6 +3,7 @@
     import type { ActorRefFrom } from "xstate";
     import type { RegisterMachine } from "../../fsm/register.machine";
     import type { RegisterState } from "./Register.types";
+    import { useState } from "react";
 
     export let machine: ActorRefFrom<RegisterMachine>;
 
@@ -33,30 +34,33 @@
     }
 
     $: {
-        switch ($machine.value) {
-            case "awaiting_phone_number":
-                uiState = "awaitingPhoneNumber";
-                break;
-            case "awaiting_registration_code":
-                uiState = "awaitingCode";
-                break;
-            case "awaiting_username":
-                uiState = "awaitingUsername";
-                break;
-            case "registering_user_succeeded":
-                uiState = "awaitingCompletion";
-                break;
-            case "resending_code":
-            case "checking_registration_code":
-            case "checking_phone_number":
-            case "registering_user":
-                uiState = "verifying";
-                break;
-            case "awaiting_canister":
-                uiState = "awaitingCanister";
-                break;
-            default:
-                uiState = { error: $machine.context.error?.message ?? "" };
+        if ($machine.matches("awaiting_phone_number")) {
+            uiState = "awaitingPhoneNumber";
+        } else if ($machine.matches("awaiting_registration_code")) {
+            uiState = "awaitingCode";
+        } else if ($machine.matches("awaiting_username")) {
+            uiState = "awaitingUsername";
+        } else if ($machine.matches("registering_user_succeeded")) {
+            uiState = "awaitingCompletion";
+        } else if (
+            [
+                "resending_code",
+                "checking_registration_code",
+                "checking_phone_number",
+                "registering_user",
+            ].some($machine.matches)
+        ) {
+            uiState = "verifying";
+        } else if (
+            [
+                "awaiting_canister",
+                { checking_user_readiness: "loading_users" },
+                { checking_user_readiness: "creating_canister" },
+            ].some($machine.matches)
+        ) {
+            uiState = "awaitingCanister";
+        } else {
+            uiState = { error: $machine.context.error?.message ?? "" };
         }
     }
 </script>

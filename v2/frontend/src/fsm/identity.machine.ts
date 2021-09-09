@@ -73,14 +73,13 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
             throw new Error(`Unexpected event type for userUpgradeInProgress guard: ${ev.type}`);
         },
         userIsRegistered: (_, ev) => {
-            if (ev.type === "done.invoke.getUser") {
+            if (ev.type === "done.invoke.getUser" || ev.type === "done.invoke.registerMachine") {
                 return ev.data.kind == "created_user";
             }
             throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
         },
         userIsNotRegistered: (_, ev) => {
             if (ev.type === "done.invoke.getUser") {
-                console.log("user:", ev.data);
                 return (
                     ev.data.kind === "confirmed_user" ||
                     ev.data.kind === "unknown_user" ||
@@ -251,7 +250,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                                 ev: DoneInvokeEvent<CurrentUserResponse>
                             ) => {
                                 console.log("Response from reg machine", ev);
-                                if (ev.type === "done.invoke.getUser") {
+                                if (ev.type === "done.invoke.registerMachine") {
                                     if (ev.data.kind === "created_user") {
                                         return serviceContainer!.createUserClient(ev.data.userId);
                                     }
@@ -259,7 +258,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                                 return serviceContainer;
                             },
                             user: (_, ev: DoneInvokeEvent<CurrentUserResponse>) => {
-                                if (ev.type === "done.invoke.getUser") {
+                                if (ev.type === "done.invoke.registerMachine") {
                                     if (ev.data.kind === "created_user") {
                                         return { ...ev.data };
                                     }

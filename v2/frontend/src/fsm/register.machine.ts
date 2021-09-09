@@ -386,7 +386,7 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                                 cond: "shouldCreateCanister",
                             },
                             {
-                                target: "..registering_user_succeeded",
+                                target: "#registering_user_succeeded",
                                 cond: "userIsRegistered",
                                 actions: assign((_, ev: DoneInvokeEvent<CurrentUserResponse>) => ({
                                     currentUser: ev.data,
@@ -418,17 +418,14 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
             },
         },
         registering_user_succeeded: {
+            id: "registering_user_succeeded",
             on: {
                 COMPLETE: "registration_complete",
             },
         },
         registration_complete: {
             type: "final",
-            data: (ctx, _) => {
-                return {
-                    user: ctx.currentUser,
-                };
-            },
+            data: (ctx, _) => ctx.currentUser,
         },
         unexpected_error: {
             type: "final",
