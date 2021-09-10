@@ -121,7 +121,13 @@
         class:last
         class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
-            <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
+            <RepliesTo
+                {identity}
+                {chatSummary}
+                {user}
+                {userLookup}
+                on:goToMessage
+                repliesTo={msg.repliesTo} />
         {/if}
 
         <ChatMessageContent {identity} {me} content={msg.content} />

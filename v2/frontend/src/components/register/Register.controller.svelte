@@ -3,7 +3,6 @@
     import type { ActorRefFrom } from "xstate";
     import type { RegisterMachine } from "../../fsm/register.machine";
     import type { RegisterState } from "./Register.types";
-    import { useState } from "react";
 
     export let machine: ActorRefFrom<RegisterMachine>;
 
