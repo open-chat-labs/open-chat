@@ -134,7 +134,7 @@ export class ServiceContainer {
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (resp === "chat_not_found" || resp === "not_authorised") {
+        if (resp === "chat_not_found") {
             return resp;
         }
 
