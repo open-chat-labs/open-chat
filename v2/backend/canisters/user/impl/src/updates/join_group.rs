@@ -35,13 +35,11 @@ struct PrepareResult {
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.is_caller_owner() {
-        Ok(PrepareResult {
-            principal: runtime_state.env.caller(),
-        })
-    } else {
-        Err(NotAuthorized)
-    }
+    runtime_state.trap_if_caller_not_owner();
+
+    Ok(PrepareResult {
+        principal: runtime_state.env.caller(),
+    })
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {

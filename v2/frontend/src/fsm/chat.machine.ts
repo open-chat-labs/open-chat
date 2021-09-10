@@ -193,7 +193,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             return {
                 userLookup,
                 events:
-                    eventsResponse === "chat_not_found" || eventsResponse === "not_authorised"
+                    eventsResponse === "chat_not_found"
                         ? []
                         : eventsResponse.events,
             };

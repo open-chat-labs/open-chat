@@ -41,8 +41,7 @@ type MarkReadResponse =
         Success;
         SuccessNoChange;
         ChatNotFound;
-        NotAuthorized;
-    }; 
+    };
 
 type SetAvatarArgs =
     record {
@@ -117,7 +116,6 @@ type CreateGroupResponse =
         PublicGroupAlreadyExists;
         Throttled;
         InternalError;
-        NotAuthorized;
     };
 
 type JoinGroupArgs =
@@ -133,7 +131,6 @@ type JoinGroupResponse =
         GroupNotFound;
         GroupNotPublic;
         InternalError: text;
-        NotAuthorized;
     };
 
 type LeaveGroupArgs =
@@ -146,7 +143,6 @@ type LeaveGroupResponse =
         Success;
         GroupNotFound;
         InternalError: text;
-        NotAuthorized;
         NotInGroup;
     }; 
 
@@ -194,7 +190,6 @@ type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
-        NotAuthorized;
     };
 
 type EventsByIndexArgs =

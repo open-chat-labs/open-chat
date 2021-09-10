@@ -8,6 +8,8 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.blocked_users.remove(args.user_id);
+    runtime_state.trap_if_caller_not_owner();
+
+    runtime_state.data.blocked_users.remove(&args.user_id);
     Response::Success
 }

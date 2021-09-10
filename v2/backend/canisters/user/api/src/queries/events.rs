@@ -13,7 +13,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     ChatNotFound,
-    NotAuthorized,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

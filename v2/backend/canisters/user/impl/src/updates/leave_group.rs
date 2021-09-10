@@ -25,11 +25,8 @@ async fn leave_group(args: Args) -> Response {
 }
 
 fn prepare(runtime_state: &RuntimeState) -> Result<(), Response> {
-    if runtime_state.is_caller_owner() {
-        Ok(())
-    } else {
-        Err(NotAuthorized)
-    }
+    runtime_state.trap_if_caller_not_owner();
+    Ok(())
 }
 
 fn commit(chat_id: &ChatId, runtime_state: &mut RuntimeState) {

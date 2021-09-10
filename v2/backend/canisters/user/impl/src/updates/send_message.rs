@@ -11,39 +11,37 @@ fn send_message(args: Args) -> Response {
 }
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.is_caller_owner() {
-        let my_user_id = runtime_state.env.canister_id().into();
+    runtime_state.trap_if_caller_not_owner();
 
-        if runtime_state.data.blocked_users.contains(&my_user_id) {
-            return RecipientBlocked;
-        }
+    let my_user_id = runtime_state.env.canister_id().into();
 
-        let now = runtime_state.env.now();
-        let push_message_args = PushMessageArgs {
-            message_id: args.message_id,
-            sent_by_me: true,
-            content: args.content.clone(),
-            replies_to: args.replies_to.clone(),
-            now,
-        };
-
-        let (chat_id, event_index, message) = runtime_state
-            .data
-            .direct_chats
-            .push_message(args.recipient, push_message_args);
-
-        let (canister_id, c2c_args) = build_c2c_args(args);
-        ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
-
-        Success(SuccessResult {
-            chat_id,
-            event_index,
-            message_index: message.message_index,
-            timestamp: now,
-        })
-    } else {
-        NotAuthorized
+    if runtime_state.data.blocked_users.contains(&my_user_id) {
+        return RecipientBlocked;
     }
+
+    let now = runtime_state.env.now();
+    let push_message_args = PushMessageArgs {
+        message_id: args.message_id,
+        sent_by_me: true,
+        content: args.content.clone(),
+        replies_to: args.replies_to.clone(),
+        now,
+    };
+
+    let (chat_id, event_index, message) = runtime_state
+        .data
+        .direct_chats
+        .push_message(args.recipient, push_message_args);
+
+    let (canister_id, c2c_args) = build_c2c_args(args);
+    ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
+
+    Success(SuccessResult {
+        chat_id,
+        event_index,
+        message_index: message.message_index,
+        timestamp: now,
+    })
 }
 
 fn build_c2c_args(args: Args) -> (CanisterId, c2c_send_message::Args) {

@@ -231,6 +231,7 @@ export interface MetricsResponse {
   'cycles_transferred' : bigint,
   'active_user_count' : bigint,
 }
+export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -325,6 +326,7 @@ export interface SubscriptionInfo {
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
+export type TimestampNanos = bigint;
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,

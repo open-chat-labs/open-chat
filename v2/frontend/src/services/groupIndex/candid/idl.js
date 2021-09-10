@@ -1,20 +1,16 @@
 export const idlFactory = ({ IDL }) => {
-  const CreateArgs = IDL.Record({ 'is_public' : IDL.Bool, 'name' : IDL.Text });
+  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
-  const CreateResponse = IDL.Variant({
-    'PublicGroupAlreadyExists' : IDL.Null,
-    'UnknownError' : IDL.Null,
-    'Success' : IDL.Record({ 'canister_id' : CanisterId }),
-    'InvalidName' : IDL.Null,
-    'NameTooLong' : IDL.Nat16,
-    'GroupLimitExceeded' : IDL.Null,
-  });
   const ChatId = CanisterId;
-  const DeleteArgs = IDL.Record({ 'chat_id' : ChatId });
-  const DeleteResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotAdmin' : IDL.Null,
+  const ActiveGroupsArgs = IDL.Record({
+    'active_in_last' : Milliseconds,
+    'chat_ids' : IDL.Vec(ChatId),
+  });
+  const ActiveGroupsSuccessResult = IDL.Record({
+    'active_groups' : IDL.Vec(ChatId),
+  });
+  const ActiveGroupsResponse = IDL.Variant({
+    'Success' : ActiveGroupsSuccessResult,
   });
   const MetricsArgs = IDL.Record({});
   const TimestampMillis = IDL.Nat64;
@@ -31,40 +27,30 @@ export const idlFactory = ({ IDL }) => {
     'public_group_count' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
   });
-  const NotifyBalanceArgs = IDL.Record({ 'balance' : IDL.Nat });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const GroupMatch = IDL.Record({
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'chat_id' : ChatId,
+  });
+  const SearchSuccessResult = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });
   const SearchResponse = IDL.Variant({
-    'TermTooShort' : IDL.Nat16,
-    'Success' : IDL.Record({
-      'groups' : IDL.Vec(
-        IDL.Record({
-          'name' : IDL.Text,
-          'score' : IDL.Nat32,
-          'chat_id' : ChatId,
-        })
-      ),
-    }),
-    'TermTooLong' : IDL.Nat16,
+    'TermTooShort' : IDL.Nat8,
+    'Success' : SearchSuccessResult,
+    'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const UpgradeArgs = IDL.Record({
-    'wasm' : IDL.Vec(IDL.Nat8),
-    'version' : IDL.Text,
-  });
-  const UpgradeResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'canister_id' : CanisterId }),
-    'Failure' : IDL.Null,
-  });
   return IDL.Service({
-    'create' : IDL.Func([CreateArgs], [CreateResponse], []),
-    'delete' : IDL.Func([DeleteArgs], [DeleteResponse], []),
+    'active_groups' : IDL.Func(
+        [ActiveGroupsArgs],
+        [ActiveGroupsResponse],
+        ['query'],
+      ),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
-    'notify_balance' : IDL.Func([NotifyBalanceArgs], [], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
-    'upgrade' : IDL.Func([UpgradeArgs], [UpgradeResponse], []),
   });
 };
 export const init = ({ IDL }) => { return []; };
