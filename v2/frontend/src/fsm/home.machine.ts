@@ -81,7 +81,6 @@ type ChatsResponse = {
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
 async function getUpdates(
-    userId: string,
     serviceContainer: ServiceContainer,
     userLookup: UserLookup,
     chatSummaries: ChatSummary[],
@@ -128,7 +127,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     services: {
         getUpdates: async (ctx, _) =>
             getUpdates(
-                ctx.user!.userId,
                 ctx.serviceContainer!,
                 ctx.userLookup,
                 ctx.chatSummaries,
@@ -159,7 +157,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                     callback({
                         type: "CHATS_UPDATED",
                         data: await getUpdates(
-                            ctx.user!.userId,
                             ctx.serviceContainer!,
                             userLookup,
                             chatSummaries,
@@ -389,11 +386,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 replyingTo: ev.data,
                             };
                         } else {
-                            // todo - this is just temporary obvs
                             const newChat: DirectChatSummary = {
                                 kind: "direct_chat",
                                 them: ev.data.sender!.userId,
-                                chatId: String(ctx.chatSummaries.length + 1),
+                                chatId: ev.data.sender!.userId,
                                 latestReadByMe: 0,
                                 latestReadByThem: 0,
                                 latestMessage: undefined,
@@ -416,7 +412,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             const dummyChat: DirectChatSummary = {
                                 kind: "direct_chat",
                                 them: ev.data,
-                                chatId: String(ctx.chatSummaries.length + 1),
+                                chatId: ev.data,
                                 latestReadByMe: 0,
                                 latestReadByThem: 0,
                                 latestMessage: undefined,
@@ -490,26 +486,31 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         },
                         onDone: {
                             target: "chat_selected",
-                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                                const dummyChat: DirectChatSummary = {
-                                    kind: "direct_chat",
-                                    them: ev.data.userId,
-                                    chatId: String(ctx.chatSummaries.length + 1),
-                                    latestReadByMe: 0,
-                                    latestReadByThem: 0,
-                                    latestMessage: undefined,
-                                    latestEventIndex: 0,
-                                    dateCreated: BigInt(+new Date()),
-                                };
-                                push(`/${dummyChat.chatId}`);
-                                return {
-                                    chatSummaries: [dummyChat, ...ctx.chatSummaries],
-                                    userLookup: {
-                                        ...ctx.userLookup,
-                                        [ev.data.userId]: ev.data,
-                                    },
-                                };
-                            }),
+                            actions: [
+                                assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                    const dummyChat: DirectChatSummary = {
+                                        kind: "direct_chat",
+                                        them: ev.data.userId,
+                                        chatId: ev.data.userId,
+                                        latestReadByMe: 0,
+                                        latestReadByThem: 0,
+                                        latestMessage: undefined,
+                                        latestEventIndex: 0,
+                                        dateCreated: BigInt(+new Date()),
+                                    };
+                                    push(`/${dummyChat.chatId}`);
+                                    return {
+                                        chatSummaries: [dummyChat, ...ctx.chatSummaries],
+                                        userLookup: {
+                                            ...ctx.userLookup,
+                                            [ev.data.userId]: ev.data,
+                                        },
+                                    };
+                                }),
+                                send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                                    to: "updateChatsPoller",
+                                }),
+                            ],
                         },
                         onError: {
                             internal: true,
