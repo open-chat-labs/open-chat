@@ -155,7 +155,7 @@ export class ServiceContainer {
 
     private getMediaData(blobRef?: BlobReference): Promise<Uint8Array | undefined> {
         if (!blobRef) return Promise.resolve(undefined);
-        return DataClient.create(blobRef.canisterId).getData(blobRef);
+        return DataClient.create(this.identity, blobRef.canisterId).getData(blobRef);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {
