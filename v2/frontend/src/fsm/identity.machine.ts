@@ -145,9 +145,13 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
         },
         loading_user: {
             entry: assign({
-                serviceContainer: ({ identity, serviceContainer }, _) =>
+                serviceContainer: ({ identity, serviceContainer }, _) => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    serviceContainer ?? new ServiceContainer(identity!),
+                    return serviceContainer === undefined ||
+                        serviceContainer.differentIdentity(identity!)
+                        ? new ServiceContainer(identity!)
+                        : serviceContainer;
+                },
             }),
             invoke: {
                 id: "getUser",

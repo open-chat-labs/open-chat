@@ -197,4 +197,8 @@ export class ServiceContainer {
     createCanister(): Promise<CreateCanisterResponse> {
         return this._userIndexClient.createCanister();
     }
+
+    differentIdentity(identity: Identity): boolean {
+        return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
+    }
 }
