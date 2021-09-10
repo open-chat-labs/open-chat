@@ -89,7 +89,7 @@
         "enterPhonePlaceholder": "enter your phone number",
         "enterUsername": "Choose a username",
         "pleaseEnterCode": "please enter the code we sent you below",
-        "usernameInvalid": "The username you entered is not valid - try again",
+        "usernameInvalid": "Invalid username, please try again",
         "enterCode": "enter code",
         "requestCode": "Request code",
         "validateCode": "Validate code",
@@ -103,14 +103,16 @@
         "tooManyAttempts": "Too many registration attempts",
         "confirmAlreadyClaimed": "Code has already been claimed",
         "resendAlreadyClaimed": "Code has already been claimed",
-        "claimInvalid": "The code you entered is invalid",
+        "codeIncorrect": "The code you entered is incorrect",
         "usernameTaken": "That username is already taken",
         "userNotFound": "User not found",
         "usernameTooShort": "That username is too short",
         "usernameTooLong": "That username is too long",
-        "claimExpired": "The code you entered has expired",
+        "codeExpired": "The code you entered has expired",
+        "codeNotFound": "The code you entered was not found",
         "phoneAlreadyRegisterd": "The phone number is already registered",
-        "phoneAlreadyRegisterdByAnother": "The phone number is already registered by someone else",
-        "phoneInvalid": "The phone number is invalid"
+        "phoneAlreadyRegisteredByAnother": "The phone number is already registered by someone else",
+        "phoneInvalid": "The phone number is invalid",
+        "createUser": "Create user"
     }
 }

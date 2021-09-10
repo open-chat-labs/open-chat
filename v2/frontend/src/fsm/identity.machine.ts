@@ -28,7 +28,7 @@ export interface IdentityContext {
 }
 
 type RegisterFailed = { kind: "failure" };
-type RegisterSucceeded = { kind: "success" };
+type RegisterSucceeded = CurrentUserResponse;
 
 type RegisterResult = RegisterFailed | RegisterSucceeded;
 
@@ -73,7 +73,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
             throw new Error(`Unexpected event type for userUpgradeInProgress guard: ${ev.type}`);
         },
         userIsRegistered: (_, ev) => {
-            if (ev.type === "done.invoke.getUser") {
+            if (ev.type === "done.invoke.getUser" || ev.type === "done.invoke.registerMachine") {
                 return ev.data.kind == "created_user";
             }
             throw new Error(`Unexpected event type for userIsRegistered guard: ${ev.type}`);
@@ -88,12 +88,6 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
                 );
             }
             throw new Error(`Unexpected event type for userIsNotRegistered guard: ${ev.type}`);
-        },
-        registrationSucceeded: (_, ev) => {
-            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "success";
-        },
-        registrationFailed: (_, ev) => {
-            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "failure";
         },
         isAuthError: (ctx, _) => ctx.error instanceof AuthError,
     },
@@ -151,9 +145,13 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
         },
         loading_user: {
             entry: assign({
-                serviceContainer: ({ identity, serviceContainer }, _) =>
+                serviceContainer: ({ identity, serviceContainer }, _) => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    serviceContainer ?? new ServiceContainer(identity!),
+                    return serviceContainer === undefined ||
+                        serviceContainer.differentIdentity(identity!)
+                        ? new ServiceContainer(identity!)
+                        : serviceContainer;
+                },
             }),
             invoke: {
                 id: "getUser",
@@ -240,7 +238,32 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         phoneNumber,
                     };
                 },
-                onDone: "loading_user",
+                onDone: [
+                    {
+                        target: "logged_in",
+                        cond: "userIsRegistered",
+                        actions: assign({
+                            serviceContainer: (
+                                { serviceContainer },
+                                ev: DoneInvokeEvent<CurrentUserResponse>
+                            ) => {
+                                if (ev.type === "done.invoke.registerMachine") {
+                                    if (ev.data.kind === "created_user") {
+                                        return serviceContainer!.createUserClient(ev.data.userId);
+                                    }
+                                }
+                                return serviceContainer;
+                            },
+                            user: (_, ev: DoneInvokeEvent<CurrentUserResponse>) => {
+                                if (ev.type === "done.invoke.registerMachine") {
+                                    if (ev.data.kind === "created_user") {
+                                        return { ...ev.data };
+                                    }
+                                }
+                            },
+                        }),
+                    },
+                ],
                 onError: {
                     target: "unexpected_error",
                     actions: assign({
@@ -330,15 +353,17 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                 src: "logout",
                 onDone: {
                     target: "login",
-                    actions: assign({
-                        identity: (_, _ev) => undefined,
-                    }),
+                    actions: assign((_, _ev) => ({
+                        identity: undefined,
+                        user: undefined,
+                    })),
                 },
                 onError: {
                     target: "unexpected_error",
-                    actions: assign({
-                        identity: (_, _ev) => undefined,
-                    }),
+                    actions: assign((_, _ev) => ({
+                        identity: undefined,
+                        user: undefined,
+                    })),
                 },
             },
         },

@@ -329,7 +329,7 @@
     }
 
     .chat-messages {
-        flex: 1;
+        flex: auto;
         background-color: var(--currentChat-msgs-bg);
         padding: 10px 0;
         overflow-y: scroll;

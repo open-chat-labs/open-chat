@@ -80,6 +80,7 @@
             bind:value={groupName}
             minlength={MIN_LENGTH}
             maxlength={MAX_LENGTH}
+            countdown={true}
             placeholder={$_("newGroupName")} />
 
         <TextArea

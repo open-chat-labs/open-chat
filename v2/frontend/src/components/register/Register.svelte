@@ -15,6 +15,7 @@
     let bgClass: "underwater" | "sunset" = "underwater";
     $: {
         switch (state) {
+            case "awaitingCanister":
             case "awaitingCompletion":
                 bgClass = "sunset";
                 break;

@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { assign, createMachine, MachineConfig, MachineOptions, sendParent } from "xstate";
+import {
+    assign,
+    createMachine,
+    MachineConfig,
+    MachineOptions,
+    sendParent,
+    DoneInvokeEvent,
+} from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
 import type { Principal } from "@dfinity/principal";
 import type {
@@ -10,6 +17,7 @@ import type {
     PhoneNumber,
     ResendCodeResponse,
 } from "../domain/user/user";
+import { log } from "xstate/lib/actions";
 
 const CANISTER_CREATION_INTERVAL = 1000;
 
@@ -36,6 +44,10 @@ export type RegisterEvents =
     | { type: "error.platform.submitPhoneNumber"; data: Error }
     | { type: "done.invoke.setUsername"; data: SetUsernameResponse }
     | { type: "error.platform.setUsername"; data: Error }
+    | { type: "done.invoke.getUser"; data: CurrentUserResponse }
+    | { type: "error.platform.getUser"; data: Error }
+    | { type: "done.invoke.createCanister" }
+    | { type: "error.platform.createCanister"; data: Error }
     | { type: "done.invoke.resendCode"; data: ResendCodeResponse }
     | { type: "error.platform.resendCode"; data: Error };
 
@@ -103,8 +115,20 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
         resendUserNotFound: (_, ev) => {
             return ev.type === "done.invoke.resendCode" && ev.data === "user_not_found";
         },
+        shouldCreateCanister: (_, ev) => {
+            return (
+                ev.type === "done.invoke.getUser" &&
+                (ev.data.kind === "confirmed_user" ||
+                    ev.data.kind === "confirmed_pending_username") &&
+                ev.data.canisterCreationStatus === "pending"
+            );
+        },
+        userIsRegistered: (_, ev) => {
+            return ev.type === "done.invoke.getUser" && ev.data.kind == "created_user";
+        },
     },
     services: {
+        getUser: ({ serviceContainer }, _) => serviceContainer!.getCurrentUser(),
         resendCode: (ctx, _) => ctx.serviceContainer!.resendRegistrationCode(),
         submitPhoneNumber: (ctx, _) => ctx.serviceContainer!.submitPhoneNumber(ctx.phoneNumber!),
         confirmPhoneNumber: (ctx, _) =>
@@ -115,18 +139,7 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             }
             throw new Error(`setUsername called with unexpected event type: ${ev.type}`);
         },
-    },
-    actions: {
-        optionallyTriggerCanisterCreation: (ctx, _) => {
-            if (
-                ctx.currentUser?.kind === "confirmed_user" ||
-                ctx.currentUser?.kind === "confirmed_pending_username"
-            ) {
-                if (ctx.currentUser.canisterCreationStatus === "pending") {
-                    ctx.serviceContainer!.createCanister();
-                }
-            }
-        },
+        createCanister: ({ serviceContainer }, _) => serviceContainer!.createCanister(),
     },
 };
 
@@ -137,7 +150,6 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
     context: {},
     states: {
         initial: {
-            entry: "optionallyTriggerCanisterCreation",
             always: [
                 { target: "awaiting_phone_number", cond: "isAwaitingPhoneNumber" },
                 { target: "awaiting_registration_code", cond: "isAwaitingCode" },
@@ -345,7 +357,7 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                         }),
                     },
                     {
-                        target: "registering_user_succeeded",
+                        target: "checking_user_readiness",
                         actions: assign({
                             error: (_, _ev) => undefined,
                         }),
@@ -359,16 +371,60 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 },
             },
         },
+        checking_user_readiness: {
+            initial: "loading_user",
+            states: {
+                loading_user: {
+                    entry: log("entering loading_user"),
+                    invoke: {
+                        id: "getUser",
+                        src: "getUser",
+                        onDone: [
+                            {
+                                target: "creating_canister",
+                                cond: "shouldCreateCanister",
+                            },
+                            {
+                                target: "#registering_user_succeeded",
+                                cond: "userIsRegistered",
+                                actions: assign((_, ev: DoneInvokeEvent<CurrentUserResponse>) => ({
+                                    currentUser: ev.data,
+                                })),
+                            },
+                        ],
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
+                },
+                creating_canister: {
+                    entry: log("entering creating_canister"),
+                    invoke: {
+                        id: "createCanister",
+                        src: "createCanister",
+                        onDone: "loading_user",
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
+                },
+            },
+        },
         registering_user_succeeded: {
+            id: "registering_user_succeeded",
             on: {
                 COMPLETE: "registration_complete",
             },
         },
         registration_complete: {
             type: "final",
-            data: {
-                kind: () => "success",
-            },
+            data: (ctx, _) => ctx.currentUser,
         },
         unexpected_error: {
             type: "final",

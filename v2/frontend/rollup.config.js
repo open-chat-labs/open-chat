@@ -35,7 +35,7 @@ function serve() {
             "/api/*": `http://${dfxJson.networks.local.bind}`,
         },
         spa: "./public/index.html",
-        port: 5000,
+        port: process.env.DEV_PORT || 5000,
     });
 }
 

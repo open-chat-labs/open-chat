@@ -5,8 +5,7 @@ import { DelegationIdentity } from "@dfinity/identity";
 const ONE_MINUTE_MILLIS = 60 * 1000;
 
 // Use your local .env file to direct this to the local IC replica
-const IDENTITY_URL =
-    process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
+const IDENTITY_URL = process.env.INTERNET_IDENTITY_URL || "https://identity.ic0.app";
 
 const authClient = AuthClient.create();
 
@@ -38,10 +37,8 @@ export function logout(): Promise<void> {
 
 export function startSession(identity: Identity): Promise<void> {
     return new Promise((resolve) => {
-        const durationUntilSessionExpireMS =
-            getTimeUntilSessionExpiryMs(identity);
-        const durationUntilLogoutMs =
-            durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
+        const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
+        const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
         if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
             resolve();
         } else {
@@ -60,8 +57,7 @@ export function getTimeUntilSessionExpiryMs(identity: Identity): number {
         identity
             .getDelegation()
             .delegations.map((d) => d.delegation.expiration)
-            .reduce((current, next) => (next < current ? next : current)) /
-            BigInt(1_000_000)
+            .reduce((current, next) => (next < current ? next : current)) / BigInt(1_000_000)
     );
 
     return expiryDateTimestampMs - Date.now();

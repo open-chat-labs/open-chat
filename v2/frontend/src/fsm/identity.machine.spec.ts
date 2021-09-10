@@ -7,6 +7,7 @@ import type { IdentityContext, IdentityEvents } from "./identity.machine";
 import { identityMachine } from "./identity.machine";
 import type { CurrentUserResponse } from "../domain/user/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
+import { ServiceContainer } from "../services/serviceContainer";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
@@ -22,6 +23,8 @@ const fakeIdentity: Identity = {
     getPrincipal: () => ({} as Principal),
     transformRequest: (_req: HttpAgentRequest) => Promise.resolve({}),
 };
+
+const mockServiceContainer = new ServiceContainer(fakeIdentity);
 
 // create a test version of all of our side effects
 function testConfig(): Config {
@@ -261,11 +264,12 @@ describe("identity machine transitions", () => {
     });
 
     test("when register user succeeds", () => {
+        mockServiceContainer.createUserClient = jest.fn();
         testTransition(
-            identityMachine,
+            identityMachine.withContext({ serviceContainer: mockServiceContainer }),
             "register_user",
-            "done.invoke.registerMachine",
-            "loading_user",
+            { type: "done.invoke.registerMachine", data: fakeUser },
+            "logged_in",
             testConfig()
         );
     });

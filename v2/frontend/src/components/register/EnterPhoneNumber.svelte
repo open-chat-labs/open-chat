@@ -14,7 +14,9 @@
     let countryCodeStr: string = "";
 
     function submitPhoneNumber() {
-        dispatch("submitPhoneNumber", { countryCode, number: phoneNumber });
+        if (valid) {
+            dispatch("submitPhoneNumber", { countryCode, number: phoneNumber });
+        }
     }
 
     $: phoneNumber = phoneNumberStr.replace(/\D/g, "");
@@ -24,7 +26,7 @@
 
 <p class="enter-phone">{$_("register.enterPhone")}</p>
 
-<div class="phone-number">
+<form class="phone-number" on:submit|preventDefault={submitPhoneNumber}>
     <div class="country" class:rtl={$rtlStore}>
         <Select invalid={error !== undefined} bind:value={countryCodeStr}>
             <option disabled={true} selected value="0">{$_("register.countryCode")}</option>
@@ -42,7 +44,7 @@
             maxlength={25}
             placeholder={$_("register.enterPhonePlaceholder")} />
     </div>
-</div>
+</form>
 
 {#if error}
     <h4 in:fade class="error">{$_(error)}</h4>
