@@ -9,7 +9,9 @@
     export let username: string = "";
 
     function submitUsername() {
-        dispatch("submitUsername", { username: username });
+        if (valid) {
+            dispatch("submitUsername", { username: username });
+        }
     }
 
     $: valid = username.length >= 3;
@@ -17,22 +19,23 @@
 
 <p class="enter-username">{$_("register.enterUsername")}</p>
 
-<div class="username-wrapper">
+<form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <Input
         invalid={error !== undefined}
         autofocus={true}
         bind:value={username}
         minlength={3}
         maxlength={25}
+        countdown={true}
         placeholder={$_("register.enterUsername")} />
-</div>
+</form>
 
 {#if error}
     <h4 in:fade class="error">{$_(error)}</h4>
 {/if}
 
 <div class="actions">
-    <Button disabled={!valid} on:click={submitUsername}>Create user</Button>
+    <Button disabled={!valid} on:click={submitUsername}>{$_("register.createUser")}</Button>
 </div>
 
 <style type="text/scss">

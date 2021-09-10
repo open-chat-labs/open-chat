@@ -11,6 +11,7 @@
     export let maxlength: number = Number.MAX_VALUE;
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
+    export let countdown: boolean = false;
 
     onMount(() => {
         if (autofocus) {
@@ -42,7 +43,7 @@
         bind:this={inp}
         {value}
         class={`textbox ${fontSize} ${align}`} />
-    {#if maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
+    {#if countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
         <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
     {/if}
 </div>

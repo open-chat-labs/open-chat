@@ -15,7 +15,9 @@
     let codeValue: string = "";
 
     function submitCode() {
-        dispatch("submitCode", { code: codeValue });
+        if (valid) {
+            dispatch("submitCode", { code: codeValue });
+        }
     }
 
     function resendCode() {
@@ -39,7 +41,7 @@
     </span>
 </p>
 
-<div class="code-wrapper">
+<form class="code-wrapper" on:submit|preventDefault={submitCode}>
     <Input
         invalid={error !== undefined}
         align="center"
@@ -49,7 +51,7 @@
         minlength={6}
         maxlength={6}
         placeholder={$_("register.enterCode")} />
-</div>
+</form>
 
 {#if error}
     <h4 in:fade class="error">{$_(error)}</h4>
