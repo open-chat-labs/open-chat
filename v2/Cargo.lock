@@ -401,18 +401,31 @@ name = "canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_client_macros",
  "dirs",
  "futures",
  "garcon",
  "group_canister",
+ "group_canister_client",
  "group_index_canister",
+ "group_index_canister_client",
  "ic-agent 0.7.0",
  "ic-utils",
  "notifications_canister",
+ "notifications_canister_client",
  "serde",
  "types",
  "user_canister",
+ "user_canister_client",
  "user_index_canister",
+ "user_index_canister_client",
+]
+
+[[package]]
+name = "canister_client_macros"
+version = "0.1.0"
+dependencies = [
+ "garcon",
 ]
 
 [[package]]
@@ -902,14 +915,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "group_canister_client"
+name = "group_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
+ "canister_client_macros",
  "group_canister",
  "ic-cdk",
  "log",
  "types",
- "utils",
+]
+
+[[package]]
+name = "group_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "group_canister",
+ "ic-agent 0.7.0",
+ "log",
+ "types",
 ]
 
 [[package]]
@@ -920,16 +946,16 @@ dependencies = [
  "futures",
  "group_canister",
  "group_index_canister",
- "group_index_canister_client",
+ "group_index_canister_c2c_client",
  "ic-cdk",
  "ic-cdk-macros",
  "log",
  "notifications_canister",
- "notifications_canister_client",
+ "notifications_canister_c2c_client",
  "serde",
  "types",
  "user_canister",
- "user_canister_client",
+ "user_canister_c2c_client",
  "utils",
 ]
 
@@ -944,14 +970,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "group_index_canister_client"
+name = "group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "canister_client_macros",
  "group_index_canister",
  "ic-cdk",
  "log",
  "types",
- "utils",
+]
+
+[[package]]
+name = "group_index_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "group_index_canister",
+ "ic-agent 0.7.0",
+ "log",
+ "types",
 ]
 
 [[package]]
@@ -1569,14 +1607,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "notifications_canister_client"
+name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "canister_client_macros",
  "ic-cdk",
  "log",
  "notifications_canister",
  "types",
- "utils",
+]
+
+[[package]]
+name = "notifications_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent 0.7.0",
+ "log",
+ "notifications_canister",
+ "types",
 ]
 
 [[package]]
@@ -3154,14 +3204,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "user_canister_client"
+name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "canister_client_macros",
  "ic-cdk",
  "log",
  "types",
  "user_canister",
- "utils",
+]
+
+[[package]]
+name = "user_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent 0.7.0",
+ "log",
+ "types",
+ "user_canister",
 ]
 
 [[package]]
@@ -3171,20 +3233,20 @@ dependencies = [
  "candid",
  "futures",
  "group_canister",
- "group_canister_client",
+ "group_canister_c2c_client",
  "group_index_canister",
- "group_index_canister_client",
+ "group_index_canister_c2c_client",
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",
  "log",
  "notifications_canister",
- "notifications_canister_client",
+ "notifications_canister_c2c_client",
  "serde",
  "serde_bytes",
  "types",
  "user_canister",
- "user_canister_client",
+ "user_canister_c2c_client",
  "utils",
 ]
 
@@ -3201,14 +3263,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "user_index_canister_client"
+name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "canister_client_macros",
  "ic-cdk",
  "log",
  "types",
  "user_index_canister",
- "utils",
+]
+
+[[package]]
+name = "user_index_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-agent 0.7.0",
+ "log",
+ "types",
+ "user_index_canister",
 ]
 
 [[package]]

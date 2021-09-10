@@ -128,10 +128,6 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "internal_error" };
     }
 
-    if ("NotAuthorized" in candid) {
-        return { kind: "not_authorized" };
-    }
-
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
@@ -144,9 +140,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("ChatNotFound" in candid) {
         return "chat_not_found";
     }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
+
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 

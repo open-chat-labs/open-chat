@@ -38,46 +38,44 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.is_caller_owner() {
-        let now = runtime_state.env.now();
-        if let Some(updates_since) = &args.updates_since {
-            let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);
+    runtime_state.trap_if_caller_not_owner();
 
-            let mut group_chats_to_check_for_updates = Vec::new();
-            let mut group_chats_added = Vec::new();
-            let group_chat_args_map: HashMap<_, _> = updates_since
-                .group_chats
-                .iter()
-                .map(|g| (g.chat_id, g.updates_since))
-                .collect();
+    let now = runtime_state.env.now();
+    if let Some(updates_since) = &args.updates_since {
+        let duration_since_last_sync = now.saturating_sub(updates_since.timestamp);
 
-            // TODO handle groups that the user has been removed from
-            for chat_id in runtime_state.data.group_chats.iter().map(|g| g.chat_id) {
-                if let Some(updates_since) = group_chat_args_map.get(&chat_id) {
-                    group_chats_to_check_for_updates.push((chat_id, *updates_since));
-                } else {
-                    group_chats_added.push(chat_id);
-                }
+        let mut group_chats_to_check_for_updates = Vec::new();
+        let mut group_chats_added = Vec::new();
+        let group_chat_args_map: HashMap<_, _> = updates_since
+            .group_chats
+            .iter()
+            .map(|g| (g.chat_id, g.updates_since))
+            .collect();
+
+        // TODO handle groups that the user has been removed from
+        for chat_id in runtime_state.data.group_chats.iter().map(|g| g.chat_id) {
+            if let Some(updates_since) = group_chat_args_map.get(&chat_id) {
+                group_chats_to_check_for_updates.push((chat_id, *updates_since));
+            } else {
+                group_chats_added.push(chat_id);
             }
-
-            Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                duration_since_last_sync,
-                group_chats_to_check_for_updates,
-                group_chats_added,
-            })
-        } else {
-            let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
-
-            Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                duration_since_last_sync: now,
-                group_chats_to_check_for_updates: Vec::new(),
-                group_chats_added: new_group_chats,
-            })
         }
+
+        Ok(PrepareResult {
+            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            duration_since_last_sync,
+            group_chats_to_check_for_updates,
+            group_chats_added,
+        })
     } else {
-        Err(NotAuthorized)
+        let new_group_chats = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
+
+        Ok(PrepareResult {
+            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            duration_since_last_sync: now,
+            group_chats_to_check_for_updates: Vec::new(),
+            group_chats_added: new_group_chats,
+        })
     }
 }
 

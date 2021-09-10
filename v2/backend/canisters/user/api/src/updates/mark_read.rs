@@ -13,5 +13,4 @@ pub enum Response {
     Success,
     SuccessNoChange,
     ChatNotFound,
-    NotAuthorized,
 }

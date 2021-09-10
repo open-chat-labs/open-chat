@@ -14,6 +14,5 @@ pub enum Response {
     GroupNotFound,
     GroupNotPublic,
     Blocked,
-    NotAuthorized,
     InternalError(String),
 }

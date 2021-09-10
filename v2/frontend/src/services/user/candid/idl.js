@@ -25,7 +25,6 @@ export const idlFactory = ({ IDL }) => {
     'PublicGroupAlreadyExists' : IDL.Null,
     'DescriptionTooLong' : CreateGroupFieldTooLongResult,
     'Throttled' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : CreateGroupFieldTooLongResult,
     'InternalError' : IDL.Null,
@@ -105,7 +104,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({
@@ -122,14 +120,12 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const LeaveGroupResponse = IDL.Variant({
     'GroupNotFound' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
     'NotInGroup' : IDL.Null,
@@ -141,7 +137,6 @@ export const idlFactory = ({ IDL }) => {
   const MarkReadResponse = IDL.Variant({
     'SuccessNoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});
