@@ -83,13 +83,7 @@
 
     .footer-overlay {
         width: 100%;
-        position: absolute;
-        bottom: 54px;
         display: flex;
         flex-direction: column;
-        @include z-index(footer-overlay);
-        @include size-below(xs) {
-            bottom: 49px;
-        }
     }
 </style>
