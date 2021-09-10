@@ -1,6 +1,7 @@
 use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
@@ -9,6 +10,8 @@ use user_canister::c2c_remove_from_group;
 
 #[update]
 async fn block_user(args: Args) -> Response {
+    check_cycles_balance();
+
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,

@@ -2,6 +2,7 @@ use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
+use cycles_utils::check_cycles_balance;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
@@ -10,6 +11,8 @@ use user_canister::c2c_try_add_to_group;
 
 #[update]
 async fn add_participants(args: Args) -> Response {
+    check_cycles_balance();
+
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,
         Err(response) => return response,

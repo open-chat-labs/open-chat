@@ -1,11 +1,14 @@
 use crate::updates::mark_read::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::mark_read::*;
 use ic_cdk_macros::update;
 use std::cmp::min;
 
 #[update]
 fn mark_read(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 

@@ -2,6 +2,7 @@ use crate::model::events::GroupChatEventInternal;
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{EventIndex, ParticipantJoined};
@@ -9,6 +10,8 @@ use types::{EventIndex, ParticipantJoined};
 // Called via the user's user canister
 #[update]
 fn c2c_join_group(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| c2c_join_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
