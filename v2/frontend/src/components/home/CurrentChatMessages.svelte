@@ -45,11 +45,11 @@
         setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
-                    top: messagesDiv.scrollHeight,
+                    top: messagesDiv.scrollHeight - messagesDiv.offsetHeight,
                     behavior,
                 });
             }
-        }, 100);
+        }, 0);
     }
 
     function scrollToNew() {
