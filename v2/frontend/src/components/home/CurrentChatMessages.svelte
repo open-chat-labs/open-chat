@@ -235,6 +235,7 @@
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
+                        identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
                         me={isMe(evt)}

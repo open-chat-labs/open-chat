@@ -9,8 +9,10 @@
     import Pause from "svelte-material-icons/Pause.svelte";
     import { dataToBlobUrl } from "../../utils/blob";
     import { DataClient } from "../../services/data/data.client";
+    import type { Identity } from "@dfinity/agent";
 
     export let content: MediaContent;
+    export let identity: Identity;
 
     let downloaded: boolean = false;
     let audioPlayer: HTMLAudioElement;
@@ -43,7 +45,7 @@
             // we need to overwrite the whole content object so that we trigger a re-render
             content = {
                 ...content,
-                blobData: DataClient.create(content.blobReference.canisterId)
+                blobData: DataClient.create(identity, content.blobReference.canisterId)
                     .getData(content.blobReference)
                     .then((data) => {
                         downloaded = true;

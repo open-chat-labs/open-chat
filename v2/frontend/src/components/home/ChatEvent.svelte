@@ -7,6 +7,7 @@
     import ParticipantsAddedEvent from "./ParticipantsAddedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type { Identity } from "@dfinity/agent";
 
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
@@ -17,10 +18,12 @@
     export let last: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
+    export let identity: Identity;
 </script>
 
 {#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
+        {identity}
         {chatSummary}
         {user}
         {me}

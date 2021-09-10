@@ -71,6 +71,10 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
+    getIdentity(): Identity {
+        return this.identity;
+    }
+
     sendMessage(
         chat: ChatSummary,
         user: UserSummary,

@@ -29,8 +29,10 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
+    import type { Identity } from "@dfinity/agent";
     const dispatch = createEventDispatcher();
 
+    export let identity: Identity;
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let msg: GroupMessage | DirectMessage;
@@ -122,7 +124,7 @@
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
 
-        <ChatMessageContent {me} content={msg.content} />
+        <ChatMessageContent {identity} {me} content={msg.content} />
 
         {#if metaData}
             {#await metaData then meta}

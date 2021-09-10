@@ -5,12 +5,14 @@
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
+    import type { Identity } from "@dfinity/agent";
 
     export let content: MediaContent;
+    export let identity: Identity;
 </script>
 
 {#if /^video/.test(content.mimeType)}
-    <VideoContent {content} />
+    <VideoContent {identity} {content} />
 {/if}
 
 {#if /^image/.test(content.mimeType)}
@@ -18,7 +20,7 @@
 {/if}
 
 {#if /^audio/.test(content.mimeType)}
-    <AudioContent {content} />
+    <AudioContent {identity} {content} />
 {/if}
 
 {#if content.caption !== undefined}
