@@ -28,9 +28,9 @@ const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
 
-    constructor(identity: Identity, userId: string) {
+    constructor(identity: Identity, private chatId: string) {
         super(identity);
-        this.groupService = this.createServiceClient<GroupService>(idlFactory, userId);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId);
     }
 
     static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
@@ -97,6 +97,13 @@ export class GroupClient extends CandidService implements IGroupClient {
                         const slice = data.slice(byteStart, byteEnd);
                         chunks.push(slice);
                     }
+
+                    message.content.blobReference = {
+                        blobId,
+                        chunkSize: CHUNK_SIZE_BYTES,
+                        blobSize: size,
+                        canisterId: this.chatId,
+                    };
 
                     await Promise.all(
                         chunks.map((chunk, i) => {

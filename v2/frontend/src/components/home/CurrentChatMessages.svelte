@@ -42,6 +42,9 @@
     let fromBottom = 0;
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
+        // todo the problem here is that the height is affected by loading images
+        // I'm going to wait until we load images via their own urls before trying any
+        // harder to fix this.
         setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({

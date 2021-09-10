@@ -12,13 +12,13 @@ import { rollbar } from "../../utils/logging";
 export class DataClient extends CandidService implements IDataClient {
     private dataService: UserService;
 
-    static create(_canisterId: string): IDataClient {
-        // todo - replace this with the real thing
-        let client: IDataClient = new DataClientMock();
-        if (db && process.env.CLIENT_CACHING) {
-            client = new CachingDataClient(db, client);
+    static create(canisterId: string): IDataClient {
+        if (process.env.MOCK_SERVICES) {
+            return db ? new CachingDataClient(db, new DataClientMock()) : new DataClientMock();
         }
-        return client;
+        return db && process.env.CLIENT_CACHING
+            ? new CachingDataClient(db, new DataClient(canisterId))
+            : new DataClient(canisterId);
     }
 
     constructor(canisterId: string) {
