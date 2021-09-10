@@ -28,8 +28,6 @@ import type {
     GroupMessage,
     SendMessageResponse,
     DirectMessage,
-    ReplyContext,
-    MessageContent,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -39,8 +37,6 @@ import { DataClient } from "./data/data.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
-import { createDirectMessage, createGroupMessage } from "../domain/chat/chat.utils";
-import { UnsupportedValueError } from "../utils/error";
 
 export class ServiceContainer {
     private _userIndexClient: IUserIndexClient;

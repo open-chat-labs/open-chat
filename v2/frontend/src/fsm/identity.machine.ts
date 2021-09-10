@@ -28,7 +28,7 @@ export interface IdentityContext {
 }
 
 type RegisterFailed = { kind: "failure" };
-type RegisterSucceeded = { kind: "success" };
+type RegisterSucceeded = CurrentUserResponse;
 
 type RegisterResult = RegisterFailed | RegisterSucceeded;
 
@@ -88,12 +88,6 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
                 );
             }
             throw new Error(`Unexpected event type for userIsNotRegistered guard: ${ev.type}`);
-        },
-        registrationSucceeded: (_, ev) => {
-            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "success";
-        },
-        registrationFailed: (_, ev) => {
-            return ev.type === "done.invoke.registerMachine" && ev.data.kind === "failure";
         },
         isAuthError: (ctx, _) => ctx.error instanceof AuthError,
     },
@@ -249,7 +243,6 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                                 { serviceContainer },
                                 ev: DoneInvokeEvent<CurrentUserResponse>
                             ) => {
-                                console.log("Response from reg machine", ev);
                                 if (ev.type === "done.invoke.registerMachine") {
                                     if (ev.data.kind === "created_user") {
                                         return serviceContainer!.createUserClient(ev.data.userId);

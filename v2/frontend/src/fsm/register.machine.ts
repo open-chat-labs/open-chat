@@ -116,7 +116,6 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             return ev.type === "done.invoke.resendCode" && ev.data === "user_not_found";
         },
         shouldCreateCanister: (_, ev) => {
-            console.log("should create canister: ", ev);
             return (
                 ev.type === "done.invoke.getUser" &&
                 (ev.data.kind === "confirmed_user" ||

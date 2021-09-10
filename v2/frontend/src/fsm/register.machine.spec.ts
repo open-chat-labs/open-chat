@@ -1,5 +1,20 @@
 import { registerMachine } from "./register.machine";
 import { testTransition } from "./machine.spec.utils";
+import type { CurrentUserResponse } from "../domain/user/user";
+
+const canisterRequired: CurrentUserResponse = {
+    kind: "confirmed_user",
+    canisterCreationStatus: "pending",
+    username: "julian_jelfs",
+};
+
+const userCreated: CurrentUserResponse = {
+    kind: "created_user",
+    userId: "abcdefg",
+    username: "julian_jelfs",
+    accountBalance: BigInt(10000),
+    canisterUpgradeStatus: "not_required",
+};
 
 describe("register machine transitions", () => {
     test("enter phone number", () => {
@@ -184,6 +199,31 @@ describe("register machine transitions", () => {
         testTransition(registerMachine, "awaiting_username", "REGISTER_USER", "registering_user");
     });
 
+    describe("checking user readiness", () => {
+        test("when canister creation required", () => {
+            testTransition(
+                registerMachine,
+                { checking_user_readiness: "loading_user" },
+                {
+                    type: "done.invoke.getUser",
+                    data: canisterRequired,
+                },
+                { checking_user_readiness: "creating_canister" }
+            );
+        });
+        test("when user is ready", () => {
+            testTransition(
+                registerMachine,
+                { checking_user_readiness: "loading_user" },
+                {
+                    type: "done.invoke.getUser",
+                    data: userCreated,
+                },
+                "registering_user_succeeded"
+            );
+        });
+    });
+
     describe("setting username", () => {
         test("success", () => {
             testTransition(
@@ -193,7 +233,7 @@ describe("register machine transitions", () => {
                     type: "done.invoke.setUsername",
                     data: "success",
                 },
-                "registering_user_succeeded"
+                { checking_user_readiness: "loading_user" }
             );
         });
 
