@@ -7,7 +7,14 @@
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
-    import type { MessageContent } from "../../domain/chat/chat";
+    import { chatStore } from "../../stores/chat";
+    import type { DirectMessage, GroupMessage, MessageContent } from "../../domain/chat/chat";
+    import {
+        createDirectMessage,
+        createGroupMessage,
+        latestLoadedEventIndex,
+    } from "../../domain/chat/chat.utils";
+    import { rollbar } from "../../utils/logging";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -18,8 +25,65 @@
         machine.send({ type: "CANCEL_REPLY_TO" });
     }
 
+    function sendMessageWithAttachment(
+        textContent: string | null,
+        fileToAttach: MessageContent | undefined
+    ) {
+        if (textContent || fileToAttach) {
+            const nextIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
+            let msg: GroupMessage | DirectMessage | undefined;
+            if ($machine.context.chatSummary.kind === "group_chat") {
+                msg = createGroupMessage(
+                    $machine.context.user!.userId,
+                    nextIndex,
+                    textContent ?? undefined,
+                    $machine.context.replyingTo,
+                    fileToAttach
+                );
+            }
+            if ($machine.context.chatSummary.kind === "direct_chat") {
+                msg = createDirectMessage(
+                    nextIndex,
+                    textContent ?? undefined,
+                    $machine.context.replyingTo,
+                    fileToAttach
+                );
+            }
+            $machine.context.serviceContainer
+                .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
+                .then((resp) => {
+                    if (resp.kind === "send_message_success") {
+                        machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
+                    } else {
+                        rollbar.warn("Error response sending message", resp);
+                        toastStore.showFailureToast("errorSendingMessage");
+                        machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("errorSendingMessage");
+                    machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    rollbar.error("Exception sending message", err);
+                });
+
+            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextIndex } });
+            chatStore.set({
+                chatId: $machine.context.chatSummary.chatId,
+                event: "sending_message",
+            });
+        }
+    }
+
+    function sendMessage(ev: CustomEvent<string | null>) {
+        sendMessageWithAttachment(ev.detail, $machine.context.fileToAttach);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        machine.send({ type: "ATTACH_FILE", data: ev.detail });
+        if (ev.detail.kind === "file_content") {
+            sendMessageWithAttachment(null, ev.detail);
+        } else {
+            machine.send({ type: "ATTACH_FILE", data: ev.detail });
+        }
     }
 
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
@@ -74,6 +138,7 @@
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
+        on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         {machine} />

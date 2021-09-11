@@ -9,7 +9,11 @@ export const rollbar = Rollbar.init({
     },
 });
 
-export function debug<T>(msg: T): T {
-    console.log(msg);
-    return msg;
+export function debug<T>(data: T, msg?: string): T {
+    if (msg) {
+        console.log(msg, data);
+    } else {
+        console.log(data);
+    }
+    return data;
 }

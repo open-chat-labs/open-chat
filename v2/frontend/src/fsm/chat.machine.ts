@@ -122,17 +122,17 @@ function loadEvents(
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
-    return earliestIndex(ctx) >= earliestAvailableMessageIndex(ctx);
+    return earliestIndex(ctx) > earliestAvailableEventIndex(ctx);
 }
 
-export function earliestAvailableMessageIndex(ctx: ChatContext): number {
+export function earliestAvailableEventIndex(ctx: ChatContext): number {
     return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleEventIndex : 0;
 }
 
 export function earliestIndex(ctx: ChatContext): number {
     const earliestLoaded = earliestLoadedEventIndex(ctx.events);
-    if (earliestLoaded) {
-        return earliestLoaded - 1;
+    if (earliestLoaded !== undefined) {
+        return earliestLoaded;
     } else {
         return ctx.chatSummary.latestEventIndex;
     }
@@ -154,7 +154,7 @@ export function previousMessagesRange(ctx: ChatContext): [number, number] | unde
     const to = earliestIndex(ctx);
     const candidateFrom =
         ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
-    const min = earliestAvailableMessageIndex(ctx);
+    const min = earliestAvailableEventIndex(ctx);
     const from = Math.max(min, candidateFrom);
     return clampRange([from, to]);
 }
@@ -330,18 +330,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     })),
                 },
                 ATTACH_FILE: {
-                    actions: pure((_, ev) => {
-                        // a lot of hideous type hints required here for some reason
-                        const actions: ActionObject<ChatContext, ChatEvents>[] = [
-                            assign<ChatContext, ChatEvents>({
-                                fileToAttach: ev.data,
-                            }),
-                        ];
-                        if (ev.data.kind === "file_content") {
-                            actions.push(send({ type: "SEND_MESSAGE" }));
-                        }
-                        return actions;
-                    }),
+                    actions: assign((_, ev) => ({
+                        fileToAttach: ev.data,
+                    })),
                 },
                 CLEAR_ATTACHMENT: {
                     actions: assign((_, _ev) => ({
