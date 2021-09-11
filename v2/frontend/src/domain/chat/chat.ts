@@ -95,6 +95,7 @@ export type GroupChatEvent =
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin
+    | ParticipantsRemoved
     | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -107,6 +108,12 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type ParticipantsRemoved = {
+    kind: "participants_removed";
+    userIds: string[];
+    removedBy: string;
 };
 
 export type ParticipantsDismissedAsAdmin = {
@@ -362,3 +369,11 @@ export type ChangeAdminResponse =
     | "caller_not_in_group"
     | "not_authorised"
     | "success";
+
+export type RemoveParticipantResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success"
+    | "cannot_remove_self"
+    | "internal_error";

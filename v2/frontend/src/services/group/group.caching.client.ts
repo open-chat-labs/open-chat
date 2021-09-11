@@ -5,6 +5,7 @@ import type {
     GroupMessage,
     ChangeAdminResponse,
     SendMessageResponse,
+    RemoveParticipantResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -47,5 +48,9 @@ export class CachingGroupClient implements IGroupClient {
 
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse> {
         return this.client.dismissAsAdmin(userId);
+    }
+
+    removeParticipant(userId: string): Promise<RemoveParticipantResponse> {
+        return this.client.removeParticipant(userId);
     }
 }

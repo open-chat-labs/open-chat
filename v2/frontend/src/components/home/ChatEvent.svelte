@@ -48,6 +48,14 @@
         resourceKey={"addedBy"}
         {userLookup}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_removed"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.removedBy}
+        resourceKey={"removedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent
         {user}

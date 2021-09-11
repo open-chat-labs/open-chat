@@ -2,10 +2,15 @@
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
 import { escalate } from "xstate/lib/actions";
 import { userSearchMachine } from "./userSearch.machine";
-import type { GroupChatSummary } from "../domain/chat/chat";
+import type {
+    GroupChatSummary,
+    ChangeAdminResponse,
+    RemoveParticipantResponse,
+} from "../domain/chat/chat";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
+import { toastStore } from "../stores/toast";
 
 export interface ParticipantsContext {
     serviceContainer: ServiceContainer;
@@ -27,21 +32,19 @@ export type ParticipantsEvents =
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin" }
     | { type: "error.platform.dismissAsAdmin"; data: Error }
+    | { type: "done.invoke.makeAdmin" }
+    | { type: "error.platform.makeAdmin"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
 const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents>> = {
     guards: {},
     services: {
-        removeParticipant: (_ctx, _ev) => {
-            // todo - what do we do if this fails given that we have already optimistically removed it?
-            // perhaps we have to keep track of the participant that we are trying to delete so that we can
-            // re-insert if it fails
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 1000);
-            });
+        removeParticipant: (ctx, ev) => {
+            if (ev.type === "REMOVE_PARTICIPANT") {
+                return ctx.serviceContainer.removeParticipant(ctx.chatSummary.chatId, ev.data);
+            }
+            throw new Error("Unexpected event type provided to ParticipantsMachine.dismissAsAdmin");
         },
         dismissAsAdmin: (ctx, ev) => {
             if (ev.type === "DISMISS_AS_ADMIN") {
@@ -201,6 +204,14 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                 src: "makeAdmin",
                 onDone: {
                     target: "idle",
+                    actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
+                        if (ev.data !== "success") {
+                            // todo - we need to undo the operation here, but we don't have
+                            // the data any more. Tsk.
+                            toastStore.showFailureToast("makeAdminFailed");
+                        }
+                        return {};
+                    }),
                 },
                 onError: {
                     target: "..unexpected_error",
@@ -229,6 +240,14 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                 src: "dismissAsAdmin",
                 onDone: {
                     target: "idle",
+                    actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
+                        if (ev.data !== "success") {
+                            // todo - we need to undo the operation here, but we don't have
+                            // the data any more. Tsk.
+                            toastStore.showFailureToast("dismissAsAdminFailed");
+                        }
+                        return {};
+                    }),
                 },
                 onError: {
                     target: "..unexpected_error",
@@ -252,6 +271,14 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                 src: "removeParticipant",
                 onDone: {
                     target: "idle",
+                    actions: assign((ctx, ev: DoneInvokeEvent<RemoveParticipantResponse>) => {
+                        if (ev.data !== "success") {
+                            // todo - we need to undo the operation here, but we don't have
+                            // the data any more. Tsk.
+                            toastStore.showFailureToast("removeParticipantFailed");
+                        }
+                        return {};
+                    }),
                 },
                 onError: {
                     // todo - need to make sure that this actually works - I'm not sure it does

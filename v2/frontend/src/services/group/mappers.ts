@@ -10,6 +10,7 @@ import type {
     ApiMediaContent,
     ApiMessageContent,
     ApiPutChunkResponse,
+    ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiTextContent,
 } from "./candid/idl";
@@ -29,6 +30,7 @@ import type {
     SendMessageResponse,
     PutChunkResponse,
     ChangeAdminResponse,
+    RemoveParticipantResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -86,6 +88,34 @@ export function changeAdminResponse(candid: ApiMakeAdminResponse): ChangeAdminRe
         return "not_authorised";
     }
     throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
+}
+
+export function removeParticipantResponse(
+    candid: ApiRemoveParticipantResponse
+): RemoveParticipantResponse {
+    console.debug(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("CannotRemoveSelf" in candid) {
+        return "cannot_remove_self";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiRemoveParticipantResponse type received",
+        candid
+    );
 }
 
 export function addParticipantsResponse(
@@ -193,6 +223,17 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
                     p.toString()
                 ),
                 dismissedBy: candid.event.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    if ("ParticipantsRemoved" in candid.event) {
+        return {
+            event: {
+                kind: "participants_removed",
+                userIds: candid.event.ParticipantsRemoved.user_ids.map((p) => p.toString()),
+                removedBy: candid.event.ParticipantsRemoved.removed_by.toString(),
             },
             index: candid.index,
             timestamp: candid.timestamp,

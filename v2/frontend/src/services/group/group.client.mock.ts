@@ -7,6 +7,7 @@ import type {
     GroupMessage,
     ChangeAdminResponse,
     SendMessageResponse,
+    RemoveParticipantResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
@@ -132,6 +133,14 @@ export class GroupClientMock implements IGroupClient {
     }
 
     dismissAsAdmin(_userId: string): Promise<ChangeAdminResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    removeParticipant(_userId: string): Promise<RemoveParticipantResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");

@@ -26,6 +26,7 @@ import {
     PutChunkResponse,
     MakeAdminResponse,
     RemoveAdminResponse,
+    RemoveParticipantResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -53,6 +54,7 @@ export {
     AddParticipantsResponse as ApiAddParticipantsResponse,
     MakeAdminResponse as ApiMakeAdminResponse,
     RemoveAdminResponse as ApiRemoveAdminResponse,
+    RemoveParticipantResponse as ApiRemoveParticipantResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

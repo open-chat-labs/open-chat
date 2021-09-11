@@ -29,6 +29,7 @@ import type {
     SendMessageResponse,
     DirectMessage,
     ChangeAdminResponse,
+    RemoveParticipantResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -213,5 +214,9 @@ export class ServiceContainer {
 
     dismissAsAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
         return this.getGroupClient(chatId).dismissAsAdmin(userId);
+    }
+
+    removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
+        return this.getGroupClient(chatId).removeParticipant(userId);
     }
 }
