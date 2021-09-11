@@ -57,7 +57,7 @@ export class DataClient extends CandidService implements IDataClient {
                 }
             });
         } catch (err) {
-            rollbar.error(`Unable to load blobref: ${blobId}`, err);
+            rollbar.error(`Unable to load blobref: ${blobId}`, err as Error);
             return undefined;
         }
 

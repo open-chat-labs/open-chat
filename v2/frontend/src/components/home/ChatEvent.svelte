@@ -4,7 +4,7 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
-    import ParticipantsAddedEvent from "./ParticipantsAddedEvent.svelte";
+    import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
     import type { Identity } from "@dfinity/agent";
@@ -41,7 +41,29 @@
 {:else if event.event.kind === "direct_chat_created"}
     <DirectChatCreatedEvent timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_added"}
-    <ParticipantsAddedEvent {user} event={event.event} {userLookup} timestamp={event.timestamp} />
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.addedBy}
+        resourceKey={"addedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_promoted_to_admin"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.promotedBy}
+        resourceKey={"promotedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_dismissed_as_admin"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.dismissedBy}
+        resourceKey={"dismissedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
 {:else}
     <div>Unexpected event type</div>
 {/if}

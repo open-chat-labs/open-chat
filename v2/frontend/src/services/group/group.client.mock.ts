@@ -5,6 +5,7 @@ import type {
     GroupChatEvent,
     GroupChatReplyContext,
     GroupMessage,
+    ChangeAdminResponse,
     SendMessageResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
@@ -119,6 +120,22 @@ export class GroupClientMock implements IGroupClient {
             timestamp: BigInt(Number(+new Date())),
             messageIndex: message.messageIndex,
             eventIndex: message.messageIndex,
+        });
+    }
+
+    makeAdmin(_userId: string): Promise<ChangeAdminResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    dismissAsAdmin(_userId: string): Promise<ChangeAdminResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
         });
     }
 }

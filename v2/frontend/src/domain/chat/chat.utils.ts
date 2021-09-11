@@ -340,3 +340,19 @@ export function updateArgsFromChats(timestamp: bigint, chatSummaries: ChatSummar
         },
     };
 }
+
+export function updateParticipant(
+    chat: GroupChatSummary,
+    id: string,
+    updater: (p: Participant) => Participant
+): GroupChatSummary {
+    // note that this mutates the chat rather than cloning. Quite significant as it means the
+    // parent machine's chat is the same object
+    chat.participants = chat.participants.map((p) => (p.userId === id ? updater(p) : p));
+    return chat;
+}
+
+export function removeParticipant(chat: GroupChatSummary, id: string): GroupChatSummary {
+    chat.participants = chat.participants.filter((p) => p.userId !== id);
+    return chat;
+}

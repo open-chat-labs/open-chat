@@ -28,6 +28,7 @@ import type {
     GroupMessage,
     SendMessageResponse,
     DirectMessage,
+    ChangeAdminResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -204,5 +205,13 @@ export class ServiceContainer {
 
     differentIdentity(identity: Identity): boolean {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
+    }
+
+    makeAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+        return this.getGroupClient(chatId).makeAdmin(userId);
+    }
+
+    dismissAsAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+        return this.getGroupClient(chatId).dismissAsAdmin(userId);
     }
 }

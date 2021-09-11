@@ -3,6 +3,7 @@ import type {
     EventsResponse,
     GroupChatEvent,
     GroupMessage,
+    ChangeAdminResponse,
     SendMessageResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
@@ -19,7 +20,6 @@ export class CachingGroupClient implements IGroupClient {
         private chatId: string,
         private client: IGroupClient
     ) {}
-
     async chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
         const cachedMsgs = await getCachedMessages<GroupChatEvent>(
             this.db,
@@ -39,5 +39,13 @@ export class CachingGroupClient implements IGroupClient {
 
     sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
         return this.client.sendMessage(senderName, message);
+    }
+
+    makeAdmin(userId: string): Promise<ChangeAdminResponse> {
+        return this.client.makeAdmin(userId);
+    }
+
+    dismissAsAdmin(userId: string): Promise<ChangeAdminResponse> {
+        return this.client.dismissAsAdmin(userId);
     }
 }

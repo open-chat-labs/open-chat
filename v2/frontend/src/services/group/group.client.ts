@@ -5,10 +5,16 @@ import type {
     EventsResponse,
     GroupChatEvent,
     GroupMessage,
+    ChangeAdminResponse,
     SendMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
-import { addParticipantsResponse, getEventsResponse, sendMessageResponse } from "./mappers";
+import {
+    addParticipantsResponse,
+    getEventsResponse,
+    changeAdminResponse,
+    sendMessageResponse,
+} from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
 import { GroupClientMock } from "./group.client.mock";
@@ -52,6 +58,24 @@ export class GroupClient extends CandidService implements IGroupClient {
                 user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
             addParticipantsResponse
+        );
+    }
+
+    makeAdmin(userId: string): Promise<ChangeAdminResponse> {
+        return this.handleResponse(
+            this.groupService.make_admin({
+                user_id: Principal.fromText(userId),
+            }),
+            changeAdminResponse
+        );
+    }
+
+    dismissAsAdmin(userId: string): Promise<ChangeAdminResponse> {
+        return this.handleResponse(
+            this.groupService.remove_admin({
+                user_id: Principal.fromText(userId),
+            }),
+            changeAdminResponse
         );
     }
 

@@ -6,6 +6,7 @@ import type {
     ApiFileContent,
     ApiGroupMessage,
     ApiGroupReplyContext,
+    ApiMakeAdminResponse,
     ApiMediaContent,
     ApiMessageContent,
     ApiPutChunkResponse,
@@ -27,6 +28,7 @@ import type {
     AddParticipantsResponse,
     SendMessageResponse,
     PutChunkResponse,
+    ChangeAdminResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -67,6 +69,23 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "send_message_not_in_group" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
+
+export function changeAdminResponse(candid: ApiMakeAdminResponse): ChangeAdminResponse {
+    console.debug(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
 }
 
 export function addParticipantsResponse(
@@ -150,6 +169,30 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
                 kind: "participants_added",
                 userIds: candid.event.ParticipantsAdded.user_ids.map((p) => p.toString()),
                 addedBy: candid.event.ParticipantsAdded.added_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    if ("ParticipantsPromotedToAdmin" in candid.event) {
+        return {
+            event: {
+                kind: "participants_promoted_to_admin",
+                userIds: candid.event.ParticipantsPromotedToAdmin.user_ids.map((p) => p.toString()),
+                promotedBy: candid.event.ParticipantsPromotedToAdmin.promoted_by.toString(),
+            },
+            index: candid.index,
+            timestamp: candid.timestamp,
+        };
+    }
+    if ("ParticipantsDismissedAsAdmin" in candid.event) {
+        return {
+            event: {
+                kind: "participants_dismissed_as_admin",
+                userIds: candid.event.ParticipantsDismissedAsAdmin.user_ids.map((p) =>
+                    p.toString()
+                ),
+                dismissedBy: candid.event.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
             },
             index: candid.index,
             timestamp: candid.timestamp,

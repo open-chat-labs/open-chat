@@ -86,13 +86,16 @@ export type GroupMessage = MessageCommon & {
     repliesTo?: GroupChatReplyContext;
 };
 
-export type EventsResponse<T extends ChatEvent> =
-    | "chat_not_found"
-    | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
 export type DirectChatEvent = DirectMessage | DirectChatCreated;
 
-export type GroupChatEvent = GroupMessage | GroupChatCreated | ParticipantsAdded;
+export type GroupChatEvent =
+    | GroupMessage
+    | GroupChatCreated
+    | ParticipantsAdded
+    | ParticipantsPromotedToAdmin
+    | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -104,6 +107,18 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type ParticipantsDismissedAsAdmin = {
+    kind: "participants_dismissed_as_admin";
+    userIds: string[];
+    dismissedBy: string;
+};
+
+export type ParticipantsPromotedToAdmin = {
+    kind: "participants_promoted_to_admin";
+    userIds: string[];
+    promotedBy: string;
 };
 
 export type GroupChatCreated = {
@@ -341,3 +356,9 @@ export type SendMessageNotInGroup = {
 };
 
 export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";
+
+export type ChangeAdminResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";

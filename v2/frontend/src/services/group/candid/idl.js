@@ -106,6 +106,10 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
     'message_index' : MessageIndex,
   });
+  const ParticipantsDismissedAsAdmin = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'dismissed_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -123,7 +127,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'Message' : GroupMessage,
-    'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin,
+    'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'ParticipantLeft' : ParticipantLeft,
     'GroupNameChanged' : GroupNameChanged,
     'ParticipantsAdded' : ParticipantsAdded,

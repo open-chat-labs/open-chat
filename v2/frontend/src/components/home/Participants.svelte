@@ -41,6 +41,10 @@
         machine.send({ type: "DISMISS_AS_ADMIN", data: ev.detail });
     }
 
+    function makeAdmin(ev: CustomEvent<string>): void {
+        machine.send({ type: "MAKE_ADMIN", data: ev.detail });
+    }
+
     function removeParticipant(ev: CustomEvent<string>): void {
         machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail });
     }
@@ -67,6 +71,7 @@
         on:blockUser
         on:chatWith
         on:dismissAsAdmin={dismissAsAdmin}
+        on:makeAdmin={makeAdmin}
         on:removeParticipant={removeParticipant}
         on:close={close} />
 </VirtualList>

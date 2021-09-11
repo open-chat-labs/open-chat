@@ -154,7 +154,11 @@
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
-        if (first.event.kind === "participants_added") {
+        if (
+            first.event.kind === "participants_added" ||
+            first.event.kind === "participants_promoted_to_admin" ||
+            first.event.kind === "participants_dismissed_as_admin"
+        ) {
             return `${first.timestamp}_${first.index}`;
         }
 
@@ -200,10 +204,12 @@
         if (evt.event.kind === "direct_message") {
             return evt.event.sentByMe;
         }
-        if (evt.event.kind === "direct_chat_created") {
-            return false;
-        }
-        if (evt.event.kind === "participants_added") {
+        if (
+            evt.event.kind === "direct_chat_created" ||
+            evt.event.kind === "participants_added" ||
+            evt.event.kind === "participants_dismissed_as_admin" ||
+            evt.event.kind === "participants_promoted_to_admin"
+        ) {
             return false;
         }
         if (evt.event.kind === "group_message") {

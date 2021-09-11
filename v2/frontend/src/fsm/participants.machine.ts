@@ -5,6 +5,7 @@ import { userSearchMachine } from "./userSearch.machine";
 import type { GroupChatSummary } from "../domain/chat/chat";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 
 export interface ParticipantsContext {
     serviceContainer: ServiceContainer;
@@ -19,6 +20,7 @@ export type ParticipantsEvents =
     | { type: "CANCEL_ADD_PARTICIPANT" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "DISMISS_AS_ADMIN"; data: string }
+    | { type: "MAKE_ADMIN"; data: string }
     | { type: "ADD_PARTICIPANT" }
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "done.invoke.removeParticipant" }
@@ -41,12 +43,17 @@ const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents
                 }, 1000);
             });
         },
-        dismissAsAdmin: (_ctx, _ev) => {
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 1000);
-            });
+        dismissAsAdmin: (ctx, ev) => {
+            if (ev.type === "DISMISS_AS_ADMIN") {
+                return ctx.serviceContainer.dismissAsAdmin(ctx.chatSummary.chatId, ev.data);
+            }
+            throw new Error("Unexpected event type provided to ParticipantsMachine.dismissAsAdmin");
+        },
+        makeAdmin: (ctx, ev) => {
+            if (ev.type === "MAKE_ADMIN") {
+                return ctx.serviceContainer.makeAdmin(ctx.chatSummary.chatId, ev.data);
+            }
+            throw new Error("Unexpected event type provided to ParticipantsMachine.makeAdmin");
         },
         addParticipant: (ctx, ev) => {
             if (ev.type === "done.invoke.userSearchMachine") {
@@ -67,6 +74,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
         HIDE_PARTICIPANTS: ".done", // todo make sure this goes to the parent.idle state correctly
         REMOVE_PARTICIPANT: ".removing_participant",
         DISMISS_AS_ADMIN: ".dismissing_participant",
+        MAKE_ADMIN: ".making_admin",
         ADD_PARTICIPANT: ".adding_participant",
     },
     states: {
@@ -174,7 +182,48 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                 "error.platform.userSearchMachine": "..unexpected_error",
             },
         },
+        making_admin: {
+            // optimistically set the user standard in memory
+            // if the operation fails, undo it
+            entry: assign((ctx, ev) => {
+                if (ctx.chatSummary.kind === "group_chat" && ev.type === "MAKE_ADMIN") {
+                    return {
+                        chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
+                            ...p,
+                            role: "admin",
+                        })),
+                    };
+                }
+                return {};
+            }),
+            invoke: {
+                id: "makeAdmin",
+                src: "makeAdmin",
+                onDone: {
+                    target: "idle",
+                },
+                onError: {
+                    target: "..unexpected_error",
+                    actions: assign({
+                        error: (_, { data }) => data,
+                    }),
+                },
+            },
+        },
         dismissing_participant: {
+            // optimistically set the user standard in memory
+            // if the operation fails, undo it
+            entry: assign((ctx, ev) => {
+                if (ctx.chatSummary.kind === "group_chat" && ev.type === "DISMISS_AS_ADMIN") {
+                    return {
+                        chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
+                            ...p,
+                            role: "standard",
+                        })),
+                    };
+                }
+                return {};
+            }),
             invoke: {
                 id: "dismissAsAdmin",
                 src: "dismissAsAdmin",
@@ -193,12 +242,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
             entry: assign((ctx, ev) => {
                 if (ctx.chatSummary.kind === "group_chat" && ev.type === "REMOVE_PARTICIPANT") {
                     return {
-                        chatSummary: {
-                            ...ctx.chatSummary,
-                            participants: ctx.chatSummary.participants.filter(
-                                (p) => p.userId !== ev.data
-                            ),
-                        },
+                        chatSummary: removeParticipant(ctx.chatSummary, ev.data),
                     };
                 }
                 return {};

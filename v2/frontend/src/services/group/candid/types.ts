@@ -130,7 +130,7 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
-  { 'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin } |
+  { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
