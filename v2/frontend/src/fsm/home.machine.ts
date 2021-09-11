@@ -106,7 +106,7 @@ async function getUpdates(
             usersLastUpdate: usersResponse.timestamp,
         };
     } catch (err) {
-        rollbar.error("Error getting chats", err);
+        rollbar.error("Error getting chats", err as Error);
         throw err;
     }
 }
@@ -191,7 +191,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                     });
                 } catch (err) {
                     // exceptions in a poller do not stop the poller, but we *do* want to know about it
-                    rollbar.error("Error updating users", err);
+                    rollbar.error("Error updating users", err as Error);
                     throw err;
                 }
             }, USER_UPDATE_INTERVAL);

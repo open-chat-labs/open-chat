@@ -129,13 +129,9 @@ export function earliestAvailableEventIndex(ctx: ChatContext): number {
     return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleEventIndex : 0;
 }
 
+// we need to be clearer about what this means
 export function earliestIndex(ctx: ChatContext): number {
-    const earliestLoaded = earliestLoadedEventIndex(ctx.events);
-    if (earliestLoaded !== undefined) {
-        return earliestLoaded;
-    } else {
-        return ctx.chatSummary.latestEventIndex;
-    }
+    return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
 }
 
 export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
@@ -150,8 +146,23 @@ export function newMessagesRange(ctx: ChatContext): [number, number] | undefined
     }
 }
 
+/**
+ * This gives us the highest index that we have not yet loaded
+ */
+export function highestUnloadedEventIndex(ctx: ChatContext): number {
+    const earliestLoaded = earliestLoadedEventIndex(ctx.events);
+    if (earliestLoaded !== undefined) {
+        return earliestLoaded - 1; // the one before the first one we *have* loaded
+    } else {
+        return ctx.chatSummary.latestEventIndex; //or the latest index if we haven't loaded *any*
+    }
+}
+
+/**
+ * This gives us the range of messages that we must request when loading *previous* messages
+ */
 export function previousMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const to = earliestIndex(ctx);
+    const to = highestUnloadedEventIndex(ctx);
     const candidateFrom =
         ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
     const min = earliestAvailableEventIndex(ctx);
