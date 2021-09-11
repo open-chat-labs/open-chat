@@ -32,6 +32,12 @@ impl RuntimeState {
     pub fn is_caller_owner(&self) -> bool {
         self.env.caller() == self.data.owner
     }
+
+    pub fn trap_if_caller_not_owner(&self) {
+        if !self.is_caller_owner() {
+            ic_cdk::trap("Not authorized");
+        }
+    }
 }
 
 pub struct Data {

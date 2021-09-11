@@ -239,6 +239,7 @@ export interface MetricsResponse {
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
 }
+export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -357,6 +358,7 @@ export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |
 export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
+export type TimestampNanos = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |

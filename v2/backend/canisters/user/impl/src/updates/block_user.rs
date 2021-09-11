@@ -8,6 +8,8 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    runtime_state.trap_if_caller_not_owner();
+
     runtime_state.data.blocked_users.insert(args.user_id);
     Response::Success
 }

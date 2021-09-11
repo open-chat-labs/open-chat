@@ -40,39 +40,37 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    runtime_state.trap_if_caller_not_owner();
+
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false
     }
 
-    if runtime_state.is_caller_owner() {
-        if is_throttled() {
-            Err(Throttled)
-        } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
-            Err(NameTooLong(FieldTooLongResult {
-                length_provided: args.name.len() as u32,
-                max_length: MAX_GROUP_NAME_LENGTH,
-            }))
-        } else if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
-            Err(DescriptionTooLong(FieldTooLongResult {
-                length_provided: args.description.len() as u32,
-                max_length: MAX_GROUP_DESCRIPTION_LENGTH,
-            }))
-        } else {
-            let create_group_args = c2c_create_group::Args {
-                is_public: args.is_public,
-                creator_principal: runtime_state.env.caller(),
-                name: args.name,
-                description: args.description,
-                history_visible_to_new_joiners: args.history_visible_to_new_joiners,
-            };
-            Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                create_group_args,
-            })
-        }
+    if is_throttled() {
+        Err(Throttled)
+    } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
+        Err(NameTooLong(FieldTooLongResult {
+            length_provided: args.name.len() as u32,
+            max_length: MAX_GROUP_NAME_LENGTH,
+        }))
+    } else if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
+        Err(DescriptionTooLong(FieldTooLongResult {
+            length_provided: args.description.len() as u32,
+            max_length: MAX_GROUP_DESCRIPTION_LENGTH,
+        }))
     } else {
-        Err(NotAuthorized)
+        let create_group_args = c2c_create_group::Args {
+            is_public: args.is_public,
+            creator_principal: runtime_state.env.caller(),
+            name: args.name,
+            description: args.description,
+            history_visible_to_new_joiners: args.history_visible_to_new_joiners,
+        };
+        Ok(PrepareResult {
+            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            create_group_args,
+        })
     }
 }
 

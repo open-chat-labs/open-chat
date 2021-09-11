@@ -9,5 +9,6 @@ pub trait Environment {
     fn caller(&self) -> Principal;
     fn canister_id(&self) -> CanisterId;
     fn random_u32(&mut self) -> u32;
+    fn cycles_balance(&self) -> u64;
     fn test_mode(&self) -> bool;
 }

@@ -166,7 +166,7 @@ fi
 
 ## Run tests
 st_test=$(date)
-cargo run --bin tests -- "$@"
+cargo run --bin integration_tests -- "$@"
 e_test=$(date)
 
 ## Summary

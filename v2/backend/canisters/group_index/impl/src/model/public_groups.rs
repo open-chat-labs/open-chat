@@ -1,7 +1,7 @@
 use crate::MARK_ACTIVE_DURATION;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, GroupMatch, TimestampMillis, Version};
+use types::{ChatId, CyclesTopUp, GroupMatch, TimestampMillis, Version};
 
 #[derive(Default)]
 pub struct PublicGroups {
@@ -81,6 +81,7 @@ pub struct PublicGroupInfo {
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
     wasm_version: Version,
+    cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl PublicGroupInfo {
@@ -92,6 +93,7 @@ impl PublicGroupInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
+            cycle_top_ups: Vec::new(),
         }
     }
 
@@ -105,6 +107,10 @@ impl PublicGroupInfo {
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
         self.marked_active_until > now
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up)
     }
 
     // To match, the name or description must contain the case-insensitive search_term.

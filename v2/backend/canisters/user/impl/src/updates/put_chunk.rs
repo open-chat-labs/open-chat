@@ -10,6 +10,8 @@ fn put_chunk(args: Args) -> Response {
 }
 
 fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    runtime_state.trap_if_caller_not_owner();
+
     match runtime_state
         .data
         .blob_storage

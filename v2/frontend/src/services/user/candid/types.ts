@@ -37,7 +37,6 @@ export interface CreateGroupFieldTooLongResult { 'chat_id' : ChatId }
 export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
   { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
   { 'Throttled' : null } |
-  { 'NotAuthorized' : null } |
   { 'Success' : CreateGroupSuccessResult } |
   { 'NameTooLong' : CreateGroupFieldTooLongResult } |
   { 'InternalError' : null };
@@ -100,7 +99,6 @@ export interface EventsByIndexArgs {
 export type EventsByIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export type EventsResponse = { 'ChatNotFound' : null } |
-  { 'NotAuthorized' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<DirectChatEventWrapper>,
@@ -207,12 +205,10 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
-  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
 export type LeaveGroupResponse = { 'GroupNotFound' : null } |
-  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'NotInGroup' : null };
@@ -222,7 +218,6 @@ export interface MarkReadArgs {
 }
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface MediaContent {
   'height' : number,
@@ -255,6 +250,7 @@ export interface MetricsResponse {
   'wasm_memory_used' : bigint,
   'video_message_count' : bigint,
 }
+export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -367,6 +363,7 @@ export interface SubscriptionInfo {
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
+export type TimestampNanos = bigint;
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }

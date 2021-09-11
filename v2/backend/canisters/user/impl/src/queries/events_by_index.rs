@@ -9,16 +9,14 @@ fn events_by_index(args: Args) -> Response {
 }
 
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.is_caller_owner() {
-        let their_user_id = args.user_id;
-        let chat_id = ChatId::from(their_user_id);
-        if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-            let events = chat.events.get_by_index(args.events);
-            Success(SuccessResult { events })
-        } else {
-            ChatNotFound
-        }
+    runtime_state.trap_if_caller_not_owner();
+
+    let their_user_id = args.user_id;
+    let chat_id = ChatId::from(their_user_id);
+    if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
+        let events = chat.events.get_by_index(args.events);
+        Success(SuccessResult { events })
     } else {
-        NotAuthorized
+        ChatNotFound
     }
 }

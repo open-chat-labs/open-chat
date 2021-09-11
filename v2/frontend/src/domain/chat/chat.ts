@@ -88,7 +88,6 @@ export type GroupMessage = MessageCommon & {
 
 export type EventsResponse<T extends ChatEvent> =
     | "chat_not_found"
-    | "not_authorised"
     | EventsSuccessResult<T>;
 
 export type DirectChatEvent = DirectMessage | DirectChatCreated;
@@ -234,8 +233,7 @@ export type CreateGroupResponse =
     | CreateGroupNameTooLong
     | CreateGroupDescriptionTooLong
     | CreateGroupPublicGroupAlreadyExists
-    | CreateGroupThrottled
-    | CreateGroupNotAuthorized;
+    | CreateGroupThrottled;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -264,10 +262,6 @@ export type CreateGroupPublicGroupAlreadyExists = {
 
 export type CreateGroupThrottled = {
     kind: "throttled";
-};
-
-export type CreateGroupNotAuthorized = {
-    kind: "not_authorized";
 };
 
 export type AddParticipantsResponse =

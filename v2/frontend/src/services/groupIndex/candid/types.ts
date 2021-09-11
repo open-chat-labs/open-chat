@@ -1,4 +1,10 @@
 import type { Principal } from '@dfinity/principal';
+export interface ActiveGroupsArgs {
+  'active_in_last' : Milliseconds,
+  'chat_ids' : Array<ChatId>,
+}
+export type ActiveGroupsResponse = { 'Success' : ActiveGroupsSuccessResult };
+export interface ActiveGroupsSuccessResult { 'active_groups' : Array<ChatId> }
 export interface BlobReference {
   'blob_size' : number,
   'blob_id' : bigint,
@@ -22,18 +28,7 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export interface CreateArgs { 'is_public' : boolean, 'name' : string }
-export type CreateResponse = { 'PublicGroupAlreadyExists' : null } |
-  { 'UnknownError' : null } |
-  { 'Success' : { 'canister_id' : CanisterId } } |
-  { 'InvalidName' : null } |
-  { 'NameTooLong' : number } |
-  { 'GroupLimitExceeded' : null };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
-export interface DeleteArgs { 'chat_id' : ChatId }
-export type DeleteResponse = { 'NotFound' : null } |
-  { 'Success' : null } |
-  { 'NotAdmin' : null };
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
@@ -134,6 +129,11 @@ export interface GroupDescriptionChanged {
   'previous_description' : [] | [string],
   'changed_by' : UserId,
 }
+export interface GroupMatch {
+  'name' : string,
+  'description' : string,
+  'chat_id' : ChatId,
+}
 export interface GroupMessage {
   'content' : MessageContent,
   'sender' : UserId,
@@ -196,6 +196,7 @@ export interface MetricsResponse {
   'public_group_count' : bigint,
   'wasm_memory_used' : bigint,
 }
+export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -206,7 +207,6 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
-export interface NotifyBalanceArgs { 'balance' : bigint }
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
@@ -243,15 +243,10 @@ export type Role = { 'Participant' : null } |
   { 'Admin' : null };
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = { 'TermTooShort' : number } |
-  {
-    'Success' : {
-      'groups' : Array<
-        { 'name' : string, 'score' : number, 'chat_id' : ChatId }
-      >,
-    }
-  } |
+  { 'Success' : SearchSuccessResult } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
+export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
@@ -268,9 +263,7 @@ export interface SubscriptionInfo {
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
-export interface UpgradeArgs { 'wasm' : Array<number>, 'version' : string }
-export type UpgradeResponse = { 'Success' : { 'canister_id' : CanisterId } } |
-  { 'Failure' : null };
+export type TimestampNanos = bigint;
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
@@ -342,10 +335,7 @@ export interface Version {
   'patch' : number,
 }
 export interface _SERVICE {
-  'create' : (arg_0: CreateArgs) => Promise<CreateResponse>,
-  'delete' : (arg_0: DeleteArgs) => Promise<DeleteResponse>,
+  'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
-  'notify_balance' : (arg_0: NotifyBalanceArgs) => Promise<undefined>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
-  'upgrade' : (arg_0: UpgradeArgs) => Promise<UpgradeResponse>,
 }
