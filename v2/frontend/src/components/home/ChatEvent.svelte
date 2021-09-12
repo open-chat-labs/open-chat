@@ -5,6 +5,7 @@
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
+    import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
     import type { Identity } from "@dfinity/agent";
@@ -55,6 +56,11 @@
         changedBy={event.event.removedBy}
         resourceKey={"removedBy"}
         {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participant_left"}
+    <ParticipantLeftEvent
+        {user}
+        left={userLookup[event.event.userId]}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent

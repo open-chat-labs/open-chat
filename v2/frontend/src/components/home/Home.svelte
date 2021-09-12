@@ -97,6 +97,17 @@
 
     function leaveGroup(ev: CustomEvent<string>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
+        $machine.context
+            .serviceContainer!.leaveGroup(ev.detail)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("leftGroup");
+                } else {
+                    // todo - do we need to reverse the data update here (by posting to the machine)
+                    toastStore.showFailureToast("failedToLeaveGroup");
+                }
+            })
+            .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
     }
 
     function chatWith(ev: CustomEvent<string>) {

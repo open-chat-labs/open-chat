@@ -10,6 +10,7 @@ import type {
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
+    LeaveGroupResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -85,5 +86,9 @@ export class CachingUserClient implements IUserClient {
 
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.client.unblockUser(userId);
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.client.leaveGroup(chatId);
     }
 }

@@ -10,6 +10,7 @@ import type {
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
+    LeaveGroupResponse,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
@@ -27,4 +28,5 @@ export interface IUserClient {
     ): Promise<SendMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
 }

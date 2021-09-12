@@ -32,6 +32,7 @@ import type {
     RemoveParticipantResponse,
     BlockUserResponse,
     UnblockUserResponse,
+    LeaveGroupResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -228,5 +229,9 @@ export class ServiceContainer {
 
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.userClient.unblockUser(userId);
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.userClient.leaveGroup(chatId);
     }
 }

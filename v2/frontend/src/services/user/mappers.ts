@@ -21,6 +21,7 @@ import type {
     ApiPutChunkResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
+    ApiLeaveGroupResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -45,10 +46,27 @@ import type {
     PutChunkResponse,
     BlockUserResponse,
     UnblockUserResponse,
+    LeaveGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
+}
 
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
     if ("Full" in candid) {

@@ -4,6 +4,7 @@ import type {
     ApiEventsResponse,
     ApiEventWrapper,
     ApiFileContent,
+    ApiGroupChatEvent,
     ApiGroupMessage,
     ApiGroupReplyContext,
     ApiMakeAdminResponse,
@@ -173,74 +174,62 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
-    if ("Message" in candid.event) {
+function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
+    if ("Message" in candid) {
+        return message(candid.Message);
+    }
+    if ("GroupChatCreated" in candid) {
         return {
-            event: message(candid.event.Message),
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "group_chat_created",
+            name: candid.GroupChatCreated.name,
+            description: candid.GroupChatCreated.description,
+            created_by: candid.GroupChatCreated.created_by.toString(),
         };
     }
-    if ("GroupChatCreated" in candid.event) {
+    if ("ParticipantsAdded" in candid) {
         return {
-            event: {
-                kind: "group_chat_created",
-                name: candid.event.GroupChatCreated.name,
-                description: candid.event.GroupChatCreated.description,
-                created_by: candid.event.GroupChatCreated.created_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_added",
+            userIds: candid.ParticipantsAdded.user_ids.map((p) => p.toString()),
+            addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
-    if ("ParticipantsAdded" in candid.event) {
+    if ("ParticipantsPromotedToAdmin" in candid) {
         return {
-            event: {
-                kind: "participants_added",
-                userIds: candid.event.ParticipantsAdded.user_ids.map((p) => p.toString()),
-                addedBy: candid.event.ParticipantsAdded.added_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_promoted_to_admin",
+            userIds: candid.ParticipantsPromotedToAdmin.user_ids.map((p) => p.toString()),
+            promotedBy: candid.ParticipantsPromotedToAdmin.promoted_by.toString(),
         };
     }
-    if ("ParticipantsPromotedToAdmin" in candid.event) {
+    if ("ParticipantsDismissedAsAdmin" in candid) {
         return {
-            event: {
-                kind: "participants_promoted_to_admin",
-                userIds: candid.event.ParticipantsPromotedToAdmin.user_ids.map((p) => p.toString()),
-                promotedBy: candid.event.ParticipantsPromotedToAdmin.promoted_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_dismissed_as_admin",
+            userIds: candid.ParticipantsDismissedAsAdmin.user_ids.map((p) => p.toString()),
+            dismissedBy: candid.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
         };
     }
-    if ("ParticipantsDismissedAsAdmin" in candid.event) {
+    if ("ParticipantsRemoved" in candid) {
         return {
-            event: {
-                kind: "participants_dismissed_as_admin",
-                userIds: candid.event.ParticipantsDismissedAsAdmin.user_ids.map((p) =>
-                    p.toString()
-                ),
-                dismissedBy: candid.event.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_removed",
+            userIds: candid.ParticipantsRemoved.user_ids.map((p) => p.toString()),
+            removedBy: candid.ParticipantsRemoved.removed_by.toString(),
         };
     }
-    if ("ParticipantsRemoved" in candid.event) {
+    if ("ParticipantLeft" in candid) {
         return {
-            event: {
-                kind: "participants_removed",
-                userIds: candid.event.ParticipantsRemoved.user_ids.map((p) => p.toString()),
-                removedBy: candid.event.ParticipantsRemoved.removed_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participant_left",
+            userId: candid.ParticipantLeft.user_id.toString(),
         };
     }
     // todo - we know there are other event types that we are not dealing with yet
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid.event)}`);
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
+}
+
+function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
+    return {
+        event: groupChatEvent(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
 }
 
 function message(candid: ApiGroupMessage): GroupMessage {

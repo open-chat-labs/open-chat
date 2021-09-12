@@ -117,10 +117,6 @@ async function getUpdates(
 }
 
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
-    actions: {
-        notifyLeftGroup: (_, _ev) => toastStore.showSuccessToast("leftGroup"),
-        failedToLeaveGroup: (_, _ev) => toastStore.showFailureToast("failedToLeaveGroup"),
-    },
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
@@ -256,19 +252,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
-                // todo - obviously we need to invoke some api call here as well ...
                 LEAVE_GROUP: {
                     internal: true,
                     actions: [
-                        "notifyLeftGroup",
-                        // "failedToLeaveGroup",
-                        assign((ctx, ev) => {
-                            return {
-                                chatSummaries: ctx.chatSummaries.filter(
-                                    (c) => c.chatId !== ev.data
-                                ),
-                                selectedChat: undefined,
-                            };
+                        assign((ctx, ev) => ({
+                            chatSummaries: ctx.chatSummaries.filter((c) => c.chatId !== ev.data),
+                            selectedChat: undefined,
+                        })),
+                        send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                            to: "updateChatsPoller",
                         }),
                     ],
                 },

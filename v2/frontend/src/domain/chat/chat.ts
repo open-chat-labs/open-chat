@@ -96,6 +96,7 @@ export type GroupChatEvent =
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin
     | ParticipantsRemoved
+    | ParticipantLeft
     | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -108,6 +109,11 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type ParticipantLeft = {
+    kind: "participant_left";
+    userId: string;
 };
 
 export type ParticipantsRemoved = {
@@ -382,3 +388,5 @@ export type RemoveParticipantResponse =
 export type BlockUserResponse = "success";
 
 export type UnblockUserResponse = "success";
+
+export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";

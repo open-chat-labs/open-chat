@@ -156,6 +156,7 @@
         }
         if (
             first.event.kind === "participants_added" ||
+            first.event.kind === "participant_left" ||
             first.event.kind === "participants_promoted_to_admin" ||
             first.event.kind === "participants_dismissed_as_admin" ||
             first.event.kind === "participants_removed"
@@ -209,6 +210,7 @@
             evt.event.kind === "direct_chat_created" ||
             evt.event.kind === "participants_added" ||
             evt.event.kind === "participants_removed" ||
+            evt.event.kind === "participant_left" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {

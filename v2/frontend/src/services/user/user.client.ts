@@ -13,6 +13,7 @@ import type {
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
+    LeaveGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -21,6 +22,7 @@ import {
     createGroupResponse,
     getEventsResponse,
     getUpdatesResponse,
+    leaveGroupResponse,
     sendMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
@@ -165,6 +167,15 @@ export class UserClient extends CandidService implements IUserClient {
                 user_id: Principal.fromText(userId),
             }),
             blockResponse
+        );
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.handleResponse(
+            this.userService.leave_group({
+                chat_id: Principal.fromText(chatId),
+            }),
+            leaveGroupResponse
         );
     }
 }
