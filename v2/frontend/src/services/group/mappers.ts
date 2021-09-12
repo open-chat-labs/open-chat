@@ -221,6 +221,9 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
     // todo - we know there are other event types that we are not dealing with yet
+    // ParticipantJoined
+    // GroupDescChanged
+    // GroupNameChanged
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
