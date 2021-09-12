@@ -16,6 +16,8 @@ import type {
     DirectChatReplyContext,
     MergedUpdatesResponse,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import { mergeChatUpdates, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -297,7 +299,7 @@ export class UserClientMock implements IUserClient {
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {
-            blockedUsers: [],
+            blockedUsers: new Set<string>(),
             chatsUpdated: args.updatesSince
                 ? chatSummaries.map((c) => updateChat(c, this.updateCycles))
                 : [],
@@ -311,6 +313,7 @@ export class UserClientMock implements IUserClient {
                 res({
                     chatSummaries: mergeChatUpdates(chatSummaries, resp),
                     timestamp: resp.timestamp,
+                    blockedUsers: resp.blockedUsers,
                 });
             }, 500);
         });
@@ -348,6 +351,22 @@ export class UserClientMock implements IUserClient {
             timestamp: BigInt(Number(+new Date())),
             messageIndex: message.messageIndex,
             eventIndex: message.messageIndex,
+        });
+    }
+
+    blockUser(_userId: string): Promise<BlockUserResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
+        });
+    }
+
+    unblockUser(_userId: string): Promise<UnblockUserResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
         });
     }
 }

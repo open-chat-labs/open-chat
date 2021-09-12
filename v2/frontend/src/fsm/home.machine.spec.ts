@@ -55,6 +55,7 @@ describe("home machine transitions", () => {
                     userLookup: {},
                     usersLastUpdate: BigInt(0),
                     chatUpdatesSince: BigInt(0),
+                    blockedUsers: new Set<string>(),
                 },
             },
             { loaded_chats: "no_chat_selected" }
@@ -67,6 +68,7 @@ describe("home machine transitions", () => {
                 userLookup: {},
                 usersLastUpdate: BigInt(0),
                 chatsIndex: {},
+                blockedUsers: new Set<string>(),
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
@@ -95,6 +97,7 @@ describe("home machine transitions", () => {
                 usersLastUpdate: BigInt(0),
                 selectedChat: directChat,
                 chatsIndex: {},
+                blockedUsers: new Set<string>(),
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",
@@ -165,6 +168,7 @@ describe("home machine transitions", () => {
                         "123": { userId: "123", username: "me", secondsSinceLastOnline: 10 },
                     },
                     usersLastUpdate: BigInt(100),
+                    blockedUsers: new Set<string>(),
                 },
             },
             {

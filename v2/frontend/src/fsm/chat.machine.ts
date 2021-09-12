@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-    ActionObject,
-    createMachine,
-    DoneInvokeEvent,
-    MachineConfig,
-    MachineOptions,
-} from "xstate";
-import { assign, pure, send, sendParent } from "xstate/lib/actions";
+import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
+import { assign, pure, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -203,10 +197,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             ]);
             return {
                 userLookup,
-                events:
-                    eventsResponse === "chat_not_found"
-                        ? []
-                        : eventsResponse.events,
+                events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
             };
         },
     },

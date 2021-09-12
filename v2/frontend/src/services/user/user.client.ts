@@ -11,9 +11,12 @@ import type {
     ChatSummary,
     DirectMessage,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
+    blockResponse,
     chunkResponse,
     createGroupResponse,
     getEventsResponse,
@@ -98,6 +101,7 @@ export class UserClient extends CandidService implements IUserClient {
         return {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
             timestamp: updatesResponse.timestamp,
+            blockedUsers: updatesResponse.blockedUsers,
         };
     }
 
@@ -144,5 +148,23 @@ export class UserClient extends CandidService implements IUserClient {
                     sendMessageResponse
                 );
             });
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.handleResponse(
+            this.userService.block_user({
+                user_id: Principal.fromText(userId),
+            }),
+            blockResponse
+        );
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.handleResponse(
+            this.userService.block_user({
+                user_id: Principal.fromText(userId),
+            }),
+            blockResponse
+        );
     }
 }

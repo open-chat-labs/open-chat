@@ -8,6 +8,8 @@ import type {
     MergedUpdatesResponse,
     DirectMessage,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
@@ -23,4 +25,6 @@ export interface IUserClient {
         senderName: string,
         message: DirectMessage
     ): Promise<SendMessageResponse>;
+    blockUser(userId: string): Promise<BlockUserResponse>;
+    unblockUser(userId: string): Promise<UnblockUserResponse>;
 }

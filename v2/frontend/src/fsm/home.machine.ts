@@ -47,6 +47,7 @@ export interface HomeContext {
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext<ReplyContext>;
+    blockedUsers: Set<string>;
 }
 
 export type HomeEvents =
@@ -56,6 +57,8 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "BLOCK_USER"; data: string }
+    | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
@@ -77,6 +80,7 @@ type ChatsResponse = {
     chatUpdatesSince: bigint;
     userLookup: UserLookup;
     usersLastUpdate: bigint;
+    blockedUsers: Set<string>;
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
@@ -104,6 +108,7 @@ async function getUpdates(
             chatUpdatesSince: chatsResponse.timestamp,
             userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
+            blockedUsers: chatsResponse.blockedUsers,
         };
     } catch (err) {
         rollbar.error("Error getting chats", err as Error);
@@ -212,6 +217,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         userLookup: {},
         usersLastUpdate: BigInt(0),
         chatsIndex: {},
+        blockedUsers: new Set<string>(),
     },
     states: {
         loading_chats: {
@@ -373,6 +379,21 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 JOIN_GROUP: {
                     internal: true,
                     target: ".join_group",
+                },
+                BLOCK_USER: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            blockedUsers: ctx.blockedUsers.add(ev.data),
+                        };
+                    }),
+                },
+                UNBLOCK_USER: {
+                    actions: assign((ctx, ev) => {
+                        ctx.blockedUsers.delete(ev.data);
+                        return {
+                            blockedUsers: ctx.blockedUsers,
+                        };
+                    }),
                 },
                 REPLY_PRIVATELY_TO: {
                     actions: assign((ctx, ev) => {

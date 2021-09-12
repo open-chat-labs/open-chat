@@ -19,6 +19,7 @@
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
+    import { toastStore } from "../../stores/toast";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -78,11 +79,20 @@
 
     function joinGroup() {
         machine.send({ type: "JOIN_GROUP" });
-        // modalStore.showModal(ModalType.JoinGroup);
     }
 
-    function blockUser() {
-        console.log("block user clicked");
+    function blockUser(ev: CustomEvent<{ userId: string }>) {
+        machine.send({ type: "BLOCK_USER", data: ev.detail.userId });
+        $machine.context
+            .serviceContainer!.blockUser(ev.detail.userId)
+            .catch((_err) => toastStore.showFailureToast("blockUserFailed"));
+    }
+
+    function unblockUser(ev: CustomEvent<{ userId: string }>) {
+        machine.send({ type: "UNBLOCK_USER", data: ev.detail.userId });
+        $machine.context
+            .serviceContainer!.unblockUser(ev.detail.userId)
+            .catch((_err) => toastStore.showFailureToast("unblockUserFailed"));
     }
 
     function leaveGroup(ev: CustomEvent<string>) {
@@ -117,6 +127,11 @@
     $: participantsMachine =
         selectedChatActor &&
         ($selectedChatActor.children.participantsMachine as ActorRefFrom<ParticipantsMachine>);
+
+    $: blocked =
+        selectedChat !== undefined &&
+        selectedChat.kind === "direct_chat" &&
+        $machine.context.blockedUsers.has(selectedChat.them);
 </script>
 
 {#if $machine.context.user}
@@ -132,9 +147,11 @@
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
+                {blocked}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
+                on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
                 machine={selectedChatActor} />

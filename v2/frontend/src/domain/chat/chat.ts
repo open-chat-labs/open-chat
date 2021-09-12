@@ -161,11 +161,12 @@ export type UpdateArgs = {
 
 export type MergedUpdatesResponse = {
     chatSummaries: ChatSummary[];
+    blockedUsers: Set<string>;
     timestamp: bigint;
 };
 
 export type UpdatesResponse = {
-    blockedUsers: string[];
+    blockedUsers: Set<string>;
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
@@ -377,3 +378,7 @@ export type RemoveParticipantResponse =
     | "success"
     | "cannot_remove_self"
     | "internal_error";
+
+export type BlockUserResponse = "success";
+
+export type UnblockUserResponse = "success";

@@ -40,6 +40,8 @@ import {
     PutChunkResponse,
     SendMessageArgs,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -82,6 +84,8 @@ export {
     ChunkResponse as ApiChunkResponse,
     PutChunkArgs as ApiPutChunkArgs,
     PutChunkResponse as ApiPutChunkResponse,
+    BlockUserResponse as ApiBlockUserResponse,
+    UnblockUserResponse as ApiUnblockUserResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

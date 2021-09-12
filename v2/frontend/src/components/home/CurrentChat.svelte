@@ -6,6 +6,7 @@
     import type { ActorRefFrom } from "xstate";
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let blocked: boolean;
 
     function showParticipants() {
         machine.send({ type: "SHOW_PARTICIPANTS" });
@@ -20,8 +21,10 @@
     <CurrentChatHeader
         users={$machine.context.userLookup}
         user={$machine.context.user}
+        {blocked}
         on:clearSelection
         on:blockUser
+        on:unblockUser
         on:addParticipant={addParticipant}
         on:showParticipants={showParticipants}
         on:leaveGroup

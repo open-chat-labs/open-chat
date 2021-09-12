@@ -8,6 +8,8 @@ import type {
     MergedUpdatesResponse,
     DirectMessage,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -75,5 +77,13 @@ export class CachingUserClient implements IUserClient {
         message: DirectMessage
     ): Promise<SendMessageResponse> {
         return this.client.sendMessage(recipientId, senderName, message);
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.client.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.client.unblockUser(userId);
     }
 }

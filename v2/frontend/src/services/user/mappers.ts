@@ -19,6 +19,8 @@ import type {
     ApiDirectMessage,
     ApiSendMessageResponse,
     ApiPutChunkResponse,
+    ApiBlockUserResponse,
+    ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -41,6 +43,8 @@ import type {
     DirectChatReplyContext,
     SendMessageResponse,
     PutChunkResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
@@ -57,6 +61,16 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
         return "put_chunk_success";
     }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
+}
+
+export function blockResponse(
+    candid: ApiBlockUserResponse | ApiUnblockUserResponse
+): BlockUserResponse | UnblockUserResponse {
+    console.log(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    throw new UnsupportedValueError("Unexpected ApiBlockResponse type received", candid);
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
@@ -167,7 +181,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
-            blockedUsers: candid.Success.blocked_users.map((u) => u.toString()),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),

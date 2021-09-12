@@ -50,12 +50,12 @@ export function openMessageCache(): Database | undefined {
                     db.createObjectStore("media_data");
                     db.createObjectStore("chats");
                 } catch (err) {
-                    rollbar.error("Unable to upgrade indexDB", err);
+                    rollbar.error("Unable to upgrade indexDB", err as Error);
                 }
             },
         });
     } catch (err) {
-        rollbar.error("Unable to open indexDB", err);
+        rollbar.error("Unable to open indexDB", err as Error);
     }
 }
 
@@ -93,6 +93,7 @@ export function setCachedChats(
             {
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
+                blockedUsers: data.blockedUsers,
             },
             "cached_chats"
         );

@@ -9,6 +9,7 @@
     import type { ActorRefFrom } from "xstate";
     export let machine: ActorRefFrom<ChatMachine> | undefined;
     export let loadingChats: boolean = false;
+    export let blocked: boolean;
 </script>
 
 <Panel middle>
@@ -23,7 +24,14 @@
             <NoChatSelected on:newchat />
         </div>
     {:else}
-        <CurrentChat {machine} on:clearSelection on:blockUser on:leaveGroup on:chatWith />
+        <CurrentChat
+            {blocked}
+            {machine}
+            on:unblockUser
+            on:clearSelection
+            on:blockUser
+            on:leaveGroup
+            on:chatWith />
     {/if}
 </Panel>
 

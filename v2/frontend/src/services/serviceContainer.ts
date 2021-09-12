@@ -30,6 +30,8 @@ import type {
     DirectMessage,
     ChangeAdminResponse,
     RemoveParticipantResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -218,5 +220,13 @@ export class ServiceContainer {
 
     removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
         return this.getGroupClient(chatId).removeParticipant(userId);
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.userClient.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.userClient.unblockUser(userId);
     }
 }
