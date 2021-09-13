@@ -1,4 +1,5 @@
 use candid::CandidType;
+use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use types::*;
@@ -101,6 +102,10 @@ impl Events {
             .collect()
     }
 
+    pub fn get_all(&self) -> impl Iterator<Item = &EventWrapper<DirectChatEventInternal>> {
+        self.events.iter()
+    }
+
     pub fn get_by_index(&self, indexes: Vec<EventIndex>) -> Vec<EventWrapper<DirectChatEvent>> {
         if self.events.is_empty() {
             return Vec::new();
@@ -143,6 +148,39 @@ impl Events {
 
     pub fn latest_message_index(&self) -> MessageIndex {
         self.latest_message_index
+    }
+
+    pub fn search_messages(&self, now: TimestampMillis, search_term: &str, max_results: u8) -> Vec<UserMessageMatch> {
+        let query = Query::parse(search_term);
+
+        let mut matches: Vec<_> = self
+            .events
+            .iter()
+            .filter_map(|e| match &e.event {
+                DirectChatEventInternal::Message(m) => {
+                    let mut document: Document = (&m.content).into();
+                    document.set_age(now - e.timestamp);
+                    match document.calculate_score(&query) {
+                        0 => None,
+                        n => Some((n, m, e.index)),
+                    }
+                }
+                _ => None,
+            })
+            .collect();
+
+        matches.sort_unstable_by(|m1, m2| m2.0.cmp(&m1.0));
+
+        matches
+            .iter()
+            .take(max_results as usize)
+            .map(|m| UserMessageMatch {
+                event_index: m.2,
+                content: m.1.content.clone(),
+                score: m.0,
+                sent_by_me: m.1.sent_by_me,
+            })
+            .collect()
     }
 
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {

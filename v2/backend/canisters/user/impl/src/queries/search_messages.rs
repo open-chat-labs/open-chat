@@ -1,6 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use group_canister::search_messages::{Response::*, *};
 use ic_cdk_macros::query;
+use user_canister::search_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
@@ -21,18 +21,14 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         return TermTooLong(MAX_TERM_LENGTH);
     }
 
-    let caller = runtime_state.env.caller();
-    let participant = match runtime_state.data.participants.get(caller) {
-        None => return NotInGroup,
-        Some(p) => p,
+    let direct_chat = match runtime_state.data.direct_chats.get(&args.user_id.into()) {
+        None => return ChatNotFound,
+        Some(dc) => dc,
     };
 
-    let matches = runtime_state.data.events.search_messages(
-        runtime_state.env.now(),
-        participant.min_visible_event_index,
-        &args.search_term,
-        args.max_results,
-    );
+    let matches = direct_chat
+        .events
+        .search_messages(runtime_state.env.now(), &args.search_term, args.max_results);
 
     Success(SuccessResult { matches })
 }

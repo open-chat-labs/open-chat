@@ -269,8 +269,26 @@ type MessageIndexRange =
         to: MessageIndex;
     };
 
-type MessageMatch = 
+type UserMessageMatch = 
     record {
+        event_index: EventIndex;
+        content: MessageContent;
+        sent_by_me: bool;
+        score: nat32;
+    };
+
+type GroupMessageMatch = 
+    record {
+        event_index: EventIndex;
+        content: MessageContent;
+        sender: UserId;
+        score: nat32;
+    };
+
+type CombinedMessageMatch = 
+    record {
+        chat_id: ChatId;
+        event_index: EventIndex;
         content: MessageContent;
         sender: UserId;
         score: nat32;

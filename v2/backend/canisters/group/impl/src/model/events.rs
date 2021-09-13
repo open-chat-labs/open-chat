@@ -183,7 +183,7 @@ impl Events {
         min_visible_event_index: EventIndex,
         search_term: &str,
         max_results: u8,
-    ) -> Vec<MessageMatch> {
+    ) -> Vec<GroupMessageMatch> {
         let earliest_event_index: u32 = self.events.first().unwrap().index.into();
         let latest_event_index: u32 = self.events.last().unwrap().index.into();
 
@@ -203,7 +203,7 @@ impl Events {
                     document.set_age(now - e.timestamp);
                     match document.calculate_score(&query) {
                         0 => None,
-                        n => Some((n, m)),
+                        n => Some((n, m, e.index)),
                     }
                 }
                 _ => None,
@@ -215,7 +215,8 @@ impl Events {
         matches
             .iter()
             .take(max_results as usize)
-            .map(|m| MessageMatch {
+            .map(|m| GroupMessageMatch {
+                event_index: m.2,
                 sender: m.1.sender,
                 content: m.1.content.clone(),
                 score: m.0,
