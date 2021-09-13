@@ -1,13 +1,17 @@
 use crate::model::events::Events;
-use types::{ChatId, MessageIndex, TimestampMillis, Updatable, UserId};
+use range_set::RangeSet;
+use std::ops::RangeInclusive;
+use types::{ChatId, TimestampMillis, UserId};
 
 pub struct DirectChat {
     pub chat_id: ChatId,
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: Events,
-    pub latest_read_by_me: Updatable<MessageIndex>,
-    pub latest_read_by_them: Updatable<MessageIndex>,
+    pub read_by_me: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_me_updated: TimestampMillis,
+    pub read_by_them: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_them_updated: TimestampMillis,
 }
 
 impl DirectChat {
@@ -17,8 +21,10 @@ impl DirectChat {
             them,
             date_created: now,
             events: Events::new(now),
-            latest_read_by_me: Updatable::new(MessageIndex::default(), now),
-            latest_read_by_them: Updatable::new(MessageIndex::default(), now),
+            read_by_me: RangeSet::new(),
+            read_by_me_updated: now,
+            read_by_them: RangeSet::new(),
+            read_by_them_updated: now,
         }
     }
 

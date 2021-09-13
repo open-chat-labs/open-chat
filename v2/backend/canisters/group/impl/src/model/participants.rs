@@ -1,7 +1,9 @@
 use candid::Principal;
+use range_set::RangeSet;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{EventIndex, MessageIndex, ParticipantInternal, Role, TimestampMillis, Updatable, UserId};
+use std::ops::RangeInclusive;
+use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct Participants {
@@ -16,9 +18,11 @@ impl Participants {
             user_id: creator_user_id,
             date_added: now,
             role: Role::Admin,
-            read_up_to: Updatable::new(MessageIndex::default(), now),
+            read_by_me: RangeSet::new(),
+            read_by_me_updated: now,
             mute_notifications: false,
             min_visible_event_index: EventIndex::default(),
+            min_visible_message_index: MessageIndex::default(),
         };
 
         Participants {
@@ -33,8 +37,8 @@ impl Participants {
         user_id: UserId,
         principal: Principal,
         now: TimestampMillis,
-        latest_message_index: MessageIndex,
         min_visible_event_index: EventIndex,
+        min_visible_message_index: MessageIndex,
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
@@ -45,9 +49,11 @@ impl Participants {
                         user_id,
                         date_added: now,
                         role: Role::Participant,
-                        read_up_to: Updatable::new(latest_message_index, now),
+                        read_by_me: RangeSet::new(),
+                        read_by_me_updated: now,
                         mute_notifications: false,
                         min_visible_event_index,
+                        min_visible_message_index,
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
@@ -129,4 +135,35 @@ pub enum AddResult {
     Success,
     AlreadyInGroup,
     Blocked,
+}
+
+pub struct ParticipantInternal {
+    pub user_id: UserId,
+    pub date_added: TimestampMillis,
+    pub role: Role,
+    pub read_by_me: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_me_updated: TimestampMillis,
+    pub mute_notifications: bool,
+    pub min_visible_event_index: EventIndex,
+    pub min_visible_message_index: MessageIndex,
+}
+
+impl From<ParticipantInternal> for Participant {
+    fn from(p: ParticipantInternal) -> Self {
+        Participant {
+            user_id: p.user_id,
+            date_added: p.date_added,
+            role: p.role,
+        }
+    }
+}
+
+impl From<&ParticipantInternal> for Participant {
+    fn from(p: &ParticipantInternal) -> Self {
+        Participant {
+            user_id: p.user_id,
+            date_added: p.date_added,
+            role: p.role,
+        }
+    }
 }

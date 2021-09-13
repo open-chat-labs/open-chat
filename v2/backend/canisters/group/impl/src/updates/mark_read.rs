@@ -3,7 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::mark_read::*;
 use ic_cdk_macros::update;
-use std::cmp::min;
+use utils::range_set::insert_ranges;
 
 #[update]
 fn mark_read(args: Args) -> Response {
@@ -15,14 +15,19 @@ fn mark_read(args: Args) -> Response {
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
+        let min_message_index = participant.min_visible_message_index;
         let max_message_index = runtime_state.data.events.latest_message_index();
-        let up_to_index = min(args.up_to_message_index, max_message_index);
-        if up_to_index <= *participant.read_up_to.value() {
-            SuccessNoChange
-        } else {
-            let now = runtime_state.env.now();
-            participant.read_up_to.set_value(up_to_index, now);
+        let has_changes = insert_ranges(
+            &mut participant.read_by_me,
+            &args.message_ranges,
+            min_message_index,
+            max_message_index,
+        );
+        if has_changes {
+            participant.read_by_me_updated = runtime_state.env.now();
             Success
+        } else {
+            SuccessNoChange
         }
     } else {
         NotInGroup

@@ -1,9 +1,9 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use std::cmp::min;
-use types::{CanisterId, ChatId, MessageIndex};
+use types::{CanisterId, ChatId, MessageIndex, MessageIndexRange};
 use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
+use utils::range_set::insert_ranges;
 
 #[update]
 fn mark_read(args: Args) -> Response {
@@ -15,17 +15,20 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let chat_id = ChatId::from(args.user_id);
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+        let min_message_index = MessageIndex::default();
         let max_message_index = chat.events.latest_message_index();
-        let up_to_index = min(args.up_to_message_index, max_message_index);
-        if up_to_index <= *chat.latest_read_by_me.value() {
+        let has_changes = insert_ranges(
+            &mut chat.read_by_me,
+            &args.message_ranges,
+            min_message_index,
+            max_message_index,
+        );
+        if !has_changes {
             SuccessNoChange
         } else {
             let now = runtime_state.env.now();
-            chat.latest_read_by_me.set_value(up_to_index, now);
-            ic_cdk::block_on(mark_read_on_recipients_canister(
-                args.user_id.into(),
-                args.up_to_message_index,
-            ));
+            chat.read_by_me_updated = now;
+            ic_cdk::block_on(mark_read_on_recipients_canister(args.user_id.into(), args.message_ranges));
             Success
         }
     } else {
@@ -33,7 +36,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-async fn mark_read_on_recipients_canister(canister_id: CanisterId, up_to_message_index: MessageIndex) {
-    let args = c2c_mark_read::Args { up_to_message_index };
+async fn mark_read_on_recipients_canister(canister_id: CanisterId, message_ranges: Vec<MessageIndexRange>) {
+    let args = c2c_mark_read::Args { message_ranges };
     let _ = user_canister_c2c_client::c2c_mark_read(canister_id, &args).await;
 }

@@ -25,7 +25,7 @@ type SendMessageResponse =
 
 type MarkReadArgs =
     record {
-        message_ranges: vec MessageIndexRange; 
+        message_ranges: vec MessageIndexRange;
     };
 
 type MarkReadResponse =
@@ -229,14 +229,17 @@ type SearchMessagesArgs =
 
 type SearchMessagesResponse =
     variant {
-        Success: record {
-            matches: vec record {
-                message: GroupMessage;
-                score: nat32;
-            };
-        };
-        Failure;
+        Success: SearchMessagesSuccessResult;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+        NotInGroup;
     }; 
+
+type SearchMessagesSuccessResult =
+    record {
+        matches: vec MessageMatch;
+    };
 
 type ChunkArgs =
     record {

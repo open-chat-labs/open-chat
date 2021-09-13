@@ -8,6 +8,7 @@ use types::{
     GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
 };
 use user_canister::updates::{Response::*, *};
+use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
 async fn updates(args: Args) -> Response {
@@ -220,8 +221,8 @@ fn finalize(
                 latest_message: direct_chat.events.latest_message().unwrap(),
                 latest_event_index: direct_chat.events.last().index,
                 date_created: direct_chat.date_created,
-                latest_read_by_me: *direct_chat.latest_read_by_me.value(),
-                latest_read_by_them: *direct_chat.latest_read_by_them.value(),
+                read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.clone()),
+                read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.clone()),
             }));
         } else {
             let mut latest_message = None;
@@ -234,14 +235,14 @@ fn finalize(
             let latest_event = direct_chat.events.last();
             let latest_event_index = if latest_event.timestamp > updates_since { Some(latest_event.index) } else { None };
 
-            let latest_read_by_me = if direct_chat.latest_read_by_me.updated() > updates_since {
-                Some(*direct_chat.latest_read_by_me.value())
+            let read_by_me = if direct_chat.read_by_me_updated > updates_since {
+                Some(convert_to_message_index_ranges(direct_chat.read_by_me.clone()))
             } else {
                 None
             };
 
-            let latest_read_by_them = if direct_chat.latest_read_by_them.updated() > updates_since {
-                Some(*direct_chat.latest_read_by_them.value())
+            let read_by_them = if direct_chat.read_by_them_updated > updates_since {
+                Some(convert_to_message_index_ranges(direct_chat.read_by_them.clone()))
             } else {
                 None
             };
@@ -250,8 +251,8 @@ fn finalize(
                 chat_id: direct_chat.chat_id,
                 latest_message,
                 latest_event_index,
-                latest_read_by_me,
-                latest_read_by_them,
+                read_by_me,
+                read_by_them,
             }));
         }
     }

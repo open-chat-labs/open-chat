@@ -22,8 +22,10 @@ ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70
 log = "0.4.14"
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+range-set = "0.0.7"
+search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
-utils = { path = "../../../libraries/utils" }
+utils = { path = "../../../libraries/utils", features = ["range-set"] }
