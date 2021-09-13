@@ -5,6 +5,7 @@ use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashSet;
 use types::{EventIndex, EventWrapper, GroupChatSummaryUpdates, GroupMessage, Participant, TimestampMillis, UserId};
+use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -16,26 +17,23 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let updates_from_events = process_events(args.updates_since, runtime_state);
 
-        let latest_read_by_me = if participant.read_up_to.updated() > args.updates_since {
-            Some(*participant.read_up_to.value())
+        let read_by_me = if participant.read_by_me_updated > args.updates_since {
+            Some(convert_to_message_index_ranges(participant.read_by_me.clone()))
         } else {
             None
         };
 
-        if updates_from_events.latest_update.is_some() || latest_read_by_me.is_some() {
+        if updates_from_events.latest_update.is_some() || read_by_me.is_some() {
             let updates = GroupChatSummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
-                last_updated: max(
-                    updates_from_events.latest_update.unwrap_or(0),
-                    participant.read_up_to.updated(),
-                ),
+                last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
                 name: updates_from_events.name,
                 description: updates_from_events.description,
                 participants_added_or_updated: updates_from_events.participants_added_or_updated,
                 participants_removed: updates_from_events.participants_removed,
                 latest_message: updates_from_events.latest_message,
                 latest_event_index: updates_from_events.latest_event_index,
-                latest_read_by_me,
+                read_by_me,
             };
             Success(SuccessResult { updates })
         } else {

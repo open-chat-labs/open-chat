@@ -5,7 +5,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{EventIndex, ParticipantJoined};
+use types::{EventIndex, MessageIndex, ParticipantJoined};
 
 // Called via the user's user canister
 #[update]
@@ -19,18 +19,23 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
     if runtime_state.data.is_public {
         let user_id = runtime_state.env.caller().into();
         let now = runtime_state.env.now();
-        let latest_message_index = runtime_state.data.events.latest_message_index();
-        let min_visible_event_index = if runtime_state.data.history_visible_to_new_joiners {
-            EventIndex::default()
+        let min_visible_event_index;
+        let min_visible_message_index;
+        if runtime_state.data.history_visible_to_new_joiners {
+            min_visible_event_index = EventIndex::default();
+            min_visible_message_index = MessageIndex::default();
         } else {
-            runtime_state.data.events.last().index
+            min_visible_event_index = runtime_state.data.events.last().index.incr();
+            min_visible_message_index = runtime_state.data.events.latest_message_index().incr();
         };
 
-        match runtime_state
-            .data
-            .participants
-            .add(user_id, args.principal, now, latest_message_index, min_visible_event_index)
-        {
+        match runtime_state.data.participants.add(
+            user_id,
+            args.principal,
+            now,
+            min_visible_event_index,
+            min_visible_message_index,
+        ) {
             AddResult::Success => {
                 let event = ParticipantJoined { user_id };
                 runtime_state

@@ -156,7 +156,13 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const MarkReadArgs = IDL.Record({ 'up_to_message_index' : MessageIndex });
+  const MessageIndexRange = IDL.Record({
+    'to' : MessageIndex,
+    'from' : MessageIndex,
+  });
+  const MarkReadArgs = IDL.Record({
+    'message_ranges' : IDL.Vec(MessageIndexRange),
+  });
   const MarkReadResponse = IDL.Variant({
     'SuccessNoChange' : IDL.Null,
     'Success' : IDL.Null,
@@ -258,9 +264,10 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'latest_read_by_me' : MessageIndex,
+    'read_by_me' : IDL.Vec(MessageIndexRange),
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
+    'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
@@ -276,7 +283,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
-    'latest_read_by_me' : IDL.Opt(MessageIndex),
+    'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),

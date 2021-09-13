@@ -21,3 +21,9 @@ impl From<MessageIndex> for u32 {
         message_index.0
     }
 }
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MessageIndexRange {
+    pub from: MessageIndex,
+    pub to: MessageIndex,
+}

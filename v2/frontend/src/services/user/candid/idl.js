@@ -130,8 +130,12 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'NotInGroup' : IDL.Null,
   });
+  const MessageIndexRange = IDL.Record({
+    'to' : MessageIndex,
+    'from' : MessageIndex,
+  });
   const MarkReadArgs = IDL.Record({
-    'up_to_message_index' : MessageIndex,
+    'message_ranges' : IDL.Vec(MessageIndexRange),
     'user_id' : UserId,
   });
   const MarkReadResponse = IDL.Variant({
@@ -255,7 +259,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
-    'latest_read_by_me' : IDL.Opt(MessageIndex),
+    'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
@@ -266,10 +270,10 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const DirectChatSummaryUpdates = IDL.Record({
-    'latest_read_by_me' : IDL.Opt(MessageIndex),
+    'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
-    'latest_read_by_them' : IDL.Opt(MessageIndex),
+    'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_message' : IDL.Opt(DirectMessageEventWrapper),
   });
   const ChatSummaryUpdates = IDL.Variant({
@@ -283,19 +287,20 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'latest_read_by_me' : MessageIndex,
+    'read_by_me' : IDL.Vec(MessageIndexRange),
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
+    'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
     'date_created' : TimestampMillis,
     'them' : UserId,
-    'latest_read_by_me' : MessageIndex,
+    'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
-    'latest_read_by_them' : MessageIndex,
+    'read_by_them' : IDL.Vec(MessageIndexRange),
     'latest_message' : DirectMessageEventWrapper,
   });
   const ChatSummary = IDL.Variant({
