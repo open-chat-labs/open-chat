@@ -17,26 +17,26 @@ pub struct TextContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MediaContent {
-    width: u32,
-    height: u32,
-    thumbnail_data: String,
-    caption: Option<String>,
-    mime_type: String,
-    blob_reference: Option<BlobReference>,
+    pub width: u32,
+    pub height: u32,
+    pub thumbnail_data: String,
+    pub caption: Option<String>,
+    pub mime_type: String,
+    pub blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileContent {
-    name: String,
-    caption: Option<String>,
-    mime_type: String,
-    blob_reference: Option<BlobReference>,
+    pub name: String,
+    pub caption: Option<String>,
+    pub mime_type: String,
+    pub blob_reference: Option<BlobReference>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CycleContent {
-    amount: u128,
-    caption: Option<String>,
+    pub amount: u128,
+    pub caption: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -50,8 +50,8 @@ pub enum MessageContentType {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReference {
-    canister_id: CanisterId,
-    blob_id: u128,
-    blob_size: u32,
-    chunk_size: u32,
+    pub canister_id: CanisterId,
+    pub blob_id: u128,
+    pub blob_size: u32,
+    pub chunk_size: u32,
 }

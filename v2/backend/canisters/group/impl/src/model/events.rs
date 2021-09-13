@@ -1,4 +1,5 @@
 use candid::CandidType;
+use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use types::*;
@@ -174,6 +175,52 @@ impl Events {
             content: message.content.clone(),
             replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
         }
+    }
+
+    pub fn search_messages(
+        &self,
+        now: TimestampMillis,
+        min_visible_event_index: EventIndex,
+        search_term: &str,
+        max_results: u8,
+    ) -> Vec<MessageMatch> {
+        let earliest_event_index: u32 = self.events.first().unwrap().index.into();
+        let latest_event_index: u32 = self.events.last().unwrap().index.into();
+
+        let from_event_index = max(min_visible_event_index.into(), earliest_event_index);
+        let to_event_index = latest_event_index;
+
+        let from_index = (from_event_index - earliest_event_index) as usize;
+        let to_index = (to_event_index - earliest_event_index) as usize;
+
+        let query = Query::parse(search_term);
+
+        let mut matches: Vec<_> = self.events[from_index..=to_index]
+            .iter()
+            .filter_map(|e| match &e.event {
+                GroupChatEventInternal::Message(m) => {
+                    let mut document: Document = (&m.content).into();
+                    document.set_age(now - e.timestamp);
+                    match document.calculate_score(&query) {
+                        0 => None,
+                        n => Some((n, m)),
+                    }
+                }
+                _ => None,
+            })
+            .collect();
+
+        matches.sort_unstable_by(|m1, m2| m2.0.cmp(&m1.0));
+
+        matches
+            .iter()
+            .take(max_results as usize)
+            .map(|m| MessageMatch {
+                sender: m.1.sender,
+                content: m.1.content.clone(),
+                score: m.0,
+            })
+            .collect()
     }
 
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {

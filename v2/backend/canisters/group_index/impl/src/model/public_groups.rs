@@ -1,4 +1,5 @@
 use crate::MARK_ACTIVE_DURATION;
+use search::*;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, CyclesTopUp, GroupMatch, TimestampMillis, Version};
@@ -57,12 +58,16 @@ impl PublicGroups {
     }
 
     pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
-        let search_term_lower = search_term.to_lowercase();
+        let query = Query::parse(search_term);
 
         let mut all_matches = self
             .groups
             .values()
-            .map(|g| (g.score_match(search_term, &search_term_lower), g))
+            .map(|g| {
+                let document: Document = g.into();
+                let score = document.calculate_score(&query);
+                (score, g)
+            })
             .filter(|m| m.0 > 0)
             .collect::<Vec<_>>();
 
@@ -112,60 +117,6 @@ impl PublicGroupInfo {
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
     }
-
-    // To match, the name or description must contain the case-insensitive search_term.
-    // Extra weight is given:
-    // 1. for matching both fields, then name, then description
-    // 2. for case-sensitive matches
-    // 3. the shorter the matching field(s)
-    // 4. if the term matches the start of the field
-    // A score of zero means no match
-    pub fn score_match(&self, search_term: &str, search_term_lower: &str) -> u32 {
-        fn score_field(field: &str, search_term: &str, search_term_lower: &str) -> f32 {
-            fn calculate_base_score(field: &str, search_term: &str, search_term_lower: &str) -> f32 {
-                let field_lower = field.to_lowercase();
-                if field.starts_with(search_term) {
-                    5.0
-                } else if field_lower.starts_with(search_term_lower) {
-                    3.0
-                } else if field.contains(search_term) {
-                    2.0
-                } else if field_lower.contains(search_term_lower) {
-                    1.0
-                } else {
-                    0.0
-                }
-            }
-
-            // b is boost, p is proportion of field length to term length
-            // 3b = 7 - p (1 <= p <= 4)
-            // b = 1 (p > 4)
-            fn calculate_length_boost(p: f32) -> f32 {
-                if p < 1.0 {
-                    0.0
-                } else if p >= 4.0 {
-                    1.0
-                } else {
-                    (7.0 - p) / 3.0
-                }
-            }
-
-            // If length of field is equal to length of term then boost score by 2 declining to 1 for a long field
-            let score = calculate_base_score(field, search_term, search_term_lower);
-            if score > 0.0 {
-                let p = field.len() as f32 / search_term.len() as f32;
-                let boost = calculate_length_boost(p);
-                score * boost
-            } else {
-                0.0
-            }
-        }
-
-        let name_score = score_field(&self.name, search_term, search_term_lower);
-        let description_score = score_field(&self.description, search_term, search_term_lower);
-
-        ((5.0 * name_score + description_score) * 1000.0) as u32
-    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
@@ -175,5 +126,15 @@ impl From<&PublicGroupInfo> for GroupMatch {
             name: group.name.clone(),
             description: group.description.clone(),
         }
+    }
+}
+
+impl From<&PublicGroupInfo> for Document {
+    fn from(group: &PublicGroupInfo) -> Self {
+        let mut document = Document::default();
+        document
+            .add_field(group.name.to_owned(), 5.0)
+            .add_field(group.description.to_owned(), 1.0);
+        document
     }
 }

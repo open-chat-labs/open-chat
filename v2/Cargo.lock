@@ -967,6 +967,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "range-set",
+ "search",
  "serde",
  "types",
  "user_canister",
@@ -1017,6 +1018,7 @@ dependencies = [
  "group_index_canister",
  "ic-cdk",
  "ic-cdk-macros",
+ "search",
  "serde",
  "types",
  "utils",
@@ -2361,6 +2363,13 @@ checksum = "b362b83898e0e69f38515b82ee15aa80636befe47c3b6d3d89a911e78fc228ce"
 dependencies = [
  "ring",
  "untrusted",
+]
+
+[[package]]
+name = "search"
+version = "0.1.0"
+dependencies = [
+ "types",
 ]
 
 [[package]]

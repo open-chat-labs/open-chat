@@ -263,11 +263,17 @@ type MessageContent =
         Cycles: CyclesContent;
     };
 
-
 type MessageIndexRange =
     record {
         from: MessageIndex;
         to: MessageIndex;
+    };
+
+type MessageMatch = 
+    record {
+        content: MessageContent;
+        sender: UserId;
+        score: nat32;
     };
 
 type Notification =
@@ -471,6 +477,3 @@ type V1GroupMessageNotification =
         recipients: vec UserId;
         message: V1Message;
     };
-
-
-
