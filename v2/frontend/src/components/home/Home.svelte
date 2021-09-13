@@ -73,6 +73,14 @@
         machine.send({ type: "NEW_GROUP" });
     }
 
+    function unconfirmedMessage(ev: CustomEvent<bigint>) {
+        machine.send({ type: "UNCONFIRMED_MESSAGE", data: ev.detail });
+    }
+
+    function messageConfirmed(ev: CustomEvent<bigint>) {
+        machine.send({ type: "MESSAGE_CONFIRMED", data: ev.detail });
+    }
+
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
@@ -157,8 +165,11 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
+                unconfirmed={$machine.context.unconfirmed}
                 loadingChats={$machine.matches("loading_chats")}
                 {blocked}
+                on:unconfirmedMessage={unconfirmedMessage}
+                on:messageConfirmed={messageConfirmed}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}

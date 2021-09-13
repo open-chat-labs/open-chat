@@ -7,6 +7,7 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
+    export let unconfirmed: Set<bigint>;
 
     function showParticipants() {
         machine.send({ type: "SHOW_PARTICIPANTS" });
@@ -29,8 +30,8 @@
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:chatWith {machine} />
-    <Footer {machine} />
+    <CurrentChatMessages {unconfirmed} on:chatWith {machine} />
+    <Footer {machine} on:unconfirmedMessage on:messageConfirmed />
 </div>
 
 <style type="text/scss">

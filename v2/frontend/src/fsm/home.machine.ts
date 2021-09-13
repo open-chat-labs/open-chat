@@ -24,7 +24,6 @@ import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/use
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
-import { toastStore } from "../stores/toast";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
@@ -48,6 +47,7 @@ export interface HomeContext {
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext<ReplyContext>;
     blockedUsers: Set<string>;
+    unconfirmed: Set<bigint>;
 }
 
 export type HomeEvents =
@@ -57,6 +57,8 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
+    | { type: "MESSAGE_CONFIRMED"; data: bigint }
     | { type: "BLOCK_USER"; data: string }
     | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
@@ -214,6 +216,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         usersLastUpdate: BigInt(0),
         chatsIndex: {},
         blockedUsers: new Set<string>(),
+        unconfirmed: new Set<bigint>(),
     },
     states: {
         loading_chats: {
@@ -441,6 +444,19 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             to: "updateChatsPoller",
                         }),
                     ],
+                },
+                UNCONFIRMED_MESSAGE: {
+                    actions: assign((ctx, ev) => ({
+                        unconfirmed: ctx.unconfirmed.add(ev.data),
+                    })),
+                },
+                MESSAGE_CONFIRMED: {
+                    actions: assign((ctx, ev) => {
+                        ctx.unconfirmed.delete(ev.data);
+                        return {
+                            unconfirmed: ctx.unconfirmed,
+                        };
+                    }),
                 },
             },
             states: {

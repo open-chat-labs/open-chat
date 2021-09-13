@@ -10,8 +10,11 @@
     import { _ } from "svelte-i18n";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
+    import SelectUsers from "./SelectUsers.svelte";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
+
+    $: selectedUsers = [];
 
     function cancelAddParticipant() {
         machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
@@ -28,6 +31,12 @@
     </span>
     <h4>{$_("addParticipant")}</h4>
 </SectionHeader>
+
+{#if userSearchMachine !== undefined}
+    <SelectUsers error={$machine.context.error} {selectedUsers} {userSearchMachine} />
+{:else}
+    <p>user search machine is undefined</p>
+{/if}
 
 {#if $machine.matches({ adding_participant: "saving_participant" })}
     <Loading />

@@ -20,10 +20,12 @@
     export let me: boolean;
     export let userLookup: UserLookup;
     export let identity: Identity;
+    export let confirmed: boolean;
 </script>
 
 {#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
+        {confirmed}
         {identity}
         {chatSummary}
         {user}

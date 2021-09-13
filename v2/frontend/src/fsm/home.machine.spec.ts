@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { DirectChatSummary, GroupChatSummary } from "../domain/chat/chat";
+import type { DirectChatSummary } from "../domain/chat/chat";
 import { homeMachine } from "./home.machine";
 import { testTransition } from "./machine.spec.utils";
 
@@ -15,27 +15,29 @@ const directChat: DirectChatSummary = {
     dateCreated: BigInt(0),
 };
 
-const groupChat: GroupChatSummary = {
-    kind: "group_chat",
-    name: "my group chat",
-    description: "some group or other",
-    participants: [
-        {
-            role: "standard",
-            userId: "123456",
-        },
-    ],
-    public: true,
-    joined: BigInt(+new Date()),
-    minVisibleEventIndex: 0,
-    chatId: "123456",
-    unreadByMe: [],
-    latestMessage: undefined,
-    latestEventIndex: 0,
-    lastUpdated: BigInt(+new Date()),
-};
-
 describe("home machine transitions", () => {
+    test("unconfirmed message", () => {
+        const ctx = testTransition(
+            homeMachine,
+            "loaded_chats",
+            { type: "UNCONFIRMED_MESSAGE", data: BigInt(100) },
+            "loaded_chats"
+        );
+        expect(ctx.unconfirmed.has(BigInt(100))).toBe(true);
+    });
+    test("unconfirmed message", () => {
+        const ctx = testTransition(
+            homeMachine.withContext({
+                ...homeMachine.context,
+                unconfirmed: new Set([BigInt(100), BigInt(200)]),
+            }),
+            "loaded_chats",
+            { type: "MESSAGE_CONFIRMED", data: BigInt(100) },
+            "loaded_chats"
+        );
+        expect(ctx.unconfirmed.has(BigInt(100))).toBe(false);
+        expect(ctx.unconfirmed.has(BigInt(200))).toBe(true);
+    });
     test("getUpdates fails", () => {
         testTransition(
             homeMachine,
@@ -69,6 +71,7 @@ describe("home machine transitions", () => {
                 usersLastUpdate: BigInt(0),
                 chatsIndex: {},
                 blockedUsers: new Set<string>(),
+                unconfirmed: new Set<bigint>(),
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
@@ -98,6 +101,7 @@ describe("home machine transitions", () => {
                 selectedChat: directChat,
                 chatsIndex: {},
                 blockedUsers: new Set<string>(),
+                unconfirmed: new Set<bigint>(),
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",

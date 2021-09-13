@@ -41,8 +41,8 @@
     export let index: number;
     export let timestamp: bigint;
     export let last: boolean;
+    export let confirmed: boolean;
 
-    let confirmed: boolean = true; // todo - where does this come from
     let read: boolean = true; // todo - where does this come from
     let msgElement: HTMLElement;
 

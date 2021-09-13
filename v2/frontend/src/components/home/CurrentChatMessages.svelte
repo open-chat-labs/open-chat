@@ -36,6 +36,7 @@
     const FROM_BOTTOM_THRESHOLD = 600;
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let unconfirmed: Set<bigint>;
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
@@ -231,6 +232,13 @@
         throw new UnsupportedValueError("Unexpected event type received", evt.event);
     }
 
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            return !unconfirmed.has(evt.event.messageId);
+        }
+        return true;
+    }
+
     // then we need to integrate web rtc
 </script>
 
@@ -251,6 +259,7 @@
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
+                        confirmed={isConfirmed(evt)}
                         identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}

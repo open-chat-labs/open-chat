@@ -15,6 +15,8 @@
         latestLoadedEventIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -49,10 +51,12 @@
                     fileToAttach
                 );
             }
+            dispatch("unconfirmedMessage", msg!.messageId);
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
                     if (resp.kind === "send_message_success") {
+                        dispatch("messageConfirmed", msg!.messageId);
                         machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
                     } else {
                         rollbar.warn("Error response sending message", resp);
