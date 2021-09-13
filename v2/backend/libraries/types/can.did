@@ -84,8 +84,8 @@ type DirectChatSummary =
         latest_message: DirectMessageEventWrapper;
         latest_event_index: EventIndex;
         date_created: TimestampMillis;
-        latest_read_by_me: MessageIndex;
-        latest_read_by_them: MessageIndex;
+        read_by_me: vec MessageIndexRange;
+        read_by_them: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -93,8 +93,8 @@ type DirectChatSummaryUpdates =
         chat_id: ChatId;
         latest_message: opt DirectMessageEventWrapper;
         latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
-        latest_read_by_them: opt MessageIndex;
+        read_by_me: opt vec MessageIndexRange;
+        read_by_them: opt vec MessageIndexRange;
     };
 
 type DirectMessage =
@@ -171,11 +171,12 @@ type GroupChatSummary =
         description: text;
         is_public: bool;
         min_visible_event_index: EventIndex;
+        min_visible_message_index: MessageIndex;
         participants: vec Participant;
         latest_message: opt GroupMessageEventWrapper;
         latest_event_index: EventIndex;
         joined: TimestampMillis;
-        latest_read_by_me: MessageIndex;
+        read_by_me: vec MessageIndexRange;
     };
 
 type GroupChatSummaryUpdates =
@@ -188,7 +189,7 @@ type GroupChatSummaryUpdates =
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;
         latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
+        read_by_me: opt vec MessageIndexRange;
     };
 
 type GroupDescriptionChanged =
@@ -260,6 +261,13 @@ type MessageContent =
         Media: MediaContent;
         File: FileContent;
         Cycles: CyclesContent;
+    };
+
+
+type MessageIndexRange =
+    record {
+        from: MessageIndex;
+        to: MessageIndex;
     };
 
 type Notification =

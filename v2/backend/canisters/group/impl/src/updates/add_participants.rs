@@ -6,7 +6,7 @@ use cycles_utils::check_cycles_balance;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use log::error;
-use types::{EventIndex, ParticipantsAdded, UserId};
+use types::{EventIndex, MessageIndex, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
 
 #[update]
@@ -119,18 +119,21 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
 fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let latest_message_index = runtime_state.data.events.latest_message_index();
-    let min_visible_event_index = if runtime_state.data.history_visible_to_new_joiners {
-        EventIndex::default()
+    let min_visible_event_index;
+    let min_visible_message_index;
+    if runtime_state.data.history_visible_to_new_joiners {
+        min_visible_event_index = EventIndex::default();
+        min_visible_message_index = MessageIndex::default();
     } else {
-        runtime_state.data.events.last().index
+        min_visible_event_index = runtime_state.data.events.last().index;
+        min_visible_message_index = runtime_state.data.events.latest_message_index().incr();
     };
 
     for (user_id, principal) in users.iter().cloned() {
         runtime_state
             .data
             .participants
-            .add(user_id, principal, now, latest_message_index, min_visible_event_index);
+            .add(user_id, principal, now, min_visible_event_index, min_visible_message_index);
     }
 
     let event = ParticipantsAdded {

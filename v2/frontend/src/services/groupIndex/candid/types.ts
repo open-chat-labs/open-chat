@@ -40,17 +40,17 @@ export interface DirectChatEventWrapper {
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
-  'latest_read_by_me' : MessageIndex,
+  'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
-  'latest_read_by_them' : MessageIndex,
+  'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : DirectMessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'latest_read_by_me' : [] | [MessageIndex],
+  'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
-  'latest_read_by_them' : [] | [MessageIndex],
+  'read_by_them' : [] | [Array<MessageIndexRange>],
   'latest_message' : [] | [DirectMessageEventWrapper],
 }
 export interface DirectMessage {
@@ -107,9 +107,10 @@ export interface GroupChatSummary {
   'name' : string,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'latest_read_by_me' : MessageIndex,
+  'read_by_me' : Array<MessageIndexRange>,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
+  'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
@@ -119,7 +120,7 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'latest_read_by_me' : [] | [MessageIndex],
+  'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
@@ -182,6 +183,10 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessageIndexRange {
+  'to' : MessageIndex,
+  'from' : MessageIndex,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'cycles_balance' : bigint,
