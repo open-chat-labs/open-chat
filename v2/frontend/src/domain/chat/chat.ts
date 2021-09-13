@@ -221,7 +221,7 @@ export type MessageIndexRange = {
 
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    unreadByMe: MessageIndexRange[];
+    readByMe: MessageIndexRange[];
     latestEventIndex: number;
 };
 
@@ -241,6 +241,7 @@ export type GroupChatSummary = ChatSummaryCommon & {
     public: boolean;
     joined: bigint;
     minVisibleEventIndex: number;
+    minVisibleMessageIndex: number;
     lastUpdated: bigint;
     latestMessage?: EventWrapper<GroupMessage>;
 };

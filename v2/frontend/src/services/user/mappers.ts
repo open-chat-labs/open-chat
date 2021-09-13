@@ -260,13 +260,14 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                     event: groupMessage(ev.event),
                 };
             }),
-            unreadByMe: candid.Group.unread_by_me,
+            readByMe: candid.Group.unread_by_me,
             name: candid.Group.name,
             description: candid.Group.description,
             participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,
             minVisibleEventIndex: candid.Group.min_visible_event_index,
+            minVisibleMessageIndex: 0, // todo - come back to this
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
         };
@@ -282,7 +283,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
-            unreadByMe: candid.Direct.unread_by_me,
+            readByMe: candid.Direct.unread_by_me,
             readByThem: candid.Direct.read_by_them,
             dateCreated: candid.Direct.date_created,
         };

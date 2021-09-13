@@ -50,9 +50,10 @@ function mockGroupChat(i: number): GroupChatSummary {
         public: false,
         joined: BigInt(time),
         minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        unreadByMe: [],
+        readByMe: [],
         latestMessage: mockEvent<GroupMessage>("group_message", numMessages),
         latestEventIndex: numMessages,
         participants,
@@ -67,7 +68,7 @@ function mockDirectChat(i: number): DirectChatSummary {
         kind: "direct_chat",
         them: others[i % 3],
         chatId: String(i),
-        unreadByMe: [],
+        readByMe: [],
         readByThem: [],
         latestMessage: mockEvent("direct_message", numMessages),
         latestEventIndex: numMessages,
@@ -236,7 +237,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
-            unreadByMe: chat.unreadByMe,
+            unreadByMe: chat.readByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
                 ? mockEvent<GroupMessage>("group_message", chat.latestMessage?.index + 2)

@@ -7,7 +7,9 @@ import type {
     GroupChatSummaryUpdates,
 } from "./chat";
 import {
+    getFirstUnreadMessageIndex,
     getParticipantsString,
+    getUnreadMessages,
     mergeChatUpdates,
     newMessageId,
     userIdsFromChatSummaries,
@@ -17,14 +19,14 @@ const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    unreadByMe: [],
+    readByMe: [],
     readByThem: [],
     latestMessage: {
         event: {
             kind: "direct_message",
             sentByMe: true,
             messageId: newMessageId(),
-            messageIndex: 0,
+            messageIndex: 100,
             content: {
                 kind: "text_content",
                 text: "some message",
@@ -44,12 +46,33 @@ const defaultGroupChat: GroupChatSummary = {
     participants: [participant("1"), participant("2"), participant("3")],
     chatId: "abc",
     lastUpdated: BigInt(0),
-    unreadByMe: [],
+    readByMe: [],
     latestMessage: undefined,
     public: true,
     joined: BigInt(0),
     minVisibleEventIndex: 0,
+    minVisibleMessageIndex: 0,
     latestEventIndex: 0,
+};
+
+const groupChatWithMessage: GroupChatSummary = {
+    ...defaultGroupChat,
+    minVisibleMessageIndex: 20,
+    minVisibleEventIndex: 10,
+    latestMessage: {
+        event: {
+            kind: "group_message",
+            sender: "abscdefg",
+            messageId: newMessageId(),
+            messageIndex: 100,
+            content: {
+                kind: "text_content",
+                text: "some message",
+            },
+        },
+        timestamp: BigInt(0),
+        index: 0,
+    },
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -86,6 +109,178 @@ function participant(id: string): Participant {
         userId: id,
     };
 }
+
+describe("getting first unread message index", () => {
+    test("where we have read everything", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 0, to: 100 }],
+            })
+        ).toEqual(101);
+    });
+    test("where we have no messages", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                latestMessage: undefined,
+                readByMe: [],
+            })
+        ).toEqual(0);
+    });
+    test("where we have read nothing", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [],
+            })
+        ).toEqual(0);
+    });
+    test("where we are missing messages at the end", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 0, to: 80 }],
+            })
+        ).toEqual(81);
+    });
+    test("where we are missing messages at the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 80 }],
+            })
+        ).toEqual(0);
+    });
+    test("where we have multiple gaps including the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 20, to: 40 },
+                    { from: 50, to: 60 },
+                    { from: 70, to: 80 },
+                ],
+            })
+        ).toEqual(0);
+    });
+    test("where we have multiple gaps after the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 0, to: 40 },
+                    { from: 50, to: 60 },
+                    { from: 70, to: 80 },
+                ],
+            })
+        ).toEqual(41);
+    });
+});
+
+describe("getting unread message counts", () => {
+    describe("for a direct chat", () => {
+        test("with no latest message", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    latestMessage: undefined,
+                })
+            ).toEqual(0);
+        });
+        test("with no gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 0, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 10, to: 100 }],
+                })
+            ).toEqual(10);
+        });
+        test("with gaps at both ends", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 10, to: 90 }],
+                })
+            ).toEqual(20);
+        });
+        test("with multiple gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [
+                        { from: 10, to: 30 }, // gap of 9
+                        { from: 40, to: 50 }, // gap of 9
+                        { from: 60, to: 70 }, // gap of 30
+                    ],
+                })
+            ).toEqual(58);
+        });
+    });
+
+    describe("for a group chat", () => {
+        test("with no latest message", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    latestMessage: undefined,
+                })
+            ).toEqual(0);
+        });
+        test("with no gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 0, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning before min", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 10, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning after min", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 30, to: 100 }],
+                })
+            ).toEqual(10);
+        });
+        test("with gaps at both ends", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 30, to: 90 }],
+                })
+            ).toEqual(20);
+        });
+        test("with multiple gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [
+                        { from: 10, to: 30 }, // gap of 9
+                        { from: 40, to: 50 }, // gap of 9
+                        { from: 60, to: 70 }, // gap of 30
+                    ],
+                })
+            ).toEqual(48);
+        });
+    });
+});
 
 describe("extract userids from chat summaries", () => {
     test("when there are no chats", () => {
@@ -274,7 +469,7 @@ describe("merging updates", () => {
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
                 expect(updated.readByThem).toEqual([]);
-                expect(updated.unreadByMe).toEqual([]);
+                expect(updated.readByMe).toEqual([]);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
@@ -293,7 +488,7 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "2");
             if (updated && updated.kind === "group_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.unreadByMe).toEqual([]);
+                expect(updated.readByMe).toEqual([]);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
                 expect(updated.participants.length).toEqual(4);

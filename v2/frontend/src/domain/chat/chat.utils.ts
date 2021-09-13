@@ -18,6 +18,7 @@ import type {
     DirectMessage,
     ReplyContext,
     UpdateArgs,
+    MessageIndexRange,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -76,10 +77,28 @@ export function userIdsFromChatSummaries(
     }, new Set<string>());
 }
 
-export function getUnreadMessages({ unreadByMe }: ChatSummary): number {
-    return unreadByMe.reduce((agg, { from, to }) => {
-        return agg + (to - from + 1);
-    }, 0);
+export function getMinVisibleMessageIndex(chat: ChatSummary): number {
+    if (chat.kind === "direct_chat") return 0;
+    return chat.minVisibleMessageIndex;
+}
+
+export function getUnreadMessages(chat: ChatSummary): number {
+    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+    if (latestMessageIndex === undefined) {
+        // if we have no latestMessage then we cannot have any unread messages
+        return 0;
+    }
+
+    const firstMessageIndex = getMinVisibleMessageIndex(chat);
+
+    const [, unread, lastRead] = chat.readByMe.reduce(
+        ([first, unread], { from, to }) => {
+            return [to + 1, unread + Math.max(from, first) - first, to];
+        },
+        [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
+    );
+
+    return latestMessageIndex - lastRead + unread;
 }
 
 export function messageIsRead(
@@ -95,10 +114,30 @@ export function messageIsRead(
     }, false);
 }
 
-export function getFirstUnreadMessageIndex({ unreadByMe }: ChatSummary): number {
-    return unreadByMe.reduce((agg, { from }) => {
-        return from < agg ? from : agg;
-    }, Number.MAX_VALUE);
+export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
+    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+    const min = getMinVisibleMessageIndex(chat);
+
+    if (latestMessageIndex === undefined) {
+        return min;
+    }
+
+    if (chat.readByMe.length === 0) {
+        return min;
+    }
+
+    const [unreadIndex, finalRange] = chat.readByMe.reduce(
+        ([index, prev], range) => {
+            return range.from > min
+                ? prev === undefined
+                    ? [min, range]
+                    : [Math.min(index, prev.to + 1), range]
+                : [index, range];
+        },
+        [Number.MAX_VALUE, undefined as MessageIndexRange | undefined]
+    );
+
+    return Math.min(unreadIndex, finalRange ? finalRange.to + 1 : Number.MAX_VALUE);
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
@@ -201,7 +240,7 @@ function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.unreadByMe = updatedChat.unreadByMe;
+    chat.readByMe = updatedChat.unreadByMe;
     chat.readByThem = updatedChat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
@@ -250,7 +289,7 @@ function mergeUpdatedGroupChat(
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.unreadByMe = updatedChat.unreadByMe;
+    chat.readByMe = updatedChat.unreadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;

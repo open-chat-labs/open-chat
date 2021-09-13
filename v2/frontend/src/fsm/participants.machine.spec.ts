@@ -12,9 +12,10 @@ const groupChat: GroupChatSummary = {
     public: true,
     joined: BigInt(100),
     minVisibleEventIndex: 50,
+    minVisibleMessageIndex: 50,
     chatId: "chat_id",
     lastUpdated: BigInt(200),
-    unreadByMe: [],
+    readByMe: [],
     latestMessage: undefined,
     latestEventIndex: 0,
     participants: [
