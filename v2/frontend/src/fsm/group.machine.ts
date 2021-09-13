@@ -98,7 +98,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                                             joined: now,
                                             minVisibleEventIndex: 0,
                                             chatId: ev.data.canisterId,
-                                            latestReadByMe: 0,
+                                            unreadByMe: [],
                                             latestMessage: undefined,
                                             latestEventIndex: 0,
                                             lastUpdated: now,
