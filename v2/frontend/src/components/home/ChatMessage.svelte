@@ -20,7 +20,7 @@
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -43,6 +43,7 @@
     export let timestamp: bigint;
     export let last: boolean;
     export let confirmed: boolean;
+    export let observer: IntersectionObserver;
 
     // we assume that a message cannot possibly be read if it is unconfirmed
     let read: boolean = confirmed && messageIsRead(chatSummary, msg);
@@ -59,6 +60,10 @@
         // todo - keep an eye on this
         console.log("updating ChatMessage component");
     });
+
+    onMount(() => observer.observe(msgElement));
+
+    onDestroy(() => observer.unobserve(msgElement));
 
     function getSenderId() {
         if (msg.kind === "direct_message" && chatSummary.kind === "direct_chat") {
@@ -115,7 +120,11 @@
     // e.g. image / video with no caption should fill the whole chat bubble
 </script>
 
-<div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
+<div
+    bind:this={msgElement}
+    class="chat-message-wrapper"
+    class:me
+    id={`message-${msg.messageIndex}`}>
     <div
         class="chat-message"
         class:fill={fillMessage(msg)}
@@ -133,6 +142,7 @@
         {/if}
 
         <ChatMessageContent {identity} {me} content={msg.content} />
+        <pre>{msg.messageIndex}</pre>
 
         {#if metaData}
             {#await metaData then meta}

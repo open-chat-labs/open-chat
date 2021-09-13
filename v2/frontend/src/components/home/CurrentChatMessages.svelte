@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -45,6 +45,21 @@
     let scrollTop = 0;
     let currentChatId = "";
     let fromBottom = 0;
+    let observer: IntersectionObserver;
+
+    onMount(() => {
+        const options = {
+            root: messagesDiv,
+            rootMargin: "0px",
+            threshold: 0.5,
+        };
+
+        observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+            entries.forEach((entry) => {
+                console.log("IntersectionChanged: ", entry.target.id, entry.isIntersecting);
+            });
+        }, options);
+    });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
         // todo the problem here is that the height is affected by loading images
@@ -259,6 +274,7 @@
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
+                        {observer}
                         confirmed={isConfirmed(evt)}
                         identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}

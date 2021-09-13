@@ -21,10 +21,12 @@
     export let userLookup: UserLookup;
     export let identity: Identity;
     export let confirmed: boolean;
+    export let observer: IntersectionObserver;
 </script>
 
 {#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
+        {observer}
         {confirmed}
         {identity}
         {chatSummary}
