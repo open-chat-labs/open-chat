@@ -42,14 +42,14 @@ export interface DirectChatSummary {
   'them' : UserId,
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
-  'unread_by_them' : Array<MessageIndexRange>,
+  'read_by_them' : Array<MessageIndexRange>,
   'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : DirectMessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
-  'unread_by_them' : Array<MessageIndexRange>,
+  'read_by_them' : Array<MessageIndexRange>,
   'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : [] | [DirectMessageEventWrapper],
 }

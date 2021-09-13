@@ -91,7 +91,7 @@ type DirectChatSummary =
         latest_event_index: EventIndex;
         date_created: TimestampMillis;
         unread_by_me: vec MessageIndexRange;
-        unread_by_them: vec MessageIndexRange;
+        read_by_them: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -100,7 +100,7 @@ type DirectChatSummaryUpdates =
         latest_message: opt DirectMessageEventWrapper;
         latest_event_index: opt EventIndex;
         unread_by_me: vec MessageIndexRange;
-        unread_by_them: vec MessageIndexRange;
+        read_by_them: vec MessageIndexRange;
     };
 
 type DirectMessage =

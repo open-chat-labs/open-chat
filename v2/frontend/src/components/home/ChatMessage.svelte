@@ -30,6 +30,7 @@
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import type { Identity } from "@dfinity/agent";
+    import { messageIsRead } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let identity: Identity;
@@ -43,7 +44,8 @@
     export let last: boolean;
     export let confirmed: boolean;
 
-    let read: boolean = true; // todo - where does this come from
+    // we assume that a message cannot possibly be read if it is unconfirmed
+    let read: boolean = confirmed && messageIsRead(chatSummary, msg);
     let msgElement: HTMLElement;
 
     let senderId = getSenderId();

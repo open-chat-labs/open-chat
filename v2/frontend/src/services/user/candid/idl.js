@@ -272,7 +272,7 @@ export const idlFactory = ({ IDL }) => {
   const DirectChatSummaryUpdates = IDL.Record({
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
-    'unread_by_them' : IDL.Vec(MessageIndexRange),
+    'read_by_them' : IDL.Vec(MessageIndexRange),
     'unread_by_me' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(DirectMessageEventWrapper),
   });
@@ -298,7 +298,7 @@ export const idlFactory = ({ IDL }) => {
     'them' : UserId,
     'latest_event_index' : EventIndex,
     'chat_id' : ChatId,
-    'unread_by_them' : IDL.Vec(MessageIndexRange),
+    'read_by_them' : IDL.Vec(MessageIndexRange),
     'unread_by_me' : IDL.Vec(MessageIndexRange),
     'latest_message' : DirectMessageEventWrapper,
   });

@@ -321,6 +321,7 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         usersLastUpdate: BigInt(0),
                         chatsIndex: {},
                         blockedUsers: [],
+                        unconfirmed: new Set<bigint>(),
                     }),
                     onDone: "login",
                     onError: {

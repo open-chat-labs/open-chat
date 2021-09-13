@@ -18,7 +18,7 @@ const defaultDirectChat: DirectChatSummary = {
     them: "a",
     chatId: "abc",
     unreadByMe: [],
-    unreadByThem: [],
+    readByThem: [],
     latestMessage: {
         event: {
             kind: "direct_message",
@@ -200,7 +200,7 @@ describe("merging updates", () => {
             kind: "direct_chat",
             unreadByMe: [],
             chatId: "4",
-            unreadByThem: [],
+            readByThem: [],
             latestEventIndex: 300,
             latestMessage: {
                 event: {
@@ -273,7 +273,7 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "4");
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated.unreadByThem).toEqual([]);
+                expect(updated.readByThem).toEqual([]);
                 expect(updated.unreadByMe).toEqual([]);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {

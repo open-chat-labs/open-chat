@@ -235,7 +235,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),
             unreadByMe: candid.Direct.unread_by_me,
-            unreadByThem: candid.Direct.unread_by_them,
+            readByThem: candid.Direct.read_by_them,
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -283,7 +283,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
             unreadByMe: candid.Direct.unread_by_me,
-            unreadByThem: candid.Direct.unread_by_them,
+            readByThem: candid.Direct.read_by_them,
             dateCreated: candid.Direct.date_created,
         };
     }

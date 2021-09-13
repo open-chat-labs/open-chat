@@ -190,7 +190,7 @@ type ChatSummaryUpdatesCommon = {
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
     latestMessage?: EventWrapper<DirectMessage>;
-    unreadByThem: MessageIndexRange[];
+    readByThem: MessageIndexRange[];
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -228,7 +228,7 @@ type ChatSummaryCommon = {
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    unreadByThem: MessageIndexRange[];
+    readByThem: MessageIndexRange[];
     dateCreated: bigint;
     latestMessage?: EventWrapper<DirectMessage>;
 };

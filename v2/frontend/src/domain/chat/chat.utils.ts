@@ -82,6 +82,19 @@ export function getUnreadMessages({ unreadByMe }: ChatSummary): number {
     }, 0);
 }
 
+export function messageIsRead(
+    chat: ChatSummary,
+    { messageIndex, kind }: GroupMessage | DirectMessage
+): boolean {
+    if (chat.kind === "group_chat") return true;
+    if (kind === "group_message") return true;
+
+    return chat.readByThem.reduce<boolean>((agg, { from, to }) => {
+        if (!agg && (messageIndex >= from || messageIndex <= to)) return true;
+        return agg;
+    }, false);
+}
+
 export function getFirstUnreadMessageIndex({ unreadByMe }: ChatSummary): number {
     return unreadByMe.reduce((agg, { from }) => {
         return from < agg ? from : agg;
@@ -189,7 +202,7 @@ function mergeUpdatedDirectChat(
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
     chat.unreadByMe = updatedChat.unreadByMe;
-    chat.unreadByThem = updatedChat.unreadByThem;
+    chat.readByThem = updatedChat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     return chat;

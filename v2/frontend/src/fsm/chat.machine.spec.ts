@@ -43,7 +43,7 @@ const directChat: DirectChatSummary = {
     them: "abcdefg",
     chatId: "abcdefg",
     unreadByMe: [],
-    unreadByThem: [],
+    readByThem: [],
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),

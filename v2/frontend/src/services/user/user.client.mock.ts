@@ -68,7 +68,7 @@ function mockDirectChat(i: number): DirectChatSummary {
         them: others[i % 3],
         chatId: String(i),
         unreadByMe: [],
-        unreadByThem: [],
+        readByThem: [],
         latestMessage: mockEvent("direct_message", numMessages),
         latestEventIndex: numMessages,
         dateCreated: BigInt(time),
@@ -253,7 +253,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
     return {
         chatId: chat.chatId,
         unreadByMe: [],
-        unreadByThem: [],
+        readByThem: [{ from: 0, to: Number.MAX_VALUE }],
         latestMessage: chat.latestMessage,
         latestEventIndex: chat.latestEventIndex,
         kind: "direct_chat",
@@ -346,11 +346,15 @@ export class UserClientMock implements IUserClient {
         _senderName: string,
         message: DirectMessage
     ): Promise<SendMessageResponse> {
-        return Promise.resolve({
-            kind: "send_message_success",
-            timestamp: BigInt(Number(+new Date())),
-            messageIndex: message.messageIndex,
-            eventIndex: message.messageIndex,
+        return new Promise((res) => {
+            setTimeout(() => {
+                res({
+                    kind: "send_message_success",
+                    timestamp: BigInt(Number(+new Date())),
+                    messageIndex: message.messageIndex,
+                    eventIndex: message.messageIndex,
+                });
+            }, 2000);
         });
     }
 
