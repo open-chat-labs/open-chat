@@ -8,12 +8,6 @@ type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type UserId = CanisterId;
 
-type MessageIndexRange = 
-    record { 
-        from: MessageIndex;
-        to: MessageIndex;
-    };
-
 type BlobReference =
     record {
         canister_id: CanisterId;
