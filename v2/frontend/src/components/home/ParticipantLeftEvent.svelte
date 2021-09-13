@@ -11,7 +11,6 @@
 
     $: me = left?.userId === user?.userId;
     $: username = me ? $_("you") : left?.username ?? $_("unknownUser");
-    $: date = new Date(Number(timestamp));
     $: text = $_("userLeft", {
         values: {
             username: username,
