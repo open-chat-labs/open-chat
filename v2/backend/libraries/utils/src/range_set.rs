@@ -4,7 +4,7 @@ use types::{MessageIndex, MessageIndexRange};
 
 pub fn insert_ranges(
     range_set: &mut RangeSet<[RangeInclusive<u32>; 2]>,
-    message_ranges: &Vec<MessageIndexRange>,
+    message_ranges: &[MessageIndexRange],
     min_message_index: MessageIndex,
     max_message_index: MessageIndex,
 ) -> bool {
