@@ -2,25 +2,23 @@
     import type { ActorRefFrom } from "xstate";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import FindUser from "../FindUser.svelte";
     import Button from "../Button.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
     import SectionHeader from "../SectionHeader.svelte";
-    import ParticipantPill from "../ParticipantPill.svelte";
-    import { fade } from "svelte/transition";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { GroupMachine } from "../../fsm/group.machine";
-    import { pop } from "../../utils/transition";
     import type { CandidateParticipant } from "../../domain/chat/chat";
+    import SelectUsers from "./SelectUsers.svelte";
 
     export let machine: ActorRefFrom<GroupMachine>;
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
     $: numParticipants = $machine.context.candidateGroup.participants.length;
+
+    $: selectedUsers = $machine.context.candidateGroup.participants.map((p) => p.user);
 
     $: busy =
         $machine.matches({ canister_creation: "creating" }) ||
@@ -53,7 +51,12 @@
 
 <div class="participants">
     <div class="form-fields">
-        <div class="selected">
+        {#if userSearchMachine !== undefined}
+            <SelectUsers error={$machine.context.error} {selectedUsers} {userSearchMachine} />
+        {:else}
+            <p>user search machine is undefined</p>
+        {/if}
+        <!-- <div class="selected">
             {#each $machine.context.candidateGroup.participants as participant, _pi (participant.user.userId)}
                 <div
                     class="pill"
@@ -72,7 +75,7 @@
             <div class="find-user">
                 <FindUser machine={userSearchMachine} />
             </div>
-        {/if}
+        {/if} -->
     </div>
 
     <div class="cta">

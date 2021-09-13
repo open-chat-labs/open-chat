@@ -40,17 +40,17 @@ export interface DirectChatEventWrapper {
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
-  'latest_read_by_me' : MessageIndex,
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
-  'latest_read_by_them' : MessageIndex,
+  'unread_by_them' : Array<MessageIndexRange>,
+  'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : DirectMessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
-  'latest_read_by_them' : [] | [MessageIndex],
+  'unread_by_them' : Array<MessageIndexRange>,
+  'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : [] | [DirectMessageEventWrapper],
 }
 export interface DirectMessage {
@@ -107,10 +107,10 @@ export interface GroupChatSummary {
   'name' : string,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'latest_read_by_me' : MessageIndex,
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'chat_id' : ChatId,
+  'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
@@ -119,9 +119,9 @@ export interface GroupChatSummaryUpdates {
   'name' : [] | [string],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
-  'latest_read_by_me' : [] | [MessageIndex],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
+  'unread_by_me' : Array<MessageIndexRange>,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
@@ -182,6 +182,10 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessageIndexRange {
+  'to' : MessageIndex,
+  'from' : MessageIndex,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'cycles_balance' : bigint,

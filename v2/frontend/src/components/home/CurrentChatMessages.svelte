@@ -24,7 +24,11 @@
         ChatEvent as ChatEventType,
         DirectChatReplyContext,
     } from "../../domain/chat/chat";
-    import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
+    import {
+        getFirstUnreadMessageIndex,
+        getUnreadMessages,
+        groupEvents,
+    } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
 
@@ -171,6 +175,8 @@
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
 
+    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
+
     $: {
         if ($machine.context.chatSummary.chatId !== currentChatId) {
             currentChatId = $machine.context.chatSummary.chatId;
@@ -241,7 +247,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (evt.index)}
-                    {#if evt.index === $machine.context.chatSummary.latestReadByMe + 1}
+                    {#if evt.index === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent

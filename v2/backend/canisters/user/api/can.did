@@ -33,7 +33,7 @@ type SendMessageResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        up_to_message_index: MessageIndex;
+        message_ranges: vec MessageIndexRange; 
     };
 
 type MarkReadResponse =

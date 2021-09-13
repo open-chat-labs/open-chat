@@ -183,14 +183,14 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    latestReadByMe?: number;
+    unreadByMe: MessageIndexRange[];
     latestEventIndex?: number;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestReadByThem?: number;
     latestMessage?: EventWrapper<DirectMessage>;
+    unreadByThem: MessageIndexRange[];
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -214,16 +214,21 @@ export type FullParticipant = Participant & PartialUserSummary;
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
+export type MessageIndexRange = {
+    from: number;
+    to: number;
+};
+
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    latestReadByMe: number;
+    unreadByMe: MessageIndexRange[];
     latestEventIndex: number;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    latestReadByThem: number;
+    unreadByThem: MessageIndexRange[];
     dateCreated: bigint;
     latestMessage?: EventWrapper<DirectMessage>;
 };

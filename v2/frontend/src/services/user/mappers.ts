@@ -215,7 +215,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
-            latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
+            unreadByMe: candid.Group.unread_by_me,
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -234,13 +234,13 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         return {
             kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),
-            latestReadByMe: optional(candid.Direct.latest_read_by_me, identity),
+            unreadByMe: candid.Direct.unread_by_me,
+            unreadByThem: candid.Direct.unread_by_them,
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
                 event: directMessage(ev.event),
             })),
-            latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
         };
     }
@@ -260,7 +260,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                     event: groupMessage(ev.event),
                 };
             }),
-            latestReadByMe: candid.Group.latest_read_by_me,
+            unreadByMe: candid.Group.unread_by_me,
             name: candid.Group.name,
             description: candid.Group.description,
             participants,
@@ -282,8 +282,8 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
-            latestReadByMe: candid.Direct.latest_read_by_me,
-            latestReadByThem: candid.Direct.latest_read_by_me,
+            unreadByMe: candid.Direct.unread_by_me,
+            unreadByThem: candid.Direct.unread_by_them,
             dateCreated: candid.Direct.date_created,
         };
     }

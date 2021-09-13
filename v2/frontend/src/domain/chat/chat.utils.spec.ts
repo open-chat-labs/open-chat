@@ -17,8 +17,8 @@ const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    latestReadByMe: 0,
-    latestReadByThem: 0,
+    unreadByMe: [],
+    unreadByThem: [],
     latestMessage: {
         event: {
             kind: "direct_message",
@@ -44,7 +44,7 @@ const defaultGroupChat: GroupChatSummary = {
     participants: [participant("1"), participant("2"), participant("3")],
     chatId: "abc",
     lastUpdated: BigInt(0),
-    latestReadByMe: 0,
+    unreadByMe: [],
     latestMessage: undefined,
     public: true,
     joined: BigInt(0),
@@ -198,9 +198,9 @@ describe("merging updates", () => {
     describe("updated chats get merged correctly", () => {
         const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
-            latestReadByThem: 100,
+            unreadByMe: [],
             chatId: "4",
-            latestReadByMe: 200,
+            unreadByThem: [],
             latestEventIndex: 300,
             latestMessage: {
                 event: {
@@ -223,7 +223,7 @@ describe("merging updates", () => {
             kind: "group_chat",
             chatId: "2",
             lastUpdated: BigInt(1000),
-            latestReadByMe: 200,
+            unreadByMe: [],
             latestMessage: {
                 event: {
                     kind: "group_message",
@@ -273,8 +273,8 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "4");
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated?.latestReadByThem).toEqual(100);
-                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated.unreadByThem).toEqual([]);
+                expect(updated.unreadByMe).toEqual([]);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
@@ -293,7 +293,7 @@ describe("merging updates", () => {
             const updated = merged.find((c) => c.chatId === "2");
             if (updated && updated.kind === "group_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated.unreadByMe).toEqual([]);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
                 expect(updated.participants.length).toEqual(4);

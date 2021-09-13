@@ -8,6 +8,12 @@ type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type UserId = CanisterId;
 
+type MessageIndexRange = 
+    record { 
+        from: MessageIndex;
+        to: MessageIndex;
+    };
+
 type BlobReference =
     record {
         canister_id: CanisterId;
@@ -84,8 +90,8 @@ type DirectChatSummary =
         latest_message: DirectMessageEventWrapper;
         latest_event_index: EventIndex;
         date_created: TimestampMillis;
-        latest_read_by_me: MessageIndex;
-        latest_read_by_them: MessageIndex;
+        unread_by_me: vec MessageIndexRange;
+        unread_by_them: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -93,8 +99,8 @@ type DirectChatSummaryUpdates =
         chat_id: ChatId;
         latest_message: opt DirectMessageEventWrapper;
         latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
-        latest_read_by_them: opt MessageIndex;
+        unread_by_me: vec MessageIndexRange;
+        unread_by_them: vec MessageIndexRange;
     };
 
 type DirectMessage =
@@ -175,7 +181,7 @@ type GroupChatSummary =
         latest_message: opt GroupMessageEventWrapper;
         latest_event_index: EventIndex;
         joined: TimestampMillis;
-        latest_read_by_me: MessageIndex;
+        unread_by_me: vec MessageIndexRange;
     };
 
 type GroupChatSummaryUpdates =
@@ -188,7 +194,7 @@ type GroupChatSummaryUpdates =
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;
         latest_event_index: opt EventIndex;
-        latest_read_by_me: opt MessageIndex;
+        unread_by_me: vec MessageIndexRange;
     };
 
 type GroupDescriptionChanged =

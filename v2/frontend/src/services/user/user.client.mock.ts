@@ -52,7 +52,7 @@ function mockGroupChat(i: number): GroupChatSummary {
         minVisibleEventIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: numMessages,
+        unreadByMe: [],
         latestMessage: mockEvent<GroupMessage>("group_message", numMessages),
         latestEventIndex: numMessages,
         participants,
@@ -63,13 +63,12 @@ const others = ["qwxyz", "mnopr", "rstuv"];
 
 function mockDirectChat(i: number): DirectChatSummary {
     time -= oneDay;
-    const us = randomNum(10, 1000);
     return {
         kind: "direct_chat",
         them: others[i % 3],
         chatId: String(i),
-        latestReadByMe: us,
-        latestReadByThem: 0,
+        unreadByMe: [],
+        unreadByThem: [],
         latestMessage: mockEvent("direct_message", numMessages),
         latestEventIndex: numMessages,
         dateCreated: BigInt(time),
@@ -237,7 +236,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
-            latestReadByMe: chat.latestReadByMe,
+            unreadByMe: chat.unreadByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
                 ? mockEvent<GroupMessage>("group_message", chat.latestMessage?.index + 2)
@@ -253,11 +252,11 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
     }
     return {
         chatId: chat.chatId,
-        latestReadByMe: chat.latestReadByMe,
+        unreadByMe: [],
+        unreadByThem: [],
         latestMessage: chat.latestMessage,
         latestEventIndex: chat.latestEventIndex,
         kind: "direct_chat",
-        latestReadByThem: chat.latestReadByThem,
     };
 }
 

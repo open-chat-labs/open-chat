@@ -76,8 +76,16 @@ export function userIdsFromChatSummaries(
     }, new Set<string>());
 }
 
-export function getUnreadMessages({ latestMessage, latestReadByMe }: ChatSummary): number {
-    return (latestMessage?.index ?? 0) - latestReadByMe;
+export function getUnreadMessages({ unreadByMe }: ChatSummary): number {
+    return unreadByMe.reduce((agg, { from, to }) => {
+        return agg + (to - from + 1);
+    }, 0);
+}
+
+export function getFirstUnreadMessageIndex({ unreadByMe }: ChatSummary): number {
+    return unreadByMe.reduce((agg, { from }) => {
+        return from < agg ? from : agg;
+    }, Number.MAX_VALUE);
 }
 
 export function latestMessageText({ latestMessage }: ChatSummary): string {
@@ -180,9 +188,9 @@ function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.unreadByMe = updatedChat.unreadByMe;
+    chat.unreadByThem = updatedChat.unreadByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
-    chat.latestReadByThem = updatedChat.latestReadByThem ?? chat.latestReadByThem;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     return chat;
 }
@@ -229,7 +237,7 @@ function mergeUpdatedGroupChat(
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.latestReadByMe = updatedChat.latestReadByMe ?? chat.latestReadByMe;
+    chat.unreadByMe = updatedChat.unreadByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
