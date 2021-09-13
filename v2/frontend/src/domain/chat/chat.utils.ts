@@ -240,8 +240,8 @@ function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.readByMe = updatedChat.unreadByMe;
-    chat.readByThem = updatedChat.readByThem;
+    chat.readByMe = updatedChat.readByMe ?? chat.readByMe;
+    chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
     return chat;
@@ -289,7 +289,7 @@ function mergeUpdatedGroupChat(
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.readByMe = updatedChat.unreadByMe;
+    chat.readByMe = updatedChat.readByMe ?? chat.readByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;

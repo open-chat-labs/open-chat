@@ -237,7 +237,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
-            unreadByMe: chat.readByMe,
+            readByMe: chat.readByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
                 ? mockEvent<GroupMessage>("group_message", chat.latestMessage?.index + 2)
@@ -253,7 +253,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
     }
     return {
         chatId: chat.chatId,
-        unreadByMe: [],
+        readByMe: [],
         readByThem: [{ from: 0, to: Number.MAX_VALUE }],
         latestMessage: chat.latestMessage,
         latestEventIndex: chat.latestEventIndex,

@@ -183,14 +183,14 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    unreadByMe: MessageIndexRange[];
+    readByMe?: MessageIndexRange[];
     latestEventIndex?: number;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
     latestMessage?: EventWrapper<DirectMessage>;
-    readByThem: MessageIndexRange[];
+    readByThem?: MessageIndexRange[];
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {

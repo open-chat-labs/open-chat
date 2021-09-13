@@ -393,7 +393,7 @@ describe("merging updates", () => {
     describe("updated chats get merged correctly", () => {
         const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
-            unreadByMe: [],
+            readByMe: [],
             chatId: "4",
             readByThem: [],
             latestEventIndex: 300,
@@ -418,7 +418,7 @@ describe("merging updates", () => {
             kind: "group_chat",
             chatId: "2",
             lastUpdated: BigInt(1000),
-            unreadByMe: [],
+            readByMe: [],
             latestMessage: {
                 event: {
                     kind: "group_message",
