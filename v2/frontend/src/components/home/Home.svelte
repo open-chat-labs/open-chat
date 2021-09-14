@@ -93,6 +93,13 @@
         machine.send({ type: "BLOCK_USER", data: ev.detail.userId });
         $machine.context
             .serviceContainer!.blockUser(ev.detail.userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("blockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("blockUserFailed");
+                }
+            })
             .catch((_err) => toastStore.showFailureToast("blockUserFailed"));
     }
 
@@ -100,6 +107,13 @@
         machine.send({ type: "UNBLOCK_USER", data: ev.detail.userId });
         $machine.context
             .serviceContainer!.unblockUser(ev.detail.userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("unblockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("unblockUserFailed");
+                }
+            })
             .catch((_err) => toastStore.showFailureToast("unblockUserFailed"));
     }
 

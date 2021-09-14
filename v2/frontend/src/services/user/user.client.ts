@@ -166,7 +166,7 @@ export class UserClient extends CandidService implements IUserClient {
 
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.handleResponse(
-            this.userService.block_user({
+            this.userService.unblock_user({
                 user_id: Principal.fromText(userId),
             }),
             blockResponse

@@ -40,9 +40,8 @@
             // todo - we also have a problem for group chats with hidden history - we don't know what the index
             // should be at all in that case
             const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
-            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
 
-            console.log(nextIndex);
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
                 msg = createGroupMessage(

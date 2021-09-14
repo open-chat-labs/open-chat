@@ -358,6 +358,14 @@ describe("getting unread message counts", () => {
                 })
             ).toEqual(0);
         });
+        test("with no messages read", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [],
+                })
+            ).toEqual(101);
+        });
         test("with no gaps", () => {
             expect(
                 getUnreadMessages({

@@ -92,6 +92,10 @@ export function getUnreadMessages(chat: ChatSummary): number {
 
     const firstMessageIndex = getMinVisibleMessageIndex(chat);
 
+    if (chat.readByMe.length === 0) {
+        return latestMessageIndex - firstMessageIndex + 1;
+    }
+
     const [, unread, lastRead] = chat.readByMe.reduce(
         ([first, unread], { from, to }) => {
             return [to + 1, unread + Math.max(from, first) - first, to];

@@ -6,7 +6,7 @@ import {
     MachineConfig,
     MachineOptions,
 } from "xstate";
-import { assign, pure, send, sendParent } from "xstate/lib/actions";
+import { assign, pure, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -106,21 +106,13 @@ async function loadUsersForChat(
 function loadEvents(
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
-    earliestRequiredEventIndex: number,
-    earliestLoadedEventIndex: number
+    fromIndex: number,
+    toIndex: number
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(
-            chatSummary.them,
-            earliestRequiredEventIndex,
-            earliestLoadedEventIndex
-        );
+        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
     }
-    const events = serviceContainer.groupChatEvents(
-        chatSummary.chatId,
-        earliestRequiredEventIndex,
-        earliestLoadedEventIndex
-    );
+    const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
     return events;
 }
 
@@ -139,7 +131,7 @@ export function earliestIndex(ctx: ChatContext): number {
 
 export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
-    if (lastLoaded) {
+    if (lastLoaded !== undefined) {
         const from = lastLoaded + 1;
         const to = latestAvailableEventIndex(ctx.chatSummary) ?? 0;
         return clampRange([from, to]);
