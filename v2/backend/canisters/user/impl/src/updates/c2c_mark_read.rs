@@ -25,7 +25,7 @@ fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             SuccessNoChange
         } else {
             let now = runtime_state.env.now();
-            chat.read_by_me_updated = now;
+            chat.read_by_them_updated = now;
             Success
         }
     } else {
