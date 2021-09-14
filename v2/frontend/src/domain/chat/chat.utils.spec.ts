@@ -296,7 +296,7 @@ describe("getting first unread message index", () => {
                 latestMessage: undefined,
                 readByMe: [],
             })
-        ).toEqual(0);
+        ).toEqual(Number.MAX_VALUE);
     });
     test("where we have read nothing", () => {
         expect(

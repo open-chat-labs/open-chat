@@ -27,6 +27,7 @@ import {
     MakeAdminResponse,
     RemoveAdminResponse,
     RemoveParticipantResponse,
+    MarkReadResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -55,6 +56,7 @@ export {
     MakeAdminResponse as ApiMakeAdminResponse,
     RemoveAdminResponse as ApiRemoveAdminResponse,
     RemoveParticipantResponse as ApiRemoveParticipantResponse,
+    MarkReadResponse as ApiMarkReadResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

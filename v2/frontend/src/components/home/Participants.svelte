@@ -12,7 +12,7 @@
         machine.send({ type: "HIDE_PARTICIPANTS" });
     }
 
-    function addParticipant() {
+    function addParticipants() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
 
@@ -50,7 +50,7 @@
     }
 </script>
 
-<ParticipantsHeader {publicGroup} {me} on:close={close} on:addParticipant={addParticipant} />
+<ParticipantsHeader {publicGroup} {me} on:close={close} on:addParticipants={addParticipants} />
 
 {#if me !== undefined}
     <Participant

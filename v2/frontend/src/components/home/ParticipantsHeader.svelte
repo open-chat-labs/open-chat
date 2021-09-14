@@ -18,14 +18,14 @@
     }
 
     // todo - this is probably contingent on being an admin
-    function addParticipant() {
-        dispatch("addParticipant");
+    function addParticipants() {
+        dispatch("addParticipants");
     }
 </script>
 
 <SectionHeader>
     {#if canAdd}
-        <span title={$_("addParticipant")} class="add" on:click={addParticipant}>
+        <span title={$_("addParticipants")} class="add" on:click={addParticipants}>
             <HoverIcon>
                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} />
             </HoverIcon>

@@ -13,7 +13,7 @@
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
-    function addParticipant() {
+    function addParticipants() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
 </script>
@@ -26,7 +26,7 @@
         on:clearSelection
         on:blockUser
         on:unblockUser
-        on:addParticipant={addParticipant}
+        on:addParticipants={addParticipants}
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />

@@ -2,25 +2,32 @@
     import type { ActorRefFrom } from "xstate";
     import SectionHeader from "../SectionHeader.svelte";
     import Loading from "../Loading.svelte";
+    import Button from "../Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     export let machine: ActorRefFrom<ParticipantsMachine>;
     import { _ } from "svelte-i18n";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
     import SelectUsers from "./SelectUsers.svelte";
+    import type { UserSummary } from "../../domain/user/user";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
-    $: selectedUsers = [];
+    $: busy = $machine.matches({ adding_participants: "saving_participants" });
 
     function cancelAddParticipant() {
         machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
     }
 
-    $: console.log("part machine: ", $machine.value);
+    function complete() {
+        machine.send({ type: "SAVE_PARTICIPANTS" });
+    }
+
+    function deleteUser(ev: CustomEvent<UserSummary>) {
+        machine.send({ type: "UNSELECT_PARTICIPANT", data: ev.detail });
+    }
 </script>
 
 <SectionHeader>
@@ -29,28 +36,34 @@
             <Close size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
-    <h4>{$_("addParticipant")}</h4>
+    <h4>{$_("addParticipants")}</h4>
 </SectionHeader>
 
 {#if userSearchMachine !== undefined}
-    <SelectUsers error={$machine.context.error} {selectedUsers} {userSearchMachine} />
-{:else}
-    <p>user search machine is undefined</p>
+    <div class="find-user">
+        <SelectUsers
+            error={$machine.context.error}
+            on:deleteUser={deleteUser}
+            selectedUsers={$machine.context.usersToAdd}
+            {userSearchMachine} />
+    </div>
 {/if}
 
-{#if $machine.matches({ adding_participant: "saving_participant" })}
+{#if $machine.matches({ adding_participants: "saving_participants" })}
     <Loading />
 {/if}
 
-{#if $machine.matches({ adding_participant: "unexpected_error" })}
+{#if $machine.matches({ adding_participants: "unexpected_error" })}
     <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
 {/if}
 
-{#if userSearchMachine !== undefined && !$userSearchMachine.matches("unexpected_error")}
-    <div class="find-user">
-        <FindUser machine={userSearchMachine} />
-    </div>
-{/if}
+<div class="cta">
+    <Button
+        disabled={busy || $machine.context.usersToAdd.length === 0}
+        loading={busy}
+        on:click={complete}
+        fill={true}>{$_("addParticipants")}</Button>
+</div>
 
 <style type="text/scss">
     h4 {

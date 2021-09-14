@@ -24,6 +24,7 @@ import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
+import { update } from "xstate/lib/actionTypes";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -177,7 +178,7 @@ export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
     const min = getMinVisibleMessageIndex(chat);
 
     if (latestMessageIndex === undefined) {
-        return min;
+        return Number.MAX_VALUE;
     }
 
     if (chat.readByMe.length === 0) {
@@ -454,7 +455,7 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
 }
 
 export function latestLoadedMessageIndex(chat: ChatSummary): number {
-    return chat.latestMessage?.event.messageIndex ?? -1;
+    return chat.latestMessage?.event.messageIndex ?? 0;
 }
 
 export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {

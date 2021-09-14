@@ -8,15 +8,10 @@
     import type { UserSummary } from "../../domain/user/user";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import { pop } from "../../utils/transition";
-    import type { CandidateParticipant } from "../../domain/chat/chat";
 
     export let userSearchMachine: ActorRefFrom<UserSearchMachine>;
     export let selectedUsers: UserSummary[];
     export let error: Error | undefined;
-
-    function deleteParticipant(ev: CustomEvent<CandidateParticipant>): void {
-        selectedUsers = selectedUsers.filter((u) => u.userId !== ev.detail.user.userId);
-    }
 </script>
 
 <div class="selected">
@@ -26,7 +21,7 @@
             in:pop={{ duration: 500 }}
             out:fade={{ duration: 200 }}
             title={user.username}>
-            <UserPill on:deleteParticipant={deleteParticipant} {user} />
+            <UserPill on:deleteUser {user} />
         </div>
     {/each}
 </div>

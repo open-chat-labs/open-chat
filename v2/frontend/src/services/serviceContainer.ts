@@ -243,4 +243,11 @@ export class ServiceContainer {
     ): Promise<MarkReadResponse> {
         return this.userClient.markMessagesRead(userId, ranges);
     }
+
+    markGroupChatMessagesRead(
+        chatId: string,
+        ranges: MessageIndexRange[]
+    ): Promise<MarkReadResponse> {
+        return this.getGroupClient(chatId).markMessagesRead(ranges);
+    }
 }

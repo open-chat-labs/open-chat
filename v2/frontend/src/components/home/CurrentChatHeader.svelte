@@ -53,9 +53,9 @@
         }
     }
 
-    function addParticipant() {
+    function addParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("addParticipant");
+            dispatch("addParticipants");
         }
     }
 
@@ -170,9 +170,9 @@
                             <div slot="text">{$_("copyInviteCode")}</div>
                         </MenuItem>
                         {#if canAdminister(selectedChatSummary)}
-                            <MenuItem on:click={addParticipant}>
+                            <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                <div slot="text">{$_("addParticipant")}</div>
+                                <div slot="text">{$_("addParticipants")}</div>
                             </MenuItem>
                         {/if}
                     </Menu>

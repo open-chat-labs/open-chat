@@ -6,6 +6,8 @@ import type {
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -15,4 +17,5 @@ export interface IGroupClient {
     makeAdmin(userId: string): Promise<ChangeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
+    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
 }

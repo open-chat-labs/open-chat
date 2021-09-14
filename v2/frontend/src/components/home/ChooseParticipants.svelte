@@ -2,14 +2,15 @@
     import type { ActorRefFrom } from "xstate";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
+    import Loading from "../Loading.svelte";
     import Button from "../Button.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { GroupMachine } from "../../fsm/group.machine";
-    import type { CandidateParticipant } from "../../domain/chat/chat";
     import SelectUsers from "./SelectUsers.svelte";
 
     export let machine: ActorRefFrom<GroupMachine>;
@@ -33,9 +34,8 @@
         machine.send({ type: "COMPLETE" });
     }
 
-    function deleteParticipant(ev: CustomEvent<CandidateParticipant>): void {
-        console.log("removing participant: ", ev.detail.user.userId);
-        machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail.user.userId });
+    function deleteParticipant(ev: CustomEvent<UserSummary>): void {
+        machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail.userId });
     }
 </script>
 
@@ -52,30 +52,14 @@
 <div class="participants">
     <div class="form-fields">
         {#if userSearchMachine !== undefined}
-            <SelectUsers error={$machine.context.error} {selectedUsers} {userSearchMachine} />
+            <SelectUsers
+                on:deleteUser={deleteParticipant}
+                error={$machine.context.error}
+                {selectedUsers}
+                {userSearchMachine} />
         {:else}
-            <p>user search machine is undefined</p>
+            <Loading />
         {/if}
-        <!-- <div class="selected">
-            {#each $machine.context.candidateGroup.participants as participant, _pi (participant.user.userId)}
-                <div
-                    class="pill"
-                    in:pop={{ duration: 500 }}
-                    out:fade={{ duration: 200 }}
-                    title={participant.user.username}>
-                    <ParticipantPill on:deleteParticipant={deleteParticipant} {participant} />
-                </div>
-            {/each}
-        </div>
-        {#if $machine.matches({ showing_participants: { adding_participant: "unexpected_error" } })}
-            <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
-        {/if}
-
-        {#if userSearchMachine !== undefined && !$userSearchMachine.matches("unexpected_error")}
-            <div class="find-user">
-                <FindUser machine={userSearchMachine} />
-            </div>
-        {/if} -->
     </div>
 
     <div class="cta">

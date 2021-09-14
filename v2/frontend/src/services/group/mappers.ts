@@ -8,6 +8,7 @@ import type {
     ApiGroupMessage,
     ApiGroupReplyContext,
     ApiMakeAdminResponse,
+    ApiMarkReadResponse,
     ApiMediaContent,
     ApiMessageContent,
     ApiPutChunkResponse,
@@ -32,6 +33,7 @@ import type {
     PutChunkResponse,
     ChangeAdminResponse,
     RemoveParticipantResponse,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -44,6 +46,22 @@ import type { Principal } from "@dfinity/principal";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("SuccessNoChange" in candid) {
+        return "success_no_change";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }
 
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {

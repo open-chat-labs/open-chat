@@ -25,12 +25,17 @@ export type MarkReadEvents =
 const liveConfig: Partial<MachineOptions<MarkReadContext, MarkReadEvents>> = {
     services: {
         markMessagesRead: async (ctx, _) => {
-            if (ctx.chatSummary.kind === "direct_chat") {
-                if (ctx.ranges.length === 0) {
-                    return Promise.resolve("success");
-                } else {
+            if (ctx.ranges.length === 0) {
+                return Promise.resolve("success");
+            } else {
+                if (ctx.chatSummary.kind === "direct_chat") {
                     return ctx.serviceContainer.markDirectChatMessagesRead(
                         ctx.chatSummary.them,
+                        ctx.ranges
+                    );
+                } else if (ctx.chatSummary.kind === "group_chat") {
+                    return ctx.serviceContainer.markGroupChatMessagesRead(
+                        ctx.chatSummary.chatId,
                         ctx.ranges
                     );
                 }
@@ -67,7 +72,9 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
                 onDone: {
                     target: "idle",
                     actions: assign((ctx, ev: DoneInvokeEvent<MarkReadResponse>) => {
-                        console.log("Marked messages read: ", ctx.ranges);
+                        if (ctx.ranges.length > 0) {
+                            console.log("marked read: ", ctx.ranges);
+                        }
                         return ev.data === "success" || ev.data === "success_no_change"
                             ? { ranges: [] }
                             : {};

@@ -8,6 +8,8 @@ import type {
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
@@ -141,6 +143,14 @@ export class GroupClientMock implements IGroupClient {
     }
 
     removeParticipant(_userId: string): Promise<RemoveParticipantResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");

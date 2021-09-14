@@ -12,7 +12,6 @@
     import {
         createDirectMessage,
         createGroupMessage,
-        latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
@@ -33,6 +32,9 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
+            // todo - this is not correct currently
+            // if we enter messages too quickly we will get the same index repeatedly
+            // we need to optimistically update the latestMessage on the chat summary
             const nextIndex = latestLoadedMessageIndex($machine.context.chatSummary) + 1;
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {

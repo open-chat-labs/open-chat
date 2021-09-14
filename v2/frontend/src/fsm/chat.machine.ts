@@ -417,6 +417,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 add: ev.type === "ADD_PARTICIPANT",
                                 user: ctx.user,
                                 error: undefined,
+                                usersToAdd: [],
                             };
                         },
                         onDone: {

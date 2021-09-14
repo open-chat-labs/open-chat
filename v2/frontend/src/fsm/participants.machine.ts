@@ -6,6 +6,7 @@ import type {
     GroupChatSummary,
     ChangeAdminResponse,
     RemoveParticipantResponse,
+    ParticipantRole,
 } from "../domain/chat/chat";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
@@ -18,6 +19,7 @@ export interface ParticipantsContext {
     userLookup: UserLookup;
     add: boolean; // used to track whether we go straight into the adding_participant state
     error?: Error;
+    usersToAdd: UserSummary[];
     user?: UserSummary;
 }
 
@@ -28,6 +30,8 @@ export type ParticipantsEvents =
     | { type: "MAKE_ADMIN"; data: string }
     | { type: "ADD_PARTICIPANT" }
     | { type: "HIDE_PARTICIPANTS" }
+    | { type: "SAVE_PARTICIPANTS" }
+    | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin" }
@@ -58,11 +62,12 @@ const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents
             }
             throw new Error("Unexpected event type provided to ParticipantsMachine.makeAdmin");
         },
-        addParticipant: (ctx, ev) => {
-            if (ev.type === "done.invoke.userSearchMachine") {
-                return ctx.serviceContainer.addParticipants(ctx.chatSummary.chatId, [
-                    ev.data.userId,
-                ]);
+        addParticipants: (ctx, _ev) => {
+            if (ctx.usersToAdd.length > 0) {
+                return ctx.serviceContainer.addParticipants(
+                    ctx.chatSummary.chatId,
+                    ctx.usersToAdd.map((u) => u.userId)
+                );
             }
             throw new Error("Unexpected event type provided to ParticipantsMachine.addParticipant");
         },
@@ -78,7 +83,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
         REMOVE_PARTICIPANT: ".removing_participant",
         DISMISS_AS_ADMIN: ".dismissing_participant",
         MAKE_ADMIN: ".making_admin",
-        ADD_PARTICIPANT: ".adding_participant",
+        ADD_PARTICIPANT: ".adding_participants",
     },
     states: {
         done: { type: "final" },
@@ -86,7 +91,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
             always: [
                 {
                     cond: (ctx, _) => ctx.add,
-                    target: "adding_participant",
+                    target: "adding_participants",
                 },
                 {
                     cond: (ctx, _) => !ctx.add,
@@ -95,10 +100,20 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
             ],
         },
         idle: { id: "showing_participants_idle", entry: assign((_ctx, _ev) => ({ add: false })) },
-        adding_participant: {
-            initial: "choosing_participant",
+        adding_participants: {
+            initial: "choosing_participants",
             states: {
-                choosing_participant: {
+                choosing_participants: {
+                    on: {
+                        SAVE_PARTICIPANTS: "saving_participants",
+                        UNSELECT_PARTICIPANT: {
+                            actions: assign((ctx, ev) => ({
+                                usersToAdd: ctx.usersToAdd.filter(
+                                    (u) => u.userId !== ev.data.userId
+                                ),
+                            })),
+                        },
+                    },
                     invoke: {
                         id: "userSearchMachine",
                         src: userSearchMachine,
@@ -111,7 +126,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                             };
                         },
                         onDone: {
-                            target: "saving_participant",
+                            target: "choosing_participants",
                             actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
                                 if (ctx.chatSummary.kind === "group_chat" && ev.data) {
                                     return {
@@ -119,6 +134,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                                             ...ctx.userLookup,
                                             [ev.data.userId]: ev.data,
                                         },
+                                        usersToAdd: [ev.data, ...ctx.usersToAdd],
                                     };
                                 }
                                 return {};
@@ -135,48 +151,45 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
                         },
                     },
                 },
-                saving_participant: {
-                    // todo - we want to come up with a strategy that treats *all* updates as succesfull until
-                    // proven otherwise rather than waiting. Otherwise everything is going to feel very slow.
-                    // so the pattern will be invoke + entry action to update state as if successful. OnDone for
-                    // the invoke, if not successful, revert the state change
-                    // the problem with this is that we cannot have a significant *state* that means the operation
-                    // is in progress. But then we potentially don't need one.
+                saving_participants: {
                     invoke: {
-                        id: "addParticipant",
-                        src: "addParticipant",
+                        id: "addParticipants",
+                        src: "addParticipants",
                         onDone: {
                             // todo - here we need to check for any failure and if it fails,
                             // remove the participant we added and toast (and log) the error
-                            target: "choosing_participant",
+                            target: "#showing_participants_idle",
+                            actions: assign((_ctx, _ev) => ({ usersToAdd: [] })),
                         },
                         onError: {
                             internal: true,
                             target: "..unexpected_error",
                             actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
+                                assign((ctx, ev) => ({
+                                    error: ev.data,
+                                    chatSummary: {
+                                        ...ctx.chatSummary,
+                                        participants: ctx.chatSummary.participants.filter((p) => {
+                                            !ctx.usersToAdd.map((u) => u.userId).includes(p.userId);
+                                        }),
+                                    },
+                                })),
                             ],
                         },
                     },
-                    entry: assign((ctx, ev) => {
-                        // todo - optimistically add the participant assuming the api call will work
-                        if (ev.type === "done.invoke.userSearchMachine") {
-                            return {
-                                chatSummary: {
-                                    ...ctx.chatSummary,
-                                    participants: [
-                                        {
-                                            userId: ev.data.userId,
-                                            role: "standard",
-                                        },
-                                        ...ctx.chatSummary.participants,
-                                    ],
-                                },
-                            };
-                        }
-                        return {};
+                    entry: assign((ctx, _ev) => {
+                        return {
+                            chatSummary: {
+                                ...ctx.chatSummary,
+                                participants: [
+                                    ...ctx.usersToAdd.map((u) => ({
+                                        userId: u.userId,
+                                        role: "standard" as ParticipantRole,
+                                    })),
+                                    ...ctx.chatSummary.participants,
+                                ],
+                            },
+                        };
                     }),
                 },
             },

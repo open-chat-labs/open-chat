@@ -8,7 +8,7 @@
 </script>
 
 <Panel right>
-    {#if $machine.matches("adding_participant")}
+    {#if $machine.matches("adding_participants")}
         <AddParticipant {machine} />
     {:else}
         <Participants {machine} on:blockUser on:chatWith />

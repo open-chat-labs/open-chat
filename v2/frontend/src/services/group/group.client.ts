@@ -8,6 +8,8 @@ import type {
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
+    MarkReadResponse,
+    MessageIndexRange,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -16,6 +18,7 @@ import {
     changeAdminResponse,
     sendMessageResponse,
     removeParticipantResponse,
+    markReadResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -108,5 +111,14 @@ export class GroupClient extends CandidService implements IGroupClient {
                     sendMessageResponse
                 );
             });
+    }
+
+    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return this.handleResponse(
+            this.groupService.mark_read({
+                message_ranges: ranges,
+            }),
+            markReadResponse
+        );
     }
 }

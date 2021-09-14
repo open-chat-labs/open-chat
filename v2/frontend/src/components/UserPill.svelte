@@ -31,6 +31,7 @@
         margin-right: $sp3;
         display: inline-block;
         width: 60px;
+        color: var(--section-txt);
 
         .username {
             @include ellipsis();
