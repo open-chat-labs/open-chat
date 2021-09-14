@@ -454,8 +454,8 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
     return events[0]?.index;
 }
 
-export function latestLoadedMessageIndex(chat: ChatSummary): number {
-    return chat.latestMessage?.event.messageIndex ?? 0;
+export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
+    return chat.latestMessage?.event.messageIndex;
 }
 
 export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {

@@ -81,10 +81,6 @@
         flex: 0 0 57px;
     }
 
-    .pill {
-        display: inline-block;
-    }
-
     .participants {
         flex: 1;
         background-color: var(--section-bg);

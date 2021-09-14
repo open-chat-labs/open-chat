@@ -12,6 +12,7 @@
     import {
         createDirectMessage,
         createGroupMessage,
+        latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
@@ -35,7 +36,13 @@
             // todo - this is not correct currently
             // if we enter messages too quickly we will get the same index repeatedly
             // we need to optimistically update the latestMessage on the chat summary
-            const nextIndex = latestLoadedMessageIndex($machine.context.chatSummary) + 1;
+
+            // todo - we also have a problem for group chats with hidden history - we don't know what the index
+            // should be at all in that case
+            const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
+
+            console.log(nextIndex);
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
                 msg = createGroupMessage(
@@ -73,7 +80,7 @@
                     rollbar.error("Exception sending message", err);
                 });
 
-            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextIndex } });
+            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextEventIndex } });
             chatStore.set({
                 chatId: $machine.context.chatSummary.chatId,
                 event: "sending_message",
