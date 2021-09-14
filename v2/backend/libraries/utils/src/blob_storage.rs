@@ -47,6 +47,10 @@ impl BlobStorage {
         self.chunks.get(&(blob_id, chunk_index))
     }
 
+    pub fn exists(&self, blob_id: u128, chunk_index: u32) -> bool {
+        self.chunks.contains_key(&(blob_id, chunk_index))
+    }
+
     pub fn delete_blob(&mut self, blob_id: u128, blob_size: u32, chunk_size: u32) {
         let num_indexes = ((blob_size - 1) / chunk_size) + 1;
         for i in 0..num_indexes {
