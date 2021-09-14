@@ -15,14 +15,16 @@ fn mark_read(args: Args) -> Response {
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
-        let min_message_index = participant.min_visible_message_index;
-        let max_message_index = runtime_state.data.events.latest_message_index();
-        let has_changes = insert_ranges(
-            &mut participant.read_by_me,
-            &args.message_ranges,
-            min_message_index,
-            max_message_index,
-        );
+        let mut has_changes = false;
+        if let Some(max_message_index) = runtime_state.data.events.latest_message_index() {
+            let min_message_index = participant.min_visible_message_index;
+            has_changes = insert_ranges(
+                &mut participant.read_by_me,
+                &args.message_ranges,
+                min_message_index,
+                max_message_index,
+            );
+        }
         if has_changes {
             participant.read_by_me_updated = runtime_state.env.now();
             Success
