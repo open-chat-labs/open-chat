@@ -1,3 +1,4 @@
+pub mod c2c_search_messages;
 pub mod events;
 pub mod events_by_index;
 pub mod http_request;

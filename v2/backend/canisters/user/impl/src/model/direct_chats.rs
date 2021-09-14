@@ -32,7 +32,7 @@ impl DirectChats {
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),
-            Vacant(e) => e.insert(DirectChat::new(chat_id, their_user_id, args.now)),
+            Vacant(e) => e.insert(DirectChat::new(their_user_id, args.now)),
         };
 
         let (event_index, message) = chat.events.push_message(args);

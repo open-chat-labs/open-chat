@@ -19,7 +19,6 @@ impl ChatSummary {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
-    pub chat_id: ChatId,
     pub them: UserId,
     pub latest_message: EventWrapper<message::DirectMessage>,
     pub latest_event_index: EventIndex,
