@@ -3306,6 +3306,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "range-set",
+ "search",
  "serde",
  "types",
  "user_canister",

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::GroupMessageMatch;
+use types::CombinedMessageMatch;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -14,10 +14,9 @@ pub enum Response {
     InvalidTerm,
     TermTooLong(u8),
     TermTooShort(u8),
-    NotInGroup,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub matches: Vec<GroupMessageMatch>,
+    pub matches: Vec<CombinedMessageMatch>,
 }

@@ -248,7 +248,7 @@ type SearchMessagesResponse =
 
 type SearchMessagesSuccessResult =
     record {
-        matches: vec MessageMatch;
+        matches: vec GroupMessageMatch;
     };
 
 type MetricsArgs =

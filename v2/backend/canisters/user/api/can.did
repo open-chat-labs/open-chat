@@ -212,6 +212,27 @@ type EventsByIndexResponse =
         ChatNotFound;
     }; 
 
+type SearchMessagesArgs =
+    record {
+        user_id: UserId;
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchMessagesResponse =
+    variant {
+        Success: SearchMessagesSuccessResult;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+        ChatNotFound;
+    }; 
+
+type SearchMessagesSuccessResult =
+    record {
+        matches: vec UserMessageMatch;
+    };
+
 type SearchAllMessagesArgs =
     record {
         search_term: text;
@@ -220,15 +241,16 @@ type SearchAllMessagesArgs =
 
 type SearchAllMessagesResponse =
     variant {
-        Success: record {
-            matches: vec record {
-                is_direct: bool;
-                chat: CanisterId;
-                message: DirectMessage;
-            };
-        };
-        Failure;
+        Success: SearchAllMessagesSuccessResult;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
     }; 
+
+type SearchAllMessagesSuccessResult =
+    record {
+        matches: vec CombinedMessageMatch;
+    };
 
 type MetricsArgs =
     record {
@@ -274,7 +296,11 @@ service: (InitArgs) -> {
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
-    // Use ICQC to search all group chats too - use Tantivy. How to resolve filter/sort/page across multiple groups?
-    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
+
+    // Search just the messages of one direct chat
+    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;
+
+    // Use ICQC to search all group chats too - use Tantivy
+    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
 }
