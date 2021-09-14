@@ -1,5 +1,6 @@
 use crate::model::events::Events;
 use range_set::RangeSet;
+use std::cmp::max;
 use std::ops::RangeInclusive;
 use types::{ChatId, TimestampMillis, UserId};
 
@@ -29,6 +30,9 @@ impl DirectChat {
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        self.events.last().timestamp
+        max(
+            self.events.last().timestamp,
+            max(self.read_by_me_updated, self.read_by_them_updated),
+        )
     }
 }

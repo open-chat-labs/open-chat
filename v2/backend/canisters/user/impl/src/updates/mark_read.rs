@@ -15,14 +15,15 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let chat_id = ChatId::from(args.user_id);
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        let min_message_index = MessageIndex::default();
-        let max_message_index = chat.events.latest_message_index();
-        let has_changes = insert_ranges(
-            &mut chat.read_by_me,
-            &args.message_ranges,
-            min_message_index,
-            max_message_index,
-        );
+        let mut has_changes = false;
+        if let Some(max_message_index) = chat.events.latest_message_index() {
+            has_changes = insert_ranges(
+                &mut chat.read_by_me,
+                &args.message_ranges,
+                MessageIndex::default(),
+                max_message_index,
+            );
+        }
         if !has_changes {
             SuccessNoChange
         } else {
