@@ -1,9 +1,8 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use candid::Principal;
-use serde_bytes::ByteBuf;
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use types::{CanisterId, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
@@ -44,7 +43,6 @@ pub struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
-    pub blobs: HashMap<String, Vec<ByteBuf>>,
     pub blocked_users: HashSet<UserId>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -65,7 +63,6 @@ impl Data {
             owner,
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
-            blobs: HashMap::new(),
             blocked_users: HashSet::new(),
             user_index_canister_id,
             group_index_canister_id,
