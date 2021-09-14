@@ -222,6 +222,11 @@ export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
 }
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'cycles_balance' : bigint,

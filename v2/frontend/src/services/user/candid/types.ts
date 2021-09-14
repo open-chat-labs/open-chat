@@ -20,9 +20,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
-export type ChunkResponse = { 'NotFound' : null } |
-  { 'Success' : { 'bytes' : Array<number> } };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -238,6 +235,11 @@ export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
 }
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -306,6 +308,12 @@ export interface PutChunkArgs {
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
+export interface PutFirstChunkArgs {
+  'total_chunks' : number,
+  'blob_id' : bigint,
+  'mime_type' : string,
+  'bytes' : Array<number>,
+}
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [ChatId],
   'message_index' : MessageIndex,
@@ -457,7 +465,6 @@ export interface Version {
 }
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
-  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
@@ -468,6 +475,7 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
+  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
     >,

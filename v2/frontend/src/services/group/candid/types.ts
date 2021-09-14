@@ -47,9 +47,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
-export type ChunkResponse = { 'NotFound' : null } |
-  { 'Success' : { 'bytes' : Array<number> } };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -230,6 +227,11 @@ export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
 }
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -292,9 +294,17 @@ export interface PutChunkArgs {
   'bytes' : Array<number>,
   'index' : number,
 }
-export type PutChunkResponse = { 'Full' : null } |
+export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
+  { 'Full' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
+export interface PutFirstChunkArgs {
+  'total_chunks' : number,
+  'blob_id' : bigint,
+  'mime_type' : string,
+  'bytes' : Array<number>,
+}
 export interface RemoveAdminArgs { 'user_id' : UserId }
 export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -314,12 +324,12 @@ export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
 }
-export type SearchMessagesResponse = {
-    'Success' : {
-      'matches' : Array<{ 'score' : number, 'message' : GroupMessage }>,
-    }
-  } |
-  { 'Failure' : null };
+export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'Success' : SearchMessagesSuccessResult } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null } |
+  { 'NotInGroup' : null };
+export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,
@@ -445,7 +455,6 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
-  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
       EventsByIndexResponse
@@ -454,6 +463,7 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
+  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
