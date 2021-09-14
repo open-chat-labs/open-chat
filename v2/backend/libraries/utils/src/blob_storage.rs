@@ -11,7 +11,7 @@ const MAX_CHUNK_SIZE: u64 = 1024 * 1024; // 1MB
 pub struct BlobStorage {
     blobs: HashMap<u128, Blob>,
     pending_blobs: HashMap<u128, PendingBlob>,
-    orphan_chunks: HashMap<u128, Vec<(u32, ByteBuf)>>,
+    orphan_chunks: HashMap<u128, HashMap<u32, ByteBuf>>,
     total_bytes: u64,
     max_bytes: u64,
 }
@@ -44,13 +44,18 @@ impl PendingBlob {
             created: now,
             mime_type,
             chunks_remaining: total_chunks,
-            chunks: Vec::with_capacity(total_chunks as usize),
+            chunks: vec![ByteBuf::default(); total_chunks as usize],
         }
     }
 
-    pub fn add_chunk(&mut self, index: u32, data: ByteBuf) {
-        self.chunks[index as usize] = data;
-        self.chunks_remaining -= 1;
+    pub fn add_chunk(&mut self, index: usize, data: ByteBuf) -> bool {
+        if self.chunks[index].is_empty() {
+            self.chunks[index] = data;
+            self.chunks_remaining -= 1;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn is_complete(&self) -> bool {
@@ -124,7 +129,7 @@ impl BlobStorage {
 
                 if let Some(existing_chunks) = self.orphan_chunks.remove(&blob_id) {
                     for (index, chunk) in existing_chunks.into_iter() {
-                        pending_blob.add_chunk(index, chunk);
+                        pending_blob.add_chunk(index as usize, chunk);
                     }
                 }
 
@@ -161,10 +166,24 @@ impl BlobStorage {
 
         if let Occupied(mut e) = self.pending_blobs.entry(blob_id) {
             let pending_blob = e.get_mut();
-            pending_blob.add_chunk(chunk_index, data);
+            if !pending_blob.add_chunk(chunk_index as usize, data) {
+                return PutChunkResult::ChunkAlreadyExists;
+            }
             if pending_blob.is_complete() {
                 let blob = Blob::from(e.remove(), now);
                 self.blobs.insert(blob_id, blob);
+            }
+        } else {
+            match self.orphan_chunks.entry(blob_id) {
+                Occupied(e) => {
+                    if e.get().contains_key(&chunk_index) {
+                        return PutChunkResult::ChunkAlreadyExists;
+                    }
+                    e.into_mut().insert(chunk_index, data);
+                }
+                Vacant(e) => {
+                    e.insert(vec![(chunk_index, data)].into_iter().collect());
+                }
             }
         }
 
@@ -182,15 +201,15 @@ impl BlobStorage {
             .map_or(false, |b| b.chunks.len() as u32 > chunk_index)
     }
 
-    pub fn delete_blob(&mut self, blob_id: u128) -> bool {
+    pub fn delete_blob(&mut self, blob_id: &u128) -> bool {
         if let Some(bytes_removed) = self
             .blobs
-            .remove(&blob_id)
+            .remove(blob_id)
             .map(|b| count_bytes(b.chunks.iter()))
-            .or_else(|| self.pending_blobs.remove(&blob_id).map(|b| count_bytes(b.chunks.iter())))
+            .or_else(|| self.pending_blobs.remove(blob_id).map(|b| count_bytes(b.chunks.iter())))
             .or_else(|| {
                 self.orphan_chunks
-                    .remove(&blob_id)
+                    .remove(blob_id)
                     .map(|b| count_bytes(b.iter().map(|(_, chunk)| chunk)))
             })
         {
@@ -212,4 +231,63 @@ impl BlobStorage {
 
 fn count_bytes<'a>(chunks: impl Iterator<Item = &'a ByteBuf>) -> u64 {
     chunks.map(|c| c.len()).sum::<usize>() as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::seq::SliceRandom;
+    use rand::thread_rng;
+    use std::cell::RefCell;
+
+    #[test]
+    fn when_adding_chunks_order_is_irrelevant() {
+        fn generate_chunk(index: usize) -> ByteBuf {
+            let vec: Vec<_> = (0..100).into_iter().map(|_| index as u8).collect();
+            ByteBuf::from(vec)
+        }
+
+        fn check_blob(blob: &Blob) {
+            assert_eq!(blob.chunks.len(), 5);
+
+            for chunk_index in 0..5 {
+                let chunk = &blob.chunks[chunk_index];
+                assert_eq!(chunk, &generate_chunk(chunk_index));
+            }
+        }
+
+        let blob_storage = RefCell::new(BlobStorage::new(10_000));
+
+        let mut actions: Vec<Box<dyn Fn() -> PutChunkResult>> = vec![
+            Box::new(|| {
+                blob_storage
+                    .borrow_mut()
+                    .put_first_chunk(1, "mime_type".to_string(), 5, generate_chunk(0), 1)
+            }),
+            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 1, generate_chunk(1), 2)),
+            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 2, generate_chunk(2), 3)),
+            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 3, generate_chunk(3), 4)),
+            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 4, generate_chunk(4), 5)),
+        ];
+
+        let mut rng = thread_rng();
+
+        for _ in 0..20 {
+            actions.shuffle(&mut rng);
+
+            for action in actions.iter() {
+                assert!(matches!(action(), PutChunkResult::Success));
+            }
+
+            assert!(blob_storage.borrow().pending_blobs.is_empty());
+            assert!(blob_storage.borrow().orphan_chunks.is_empty());
+            assert_eq!(blob_storage.borrow().total_bytes, 500);
+
+            check_blob(blob_storage.borrow().get_blob(&1).unwrap());
+
+            blob_storage.borrow_mut().delete_blob(&1);
+
+            assert_eq!(blob_storage.borrow().total_bytes, 0);
+        }
+    }
 }
