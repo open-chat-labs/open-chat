@@ -1,9 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::GroupMessageMatch;
+use types::{UserId, UserMessageMatch};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub search_term: String,
     pub max_results: u8,
 }
@@ -14,10 +15,10 @@ pub enum Response {
     InvalidTerm,
     TermTooLong(u8),
     TermTooShort(u8),
-    NotInGroup,
+    ChatNotFound,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub matches: Vec<GroupMessageMatch>,
+    pub matches: Vec<UserMessageMatch>,
 }
