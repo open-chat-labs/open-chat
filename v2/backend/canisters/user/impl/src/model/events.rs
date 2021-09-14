@@ -5,8 +5,8 @@ use types::*;
 
 pub struct Events {
     events: Vec<EventWrapper<DirectChatEventInternal>>,
-    latest_message_event_index: EventIndex,
-    latest_message_index: MessageIndex,
+    latest_message_event_index: Option<EventIndex>,
+    latest_message_index: Option<MessageIndex>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -36,8 +36,8 @@ impl Events {
     pub fn new(now: TimestampMillis) -> Events {
         let mut events = Events {
             events: Vec::new(),
-            latest_message_event_index: EventIndex::default(),
-            latest_message_index: MessageIndex::default(),
+            latest_message_event_index: None,
+            latest_message_index: None,
         };
 
         events.push_event(DirectChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -46,7 +46,7 @@ impl Events {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, DirectMessage) {
-        let message_index = self.latest_message_index.incr();
+        let message_index = self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr());
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,
@@ -62,8 +62,8 @@ impl Events {
     pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index.incr());
         if let DirectChatEventInternal::Message(m) = &event {
-            self.latest_message_index = m.message_index;
-            self.latest_message_event_index = event_index;
+            self.latest_message_index = Some(m.message_index);
+            self.latest_message_event_index = Some(event_index);
         }
         self.events.push(EventWrapper {
             index: event_index,
@@ -122,7 +122,9 @@ impl Events {
     }
 
     pub fn latest_message(&self) -> Option<EventWrapper<DirectMessage>> {
-        self.get_internal(self.latest_message_event_index)
+        let event_index = self.latest_message_event_index?;
+
+        self.get_internal(event_index)
             .map(|e| {
                 if let DirectChatEventInternal::Message(m) = &e.event {
                     Some(EventWrapper {
@@ -141,7 +143,7 @@ impl Events {
         self.events.last().unwrap()
     }
 
-    pub fn latest_message_index(&self) -> MessageIndex {
+    pub fn latest_message_index(&self) -> Option<MessageIndex> {
         self.latest_message_index
     }
 

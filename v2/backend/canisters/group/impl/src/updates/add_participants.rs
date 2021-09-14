@@ -125,8 +125,8 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
         min_visible_event_index = EventIndex::default();
         min_visible_message_index = MessageIndex::default();
     } else {
-        min_visible_event_index = runtime_state.data.events.last().index;
-        min_visible_message_index = runtime_state.data.events.latest_message_index().incr();
+        min_visible_event_index = runtime_state.data.events.last().index.incr();
+        min_visible_message_index = runtime_state.data.events.next_message_index();
     };
 
     for (user_id, principal) in users.iter().cloned() {
