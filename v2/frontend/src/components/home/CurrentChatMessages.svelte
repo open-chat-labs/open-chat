@@ -28,12 +28,15 @@
         getFirstUnreadMessageIndex,
         getUnreadMessages,
         groupEvents,
+        messageIsReadByMe,
+        messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
+    const MESSAGE_READ_THRESHOLD = 500;
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let unconfirmed: Set<bigint>;
@@ -46,6 +49,7 @@
     let currentChatId = "";
     let fromBottom = 0;
     let observer: IntersectionObserver;
+    let messageReadTimers: Record<number, NodeJS.Timer> = {};
 
     onMount(() => {
         const options = {
@@ -56,7 +60,27 @@
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
-                console.log("IntersectionChanged: ", entry.target.id, entry.isIntersecting);
+                const idAttr = entry.target.attributes.getNamedItem("data-index");
+                const idx = idAttr ? parseInt(idAttr.value, 10) : undefined;
+                if (idx !== undefined) {
+                    if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                        const timer = setTimeout(() => {
+                            machine.send({
+                                type: "MESSAGE_READ_BY_ME",
+                                data: {
+                                    chatId: $machine.context.chatSummary.chatId,
+                                    messageIndex: idx,
+                                },
+                            });
+                            delete messageReadTimers[idx];
+                        }, MESSAGE_READ_THRESHOLD);
+                        messageReadTimers[idx] = timer;
+                    }
+                    if (!entry.isIntersecting && messageReadTimers[idx] !== undefined) {
+                        clearTimeout(messageReadTimers[idx]);
+                        delete messageReadTimers[idx];
+                    }
+                }
             });
         }, options);
     });
@@ -254,6 +278,20 @@
         return true;
     }
 
+    function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message") {
+            return messageIsReadByThem($machine.context.chatSummary, evt.event);
+        }
+        return true;
+    }
+
+    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            return messageIsReadByMe($machine.context.chatSummary, evt.event);
+        }
+        return true;
+    }
+
     // then we need to integrate web rtc
 </script>
 
@@ -276,6 +314,8 @@
                     <ChatEvent
                         {observer}
                         confirmed={isConfirmed(evt)}
+                        readByThem={isReadByThem(evt)}
+                        readByMe={isReadByMe(evt)}
                         identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}

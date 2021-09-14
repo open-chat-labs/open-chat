@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure, sendParent } from "xstate/lib/actions";
+import {
+    ActorRefFrom,
+    createMachine,
+    DoneInvokeEvent,
+    MachineConfig,
+    MachineOptions,
+} from "xstate";
+import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -27,6 +33,7 @@ import { participantsMachine } from "./participants.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
+import type { MarkReadMachine } from "./markread.machine";
 
 const PAGE_SIZE = 20;
 
@@ -40,6 +47,7 @@ export interface ChatContext {
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext<ReplyContext>;
     fileToAttach?: MessageContent;
+    markMessages: ActorRefFrom<MarkReadMachine>;
 }
 
 type LoadEventsResponse = {
@@ -55,6 +63,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
+    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: { message: GroupMessage | DirectMessage; index: number } }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
@@ -340,6 +349,18 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: assign((_, _ev) => ({
                         fileToAttach: undefined,
                     })),
+                },
+                MESSAGE_READ_BY_ME: {
+                    // we need to send this modified chat summary to the parent machine
+                    // so that it can sync it with the chat poller - nasty
+                    // we also need to seend it to the mark read machine to periodically ping off to the server
+                    actions: pure((ctx, ev) => {
+                        ctx.markMessages.send({
+                            type: "MESSAGE_READ_BY_ME",
+                            data: ev.data.messageIndex,
+                        });
+                        return sendParent<ChatContext, ChatEvents>(ev);
+                    }),
                 },
             },
             states: {

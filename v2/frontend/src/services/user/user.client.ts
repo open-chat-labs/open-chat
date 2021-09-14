@@ -14,6 +14,8 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -23,6 +25,7 @@ import {
     getEventsResponse,
     getUpdatesResponse,
     leaveGroupResponse,
+    markReadResponse,
     sendMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
@@ -176,6 +179,16 @@ export class UserClient extends CandidService implements IUserClient {
                 chat_id: Principal.fromText(chatId),
             }),
             leaveGroupResponse
+        );
+    }
+
+    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return this.handleResponse(
+            this.userService.mark_read({
+                user_id: Principal.fromText(userId),
+                message_ranges: ranges,
+            }),
+            markReadResponse
         );
     }
 }

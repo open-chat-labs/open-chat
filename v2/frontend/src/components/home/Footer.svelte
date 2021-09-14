@@ -13,6 +13,7 @@
         createDirectMessage,
         createGroupMessage,
         latestLoadedEventIndex,
+        latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
@@ -32,7 +33,7 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
-            const nextIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
+            const nextIndex = latestLoadedMessageIndex($machine.context.chatSummary) + 1;
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
                 msg = createGroupMessage(

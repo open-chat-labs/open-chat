@@ -7,11 +7,15 @@ import type {
     GroupChatSummaryUpdates,
 } from "./chat";
 import {
+    compareMessageRange,
     getFirstUnreadMessageIndex,
     getParticipantsString,
     getUnreadMessages,
+    indexIsInRanges,
     mergeChatUpdates,
+    mergeMessageIndexRanges,
     newMessageId,
+    setMessageRead,
     userIdsFromChatSummaries,
 } from "./chat.utils";
 
@@ -109,6 +113,172 @@ function participant(id: string): Participant {
         userId: id,
     };
 }
+
+describe("sorting message index ranges", () => {
+    test("sort by from first", () => {
+        expect(
+            [
+                { from: 10, to: 100 },
+                { from: 5, to: 100 },
+                { from: 3, to: 100 },
+            ].sort(compareMessageRange)
+        ).toEqual([
+            { from: 3, to: 100 },
+            { from: 5, to: 100 },
+            { from: 10, to: 100 },
+        ]);
+    });
+    test("sort by to if from are equal", () => {
+        expect(
+            [
+                { from: 10, to: 80 },
+                { from: 10, to: 60 },
+                { from: 10, to: 40 },
+            ].sort(compareMessageRange)
+        ).toEqual([
+            { from: 10, to: 40 },
+            { from: 10, to: 60 },
+            { from: 10, to: 80 },
+        ]);
+    });
+});
+
+describe("merging message index ranges", () => {
+    test("with no ranges", () => {
+        expect(mergeMessageIndexRanges([], [])).toEqual([]);
+    });
+    test("with no overlaps", () => {
+        expect(
+            mergeMessageIndexRanges(
+                [
+                    { from: 25, to: 30 },
+                    { from: 0, to: 20 },
+                ],
+                [{ from: 40, to: 50 }]
+            )
+        ).toEqual([
+            { from: 0, to: 20 },
+            { from: 25, to: 30 },
+            { from: 40, to: 50 },
+        ]);
+    });
+    test("with overlaps", () => {
+        expect(
+            mergeMessageIndexRanges(
+                [
+                    { from: 25, to: 30 },
+                    { from: 0, to: 20 },
+                ],
+                [
+                    { from: 40, to: 50 },
+                    { from: 10, to: 28 },
+                    { from: 29, to: 35 },
+                ]
+            )
+        ).toEqual([
+            { from: 0, to: 35 },
+            { from: 40, to: 50 },
+        ]);
+    });
+});
+
+describe("index is in ranges", () => {
+    test("where index is not in ranges", () => {
+        expect(indexIsInRanges(16, [{ from: 11, to: 13 }])).toEqual(false);
+    });
+    test("where index is in ranges", () => {
+        expect(
+            indexIsInRanges(16, [
+                { from: 11, to: 13 },
+                { from: 15, to: 20 },
+            ])
+        ).toEqual(true);
+    });
+    test("where there are no ranges", () => {
+        expect(indexIsInRanges(16, [])).toEqual(false);
+    });
+});
+
+describe("setting message read by me", () => {
+    test("where we have no messages read", () => {
+        expect(setMessageRead(defaultDirectChat, 10).readByMe).toEqual([{ from: 10, to: 10 }]);
+    });
+
+    test("where new index is within an existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            25
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 20, to: 30 }]);
+    });
+
+    test("where new index is fully below all existing ranges", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            10
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 10, to: 10 },
+            { from: 20, to: 30 },
+        ]);
+    });
+    test("where new index is contiguous with lower bound of existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            19
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 19, to: 30 }]);
+    });
+    test("where new index is contiguous with upper bound of existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            31
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 20, to: 31 }]);
+    });
+    test("where new index is beyond final range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            35
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 20, to: 30 },
+            { from: 35, to: 35 },
+        ]);
+    });
+    test("where new index is between existing ranges", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 0, to: 10 },
+                    { from: 20, to: 30 },
+                ],
+            },
+            15
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 0, to: 10 },
+            { from: 15, to: 15 },
+            { from: 20, to: 30 },
+        ]);
+    });
+});
 
 describe("getting first unread message index", () => {
     test("where we have read everything", () => {

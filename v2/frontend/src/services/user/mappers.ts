@@ -22,6 +22,7 @@ import type {
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiLeaveGroupResponse,
+    ApiMarkReadResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -47,10 +48,24 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("SuccessNoChange" in candid) {
+        return "success_no_change";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
+}
 
 export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
     if ("Success" in candid) {

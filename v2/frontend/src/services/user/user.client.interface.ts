@@ -11,6 +11,8 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MarkReadResponse,
+    MessageIndexRange,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
@@ -29,4 +31,5 @@ export interface IUserClient {
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
+    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
 }

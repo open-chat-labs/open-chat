@@ -30,7 +30,6 @@
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import type { Identity } from "@dfinity/agent";
-    import { messageIsRead } from "../../domain/chat/chat.utils";
     const dispatch = createEventDispatcher();
 
     export let identity: Identity;
@@ -43,10 +42,10 @@
     export let timestamp: bigint;
     export let last: boolean;
     export let confirmed: boolean;
+    export let readByThem: boolean;
+    export let readByMe: boolean;
     export let observer: IntersectionObserver;
 
-    // we assume that a message cannot possibly be read if it is unconfirmed
-    let read: boolean = confirmed && messageIsRead(chatSummary, msg);
     let msgElement: HTMLElement;
 
     let senderId = getSenderId();
@@ -59,9 +58,20 @@
     afterUpdate(() => {
         // todo - keep an eye on this
         console.log("updating ChatMessage component");
+
+        if (readByMe) {
+            observer.unobserve(msgElement);
+        }
     });
 
-    onMount(() => observer.observe(msgElement));
+    onMount(() => {
+        if (!readByMe) {
+            // todo - leaving this console log here for now just to make sure we are not *over* observing
+            console.log("beginning to observe: ", msg.messageIndex);
+            observer.observe(msgElement);
+        } else {
+        }
+    });
 
     onDestroy(() => observer.unobserve(msgElement));
 
@@ -114,22 +124,20 @@
     function replyPrivately() {
         dispatch("replyPrivatelyTo", createReplyContext(true));
     }
-
-    // todo - I think perhaps ChatMessageContent cannot make all of the decisions about rendering the content
-    // ideally we want to make decisions at this level about padding and stuff based on the content type
-    // e.g. image / video with no caption should fill the whole chat bubble
 </script>
 
 <div
     bind:this={msgElement}
     class="chat-message-wrapper"
     class:me
+    data-index={msg.messageIndex}
     id={`message-${msg.messageIndex}`}>
     <div
         class="chat-message"
         class:fill={fillMessage(msg)}
         class:me
         class:last
+        class:readByMe
         class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
             <RepliesTo
@@ -156,7 +164,7 @@
                 {toShortTimeString(new Date(Number(timestamp)))}
             </span>
             {#if me && confirmed}
-                {#if read}
+                {#if readByThem}
                     <DoubleTick />
                 {:else}
                     <Tick />
@@ -298,6 +306,10 @@
             .menu-icon {
                 opacity: 0.6;
             }
+        }
+
+        &:not(.readByMe) {
+            box-shadow: 0 0 0 5px yellow;
         }
 
         &.last {

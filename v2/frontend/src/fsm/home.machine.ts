@@ -19,7 +19,11 @@ import type {
     GroupChatSummary,
     ReplyContext,
 } from "../domain/chat/chat";
-import { updateArgsFromChats, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import {
+    setMessageRead,
+    updateArgsFromChats,
+    userIdsFromChatSummaries,
+} from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
@@ -29,6 +33,7 @@ import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { groupMachine, nullGroup } from "./group.machine";
+import { markReadMachine } from "./markread.machine";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -64,6 +69,7 @@ export type HomeEvents =
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
+    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -309,9 +315,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         const chatSummary = ctx.chatSummaries.find(
                             (c) => c.chatId === ev.data.chatId
                         );
-                        // const chatActor = ctx.chatsIndex[key];
                         if (chatSummary) {
-                            // if (!chatActor) {
                             return {
                                 selectedChat: chatSummary,
                                 replyingTo: undefined,
@@ -334,23 +338,19 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 ? Number(ev.data.messageIndex)
                                                 : undefined,
                                             replyingTo: ctx.replyingTo,
+                                            markMessages: spawn(
+                                                markReadMachine.withContext({
+                                                    serviceContainer: ctx.serviceContainer!,
+                                                    chatSummary,
+                                                    ranges: [],
+                                                })
+                                            ),
                                         }),
                                         `chat-${key}`
                                     ),
                                 },
                             };
                         }
-                        // else {
-                        //     // if we *have* got a chat actor already then we still need to tell it if
-                        //     // we want to focus a particular message index
-                        //     if (ev.data.messageIndex) {
-                        //         chatActor.send({
-                        //             type: "GO_TO_MESSAGE_INDEX",
-                        //             data: Number(ev.data.messageIndex),
-                        //         });
-                        //     }
-                        // }
-                        // }
                         return { selectedChat: chatSummary };
                     }),
                 },
@@ -388,6 +388,51 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         return {
                             blockedUsers: ctx.blockedUsers,
                         };
+                    }),
+                },
+                MESSAGE_READ_BY_ME: {
+                    // this is fairly horrific, but it seems to be what we have to do
+                    // need to think about what this is a symptom of .....
+                    // basically we have multiple copies of the same data that need to
+                    // be synchronised and we need to get rid of that somehow.
+                    actions: pure((ctx, ev) => {
+                        const actor = ctx.chatsIndex[ev.data.chatId];
+                        if (actor) {
+                            let chat: ChatSummary | undefined = undefined;
+                            const chatSummaries = ctx.chatSummaries.map((c) => {
+                                if (c.chatId === ev.data.chatId) {
+                                    chat = setMessageRead(c, ev.data.messageIndex);
+                                    return chat;
+                                }
+                                return c;
+                            });
+
+                            const actions = [
+                                // update the chat summaries
+                                assign<HomeContext, HomeEvents>({
+                                    chatSummaries,
+                                }),
+                                // ping the update back to the relavant chat machine
+                                send(
+                                    {
+                                        type: "CHAT_UPDATED",
+                                        data: chat,
+                                    },
+                                    { to: actor.id }
+                                ),
+                                // sync the update to the chat poller
+                                send<HomeContext, HomeEvents>(
+                                    (ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }),
+                                    {
+                                        to: "updateChatsPoller",
+                                    }
+                                ),
+                            ];
+                            return actions;
+                        }
+                        throw new Error(
+                            "We received a message from an actor but we couldn't find the actor??"
+                        );
                     }),
                 },
                 REPLY_PRIVATELY_TO: {

@@ -21,6 +21,8 @@
     export let userLookup: UserLookup;
     export let identity: Identity;
     export let confirmed: boolean;
+    export let readByThem: boolean;
+    export let readByMe: boolean;
     export let observer: IntersectionObserver;
 </script>
 
@@ -28,6 +30,8 @@
     <ChatMessage
         {observer}
         {confirmed}
+        {readByMe}
+        {readByThem}
         {identity}
         {chatSummary}
         {user}

@@ -396,3 +396,5 @@ export type BlockUserResponse = "success";
 export type UnblockUserResponse = "success";
 
 export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
+
+export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found";

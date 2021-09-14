@@ -101,17 +101,75 @@ export function getUnreadMessages(chat: ChatSummary): number {
     return latestMessageIndex - lastRead + unread;
 }
 
-export function messageIsRead(
+export function indexIsInRanges(index: number, ranges: MessageIndexRange[]): boolean {
+    return ranges.reduce<boolean>((agg, { from, to }) => {
+        if (!agg && index >= from && index <= to) return true;
+        return agg;
+    }, false);
+}
+
+export function insertIndexIntoRanges(
+    index: number,
+    ranges: MessageIndexRange[]
+): MessageIndexRange[] {
+    if (ranges.length === 0) {
+        return [{ from: index, to: index }];
+    }
+    return ranges.reduce<MessageIndexRange[]>((agg, range, i) => {
+        // if the index is in an existing range, do nothing
+        if (index >= range.from && index <= range.to) {
+            agg.push(range);
+        }
+
+        // if the index falls *before* the current range, create a new range
+        if (index < range.from) {
+            // if it is contiguous with the current range, extend that range
+            if (index === range.from - 1) {
+                agg.push({ from: index, to: range.to });
+            } else {
+                // otherwise create a new range *before* the current range
+                agg.push({ from: index, to: index });
+                agg.push(range);
+            }
+        }
+
+        // if the index falls *after* the current range
+        if (index > range.to) {
+            // if it is contiguous with the current range on the upper bound, extend previous
+            if (index === range.to + 1) {
+                agg.push({ from: range.from, to: index });
+            } else if (i === ranges.length - 1) {
+                // otherwise, if this is the last range, create a new range
+                agg.push(range);
+                agg.push({ from: index, to: index });
+            } else {
+                agg.push(range);
+            }
+        }
+
+        return agg;
+    }, []);
+}
+
+export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSummary {
+    chat.readByMe = insertIndexIntoRanges(messageIndex, chat.readByMe);
+    return chat;
+}
+
+export function messageIsReadByThem(
     chat: ChatSummary,
     { messageIndex, kind }: GroupMessage | DirectMessage
 ): boolean {
     if (chat.kind === "group_chat") return true;
     if (kind === "group_message") return true;
+    return indexIsInRanges(messageIndex, chat.readByThem);
+}
 
-    return chat.readByThem.reduce<boolean>((agg, { from, to }) => {
-        if (!agg && (messageIndex >= from || messageIndex <= to)) return true;
-        return agg;
-    }, false);
+export function messageIsReadByMe(
+    chat: ChatSummary,
+    { messageIndex }: GroupMessage | DirectMessage
+): boolean {
+    return indexIsInRanges(messageIndex, chat.readByMe);
 }
 
 export function getFirstUnreadMessageIndex(chat: ChatSummary): number {
@@ -240,7 +298,9 @@ function mergeUpdatedDirectChat(
     chat: DirectChatSummary,
     updatedChat: DirectChatSummaryUpdates
 ): DirectChatSummary {
-    chat.readByMe = updatedChat.readByMe ?? chat.readByMe;
+    chat.readByMe = updatedChat.readByMe
+        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
+        : chat.readByMe;
     chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
@@ -283,13 +343,47 @@ function mergeParticipants(_: Participant | undefined, updated: Participant) {
     return updated;
 }
 
+export function compareMessageRange(a: MessageIndexRange, b: MessageIndexRange): number {
+    if (a.from === b.from) {
+        return a.to - b.to;
+    }
+    return a.from - b.from;
+}
+
+export function mergeMessageIndexRanges(
+    current: MessageIndexRange[],
+    inbound: MessageIndexRange[]
+): MessageIndexRange[] {
+    const merged = [...current, ...inbound];
+    merged.sort(compareMessageRange);
+
+    if (merged.length === 0) return merged;
+
+    const stack = [merged[0]];
+
+    for (let i = 1; i < merged.length; i++) {
+        const top = stack[0];
+
+        if (top.to < merged[i].from) {
+            stack.push(merged[i]);
+        } else if (top.to < merged[i].to) {
+            top.to = merged[i].to;
+            stack.pop();
+            stack.push(top);
+        }
+    }
+    return stack;
+}
+
 function mergeUpdatedGroupChat(
     chat: GroupChatSummary,
     updatedChat: GroupChatSummaryUpdates
 ): GroupChatSummary {
     chat.name = updatedChat.name ?? chat.name;
     chat.description = updatedChat.description ?? chat.description;
-    chat.readByMe = updatedChat.readByMe ?? chat.readByMe;
+    chat.readByMe = updatedChat.readByMe
+        ? mergeMessageIndexRanges(chat.readByMe, updatedChat.readByMe)
+        : chat.readByMe;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.lastUpdated = updatedChat.lastUpdated;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
@@ -357,6 +451,10 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
 
 export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[0]?.index;
+}
+
+export function latestLoadedMessageIndex(chat: ChatSummary): number {
+    return chat.latestMessage?.event.messageIndex ?? -1;
 }
 
 export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {

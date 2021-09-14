@@ -11,6 +11,8 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -90,5 +92,9 @@ export class CachingUserClient implements IUserClient {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.client.leaveGroup(chatId);
+    }
+
+    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return this.client.markMessagesRead(userId, ranges);
     }
 }

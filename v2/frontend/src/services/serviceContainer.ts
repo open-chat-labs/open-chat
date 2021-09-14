@@ -33,6 +33,8 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -233,5 +235,12 @@ export class ServiceContainer {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.userClient.leaveGroup(chatId);
+    }
+
+    markDirectChatMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[]
+    ): Promise<MarkReadResponse> {
+        return this.userClient.markMessagesRead(userId, ranges);
     }
 }

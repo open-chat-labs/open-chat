@@ -19,6 +19,8 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { mergeChatUpdates, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -376,6 +378,14 @@ export class UserClientMock implements IUserClient {
     }
 
     leaveGroup(_chatId: string): Promise<LeaveGroupResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
+        });
+    }
+
+    markMessagesRead(_userId: string, _ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");
