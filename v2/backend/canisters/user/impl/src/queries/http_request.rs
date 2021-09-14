@@ -5,7 +5,7 @@ use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::str::FromStr;
-use types::{StreamingStrategy, Token};
+use types::{HeaderField, StreamingStrategy, Token};
 use url::Url;
 use user_canister::http_request::*;
 
@@ -21,7 +21,10 @@ fn http_request(args: Args) -> Response {
         {
             return Response {
                 status_code: 200,
-                headers: Vec::new(),
+                headers: vec![
+                    HeaderField("Cache-Control".to_string(), "max-age=1000000000".to_string()),
+                    HeaderField("Cache-Control".to_string(), "immutable".to_string()),
+                ],
                 body: Cow::Owned(r.bytes),
                 streaming_strategy: r.streaming_strategy,
             };

@@ -160,6 +160,8 @@ type PutChunkArgs =
 type PutChunkResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        ChunkAlreadyExists;
         ChunkTooBig;
         Full;
     };
