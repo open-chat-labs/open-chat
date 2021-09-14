@@ -70,6 +70,14 @@ impl Blob {
             chunks: pending_blob.chunks,
         }
     }
+
+    pub fn mime_type(&self) -> &str {
+        &self.mime_type
+    }
+
+    pub fn chunk(&self, index: u32) -> Option<&ByteBuf> {
+        self.chunks.get(index as usize)
+    }
 }
 
 impl BlobStorage {
@@ -81,6 +89,10 @@ impl BlobStorage {
             total_bytes: 0,
             max_bytes,
         }
+    }
+
+    pub fn get_blob(&self, blob_id: &u128) -> Option<&Blob> {
+        self.blobs.get(blob_id)
     }
 
     pub fn put_first_chunk(

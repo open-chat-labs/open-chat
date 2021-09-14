@@ -16,8 +16,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 #[query]
 fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpResponse {
     fn handle_request(token: Token, runtime_state: &RuntimeState) -> StreamingCallbackHttpResponse {
-        let canister_id = runtime_state.env.canister_id();
-        http_request_streaming_callback_impl(token, canister_id, &runtime_state.data.blob_storage)
+        http_request_streaming_callback_impl(token, &runtime_state.data.blob_storage)
     }
 
     RUNTIME_STATE.with(|state| handle_request(token, state.borrow().as_ref().unwrap()))
