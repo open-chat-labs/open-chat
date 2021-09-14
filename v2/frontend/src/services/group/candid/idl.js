@@ -215,13 +215,14 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const MessageMatch = IDL.Record({
+  const GroupMessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
+    'event_index' : EventIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(MessageMatch),
+    'matches' : IDL.Vec(GroupMessageMatch),
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
