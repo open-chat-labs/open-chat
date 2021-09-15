@@ -76,6 +76,14 @@ type UnblockUserResponse =
         Success;
     }; 
 
+type PutFirstChunkArgs =
+    record {
+        blob_id: nat;
+        mime_type: text;
+        total_chunks: nat32;
+        bytes: blob;
+    };
+
 type PutChunkArgs =
     record {
         blob_id: nat;
@@ -86,6 +94,8 @@ type PutChunkArgs =
 type PutChunkResponse =
     variant {
         Success;
+        BlobAlreadyExists;
+        ChunkAlreadyExists;
         ChunkTooBig;
         Full;
     }; 
@@ -244,20 +254,6 @@ type SearchAllMessagesSuccessResult =
         matches: vec CombinedMessageMatch;
     };
 
-type ChunkArgs =
-    record {
-        blob_id: nat;
-        index: nat32;
-    };
-
-type ChunkResponse =
-    variant {
-        Success: record {
-            bytes: blob;
-        };
-        NotFound;
-    };
-
 type MetricsArgs =
     record {
     };
@@ -292,6 +288,7 @@ service: (InitArgs) -> {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
+    put_first_chunk: (PutFirstChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
@@ -301,7 +298,6 @@ service: (InitArgs) -> {
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
-    chunk: (ChunkArgs) -> (ChunkResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 
     // Search just the messages of one direct chat

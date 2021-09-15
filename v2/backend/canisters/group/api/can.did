@@ -148,7 +148,15 @@ type RemoveAdminResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserNotInGroup;
-    }; 
+    };
+
+type PutFirstChunkArgs =
+    record {
+        blob_id: nat;
+        mime_type: text;
+        total_chunks: nat32;
+        bytes: blob;
+    };
 
 type PutChunkArgs =
     record {
@@ -160,6 +168,9 @@ type PutChunkArgs =
 type PutChunkResponse =
     variant {
         Success;
+        CallerNotInGroup;
+        BlobAlreadyExists;
+        ChunkAlreadyExists;
         ChunkTooBig;
         Full;
     };
@@ -241,20 +252,6 @@ type SearchMessagesSuccessResult =
         matches: vec GroupMessageMatch;
     };
 
-type ChunkArgs =
-    record {
-        blob_id: nat;
-        index: nat32;
-    };
-
-type ChunkResponse =
-    variant {
-        Success: record {
-            bytes: blob;
-        };
-        NotFound;
-    };
-
 type MetricsArgs =
     record {
     };
@@ -289,6 +286,7 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
+    put_first_chunk: (PutFirstChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
@@ -296,6 +294,5 @@ service: {
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
-    chunk: (ChunkArgs) -> (ChunkResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

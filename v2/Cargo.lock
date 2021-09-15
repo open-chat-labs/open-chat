@@ -961,6 +961,7 @@ dependencies = [
  "group_canister",
  "group_index_canister",
  "group_index_canister_c2c_client",
+ "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "log",
@@ -1099,6 +1100,18 @@ dependencies = [
  "bytes",
  "http",
  "pin-project-lite",
+]
+
+[[package]]
+name = "http_request"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "num-traits",
+ "serde_bytes",
+ "types",
+ "url",
+ "utils",
 ]
 
 [[package]]
@@ -3285,6 +3298,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_index_canister",
  "group_index_canister_c2c_client",
+ "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",
@@ -3294,7 +3308,6 @@ dependencies = [
  "range-set",
  "search",
  "serde",
- "serde_bytes",
  "types",
  "user_canister",
  "user_canister_c2c_client",
