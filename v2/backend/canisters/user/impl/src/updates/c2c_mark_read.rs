@@ -1,7 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use types::{ChatId, UserId};
+use types::{ChatId, MessageIndex, UserId};
 use user_canister::c2c_mark_read::{Response::*, *};
+use utils::range_set::insert_ranges;
 
 #[update]
 fn c2c_mark_read(args: Args) -> Response {
@@ -14,11 +15,12 @@ fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         let mut has_changes = false;
         if let Some(max_message_index) = chat.events.latest_message_index() {
-            for message_index in args.messages.into_iter().filter(|&m| m <= max_message_index) {
-                if chat.read_by_them.insert(message_index.into()) {
-                    has_changes = true;
-                }
-            }
+            has_changes = insert_ranges(
+                &mut chat.read_by_me,
+                &args.message_ranges,
+                MessageIndex::default(),
+                max_message_index,
+            );
         }
         if !has_changes {
             SuccessNoChange

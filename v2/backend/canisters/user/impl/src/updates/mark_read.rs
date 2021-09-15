@@ -1,9 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use types::{ChatId, MessageIndex};
+use range_set::RangeSet;
+use types::{ChatId, MessageIndex, MessageIndexRange};
 use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
-use utils::range_set::insert_ranges_and_return_added;
+use utils::range_set::{convert_to_message_index_ranges, insert_ranges_and_return_added};
 
 #[update]
 fn mark_read(args: Args) -> Response {
@@ -30,16 +31,19 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             let now = runtime_state.env.now();
             chat.read_by_me_updated = now;
 
-            let their_message_indexes: Vec<_> = newly_read_messages
+            let mut their_message_ranges = RangeSet::new();
+            for index in newly_read_messages
                 .iter()
                 .filter_map(|m| chat.unread_message_index_map.get(m))
-                .collect();
+            {
+                their_message_ranges.insert(index.into());
+            }
 
-            if !their_message_indexes.is_empty() {
+            if !their_message_ranges.is_empty() {
                 ic_cdk::block_on(mark_read_on_recipients_canister(
                     chat_id,
+                    convert_to_message_index_ranges(their_message_ranges),
                     newly_read_messages,
-                    their_message_indexes,
                 ));
             }
 
@@ -52,11 +56,11 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
 async fn mark_read_on_recipients_canister(
     chat_id: ChatId,
+    their_message_ranges: Vec<MessageIndexRange>,
     our_message_indexes: Vec<MessageIndex>,
-    their_message_indexes: Vec<MessageIndex>,
 ) {
     let args = c2c_mark_read::Args {
-        messages: their_message_indexes,
+        message_ranges: their_message_ranges,
     };
     let _ = user_canister_c2c_client::c2c_mark_read(chat_id.into(), &args).await;
 
