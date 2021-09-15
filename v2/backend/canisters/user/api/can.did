@@ -94,6 +94,8 @@ type PutChunkArgs =
 type PutChunkResponse =
     variant {
         Success;
+        BlobAlreadyExists;
+        ChunkAlreadyExists;
         ChunkTooBig;
         Full;
     }; 

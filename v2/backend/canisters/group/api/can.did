@@ -169,6 +169,7 @@ type PutChunkResponse =
     variant {
         Success;
         CallerNotInGroup;
+        BlobAlreadyExists;
         ChunkAlreadyExists;
         ChunkTooBig;
         Full;

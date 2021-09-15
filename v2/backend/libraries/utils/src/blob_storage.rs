@@ -33,6 +33,7 @@ pub struct PendingBlob {
 
 pub enum PutChunkResult {
     Success,
+    BlobAlreadyExists,
     ChunkAlreadyExists,
     ChunkTooBig,
     Full,
@@ -109,7 +110,7 @@ impl BlobStorage {
         now: TimestampMillis,
     ) -> PutChunkResult {
         if self.blobs.contains_key(&blob_id) {
-            return PutChunkResult::ChunkAlreadyExists;
+            return PutChunkResult::BlobAlreadyExists;
         }
 
         let byte_count = data.len() as u64;
@@ -122,27 +123,36 @@ impl BlobStorage {
             return PutChunkResult::Full;
         }
 
-        match self.pending_blobs.entry(blob_id) {
-            Vacant(e) => {
-                let mut pending_blob = PendingBlob::new(now, mime_type, total_chunks);
-                pending_blob.add_chunk(0, data);
+        if total_chunks == 1 {
+            self.blobs.insert(blob_id, Blob {
+                created: now,
+                mime_type,
+                chunks: vec![data],
+            });
+        } else {
+            match self.pending_blobs.entry(blob_id) {
+                Vacant(e) => {
+                    let mut pending_blob = PendingBlob::new(now, mime_type, total_chunks);
+                    pending_blob.add_chunk(0, data);
 
-                if let Some(existing_chunks) = self.orphan_chunks.remove(&blob_id) {
-                    for (index, chunk) in existing_chunks.into_iter() {
-                        pending_blob.add_chunk(index as usize, chunk);
+                    if let Some(existing_chunks) = self.orphan_chunks.remove(&blob_id) {
+                        for (index, chunk) in existing_chunks.into_iter() {
+                            pending_blob.add_chunk(index as usize, chunk);
+                        }
+                    }
+
+                    if pending_blob.is_complete() {
+                        self.blobs.insert(blob_id, Blob::from(pending_blob, now));
+                    } else {
+                        e.insert(pending_blob);
                     }
                 }
-
-                if pending_blob.is_complete() {
-                    self.blobs.insert(blob_id, Blob::from(pending_blob, now));
-                } else {
-                    e.insert(pending_blob);
-                }
-                self.total_bytes += byte_count;
-                PutChunkResult::Success
+                Occupied(_) => return PutChunkResult::ChunkAlreadyExists,
             }
-            Occupied(_) => PutChunkResult::ChunkAlreadyExists,
         }
+
+        self.total_bytes += byte_count;
+        PutChunkResult::Success
     }
 
     pub fn put_chunk(&mut self, blob_id: u128, chunk_index: u32, data: ByteBuf, now: TimestampMillis) -> PutChunkResult {
@@ -151,7 +161,7 @@ impl BlobStorage {
         }
 
         if self.blobs.contains_key(&blob_id) {
-            return PutChunkResult::ChunkAlreadyExists;
+            return PutChunkResult::BlobAlreadyExists;
         }
 
         let byte_count = data.len() as u64;
@@ -192,7 +202,7 @@ impl BlobStorage {
     }
 
     pub fn get_chunk(&self, blob_id: u128, chunk_index: u32) -> Option<&ByteBuf> {
-        self.blobs.get(&blob_id).map(|b| b.chunks.get(chunk_index as usize)).flatten()
+        self.blobs.get(&blob_id)?.chunks.get(chunk_index as usize)
     }
 
     pub fn exists(&self, blob_id: u128, chunk_index: u32) -> bool {
