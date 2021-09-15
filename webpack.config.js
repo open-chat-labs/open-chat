@@ -5,6 +5,7 @@ const TerserPlugin = require("terser-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
 const NOTIFICATIONS_CANISTER_ID = "6vuwk-zaaaa-aaaaf-aaagq-cai";
+const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 const isDevelopment = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
@@ -143,6 +144,7 @@ function generateWebpackConfigForCanister(name, info) {
         P2P_CANISTER_ID: canisterIds["p2p"],
         USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
         NOTIFICATIONS_CANISTER_ID,
+        WEBPUSH_SERVICE_WORKER_PATH,
         IDP_URL,
       }),  
       new webpack.ProvidePlugin({
@@ -163,7 +165,7 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: "sw10.js",
+      filename: WEBPUSH_SERVICE_WORKER_PATH,
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {
