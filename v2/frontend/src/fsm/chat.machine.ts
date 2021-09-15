@@ -65,7 +65,7 @@ export type ChatEvents =
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: { message: GroupMessage | DirectMessage; index: number } }
+    | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
     | {
           type: "UPDATE_MESSAGE";
@@ -283,14 +283,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => ({
-                        events: [
-                            ...ctx.events,
-                            {
-                                event: ev.data.message,
-                                index: ev.data.index,
-                                timestamp: BigInt(+new Date()),
-                            },
-                        ],
+                        events: [...ctx.events, ev.data],
                         replyingTo: undefined,
                         fileToAttach: undefined,
                     })),

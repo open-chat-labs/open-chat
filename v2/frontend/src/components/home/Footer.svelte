@@ -12,7 +12,6 @@
     import {
         createDirectMessage,
         createGroupMessage,
-        latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
@@ -40,7 +39,7 @@
             // todo - we also have a problem for group chats with hidden history - we don't know what the index
             // should be at all in that case
             const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
-            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
+            const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
 
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
@@ -79,7 +78,12 @@
                     rollbar.error("Exception sending message", err);
                 });
 
-            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextEventIndex } });
+            const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
+            dispatch("sentMessage", { ...event, chatId: $machine.context.chatSummary.chatId });
+            machine.send({
+                type: "SEND_MESSAGE",
+                data: event,
+            });
             chatStore.set({
                 chatId: $machine.context.chatSummary.chatId,
                 event: "sending_message",

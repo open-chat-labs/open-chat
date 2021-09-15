@@ -13,6 +13,8 @@
     export let identity: Identity;
 
     let landscape = content.height < content.width;
+    let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
+
     let downloaded: boolean = false;
     let videoPlayer: HTMLVideoElement;
 
@@ -21,21 +23,20 @@
         content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
 
     function download() {
-        if (downloaded) return;
-
-        if (content.blobReference) {
-            // we need to overwrite the whole content object so that we trigger a re-render
-            content = {
-                ...content,
-                blobData: DataClient.create(identity, content.blobReference.canisterId)
-                    .getData(content.blobReference)
-                    .then((data) => {
-                        downloaded = true;
-                        videoPlayer.play();
-                        return data;
-                    }),
-            };
-        }
+        // if (downloaded) return;
+        // if (content.blobReference) {
+        //     // we need to overwrite the whole content object so that we trigger a re-render
+        //     content = {
+        //         ...content,
+        //         blobData: DataClient.create(identity, content.blobReference.canisterId)
+        //             .getData(content.blobReference)
+        //             .then((data) => {
+        //                 downloaded = true;
+        //                 videoPlayer.play();
+        //                 return data;
+        //             }),
+        //     };
+        // }
     }
 
     onDestroy(() => {
@@ -44,7 +45,7 @@
 </script>
 
 <div class="video" on:click={download}>
-    <video bind:this={videoPlayer} poster={content.thumbnailData} class:landscape controls>
+    <video bind:this={videoPlayer} {style} poster={content.thumbnailData} class:landscape controls>
         <track kind="captions" />
         {#await blobUrl then url}
             {#if url}

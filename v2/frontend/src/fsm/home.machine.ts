@@ -15,8 +15,11 @@ import type {
     ChatSummary,
     DirectChatReplyContext,
     DirectChatSummary,
+    DirectMessage,
     EnhancedReplyContext,
+    EventWrapper,
     GroupChatSummary,
+    GroupMessage,
     ReplyContext,
 } from "../domain/chat/chat";
 import {
@@ -34,6 +37,7 @@ import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { groupMachine, nullGroup } from "./group.machine";
 import { markReadMachine } from "./markread.machine";
+import { claim_text } from "svelte/internal";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -62,6 +66,10 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | {
+          type: "SENT_MESSAGE";
+          data: EventWrapper<GroupMessage | DirectMessage> & { chatId: string };
+      }
     | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
     | { type: "MESSAGE_CONFIRMED"; data: bigint }
     | { type: "BLOCK_USER"; data: string }
@@ -261,6 +269,60 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                // todo - I hate every single thing about this.
+                // the complexity has got out of control and that's
+                // because we have multiple copies of the fundamental state i.e. chats
+                // can we do something about this? Perhaps store state in a svelte store instead
+                SENT_MESSAGE: {
+                    actions: [
+                        assign((ctx, ev) => ({
+                            chatSummaries: ctx.chatSummaries.map((chat) => {
+                                if (chat.chatId === ev.data.chatId) {
+                                    if (
+                                        chat.kind === "group_chat" &&
+                                        ev.data.event.kind === "group_message"
+                                    ) {
+                                        return {
+                                            ...chat,
+                                            latestEventIndex: ev.data.index,
+                                            latestMessage: ev.data as EventWrapper<GroupMessage>, // so disgusting
+                                        };
+                                    }
+                                    if (
+                                        chat.kind === "direct_chat" &&
+                                        ev.data.event.kind === "direct_message"
+                                    ) {
+                                        return {
+                                            ...chat,
+                                            latestEventIndex: ev.data.index,
+                                            latestMessage: ev.data as EventWrapper<DirectMessage>, // so disgusting
+                                        };
+                                    }
+                                }
+                                return chat;
+                            }),
+                        })),
+                        send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                            to: "updateChatsPoller",
+                        }),
+                        pure((ctx, ev) => {
+                            const chat = ctx.chatSummaries.find(
+                                (chat) => chat.chatId === ev.data.chatId
+                            );
+                            const actor = ctx.chatsIndex[ev.data.chatId];
+                            if (actor) {
+                                return send(
+                                    {
+                                        type: "CHAT_UPDATED",
+                                        data: chat,
+                                    },
+                                    { to: actor.id }
+                                );
+                            }
+                            return undefined;
+                        }),
+                    ],
+                },
                 LEAVE_GROUP: {
                     internal: true,
                     actions: [

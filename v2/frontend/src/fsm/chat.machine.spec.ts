@@ -153,7 +153,10 @@ describe("chat machine transitions", () => {
         const ctx = testTransition(
             chatMachine.withContext(groupContext),
             { user_states: "idle" },
-            { type: "SEND_MESSAGE", data: { message: testDirectMessage, index: 100 } },
+            {
+                type: "SEND_MESSAGE",
+                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+            },
             { user_states: "idle" }
         );
         expect(ctx.events.length).toEqual(1);
@@ -229,7 +232,10 @@ describe("chat machine transitions", () => {
         const ctx = testTransition(
             chatMachine.withContext({ ...groupContext, replyingTo: repliesToGroup() }),
             { user_states: "idle" },
-            { type: "SEND_MESSAGE", data: { message: testDirectMessage, index: 100 } },
+            {
+                type: "SEND_MESSAGE",
+                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+            },
             { user_states: "idle" }
         );
         expect(ctx.replyingTo).toBe(undefined);

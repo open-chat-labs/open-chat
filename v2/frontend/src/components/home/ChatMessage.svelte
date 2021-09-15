@@ -150,7 +150,7 @@
         {/if}
 
         <ChatMessageContent {identity} {me} content={msg.content} />
-        <!-- <pre>{msg.messageIndex} {index}</pre> -->
+        <pre>M: {msg.messageIndex} E: {index}</pre>
 
         {#if metaData}
             {#await metaData then meta}

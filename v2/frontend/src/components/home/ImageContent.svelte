@@ -9,6 +9,8 @@
 
     let landscape = content.height < content.width;
 
+    let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
+
     $: blobUrl =
         content.blobData &&
         content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
@@ -21,13 +23,13 @@
 {#if content.url !== undefined}
     <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->
     <object title={content.caption} data={content.url} type={content.mimeType}>
-        <img class:landscape src={content.thumbnailData} alt={content.caption} />
+        <img class:landscape {style} src={content.thumbnailData} alt={content.caption} />
     </object>
 {:else}
     {#await blobUrl}
-        <img class:landscape src={content.thumbnailData} alt={content.caption} />
+        <img class:landscape {style} src={content.thumbnailData} alt={content.caption} />
     {:then url}
-        <img class:landscape src={url ?? content.thumbnailData} alt={content.caption} />
+        <img class:landscape {style} src={url ?? content.thumbnailData} alt={content.caption} />
     {/await}
 {/if}
 

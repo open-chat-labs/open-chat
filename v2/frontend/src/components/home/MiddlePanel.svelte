@@ -31,6 +31,7 @@
             {machine}
             on:unconfirmedMessage
             on:messageConfirmed
+            on:sentMessage
             on:unblockUser
             on:clearSelection
             on:blockUser
