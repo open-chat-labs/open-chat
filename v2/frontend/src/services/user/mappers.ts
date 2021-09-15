@@ -282,7 +282,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             public: candid.Group.is_public,
             joined: candid.Group.joined,
             minVisibleEventIndex: candid.Group.min_visible_event_index,
-            minVisibleMessageIndex: 0, // todo - come back to this
+            minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
         };

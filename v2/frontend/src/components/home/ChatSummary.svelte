@@ -49,6 +49,8 @@
         <!-- <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
         {#if chatSummary.kind === "direct_chat"}
             <pre>{JSON.stringify(chatSummary.readByThem)}</pre>
+        {:else}
+            <pre>{chatSummary.minVisibleMessageIndex}</pre>
         {/if} -->
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
