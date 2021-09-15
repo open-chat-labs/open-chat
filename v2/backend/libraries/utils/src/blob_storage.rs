@@ -124,11 +124,14 @@ impl BlobStorage {
         }
 
         if total_chunks == 1 {
-            self.blobs.insert(blob_id, Blob {
-                created: now,
-                mime_type,
-                chunks: vec![data],
-            });
+            self.blobs.insert(
+                blob_id,
+                Blob {
+                    created: now,
+                    mime_type,
+                    chunks: vec![data],
+                },
+            );
         } else {
             match self.pending_blobs.entry(blob_id) {
                 Vacant(e) => {
