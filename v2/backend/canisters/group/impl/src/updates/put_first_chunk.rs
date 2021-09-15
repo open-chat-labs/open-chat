@@ -21,6 +21,7 @@ fn put_first_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .put_first_chunk(args.blob_id, args.mime_type, args.total_chunks, args.bytes, now)
         {
             PutChunkResult::Success => Success,
+            PutChunkResult::BlobAlreadyExists => BlobAlreadyExists,
             PutChunkResult::ChunkAlreadyExists => ChunkAlreadyExists,
             PutChunkResult::ChunkTooBig => ChunkTooBig,
             PutChunkResult::Full => Full,

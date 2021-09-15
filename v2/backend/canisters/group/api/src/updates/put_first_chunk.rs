@@ -14,6 +14,7 @@ pub struct Args {
 pub enum Response {
     Success,
     CallerNotInGroup,
+    BlobAlreadyExists,
     ChunkAlreadyExists,
     ChunkTooBig,
     Full,
