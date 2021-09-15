@@ -18,11 +18,18 @@
     });
 </script>
 
-{#await blobUrl}
-    <img class:landscape src={content.thumbnailData} alt={content.caption} />
-{:then url}
-    <img class:landscape src={url ?? content.thumbnailData} alt={content.caption} />
-{/await}
+{#if content.url !== undefined}
+    <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->
+    <object title={content.caption} data={content.url} type={content.mimeType}>
+        <img class:landscape src={content.thumbnailData} alt={content.caption} />
+    </object>
+{:else}
+    {#await blobUrl}
+        <img class:landscape src={content.thumbnailData} alt={content.caption} />
+    {:then url}
+        <img class:landscape src={url ?? content.thumbnailData} alt={content.caption} />
+    {/await}
+{/if}
 
 <style type="text/scss">
     img {

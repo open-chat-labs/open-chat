@@ -18,7 +18,6 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
-    BlobReference,
     DirectChatEvent,
     GroupChatEvent,
     ChatEvent,
@@ -40,7 +39,6 @@ import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
-import { DataClient } from "./data/data.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -121,11 +119,16 @@ export class ServiceContainer {
     }
 
     directChatEvents(
-        userId: string,
+        myUserId: string,
+        theirUserId: string,
         fromIndex: number,
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(this.userClient.chatEvents(userId, fromIndex, toIndex));
+        return this.rehydrateMediaData(
+            this.userClient.chatEvents(theirUserId, fromIndex, toIndex),
+            myUserId,
+            theirUserId
+        );
     }
 
     groupChatEvents(
@@ -136,8 +139,11 @@ export class ServiceContainer {
         return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
     }
 
+    // TODO - revisit whether this can simply be removed
     private async rehydrateMediaData<T extends ChatEvent>(
-        eventsPromise: Promise<EventsResponse<T>>
+        eventsPromise: Promise<EventsResponse<T>>,
+        myUserId?: string,
+        theirUserId?: string
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
@@ -151,22 +157,27 @@ export class ServiceContainer {
                     e.event.content.kind === "media_content" &&
                     /^image/.test(e.event.content.mimeType)
                 ) {
-                    e.event.content.blobData = this.getMediaData(e.event.content.blobReference);
+                    if (e.event.content.blobReference) {
+                        console.log("are we coming through here");
+                        const canisterId =
+                            e.event.kind === "direct_message"
+                                ? e.event.sentByMe
+                                    ? myUserId
+                                    : theirUserId
+                                : e.event.sender;
+                        e.event.content.blobData = undefined;
+                        e.event.content.url = `process.env.IC_URL/blobs/${e.event.content.blobReference?.blobId}?canisterId=${canisterId}`;
+                    }
                 } else if (
                     e.event.content.kind === "media_content" ||
                     e.event.content.kind === "file_content"
                 ) {
-                    e.event.content.blobData = Promise.resolve(undefined);
+                    e.event.content.blobData = undefined;
                 }
             }
             return e;
         });
         return resp;
-    }
-
-    private getMediaData(blobRef?: BlobReference): Promise<Uint8Array | undefined> {
-        if (!blobRef) return Promise.resolve(undefined);
-        return DataClient.create(this.identity, blobRef.canisterId).getData(blobRef);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {

@@ -336,14 +336,6 @@ export class UserClientMock implements IUserClient {
         });
     }
 
-    async getData(
-        _blobId: bigint,
-        _totalBytes?: number,
-        _chunkSize?: number
-    ): Promise<Uint8Array | undefined> {
-        return undefined;
-    }
-
     sendMessage(
         _recipientId: string,
         _senderName: string,

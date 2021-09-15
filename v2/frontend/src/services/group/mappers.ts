@@ -74,6 +74,15 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
     if ("Success" in candid) {
         return "put_chunk_success";
     }
+    if ("ChunkAlreadyExists" in candid) {
+        return "chunk_already_exists";
+    }
+    if ("BlobAlreadyExists" in candid) {
+        return "blob_already_exists";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
 

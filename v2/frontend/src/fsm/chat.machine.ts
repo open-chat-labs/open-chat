@@ -104,13 +104,14 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
+    userId: string,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
     fromIndex: number,
     toIndex: number
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
+        return serviceContainer.directChatEvents(userId, chatSummary.them, fromIndex, toIndex);
     }
     const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
     return events;
@@ -193,7 +194,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             const [userLookup, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
                 range
-                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
+                    ? loadEvents(
+                          ctx.user!.userId,
+                          ctx.serviceContainer!,
+                          ctx.chatSummary,
+                          range[0],
+                          range[1]
+                      )
                     : { events: [] },
             ]);
             return {

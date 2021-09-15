@@ -20,6 +20,7 @@ export interface MediaContent extends DataContent {
     height: number;
     width: number;
     thumbnailData: string;
+    url?: string;
 }
 
 export interface TextContent {
@@ -375,7 +376,13 @@ export type SendMessageNotInGroup = {
     kind: "send_message_not_in_group";
 };
 
-export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";
+export type PutChunkResponse =
+    | "put_chunk_success"
+    | "put_chunk_full"
+    | "put_chunk_too_big"
+    | "chunk_already_exists"
+    | "caller_not_in_group"
+    | "blob_already_exists";
 
 export type ChangeAdminResponse =
     | "user_not_in_group"
