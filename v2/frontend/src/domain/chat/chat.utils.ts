@@ -452,6 +452,27 @@ export function identity<T>(x: T): T {
     return x;
 }
 
+export function setLastMessageOnChat(
+    chat: ChatSummary,
+    ev: EventWrapper<DirectMessage | GroupMessage>
+): ChatSummary {
+    if (chat.kind === "direct_chat" && ev.event.kind === "direct_message") {
+        return {
+            ...chat,
+            latestMessage: ev as EventWrapper<DirectMessage>,
+            latestEventIndex: ev.index,
+        };
+    }
+    if (chat.kind === "group_chat" && ev.event.kind === "group_message") {
+        return {
+            ...chat,
+            latestMessage: ev as EventWrapper<GroupMessage>,
+            latestEventIndex: ev.index,
+        };
+    }
+    return chat;
+}
+
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
     return areOnSameDay(new Date(Number(a.timestamp)), new Date(Number(b.timestamp)));
 }

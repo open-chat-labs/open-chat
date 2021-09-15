@@ -46,12 +46,12 @@
         <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
-        <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
+        <!-- <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
         {#if chatSummary.kind === "direct_chat"}
             <pre>{JSON.stringify(chatSummary.readByThem)}</pre>
         {:else}
             <pre>{chatSummary.minVisibleMessageIndex}</pre>
-        {/if}
+        {/if} -->
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
             <!-- this date formatting is OK for now but we might want to use something like this: 

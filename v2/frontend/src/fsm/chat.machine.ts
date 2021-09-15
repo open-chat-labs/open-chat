@@ -24,6 +24,7 @@ import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
+    setLastMessageOnChat,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -283,10 +284,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => ({
-                        chatSummary: {
-                            ...ctx.chatSummary,
-                            latestEventIndex: ev.data.index,
-                        },
+                        chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
                         events: [...ctx.events, ev.data],
                         replyingTo: undefined,
                         fileToAttach: undefined,

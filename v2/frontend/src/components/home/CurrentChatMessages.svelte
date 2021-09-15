@@ -104,6 +104,10 @@
         // the problem is that will make the new legend immediately disappear which is not quite what we
         // want. We'll come back to that.
         if (unreadMessages > 0) {
+            // todo - this is no good because the first unread message may not have been rendered yet
+            // it's tempting to re-use the goToMessage func, but that uses *event* index
+            // it *must* use event index as it potentially has to load new events and loading events
+            // is done via event index range
             scrollToElement(document.getElementById("new-msgs"), "smooth");
         } else {
             scrollBottom("smooth");
