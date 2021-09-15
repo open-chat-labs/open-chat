@@ -2,7 +2,7 @@ use crate::model::direct_chat::DirectChat;
 use crate::model::events::PushMessageArgs;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, DirectMessage, EventIndex, TimestampMillis, UserId};
+use types::{ChatId, DirectMessage, EventIndex, MessageIndex, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct DirectChats {
@@ -27,8 +27,15 @@ impl DirectChats {
         })
     }
 
-    pub fn push_message(&mut self, their_user_id: UserId, args: PushMessageArgs) -> (ChatId, EventIndex, DirectMessage) {
+    pub fn push_message(
+        &mut self,
+        their_user_id: UserId,
+        their_message_index: Option<MessageIndex>,
+        args: PushMessageArgs,
+    ) -> (ChatId, EventIndex, DirectMessage) {
         let chat_id = ChatId::from(their_user_id);
+        let sent_by_me = args.sent_by_me;
+        let now = args.now;
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),
@@ -36,6 +43,18 @@ impl DirectChats {
         };
 
         let (event_index, message) = chat.events.push_message(args);
+
+        if sent_by_me {
+            chat.read_by_me.insert(message.message_index.into());
+            chat.read_by_me_updated = now;
+        } else {
+            chat.read_by_them.insert(message.message_index.into());
+            chat.read_by_them_updated = now;
+            if let Some(their_message_index) = their_message_index {
+                chat.unread_message_index_map.add(message.message_index, their_message_index);
+            }
+        }
+
         (chat_id, event_index, message)
     }
 }
