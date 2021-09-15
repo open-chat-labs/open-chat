@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
+import { spawn } from "xstate";
 import type {
     DirectChatSummary,
     DirectMessage,
@@ -16,6 +17,7 @@ import { newMessageId } from "../domain/chat/chat.utils";
 import { ServiceContainer } from "../services/serviceContainer";
 import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
+import { markReadMachine } from "./markread.machine";
 
 const textMessageContent: TextContent = {
     kind: "text_content",
@@ -42,8 +44,8 @@ const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
     chatId: "abcdefg",
-    latestReadByMe: 0,
-    latestReadByThem: 0,
+    readByMe: [],
+    readByThem: [],
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),
@@ -56,9 +58,10 @@ const groupChat: GroupChatSummary = {
     public: true,
     joined: BigInt(0),
     minVisibleEventIndex: 0,
+    minVisibleMessageIndex: 0,
     chatId: "abcdef",
     lastUpdated: BigInt(0),
-    latestReadByMe: 0,
+    readByMe: [],
     latestMessage: undefined,
     participants: [],
     latestEventIndex: 0,
@@ -75,6 +78,7 @@ const directContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
+    markMessages: spawn(markReadMachine),
 };
 
 const serviceContainer = new ServiceContainer({} as Identity);
@@ -90,6 +94,7 @@ const groupContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
+    markMessages: spawn(markReadMachine),
 };
 
 describe("chat machine transitions", () => {

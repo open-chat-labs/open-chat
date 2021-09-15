@@ -19,17 +19,21 @@ import type {
     GroupChatSummary,
     ReplyContext,
 } from "../domain/chat/chat";
-import { updateArgsFromChats, userIdsFromChatSummaries } from "../domain/chat/chat.utils";
+import {
+    setMessageRead,
+    updateArgsFromChats,
+    userIdsFromChatSummaries,
+} from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
-import { toastStore } from "../stores/toast";
 import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { groupMachine, nullGroup } from "./group.machine";
+import { markReadMachine } from "./markread.machine";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -47,6 +51,8 @@ export interface HomeContext {
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext<ReplyContext>;
+    blockedUsers: Set<string>;
+    unconfirmed: Set<bigint>;
 }
 
 export type HomeEvents =
@@ -56,9 +62,14 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
+    | { type: "MESSAGE_CONFIRMED"; data: bigint }
+    | { type: "BLOCK_USER"; data: string }
+    | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
+    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -77,6 +88,7 @@ type ChatsResponse = {
     chatUpdatesSince: bigint;
     userLookup: UserLookup;
     usersLastUpdate: bigint;
+    blockedUsers: Set<string>;
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
@@ -104,18 +116,15 @@ async function getUpdates(
             chatUpdatesSince: chatsResponse.timestamp,
             userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
+            blockedUsers: chatsResponse.blockedUsers,
         };
     } catch (err) {
-        rollbar.error("Error getting chats", err);
+        rollbar.error("Error getting chats", err as Error);
         throw err;
     }
 }
 
 const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
-    actions: {
-        notifyLeftGroup: (_, _ev) => toastStore.showSuccessToast("leftGroup"),
-        failedToLeaveGroup: (_, _ev) => toastStore.showFailureToast("failedToLeaveGroup"),
-    },
     guards: {
         selectedChatIsValid: (ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
@@ -191,7 +200,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                     });
                 } catch (err) {
                     // exceptions in a poller do not stop the poller, but we *do* want to know about it
-                    rollbar.error("Error updating users", err);
+                    rollbar.error("Error updating users", err as Error);
                     throw err;
                 }
             }, USER_UPDATE_INTERVAL);
@@ -212,6 +221,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         userLookup: {},
         usersLastUpdate: BigInt(0),
         chatsIndex: {},
+        blockedUsers: new Set<string>(),
+        unconfirmed: new Set<bigint>(),
     },
     states: {
         loading_chats: {
@@ -250,19 +261,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
-                // todo - obviously we need to invoke some api call here as well ...
                 LEAVE_GROUP: {
                     internal: true,
                     actions: [
-                        "notifyLeftGroup",
-                        // "failedToLeaveGroup",
-                        assign((ctx, ev) => {
-                            return {
-                                chatSummaries: ctx.chatSummaries.filter(
-                                    (c) => c.chatId !== ev.data
-                                ),
-                                selectedChat: undefined,
-                            };
+                        assign((ctx, ev) => ({
+                            chatSummaries: ctx.chatSummaries.filter((c) => c.chatId !== ev.data),
+                            selectedChat: undefined,
+                        })),
+                        send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
+                            to: "updateChatsPoller",
                         }),
                     ],
                 },
@@ -308,9 +315,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         const chatSummary = ctx.chatSummaries.find(
                             (c) => c.chatId === ev.data.chatId
                         );
-                        // const chatActor = ctx.chatsIndex[key];
                         if (chatSummary) {
-                            // if (!chatActor) {
                             return {
                                 selectedChat: chatSummary,
                                 replyingTo: undefined,
@@ -333,23 +338,19 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 ? Number(ev.data.messageIndex)
                                                 : undefined,
                                             replyingTo: ctx.replyingTo,
+                                            markMessages: spawn(
+                                                markReadMachine.withContext({
+                                                    serviceContainer: ctx.serviceContainer!,
+                                                    chatSummary,
+                                                    ranges: [],
+                                                })
+                                            ),
                                         }),
                                         `chat-${key}`
                                     ),
                                 },
                             };
                         }
-                        // else {
-                        //     // if we *have* got a chat actor already then we still need to tell it if
-                        //     // we want to focus a particular message index
-                        //     if (ev.data.messageIndex) {
-                        //         chatActor.send({
-                        //             type: "GO_TO_MESSAGE_INDEX",
-                        //             data: Number(ev.data.messageIndex),
-                        //         });
-                        //     }
-                        // }
-                        // }
                         return { selectedChat: chatSummary };
                     }),
                 },
@@ -374,6 +375,66 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     target: ".join_group",
                 },
+                BLOCK_USER: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            blockedUsers: ctx.blockedUsers.add(ev.data),
+                        };
+                    }),
+                },
+                UNBLOCK_USER: {
+                    actions: assign((ctx, ev) => {
+                        ctx.blockedUsers.delete(ev.data);
+                        return {
+                            blockedUsers: ctx.blockedUsers,
+                        };
+                    }),
+                },
+                MESSAGE_READ_BY_ME: {
+                    // this is fairly horrific, but it seems to be what we have to do
+                    // need to think about what this is a symptom of .....
+                    // basically we have multiple copies of the same data that need to
+                    // be synchronised and we need to get rid of that somehow.
+                    actions: pure((ctx, ev) => {
+                        const actor = ctx.chatsIndex[ev.data.chatId];
+                        if (actor) {
+                            let chat: ChatSummary | undefined = undefined;
+                            const chatSummaries = ctx.chatSummaries.map((c) => {
+                                if (c.chatId === ev.data.chatId) {
+                                    chat = setMessageRead(c, ev.data.messageIndex);
+                                    return chat;
+                                }
+                                return c;
+                            });
+
+                            const actions = [
+                                // update the chat summaries
+                                assign<HomeContext, HomeEvents>({
+                                    chatSummaries,
+                                }),
+                                // ping the update back to the relavant chat machine
+                                send(
+                                    {
+                                        type: "CHAT_UPDATED",
+                                        data: chat,
+                                    },
+                                    { to: actor.id }
+                                ),
+                                // sync the update to the chat poller
+                                send<HomeContext, HomeEvents>(
+                                    (ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }),
+                                    {
+                                        to: "updateChatsPoller",
+                                    }
+                                ),
+                            ];
+                            return actions;
+                        }
+                        throw new Error(
+                            "We received a message from an actor but we couldn't find the actor??"
+                        );
+                    }),
+                },
                 REPLY_PRIVATELY_TO: {
                     actions: assign((ctx, ev) => {
                         // let's see if we already have a direct chat with this user?
@@ -390,8 +451,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 kind: "direct_chat",
                                 them: ev.data.sender!.userId,
                                 chatId: ev.data.sender!.userId,
-                                latestReadByMe: 0,
-                                latestReadByThem: 0,
+                                readByMe: [],
+                                readByThem: [],
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
                                 dateCreated: BigInt(+new Date()),
@@ -413,8 +474,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 kind: "direct_chat",
                                 them: ev.data,
                                 chatId: ev.data,
-                                latestReadByMe: 0,
-                                latestReadByThem: 0,
+                                readByMe: [],
+                                readByThem: [],
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
                                 dateCreated: BigInt(+new Date()),
@@ -428,6 +489,19 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             to: "updateChatsPoller",
                         }),
                     ],
+                },
+                UNCONFIRMED_MESSAGE: {
+                    actions: assign((ctx, ev) => ({
+                        unconfirmed: ctx.unconfirmed.add(ev.data),
+                    })),
+                },
+                MESSAGE_CONFIRMED: {
+                    actions: assign((ctx, ev) => {
+                        ctx.unconfirmed.delete(ev.data);
+                        return {
+                            unconfirmed: ctx.unconfirmed,
+                        };
+                    }),
                 },
             },
             states: {
@@ -492,8 +566,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         kind: "direct_chat",
                                         them: ev.data.userId,
                                         chatId: ev.data.userId,
-                                        latestReadByMe: 0,
-                                        latestReadByThem: 0,
+                                        readByMe: [],
+                                        readByThem: [],
                                         latestMessage: undefined,
                                         latestEventIndex: 0,
                                         dateCreated: BigInt(+new Date()),

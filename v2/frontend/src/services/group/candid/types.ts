@@ -130,7 +130,7 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
-  { 'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin } |
+  { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -230,6 +230,11 @@ export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
 }
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+}
 export type MetricsArgs = {};
 export interface MetricsResponse {
   'blob_bytes_used' : bigint,
@@ -314,12 +319,12 @@ export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
 }
-export type SearchMessagesResponse = {
-    'Success' : {
-      'matches' : Array<{ 'score' : number, 'message' : GroupMessage }>,
-    }
-  } |
-  { 'Failure' : null };
+export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'Success' : SearchMessagesSuccessResult } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null } |
+  { 'NotInGroup' : null };
+export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,

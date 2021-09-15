@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -24,14 +24,22 @@
         ChatEvent as ChatEventType,
         DirectChatReplyContext,
     } from "../../domain/chat/chat";
-    import { getUnreadMessages, groupEvents } from "../../domain/chat/chat.utils";
+    import {
+        getFirstUnreadMessageIndex,
+        getUnreadMessages,
+        groupEvents,
+        messageIsReadByMe,
+        messageIsReadByThem,
+    } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
+    const MESSAGE_READ_THRESHOLD = 500;
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let unconfirmed: Set<bigint>;
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
@@ -40,16 +48,55 @@
     let scrollTop = 0;
     let currentChatId = "";
     let fromBottom = 0;
+    let observer: IntersectionObserver;
+    let messageReadTimers: Record<number, NodeJS.Timer> = {};
+
+    onMount(() => {
+        const options = {
+            root: messagesDiv,
+            rootMargin: "0px",
+            threshold: 0.5,
+        };
+
+        observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+            entries.forEach((entry) => {
+                const idAttr = entry.target.attributes.getNamedItem("data-index");
+                const idx = idAttr ? parseInt(idAttr.value, 10) : undefined;
+                if (idx !== undefined) {
+                    if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
+                        const timer = setTimeout(() => {
+                            machine.send({
+                                type: "MESSAGE_READ_BY_ME",
+                                data: {
+                                    chatId: $machine.context.chatSummary.chatId,
+                                    messageIndex: idx,
+                                },
+                            });
+                            delete messageReadTimers[idx];
+                        }, MESSAGE_READ_THRESHOLD);
+                        messageReadTimers[idx] = timer;
+                    }
+                    if (!entry.isIntersecting && messageReadTimers[idx] !== undefined) {
+                        clearTimeout(messageReadTimers[idx]);
+                        delete messageReadTimers[idx];
+                    }
+                }
+            });
+        }, options);
+    });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
+        // todo the problem here is that the height is affected by loading images
+        // I'm going to wait until we load images via their own urls before trying any
+        // harder to fix this.
         setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
-                    top: messagesDiv.scrollHeight,
+                    top: messagesDiv.scrollHeight - messagesDiv.offsetHeight,
                     behavior,
                 });
             }
-        }, 100);
+        }, 0);
     }
 
     function scrollToNew() {
@@ -151,7 +198,13 @@
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
-        if (first.event.kind === "participants_added") {
+        if (
+            first.event.kind === "participants_added" ||
+            first.event.kind === "participant_left" ||
+            first.event.kind === "participants_promoted_to_admin" ||
+            first.event.kind === "participants_dismissed_as_admin" ||
+            first.event.kind === "participants_removed"
+        ) {
             return `${first.timestamp}_${first.index}`;
         }
 
@@ -161,6 +214,8 @@
     $: groupedEvents = groupEvents($machine.context.events);
 
     $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
+
+    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
 
     $: {
         if ($machine.context.chatSummary.chatId !== currentChatId) {
@@ -197,10 +252,14 @@
         if (evt.event.kind === "direct_message") {
             return evt.event.sentByMe;
         }
-        if (evt.event.kind === "direct_chat_created") {
-            return false;
-        }
-        if (evt.event.kind === "participants_added") {
+        if (
+            evt.event.kind === "direct_chat_created" ||
+            evt.event.kind === "participants_added" ||
+            evt.event.kind === "participants_removed" ||
+            evt.event.kind === "participant_left" ||
+            evt.event.kind === "participants_dismissed_as_admin" ||
+            evt.event.kind === "participants_promoted_to_admin"
+        ) {
             return false;
         }
         if (evt.event.kind === "group_message") {
@@ -210,6 +269,27 @@
             return evt.event.created_by === $machine.context.user?.userId;
         }
         throw new UnsupportedValueError("Unexpected event type received", evt.event);
+    }
+
+    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            return !unconfirmed.has(evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message") {
+            return messageIsReadByThem($machine.context.chatSummary, evt.event);
+        }
+        return true;
+    }
+
+    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            return messageIsReadByMe($machine.context.chatSummary, evt.event);
+        }
+        return true;
     }
 
     // then we need to integrate web rtc
@@ -228,10 +308,15 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (evt.index)}
-                    {#if evt.index === $machine.context.chatSummary.latestReadByMe + 1}
+                    {#if (evt.event.kind === "group_message" || evt.event.kind === "direct_message") && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
+                        {observer}
+                        confirmed={isConfirmed(evt)}
+                        readByThem={isReadByThem(evt)}
+                        readByMe={isReadByMe(evt)}
+                        identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
                         me={isMe(evt)}

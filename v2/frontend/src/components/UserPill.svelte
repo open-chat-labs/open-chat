@@ -3,26 +3,23 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher } from "svelte";
     import { AvatarSize, UserStatus } from "../domain/user/user";
+    import type { UserSummary } from "../domain/user/user";
     import { avatarUrl } from "../domain/user/user.utils";
-    import type { CandidateParticipant } from "../domain/chat/chat";
     const dispatch = createEventDispatcher();
 
-    export let participant: CandidateParticipant;
+    export let user: UserSummary;
 
-    function deleteParticipant() {
-        dispatch("deleteParticipant", participant);
+    function deleteUser() {
+        dispatch("deleteUser", user);
     }
 </script>
 
 <div class="pill">
     <div class="avatar">
-        <Avatar
-            url={avatarUrl(participant.user.userId)}
-            status={UserStatus.None}
-            size={AvatarSize.Small} />
+        <Avatar url={avatarUrl(user.userId)} status={UserStatus.None} size={AvatarSize.Small} />
     </div>
-    <div class="username">{participant.user.username}</div>
-    <div on:click={deleteParticipant} class="delete">
+    <div class="username">{user.username}</div>
+    <div on:click={deleteUser} class="delete">
         <Close size={"1em"} color={"#fff"} />
     </div>
 </div>
@@ -34,6 +31,7 @@
         margin-right: $sp3;
         display: inline-block;
         width: 60px;
+        color: var(--section-txt);
 
         .username {
             @include ellipsis();

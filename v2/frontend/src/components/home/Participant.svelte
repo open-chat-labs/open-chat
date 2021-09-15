@@ -3,6 +3,7 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import AccountLock from "svelte-material-icons/AccountLock.svelte";
@@ -30,6 +31,10 @@
 
     function dismissAsAdmin() {
         dispatch("dismissAsAdmin", participant.userId);
+    }
+
+    function makeAdmin() {
+        dispatch("makeAdmin", participant.userId);
     }
 
     function participantSelected(_e: MouseEvent) {
@@ -82,6 +87,12 @@
                                         color={"#aaa"}
                                         slot="icon" />
                                     <div slot="text">{$_("dismissAsAdmin")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if participant.role === "standard"}
+                                <MenuItem on:click={makeAdmin}>
+                                    <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                    <div slot="text">{$_("makeAdmin")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}

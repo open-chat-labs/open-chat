@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
-    ActionObject,
+    ActorRefFrom,
     createMachine,
     DoneInvokeEvent,
     MachineConfig,
     MachineOptions,
 } from "xstate";
-import { assign, pure, send, sendParent } from "xstate/lib/actions";
+import { assign, pure, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -33,6 +33,7 @@ import { participantsMachine } from "./participants.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
+import type { MarkReadMachine } from "./markread.machine";
 
 const PAGE_SIZE = 20;
 
@@ -46,6 +47,7 @@ export interface ChatContext {
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext<ReplyContext>;
     fileToAttach?: MessageContent;
+    markMessages: ActorRefFrom<MarkReadMachine>;
 }
 
 type LoadEventsResponse = {
@@ -61,6 +63,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
+    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: { message: GroupMessage | DirectMessage; index: number } }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
@@ -103,44 +106,32 @@ async function loadUsersForChat(
 function loadEvents(
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
-    earliestRequiredEventIndex: number,
-    earliestLoadedEventIndex: number
+    fromIndex: number,
+    toIndex: number
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(
-            chatSummary.them,
-            earliestRequiredEventIndex,
-            earliestLoadedEventIndex
-        );
+        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
     }
-    const events = serviceContainer.groupChatEvents(
-        chatSummary.chatId,
-        earliestRequiredEventIndex,
-        earliestLoadedEventIndex
-    );
+    const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
     return events;
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
-    return earliestIndex(ctx) >= earliestAvailableMessageIndex(ctx);
+    return earliestIndex(ctx) > earliestAvailableEventIndex(ctx);
 }
 
-export function earliestAvailableMessageIndex(ctx: ChatContext): number {
+export function earliestAvailableEventIndex(ctx: ChatContext): number {
     return ctx.chatSummary.kind === "group_chat" ? ctx.chatSummary.minVisibleEventIndex : 0;
 }
 
+// we need to be clearer about what this means
 export function earliestIndex(ctx: ChatContext): number {
-    const earliestLoaded = earliestLoadedEventIndex(ctx.events);
-    if (earliestLoaded) {
-        return earliestLoaded - 1;
-    } else {
-        return ctx.chatSummary.latestEventIndex;
-    }
+    return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
 }
 
 export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
-    if (lastLoaded) {
+    if (lastLoaded !== undefined) {
         const from = lastLoaded + 1;
         const to = latestAvailableEventIndex(ctx.chatSummary) ?? 0;
         return clampRange([from, to]);
@@ -150,11 +141,26 @@ export function newMessagesRange(ctx: ChatContext): [number, number] | undefined
     }
 }
 
+/**
+ * This gives us the highest index that we have not yet loaded
+ */
+export function highestUnloadedEventIndex(ctx: ChatContext): number {
+    const earliestLoaded = earliestLoadedEventIndex(ctx.events);
+    if (earliestLoaded !== undefined) {
+        return earliestLoaded - 1; // the one before the first one we *have* loaded
+    } else {
+        return ctx.chatSummary.latestEventIndex; //or the latest index if we haven't loaded *any*
+    }
+}
+
+/**
+ * This gives us the range of messages that we must request when loading *previous* messages
+ */
 export function previousMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const to = earliestIndex(ctx);
+    const to = highestUnloadedEventIndex(ctx);
     const candidateFrom =
         ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
-    const min = earliestAvailableMessageIndex(ctx);
+    const min = earliestAvailableEventIndex(ctx);
     const from = Math.max(min, candidateFrom);
     return clampRange([from, to]);
 }
@@ -192,10 +198,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             ]);
             return {
                 userLookup,
-                events:
-                    eventsResponse === "chat_not_found"
-                        ? []
-                        : eventsResponse.events,
+                events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
             };
         },
     },
@@ -330,23 +333,26 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     })),
                 },
                 ATTACH_FILE: {
-                    actions: pure((_, ev) => {
-                        // a lot of hideous type hints required here for some reason
-                        const actions: ActionObject<ChatContext, ChatEvents>[] = [
-                            assign<ChatContext, ChatEvents>({
-                                fileToAttach: ev.data,
-                            }),
-                        ];
-                        if (ev.data.kind === "file_content") {
-                            actions.push(send({ type: "SEND_MESSAGE" }));
-                        }
-                        return actions;
-                    }),
+                    actions: assign((_, ev) => ({
+                        fileToAttach: ev.data,
+                    })),
                 },
                 CLEAR_ATTACHMENT: {
                     actions: assign((_, _ev) => ({
                         fileToAttach: undefined,
                     })),
+                },
+                MESSAGE_READ_BY_ME: {
+                    // we need to send this modified chat summary to the parent machine
+                    // so that it can sync it with the chat poller - nasty
+                    // we also need to seend it to the mark read machine to periodically ping off to the server
+                    actions: pure((ctx, ev) => {
+                        ctx.markMessages.send({
+                            type: "MESSAGE_READ_BY_ME",
+                            data: ev.data.messageIndex,
+                        });
+                        return sendParent<ChatContext, ChatEvents>(ev);
+                    }),
                 },
             },
             states: {
@@ -403,6 +409,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 add: ev.type === "ADD_PARTICIPANT",
                                 user: ctx.user,
                                 error: undefined,
+                                usersToAdd: [],
                             };
                         },
                         onDone: {

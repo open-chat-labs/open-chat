@@ -28,6 +28,13 @@ import type {
     GroupMessage,
     SendMessageResponse,
     DirectMessage,
+    ChangeAdminResponse,
+    RemoveParticipantResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -69,6 +76,10 @@ export class ServiceContainer {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    getIdentity(): Identity {
+        return this.identity;
     }
 
     sendMessage(
@@ -155,7 +166,7 @@ export class ServiceContainer {
 
     private getMediaData(blobRef?: BlobReference): Promise<Uint8Array | undefined> {
         if (!blobRef) return Promise.resolve(undefined);
-        return DataClient.create(blobRef.canisterId).getData(blobRef);
+        return DataClient.create(this.identity, blobRef.canisterId).getData(blobRef);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {
@@ -200,5 +211,43 @@ export class ServiceContainer {
 
     differentIdentity(identity: Identity): boolean {
         return identity.getPrincipal().toText() !== this.identity.getPrincipal().toText();
+    }
+
+    makeAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+        return this.getGroupClient(chatId).makeAdmin(userId);
+    }
+
+    dismissAsAdmin(chatId: string, userId: string): Promise<ChangeAdminResponse> {
+        return this.getGroupClient(chatId).dismissAsAdmin(userId);
+    }
+
+    removeParticipant(chatId: string, userId: string): Promise<RemoveParticipantResponse> {
+        return this.getGroupClient(chatId).removeParticipant(userId);
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.userClient.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.userClient.unblockUser(userId);
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.userClient.leaveGroup(chatId);
+    }
+
+    markDirectChatMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[]
+    ): Promise<MarkReadResponse> {
+        return this.userClient.markMessagesRead(userId, ranges);
+    }
+
+    markGroupChatMessagesRead(
+        chatId: string,
+        ranges: MessageIndexRange[]
+    ): Promise<MarkReadResponse> {
+        return this.getGroupClient(chatId).markMessagesRead(ranges);
     }
 }

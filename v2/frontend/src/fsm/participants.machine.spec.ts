@@ -12,9 +12,10 @@ const groupChat: GroupChatSummary = {
     public: true,
     joined: BigInt(100),
     minVisibleEventIndex: 50,
+    minVisibleMessageIndex: 50,
     chatId: "chat_id",
     lastUpdated: BigInt(200),
-    latestReadByMe: 0,
+    readByMe: [],
     latestMessage: undefined,
     latestEventIndex: 0,
     participants: [
@@ -36,6 +37,7 @@ const testContext: ParticipantsContext = {
         secondsSinceLastOnline: 10,
     },
     error: undefined,
+    usersToAdd: [],
 };
 
 describe("participant machine transitions", () => {
@@ -68,13 +70,13 @@ describe("participant machine transitions", () => {
             participantsMachine.withContext(testContext),
             "idle",
             { type: "ADD_PARTICIPANT" },
-            "adding_participant"
+            "adding_participants"
         );
     });
     test("cancel add participant", () => {
         testTransition(
             participantsMachine.withContext(testContext),
-            "adding_participant",
+            "adding_participants",
             { type: "CANCEL_ADD_PARTICIPANT" },
             "idle"
         );

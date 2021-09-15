@@ -8,6 +8,11 @@ import type {
     MergedUpdatesResponse,
     DirectMessage,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -75,5 +80,21 @@ export class CachingUserClient implements IUserClient {
         message: DirectMessage
     ): Promise<SendMessageResponse> {
         return this.client.sendMessage(recipientId, senderName, message);
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.client.blockUser(userId);
+    }
+
+    unblockUser(userId: string): Promise<UnblockUserResponse> {
+        return this.client.unblockUser(userId);
+    }
+
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        return this.client.leaveGroup(chatId);
+    }
+
+    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return this.client.markMessagesRead(userId, ranges);
     }
 }

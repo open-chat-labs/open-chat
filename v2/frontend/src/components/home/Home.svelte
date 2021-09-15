@@ -19,6 +19,7 @@
     import JoinGroup from "./JoinGroup.svelte";
     import ModalContent from "../ModalContent.svelte";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
+    import { toastStore } from "../../stores/toast";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -72,21 +73,63 @@
         machine.send({ type: "NEW_GROUP" });
     }
 
+    function unconfirmedMessage(ev: CustomEvent<bigint>) {
+        machine.send({ type: "UNCONFIRMED_MESSAGE", data: ev.detail });
+    }
+
+    function messageConfirmed(ev: CustomEvent<bigint>) {
+        machine.send({ type: "MESSAGE_CONFIRMED", data: ev.detail });
+    }
+
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
 
     function joinGroup() {
         machine.send({ type: "JOIN_GROUP" });
-        // modalStore.showModal(ModalType.JoinGroup);
     }
 
-    function blockUser() {
-        console.log("block user clicked");
+    function blockUser(ev: CustomEvent<{ userId: string }>) {
+        machine.send({ type: "BLOCK_USER", data: ev.detail.userId });
+        $machine.context
+            .serviceContainer!.blockUser(ev.detail.userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("blockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("blockUserFailed");
+                }
+            })
+            .catch((_err) => toastStore.showFailureToast("blockUserFailed"));
+    }
+
+    function unblockUser(ev: CustomEvent<{ userId: string }>) {
+        machine.send({ type: "UNBLOCK_USER", data: ev.detail.userId });
+        $machine.context
+            .serviceContainer!.unblockUser(ev.detail.userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("unblockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("unblockUserFailed");
+                }
+            })
+            .catch((_err) => toastStore.showFailureToast("unblockUserFailed"));
     }
 
     function leaveGroup(ev: CustomEvent<string>) {
         machine.send({ type: "LEAVE_GROUP", data: ev.detail });
+        $machine.context
+            .serviceContainer!.leaveGroup(ev.detail)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("leftGroup");
+                } else {
+                    // todo - do we need to reverse the data update here (by posting to the machine)
+                    toastStore.showFailureToast("failedToLeaveGroup");
+                }
+            })
+            .catch((_err) => toastStore.showFailureToast("failedToLeaveGroup"));
     }
 
     function chatWith(ev: CustomEvent<string>) {
@@ -117,6 +160,11 @@
     $: participantsMachine =
         selectedChatActor &&
         ($selectedChatActor.children.participantsMachine as ActorRefFrom<ParticipantsMachine>);
+
+    $: blocked =
+        selectedChat !== undefined &&
+        selectedChat.kind === "direct_chat" &&
+        $machine.context.blockedUsers.has(selectedChat.them);
 </script>
 
 {#if $machine.context.user}
@@ -131,10 +179,15 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
+                unconfirmed={$machine.context.unconfirmed}
                 loadingChats={$machine.matches("loading_chats")}
+                {blocked}
+                on:unconfirmedMessage={unconfirmedMessage}
+                on:messageConfirmed={messageConfirmed}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
+                on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
                 machine={selectedChatActor} />

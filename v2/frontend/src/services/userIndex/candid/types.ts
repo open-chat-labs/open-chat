@@ -122,7 +122,7 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
-  { 'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin } |
+  { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
@@ -221,6 +221,11 @@ export type MessageIndex = number;
 export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
+}
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {

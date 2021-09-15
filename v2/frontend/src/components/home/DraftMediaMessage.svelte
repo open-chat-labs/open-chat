@@ -4,12 +4,14 @@
     import MediaContentComponent from "./MediaContent.svelte";
     import type { MediaContent } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
+    import type { Identity } from "@dfinity/agent";
 
     export let draft: MediaContent;
+    export let identity: Identity;
 </script>
 
 <div class="msg-preview" class:rtl={$rtlStore}>
-    <MediaContentComponent content={draft} />
+    <MediaContentComponent {identity} content={draft} />
 </div>
 
 <style type="text/scss">

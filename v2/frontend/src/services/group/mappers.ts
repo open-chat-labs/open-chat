@@ -4,11 +4,15 @@ import type {
     ApiEventsResponse,
     ApiEventWrapper,
     ApiFileContent,
+    ApiGroupChatEvent,
     ApiGroupMessage,
     ApiGroupReplyContext,
+    ApiMakeAdminResponse,
+    ApiMarkReadResponse,
     ApiMediaContent,
     ApiMessageContent,
     ApiPutChunkResponse,
+    ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiTextContent,
 } from "./candid/idl";
@@ -27,6 +31,9 @@ import type {
     AddParticipantsResponse,
     SendMessageResponse,
     PutChunkResponse,
+    ChangeAdminResponse,
+    RemoveParticipantResponse,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -39,6 +46,22 @@ import type { Principal } from "@dfinity/principal";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("SuccessNoChange" in candid) {
+        return "success_no_change";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }
 
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
@@ -67,6 +90,51 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "send_message_not_in_group" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
+
+export function changeAdminResponse(candid: ApiMakeAdminResponse): ChangeAdminResponse {
+    console.debug(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMakeAdminResonse type received", candid);
+}
+
+export function removeParticipantResponse(
+    candid: ApiRemoveParticipantResponse
+): RemoveParticipantResponse {
+    console.debug(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("CannotRemoveSelf" in candid) {
+        return "cannot_remove_self";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiRemoveParticipantResponse type received",
+        candid
+    );
 }
 
 export function addParticipantsResponse(
@@ -124,39 +192,65 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
-    if ("Message" in candid.event) {
+function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
+    if ("Message" in candid) {
+        return message(candid.Message);
+    }
+    if ("GroupChatCreated" in candid) {
         return {
-            event: message(candid.event.Message),
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "group_chat_created",
+            name: candid.GroupChatCreated.name,
+            description: candid.GroupChatCreated.description,
+            created_by: candid.GroupChatCreated.created_by.toString(),
         };
     }
-    if ("GroupChatCreated" in candid.event) {
+    if ("ParticipantsAdded" in candid) {
         return {
-            event: {
-                kind: "group_chat_created",
-                name: candid.event.GroupChatCreated.name,
-                description: candid.event.GroupChatCreated.description,
-                created_by: candid.event.GroupChatCreated.created_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_added",
+            userIds: candid.ParticipantsAdded.user_ids.map((p) => p.toString()),
+            addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
-    if ("ParticipantsAdded" in candid.event) {
+    if ("ParticipantsPromotedToAdmin" in candid) {
         return {
-            event: {
-                kind: "participants_added",
-                userIds: candid.event.ParticipantsAdded.user_ids.map((p) => p.toString()),
-                addedBy: candid.event.ParticipantsAdded.added_by.toString(),
-            },
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "participants_promoted_to_admin",
+            userIds: candid.ParticipantsPromotedToAdmin.user_ids.map((p) => p.toString()),
+            promotedBy: candid.ParticipantsPromotedToAdmin.promoted_by.toString(),
+        };
+    }
+    if ("ParticipantsDismissedAsAdmin" in candid) {
+        return {
+            kind: "participants_dismissed_as_admin",
+            userIds: candid.ParticipantsDismissedAsAdmin.user_ids.map((p) => p.toString()),
+            dismissedBy: candid.ParticipantsDismissedAsAdmin.dismissed_by.toString(),
+        };
+    }
+    if ("ParticipantsRemoved" in candid) {
+        return {
+            kind: "participants_removed",
+            userIds: candid.ParticipantsRemoved.user_ids.map((p) => p.toString()),
+            removedBy: candid.ParticipantsRemoved.removed_by.toString(),
+        };
+    }
+    if ("ParticipantLeft" in candid) {
+        return {
+            kind: "participant_left",
+            userId: candid.ParticipantLeft.user_id.toString(),
         };
     }
     // todo - we know there are other event types that we are not dealing with yet
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid.event)}`);
+    // ParticipantJoined
+    // GroupDescChanged
+    // GroupNameChanged
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
+}
+
+function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
+    return {
+        event: groupChatEvent(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
 }
 
 function message(candid: ApiGroupMessage): GroupMessage {

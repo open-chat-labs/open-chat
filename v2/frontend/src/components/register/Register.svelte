@@ -45,6 +45,8 @@
             <EnterCode {phoneNumber} {error} on:submitCode on:resendCode on:changePhoneNumber />
         {:else if state === "verifying"}
             <div class="spinner" />
+        {:else if state === "awaitingCanister"}
+            <div class="spinner" />
         {:else if state === "awaitingUsername"}
             <EnterUsername {username} {error} on:submitUsername />
         {/if}

@@ -7,7 +7,17 @@
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
-    import type { MessageContent } from "../../domain/chat/chat";
+    import { chatStore } from "../../stores/chat";
+    import type { DirectMessage, GroupMessage, MessageContent } from "../../domain/chat/chat";
+    import {
+        createDirectMessage,
+        createGroupMessage,
+        latestLoadedEventIndex,
+        latestLoadedMessageIndex,
+    } from "../../domain/chat/chat.utils";
+    import { rollbar } from "../../utils/logging";
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -18,8 +28,75 @@
         machine.send({ type: "CANCEL_REPLY_TO" });
     }
 
+    function sendMessageWithAttachment(
+        textContent: string | null,
+        fileToAttach: MessageContent | undefined
+    ) {
+        if (textContent || fileToAttach) {
+            // todo - this is not correct currently
+            // if we enter messages too quickly we will get the same index repeatedly
+            // we need to optimistically update the latestMessage on the chat summary
+
+            // todo - we also have a problem for group chats with hidden history - we don't know what the index
+            // should be at all in that case
+            const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
+
+            let msg: GroupMessage | DirectMessage | undefined;
+            if ($machine.context.chatSummary.kind === "group_chat") {
+                msg = createGroupMessage(
+                    $machine.context.user!.userId,
+                    nextIndex,
+                    textContent ?? undefined,
+                    $machine.context.replyingTo,
+                    fileToAttach
+                );
+            }
+            if ($machine.context.chatSummary.kind === "direct_chat") {
+                msg = createDirectMessage(
+                    nextIndex,
+                    textContent ?? undefined,
+                    $machine.context.replyingTo,
+                    fileToAttach
+                );
+            }
+            dispatch("unconfirmedMessage", msg!.messageId);
+            $machine.context.serviceContainer
+                .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
+                .then((resp) => {
+                    if (resp.kind === "send_message_success") {
+                        dispatch("messageConfirmed", msg!.messageId);
+                        machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
+                    } else {
+                        rollbar.warn("Error response sending message", resp);
+                        toastStore.showFailureToast("errorSendingMessage");
+                        machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    }
+                })
+                .catch((err) => {
+                    toastStore.showFailureToast("errorSendingMessage");
+                    machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    rollbar.error("Exception sending message", err);
+                });
+
+            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextEventIndex } });
+            chatStore.set({
+                chatId: $machine.context.chatSummary.chatId,
+                event: "sending_message",
+            });
+        }
+    }
+
+    function sendMessage(ev: CustomEvent<string | null>) {
+        sendMessageWithAttachment(ev.detail, $machine.context.fileToAttach);
+    }
+
     function fileSelected(ev: CustomEvent<MessageContent>) {
-        machine.send({ type: "ATTACH_FILE", data: ev.detail });
+        if (ev.detail.kind === "file_content") {
+            sendMessageWithAttachment(null, ev.detail);
+        } else {
+            machine.send({ type: "ATTACH_FILE", data: ev.detail });
+        }
     }
 
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
@@ -52,13 +129,16 @@
     <div class="footer-overlay">
         {#if $machine.context.replyingTo}
             <ReplyingTo
+                identity={$machine.context.serviceContainer.getIdentity()}
                 on:cancelReply={cancelReply}
                 user={$machine.context.user}
                 replyingTo={$machine.context.replyingTo} />
         {/if}
         {#if $machine.context.fileToAttach !== undefined}
             {#if $machine.context.fileToAttach.kind === "media_content"}
-                <DraftMediaMessage draft={$machine.context.fileToAttach} />
+                <DraftMediaMessage
+                    identity={$machine.context.serviceContainer.getIdentity()}
+                    draft={$machine.context.fileToAttach} />
             {:else if $machine.context.fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>
             {/if}
@@ -71,6 +151,7 @@
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
+        on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
         {machine} />

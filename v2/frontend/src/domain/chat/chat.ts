@@ -86,13 +86,18 @@ export type GroupMessage = MessageCommon & {
     repliesTo?: GroupChatReplyContext;
 };
 
-export type EventsResponse<T extends ChatEvent> =
-    | "chat_not_found"
-    | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
 export type DirectChatEvent = DirectMessage | DirectChatCreated;
 
-export type GroupChatEvent = GroupMessage | GroupChatCreated | ParticipantsAdded;
+export type GroupChatEvent =
+    | GroupMessage
+    | GroupChatCreated
+    | ParticipantsAdded
+    | ParticipantsPromotedToAdmin
+    | ParticipantsRemoved
+    | ParticipantLeft
+    | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -104,6 +109,29 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type ParticipantLeft = {
+    kind: "participant_left";
+    userId: string;
+};
+
+export type ParticipantsRemoved = {
+    kind: "participants_removed";
+    userIds: string[];
+    removedBy: string;
+};
+
+export type ParticipantsDismissedAsAdmin = {
+    kind: "participants_dismissed_as_admin";
+    userIds: string[];
+    dismissedBy: string;
+};
+
+export type ParticipantsPromotedToAdmin = {
+    kind: "participants_promoted_to_admin";
+    userIds: string[];
+    promotedBy: string;
 };
 
 export type GroupChatCreated = {
@@ -139,11 +167,12 @@ export type UpdateArgs = {
 
 export type MergedUpdatesResponse = {
     chatSummaries: ChatSummary[];
+    blockedUsers: Set<string>;
     timestamp: bigint;
 };
 
 export type UpdatesResponse = {
-    blockedUsers: string[];
+    blockedUsers: Set<string>;
     chatsUpdated: ChatSummaryUpdates[];
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
@@ -154,14 +183,14 @@ export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpda
 
 type ChatSummaryUpdatesCommon = {
     chatId: string;
-    latestReadByMe?: number;
+    readByMe?: MessageIndexRange[];
     latestEventIndex?: number;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestReadByThem?: number;
     latestMessage?: EventWrapper<DirectMessage>;
+    readByThem?: MessageIndexRange[];
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -185,16 +214,21 @@ export type FullParticipant = Participant & PartialUserSummary;
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
+export type MessageIndexRange = {
+    from: number;
+    to: number;
+};
+
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
-    latestReadByMe: number;
+    readByMe: MessageIndexRange[];
     latestEventIndex: number;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
-    latestReadByThem: number;
+    readByThem: MessageIndexRange[];
     dateCreated: bigint;
     latestMessage?: EventWrapper<DirectMessage>;
 };
@@ -207,6 +241,7 @@ export type GroupChatSummary = ChatSummaryCommon & {
     public: boolean;
     joined: bigint;
     minVisibleEventIndex: number;
+    minVisibleMessageIndex: number;
     lastUpdated: bigint;
     latestMessage?: EventWrapper<GroupMessage>;
 };
@@ -341,3 +376,25 @@ export type SendMessageNotInGroup = {
 };
 
 export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";
+
+export type ChangeAdminResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success";
+
+export type RemoveParticipantResponse =
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "success"
+    | "cannot_remove_self"
+    | "internal_error";
+
+export type BlockUserResponse = "success";
+
+export type UnblockUserResponse = "success";
+
+export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
+
+export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found" | "not_in_group";

@@ -24,6 +24,10 @@ import {
     SendMessageResponse,
     PutChunkArgs,
     PutChunkResponse,
+    MakeAdminResponse,
+    RemoveAdminResponse,
+    RemoveParticipantResponse,
+    MarkReadResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -49,6 +53,10 @@ export {
     EventsArgs as ApiEventsArgs,
     GroupChatEvent as ApiGroupChatEvent,
     AddParticipantsResponse as ApiAddParticipantsResponse,
+    MakeAdminResponse as ApiMakeAdminResponse,
+    RemoveAdminResponse as ApiRemoveAdminResponse,
+    RemoveParticipantResponse as ApiRemoveParticipantResponse,
+    MarkReadResponse as ApiMarkReadResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

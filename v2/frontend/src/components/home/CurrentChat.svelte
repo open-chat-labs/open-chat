@@ -6,12 +6,14 @@
     import type { ActorRefFrom } from "xstate";
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let blocked: boolean;
+    export let unconfirmed: Set<bigint>;
 
     function showParticipants() {
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
-    function addParticipant() {
+    function addParticipants() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
 </script>
@@ -20,14 +22,16 @@
     <CurrentChatHeader
         users={$machine.context.userLookup}
         user={$machine.context.user}
+        {blocked}
         on:clearSelection
         on:blockUser
-        on:addParticipant={addParticipant}
+        on:unblockUser
+        on:addParticipants={addParticipants}
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:chatWith {machine} />
-    <Footer {machine} />
+    <CurrentChatMessages {unconfirmed} on:chatWith {machine} />
+    <Footer {machine} on:unconfirmedMessage on:messageConfirmed />
 </div>
 
 <style type="text/scss">

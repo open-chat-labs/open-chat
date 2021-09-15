@@ -16,6 +16,11 @@ import type {
     DirectChatReplyContext,
     MergedUpdatesResponse,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { mergeChatUpdates, newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara, randomWord } from "../../utils/mockutils";
@@ -47,9 +52,10 @@ function mockGroupChat(i: number): GroupChatSummary {
         public: false,
         joined: BigInt(time),
         minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
         chatId: String(i),
         lastUpdated: BigInt(time),
-        latestReadByMe: numMessages,
+        readByMe: [],
         latestMessage: mockEvent<GroupMessage>("group_message", numMessages),
         latestEventIndex: numMessages,
         participants,
@@ -60,13 +66,12 @@ const others = ["qwxyz", "mnopr", "rstuv"];
 
 function mockDirectChat(i: number): DirectChatSummary {
     time -= oneDay;
-    const us = randomNum(10, 1000);
     return {
         kind: "direct_chat",
         them: others[i % 3],
         chatId: String(i),
-        latestReadByMe: us,
-        latestReadByThem: 0,
+        readByMe: [],
+        readByThem: [],
         latestMessage: mockEvent("direct_message", numMessages),
         latestEventIndex: numMessages,
         dateCreated: BigInt(time),
@@ -234,7 +239,7 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
         return {
             chatId: chat.chatId,
             lastUpdated: BigInt(+new Date()),
-            latestReadByMe: chat.latestReadByMe,
+            readByMe: chat.readByMe,
             latestEventIndex: chat.latestEventIndex + 2,
             latestMessage: chat.latestMessage
                 ? mockEvent<GroupMessage>("group_message", chat.latestMessage?.index + 2)
@@ -250,11 +255,11 @@ function updateChat(chat: ChatSummary, i: number): ChatSummaryUpdates {
     }
     return {
         chatId: chat.chatId,
-        latestReadByMe: chat.latestReadByMe,
+        readByMe: [],
+        readByThem: [{ from: 0, to: Number.MAX_VALUE }],
         latestMessage: chat.latestMessage,
         latestEventIndex: chat.latestEventIndex,
         kind: "direct_chat",
-        latestReadByThem: chat.latestReadByThem,
     };
 }
 
@@ -297,7 +302,7 @@ export class UserClientMock implements IUserClient {
             : ([] as ChatSummary[]).concat(direct, group);
 
         const resp = {
-            blockedUsers: [],
+            blockedUsers: new Set<string>(),
             chatsUpdated: args.updatesSince
                 ? chatSummaries.map((c) => updateChat(c, this.updateCycles))
                 : [],
@@ -311,6 +316,7 @@ export class UserClientMock implements IUserClient {
                 res({
                     chatSummaries: mergeChatUpdates(chatSummaries, resp),
                     timestamp: resp.timestamp,
+                    blockedUsers: resp.blockedUsers,
                 });
             }, 500);
         });
@@ -343,11 +349,47 @@ export class UserClientMock implements IUserClient {
         _senderName: string,
         message: DirectMessage
     ): Promise<SendMessageResponse> {
-        return Promise.resolve({
-            kind: "send_message_success",
-            timestamp: BigInt(Number(+new Date())),
-            messageIndex: message.messageIndex,
-            eventIndex: message.messageIndex,
+        return new Promise((res) => {
+            setTimeout(() => {
+                res({
+                    kind: "send_message_success",
+                    timestamp: BigInt(Number(+new Date())),
+                    messageIndex: message.messageIndex,
+                    eventIndex: message.messageIndex,
+                });
+            }, 2000);
+        });
+    }
+
+    blockUser(_userId: string): Promise<BlockUserResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
+        });
+    }
+
+    unblockUser(_userId: string): Promise<UnblockUserResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
+        });
+    }
+
+    leaveGroup(_chatId: string): Promise<LeaveGroupResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
+        });
+    }
+
+    markMessagesRead(_userId: string, _ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 500);
         });
     }
 }

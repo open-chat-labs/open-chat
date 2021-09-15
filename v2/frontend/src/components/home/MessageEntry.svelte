@@ -12,15 +12,6 @@
     import type { ActorRefFrom } from "xstate";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
-    import {
-        createDirectMessage,
-        createGroupMessage,
-        latestLoadedEventIndex,
-    } from "../../domain/chat/chat.utils";
-    import type { DirectMessage, GroupMessage } from "../../domain/chat/chat";
-    import { toastStore } from "../../stores/toast";
-    import { chatStore } from "../../stores/chat";
-    import { rollbar } from "../../utils/logging";
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -44,51 +35,9 @@
     }
 
     function sendMessage() {
-        if (inp.textContent || $machine.context.fileToAttach) {
-            const nextIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
-            let msg: GroupMessage | DirectMessage | undefined;
-            if ($machine.context.chatSummary.kind === "group_chat") {
-                msg = createGroupMessage(
-                    $machine.context.user!.userId,
-                    nextIndex,
-                    inp.textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    $machine.context.fileToAttach
-                );
-            }
-            if ($machine.context.chatSummary.kind === "direct_chat") {
-                msg = createDirectMessage(
-                    nextIndex,
-                    inp.textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    $machine.context.fileToAttach
-                );
-            }
-            $machine.context.serviceContainer
-                .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
-                .then((resp) => {
-                    if (resp.kind === "send_message_success") {
-                        machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
-                    } else {
-                        rollbar.warn("Error response sending message", resp);
-                        toastStore.showFailureToast("errorSendingMessage");
-                        machine.send({ type: "REMOVE_MESSAGE", data: msg! });
-                    }
-                })
-                .catch((err) => {
-                    toastStore.showFailureToast("errorSendingMessage");
-                    machine.send({ type: "REMOVE_MESSAGE", data: msg! });
-                    rollbar.error("Exception sending message", err);
-                });
-
-            machine.send({ type: "SEND_MESSAGE", data: { message: msg!, index: nextIndex } });
-            inp.textContent = "";
-            showEmojiPicker = false;
-            chatStore.set({
-                chatId: $machine.context.chatSummary.chatId,
-                event: "sending_message",
-            });
-        }
+        dispatch("sendMessage", inp.textContent);
+        inp.textContent = "";
+        showEmojiPicker = false;
     }
 
     function toggleEmojiPicker() {

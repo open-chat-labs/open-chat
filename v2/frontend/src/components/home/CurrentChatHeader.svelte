@@ -29,6 +29,7 @@
     export let selectedChatSummary: ChatSummary;
     export let users: UserLookup;
     export let user: UserSummary | undefined;
+    export let blocked: boolean;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -40,15 +41,21 @@
         }
     }
 
+    function unblockUser() {
+        if (selectedChatSummary.kind === "direct_chat") {
+            dispatch("unblockUser", { userId: selectedChatSummary.them });
+        }
+    }
+
     function showParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
             dispatch("showParticipants");
         }
     }
 
-    function addParticipant() {
+    function addParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("addParticipant");
+            dispatch("addParticipants");
         }
     }
 
@@ -133,12 +140,21 @@
             </div>
             <div slot="menu">
                 {#if selectedChatSummary.kind === "direct_chat"}
-                    <Menu>
-                        <MenuItem on:click={blockUser}>
-                            <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
-                        </MenuItem>
-                    </Menu>
+                    {#if blocked}
+                        <Menu>
+                            <MenuItem on:click={unblockUser}>
+                                <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("unblockUser")}</div>
+                            </MenuItem>
+                        </Menu>
+                    {:else}
+                        <Menu>
+                            <MenuItem on:click={blockUser}>
+                                <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("blockUser")}</div>
+                            </MenuItem>
+                        </Menu>
+                    {/if}
                 {:else if selectedChatSummary.kind === "group_chat"}
                     <Menu>
                         <MenuItem on:click={showParticipants}>
@@ -154,9 +170,9 @@
                             <div slot="text">{$_("copyInviteCode")}</div>
                         </MenuItem>
                         {#if canAdminister(selectedChatSummary)}
-                            <MenuItem on:click={addParticipant}>
+                            <MenuItem on:click={addParticipants}>
                                 <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                <div slot="text">{$_("addParticipant")}</div>
+                                <div slot="text">{$_("addParticipants")}</div>
                             </MenuItem>
                         {/if}
                     </Menu>

@@ -8,6 +8,11 @@ import type {
     MergedUpdatesResponse,
     DirectMessage,
     SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    MessageIndexRange,
 } from "../../domain/chat/chat";
 
 export interface IUserClient {
@@ -23,4 +28,8 @@ export interface IUserClient {
         senderName: string,
         message: DirectMessage
     ): Promise<SendMessageResponse>;
+    blockUser(userId: string): Promise<BlockUserResponse>;
+    unblockUser(userId: string): Promise<UnblockUserResponse>;
+    leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
+    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
 }

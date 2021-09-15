@@ -20,7 +20,7 @@
     import RepliesTo from "./RepliesTo.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
@@ -29,8 +29,10 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
+    import type { Identity } from "@dfinity/agent";
     const dispatch = createEventDispatcher();
 
+    export let identity: Identity;
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let msg: GroupMessage | DirectMessage;
@@ -39,9 +41,11 @@
     export let index: number;
     export let timestamp: bigint;
     export let last: boolean;
+    export let confirmed: boolean;
+    export let readByThem: boolean;
+    export let readByMe: boolean;
+    export let observer: IntersectionObserver;
 
-    let confirmed: boolean = true; // todo - where does this come from
-    let read: boolean = true; // todo - where does this come from
     let msgElement: HTMLElement;
 
     let senderId = getSenderId();
@@ -54,7 +58,22 @@
     afterUpdate(() => {
         // todo - keep an eye on this
         console.log("updating ChatMessage component");
+
+        if (readByMe) {
+            observer.unobserve(msgElement);
+        }
     });
+
+    onMount(() => {
+        if (!readByMe) {
+            // todo - leaving this console log here for now just to make sure we are not *over* observing
+            console.log("beginning to observe: ", msg.messageIndex);
+            observer.observe(msgElement);
+        } else {
+        }
+    });
+
+    onDestroy(() => observer.unobserve(msgElement));
 
     function getSenderId() {
         if (msg.kind === "direct_message" && chatSummary.kind === "direct_chat") {
@@ -105,24 +124,33 @@
     function replyPrivately() {
         dispatch("replyPrivatelyTo", createReplyContext(true));
     }
-
-    // todo - I think perhaps ChatMessageContent cannot make all of the decisions about rendering the content
-    // ideally we want to make decisions at this level about padding and stuff based on the content type
-    // e.g. image / video with no caption should fill the whole chat bubble
 </script>
 
-<div bind:this={msgElement} class="chat-message-wrapper" class:me id={`message-${index}`}>
+<div
+    bind:this={msgElement}
+    class="chat-message-wrapper"
+    class:me
+    data-index={msg.messageIndex}
+    id={`message-${msg.messageIndex}`}>
     <div
         class="chat-message"
         class:fill={fillMessage(msg)}
         class:me
         class:last
+        class:readByMe
         class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
-            <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
+            <RepliesTo
+                {identity}
+                {chatSummary}
+                {user}
+                {userLookup}
+                on:goToMessage
+                repliesTo={msg.repliesTo} />
         {/if}
 
-        <ChatMessageContent {me} content={msg.content} />
+        <ChatMessageContent {identity} {me} content={msg.content} />
+        <!-- <pre>{msg.messageIndex} {index}</pre> -->
 
         {#if metaData}
             {#await metaData then meta}
@@ -136,7 +164,7 @@
                 {toShortTimeString(new Date(Number(timestamp)))}
             </span>
             {#if me && confirmed}
-                {#if read}
+                {#if readByThem}
                     <DoubleTick />
                 {:else}
                     <Tick />
@@ -278,6 +306,10 @@
             .menu-icon {
                 opacity: 0.6;
             }
+        }
+
+        &:not(.readByMe) {
+            box-shadow: 0 0 0 5px yellow;
         }
 
         &.last {

@@ -106,6 +106,10 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
     'message_index' : MessageIndex,
   });
+  const ParticipantsDismissedAsAdmin = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'dismissed_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -123,7 +127,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'Message' : GroupMessage,
-    'ParticipantsDismissedAsAdmin' : ParticipantsPromotedToAdmin,
+    'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'ParticipantLeft' : ParticipantLeft,
     'GroupNameChanged' : GroupNameChanged,
     'ParticipantsAdded' : ParticipantsAdded,
@@ -212,13 +216,20 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const MessageMatch = IDL.Record({
+    'content' : MessageContent,
+    'sender' : UserId,
+    'score' : IDL.Nat32,
+  });
+  const SearchMessagesSuccessResult = IDL.Record({
+    'matches' : IDL.Vec(MessageMatch),
+  });
   const SearchMessagesResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'matches' : IDL.Vec(
-        IDL.Record({ 'score' : IDL.Nat32, 'message' : GroupMessage })
-      ),
-    }),
-    'Failure' : IDL.Null,
+    'TermTooShort' : IDL.Nat8,
+    'Success' : SearchMessagesSuccessResult,
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
+    'NotInGroup' : IDL.Null,
   });
   const ReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
   const SendMessageArgs = IDL.Record({

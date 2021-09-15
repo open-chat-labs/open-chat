@@ -4,9 +4,11 @@
     import ChatMessage from "./ChatMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
-    import ParticipantsAddedEvent from "./ParticipantsAddedEvent.svelte";
+    import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
+    import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type { Identity } from "@dfinity/agent";
 
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
@@ -17,10 +19,20 @@
     export let last: boolean;
     export let me: boolean;
     export let userLookup: UserLookup;
+    export let identity: Identity;
+    export let confirmed: boolean;
+    export let readByThem: boolean;
+    export let readByMe: boolean;
+    export let observer: IntersectionObserver;
 </script>
 
 {#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
+        {observer}
+        {confirmed}
+        {readByMe}
+        {readByThem}
+        {identity}
         {chatSummary}
         {user}
         {me}
@@ -38,7 +50,42 @@
 {:else if event.event.kind === "direct_chat_created"}
     <DirectChatCreatedEvent timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_added"}
-    <ParticipantsAddedEvent {user} event={event.event} {userLookup} timestamp={event.timestamp} />
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.addedBy}
+        resourceKey={"addedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_removed"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.removedBy}
+        resourceKey={"removedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participant_left"}
+    <ParticipantLeftEvent
+        {user}
+        left={userLookup[event.event.userId]}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_promoted_to_admin"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.promotedBy}
+        resourceKey={"promotedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participants_dismissed_as_admin"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.dismissedBy}
+        resourceKey={"dismissedBy"}
+        {userLookup}
+        timestamp={event.timestamp} />
 {:else}
     <div>Unexpected event type</div>
 {/if}

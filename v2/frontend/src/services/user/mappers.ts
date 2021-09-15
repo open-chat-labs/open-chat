@@ -19,6 +19,10 @@ import type {
     ApiDirectMessage,
     ApiSendMessageResponse,
     ApiPutChunkResponse,
+    ApiBlockUserResponse,
+    ApiUnblockUserResponse,
+    ApiLeaveGroupResponse,
+    ApiMarkReadResponse,
 } from "./candid/idl";
 import type {
     BlobReference,
@@ -41,10 +45,43 @@ import type {
     DirectChatReplyContext,
     SendMessageResponse,
     PutChunkResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
+
+export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("SuccessNoChange" in candid) {
+        return "success_no_change";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
+}
+
+export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
+}
 
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
     if ("Full" in candid) {
@@ -57,6 +94,16 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
         return "put_chunk_success";
     }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
+}
+
+export function blockResponse(
+    candid: ApiBlockUserResponse | ApiUnblockUserResponse
+): BlockUserResponse | UnblockUserResponse {
+    console.log(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    throw new UnsupportedValueError("Unexpected ApiBlockResponse type received", candid);
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
@@ -167,7 +214,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
-            blockedUsers: candid.Success.blocked_users.map((u) => u.toString()),
+            blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             chatsUpdated: candid.Success.chats_updated.map(updatedChatSummary),
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
@@ -183,7 +230,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             kind: "group_chat",
             chatId: candid.Group.chat_id.toString(),
             lastUpdated: candid.Group.last_updated,
-            latestReadByMe: optional(candid.Group.latest_read_by_me, identity),
+            readByMe: optional(candid.Group.read_by_me, identity),
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
@@ -202,13 +249,13 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         return {
             kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),
-            latestReadByMe: optional(candid.Direct.latest_read_by_me, identity),
+            readByMe: optional(candid.Direct.read_by_me, identity),
+            readByThem: optional(candid.Direct.read_by_them, identity),
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
                 event: directMessage(ev.event),
             })),
-            latestReadByThem: optional(candid.Direct.latest_read_by_them, identity),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
         };
     }
@@ -228,13 +275,14 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                     event: groupMessage(ev.event),
                 };
             }),
-            latestReadByMe: candid.Group.latest_read_by_me,
+            readByMe: candid.Group.read_by_me,
             name: candid.Group.name,
             description: candid.Group.description,
             participants,
             public: candid.Group.is_public,
             joined: candid.Group.joined,
             minVisibleEventIndex: candid.Group.min_visible_event_index,
+            minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
         };
@@ -250,8 +298,8 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
-            latestReadByMe: candid.Direct.latest_read_by_me,
-            latestReadByThem: candid.Direct.latest_read_by_me,
+            readByMe: candid.Direct.read_by_me,
+            readByThem: candid.Direct.read_by_them,
             dateCreated: candid.Direct.date_created,
         };
     }

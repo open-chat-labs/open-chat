@@ -5,7 +5,11 @@ import type {
     GroupChatEvent,
     GroupChatReplyContext,
     GroupMessage,
+    ChangeAdminResponse,
     SendMessageResponse,
+    RemoveParticipantResponse,
+    MessageIndexRange,
+    MarkReadResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
@@ -119,6 +123,38 @@ export class GroupClientMock implements IGroupClient {
             timestamp: BigInt(Number(+new Date())),
             messageIndex: message.messageIndex,
             eventIndex: message.messageIndex,
+        });
+    }
+
+    makeAdmin(_userId: string): Promise<ChangeAdminResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    dismissAsAdmin(_userId: string): Promise<ChangeAdminResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    removeParticipant(_userId: string): Promise<RemoveParticipantResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
         });
     }
 }

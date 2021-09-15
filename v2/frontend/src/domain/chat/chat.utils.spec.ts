@@ -7,9 +7,15 @@ import type {
     GroupChatSummaryUpdates,
 } from "./chat";
 import {
+    compareMessageRange,
+    getFirstUnreadMessageIndex,
     getParticipantsString,
+    getUnreadMessages,
+    indexIsInRanges,
     mergeChatUpdates,
+    mergeMessageIndexRanges,
     newMessageId,
+    setMessageRead,
     userIdsFromChatSummaries,
 } from "./chat.utils";
 
@@ -17,14 +23,14 @@ const defaultDirectChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "a",
     chatId: "abc",
-    latestReadByMe: 0,
-    latestReadByThem: 0,
+    readByMe: [],
+    readByThem: [],
     latestMessage: {
         event: {
             kind: "direct_message",
             sentByMe: true,
             messageId: newMessageId(),
-            messageIndex: 0,
+            messageIndex: 100,
             content: {
                 kind: "text_content",
                 text: "some message",
@@ -44,12 +50,33 @@ const defaultGroupChat: GroupChatSummary = {
     participants: [participant("1"), participant("2"), participant("3")],
     chatId: "abc",
     lastUpdated: BigInt(0),
-    latestReadByMe: 0,
+    readByMe: [],
     latestMessage: undefined,
     public: true,
     joined: BigInt(0),
     minVisibleEventIndex: 0,
+    minVisibleMessageIndex: 0,
     latestEventIndex: 0,
+};
+
+const groupChatWithMessage: GroupChatSummary = {
+    ...defaultGroupChat,
+    minVisibleMessageIndex: 20,
+    minVisibleEventIndex: 10,
+    latestMessage: {
+        event: {
+            kind: "group_message",
+            sender: "abscdefg",
+            messageId: newMessageId(),
+            messageIndex: 100,
+            content: {
+                kind: "text_content",
+                text: "some message",
+            },
+        },
+        timestamp: BigInt(0),
+        index: 0,
+    },
 };
 
 function directChatId(id: number): DirectChatSummary {
@@ -86,6 +113,352 @@ function participant(id: string): Participant {
         userId: id,
     };
 }
+
+describe("sorting message index ranges", () => {
+    test("sort by from first", () => {
+        expect(
+            [
+                { from: 10, to: 100 },
+                { from: 5, to: 100 },
+                { from: 3, to: 100 },
+            ].sort(compareMessageRange)
+        ).toEqual([
+            { from: 3, to: 100 },
+            { from: 5, to: 100 },
+            { from: 10, to: 100 },
+        ]);
+    });
+    test("sort by to if from are equal", () => {
+        expect(
+            [
+                { from: 10, to: 80 },
+                { from: 10, to: 60 },
+                { from: 10, to: 40 },
+            ].sort(compareMessageRange)
+        ).toEqual([
+            { from: 10, to: 40 },
+            { from: 10, to: 60 },
+            { from: 10, to: 80 },
+        ]);
+    });
+});
+
+describe("merging message index ranges", () => {
+    test("with no ranges", () => {
+        expect(mergeMessageIndexRanges([], [])).toEqual([]);
+    });
+    test("with no overlaps", () => {
+        expect(
+            mergeMessageIndexRanges(
+                [
+                    { from: 25, to: 30 },
+                    { from: 0, to: 20 },
+                ],
+                [{ from: 40, to: 50 }]
+            )
+        ).toEqual([
+            { from: 0, to: 20 },
+            { from: 25, to: 30 },
+            { from: 40, to: 50 },
+        ]);
+    });
+    test("with overlaps", () => {
+        expect(
+            mergeMessageIndexRanges(
+                [
+                    { from: 25, to: 30 },
+                    { from: 0, to: 20 },
+                ],
+                [
+                    { from: 40, to: 50 },
+                    { from: 10, to: 28 },
+                    { from: 29, to: 35 },
+                ]
+            )
+        ).toEqual([
+            { from: 0, to: 35 },
+            { from: 40, to: 50 },
+        ]);
+    });
+});
+
+describe("index is in ranges", () => {
+    test("where index is not in ranges", () => {
+        expect(indexIsInRanges(16, [{ from: 11, to: 13 }])).toEqual(false);
+    });
+    test("where index is in ranges", () => {
+        expect(
+            indexIsInRanges(16, [
+                { from: 11, to: 13 },
+                { from: 15, to: 20 },
+            ])
+        ).toEqual(true);
+    });
+    test("where there are no ranges", () => {
+        expect(indexIsInRanges(16, [])).toEqual(false);
+    });
+});
+
+describe("setting message read by me", () => {
+    test("where we have no messages read", () => {
+        expect(setMessageRead(defaultDirectChat, 10).readByMe).toEqual([{ from: 10, to: 10 }]);
+    });
+
+    test("where new index is within an existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            25
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 20, to: 30 }]);
+    });
+
+    test("where new index is fully below all existing ranges", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            10
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 10, to: 10 },
+            { from: 20, to: 30 },
+        ]);
+    });
+    test("where new index is contiguous with lower bound of existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            19
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 19, to: 30 }]);
+    });
+    test("where new index is contiguous with upper bound of existing range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            31
+        ).readByMe;
+        expect(readByMe).toEqual([{ from: 20, to: 31 }]);
+    });
+    test("where new index is beyond final range", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 30 }],
+            },
+            35
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 20, to: 30 },
+            { from: 35, to: 35 },
+        ]);
+    });
+    test("where new index is between existing ranges", () => {
+        const readByMe = setMessageRead(
+            {
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 0, to: 10 },
+                    { from: 20, to: 30 },
+                ],
+            },
+            15
+        ).readByMe;
+        expect(readByMe).toEqual([
+            { from: 0, to: 10 },
+            { from: 15, to: 15 },
+            { from: 20, to: 30 },
+        ]);
+    });
+});
+
+describe("getting first unread message index", () => {
+    test("where we have read everything", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 0, to: 100 }],
+            })
+        ).toEqual(101);
+    });
+    test("where we have no messages", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                latestMessage: undefined,
+                readByMe: [],
+            })
+        ).toEqual(Number.MAX_VALUE);
+    });
+    test("where we have read nothing", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [],
+            })
+        ).toEqual(0);
+    });
+    test("where we are missing messages at the end", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 0, to: 80 }],
+            })
+        ).toEqual(81);
+    });
+    test("where we are missing messages at the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [{ from: 20, to: 80 }],
+            })
+        ).toEqual(0);
+    });
+    test("where we have multiple gaps including the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 20, to: 40 },
+                    { from: 50, to: 60 },
+                    { from: 70, to: 80 },
+                ],
+            })
+        ).toEqual(0);
+    });
+    test("where we have multiple gaps after the beginning", () => {
+        expect(
+            getFirstUnreadMessageIndex({
+                ...defaultDirectChat,
+                readByMe: [
+                    { from: 0, to: 40 },
+                    { from: 50, to: 60 },
+                    { from: 70, to: 80 },
+                ],
+            })
+        ).toEqual(41);
+    });
+});
+
+describe("getting unread message counts", () => {
+    describe("for a direct chat", () => {
+        test("with no latest message", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    latestMessage: undefined,
+                })
+            ).toEqual(0);
+        });
+        test("with no messages read", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [],
+                })
+            ).toEqual(101);
+        });
+        test("with no gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 0, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 10, to: 100 }],
+                })
+            ).toEqual(10);
+        });
+        test("with gaps at both ends", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [{ from: 10, to: 90 }],
+                })
+            ).toEqual(20);
+        });
+        test("with multiple gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...defaultDirectChat,
+                    readByMe: [
+                        { from: 10, to: 30 }, // gap of 9
+                        { from: 40, to: 50 }, // gap of 9
+                        { from: 60, to: 70 }, // gap of 30
+                    ],
+                })
+            ).toEqual(58);
+        });
+    });
+
+    describe("for a group chat", () => {
+        test("with no latest message", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    latestMessage: undefined,
+                })
+            ).toEqual(0);
+        });
+        test("with no gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 0, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning before min", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 10, to: 100 }],
+                })
+            ).toEqual(0);
+        });
+        test("with gap at the beginning after min", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 30, to: 100 }],
+                })
+            ).toEqual(10);
+        });
+        test("with gaps at both ends", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [{ from: 30, to: 90 }],
+                })
+            ).toEqual(20);
+        });
+        test("with multiple gaps", () => {
+            expect(
+                getUnreadMessages({
+                    ...groupChatWithMessage,
+                    readByMe: [
+                        { from: 10, to: 30 }, // gap of 9
+                        { from: 40, to: 50 }, // gap of 9
+                        { from: 60, to: 70 }, // gap of 30
+                    ],
+                })
+            ).toEqual(48);
+        });
+    });
+});
 
 describe("extract userids from chat summaries", () => {
     test("when there are no chats", () => {
@@ -170,11 +543,11 @@ describe("merging updates", () => {
 
     test("removed chats get removed", () => {
         const updatesResponse = {
-            blockedUsers: [],
             chatsUpdated: [],
             chatsRemoved: new Set(["1", "3", "5"]),
             chatsAdded: [],
             timestamp: BigInt(0),
+            blockedUsers: new Set<string>(),
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(2);
@@ -184,11 +557,11 @@ describe("merging updates", () => {
 
     test("added chats get added", () => {
         const updatesResponse = {
-            blockedUsers: [],
             chatsUpdated: [],
             chatsRemoved: new Set([]),
             chatsAdded: [directChatId(6), directChatId(7)],
             timestamp: BigInt(0),
+            blockedUsers: new Set<string>(),
         };
         const merged = mergeChatUpdates(initialChats, updatesResponse);
         expect(merged.length).toEqual(7);
@@ -198,9 +571,9 @@ describe("merging updates", () => {
     describe("updated chats get merged correctly", () => {
         const updatedDirect: DirectChatSummaryUpdates = {
             kind: "direct_chat",
-            latestReadByThem: 100,
+            readByMe: [],
             chatId: "4",
-            latestReadByMe: 200,
+            readByThem: [],
             latestEventIndex: 300,
             latestMessage: {
                 event: {
@@ -223,7 +596,7 @@ describe("merging updates", () => {
             kind: "group_chat",
             chatId: "2",
             lastUpdated: BigInt(1000),
-            latestReadByMe: 200,
+            readByMe: [],
             latestMessage: {
                 event: {
                     kind: "group_message",
@@ -252,29 +625,29 @@ describe("merging updates", () => {
 
         test("attempting to update with a mismatched kind throws error", () => {
             const updatesResponse = {
-                blockedUsers: [],
                 chatsUpdated: [{ ...updatedDirect, chatId: "1" }],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
+                blockedUsers: new Set<string>(),
             };
             expect(() => mergeChatUpdates(initialChats, updatesResponse)).toThrow();
         });
 
         test("direct chats get merged correctly", () => {
             const updatesResponse = {
-                blockedUsers: [],
                 chatsUpdated: [updatedDirect],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
+                blockedUsers: new Set<string>(),
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "4");
             if (updated && updated.kind === "direct_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated?.latestReadByThem).toEqual(100);
-                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated.readByThem).toEqual([]);
+                expect(updated.readByMe).toEqual([]);
                 expect(updated?.latestMessage).not.toBe(undefined);
             } else {
                 fail("updated chat not found or was not a direct chat");
@@ -283,17 +656,17 @@ describe("merging updates", () => {
 
         test("updated group chats get merged correctly", () => {
             const updatesResponse = {
-                blockedUsers: [],
                 chatsUpdated: [updatedGroup],
                 chatsRemoved: new Set([]),
                 chatsAdded: [],
                 timestamp: BigInt(0),
+                blockedUsers: new Set<string>(),
             };
             const merged = mergeChatUpdates(initialChats, updatesResponse);
             const updated = merged.find((c) => c.chatId === "2");
             if (updated && updated.kind === "group_chat") {
                 expect(merged.length).toEqual(5);
-                expect(updated?.latestReadByMe).toEqual(200);
+                expect(updated.readByMe).toEqual([]);
                 expect(updated?.lastUpdated).toEqual(BigInt(1000));
                 expect(updated?.latestMessage).not.toBe(undefined);
                 expect(updated.participants.length).toEqual(4);
