@@ -2,7 +2,7 @@
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
 import { log } from "xstate/lib/actions";
 import type { ChatSummary, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
-import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
+import { insertIndexIntoRanges, mergeMessageIndexRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 
 /**
@@ -15,6 +15,7 @@ export interface MarkReadContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
     ranges: MessageIndexRange[];
+    pending: MessageIndexRange[];
 }
 
 export type MarkReadEvents =
@@ -25,18 +26,18 @@ export type MarkReadEvents =
 const liveConfig: Partial<MachineOptions<MarkReadContext, MarkReadEvents>> = {
     services: {
         markMessagesRead: async (ctx, _) => {
-            if (ctx.ranges.length === 0) {
+            if (ctx.pending.length === 0) {
                 return Promise.resolve("success");
             } else {
                 if (ctx.chatSummary.kind === "direct_chat") {
                     return ctx.serviceContainer.markDirectChatMessagesRead(
                         ctx.chatSummary.them,
-                        ctx.ranges
+                        ctx.pending
                     );
                 } else if (ctx.chatSummary.kind === "group_chat") {
                     return ctx.serviceContainer.markGroupChatMessagesRead(
                         ctx.chatSummary.chatId,
-                        ctx.ranges
+                        ctx.pending
                     );
                 }
             }
@@ -66,18 +67,21 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
             },
         },
         marking_as_read: {
+            entry: assign((ctx, _) => ({
+                // capture the buffer that we are going to send
+                pending: ctx.ranges,
+                ranges: [],
+            })),
             invoke: {
                 id: "markMessagssRead",
                 src: "markMessagesRead",
                 onDone: {
                     target: "idle",
                     actions: assign((ctx, ev: DoneInvokeEvent<MarkReadResponse>) => {
-                        if (ctx.ranges.length > 0) {
-                            console.log("marked read: ", ctx.ranges);
+                        if (ctx.pending.length > 0) {
+                            console.log("marked read: ", ctx.pending, ev.data);
                         }
-                        return ev.data === "success" || ev.data === "success_no_change"
-                            ? { ranges: [] }
-                            : {};
+                        return {};
                     }),
                 },
                 onError: "idle",

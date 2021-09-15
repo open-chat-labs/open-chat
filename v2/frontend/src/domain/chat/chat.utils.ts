@@ -116,6 +116,9 @@ export function insertIndexIntoRanges(
     index: number,
     ranges: MessageIndexRange[]
 ): MessageIndexRange[] {
+    // todo this could be simpler actually. We know will be either creating a new range or
+    // extending an existing one, so we could just iterate through all the ranges and
+    // see if we find one to extend. If not, add a new one.
     return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
 }
 
