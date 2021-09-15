@@ -20,7 +20,6 @@
     import ModalContent from "../ModalContent.svelte";
     import type { ParticipantsMachine } from "../../fsm/participants.machine";
     import { toastStore } from "../../stores/toast";
-    import type { DirectMessage, EventWrapper, GroupMessage } from "../../domain/chat/chat";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -88,12 +87,6 @@
 
     function joinGroup() {
         machine.send({ type: "JOIN_GROUP" });
-    }
-
-    function sentMessage(
-        ev: CustomEvent<EventWrapper<GroupMessage | DirectMessage> & { chatId: string }>
-    ) {
-        machine.send({ type: "SENT_MESSAGE", data: ev.detail });
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -194,7 +187,6 @@
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}
-                on:sentMessage={sentMessage}
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}

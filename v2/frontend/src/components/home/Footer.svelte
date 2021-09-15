@@ -35,11 +35,17 @@
             // todo - this is not correct currently
             // if we enter messages too quickly we will get the same index repeatedly
             // we need to optimistically update the latestMessage on the chat summary
+            // no - even worse, if we enter messages quickly, we get the right index locally
+            // but - what can happen is that an update arrives from the server and sets the index
+            // back to a much lower level. This causes a duplicate key problem.
+            // one thing we can do is to key messages by message id instead
 
             // todo - we also have a problem for group chats with hidden history - we don't know what the index
             // should be at all in that case
             const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
             const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
+
+            console.log("event index: ", nextEventIndex);
 
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
@@ -79,7 +85,6 @@
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
-            dispatch("sentMessage", { ...event, chatId: $machine.context.chatSummary.chatId });
             machine.send({
                 type: "SEND_MESSAGE",
                 data: event,

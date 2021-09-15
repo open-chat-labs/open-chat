@@ -184,6 +184,14 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
+    function eventKey(e: EventWrapper<ChatEventType>): string {
+        if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+            return e.event.messageId.toString();
+        } else {
+            return e.index.toString();
+        }
+    }
+
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
         const first = group[0]!;
         if (first.event.kind === "direct_message") {
@@ -307,7 +315,7 @@
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
-                {#each userGroup as evt, i (evt.index)}
+                {#each userGroup as evt, i (eventKey(evt))}
                     {#if (evt.event.kind === "group_message" || evt.event.kind === "direct_message") && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}

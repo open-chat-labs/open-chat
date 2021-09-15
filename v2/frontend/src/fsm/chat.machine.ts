@@ -283,6 +283,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => ({
+                        chatSummary: {
+                            ...ctx.chatSummary,
+                            latestEventIndex: ev.data.index,
+                        },
                         events: [...ctx.events, ev.data],
                         replyingTo: undefined,
                         fileToAttach: undefined,

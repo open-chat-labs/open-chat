@@ -116,43 +116,7 @@ export function insertIndexIntoRanges(
     index: number,
     ranges: MessageIndexRange[]
 ): MessageIndexRange[] {
-    if (ranges.length === 0) {
-        return [{ from: index, to: index }];
-    }
-    return ranges.reduce<MessageIndexRange[]>((agg, range, i) => {
-        // if the index is in an existing range, do nothing
-        if (index >= range.from && index <= range.to) {
-            agg.push(range);
-        }
-
-        // if the index falls *before* the current range, create a new range
-        if (index < range.from) {
-            // if it is contiguous with the current range, extend that range
-            if (index === range.from - 1) {
-                agg.push({ from: index, to: range.to });
-            } else {
-                // otherwise create a new range *before* the current range
-                agg.push({ from: index, to: index });
-                agg.push(range);
-            }
-        }
-
-        // if the index falls *after* the current range
-        if (index > range.to) {
-            // if it is contiguous with the current range on the upper bound, extend previous
-            if (index === range.to + 1) {
-                agg.push({ from: range.from, to: index });
-            } else if (i === ranges.length - 1) {
-                // otherwise, if this is the last range, create a new range
-                agg.push(range);
-                agg.push({ from: index, to: index });
-            } else {
-                agg.push(range);
-            }
-        }
-
-        return agg;
-    }, []);
+    return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
 }
 
 export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSummary {
@@ -376,7 +340,19 @@ export function mergeMessageIndexRanges(
             stack.push(top);
         }
     }
-    return stack;
+
+    // we may still need to collapse any contiguous ranges
+    const reduced = stack.reduce<MessageIndexRange[]>((agg, range) => {
+        const prev = agg[agg.length - 1];
+        if (prev !== undefined && range.from === prev.to + 1) {
+            prev.to = range.to;
+        } else {
+            agg.push(range);
+        }
+        return agg;
+    }, []);
+
+    return reduced;
 }
 
 function mergeUpdatedGroupChat(
