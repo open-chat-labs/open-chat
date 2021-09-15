@@ -27,10 +27,11 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         now: runtime_state.env.now(),
     };
 
-    let (_, _, message) = runtime_state
-        .data
-        .direct_chats
-        .push_message(sender_user_id, push_message_args);
+    let (_, _, message) =
+        runtime_state
+            .data
+            .direct_chats
+            .push_message(sender_user_id, Some(args.sender_message_index), push_message_args);
 
     let random = runtime_state.env.random_u32() as usize;
 
