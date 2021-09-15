@@ -216,7 +216,6 @@ fn finalize(
     {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
-                chat_id: direct_chat.chat_id,
                 them: direct_chat.them,
                 latest_message: direct_chat.events.latest_message().unwrap(),
                 latest_event_index: direct_chat.events.last().index,
@@ -248,7 +247,7 @@ fn finalize(
             };
 
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
-                chat_id: direct_chat.chat_id,
+                chat_id: direct_chat.them.into(),
                 latest_message,
                 latest_event_index,
                 read_by_me,

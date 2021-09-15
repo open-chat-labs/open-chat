@@ -2,10 +2,9 @@ use crate::model::events::Events;
 use range_set::RangeSet;
 use std::cmp::max;
 use std::ops::RangeInclusive;
-use types::{ChatId, TimestampMillis, UserId};
+use types::{TimestampMillis, UserId};
 
 pub struct DirectChat {
-    pub chat_id: ChatId,
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: Events,
@@ -16,9 +15,8 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(chat_id: ChatId, them: UserId, now: TimestampMillis) -> DirectChat {
+    pub fn new(them: UserId, now: TimestampMillis) -> DirectChat {
         DirectChat {
-            chat_id,
             them,
             date_created: now,
             events: Events::new(now),

@@ -5,6 +5,7 @@ use log::error;
 use types::CanisterId;
 
 // Queries
+generate_c2c_call!(c2c_search_messages);
 generate_c2c_call!(summary);
 generate_c2c_call!(summary_updates);
 

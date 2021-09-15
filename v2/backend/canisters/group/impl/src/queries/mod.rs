@@ -1,3 +1,4 @@
+mod c2c_search_messages;
 mod events;
 mod events_by_index;
 mod http_request;
