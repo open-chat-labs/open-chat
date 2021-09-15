@@ -20,13 +20,9 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface CombinedMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-}
+export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
+export type ChunkResponse = { 'NotFound' : null } |
+  { 'Success' : { 'bytes' : Array<number> } };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -179,12 +175,6 @@ export interface GroupMessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export interface GroupMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'event_index' : EventIndex,
-}
 export interface GroupMessageNotification {
   'sender' : UserId,
   'recipients' : Array<UserId>,
@@ -316,12 +306,6 @@ export interface PutChunkArgs {
 export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface PutFirstChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-}
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [ChatId],
   'message_index' : MessageIndex,
@@ -332,26 +316,18 @@ export interface SearchAllMessagesArgs {
   'max_results' : number,
   'search_term' : string,
 }
-export type SearchAllMessagesResponse = { 'TermTooShort' : number } |
-  { 'Success' : SearchAllMessagesSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null };
-export interface SearchAllMessagesSuccessResult {
-  'matches' : Array<CombinedMessageMatch>,
-}
-export interface SearchMessagesArgs {
-  'max_results' : number,
-  'user_id' : UserId,
-  'search_term' : string,
-}
-export type SearchMessagesResponse = { 'TermTooShort' : number } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : SearchMessagesSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null };
-export interface SearchMessagesSuccessResult {
-  'matches' : Array<UserMessageMatch>,
-}
+export type SearchAllMessagesResponse = {
+    'Success' : {
+      'matches' : Array<
+        {
+          'chat' : CanisterId,
+          'is_direct' : boolean,
+          'message' : DirectMessage,
+        }
+      >,
+    }
+  } |
+  { 'Failure' : null };
 export interface SendMessageArgs {
   'content' : MessageContent,
   'recipient' : UserId,
@@ -410,12 +386,6 @@ export interface UpdatesSince {
   'timestamp' : TimestampMillis,
 }
 export type UserId = CanisterId;
-export interface UserMessageMatch {
-  'content' : MessageContent,
-  'score' : number,
-  'sent_by_me' : boolean,
-  'event_index' : EventIndex,
-}
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
@@ -487,6 +457,7 @@ export interface Version {
 }
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
@@ -497,12 +468,8 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
-  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
-    >,
-  'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
-      SearchMessagesResponse
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,

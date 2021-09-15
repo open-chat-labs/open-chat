@@ -47,13 +47,9 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface CombinedMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-}
+export interface ChunkArgs { 'blob_id' : bigint, 'index' : number }
+export type ChunkResponse = { 'NotFound' : null } |
+  { 'Success' : { 'bytes' : Array<number> } };
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -185,12 +181,6 @@ export interface GroupMessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
-export interface GroupMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'event_index' : EventIndex,
-}
 export interface GroupMessageNotification {
   'sender' : UserId,
   'recipients' : Array<UserId>,
@@ -302,17 +292,9 @@ export interface PutChunkArgs {
   'bytes' : Array<number>,
   'index' : number,
 }
-export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
-  { 'Full' : null } |
-  { 'CallerNotInGroup' : null } |
+export type PutChunkResponse = { 'Full' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface PutFirstChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-}
 export interface RemoveAdminArgs { 'user_id' : UserId }
 export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -332,14 +314,12 @@ export interface SearchMessagesArgs {
   'max_results' : number,
   'search_term' : string,
 }
-export type SearchMessagesResponse = { 'TermTooShort' : number } |
-  { 'Success' : SearchMessagesSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null } |
-  { 'NotInGroup' : null };
-export interface SearchMessagesSuccessResult {
-  'matches' : Array<GroupMessageMatch>,
-}
+export type SearchMessagesResponse = {
+    'Success' : {
+      'matches' : Array<{ 'score' : number, 'message' : GroupMessage }>,
+    }
+  } |
+  { 'Failure' : null };
 export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,
@@ -391,12 +371,6 @@ export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
 export type UserId = CanisterId;
-export interface UserMessageMatch {
-  'content' : MessageContent,
-  'score' : number,
-  'sent_by_me' : boolean,
-  'event_index' : EventIndex,
-}
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
@@ -471,6 +445,7 @@ export interface _SERVICE {
       AddParticipantsResponse
     >,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
+  'chunk' : (arg_0: ChunkArgs) => Promise<ChunkResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
       EventsByIndexResponse
@@ -479,7 +454,6 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
-  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse

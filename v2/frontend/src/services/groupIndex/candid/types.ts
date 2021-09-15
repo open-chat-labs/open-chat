@@ -24,13 +24,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface CombinedMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-}
 export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
@@ -153,12 +146,6 @@ export interface GroupMessageEventWrapper {
   'event' : GroupMessage,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
-}
-export interface GroupMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'event_index' : EventIndex,
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
@@ -283,12 +270,6 @@ export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type UserId = CanisterId;
-export interface UserMessageMatch {
-  'content' : MessageContent,
-  'score' : number,
-  'sent_by_me' : boolean,
-  'event_index' : EventIndex,
-}
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
