@@ -15,12 +15,13 @@ fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         let mut has_changes = false;
         if let Some(max_message_index) = chat.events.latest_message_index() {
-            has_changes = insert_ranges(
+            let added = insert_ranges(
                 &mut chat.read_by_them,
                 &args.message_ranges,
                 MessageIndex::default(),
                 max_message_index,
             );
+            has_changes = !added.is_empty();
         }
         if !has_changes {
             SuccessNoChange
