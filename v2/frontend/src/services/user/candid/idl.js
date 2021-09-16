@@ -172,7 +172,9 @@ export const idlFactory = ({ IDL }) => {
     'video_message_count' : IDL.Nat64,
   });
   const PutChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
     'bytes' : IDL.Vec(IDL.Nat8),
     'index' : IDL.Nat32,
   });
@@ -182,12 +184,6 @@ export const idlFactory = ({ IDL }) => {
     'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
-  });
-  const PutFirstChunkArgs = IDL.Record({
-    'total_chunks' : IDL.Nat32,
-    'blob_id' : IDL.Nat,
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -374,7 +370,6 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
-    'put_first_chunk' : IDL.Func([PutFirstChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],

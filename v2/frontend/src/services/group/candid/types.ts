@@ -305,7 +305,9 @@ export interface PrivateReplyContext {
   'event_index' : EventIndex,
 }
 export interface PutChunkArgs {
+  'total_chunks' : number,
   'blob_id' : bigint,
+  'mime_type' : string,
   'bytes' : Array<number>,
   'index' : number,
 }
@@ -315,12 +317,6 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface PutFirstChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-}
 export interface RemoveAdminArgs { 'user_id' : UserId }
 export type RemoveAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
@@ -496,7 +492,6 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
-  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse

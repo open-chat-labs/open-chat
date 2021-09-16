@@ -76,17 +76,11 @@ type UnblockUserResponse =
         Success;
     }; 
 
-type PutFirstChunkArgs =
+type PutChunkArgs =
     record {
         blob_id: nat;
         mime_type: text;
         total_chunks: nat32;
-        bytes: blob;
-    };
-
-type PutChunkArgs =
-    record {
-        blob_id: nat;
         index: nat32;
         bytes: vec nat8;
     };
@@ -288,7 +282,6 @@ service: (InitArgs) -> {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-    put_first_chunk: (PutFirstChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);

@@ -150,17 +150,11 @@ type RemoveAdminResponse =
         UserNotInGroup;
     };
 
-type PutFirstChunkArgs =
+type PutChunkArgs =
     record {
         blob_id: nat;
         mime_type: text;
         total_chunks: nat32;
-        bytes: blob;
-    };
-
-type PutChunkArgs =
-    record {
-        blob_id: nat;
         index: nat32;
         bytes: blob;
     };
@@ -286,7 +280,6 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
-    put_first_chunk: (PutFirstChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
