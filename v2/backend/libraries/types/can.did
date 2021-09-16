@@ -8,6 +8,13 @@ type TimestampMillis = nat64;
 type TimestampNanos = nat64;
 type UserId = CanisterId;
 
+type AudioContent =
+    record {
+        caption: opt text;
+        mime_type: text;
+        blob_reference: opt BlobReference;
+    };
+
 type BlobReference =
     record {
         canister_id: CanisterId;
@@ -239,13 +246,7 @@ type GroupReplyContext =
         content: MessageContent;
     };
 
-type IndexedNotification =
-    record {
-        index: nat64;
-        value: NotificationEnvelope;
-    };
-
-type MediaContent =
+type ImageContent =
     record {
         width: nat32;
         height: nat32;
@@ -255,10 +256,18 @@ type MediaContent =
         blob_reference: opt BlobReference;
     };
 
+type IndexedNotification =
+    record {
+        index: nat64;
+        value: NotificationEnvelope;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
-        Media: MediaContent;
+        Image: ImageContent;
+        Video: VideoContent;
+        Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
     };
@@ -494,4 +503,15 @@ type V1GroupMessageNotification =
         sender_name: text;
         recipients: vec UserId;
         message: V1Message;
+    };
+
+type VideoContent =
+    record {
+        width: nat32;
+        height: nat32;
+        thumbnail_data: text;
+        caption: opt text;
+        mime_type: text;
+        image_blob_reference: opt BlobReference;
+        video_blob_reference: opt BlobReference;
     };
