@@ -18,6 +18,8 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: EventWrapper<ChatEvent>;
     };
+
+    // this is obsolete and preserved only to keep the type checker happy
     media_data: {
         key: string;
         value: Uint8Array;
@@ -34,7 +36,7 @@ export function createCacheKey(chatId: string, index: number): string {
 
 export function openMessageCache(): Database | undefined {
     try {
-        return openDB<ChatSchema>("openchat_db", 6, {
+        return openDB<ChatSchema>("openchat_db", 7, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -47,7 +49,6 @@ export function openMessageCache(): Database | undefined {
                         db.deleteObjectStore("chats");
                     }
                     db.createObjectStore("chat_messages");
-                    db.createObjectStore("media_data");
                     db.createObjectStore("chats");
                 } catch (err) {
                     rollbar.error("Unable to upgrade indexDB", err as Error);
@@ -57,11 +58,6 @@ export function openMessageCache(): Database | undefined {
     } catch (err) {
         rollbar.error("Unable to open indexDB", err as Error);
     }
-}
-
-// this returns cached binary data used for media messages etc
-export async function getCachedData(db: Database, blobId: bigint): Promise<Uint8Array | undefined> {
-    return (await db).get("media_data", blobId.toString());
 }
 
 export async function getCachedChats(db: Database): Promise<MergedUpdatesResponse | undefined> {
@@ -122,17 +118,6 @@ export async function getCachedMessages<T extends ChatEvent>(
         // records
         return { events: cachedMsgs as EventWrapper<T>[] };
     }
-}
-
-export function setCachedData(
-    db: Database,
-    blobId: bigint
-): (data: Uint8Array | undefined) => Promise<Uint8Array | undefined> {
-    return async (data: Uint8Array | undefined) => {
-        if (!data) return Promise.resolve(data);
-        (await db).put("media_data", data, blobId.toString());
-        return data;
-    };
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
