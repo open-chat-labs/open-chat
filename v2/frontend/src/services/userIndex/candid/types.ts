@@ -18,6 +18,13 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
+export interface CombinedMessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+}
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
@@ -173,6 +180,12 @@ export interface GroupMessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
 }
+export interface GroupMessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+  'event_index' : EventIndex,
+}
 export interface GroupMessageNotification {
   'sender' : UserId,
   'recipients' : Array<UserId>,
@@ -221,11 +234,6 @@ export type MessageIndex = number;
 export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
-}
-export interface MessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -366,6 +374,12 @@ export interface UserArgs {
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
+export interface UserMessageMatch {
+  'content' : MessageContent,
+  'score' : number,
+  'sent_by_me' : boolean,
+  'event_index' : EventIndex,
+}
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {

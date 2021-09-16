@@ -343,6 +343,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     serviceContainer: ctx.serviceContainer!,
                                                     chatSummary,
                                                     ranges: [],
+                                                    pending: [],
                                                 })
                                             ),
                                         }),

@@ -25,9 +25,15 @@ This should look something like this:
 ```bash
 INTERNET_IDENTITY_URL=http://localhost:8000?canisterId=rwlgt-iiaaa-aaaaa-aaaaa-cai
 DFX_NETWORK=local
-ROLLBAR_ACCESS_TOKEN=3194bdfb0c064240911a79b287765413
-SHOW_XSTATE_INSPECTOR=false
 MOCK_SERVICES=false
+DEV_PORT=5001
+SHOW_XSTATE_INSPECTOR=false
+ROLLBAR_ACCESS_TOKEN=...
+CLIENT_CACHING=false
+USER_INDEX_CANISTER=naxa5-eyaaa-aaaaa-aacda-cai
+GROUP_INDEX_CANISTER=nhwgj-jaaaa-aaaaa-aacdq-cai
+NOTIFICATIONS_CANISTER=mkych-giaaa-aaaaa-aacea-cai
+BLOB_URL_PATTERN=http://{canisterId}.localhost:8000/blobs/
 ```
 
 Where the INTERNET_IDENTITY value should be replaced with a value containing the correct internet identity canister ID for your local environment.

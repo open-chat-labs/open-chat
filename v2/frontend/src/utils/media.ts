@@ -114,11 +114,10 @@ export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
     return false;
 }
 
-export function messageMetaData(content: MessageContent): Promise<string> | undefined {
-    if (content.kind === "file_content" && content.blobData) {
-        return content.blobData
-            .then((blob) => blob?.byteLength ?? content.blobReference?.blobSize ?? 0)
-            .then((size) => `${content.mimeType}-${(size / 1000).toFixed(2)}kb`);
+export function messageMetaData(content: MessageContent): string | undefined {
+    if (content.kind === "file_content") {
+        const size = content.blobData?.byteLength ?? content.blobReference?.blobSize ?? 0;
+        return `${content.mimeType}-${(size / 1000).toFixed(2)}kb`;
     }
 }
 
@@ -167,9 +166,8 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                 return;
             }
 
+            const blobUrl = dataToBlobUrl(data, mimeType);
             if (isImage || isVideo) {
-                const blobUrl = dataToBlobUrl(data, mimeType);
-
                 const extract = isImage
                     ? await extractImageThumbnail(blobUrl, mimeType)
                     : await extractVideoThumbnail(blobUrl, mimeType);
@@ -178,15 +176,14 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     data = (await resizeImage(blobUrl, mimeType)).thumbnailData;
                 }
 
-                URL.revokeObjectURL(blobUrl);
-
                 content = {
                     kind: "media_content",
                     mimeType: mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
-                    blobData: Promise.resolve(new Uint8Array(data)),
+                    blobData: new Uint8Array(data),
                     thumbnailData: extract.thumbnailUrl,
+                    url: blobUrl,
                 };
             } else if (isAudio) {
                 content = {
@@ -194,15 +191,17 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     mimeType: mimeType,
                     width: 0,
                     height: 0,
-                    blobData: Promise.resolve(new Uint8Array(data)),
+                    blobData: new Uint8Array(data),
                     thumbnailData: "",
+                    url: blobUrl,
                 };
             } else {
                 content = {
                     kind: "file_content",
                     name: file.name,
                     mimeType: mimeType,
-                    blobData: Promise.resolve(new Uint8Array(data)),
+                    blobData: new Uint8Array(data),
+                    url: blobUrl,
                 };
             }
             resolve(content);

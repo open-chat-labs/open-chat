@@ -3,29 +3,28 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import type { MediaContent } from "../../domain/chat/chat";
-    import { dataToBlobUrl } from "../../utils/blob";
 
     export let content: MediaContent;
 
     let landscape = content.height < content.width;
 
-    $: blobUrl =
-        content.blobData &&
-        content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
+    let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
 
     onDestroy(() => {
-        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        content.url && URL.revokeObjectURL(content.url);
     });
 </script>
 
-{#await blobUrl}
-    <img class:landscape src={content.thumbnailData} alt={content.caption} />
-{:then url}
-    <img class:landscape src={url ?? content.thumbnailData} alt={content.caption} />
-{/await}
+{#if content.url !== undefined}
+    <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->
+    <object class:landscape title={content.caption} data={content.url} type={content.mimeType}>
+        <img class:landscape {style} src={content.thumbnailData} alt={content.caption} />
+    </object>
+{/if}
 
 <style type="text/scss">
-    img {
+    img,
+    object {
         max-width: none;
         width: auto;
         height: 100%;

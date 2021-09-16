@@ -11,7 +11,6 @@ import type {
     ApiUpdatesResponse,
     ApiParticipant,
     ApiCreateGroupResponse,
-    ApiChunkResponse,
     ApiChatSummaryUpdates,
     ApiGroupMessage,
     ApiDirectChatEventWrapper,
@@ -51,7 +50,6 @@ import type {
     MarkReadResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
-import type { ChunkResponse } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
@@ -93,6 +91,12 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
     if ("Success" in candid) {
         return "put_chunk_success";
     }
+    if ("ChunkAlreadyExists" in candid) {
+        return "chunk_already_exists";
+    }
+    if ("BlobAlreadyExists" in candid) {
+        return "blob_already_exists";
+    }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
 
@@ -133,17 +137,6 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "send_message_recipient_not_found" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
-}
-
-export function chunkResponse(candid: ApiChunkResponse): ChunkResponse {
-    if ("NotFound" in candid) {
-        return undefined;
-    }
-    if ("Success" in candid) {
-        return new Uint8Array(candid.Success.bytes);
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiChunkResponse type received", candid);
 }
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
@@ -365,7 +358,6 @@ function mediaContent(candid: ApiMediaContent): MediaContent {
         height: candid.height,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
-        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
@@ -385,7 +377,6 @@ function fileContent(candid: ApiFileContent): FileContent {
         name: candid.name,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
-        blobData: Promise.resolve(undefined), // this will get filled in a bit later
         caption: optional(candid.caption, identity),
     };
 }

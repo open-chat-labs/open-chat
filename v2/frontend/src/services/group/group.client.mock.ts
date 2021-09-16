@@ -72,7 +72,6 @@ function mockImageMessage(index: number): GroupMessage {
                 canisterId: "doesnt_matter",
                 chunkSize: CHUNK_SIZE_BYTES,
             },
-            blobData: Promise.resolve(undefined),
             thumbnailData: "",
         },
         sender,

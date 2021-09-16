@@ -20,7 +20,6 @@ import type {
 import { CandidService } from "../candidService";
 import {
     blockResponse,
-    chunkResponse,
     createGroupResponse,
     getEventsResponse,
     getUpdatesResponse,
@@ -29,7 +28,6 @@ import {
     sendMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import type { ChunkResponse } from "../../domain/data/data";
 import { mergeChatUpdates } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { UserClientMock } from "./user.client.mock";
@@ -108,23 +106,6 @@ export class UserClient extends CandidService implements IUserClient {
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
         };
-    }
-
-    async getData(blobId: bigint, totalBytes?: number, chunkSize?: number): Promise<ChunkResponse> {
-        if (!totalBytes || !chunkSize) {
-            return this.getChunk(blobId, 0);
-        }
-        return undefined;
-    }
-
-    private async getChunk(blobId: bigint, chunkIndex: number): Promise<ChunkResponse> {
-        return this.handleResponse(
-            this.userService.chunk({
-                blob_id: blobId,
-                index: chunkIndex,
-            }),
-            chunkResponse
-        );
     }
 
     sendMessage(

@@ -2,6 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
 
+const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
 
 // Use your local .env file to direct this to the local IC replica
@@ -22,6 +23,7 @@ export function login(): Promise<Identity> {
         return new Promise((resolve, reject) => {
             c.login({
                 identityProvider: IDENTITY_URL,
+                maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 onSuccess: () => {
                     resolve(c.getIdentity());
                 },
@@ -44,7 +46,6 @@ export function startSession(identity: Identity): Promise<void> {
         } else {
             setTimeout(resolve, durationUntilLogoutMs);
         }
-        // setTimeout(resolve, 5000);
     });
 }
 

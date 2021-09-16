@@ -18,7 +18,6 @@ import type {
     UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
-    BlobReference,
     DirectChatEvent,
     GroupChatEvent,
     ChatEvent,
@@ -40,7 +39,6 @@ import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
-import { DataClient } from "./data/data.client";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
@@ -76,10 +74,6 @@ export class ServiceContainer {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
-    }
-
-    getIdentity(): Identity {
-        return this.identity;
     }
 
     sendMessage(
@@ -121,11 +115,11 @@ export class ServiceContainer {
     }
 
     directChatEvents(
-        userId: string,
+        theirUserId: string,
         fromIndex: number,
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(this.userClient.chatEvents(userId, fromIndex, toIndex));
+        return this.rehydrateMediaData(this.userClient.chatEvents(theirUserId, fromIndex, toIndex));
     }
 
     groupChatEvents(
@@ -136,6 +130,7 @@ export class ServiceContainer {
         return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
     }
 
+    // TODO - revisit whether this can simply be removed
     private async rehydrateMediaData<T extends ChatEvent>(
         eventsPromise: Promise<EventsResponse<T>>
     ): Promise<EventsResponse<T>> {
@@ -148,25 +143,20 @@ export class ServiceContainer {
         resp.events = resp.events.map((e) => {
             if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
                 if (
-                    e.event.content.kind === "media_content" &&
-                    /^image/.test(e.event.content.mimeType)
+                    (e.event.content.kind === "file_content" ||
+                        e.event.content.kind === "media_content") &&
+                    e.event.content.blobReference !== undefined
                 ) {
-                    e.event.content.blobData = this.getMediaData(e.event.content.blobReference);
-                } else if (
-                    e.event.content.kind === "media_content" ||
-                    e.event.content.kind === "file_content"
-                ) {
-                    e.event.content.blobData = Promise.resolve(undefined);
+                    e.event.content.blobData = undefined;
+                    e.event.content.url = `${"process.env.BLOB_URL_PATTERN".replace(
+                        "{canisterId}",
+                        e.event.content.blobReference.canisterId
+                    )}${e.event.content.blobReference.blobId}`;
                 }
             }
             return e;
         });
         return resp;
-    }
-
-    private getMediaData(blobRef?: BlobReference): Promise<Uint8Array | undefined> {
-        if (!blobRef) return Promise.resolve(undefined);
-        return DataClient.create(this.identity, blobRef.canisterId).getData(blobRef);
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {

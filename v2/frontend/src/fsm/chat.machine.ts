@@ -24,6 +24,7 @@ import {
     earliestLoadedEventIndex,
     latestAvailableEventIndex,
     latestLoadedEventIndex,
+    setLastMessageOnChat,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -65,7 +66,7 @@ export type ChatEvents =
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: { message: GroupMessage | DirectMessage; index: number } }
+    | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
     | {
           type: "UPDATE_MESSAGE";
@@ -104,6 +105,7 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
+    userId: string,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
     fromIndex: number,
@@ -193,7 +195,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             const [userLookup, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
                 range
-                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, range[0], range[1])
+                    ? loadEvents(
+                          ctx.user!.userId,
+                          ctx.serviceContainer!,
+                          ctx.chatSummary,
+                          range[0],
+                          range[1]
+                      )
                     : { events: [] },
             ]);
             return {
@@ -276,14 +284,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => ({
-                        events: [
-                            ...ctx.events,
-                            {
-                                event: ev.data.message,
-                                index: ev.data.index,
-                                timestamp: BigInt(+new Date()),
-                            },
-                        ],
+                        chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
+                        events: [...ctx.events, ev.data],
                         replyingTo: undefined,
                         fileToAttach: undefined,
                     })),

@@ -11,8 +11,9 @@ export interface CyclesContent {
 export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
-    blobData?: Promise<Uint8Array | undefined>;
+    blobData?: Uint8Array;
     mimeType: string;
+    url?: string;
 }
 
 export interface MediaContent extends DataContent {
@@ -375,7 +376,13 @@ export type SendMessageNotInGroup = {
     kind: "send_message_not_in_group";
 };
 
-export type PutChunkResponse = "put_chunk_success" | "put_chunk_full" | "put_chunk_too_big";
+export type PutChunkResponse =
+    | "put_chunk_success"
+    | "put_chunk_full"
+    | "put_chunk_too_big"
+    | "chunk_already_exists"
+    | "caller_not_in_group"
+    | "blob_already_exists";
 
 export type ChangeAdminResponse =
     | "user_not_in_group"

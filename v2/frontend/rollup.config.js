@@ -102,6 +102,7 @@ export default {
             "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
             "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
             "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
+            "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
         }),
 
         // In dev mode, call `npm run start` once

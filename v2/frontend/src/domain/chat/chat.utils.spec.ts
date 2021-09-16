@@ -5,6 +5,7 @@ import type {
     Participant,
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
+    MessageIndexRange,
 } from "./chat";
 import {
     compareMessageRange,
@@ -12,6 +13,7 @@ import {
     getParticipantsString,
     getUnreadMessages,
     indexIsInRanges,
+    insertIndexIntoRanges,
     mergeChatUpdates,
     mergeMessageIndexRanges,
     newMessageId,
@@ -114,6 +116,25 @@ function participant(id: string): Participant {
     };
 }
 
+describe("inserting into index ranges", () => {
+    test("real example which wasn't working", () => {
+        let ranges: MessageIndexRange[] = [];
+        ranges = insertIndexIntoRanges(313, ranges);
+        ranges = insertIndexIntoRanges(312, ranges);
+        ranges = insertIndexIntoRanges(311, ranges);
+        ranges = insertIndexIntoRanges(305, ranges);
+        ranges = insertIndexIntoRanges(306, ranges);
+        ranges = insertIndexIntoRanges(307, ranges);
+        ranges = insertIndexIntoRanges(308, ranges);
+        ranges = insertIndexIntoRanges(310, ranges);
+        expect(ranges.length).toEqual(2);
+        expect(ranges).toEqual([
+            { from: 305, to: 308 },
+            { from: 310, to: 313 },
+        ]);
+    });
+});
+
 describe("sorting message index ranges", () => {
     test("sort by from first", () => {
         expect(
@@ -146,6 +167,11 @@ describe("sorting message index ranges", () => {
 describe("merging message index ranges", () => {
     test("with no ranges", () => {
         expect(mergeMessageIndexRanges([], [])).toEqual([]);
+    });
+    test("a single value range", () => {
+        expect(mergeMessageIndexRanges([{ from: 10, to: 10 }], [{ from: 11, to: 11 }])).toEqual([
+            { from: 10, to: 11 },
+        ]);
     });
     test("with no overlaps", () => {
         expect(

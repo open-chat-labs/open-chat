@@ -5,6 +5,7 @@
     import { createEventDispatcher, onMount } from "svelte";
     import { MAX_AUDIO_SIZE } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
+    import { dataToBlobUrl } from "../../utils/blob";
 
     const dispatch = createEventDispatcher();
 
@@ -79,8 +80,9 @@
                             mimeType: mimeType,
                             width: 0,
                             height: 0,
-                            blobData: Promise.resolve(new Uint8Array(data)),
+                            blobData: new Uint8Array(data),
                             thumbnailData: "",
+                            url: dataToBlobUrl(data, mimeType),
                         });
                     });
 

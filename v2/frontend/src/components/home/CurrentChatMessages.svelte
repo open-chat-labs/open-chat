@@ -104,6 +104,10 @@
         // the problem is that will make the new legend immediately disappear which is not quite what we
         // want. We'll come back to that.
         if (unreadMessages > 0) {
+            // todo - this is no good because the first unread message may not have been rendered yet
+            // it's tempting to re-use the goToMessage func, but that uses *event* index
+            // it *must* use event index as it potentially has to load new events and loading events
+            // is done via event index range
             scrollToElement(document.getElementById("new-msgs"), "smooth");
         } else {
             scrollBottom("smooth");
@@ -182,6 +186,14 @@
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
+    }
+
+    function eventKey(e: EventWrapper<ChatEventType>): string {
+        if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+            return e.event.messageId.toString();
+        } else {
+            return e.index.toString();
+        }
     }
 
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
@@ -307,7 +319,7 @@
                 {formatDate(dayGroup[0][0]?.timestamp)}
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
-                {#each userGroup as evt, i (evt.index)}
+                {#each userGroup as evt, i (eventKey(evt))}
                     {#if (evt.event.kind === "group_message" || evt.event.kind === "direct_message") && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
@@ -316,7 +328,6 @@
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
-                        identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
                         me={isMe(evt)}

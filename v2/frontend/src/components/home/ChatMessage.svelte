@@ -29,10 +29,8 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
-    import type { Identity } from "@dfinity/agent";
     const dispatch = createEventDispatcher();
 
-    export let identity: Identity;
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let msg: GroupMessage | DirectMessage;
@@ -140,17 +138,11 @@
         class:readByMe
         class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
-            <RepliesTo
-                {identity}
-                {chatSummary}
-                {user}
-                {userLookup}
-                on:goToMessage
-                repliesTo={msg.repliesTo} />
+            <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
 
-        <ChatMessageContent {identity} {me} content={msg.content} />
-        <!-- <pre>{msg.messageIndex} {index}</pre> -->
+        <ChatMessageContent {me} content={msg.content} />
+        <pre>M: {msg.messageIndex} E: {index}</pre>
 
         {#if metaData}
             {#await metaData then meta}

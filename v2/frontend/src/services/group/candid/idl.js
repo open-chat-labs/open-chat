@@ -32,11 +32,6 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
   });
-  const ChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
-  const ChunkResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
-  });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'to_index' : EventIndex,
@@ -192,9 +187,18 @@ export const idlFactory = ({ IDL }) => {
     'index' : IDL.Nat32,
   });
   const PutChunkResponse = IDL.Variant({
+    'ChunkAlreadyExists' : IDL.Null,
     'Full' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
+  });
+  const PutFirstChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
+    'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
+    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const RemoveAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveAdminResponse = IDL.Variant({
@@ -216,13 +220,14 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const MessageMatch = IDL.Record({
+  const GroupMessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
+    'event_index' : EventIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(MessageMatch),
+    'matches' : IDL.Vec(GroupMessageMatch),
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
@@ -322,7 +327,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
-    'chunk' : IDL.Func([ChunkArgs], [ChunkResponse], ['query']),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -333,6 +337,7 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
+    'put_first_chunk' : IDL.Func([PutFirstChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],

@@ -7,11 +7,6 @@ export const idlFactory = ({ IDL }) => {
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const ChunkArgs = IDL.Record({ 'blob_id' : IDL.Nat, 'index' : IDL.Nat32 });
-  const ChunkResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Record({ 'bytes' : IDL.Vec(IDL.Nat8) }),
-  });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
@@ -166,25 +161,58 @@ export const idlFactory = ({ IDL }) => {
     'index' : IDL.Nat32,
   });
   const PutChunkResponse = IDL.Variant({
+    'ChunkAlreadyExists' : IDL.Null,
     'Full' : IDL.Null,
+    'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
+  });
+  const PutFirstChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
+    'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
+    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const CombinedMessageMatch = IDL.Record({
+    'content' : MessageContent,
+    'sender' : UserId,
+    'score' : IDL.Nat32,
+    'chat_id' : ChatId,
+    'event_index' : EventIndex,
+  });
+  const SearchAllMessagesSuccessResult = IDL.Record({
+    'matches' : IDL.Vec(CombinedMessageMatch),
+  });
   const SearchAllMessagesResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'matches' : IDL.Vec(
-        IDL.Record({
-          'chat' : CanisterId,
-          'is_direct' : IDL.Bool,
-          'message' : DirectMessage,
-        })
-      ),
-    }),
-    'Failure' : IDL.Null,
+    'TermTooShort' : IDL.Nat8,
+    'Success' : SearchAllMessagesSuccessResult,
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
+  });
+  const SearchMessagesArgs = IDL.Record({
+    'max_results' : IDL.Nat8,
+    'user_id' : UserId,
+    'search_term' : IDL.Text,
+  });
+  const UserMessageMatch = IDL.Record({
+    'content' : MessageContent,
+    'score' : IDL.Nat32,
+    'sent_by_me' : IDL.Bool,
+    'event_index' : EventIndex,
+  });
+  const SearchMessagesSuccessResult = IDL.Record({
+    'matches' : IDL.Vec(UserMessageMatch),
+  });
+  const SearchMessagesResponse = IDL.Variant({
+    'TermTooShort' : IDL.Nat8,
+    'ChatNotFound' : IDL.Null,
+    'Success' : SearchMessagesSuccessResult,
+    'TermTooLong' : IDL.Nat8,
+    'InvalidTerm' : IDL.Null,
   });
   const ReplyContextArgs = IDL.Record({
     'chat_id_if_other' : IDL.Opt(ChatId),
@@ -318,7 +346,6 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
-    'chunk' : IDL.Func([ChunkArgs], [ChunkResponse], ['query']),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
@@ -331,9 +358,15 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
+    'put_first_chunk' : IDL.Func([PutFirstChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],
+        ['query'],
+      ),
+    'search_messages' : IDL.Func(
+        [SearchMessagesArgs],
+        [SearchMessagesResponse],
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
