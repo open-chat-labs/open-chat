@@ -6,6 +6,8 @@ use std::str::FromStr;
 use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
 use utils::blob_storage::BlobStorage;
 
+const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
+
 pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, blob_storage: &BlobStorage) -> HttpResponse {
     if let Some(blob_id) = try_extract_blob_id_from_path(&request.url) {
         if let Some(blob) = blob_storage.get_blob(&blob_id) {
@@ -30,9 +32,8 @@ pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, blob_sto
             return HttpResponse {
                 status_code: 200,
                 headers: vec![
-                    HeaderField("Cache-Control".to_string(), "max-age=1000000000".to_string()),
-                    HeaderField("Cache-Control".to_string(), "immutable".to_string()),
                     HeaderField("Content-Type".to_string(), blob.mime_type().to_string()),
+                    HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
                 ],
                 body: Cow::Owned(blob.chunk(0).unwrap().clone()),
                 streaming_strategy,
