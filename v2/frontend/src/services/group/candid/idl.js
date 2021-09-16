@@ -182,7 +182,9 @@ export const idlFactory = ({ IDL }) => {
     'video_message_count' : IDL.Nat64,
   });
   const PutChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
     'bytes' : IDL.Vec(IDL.Nat8),
     'index' : IDL.Nat32,
   });
@@ -193,12 +195,6 @@ export const idlFactory = ({ IDL }) => {
     'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
-  });
-  const PutFirstChunkArgs = IDL.Record({
-    'total_chunks' : IDL.Nat32,
-    'blob_id' : IDL.Nat,
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const RemoveAdminArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveAdminResponse = IDL.Variant({
@@ -337,7 +333,6 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
-    'put_first_chunk' : IDL.Func([PutFirstChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],

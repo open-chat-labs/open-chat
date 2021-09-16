@@ -24,29 +24,20 @@ export class DataClient extends CandidService implements IDataClient {
         this.dataService = this.createServiceClient<UserService>(idlFactory, canisterId);
     }
 
-    putChunk(blobId: bigint, bytes: Uint8Array, index: number): Promise<PutChunkResponse> {
+    putChunk(
+        blobId: bigint,
+        bytes: Uint8Array,
+        totalChunks: number,
+        mimeType: string,
+        index: number
+    ): Promise<PutChunkResponse> {
         return this.handleResponse(
             this.dataService.put_chunk({
                 blob_id: blobId,
                 bytes: Array.from(bytes),
-                index,
-            }),
-            putChunkResponse
-        );
-    }
-
-    putFirstChunk(
-        blobId: bigint,
-        bytes: Uint8Array,
-        totalChunks: number,
-        mimeType: string
-    ): Promise<PutChunkResponse> {
-        return this.handleResponse(
-            this.dataService.put_first_chunk({
-                blob_id: blobId,
-                bytes: Array.from(bytes),
                 mime_type: mimeType,
                 total_chunks: totalChunks,
+                index: index
             }),
             putChunkResponse
         );
@@ -79,9 +70,7 @@ export class DataClient extends CandidService implements IDataClient {
 
                     await Promise.all(
                         chunks.map((chunk, i) => {
-                            return i === 0
-                                ? this.putFirstChunk(blobId, chunk, chunks.length, content.mimeType)
-                                : this.putChunk(blobId, chunk, i);
+                            this.putChunk(blobId, chunk, chunks.length, content.mimeType, i);
                         })
                     );
                 }

@@ -5,7 +5,6 @@ pub mod c2c_leave_group;
 pub mod make_admin;
 pub mod mark_read;
 pub mod put_chunk;
-pub mod put_first_chunk;
 pub mod remove_admin;
 pub mod remove_participant;
 pub mod send_message;
