@@ -3,9 +3,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { MediaContent } from "../../domain/chat/chat";
+    import type { VideoContent } from "../../domain/chat/chat";
 
-    export let content: MediaContent;
+    export let content: VideoContent;
 
     let landscape = content.height < content.width;
     let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
@@ -31,6 +31,10 @@
         {/if}
     </video>
 </div>
+
+{#if content.caption !== undefined}
+    <p>{content.caption}</p>
+{/if}
 
 <style type="text/scss">
     .video {

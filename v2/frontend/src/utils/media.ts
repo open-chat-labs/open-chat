@@ -104,11 +104,10 @@ type MediaExtract = {
 };
 
 export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
-    if (msg.content.kind === "media_content") {
+    if (msg.content.kind === "image_content") {
         return (
             (msg.content.caption === undefined || msg.content.caption === "") &&
-            msg.repliesTo === undefined &&
-            !/audio/.test(msg.content.mimeType)
+            msg.repliesTo === undefined
         );
     }
     return false;
@@ -177,7 +176,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                 }
 
                 content = {
-                    kind: "media_content",
+                    kind: isImage ? "image_content" : "video_content",
                     mimeType: mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
@@ -187,12 +186,9 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                 };
             } else if (isAudio) {
                 content = {
-                    kind: "media_content",
+                    kind: "audio_content",
                     mimeType: mimeType,
-                    width: 0,
-                    height: 0,
                     blobData: new Uint8Array(data),
-                    thumbnailData: "",
                     url: blobUrl,
                 };
             } else {

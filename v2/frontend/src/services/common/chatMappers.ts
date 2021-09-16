@@ -3,7 +3,9 @@ import type {
     BlobReference,
     CyclesContent,
     FileContent,
-    MediaContent,
+    ImageContent,
+    AudioContent,
+    VideoContent,
     MessageContent,
     TextContent,
 } from "../../domain/chat/chat";
@@ -12,7 +14,9 @@ import type {
     ApiBlobReference,
     ApiCyclesContent,
     ApiFileContent,
-    ApiMediaContent,
+    ApiImageContent,
+    ApiAudioContent,
+    ApiVideoContent,
     ApiMessageContent,
     ApiTextContent,
 } from "../user/candid/idl";
@@ -22,8 +26,14 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "text_content":
             return { Text: apiTextContent(domain) };
 
-        case "media_content":
-            return { Media: apiMediaContent(domain) };
+        case "image_content":
+            return { Image: apiImageContent(domain) };
+
+        case "video_content":
+            return { Video: apiVideoContent(domain) };
+
+        case "audio_content":
+            return { Audio: apiAudioContent(domain) };
 
         case "file_content":
             return { File: apiFileContent(domain) };
@@ -32,7 +42,8 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
             return { Cycles: apiCyclesContent(domain) };
     }
 }
-function apiMediaContent(domain: MediaContent): ApiMediaContent {
+
+function apiImageContent(domain: ImageContent): ApiImageContent {
     return {
         height: domain.height,
         mime_type: domain.mimeType,
@@ -42,6 +53,27 @@ function apiMediaContent(domain: MediaContent): ApiMediaContent {
         width: domain.width,
     };
 }
+
+function apiVideoContent(domain: VideoContent): ApiVideoContent {
+    return {
+        height: domain.height,
+        mime_type: domain.mimeType,
+        video_blob_reference: apiBlobReference(domain.blobReference),
+        image_blob_reference: apiBlobReference(), // todo - come back to this
+        thumbnail_data: domain.thumbnailData,
+        caption: apiOptional(identity, domain.caption),
+        width: domain.width,
+    };
+}
+
+function apiAudioContent(domain: AudioContent): ApiAudioContent {
+    return {
+        mime_type: domain.mimeType,
+        blob_reference: apiBlobReference(domain.blobReference),
+        caption: apiOptional(identity, domain.caption),
+    };
+}
+
 export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
     return domain ? [mapper(domain)] : [];
 }

@@ -2,7 +2,10 @@
 
 <script lang="ts">
     import SvelteMarkdown from "svelte-markdown";
-    import MediaContent from "./MediaContent.svelte";
+    import VideoContent from "./VideoContent.svelte";
+    import ImageContent from "./ImageContent.svelte";
+    import AudioContent from "./AudioContent.svelte";
+
     import FileContent from "./FileContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { getContentAsText } from "../../domain/chat/chat.utils";
@@ -26,8 +29,12 @@
 
 {#if content.kind === "text_content"}
     <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
-{:else if content.kind === "media_content"}
-    <MediaContent {content} />
+{:else if content.kind === "image_content"}
+    <ImageContent {content} />
+{:else if content.kind === "video_content"}
+    <VideoContent {content} />
+{:else if content.kind === "audio_content"}
+    <AudioContent {content} />
 {:else if content.kind === "file_content"}
     <FileContent {me} {content} />
 {:else if content.kind === "cycles_content"}

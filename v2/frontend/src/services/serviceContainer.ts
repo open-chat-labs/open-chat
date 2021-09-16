@@ -144,7 +144,9 @@ export class ServiceContainer {
             if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
                 if (
                     (e.event.content.kind === "file_content" ||
-                        e.event.content.kind === "media_content") &&
+                        e.event.content.kind === "image_content" ||
+                        e.event.content.kind === "video_content" ||
+                        e.event.content.kind === "audio_content") &&
                     e.event.content.blobReference !== undefined
                 ) {
                     e.event.content.blobData = undefined;

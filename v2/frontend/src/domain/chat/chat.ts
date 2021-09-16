@@ -1,6 +1,12 @@
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
-export type MessageContent = FileContent | TextContent | MediaContent | CyclesContent;
+export type MessageContent =
+    | FileContent
+    | TextContent
+    | ImageContent
+    | VideoContent
+    | AudioContent
+    | CyclesContent;
 
 export interface CyclesContent {
     kind: "cycles_content";
@@ -16,11 +22,22 @@ export interface DataContent {
     url?: string;
 }
 
-export interface MediaContent extends DataContent {
-    kind: "media_content";
+export interface ImageContent extends DataContent {
+    kind: "image_content";
     height: number;
     width: number;
     thumbnailData: string;
+}
+
+export interface VideoContent extends DataContent {
+    kind: "video_content";
+    height: number;
+    width: number;
+    thumbnailData: string;
+}
+
+export interface AudioContent extends DataContent {
+    kind: "audio_content";
 }
 
 export interface TextContent {

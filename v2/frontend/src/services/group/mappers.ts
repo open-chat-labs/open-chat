@@ -9,8 +9,10 @@ import type {
     ApiGroupReplyContext,
     ApiMakeAdminResponse,
     ApiMarkReadResponse,
-    ApiMediaContent,
     ApiMessageContent,
+    ApiImageContent,
+    ApiAudioContent,
+    ApiVideoContent,
     ApiPutChunkResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
@@ -20,7 +22,9 @@ import type {
     BlobReference,
     FileContent,
     EventsResponse,
-    MediaContent,
+    ImageContent,
+    VideoContent,
+    AudioContent,
     MessageContent,
     TextContent,
     EventWrapper,
@@ -280,8 +284,14 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Text" in candid) {
         return textContent(candid.Text);
     }
-    if ("Media" in candid) {
-        return mediaContent(candid.Media);
+    if ("Image" in candid) {
+        return imageContent(candid.Image);
+    }
+    if ("Video" in candid) {
+        return videoContent(candid.Video);
+    }
+    if ("Audio" in candid) {
+        return audioContent(candid.Audio);
     }
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
@@ -289,15 +299,37 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
-function mediaContent(candid: ApiMediaContent): MediaContent {
+function imageContent(candid: ApiImageContent): ImageContent {
     return {
-        kind: "media_content",
+        kind: "image_content",
         height: candid.height,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
+    };
+}
+
+function videoContent(candid: ApiVideoContent): VideoContent {
+    return {
+        kind: "video_content",
+        height: candid.height,
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.video_blob_reference, blobReference),
+        // todo - add the image blob ref here as well
+        thumbnailData: candid.thumbnail_data,
+        caption: optional(candid.caption, identity),
+        width: candid.width,
+    };
+}
+
+function audioContent(candid: ApiAudioContent): AudioContent {
+    return {
+        kind: "audio_content",
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.blob_reference, blobReference),
+        caption: optional(candid.caption, identity),
     };
 }
 

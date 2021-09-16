@@ -57,7 +57,12 @@ export class DataClient extends CandidService implements IDataClient {
     }
 
     async uploadData(content: MessageContent): Promise<boolean> {
-        if (content.kind === "file_content" || content.kind === "media_content") {
+        if (
+            content.kind === "file_content" ||
+            content.kind === "image_content" ||
+            content.kind === "video_content" ||
+            content.kind === "audio_content"
+        ) {
             if (content.blobData) {
                 const data = await content.blobData;
                 const blobId = this.newBlobId();

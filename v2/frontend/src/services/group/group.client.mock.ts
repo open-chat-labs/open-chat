@@ -61,7 +61,7 @@ function mockImageMessage(index: number): GroupMessage {
     return {
         kind: "group_message",
         content: {
-            kind: "media_content",
+            kind: "image_content",
             caption: "A picture of a bird",
             height: 201,
             width: 250,

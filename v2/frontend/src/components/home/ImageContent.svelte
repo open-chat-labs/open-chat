@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import type { MediaContent } from "../../domain/chat/chat";
+    import type { ImageContent } from "../../domain/chat/chat";
 
-    export let content: MediaContent;
+    export let content: ImageContent;
 
     let landscape = content.height < content.width;
 
@@ -20,6 +20,10 @@
     <object class:landscape title={content.caption} data={content.url} type={content.mimeType}>
         <img class:landscape {style} src={content.thumbnailData} alt={content.caption} />
     </object>
+{/if}
+
+{#if content.caption !== undefined}
+    <p>{content.caption}</p>
 {/if}
 
 <style type="text/scss">

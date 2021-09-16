@@ -1,15 +1,25 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import MediaContentComponent from "./MediaContent.svelte";
-    import type { MediaContent } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
+    import type { VideoContent as VideoContentType } from "../../domain/chat/chat";
+    import type { ImageContent as ImageContentType } from "../../domain/chat/chat";
+    import type { AudioContent as AudioContentType } from "../../domain/chat/chat";
+    import VideoContent from "./VideoContent.svelte";
+    import ImageContent from "./ImageContent.svelte";
+    import AudioContent from "./AudioContent.svelte";
 
-    export let draft: MediaContent;
+    export let draft: VideoContentType | ImageContentType | AudioContentType;
 </script>
 
 <div class="msg-preview" class:rtl={$rtlStore}>
-    <MediaContentComponent content={draft} />
+    {#if draft.kind === "video_content"}
+        <VideoContent content={draft} />
+    {:else if draft.kind === "audio_content"}
+        <AudioContent content={draft} />
+    {:else if draft.kind === "image_content"}
+        <ImageContent content={draft} />
+    {/if}
 </div>
 
 <style type="text/scss">

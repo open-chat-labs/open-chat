@@ -20,6 +20,11 @@ export type AddParticipantsResponse = {
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'NotInGroup' : null };
+export interface AudioContent {
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'caption' : [] | [string],
+}
 export interface BlobReference {
   'blob_size' : number,
   'blob_id' : bigint,
@@ -209,6 +214,14 @@ export interface GroupReplyContext {
   'user_id' : UserId,
   'event_index' : EventIndex,
 }
+export interface ImageContent {
+  'height' : number,
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
+}
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
@@ -222,18 +235,12 @@ export interface MarkReadArgs { 'message_ranges' : Array<MessageIndexRange> }
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'Success' : null } |
   { 'NotInGroup' : null };
-export interface MediaContent {
-  'height' : number,
-  'mime_type' : string,
-  'blob_reference' : [] | [BlobReference],
-  'thumbnail_data' : string,
-  'caption' : [] | [string],
-  'width' : number,
-}
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
-  { 'Media' : MediaContent } |
-  { 'Cycles' : CyclesContent };
+  { 'Image' : ImageContent } |
+  { 'Cycles' : CyclesContent } |
+  { 'Audio' : AudioContent } |
+  { 'Video' : VideoContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -466,6 +473,15 @@ export interface Version {
   'major' : number,
   'minor' : number,
   'patch' : number,
+}
+export interface VideoContent {
+  'height' : number,
+  'image_blob_reference' : [] | [BlobReference],
+  'video_blob_reference' : [] | [BlobReference],
+  'mime_type' : string,
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
 }
 export interface _SERVICE {
   'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
