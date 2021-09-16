@@ -79,7 +79,7 @@ impl Events {
         if let DirectChatEventInternal::Message(m) = &event {
             match self.message_id_map.entry(m.message_id) {
                 Vacant(e) => e.insert(event_index),
-                _ => panic!("MessageId already used: {:?}", m.message_id)
+                _ => panic!("MessageId already used: {:?}", m.message_id),
             };
             self.latest_message_index = Some(m.message_index);
             self.latest_message_event_index = Some(event_index);
