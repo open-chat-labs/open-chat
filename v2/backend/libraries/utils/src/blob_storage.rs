@@ -11,7 +11,6 @@ const MAX_CHUNK_SIZE: u64 = 1024 * 1024; // 1MB
 pub struct BlobStorage {
     blobs: HashMap<u128, Blob>,
     pending_blobs: HashMap<u128, PendingBlob>,
-    orphan_chunks: HashMap<u128, HashMap<u32, ByteBuf>>,
     total_bytes: u64,
     max_bytes: u64,
 }
@@ -26,9 +25,14 @@ pub struct Blob {
 #[derive(Default, CandidType, Deserialize)]
 pub struct PendingBlob {
     created: TimestampMillis,
-    chunks_remaining: u32,
+    meta: Option<Meta>,
+    chunks: HashMap<u32, ByteBuf>,
+}
+
+#[derive(Default, CandidType, Deserialize)]
+pub struct Meta {
+    total_chunks: u32,
     mime_type: String,
-    chunks: Vec<ByteBuf>,
 }
 
 pub enum PutChunkResult {
@@ -40,27 +44,30 @@ pub enum PutChunkResult {
 }
 
 impl PendingBlob {
-    pub fn new(now: TimestampMillis, mime_type: String, total_chunks: u32) -> PendingBlob {
+    pub fn new(now: TimestampMillis) -> PendingBlob {
         PendingBlob {
             created: now,
-            mime_type,
-            chunks_remaining: total_chunks,
-            chunks: vec![ByteBuf::default(); total_chunks as usize],
+            meta: None,
+            chunks: HashMap::default(),
         }
     }
 
-    pub fn add_chunk(&mut self, index: usize, data: ByteBuf) -> bool {
-        if self.chunks[index].is_empty() {
-            self.chunks[index] = data;
-            self.chunks_remaining -= 1;
-            true
-        } else {
-            false
+    pub fn add_chunk(&mut self, index: u32, data: ByteBuf) -> bool {
+        match self.chunks.entry(index) {
+            Vacant(e) => {
+                e.insert(data);
+                true
+            }
+            Occupied(_) => false,
         }
     }
 
     pub fn is_complete(&self) -> bool {
-        self.chunks_remaining == 0
+        if let Some(meta) = &self.meta {
+            meta.total_chunks == self.chunks.len() as u32
+        } else {
+            false
+        }
     }
 }
 
@@ -70,10 +77,17 @@ impl Blob {
             panic!("Pending blob is still incomplete");
         }
 
+        let meta = pending_blob.meta.unwrap();
+
+        let mut chunks = vec![ByteBuf::default(); meta.total_chunks as usize];
+        for (index, chunk) in pending_blob.chunks.into_iter() {
+            chunks[index as usize] = chunk;
+        }
+
         Blob {
             created: now,
-            mime_type: pending_blob.mime_type,
-            chunks: pending_blob.chunks,
+            mime_type: meta.mime_type,
+            chunks,
         }
     }
 
@@ -91,7 +105,6 @@ impl BlobStorage {
         BlobStorage {
             blobs: HashMap::default(),
             pending_blobs: HashMap::default(),
-            orphan_chunks: HashMap::default(),
             total_bytes: 0,
             max_bytes,
         }
@@ -109,53 +122,7 @@ impl BlobStorage {
         data: ByteBuf,
         now: TimestampMillis,
     ) -> PutChunkResult {
-        if self.blobs.contains_key(&blob_id) {
-            return PutChunkResult::BlobAlreadyExists;
-        }
-
-        let byte_count = data.len() as u64;
-
-        if byte_count > MAX_CHUNK_SIZE {
-            return PutChunkResult::ChunkTooBig;
-        }
-
-        if (self.total_bytes + byte_count) > self.max_bytes {
-            return PutChunkResult::Full;
-        }
-
-        if total_chunks == 1 {
-            self.blobs.insert(
-                blob_id,
-                Blob {
-                    created: now,
-                    mime_type,
-                    chunks: vec![data],
-                },
-            );
-        } else {
-            match self.pending_blobs.entry(blob_id) {
-                Vacant(e) => {
-                    let mut pending_blob = PendingBlob::new(now, mime_type, total_chunks);
-                    pending_blob.add_chunk(0, data);
-
-                    if let Some(existing_chunks) = self.orphan_chunks.remove(&blob_id) {
-                        for (index, chunk) in existing_chunks.into_iter() {
-                            pending_blob.add_chunk(index as usize, chunk);
-                        }
-                    }
-
-                    if pending_blob.is_complete() {
-                        self.blobs.insert(blob_id, Blob::from(pending_blob, now));
-                    } else {
-                        e.insert(pending_blob);
-                    }
-                }
-                Occupied(_) => return PutChunkResult::ChunkAlreadyExists,
-            }
-        }
-
-        self.total_bytes += byte_count;
-        PutChunkResult::Success
+        self.put_chunk_internal(blob_id, Some(Meta { mime_type, total_chunks }), data, 0, now)
     }
 
     pub fn put_chunk(&mut self, blob_id: u128, chunk_index: u32, data: ByteBuf, now: TimestampMillis) -> PutChunkResult {
@@ -163,6 +130,17 @@ impl BlobStorage {
             panic!("Must call 'put_first_chunk' when chunk_index is 0");
         }
 
+        self.put_chunk_internal(blob_id, None, data, chunk_index, now)
+    }
+
+    fn put_chunk_internal(
+        &mut self,
+        blob_id: u128,
+        meta: Option<Meta>,
+        data: ByteBuf,
+        chunk_index: u32,
+        now: TimestampMillis,
+    ) -> PutChunkResult {
         if self.blobs.contains_key(&blob_id) {
             return PutChunkResult::BlobAlreadyExists;
         }
@@ -177,27 +155,36 @@ impl BlobStorage {
             return PutChunkResult::Full;
         }
 
-        if let Occupied(mut e) = self.pending_blobs.entry(blob_id) {
-            let pending_blob = e.get_mut();
-            if !pending_blob.add_chunk(chunk_index as usize, data) {
-                return PutChunkResult::ChunkAlreadyExists;
-            }
-            if pending_blob.is_complete() {
-                let blob = Blob::from(e.remove(), now);
-                self.blobs.insert(blob_id, blob);
-            }
-        } else {
-            match self.orphan_chunks.entry(blob_id) {
-                Occupied(e) => {
-                    if e.get().contains_key(&chunk_index) {
-                        return PutChunkResult::ChunkAlreadyExists;
-                    }
-                    e.into_mut().insert(chunk_index, data);
-                }
-                Vacant(e) => {
-                    e.insert(vec![(chunk_index, data)].into_iter().collect());
+        let pending_blob_to_insert = match self.pending_blobs.entry(blob_id) {
+            Vacant(e) => {
+                let mut pending_blob = PendingBlob::new(now);
+                pending_blob.meta = meta;
+                pending_blob.add_chunk(chunk_index, data);
+                if pending_blob.is_complete() {
+                    Some(pending_blob)
+                } else {
+                    e.insert(pending_blob);
+                    None
                 }
             }
+            Occupied(mut e) => {
+                let pending_blob = e.get_mut();
+                if !pending_blob.add_chunk(chunk_index, data) {
+                    return PutChunkResult::ChunkAlreadyExists;
+                }
+                if meta.is_some() {
+                    pending_blob.meta = meta;
+                }
+                if pending_blob.is_complete() {
+                    Some(e.remove())
+                } else {
+                    None
+                }
+            }
+        };
+
+        if let Some(pending_blob) = pending_blob_to_insert {
+            self.blobs.insert(blob_id, Blob::from(pending_blob, now));
         }
 
         self.total_bytes += byte_count;
@@ -219,12 +206,7 @@ impl BlobStorage {
             .blobs
             .remove(blob_id)
             .map(|b| count_bytes(b.chunks.iter()))
-            .or_else(|| self.pending_blobs.remove(blob_id).map(|b| count_bytes(b.chunks.iter())))
-            .or_else(|| {
-                self.orphan_chunks
-                    .remove(blob_id)
-                    .map(|b| count_bytes(b.iter().map(|(_, chunk)| chunk)))
-            })
+            .or_else(|| self.pending_blobs.remove(blob_id).map(|b| count_bytes(b.chunks.values())))
         {
             self.total_bytes -= bytes_removed;
             true
@@ -293,7 +275,6 @@ mod tests {
             }
 
             assert!(blob_storage.borrow().pending_blobs.is_empty());
-            assert!(blob_storage.borrow().orphan_chunks.is_empty());
             assert_eq!(blob_storage.borrow().total_bytes, 500);
 
             check_blob(blob_storage.borrow().get_blob(&1).unwrap());
