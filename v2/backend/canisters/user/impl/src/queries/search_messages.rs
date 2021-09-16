@@ -11,6 +11,8 @@ fn search_messages(args: Args) -> Response {
 }
 
 fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+    runtime_state.trap_if_caller_not_owner();
+
     let term_length = args.search_term.len() as u8;
 
     if term_length < MIN_TERM_LENGTH {

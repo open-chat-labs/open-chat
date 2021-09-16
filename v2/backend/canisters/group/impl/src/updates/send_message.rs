@@ -17,7 +17,7 @@ fn send_message(args: Args) -> Response {
 
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
         let now = runtime_state.env.now();
         let sender = participant.user_id;
 
@@ -31,9 +31,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let (event_index, message) = runtime_state.data.events.push_message(push_message_args);
 
-        handle_activity_notification(runtime_state);
-
         let message_index = message.message_index;
+
+        participant.read_by_me.insert(message_index.into());
+        participant.read_by_me_updated = now;
+
+        handle_activity_notification(runtime_state);
 
         let random = runtime_state.env.random_u32() as usize;
 

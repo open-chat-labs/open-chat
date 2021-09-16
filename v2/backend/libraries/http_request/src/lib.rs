@@ -4,16 +4,10 @@ use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::str::FromStr;
 use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
-use url::Url;
 use utils::blob_storage::BlobStorage;
 
 pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, blob_storage: &BlobStorage) -> HttpResponse {
-    fn try_extract_blob_id(url: &str) -> Option<u128> {
-        let url = Url::parse(url).ok()?;
-        try_extract_blob_id_from_path(url.path())
-    }
-
-    if let Some(blob_id) = try_extract_blob_id(&request.url) {
+    if let Some(blob_id) = try_extract_blob_id_from_path(&request.url) {
         if let Some(blob) = blob_storage.get_blob(&blob_id) {
             let next_chunk_index = 1;
             let streaming_strategy = if blob_storage.exists(blob_id, next_chunk_index) {

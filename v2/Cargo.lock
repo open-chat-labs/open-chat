@@ -1110,7 +1110,6 @@ dependencies = [
  "num-traits",
  "serde_bytes",
  "types",
- "url",
  "utils",
 ]
 

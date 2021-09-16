@@ -7,23 +7,21 @@ pub fn insert_ranges(
     message_ranges: &[MessageIndexRange],
     min_message_index: MessageIndex,
     max_message_index: MessageIndex,
-) -> bool {
-    let mut updated = false;
+) -> RangeSet<[RangeInclusive<u32>; 2]> {
+    let mut added: RangeSet<[RangeInclusive<u32>; 2]> = RangeSet::new();
     for range in message_ranges
         .iter()
         .filter(|r| min_message_index <= r.from && r.from <= r.to && r.to <= max_message_index)
         .map(|r| r.from.into()..=r.to.into())
     {
-        if let Some(intersection) = range_set.insert_range(range.clone()) {
-            let input = RangeSet::from(range);
-            if input != intersection {
-                updated = true;
+        added.insert_range(range.clone());
+        if let Some(intersection) = range_set.insert_range(range) {
+            for r in intersection.into_smallvec().into_iter() {
+                added.remove_range(r);
             }
-        } else {
-            updated = true;
         }
     }
-    updated
+    added
 }
 
 pub fn convert_to_message_index_ranges(range_set: RangeSet<[RangeInclusive<u32>; 2]>) -> Vec<MessageIndexRange> {
