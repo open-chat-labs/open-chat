@@ -58,8 +58,8 @@ function apiVideoContent(domain: VideoContent): ApiVideoContent {
     return {
         height: domain.height,
         mime_type: domain.mimeType,
-        video_blob_reference: apiBlobReference(domain.blobReference),
-        image_blob_reference: apiBlobReference(), // todo - come back to this
+        video_blob_reference: apiBlobReference(domain.videoData.blobReference),
+        image_blob_reference: apiBlobReference(domain.imageData.blobReference),
         thumbnail_data: domain.thumbnailData,
         caption: apiOptional(identity, domain.caption),
         width: domain.width,

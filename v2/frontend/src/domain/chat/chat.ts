@@ -15,10 +15,8 @@ export interface CyclesContent {
 }
 
 export interface DataContent {
-    caption?: string;
     blobReference?: BlobReference;
     blobData?: Uint8Array;
-    mimeType: string;
     url?: string;
 }
 
@@ -27,17 +25,25 @@ export interface ImageContent extends DataContent {
     height: number;
     width: number;
     thumbnailData: string;
+    caption?: string;
+    mimeType: string;
 }
 
-export interface VideoContent extends DataContent {
+export interface VideoContent {
     kind: "video_content";
     height: number;
     width: number;
     thumbnailData: string;
+    caption?: string;
+    mimeType: string;
+    imageData: DataContent;
+    videoData: DataContent;
 }
 
 export interface AudioContent extends DataContent {
     kind: "audio_content";
+    caption?: string;
+    mimeType: string;
 }
 
 export interface TextContent {
@@ -48,6 +54,8 @@ export interface TextContent {
 export interface FileContent extends DataContent {
     kind: "file_content";
     name: string;
+    caption?: string;
+    mimeType: string;
 }
 
 export interface BlobReference {

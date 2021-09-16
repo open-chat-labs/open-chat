@@ -316,8 +316,12 @@ function videoContent(candid: ApiVideoContent): VideoContent {
         kind: "video_content",
         height: candid.height,
         mimeType: candid.mime_type,
-        blobReference: optional(candid.video_blob_reference, blobReference),
-        // todo - add the image blob ref here as well
+        videoData: {
+            blobReference: optional(candid.video_blob_reference, blobReference),
+        },
+        imageData: {
+            blobReference: optional(candid.image_blob_reference, blobReference),
+        },
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,

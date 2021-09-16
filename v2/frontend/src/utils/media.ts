@@ -47,17 +47,25 @@ export async function extractImageThumbnail(
 export async function extractVideoThumbnail(
     blobUrl: string,
     mimeType: string
-): Promise<MediaExtract> {
-    return new Promise<MediaExtract>((resolve, _) => {
+): Promise<[MediaExtract, MediaExtract]> {
+    return new Promise<[MediaExtract, MediaExtract]>((resolve, _) => {
         const video = document.createElement("video");
         video.addEventListener("loadedmetadata", () => {
             video.addEventListener("seeked", () => {
                 resolve(
-                    changeDimensions(
-                        video,
-                        mimeType,
-                        dimensions(video.videoWidth, video.videoHeight)
-                    )
+                    Promise.all([
+                        changeDimensions(
+                            video,
+                            mimeType,
+                            dimensions(video.videoWidth, video.videoHeight)
+                        ),
+                        changeDimensions(
+                            video,
+                            mimeType,
+                            dimensions(video.videoWidth, video.videoHeight),
+                            dimensions(video.videoWidth, video.videoHeight)
+                        ),
+                    ])
                 );
             });
             video.currentTime = 1;
@@ -87,8 +95,8 @@ function changeDimensions(
                 reader.addEventListener("loadend", () => {
                     resolve({
                         dimensions: originalDimensions,
-                        thumbnailUrl: canvas.toDataURL(mimeType),
-                        thumbnailData: reader.result as ArrayBuffer,
+                        url: canvas.toDataURL(mimeType),
+                        data: reader.result as ArrayBuffer,
                     });
                 });
                 reader.readAsArrayBuffer(blob);
@@ -99,8 +107,8 @@ function changeDimensions(
 
 type MediaExtract = {
     dimensions: Dimensions;
-    thumbnailUrl: string;
-    thumbnailData: ArrayBuffer;
+    url: string;
+    data: ArrayBuffer;
 };
 
 export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
@@ -166,23 +174,39 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             }
 
             const blobUrl = dataToBlobUrl(data, mimeType);
-            if (isImage || isVideo) {
-                const extract = isImage
-                    ? await extractImageThumbnail(blobUrl, mimeType)
-                    : await extractVideoThumbnail(blobUrl, mimeType);
+            if (isImage) {
+                const extract = await extractImageThumbnail(blobUrl, mimeType);
 
-                if (isImage && data.byteLength > MAX_IMAGE_SIZE) {
-                    data = (await resizeImage(blobUrl, mimeType)).thumbnailData;
+                if (data.byteLength > MAX_IMAGE_SIZE) {
+                    data = (await resizeImage(blobUrl, mimeType)).data;
                 }
 
                 content = {
-                    kind: isImage ? "image_content" : "video_content",
+                    kind: "image_content",
                     mimeType: mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
                     blobData: new Uint8Array(data),
-                    thumbnailData: extract.thumbnailUrl,
+                    thumbnailData: extract.url,
                     url: blobUrl,
+                };
+            } else if (isVideo) {
+                const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
+
+                content = {
+                    kind: "video_content",
+                    mimeType: mimeType,
+                    width: image.dimensions.width,
+                    height: image.dimensions.height,
+                    imageData: {
+                        blobData: new Uint8Array(image.data),
+                        url: image.url,
+                    },
+                    videoData: {
+                        blobData: new Uint8Array(data),
+                        url: blobUrl,
+                    },
+                    thumbnailData: thumb.url,
                 };
             } else if (isAudio) {
                 content = {
