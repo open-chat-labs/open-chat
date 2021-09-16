@@ -25,6 +25,7 @@ fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         ) {
             PutChunkResult::Success => Success,
+            PutChunkResult::Complete => Success,
             PutChunkResult::BlobAlreadyExists => BlobAlreadyExists,
             PutChunkResult::ChunkAlreadyExists => ChunkAlreadyExists,
             PutChunkResult::ChunkTooBig => ChunkTooBig,
