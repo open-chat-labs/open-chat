@@ -32,6 +32,7 @@ pub struct PendingBlob {
 
 pub enum PutChunkResult {
     Success,
+    Complete,
     BlobAlreadyExists,
     ChunkAlreadyExists,
     ChunkTooBig,
@@ -151,12 +152,14 @@ impl BlobStorage {
             }
         };
 
+        self.total_bytes += byte_count;
+
         if let Some(pending_blob) = pending_blob_to_insert {
             self.blobs.insert(blob_id, Blob::from(pending_blob, now));
+            PutChunkResult::Complete
+        } else {
+            PutChunkResult::Success
         }
-
-        self.total_bytes += byte_count;
-        PutChunkResult::Success
     }
 
     pub fn get_chunk(&self, blob_id: u128, chunk_index: u32) -> Option<&ByteBuf> {
@@ -255,7 +258,7 @@ mod tests {
             actions.shuffle(&mut rng);
 
             for action in actions.iter() {
-                assert!(matches!(action(), PutChunkResult::Success));
+                assert!(matches!(action(), PutChunkResult::Success) || matches!(action(), PutChunkResult::Complete));
             }
 
             assert!(blob_storage.borrow().pending_blobs.is_empty());

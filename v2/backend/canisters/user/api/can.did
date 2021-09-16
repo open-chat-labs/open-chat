@@ -282,6 +282,7 @@ service: (InitArgs) -> {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
+    put_avatar_chunk: (PutChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
