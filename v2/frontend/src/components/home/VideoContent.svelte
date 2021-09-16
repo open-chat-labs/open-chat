@@ -18,7 +18,13 @@
 </script>
 
 <div class="video">
-    <video bind:this={videoPlayer} {style} poster={content.thumbnailData} class:landscape controls>
+    <video
+        bind:this={videoPlayer}
+        preload="none"
+        {style}
+        poster={content.thumbnailData}
+        class:landscape
+        controls>
         <track kind="captions" />
         {#if content.url}
             <source src={content.url} />
