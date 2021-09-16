@@ -36,6 +36,7 @@
 
 <audio
     on:timeupdate={timeupdate}
+    preload="none"
     on:ended={() => (playing = false)}
     on:play={() => (playing = true)}
     on:pause={() => (playing = false)}
