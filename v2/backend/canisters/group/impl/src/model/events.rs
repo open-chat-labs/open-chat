@@ -1,11 +1,15 @@
 use candid::CandidType;
+use group_canister::send_message::GroupReplyContextArgs;
 use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
+use std::collections::hash_map::Entry::Vacant;
+use std::collections::HashMap;
 use types::*;
 
 pub struct Events {
     events: Vec<EventWrapper<GroupChatEventInternal>>,
+    message_id_map: HashMap<MessageId, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
 }
@@ -35,11 +39,16 @@ pub struct MessageInternal {
     replies_to: Option<GroupReplyContextInternal>,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct GroupReplyContextInternal {
+    pub message_id: MessageId,
+}
+
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<GroupReplyContextInternal>,
+    pub replies_to: Option<GroupReplyContextArgs>,
     pub now: TimestampMillis,
 }
 
@@ -47,6 +56,7 @@ impl Events {
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
         let mut events = Events {
             events: Vec::new(),
+            message_id_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
         };
@@ -70,7 +80,9 @@ impl Events {
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
-            replies_to: args.replies_to,
+            replies_to: args.replies_to.map(|r| GroupReplyContextInternal {
+                message_id: r.message_id,
+            }),
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(GroupChatEventInternal::Message(message_internal), args.now);
@@ -80,6 +92,10 @@ impl Events {
     pub fn push_event(&mut self, event: GroupChatEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index.incr());
         if let GroupChatEventInternal::Message(m) = &event {
+            match self.message_id_map.entry(m.message_id) {
+                Vacant(e) => e.insert(event_index),
+                _ => panic!("MessageId already used: {:?}", m.message_id)
+            };
             self.latest_message_index = Some(m.message_index);
             self.latest_message_event_index = Some(event_index);
         }
@@ -254,11 +270,13 @@ impl Events {
     }
 
     fn hydrate_reply_context(&self, reply_context: &GroupReplyContextInternal) -> Option<GroupReplyContext> {
-        self.get_internal(reply_context.event_index)
+        let event_index = *self.message_id_map.get(&reply_context.message_id)?;
+        self.get_internal(event_index)
             .map(|e| {
                 if let GroupChatEventInternal::Message(m) = &e.event {
                     Some(GroupReplyContext {
-                        event_index: reply_context.event_index,
+                        event_index,
+                        message_id: reply_context.message_id,
                         user_id: m.sender,
                         content: m.content.clone(),
                     })
