@@ -456,11 +456,13 @@ export function setLastMessageOnChat(
     chat: ChatSummary,
     ev: EventWrapper<DirectMessage | GroupMessage>
 ): ChatSummary {
+    // todo - we want to also add this message index to the readByMe list
     if (chat.kind === "direct_chat" && ev.event.kind === "direct_message") {
         return {
             ...chat,
             latestMessage: ev as EventWrapper<DirectMessage>,
             latestEventIndex: ev.index,
+            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
         };
     }
     if (chat.kind === "group_chat" && ev.event.kind === "group_message") {
@@ -468,6 +470,7 @@ export function setLastMessageOnChat(
             ...chat,
             latestMessage: ev as EventWrapper<GroupMessage>,
             latestEventIndex: ev.index,
+            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
         };
     }
     return chat;

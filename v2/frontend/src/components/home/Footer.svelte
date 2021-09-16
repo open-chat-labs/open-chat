@@ -45,8 +45,6 @@
             const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
             const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
 
-            console.log("event index: ", nextEventIndex);
-
             let msg: GroupMessage | DirectMessage | undefined;
             if ($machine.context.chatSummary.kind === "group_chat") {
                 msg = createGroupMessage(

@@ -80,7 +80,6 @@ export interface DirectChatSummary {
   'them' : UserId,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
-  'chat_id' : ChatId,
   'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : DirectMessageEventWrapper,
 }

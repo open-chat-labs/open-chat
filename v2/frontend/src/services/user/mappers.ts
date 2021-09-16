@@ -283,7 +283,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Direct" in candid) {
         return {
             kind: "direct_chat",
-            chatId: candid.Direct.chat_id.toString(),
+            chatId: candid.Direct.them.toString(),
             latestMessage: {
                 index: candid.Direct.latest_message.index,
                 timestamp: candid.Direct.latest_message.timestamp,

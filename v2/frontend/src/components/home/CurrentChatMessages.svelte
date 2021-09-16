@@ -298,8 +298,12 @@
     }
 
     function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
-            return messageIsReadByMe($machine.context.chatSummary, evt.event);
+        if (isMe(evt)) {
+            return true;
+        } else {
+            if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+                return messageIsReadByMe($machine.context.chatSummary, evt.event);
+            }
         }
         return true;
     }

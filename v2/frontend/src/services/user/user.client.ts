@@ -34,6 +34,7 @@ import { UserClientMock } from "./user.client.mock";
 import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
+import { replace } from "svelte-spa-router";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -123,10 +124,12 @@ export class UserClient extends CandidService implements IUserClient {
                         sender_name: senderName,
                         message_id: message.messageId,
                         replies_to: apiOptional(
-                            // todo - this is all kinds of wrong at the moment
-                            (_replyContext) => ({
-                                chat_id_if_other: [],
-                                message_index: 0,
+                            (replyContext) => ({
+                                chat_id_if_other:
+                                    replyContext.kind === "direct_private_reply_context"
+                                        ? [Principal.fromText(replyContext.chatId)]
+                                        : [],
+                                message_index: replyContext.eventIndex, // todo - this needs to be changed to messageId
                             }),
                             message.repliesTo
                         ),

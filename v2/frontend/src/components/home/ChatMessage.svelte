@@ -52,6 +52,7 @@
     let username = sender?.username;
     let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
+    let fill = fillMessage(msg);
 
     afterUpdate(() => {
         // todo - keep an eye on this
@@ -63,7 +64,7 @@
     });
 
     onMount(() => {
-        if (!readByMe) {
+        if (!me && !readByMe) {
             // todo - leaving this console log here for now just to make sure we are not *over* observing
             console.log("beginning to observe: ", msg.messageIndex);
             observer.observe(msgElement);
@@ -130,19 +131,13 @@
     class:me
     data-index={msg.messageIndex}
     id={`message-${msg.messageIndex}`}>
-    <div
-        class="chat-message"
-        class:fill={fillMessage(msg)}
-        class:me
-        class:last
-        class:readByMe
-        class:rtl={$rtlStore}>
+    <div class="chat-message" class:fill class:me class:last class:readByMe class:rtl={$rtlStore}>
         {#if msg.repliesTo !== undefined}
             <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
         {/if}
 
         <ChatMessageContent {me} content={msg.content} />
-        <pre>M: {msg.messageIndex} E: {index}</pre>
+        <!-- <pre>M: {msg.messageIndex} E: {index}</pre> -->
 
         {#if metaData}
             {#await metaData then meta}
@@ -349,6 +344,7 @@
             padding: 0;
             overflow: hidden;
             border: none;
+            min-width: 0;
         }
     }
 

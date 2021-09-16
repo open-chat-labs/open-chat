@@ -327,7 +327,6 @@ export const idlFactory = ({ IDL }) => {
     'them' : UserId,
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
-    'chat_id' : ChatId,
     'read_by_them' : IDL.Vec(MessageIndexRange),
     'latest_message' : DirectMessageEventWrapper,
   });
