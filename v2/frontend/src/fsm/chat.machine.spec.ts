@@ -27,7 +27,7 @@ const textMessageContent: TextContent = {
 const fileMessageContent: FileContent = {
     kind: "file_content",
     name: "stuff_in_a_file.pdf",
-    blobData: Promise.resolve(undefined),
+    blobData: undefined,
     mimeType: "file/pdf",
 };
 

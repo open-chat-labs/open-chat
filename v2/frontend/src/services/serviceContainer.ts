@@ -76,10 +76,6 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    getIdentity(): Identity {
-        return this.identity;
-    }
-
     sendMessage(
         chat: ChatSummary,
         user: UserSummary,
@@ -119,16 +115,11 @@ export class ServiceContainer {
     }
 
     directChatEvents(
-        myUserId: string,
         theirUserId: string,
         fromIndex: number,
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(
-            this.userClient.chatEvents(theirUserId, fromIndex, toIndex),
-            myUserId,
-            theirUserId
-        );
+        return this.rehydrateMediaData(this.userClient.chatEvents(theirUserId, fromIndex, toIndex));
     }
 
     groupChatEvents(
@@ -141,9 +132,7 @@ export class ServiceContainer {
 
     // TODO - revisit whether this can simply be removed
     private async rehydrateMediaData<T extends ChatEvent>(
-        eventsPromise: Promise<EventsResponse<T>>,
-        myUserId?: string,
-        theirUserId?: string
+        eventsPromise: Promise<EventsResponse<T>>
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
@@ -154,25 +143,15 @@ export class ServiceContainer {
         resp.events = resp.events.map((e) => {
             if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
                 if (
-                    e.event.content.kind === "media_content" &&
-                    /^image/.test(e.event.content.mimeType)
-                ) {
-                    if (e.event.content.blobReference) {
-                        console.log("are we coming through here");
-                        const canisterId =
-                            e.event.kind === "direct_message"
-                                ? e.event.sentByMe
-                                    ? myUserId
-                                    : theirUserId
-                                : e.event.sender;
-                        e.event.content.blobData = undefined;
-                        e.event.content.url = `process.env.IC_URL/blobs/${e.event.content.blobReference?.blobId}?canisterId=${canisterId}`;
-                    }
-                } else if (
-                    e.event.content.kind === "media_content" ||
-                    e.event.content.kind === "file_content"
+                    (e.event.content.kind === "file_content" ||
+                        e.event.content.kind === "media_content") &&
+                    e.event.content.blobReference !== undefined
                 ) {
                     e.event.content.blobData = undefined;
+                    e.event.content.url = `${"process.env.BLOB_URL_PATTERN".replace(
+                        "{canisterId}",
+                        e.event.content.blobReference.canisterId
+                    )}${e.event.content.blobReference.blobId}`;
                 }
             }
             return e;

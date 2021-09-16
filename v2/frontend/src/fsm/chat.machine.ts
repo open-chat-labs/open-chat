@@ -112,7 +112,7 @@ function loadEvents(
     toIndex: number
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(userId, chatSummary.them, fromIndex, toIndex);
+        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
     }
     const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
     return events;

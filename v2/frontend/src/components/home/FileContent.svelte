@@ -5,78 +5,33 @@
     import { rtlStore } from "../../stores/rtl";
     import type { FileContent } from "../../domain/chat/chat";
     import FileDownload from "svelte-material-icons/FileDownload.svelte";
-    import { dataToBlobUrl } from "../../utils/blob";
-    import { afterUpdate, onDestroy } from "svelte";
-    import { DataClient } from "../../services/data/data.client";
-    import type { Identity } from "@dfinity/agent";
+    import { onDestroy } from "svelte";
 
     export let content: FileContent;
     export let me: boolean = false;
-    export let identity: Identity;
-    let downloaded: boolean = false;
-    let anchor: HTMLAnchorElement;
 
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
-    $: blobUrl =
-        content.blobData &&
-        content.blobData.then((data) => (data ? dataToBlobUrl(data, content.mimeType) : undefined));
-
-    afterUpdate(() => {
-        if (downloaded && anchor) {
-            anchor.click();
-        }
-    });
-
-    function download() {
-        if (content.blobReference) {
-            // we need to overwrite the whole content object so that we trigger a re-render
-            content = {
-                ...content,
-                blobData: DataClient.create(identity, content.blobReference.canisterId)
-                    .getData(content.blobReference)
-                    .then((data) => {
-                        downloaded = true;
-                        return data;
-                    }),
-            };
-        }
-    }
 
     onDestroy(() => {
-        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        content.url && URL.revokeObjectURL(content.url);
     });
 </script>
 
-{#await blobUrl then url}
-    {#if url}
-        <a
-            href={url}
-            title={$_("downloadFile", { values: { name: content.name } })}
-            download={content.name}
-            bind:this={anchor}
-            role="button"
-            class="file-content">
-            <span class="icon" class:rtl={$rtlStore}>
-                <FileDownload size={"1.7em"} {color} />
-            </span>
-            <span class="name">
-                {content.name}
-            </span>
-        </a>
-    {:else}
-        <div
-            on:click={download}
-            title={$_("downloadFile", { values: { name: content.name } })}
-            class="file-content">
-            <span class="icon" class:rtl={$rtlStore}>
-                <FileDownload size={"1.7em"} {color} />
-            </span>
-            <span class="name">
-                {content.name}
-            </span>
-        </div>
-    {/if}
-{/await}
+{#if content.url}
+    <a
+        href={content.url}
+        title={$_("downloadFile", { values: { name: content.name } })}
+        download={content.name}
+        role="button"
+        class="file-content">
+        <span class="icon" class:rtl={$rtlStore}>
+            <FileDownload size={"1.7em"} {color} />
+        </span>
+        <span class="name">
+            {content.name}
+        </span>
+    </a>
+{/if}
 
 <style type="text/scss">
     .file-content {

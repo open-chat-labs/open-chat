@@ -10,13 +10,11 @@
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { Identity } from "@dfinity/agent";
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let userLookup: UserLookup;
     export let repliesTo: ReplyContext;
-    export let identity: Identity;
 
     function sentByMe(replyContext: ReplyContext): boolean {
         return replyContext.kind === "direct_standard_reply_context" && replyContext.sentByMe;
@@ -70,7 +68,7 @@
             {getUsernameFromReplyContext(repliesTo)} ({repliesTo.eventIndex})
         </h4>
         {#if content !== undefined}
-            <ChatMessageContent {identity} {content} />
+            <ChatMessageContent {content} />
         {/if}
         {#if repliesTo.kind === "direct_private_reply_context"}
             {`Private reply to message from chatId ${repliesTo.chatId}`}

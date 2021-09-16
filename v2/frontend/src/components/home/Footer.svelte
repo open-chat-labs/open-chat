@@ -138,16 +138,13 @@
     <div class="footer-overlay">
         {#if $machine.context.replyingTo}
             <ReplyingTo
-                identity={$machine.context.serviceContainer.getIdentity()}
                 on:cancelReply={cancelReply}
                 user={$machine.context.user}
                 replyingTo={$machine.context.replyingTo} />
         {/if}
         {#if $machine.context.fileToAttach !== undefined}
             {#if $machine.context.fileToAttach.kind === "media_content"}
-                <DraftMediaMessage
-                    identity={$machine.context.serviceContainer.getIdentity()}
-                    draft={$machine.context.fileToAttach} />
+                <DraftMediaMessage draft={$machine.context.fileToAttach} />
             {:else if $machine.context.fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>
             {/if}

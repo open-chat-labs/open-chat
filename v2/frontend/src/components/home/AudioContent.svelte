@@ -5,65 +5,32 @@
     import { _ } from "svelte-i18n";
     import type { MediaContent } from "../../domain/chat/chat";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
-    import CloudDownloadOutline from "svelte-material-icons/CloudDownloadOutline.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
-    import { dataToBlobUrl } from "../../utils/blob";
-    import { DataClient } from "../../services/data/data.client";
-    import type { Identity } from "@dfinity/agent";
 
     export let content: MediaContent;
-    export let identity: Identity;
 
-    let downloaded: boolean = false;
     let audioPlayer: HTMLAudioElement;
     let playing: boolean = false;
     let fractionPlayed: number = 0;
     let leftRotation: number = 0;
     let rightRotation: number = 0;
 
-    $: blobUrl =
-        content.blobData &&
-        content.blobData.then((data) => {
-            if (data) {
-                downloaded = true;
-                return dataToBlobUrl(data, content.mimeType);
-            }
-            return undefined;
-        });
-
-    function download() {
-        if (downloaded) {
-            if (playing) {
-                audioPlayer.pause();
-            } else {
-                audioPlayer.play();
-            }
-            return;
-        }
-
-        if (content.blobReference) {
-            // we need to overwrite the whole content object so that we trigger a re-render
-            content = {
-                ...content,
-                blobData: DataClient.create(identity, content.blobReference.canisterId)
-                    .getData(content.blobReference)
-                    .then((data) => {
-                        downloaded = true;
-                        audioPlayer.play();
-                        return data;
-                    }),
-            };
-        }
-    }
-
     onDestroy(() => {
-        blobUrl && blobUrl.then((url) => (url ? URL.revokeObjectURL(url) : undefined));
+        content.url && URL.revokeObjectURL(content.url);
     });
 
     function timeupdate() {
         fractionPlayed = Math.min(audioPlayer.currentTime / audioPlayer.duration, 1);
         leftRotation = Math.min(180, fractionPlayed * 360);
         rightRotation = Math.max(0, fractionPlayed * 360 - 180);
+    }
+
+    function togglePlay() {
+        if (playing) {
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play();
+        }
     }
 </script>
 
@@ -74,25 +41,19 @@
     on:pause={() => (playing = false)}
     bind:this={audioPlayer}>
     <track kind="captions" />
-    {#await blobUrl then url}
-        {#if url}
-            <source src={url} />
-        {/if}
-    {/await}
+    {#if content.url}
+        <source src={content.url} />
+    {/if}
 </audio>
 
-<div class="circular" role="button" on:click={download}>
+<div class="circular" role="button" on:click={togglePlay}>
     <div class="inner" />
     <div class="number">
-        {#await blobUrl}
-            <CloudDownloadOutline size={"2.5em"} color={"#fff"} />
-        {:then _url}
-            {#if playing}
-                <Pause size={"2.5em"} color={"#fff"} />
-            {:else}
-                <MusicNote size={"2.5em"} color={"#fff"} />
-            {/if}
-        {/await}
+        {#if playing}
+            <Pause size={"2.5em"} color={"#fff"} />
+        {:else}
+            <MusicNote size={"2.5em"} color={"#fff"} />
+        {/if}
     </div>
     <div class="circle">
         <div class="bar left">

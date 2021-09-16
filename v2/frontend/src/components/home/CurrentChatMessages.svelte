@@ -328,7 +328,6 @@
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
-                        identity={$machine.context.serviceContainer.getIdentity()}
                         chatSummary={$machine.context.chatSummary}
                         user={$machine.context.user}
                         me={isMe(evt)}

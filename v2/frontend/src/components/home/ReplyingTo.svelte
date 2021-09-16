@@ -8,13 +8,11 @@
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import type { UserSummary } from "../../domain/user/user";
     import { fade } from "svelte/transition";
-    import type { Identity } from "@dfinity/agent";
 
     const dispatch = createEventDispatcher();
 
     export let replyingTo: EnhancedReplyContext<ReplyContext>;
     export let user: UserSummary | undefined;
-    export let identity: Identity;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -35,7 +33,7 @@
         <h4 class="username">
             {username}
         </h4>
-        <ChatMessageContent {identity} {me} truncate={true} content={replyingTo.content} />
+        <ChatMessageContent {me} truncate={true} content={replyingTo.content} />
     </div>
 </div>
 

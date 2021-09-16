@@ -11,8 +11,9 @@ export interface CyclesContent {
 export interface DataContent {
     caption?: string;
     blobReference?: BlobReference;
-    blobData?: Promise<Uint8Array | undefined>;
+    blobData?: Uint8Array;
     mimeType: string;
+    url?: string;
 }
 
 export interface MediaContent extends DataContent {
@@ -20,7 +21,6 @@ export interface MediaContent extends DataContent {
     height: number;
     width: number;
     thumbnailData: string;
-    url?: string;
 }
 
 export interface TextContent {
