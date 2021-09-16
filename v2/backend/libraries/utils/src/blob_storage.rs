@@ -258,7 +258,8 @@ mod tests {
             actions.shuffle(&mut rng);
 
             for action in actions.iter() {
-                assert!(matches!(action(), PutChunkResult::Success) || matches!(action(), PutChunkResult::Complete));
+                let result = action();
+                assert!(matches!(result, PutChunkResult::Success) || matches!(result, PutChunkResult::Complete));
             }
 
             assert!(blob_storage.borrow().pending_blobs.is_empty());
