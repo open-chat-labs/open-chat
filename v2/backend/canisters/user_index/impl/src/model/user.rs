@@ -1,8 +1,8 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 #[cfg(test)]
 use std::str::FromStr;
+use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
