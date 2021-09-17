@@ -1,5 +1,6 @@
 use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use types::{CanisterId, DirectMessageNotification, UserId};
@@ -8,6 +9,8 @@ use utils::rand::get_random_item;
 
 #[update]
 fn c2c_send_message(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| c2c_send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 

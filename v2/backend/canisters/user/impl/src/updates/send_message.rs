@@ -1,5 +1,6 @@
 use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageIndex};
 use user_canister::c2c_send_message;
@@ -7,6 +8,8 @@ use user_canister::send_message::{Response::*, *};
 
 #[update]
 fn send_message(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 

@@ -2,10 +2,12 @@ use crate::TimestampMillis;
 use candid::CandidType;
 use serde::Deserialize;
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+pub type Cycles = u64;
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CyclesTopUp {
     pub date: TimestampMillis,
-    pub amount: u64,
+    pub amount: Cycles,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -13,7 +15,7 @@ pub struct NotifyLowBalanceArgs {}
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum NotifyLowBalanceResponse {
-    Success(u64),
+    Success(Cycles),
     NotEnoughCyclesRemaining,
     FailedToDepositCycles,
 }

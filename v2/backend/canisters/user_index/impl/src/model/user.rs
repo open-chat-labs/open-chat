@@ -1,6 +1,8 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use types::{CanisterCreationStatusInternal, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
+#[cfg(test)]
+use std::str::FromStr;
+use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -39,7 +41,7 @@ impl User {
             User::Unconfirmed(_) => None,
             User::Confirmed(u) => match u.canister_creation_status {
                 CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
-                CanisterCreationStatusInternal::Created(canister_id, _) => Some(canister_id.into()),
+                CanisterCreationStatusInternal::Created(canister_id, ..) => Some(canister_id.into()),
                 _ => None,
             },
             User::Created(u) => Some(u.user_id),
@@ -97,6 +99,15 @@ impl User {
         }
         true
     }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) -> bool {
+        if let User::Created(u) = self {
+            u.cycle_top_ups.push(top_up);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -128,6 +139,7 @@ pub struct CreatedUser {
     pub last_online: TimestampMillis,
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
+    pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl CreatedUser {
@@ -150,6 +162,37 @@ impl CreatedUser {
             user_id: self.user_id,
             username: if include_username { Some(self.username.clone()) } else { None },
             seconds_since_last_online,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for ConfirmedUser {
+    fn default() -> Self {
+        ConfirmedUser {
+            principal: Principal::anonymous(),
+            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            username: None,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            date_confirmed: 0,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for CreatedUser {
+    fn default() -> Self {
+        CreatedUser {
+            principal: Principal::anonymous(),
+            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            user_id: Principal::anonymous().into(),
+            username: String::new(),
+            date_created: 0,
+            date_updated: 0,
+            last_online: 0,
+            wasm_version: Version::new(0, 0, 0),
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use types::{ChatId, MessageIndex, UserId};
 use user_canister::c2c_mark_read::{Response::*, *};
@@ -6,6 +7,8 @@ use utils::range_set::insert_ranges;
 
 #[update]
 fn c2c_mark_read(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| c2c_mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 

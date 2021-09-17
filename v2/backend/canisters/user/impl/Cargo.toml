@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.7.5"
+cycles_utils = { path = "../../../libraries/cycles_utils" }
 futures = "0.3.16"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }

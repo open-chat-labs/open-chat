@@ -1,4 +1,4 @@
-use crate::{CanisterId, Version};
+use crate::{CanisterId, Cycles, Version};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -13,7 +13,7 @@ pub enum CanisterCreationStatus {
 pub enum CanisterCreationStatusInternal {
     Pending(Option<CanisterId>),
     InProgress,
-    Created(CanisterId, Version),
+    Created(CanisterId, Version, Cycles),
 }
 
 impl From<CanisterCreationStatusInternal> for CanisterCreationStatus {
@@ -21,7 +21,7 @@ impl From<CanisterCreationStatusInternal> for CanisterCreationStatus {
         match value {
             CanisterCreationStatusInternal::Pending(_) => CanisterCreationStatus::Pending,
             CanisterCreationStatusInternal::InProgress => CanisterCreationStatus::InProgress,
-            CanisterCreationStatusInternal::Created(_, _) => CanisterCreationStatus::Created,
+            CanisterCreationStatusInternal::Created(..) => CanisterCreationStatus::Created,
         }
     }
 }
