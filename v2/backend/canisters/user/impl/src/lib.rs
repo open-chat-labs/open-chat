@@ -49,7 +49,7 @@ pub struct Data {
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
-    pub avatar_blob_reference: Option<u128>,
+    pub avatar_blob_id: Option<u128>,
 }
 
 impl Data {
@@ -70,7 +70,7 @@ impl Data {
             notification_canister_ids,
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            avatar_blob_reference: None,
+            avatar_blob_id: None,
         }
     }
 }

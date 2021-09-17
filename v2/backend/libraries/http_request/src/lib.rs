@@ -1,81 +1,65 @@
-use candid::Func;
-use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::str::FromStr;
-use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
+use types::{CanisterId, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, Token};
 use utils::blob_storage::BlobStorage;
 
-const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
+mod avatar;
+mod blob;
 
-pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, blob_storage: &BlobStorage) -> HttpResponse {
-    if let Some(blob_id) = try_extract_blob_id_from_path(&request.url) {
-        if let Some(blob) = blob_storage.get_blob(&blob_id) {
-            let next_chunk_index = 1;
-            let streaming_strategy = if blob_storage.exists(blob_id, next_chunk_index) {
-                Some(StreamingStrategy::Callback {
-                    callback: Func {
-                        principal: canister_id,
-                        method: "http_request_streaming_callback".to_string(),
-                    },
-                    token: Token {
-                        key: format!("blobs/{}", blob_id),
-                        content_encoding: String::default(),
-                        index: next_chunk_index.into(),
-                        sha256: None,
-                    },
-                })
-            } else {
-                None
-            };
+pub struct CanisterData<'a> {
+    pub blob_storage: &'a BlobStorage,
+    pub avatar_blob_id: Option<u128>,
+}
 
-            return HttpResponse {
-                status_code: 200,
-                headers: vec![
-                    HeaderField("Content-Type".to_string(), blob.mime_type().to_string()),
-                    HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
-                ],
-                body: Cow::Owned(blob.chunk(0).unwrap().clone()),
-                streaming_strategy,
-            };
+pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, canister_data: CanisterData) -> HttpResponse {
+    let response = if is_avatar_request(&request.url) {
+        if let Some(blob_id) = canister_data.avatar_blob_id {
+            avatar::handle_http_request(request, canister_id, canister_data.blob_storage, blob_id)
+        } else {
+            None
         }
-    }
+    } else if let Some(blob_id) = try_extract_blob_id_from_path(&request.url) {
+        blob::handle_http_request(request, canister_id, canister_data.blob_storage, blob_id)
+    } else {
+        None
+    };
 
-    HttpResponse {
-        status_code: 404,
-        headers: Vec::new(),
-        body: Cow::default(),
-        streaming_strategy: None,
+    match response {
+        Some(r) => r,
+        None => HttpResponse {
+            status_code: 404,
+            headers: Vec::new(),
+            body: Cow::default(),
+            streaming_strategy: None,
+        },
     }
 }
 
-pub fn http_request_streaming_callback_impl(token: Token, blob_storage: &BlobStorage) -> StreamingCallbackHttpResponse {
-    if let Some(blob_id) = try_extract_blob_id_from_path(&token.key) {
-        let chunk_index = token.index.0.to_u32().unwrap();
-        if let Some(bytes) = blob_storage.get_chunk(blob_id, chunk_index) {
-            let next_chunk_index = chunk_index + 1;
-            let token = if blob_storage.exists(blob_id, next_chunk_index) {
-                Some(Token {
-                    key: format!("blobs/{}", blob_id),
-                    index: next_chunk_index.into(),
-                    content_encoding: String::default(),
-                    sha256: None,
-                })
-            } else {
-                None
-            };
-
-            return StreamingCallbackHttpResponse {
-                body: bytes.clone(),
-                token,
-            };
+pub fn http_request_streaming_callback_impl(token: Token, canister_data: CanisterData) -> StreamingCallbackHttpResponse {
+    let response = if is_avatar_request(&token.key) {
+        if let Some(blob_id) = canister_data.avatar_blob_id {
+            avatar::handle_http_request_streaming_callback(token, canister_data.blob_storage, blob_id)
+        } else {
+            None
         }
-    }
+    } else if let Some(blob_id) = try_extract_blob_id_from_path(&token.key) {
+        blob::handle_http_request_streaming_callback(token, canister_data.blob_storage, blob_id)
+    } else {
+        None
+    };
 
-    StreamingCallbackHttpResponse {
-        body: ByteBuf::new(),
-        token: None,
+    match response {
+        Some(r) => r,
+        None => StreamingCallbackHttpResponse {
+            body: ByteBuf::new(),
+            token: None,
+        },
     }
+}
+
+fn is_avatar_request(path: &str) -> bool {
+    path.trim_start_matches('/').trim_end_matches('/').to_lowercase() == "avatar"
 }
 
 fn try_extract_blob_id_from_path(path: &str) -> Option<u128> {

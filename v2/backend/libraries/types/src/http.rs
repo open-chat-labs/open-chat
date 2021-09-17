@@ -42,3 +42,13 @@ pub struct StreamingCallbackHttpResponse {
     pub body: ByteBuf,
     pub token: Option<Token>,
 }
+
+impl HttpRequest {
+    pub fn header(&self, key: &str) -> Option<&String> {
+        let key_lower = key.to_lowercase();
+        self.headers
+            .iter()
+            .find(|(k, _)| k.to_lowercase() == key_lower)
+            .map(|(_, v)| v)
+    }
+}
