@@ -4,7 +4,7 @@ use phonenumber::PhoneNumber;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{TimestampMillis, UserId};
+use types::{CyclesTopUp, TimestampMillis, UserId};
 
 #[derive(Default)]
 pub struct UserMap {
@@ -108,7 +108,6 @@ impl UserMap {
         self.users_by_principal.get(principal)
     }
 
-    #[allow(dead_code)]
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&User> {
         self.user_id_to_principal
             .get(user_id)
@@ -145,6 +144,15 @@ impl UserMap {
         } else {
             None
         }
+    }
+
+    pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
+        if let Some(principal) = self.user_id_to_principal.get(user_id) {
+            if let Some(user) = self.users_by_principal.get_mut(principal) {
+                return user.mark_cycles_top_up(top_up);
+            }
+        }
+        false
     }
 
     pub fn values(&self) -> hash_map::Values<'_, Principal, User> {

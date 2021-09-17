@@ -3292,6 +3292,7 @@ name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cycles_utils",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -3353,6 +3354,7 @@ name = "user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cycles_utils",
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",

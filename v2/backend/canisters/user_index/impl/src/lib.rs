@@ -11,9 +11,10 @@ mod model;
 mod queries;
 mod updates;
 
-pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 pub const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
 pub const USER_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
+pub const USER_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
+pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();

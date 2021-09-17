@@ -13,6 +13,7 @@ mod queries;
 mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
+const LOW_CYCLES_BALANCE_THRESHOLD: u64 = 100_000_000_000; // 0.1T
 
 thread_local! {
     pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();

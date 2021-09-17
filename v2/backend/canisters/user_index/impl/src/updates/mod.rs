@@ -1,3 +1,4 @@
+pub mod c2c_notify_low_balance;
 pub mod confirm_phone_number;
 pub mod create_canister;
 pub mod mark_as_online;

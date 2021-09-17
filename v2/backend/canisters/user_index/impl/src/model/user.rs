@@ -1,6 +1,6 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
-use types::{CanisterCreationStatusInternal, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
+use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -39,7 +39,7 @@ impl User {
             User::Unconfirmed(_) => None,
             User::Confirmed(u) => match u.canister_creation_status {
                 CanisterCreationStatusInternal::Pending(canister_id) => canister_id.map(|c| c.into()),
-                CanisterCreationStatusInternal::Created(canister_id, _) => Some(canister_id.into()),
+                CanisterCreationStatusInternal::Created(canister_id, ..) => Some(canister_id.into()),
                 _ => None,
             },
             User::Created(u) => Some(u.user_id),
@@ -97,6 +97,15 @@ impl User {
         }
         true
     }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) -> bool {
+        if let User::Created(u) = self {
+            u.cycle_top_ups.push(top_up);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -128,6 +137,7 @@ pub struct CreatedUser {
     pub last_online: TimestampMillis,
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
+    pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl CreatedUser {

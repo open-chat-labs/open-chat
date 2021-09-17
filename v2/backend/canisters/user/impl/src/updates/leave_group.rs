@@ -1,4 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::c2c_leave_group;
 use ic_cdk_macros::update;
 use types::ChatId;
@@ -6,6 +7,8 @@ use user_canister::leave_group::{Response::*, *};
 
 #[update]
 async fn leave_group(args: Args) -> Response {
+    check_cycles_balance();
+
     if let Err(response) = RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
         return response;
     };

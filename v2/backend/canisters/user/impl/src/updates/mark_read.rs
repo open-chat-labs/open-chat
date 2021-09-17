@@ -1,4 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use range_set::RangeSet;
 use std::ops::RangeInclusive;
@@ -9,6 +10,8 @@ use utils::range_set::{convert_to_message_index_ranges, insert_ranges};
 
 #[update]
 fn mark_read(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
