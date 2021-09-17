@@ -452,7 +452,6 @@ export function setLastMessageOnChat(
     chat: ChatSummary,
     ev: EventWrapper<DirectMessage | GroupMessage>
 ): ChatSummary {
-    // todo - we want to also add this message index to the readByMe list
     if (chat.kind === "direct_chat" && ev.event.kind === "direct_message") {
         return {
             ...chat,
