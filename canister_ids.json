@@ -1,14 +1,21 @@
 {
+  "__Candid_UI": {
+    "nns_dapp_testnet": "t6rzw-2iaaa-aaaaa-aaama-cai"
+  },
   "chats": {
-    "ic": "773uq-3qaaa-aaaaf-aaabq-cai"
+    "ic": "773uq-3qaaa-aaaaf-aaabq-cai",
+    "nns_dapp_testnet": "s55qq-oqaaa-aaaaa-aaakq-cai"
   },
   "p2p": {
-    "ic": "7k4f5-2yaaa-aaaaf-aaaca-cai"
+    "ic": "7k4f5-2yaaa-aaaaf-aaaca-cai",
+    "nns_dapp_testnet": "su63m-yyaaa-aaaaa-aaala-cai"
   },
   "user_mgmt": {
-    "ic": "7n5dj-xaaaa-aaaaf-aaacq-cai"
+    "ic": "7n5dj-xaaaa-aaaaf-aaacq-cai",
+    "nns_dapp_testnet": "st75y-vaaaa-aaaaa-aaalq-cai"
   },
   "website": {
-    "ic": "7e6iv-biaaa-aaaaf-aaada-cai"
+    "ic": "7e6iv-biaaa-aaaaf-aaada-cai",
+    "nns_dapp_testnet": "s24we-diaaa-aaaaa-aaaka-cai"
   }
 }

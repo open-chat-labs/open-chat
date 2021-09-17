@@ -43,9 +43,11 @@ function initCanisterIds() {
 
 let canisterIds = initCanisterIds();
 
-let IDP_URL = isDevelopment 
-  ? "http://s55qq-oqaaa-aaaaa-aaakq-cai.localhost:8000"
-  : "https://identity.ic0.app/";
+let IDP_URL = process.env.DFX_NETWORK === "nns_dapp_testnet" 
+    ? "https://qjdve-lqaaa-aaaaa-aaaeq-cai.nnsdapp.dfinity.network/" 
+    : isDevelopment 
+      ? "http://s55qq-oqaaa-aaaaa-aaakq-cai.localhost:8000"
+      : "https://identity.ic0.app/";
 
 // List of all aliases for canisters. This creates the module alias for
 // the `import ... from "@dfinity/ic/canisters/xyz"` where xyz is the name of a
