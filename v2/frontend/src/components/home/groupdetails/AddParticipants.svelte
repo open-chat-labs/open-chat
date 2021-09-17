@@ -1,17 +1,17 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
-    import SectionHeader from "../SectionHeader.svelte";
-    import Loading from "../Loading.svelte";
-    import Button from "../Button.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Loading from "../../Loading.svelte";
+    import Button from "../../Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    export let machine: ActorRefFrom<ParticipantsMachine>;
+    import HoverIcon from "../../HoverIcon.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
+    export let machine: ActorRefFrom<EditGroupMachine>;
     import { _ } from "svelte-i18n";
-    import type { UserSearchMachine } from "../../fsm/userSearch.machine";
-    import type { ParticipantsMachine } from "../../fsm/participants.machine";
-    import SelectUsers from "./SelectUsers.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSearchMachine } from "../../../fsm/userSearch.machine";
+    import SelectUsers from "../SelectUsers.svelte";
+    import type { UserSummary } from "../../../domain/user/user";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 

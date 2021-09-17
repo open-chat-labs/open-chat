@@ -30,7 +30,7 @@ import {
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { participantsMachine } from "./participants.machine";
+import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
@@ -66,6 +66,7 @@ export type ChatEvents =
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_GROUP_DETAILS" }
+    | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
     | {
@@ -313,6 +314,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     })),
                 },
                 SHOW_GROUP_DETAILS: ".showing_group",
+                SHOW_PARTICIPANTS: ".showing_group",
                 ADD_PARTICIPANT: ".showing_group",
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
@@ -399,8 +401,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 showing_group: {
                     invoke: {
-                        id: "participantsMachine",
-                        src: participantsMachine,
+                        id: "editGroupMachine",
+                        src: editGroupMachine,
                         data: (ctx, ev) => {
                             return {
                                 serviceContainer: ctx.serviceContainer,

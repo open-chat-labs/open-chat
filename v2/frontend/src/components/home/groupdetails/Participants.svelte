@@ -1,12 +1,12 @@
 <script lang="ts">
-    import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import Participant from "./Participant.svelte";
+    import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { ParticipantsMachine } from "../../fsm/participants.machine";
-    import VirtualList from "../VirtualList.svelte";
-    import type { FullParticipant } from "../../domain/chat/chat";
+    import VirtualList from "../../VirtualList.svelte";
+    import type { FullParticipant } from "../../../domain/chat/chat";
+    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
 
-    export let machine: ActorRefFrom<ParticipantsMachine>;
+    export let machine: ActorRefFrom<EditGroupMachine>;
 
     function close() {
         machine.send({ type: "HIDE_PARTICIPANTS" });

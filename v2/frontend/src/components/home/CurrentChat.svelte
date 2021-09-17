@@ -13,6 +13,10 @@
         machine.send({ type: "SHOW_GROUP_DETAILS" });
     }
 
+    function showParticipants() {
+        machine.send({ type: "SHOW_PARTICIPANTS" });
+    }
+
     function addParticipants() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
@@ -28,6 +32,7 @@
         on:unblockUser
         on:addParticipants={addParticipants}
         on:showGroupDetails={showGroupDetails}
+        on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
     <CurrentChatMessages {unconfirmed} on:chatWith {machine} />

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { GroupChatSummary } from "../domain/chat/chat";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { ParticipantsContext, participantsMachine } from "./participants.machine";
+import { EditGroupContext, editGroupMachine } from "./editgroup.machine";
 import { testTransition } from "./machine.spec.utils";
 
 const groupChat: GroupChatSummary = {
@@ -26,7 +26,7 @@ const groupChat: GroupChatSummary = {
     ],
 };
 
-const testContext: ParticipantsContext = {
+const testContext: EditGroupContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: groupChat,
     userLookup: {},
@@ -43,7 +43,7 @@ const testContext: ParticipantsContext = {
 describe("participant machine transitions", () => {
     test("hide participants", () => {
         testTransition(
-            participantsMachine.withContext(testContext),
+            editGroupMachine.withContext(testContext),
             "idle",
             { type: "HIDE_PARTICIPANTS" },
             "done"
@@ -51,7 +51,7 @@ describe("participant machine transitions", () => {
     });
     test("remove participant", () => {
         testTransition(
-            participantsMachine.withContext(testContext),
+            editGroupMachine.withContext(testContext),
             "idle",
             { type: "REMOVE_PARTICIPANT", data: "123" },
             "removing_participant"
@@ -59,7 +59,7 @@ describe("participant machine transitions", () => {
     });
     test("dismiss as admin", () => {
         testTransition(
-            participantsMachine.withContext(testContext),
+            editGroupMachine.withContext(testContext),
             "idle",
             { type: "DISMISS_AS_ADMIN", data: "123" },
             "dismissing_participant"
@@ -67,7 +67,7 @@ describe("participant machine transitions", () => {
     });
     test("add participant", () => {
         testTransition(
-            participantsMachine.withContext(testContext),
+            editGroupMachine.withContext(testContext),
             "idle",
             { type: "ADD_PARTICIPANT" },
             "adding_participants"
@@ -75,7 +75,7 @@ describe("participant machine transitions", () => {
     });
     test("cancel add participant", () => {
         testTransition(
-            participantsMachine.withContext(testContext),
+            editGroupMachine.withContext(testContext),
             "adding_participants",
             { type: "CANCEL_ADD_PARTICIPANT" },
             "idle"

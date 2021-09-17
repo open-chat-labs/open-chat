@@ -53,6 +53,12 @@
         }
     }
 
+    function showParticipants() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("showParticipants");
+        }
+    }
+
     function addParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
             dispatch("addParticipants");
@@ -168,6 +174,10 @@
                         <MenuItem on:click={copyCode}>
                             <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("copyInviteCode")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={showParticipants}>
+                            <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("participants")}</div>
                         </MenuItem>
                         {#if canAdminister(selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>

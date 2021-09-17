@@ -1,11 +1,11 @@
 <script lang="ts">
-    import HoverIcon from "../HoverIcon.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import type { FullParticipant } from "../../domain/chat/chat";
+    import type { FullParticipant } from "../../../domain/chat/chat";
 
     export let me: FullParticipant | undefined;
     export let publicGroup: boolean;

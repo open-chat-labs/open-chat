@@ -13,7 +13,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 import { toastStore } from "../stores/toast";
 
-export interface ParticipantsContext {
+export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;
     userLookup: UserLookup;
@@ -23,7 +23,7 @@ export interface ParticipantsContext {
     user?: UserSummary;
 }
 
-export type ParticipantsEvents =
+export type EditGroupEvents =
     | { type: "CANCEL_ADD_PARTICIPANT" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "DISMISS_AS_ADMIN"; data: string }
@@ -41,26 +41,26 @@ export type ParticipantsEvents =
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
-const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents>> = {
+const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
     guards: {},
     services: {
         removeParticipant: (ctx, ev) => {
             if (ev.type === "REMOVE_PARTICIPANT") {
                 return ctx.serviceContainer.removeParticipant(ctx.chatSummary.chatId, ev.data);
             }
-            throw new Error("Unexpected event type provided to ParticipantsMachine.dismissAsAdmin");
+            throw new Error("Unexpected event type provided to EditGroupMachine.dismissAsAdmin");
         },
         dismissAsAdmin: (ctx, ev) => {
             if (ev.type === "DISMISS_AS_ADMIN") {
                 return ctx.serviceContainer.dismissAsAdmin(ctx.chatSummary.chatId, ev.data);
             }
-            throw new Error("Unexpected event type provided to ParticipantsMachine.dismissAsAdmin");
+            throw new Error("Unexpected event type provided to EditGroupMachine.dismissAsAdmin");
         },
         makeAdmin: (ctx, ev) => {
             if (ev.type === "MAKE_ADMIN") {
                 return ctx.serviceContainer.makeAdmin(ctx.chatSummary.chatId, ev.data);
             }
-            throw new Error("Unexpected event type provided to ParticipantsMachine.makeAdmin");
+            throw new Error("Unexpected event type provided to EditGroupMachine.makeAdmin");
         },
         addParticipants: (ctx, _ev) => {
             if (ctx.usersToAdd.length > 0) {
@@ -69,14 +69,14 @@ const liveConfig: Partial<MachineOptions<ParticipantsContext, ParticipantsEvents
                     ctx.usersToAdd.map((u) => u.userId)
                 );
             }
-            throw new Error("Unexpected event type provided to ParticipantsMachine.addParticipant");
+            throw new Error("Unexpected event type provided to EditGroupMachine.addParticipant");
         },
     },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents> = {
-    id: "participants_machine",
+export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
+    id: "edit_group_machine",
     initial: "init",
     on: {
         HIDE_PARTICIPANTS: ".done", // todo make sure this goes to the parent.idle state correctly
@@ -303,8 +303,8 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
     },
 };
 
-export const participantsMachine = createMachine<ParticipantsContext, ParticipantsEvents>(
+export const editGroupMachine = createMachine<EditGroupContext, EditGroupEvents>(
     schema,
     liveConfig
 );
-export type ParticipantsMachine = typeof participantsMachine;
+export type EditGroupMachine = typeof editGroupMachine;

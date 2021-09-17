@@ -47,6 +47,7 @@
     "dropFile": "Drop a file here",
     "cancel": "Cancel",
     "addGroupPhoto": "Add group photo",
+    "editGroupPhoto": "Edit group photo",
     "public": "Public",
     "private": "Private",
     "unknownUser": "Unknown User",
