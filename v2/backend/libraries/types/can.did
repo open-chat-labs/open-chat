@@ -86,7 +86,6 @@ type DirectChatEventWrapper =
 
 type DirectChatSummary =
     record {
-        chat_id: ChatId;
         them: UserId;
         latest_message: DirectMessageEventWrapper;
         latest_event_index: EventIndex;

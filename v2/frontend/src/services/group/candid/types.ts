@@ -77,7 +77,6 @@ export interface DirectChatSummary {
   'them' : UserId,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
-  'chat_id' : ChatId,
   'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : DirectMessageEventWrapper,
 }
@@ -212,6 +211,7 @@ export interface GroupNameChanged {
 export interface GroupReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface ImageContent {
@@ -302,8 +302,22 @@ export interface ParticipantsRemoved {
 }
 export interface PrivateReplyContext {
   'chat_id' : ChatId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
+export interface PutAvatarChunkArgs {
+  'total_chunks' : number,
+  'blob_id' : bigint,
+  'mime_type' : string,
+  'bytes' : Array<number>,
+  'index' : number,
+}
+export type PutAvatarChunkResponse = { 'ChunkAlreadyExists' : null } |
+  { 'Full' : null } |
+  { 'BlobAlreadyExists' : null } |
+  { 'Success' : null } |
+  { 'CallerNotGroupAdmin' : null } |
+  { 'ChunkTooBig' : null };
 export interface PutChunkArgs {
   'total_chunks' : number,
   'blob_id' : bigint,
@@ -365,6 +379,7 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface Subscription {
@@ -491,6 +506,9 @@ export interface _SERVICE {
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'put_avatar_chunk' : (arg_0: PutAvatarChunkArgs) => Promise<
+      PutAvatarChunkResponse
+    >,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<

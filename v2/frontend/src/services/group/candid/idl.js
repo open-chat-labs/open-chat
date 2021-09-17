@@ -107,6 +107,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({
     'content' : MessageContent,
     'user_id' : UserId,
+    'message_id' : MessageId,
     'event_index' : EventIndex,
   });
   const MessageIndex = IDL.Nat32;
@@ -196,6 +197,21 @@ export const idlFactory = ({ IDL }) => {
     'text_message_count' : IDL.Nat64,
     'wasm_memory_used' : IDL.Nat64,
     'video_message_count' : IDL.Nat64,
+  });
+  const PutAvatarChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
+    'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
+    'bytes' : IDL.Vec(IDL.Nat8),
+    'index' : IDL.Nat32,
+  });
+  const PutAvatarChunkResponse = IDL.Variant({
+    'ChunkAlreadyExists' : IDL.Null,
+    'Full' : IDL.Null,
+    'BlobAlreadyExists' : IDL.Null,
+    'Success' : IDL.Null,
+    'CallerNotGroupAdmin' : IDL.Null,
+    'ChunkTooBig' : IDL.Null,
   });
   const PutChunkArgs = IDL.Record({
     'total_chunks' : IDL.Nat32,
@@ -348,6 +364,11 @@ export const idlFactory = ({ IDL }) => {
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'put_avatar_chunk' : IDL.Func(
+        [PutAvatarChunkArgs],
+        [PutAvatarChunkResponse],
+        [],
+      ),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),
     'remove_participant' : IDL.Func(

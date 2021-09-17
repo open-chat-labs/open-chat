@@ -287,7 +287,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
     if ("Direct" in candid) {
         return {
             kind: "direct_chat",
-            chatId: candid.Direct.chat_id.toString(),
+            chatId: candid.Direct.them.toString(),
             latestMessage: {
                 index: candid.Direct.latest_message.index,
                 timestamp: candid.Direct.latest_message.timestamp,
@@ -432,6 +432,7 @@ function groupReplyContext(candid: ApiGroupReplyContext): GroupChatReplyContext 
         content: messageContent(candid.content),
         userId: candid.user_id.toString(),
         eventIndex: candid.event_index,
+        messageId: candid.message_id,
     };
 }
 
@@ -441,6 +442,7 @@ function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyConte
             kind: "direct_private_reply_context",
             chatId: candid.Private.chat_id.toString(),
             eventIndex: candid.Private.event_index,
+            messageId: candid.Private.message_id,
         };
     }
 
@@ -450,6 +452,7 @@ function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyConte
             content: messageContent(candid.Standard.content),
             sentByMe: candid.Standard.sent_by_me,
             eventIndex: candid.Standard.event_index,
+            messageId: candid.Standard.message_id,
         };
     }
 

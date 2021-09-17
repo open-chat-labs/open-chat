@@ -63,7 +63,7 @@ export type ChatEvents =
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
-    | { type: "GO_TO_MESSAGE_INDEX"; data: number }
+    | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
@@ -328,7 +328,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 CANCEL_REPLY_TO: {
                     actions: assign((_, _ev) => ({ replyingTo: undefined })),
                 },
-                GO_TO_MESSAGE_INDEX: {
+                GO_TO_EVENT_INDEX: {
                     target: ".loading_previous_messages",
                     actions: assign((_, ev) => ({
                         focusIndex: ev.data,
@@ -372,13 +372,11 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     target: "#ui_idle",
                                     actions: [
                                         "assignEventsResponse",
-                                        pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                            if (ev.data.events.length > 0) {
-                                                chatStore.set({
-                                                    chatId: ctx.chatSummary.chatId,
-                                                    event: "loaded_previous_messages",
-                                                });
-                                            }
+                                        pure((ctx, _ev: DoneInvokeEvent<LoadEventsResponse>) => {
+                                            chatStore.set({
+                                                chatId: ctx.chatSummary.chatId,
+                                                event: "loaded_previous_messages",
+                                            });
                                             return undefined;
                                         }),
                                     ],

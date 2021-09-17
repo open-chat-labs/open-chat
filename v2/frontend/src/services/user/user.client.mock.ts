@@ -88,6 +88,7 @@ function mockRepliesTo(index: number): GroupChatReplyContext | DirectChatReplyCo
             kind: "direct_private_reply_context",
             eventIndex: jumpTo,
             chatId: "1000",
+            messageId: newMessageId(),
         };
     }
     return {
@@ -98,6 +99,7 @@ function mockRepliesTo(index: number): GroupChatReplyContext | DirectChatReplyCo
         },
         sentByMe,
         eventIndex: jumpTo,
+        messageId: newMessageId(),
     };
 }
 

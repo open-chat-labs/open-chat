@@ -36,13 +36,14 @@
     export let msg: GroupMessage | DirectMessage;
     export let me: boolean;
     export let userLookup: UserLookup;
-    export let index: number;
+    export let eventIndex: number;
     export let timestamp: bigint;
     export let last: boolean;
     export let confirmed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
+    export let focused: boolean;
 
     let msgElement: HTMLElement;
 
@@ -52,6 +53,7 @@
     let username = sender?.username;
     let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
+    let fill = fillMessage(msg);
 
     afterUpdate(() => {
         // todo - keep an eye on this
@@ -63,7 +65,7 @@
     });
 
     onMount(() => {
-        if (!readByMe) {
+        if (!me && !readByMe) {
             // todo - leaving this console log here for now just to make sure we are not *over* observing
             console.log("beginning to observe: ", msg.messageIndex);
             observer.observe(msgElement);
@@ -92,25 +94,28 @@
             return {
                 kind: "direct_private_reply_context",
                 chatId: chatSummary.chatId,
-                eventIndex: index,
+                eventIndex: eventIndex,
                 content: msg.content,
                 sender,
+                messageId: msg.messageId,
             };
         } else if (groupChat) {
             return {
                 kind: "group_reply_context",
                 content: msg.content,
                 userId: senderId,
-                eventIndex: index,
+                eventIndex: eventIndex,
                 sender,
+                messageId: msg.messageId,
             };
         } else {
             return {
                 kind: "direct_standard_reply_context",
                 content: msg.content,
                 sentByMe: me,
-                eventIndex: index,
+                eventIndex: eventIndex,
                 sender,
+                messageId: msg.messageId,
             };
         }
     }
@@ -129,10 +134,11 @@
     class="chat-message-wrapper"
     class:me
     data-index={msg.messageIndex}
-    id={`message-${msg.messageIndex}`}>
+    id={`event-${eventIndex}`}>
     <div
         class="chat-message"
-        class:fill={fillMessage(msg)}
+        class:focused
+        class:fill
         class:me
         class:last
         class:readByMe
@@ -281,7 +287,7 @@
 
     .chat-message {
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
-            border ease-in-out 500ms;
+            border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
         padding: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
@@ -349,6 +355,12 @@
             padding: 0;
             overflow: hidden;
             border: none;
+            min-width: 0;
+        }
+
+        &.focused {
+            transform: scale(0.9);
+            border: 4px solid yellow;
         }
     }
 

@@ -269,7 +269,7 @@ describe("chat machine transitions", () => {
         const ctx = testTransition(
             chatMachine.withContext(directContext),
             { user_states: "idle" },
-            { type: "GO_TO_MESSAGE_INDEX", data: 123 },
+            { type: "GO_TO_EVENT_INDEX", data: 123 },
             { user_states: "loading_previous_messages" }
         );
         expect(ctx.focusIndex).toBe(123);
@@ -298,6 +298,7 @@ function repliesTo(): EnhancedReplyContext<ReplyContext> {
         },
         sentByMe: true,
         eventIndex: 0,
+        messageId: newMessageId(),
     };
 }
 
@@ -310,6 +311,7 @@ function repliesToGroup(): EnhancedReplyContext<ReplyContext> {
         },
         userId: "abcdef",
         eventIndex: 0,
+        messageId: newMessageId(),
     };
 }
 
