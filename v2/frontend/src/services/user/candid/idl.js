@@ -43,7 +43,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
-  const MediaContent = IDL.Record({
+  const ImageContent = IDL.Record({
     'height' : IDL.Nat32,
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -55,11 +55,27 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'amount' : IDL.Nat,
   });
+  const AudioContent = IDL.Record({
+    'mime_type' : IDL.Text,
+    'blob_reference' : IDL.Opt(BlobReference),
+    'caption' : IDL.Opt(IDL.Text),
+  });
+  const VideoContent = IDL.Record({
+    'height' : IDL.Nat32,
+    'image_blob_reference' : IDL.Opt(BlobReference),
+    'video_blob_reference' : IDL.Opt(BlobReference),
+    'mime_type' : IDL.Text,
+    'thumbnail_data' : IDL.Text,
+    'caption' : IDL.Opt(IDL.Text),
+    'width' : IDL.Nat32,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
-    'Media' : MediaContent,
+    'Image' : ImageContent,
     'Cycles' : CyclesContent,
+    'Audio' : AudioContent,
+    'Video' : VideoContent,
   });
   const MessageId = IDL.Nat;
   const PrivateReplyContext = IDL.Record({

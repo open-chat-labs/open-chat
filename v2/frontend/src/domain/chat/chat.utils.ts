@@ -5,7 +5,6 @@ import type {
     DirectChatSummary,
     EventWrapper,
     GroupChatSummary,
-    MediaContent,
     MessageContent,
     Participant,
     TextContent,
@@ -35,8 +34,12 @@ export function getContentAsText(content: MessageContent): string {
     let text;
     if (content.kind === "text_content") {
         text = content.text;
-    } else if (content.kind === "media_content") {
-        text = buildTextForMediaContent(content);
+    } else if (content.kind === "image_content") {
+        text = "image";
+    } else if (content.kind === "video_content") {
+        text = "video";
+    } else if (content.kind === "audio_content") {
+        text = "audio";
     } else if (content.kind === "file_content") {
         text = content.name;
     } else if (content.kind === "cycles_content") {
@@ -46,20 +49,6 @@ export function getContentAsText(content: MessageContent): string {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
-}
-
-function buildTextForMediaContent({ caption, mimeType }: MediaContent): string {
-    if (caption) return caption;
-
-    // TODO - this should be language localised
-    const mimeTypeLower = mimeType.toLowerCase();
-    if (mimeTypeLower.startsWith("video/")) {
-        return "video";
-    } else if (mimeTypeLower.startsWith("image/")) {
-        return "image";
-    } else {
-        return "file";
-    }
 }
 
 export function userIdsFromChatSummaries(
@@ -212,6 +201,13 @@ function getMessageContent(
               text: content ?? "",
           } as TextContent);
 }
+
+export const blobbyContentTypes = [
+    "file_content",
+    "image_content",
+    "video_content",
+    "audio_content",
+];
 
 export function createDirectMessage(
     messageIndex: number,

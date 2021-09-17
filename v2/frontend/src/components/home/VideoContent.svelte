@@ -3,9 +3,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { MediaContent } from "../../domain/chat/chat";
+    import type { VideoContent } from "../../domain/chat/chat";
 
-    export let content: MediaContent;
+    export let content: VideoContent;
 
     let landscape = content.height < content.width;
     let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
@@ -13,7 +13,8 @@
     let videoPlayer: HTMLVideoElement;
 
     onDestroy(() => {
-        content.url && URL.revokeObjectURL(content.url);
+        content.videoData.url && URL.revokeObjectURL(content.videoData.url);
+        content.imageData.url && URL.revokeObjectURL(content.imageData.url);
     });
 </script>
 
@@ -22,15 +23,19 @@
         bind:this={videoPlayer}
         preload="none"
         {style}
-        poster={content.thumbnailData}
+        poster={content.imageData.url}
         class:landscape
         controls>
         <track kind="captions" />
-        {#if content.url}
-            <source src={content.url} />
+        {#if content.videoData.url}
+            <source src={content.videoData.url} />
         {/if}
     </video>
 </div>
+
+{#if content.caption !== undefined}
+    <p>{content.caption}</p>
+{/if}
 
 <style type="text/scss">
     .video {

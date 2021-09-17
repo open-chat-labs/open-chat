@@ -121,7 +121,7 @@ function mockMediaMessage<T extends GroupMessage | DirectMessage>(
     return {
         kind,
         content: {
-            kind: "media_content",
+            kind: "image_content",
             caption: "A picture of a bird",
             height: 201,
             width: 250,
