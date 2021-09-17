@@ -29,6 +29,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
                 name: updates_from_events.name,
                 description: updates_from_events.description,
+                avatar_blob_id: runtime_state.data.avatar_blob_id,
                 participants_added_or_updated: updates_from_events.participants_added_or_updated,
                 participants_removed: updates_from_events.participants_removed,
                 latest_message: updates_from_events.latest_message,

@@ -155,6 +155,16 @@ impl UserMap {
         false
     }
 
+    pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_blob_id: Option<u128>, now: TimestampMillis) -> bool {
+        if let Some(principal) = self.user_id_to_principal.get(user_id) {
+            if let Some(user) = self.users_by_principal.get_mut(principal) {
+                return user.set_avatar_blob_id(avatar_blob_id, now);
+            }
+        }
+
+        false
+    }
+
     pub fn values(&self) -> hash_map::Values<'_, Principal, User> {
         self.users_by_principal.values()
     }
@@ -228,6 +238,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
         user_map.add(created.clone());
 
@@ -366,6 +377,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -395,6 +407,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
 
         let mut updated = original.clone();
@@ -436,6 +449,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
 
         let other = User::Created(CreatedUser {
@@ -449,6 +463,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
 
         let mut updated = original.clone();
@@ -485,6 +500,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
 
         let other = User::Created(CreatedUser {
@@ -498,6 +514,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
 
         let mut updated = original.clone();
@@ -554,6 +571,7 @@ mod tests {
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         });
         user_map.add(created.clone());
 

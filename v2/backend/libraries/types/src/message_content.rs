@@ -72,6 +72,4 @@ pub enum MessageContentType {
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
-    pub blob_size: u32,
-    pub chunk_size: u32,
 }

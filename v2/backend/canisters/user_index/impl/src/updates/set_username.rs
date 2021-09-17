@@ -57,6 +57,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                             amount: *cycles,
                             date: now,
                         }],
+                        avatar_blob_id: None,
                     };
                     User::Created(created_user)
                 } else {
