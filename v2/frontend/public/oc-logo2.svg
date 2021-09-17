@@ -19,7 +19,7 @@
       <stop offset="1" style="stop-color: rgba(20, 107, 145, 1)"/>
     </linearGradient>
     <linearGradient id="gradient-6-1" gradientUnits="userSpaceOnUse" x1="973.216" y1="100.665" x2="973.216" y2="388.077" gradientTransform="matrix(0.974127, -0.22842, 0.310454, 1.352474, -95.300314, 85.515158)" xlink:href="#gradient-6"/>
-    <linearGradient id="gradient-5-0" gradientUnits="userSpaceOnUse" x1="188.919" y1="1.638" x2="188.919" y2="361.638" gradientTransform="matrix(-0.999873, -0.01596, 0.017414, -1.09106, 376.724283, 360.306693)" xlink:href="#gradient-5"/>
+    <linearGradient id="gradient-5-0" gradientUnits="userSpaceOnUse" x1="188.919" y1="1.638" x2="188.919" y2="361.638" gradientTransform="matrix(-0.999999, 0.0016, -0.002016, -1.25907, 376.77992, 357.264546)" xlink:href="#gradient-5"/>
   </defs>
   <rect style="stroke: url(#gradient-1); filter: none; stroke-width: 0px; fill-rule: nonzero; fill: url(#gradient-0);" x="0" y="0" width="500" height="500" rx="60" ry="60"/>
   <path d="M 188.919 181.638 m -180 0 a 180 180 0 1 0 360 0 a 180 180 0 1 0 -360 0 Z M 188.919 181.638 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z" style="fill: url(#gradient-5-0);" transform="matrix(1, 0.000074, -0.000074, 1, 61.094496, 68.347628)" bx:shape="ring 188.919 181.638 100 100 180 180 1@55492482"/>
