@@ -198,6 +198,7 @@ mod tests {
                 last_online: env.now,
                 upgrade_in_progress: false,
                 wasm_version: Version::new(0, 0, 0),
+                cycle_top_ups: Vec::new(),
             }));
             env.now += 1000;
         }

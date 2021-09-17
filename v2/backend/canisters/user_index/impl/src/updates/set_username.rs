@@ -107,6 +107,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -135,6 +136,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -159,6 +161,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
@@ -170,6 +173,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -214,6 +218,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -238,6 +243,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -262,6 +268,7 @@ mod tests {
             last_online: env.now,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

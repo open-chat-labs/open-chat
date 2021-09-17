@@ -227,6 +227,7 @@ mod tests {
             last_online: 1,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
         user_map.add(created.clone());
 
@@ -364,6 +365,7 @@ mod tests {
             last_online: 3,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -392,6 +394,7 @@ mod tests {
             last_online: 1,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
 
         let mut updated = original.clone();
@@ -432,6 +435,7 @@ mod tests {
             last_online: 1,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
 
         let other = User::Created(CreatedUser {
@@ -444,6 +448,7 @@ mod tests {
             last_online: 2,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
 
         let mut updated = original.clone();
@@ -479,6 +484,7 @@ mod tests {
             last_online: 1,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
 
         let other = User::Created(CreatedUser {
@@ -491,6 +497,7 @@ mod tests {
             last_online: 2,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
 
         let mut updated = original.clone();
@@ -546,6 +553,7 @@ mod tests {
             last_online: 3,
             upgrade_in_progress: false,
             wasm_version: Version::new(0, 0, 0),
+            cycle_top_ups: Vec::new(),
         });
         user_map.add(created.clone());
 
