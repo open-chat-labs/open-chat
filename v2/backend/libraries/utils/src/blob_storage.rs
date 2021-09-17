@@ -25,18 +25,14 @@ pub struct Blob {
 #[derive(Default, CandidType, Deserialize)]
 pub struct PendingBlob {
     created: TimestampMillis,
-    meta: Option<Meta>,
-    chunks: HashMap<u32, ByteBuf>,
-}
-
-#[derive(Default, CandidType, Deserialize)]
-pub struct Meta {
     total_chunks: u32,
     mime_type: String,
+    chunks: HashMap<u32, ByteBuf>,
 }
 
 pub enum PutChunkResult {
     Success,
+    Complete,
     BlobAlreadyExists,
     ChunkAlreadyExists,
     ChunkTooBig,
@@ -44,10 +40,11 @@ pub enum PutChunkResult {
 }
 
 impl PendingBlob {
-    pub fn new(now: TimestampMillis) -> PendingBlob {
+    pub fn new(now: TimestampMillis, mime_type: String, total_chunks: u32) -> PendingBlob {
         PendingBlob {
             created: now,
-            meta: None,
+            total_chunks,
+            mime_type,
             chunks: HashMap::default(),
         }
     }
@@ -63,11 +60,7 @@ impl PendingBlob {
     }
 
     pub fn is_complete(&self) -> bool {
-        if let Some(meta) = &self.meta {
-            meta.total_chunks == self.chunks.len() as u32
-        } else {
-            false
-        }
+        self.total_chunks == self.chunks.len() as u32
     }
 }
 
@@ -77,16 +70,14 @@ impl Blob {
             panic!("Pending blob is still incomplete");
         }
 
-        let meta = pending_blob.meta.unwrap();
-
-        let mut chunks = vec![ByteBuf::default(); meta.total_chunks as usize];
+        let mut chunks = vec![ByteBuf::default(); pending_blob.total_chunks as usize];
         for (index, chunk) in pending_blob.chunks.into_iter() {
             chunks[index as usize] = chunk;
         }
 
         Blob {
             created: now,
-            mime_type: meta.mime_type,
+            mime_type: pending_blob.mime_type,
             chunks,
         }
     }
@@ -114,31 +105,13 @@ impl BlobStorage {
         self.blobs.get(blob_id)
     }
 
-    pub fn put_first_chunk(
+    pub fn put_chunk(
         &mut self,
         blob_id: u128,
         mime_type: String,
         total_chunks: u32,
-        data: ByteBuf,
-        now: TimestampMillis,
-    ) -> PutChunkResult {
-        self.put_chunk_internal(blob_id, Some(Meta { mime_type, total_chunks }), data, 0, now)
-    }
-
-    pub fn put_chunk(&mut self, blob_id: u128, chunk_index: u32, data: ByteBuf, now: TimestampMillis) -> PutChunkResult {
-        if chunk_index == 0 {
-            panic!("Must call 'put_first_chunk' when chunk_index is 0");
-        }
-
-        self.put_chunk_internal(blob_id, None, data, chunk_index, now)
-    }
-
-    fn put_chunk_internal(
-        &mut self,
-        blob_id: u128,
-        meta: Option<Meta>,
-        data: ByteBuf,
         chunk_index: u32,
+        data: ByteBuf,
         now: TimestampMillis,
     ) -> PutChunkResult {
         if self.blobs.contains_key(&blob_id) {
@@ -157,8 +130,7 @@ impl BlobStorage {
 
         let pending_blob_to_insert = match self.pending_blobs.entry(blob_id) {
             Vacant(e) => {
-                let mut pending_blob = PendingBlob::new(now);
-                pending_blob.meta = meta;
+                let mut pending_blob = PendingBlob::new(now, mime_type, total_chunks);
                 pending_blob.add_chunk(chunk_index, data);
                 if pending_blob.is_complete() {
                     Some(pending_blob)
@@ -172,9 +144,6 @@ impl BlobStorage {
                 if !pending_blob.add_chunk(chunk_index, data) {
                     return PutChunkResult::ChunkAlreadyExists;
                 }
-                if meta.is_some() {
-                    pending_blob.meta = meta;
-                }
                 if pending_blob.is_complete() {
                     Some(e.remove())
                 } else {
@@ -183,12 +152,14 @@ impl BlobStorage {
             }
         };
 
+        self.total_bytes += byte_count;
+
         if let Some(pending_blob) = pending_blob_to_insert {
             self.blobs.insert(blob_id, Blob::from(pending_blob, now));
+            PutChunkResult::Complete
+        } else {
+            PutChunkResult::Success
         }
-
-        self.total_bytes += byte_count;
-        PutChunkResult::Success
     }
 
     pub fn get_chunk(&self, blob_id: u128, chunk_index: u32) -> Option<&ByteBuf> {
@@ -257,12 +228,28 @@ mod tests {
             Box::new(|| {
                 blob_storage
                     .borrow_mut()
-                    .put_first_chunk(1, "mime_type".to_string(), 5, generate_chunk(0), 1)
+                    .put_chunk(1, "mt".to_string(), 5, 0, generate_chunk(0), 1)
             }),
-            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 1, generate_chunk(1), 2)),
-            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 2, generate_chunk(2), 3)),
-            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 3, generate_chunk(3), 4)),
-            Box::new(|| blob_storage.borrow_mut().put_chunk(1, 4, generate_chunk(4), 5)),
+            Box::new(|| {
+                blob_storage
+                    .borrow_mut()
+                    .put_chunk(1, "mt".to_string(), 5, 1, generate_chunk(1), 2)
+            }),
+            Box::new(|| {
+                blob_storage
+                    .borrow_mut()
+                    .put_chunk(1, "mt".to_string(), 5, 2, generate_chunk(2), 3)
+            }),
+            Box::new(|| {
+                blob_storage
+                    .borrow_mut()
+                    .put_chunk(1, "mt".to_string(), 5, 3, generate_chunk(3), 4)
+            }),
+            Box::new(|| {
+                blob_storage
+                    .borrow_mut()
+                    .put_chunk(1, "mt".to_string(), 5, 4, generate_chunk(4), 5)
+            }),
         ];
 
         let mut rng = thread_rng();
@@ -271,7 +258,8 @@ mod tests {
             actions.shuffle(&mut rng);
 
             for action in actions.iter() {
-                assert!(matches!(action(), PutChunkResult::Success));
+                let result = action();
+                assert!(matches!(result, PutChunkResult::Success) || matches!(result, PutChunkResult::Complete));
             }
 
             assert!(blob_storage.borrow().pending_blobs.is_empty());

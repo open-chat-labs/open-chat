@@ -141,7 +141,7 @@
                 replyingTo={$machine.context.replyingTo} />
         {/if}
         {#if $machine.context.fileToAttach !== undefined}
-            {#if $machine.context.fileToAttach.kind === "media_content"}
+            {#if $machine.context.fileToAttach.kind === "image_content" || $machine.context.fileToAttach.kind === "audio_content" || $machine.context.fileToAttach.kind === "video_content"}
                 <DraftMediaMessage draft={$machine.context.fileToAttach} />
             {:else if $machine.context.fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>

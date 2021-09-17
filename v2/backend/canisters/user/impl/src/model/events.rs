@@ -2,10 +2,14 @@ use candid::CandidType;
 use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
+use std::collections::hash_map::Entry::Vacant;
+use std::collections::HashMap;
 use types::*;
+use user_canister::send_message::DirectReplyContextArgs;
 
 pub struct Events {
     events: Vec<EventWrapper<DirectChatEventInternal>>,
+    message_id_map: HashMap<MessageId, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
 }
@@ -25,11 +29,17 @@ pub struct MessageInternal {
     pub replies_to: Option<DirectReplyContextInternal>,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct DirectReplyContextInternal {
+    pub chat_id_if_other: Option<ChatId>,
+    pub message_id: MessageId,
+}
+
 pub struct PushMessageArgs {
     pub sent_by_me: bool,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<DirectReplyContextInternal>,
+    pub replies_to: Option<DirectReplyContextArgs>,
     pub now: TimestampMillis,
 }
 
@@ -37,6 +47,7 @@ impl Events {
     pub fn new(now: TimestampMillis) -> Events {
         let mut events = Events {
             events: Vec::new(),
+            message_id_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
         };
@@ -53,7 +64,10 @@ impl Events {
             message_id: args.message_id,
             sent_by_me: args.sent_by_me,
             content: args.content,
-            replies_to: args.replies_to,
+            replies_to: args.replies_to.map(|r| DirectReplyContextInternal {
+                chat_id_if_other: r.chat_id_if_other,
+                message_id: r.message_id,
+            }),
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(DirectChatEventInternal::Message(message_internal), args.now);
@@ -63,6 +77,10 @@ impl Events {
     pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.events.last().map_or(EventIndex::default(), |e| e.index.incr());
         if let DirectChatEventInternal::Message(m) = &event {
+            match self.message_id_map.entry(m.message_id) {
+                Vacant(e) => e.insert(event_index),
+                _ => panic!("MessageId already used: {:?}", m.message_id),
+            };
             self.latest_message_index = Some(m.message_index);
             self.latest_message_event_index = Some(event_index);
         }
@@ -209,17 +227,20 @@ impl Events {
     }
 
     fn hydrate_reply_context(&self, reply_context: &DirectReplyContextInternal) -> Option<DirectReplyContext> {
+        let event_index = *self.message_id_map.get(&reply_context.message_id)?;
         if let Some(chat_id) = reply_context.chat_id_if_other {
             Some(DirectReplyContext::Private(PrivateReplyContext {
                 chat_id,
-                event_index: reply_context.event_index,
+                event_index,
+                message_id: reply_context.message_id,
             }))
         } else {
-            self.get_internal(reply_context.event_index)
+            self.get_internal(event_index)
                 .map(|e| {
                     if let DirectChatEventInternal::Message(m) = &e.event {
                         Some(DirectReplyContext::Standard(StandardReplyContext {
                             event_index: e.index,
+                            message_id: reply_context.message_id,
                             sent_by_me: m.sent_by_me,
                             content: m.content.clone(),
                         }))

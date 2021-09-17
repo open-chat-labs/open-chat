@@ -8,6 +8,5 @@ pub mod join_group;
 pub mod leave_group;
 pub mod mark_read;
 pub mod put_chunk;
-pub mod put_first_chunk;
 pub mod send_message;
 pub mod unblock_user;

@@ -31,4 +31,8 @@ impl Role {
     pub fn can_unblock_user(&self) -> bool {
         matches!(self, Role::Admin)
     }
+
+    pub fn can_set_avatar(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
 }

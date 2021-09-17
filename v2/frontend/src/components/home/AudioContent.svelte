@@ -3,11 +3,11 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { MediaContent } from "../../domain/chat/chat";
+    import type { AudioContent } from "../../domain/chat/chat";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
 
-    export let content: MediaContent;
+    export let content: AudioContent;
 
     let audioPlayer: HTMLAudioElement;
     let playing: boolean = false;
@@ -65,6 +65,10 @@
         </div>
     </div>
 </div>
+
+{#if content.caption !== undefined}
+    <p>{content.caption}</p>
+{/if}
 
 <style type="text/scss">
     $size: 80px;

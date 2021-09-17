@@ -150,17 +150,30 @@ type RemoveAdminResponse =
         UserNotInGroup;
     };
 
-type PutFirstChunkArgs =
+type PutAvatarChunkArgs =
     record {
         blob_id: nat;
         mime_type: text;
         total_chunks: nat32;
+        index: nat32;
         bytes: blob;
+    };
+
+type PutAvatarChunkResponse =
+    variant {
+        Success;
+        CallerNotGroupAdmin;
+        BlobAlreadyExists;
+        ChunkAlreadyExists;
+        ChunkTooBig;
+        Full;
     };
 
 type PutChunkArgs =
     record {
         blob_id: nat;
+        mime_type: text;
+        total_chunks: nat32;
         index: nat32;
         bytes: blob;
     };
@@ -279,6 +292,7 @@ service: {
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
+    put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
@@ -286,7 +300,6 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
-    put_first_chunk: (PutFirstChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;

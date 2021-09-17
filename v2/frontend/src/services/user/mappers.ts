@@ -4,7 +4,9 @@ import type {
     ApiCyclesContent,
     ApiFileContent,
     ApiEventsResponse,
-    ApiMediaContent,
+    ApiImageContent,
+    ApiAudioContent,
+    ApiVideoContent,
     ApiMessageContent,
     ApiGroupReplyContext,
     ApiTextContent,
@@ -31,7 +33,9 @@ import type {
     UpdatesResponse,
     EventsResponse,
     EventWrapper,
-    MediaContent,
+    ImageContent,
+    VideoContent,
+    AudioContent,
     MessageContent,
     TextContent,
     Participant,
@@ -335,8 +339,14 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     if ("Text" in candid) {
         return textContent(candid.Text);
     }
-    if ("Media" in candid) {
-        return mediaContent(candid.Media);
+    if ("Image" in candid) {
+        return imageContent(candid.Image);
+    }
+    if ("Video" in candid) {
+        return videoContent(candid.Video);
+    }
+    if ("Audio" in candid) {
+        return audioContent(candid.Audio);
     }
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
@@ -352,15 +362,41 @@ function cyclesContent(candid: ApiCyclesContent): CyclesContent {
     };
 }
 
-function mediaContent(candid: ApiMediaContent): MediaContent {
+function imageContent(candid: ApiImageContent): ImageContent {
     return {
-        kind: "media_content",
+        kind: "image_content",
         height: candid.height,
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
         thumbnailData: candid.thumbnail_data,
         caption: optional(candid.caption, identity),
         width: candid.width,
+    };
+}
+
+function videoContent(candid: ApiVideoContent): VideoContent {
+    return {
+        kind: "video_content",
+        height: candid.height,
+        mimeType: candid.mime_type,
+        videoData: {
+            blobReference: optional(candid.video_blob_reference, blobReference),
+        },
+        imageData: {
+            blobReference: optional(candid.image_blob_reference, blobReference),
+        },
+        thumbnailData: candid.thumbnail_data,
+        caption: optional(candid.caption, identity),
+        width: candid.width,
+    };
+}
+
+function audioContent(candid: ApiAudioContent): AudioContent {
+    return {
+        kind: "audio_content",
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.blob_reference, blobReference),
+        caption: optional(candid.caption, identity),
     };
 }
 

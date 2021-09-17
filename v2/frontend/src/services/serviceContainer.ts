@@ -34,6 +34,8 @@ import type {
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    BlobReference,
+    DataContent,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -130,7 +132,6 @@ export class ServiceContainer {
         return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
     }
 
-    // TODO - revisit whether this can simply be removed
     private async rehydrateMediaData<T extends ChatEvent>(
         eventsPromise: Promise<EventsResponse<T>>
     ): Promise<EventsResponse<T>> {
@@ -144,19 +145,35 @@ export class ServiceContainer {
             if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
                 if (
                     (e.event.content.kind === "file_content" ||
-                        e.event.content.kind === "media_content") &&
+                        e.event.content.kind === "image_content" ||
+                        e.event.content.kind === "audio_content") &&
                     e.event.content.blobReference !== undefined
                 ) {
-                    e.event.content.blobData = undefined;
-                    e.event.content.url = `${"process.env.BLOB_URL_PATTERN".replace(
-                        "{canisterId}",
-                        e.event.content.blobReference.canisterId
-                    )}${e.event.content.blobReference.blobId}`;
+                    e.event.content = this.rehydrateDataContent(e.event.content);
+                }
+                if (e.event.content.kind === "video_content") {
+                    e.event.content.videoData = this.rehydrateDataContent(
+                        e.event.content.videoData
+                    );
+                    e.event.content.imageData = this.rehydrateDataContent(
+                        e.event.content.imageData
+                    );
                 }
             }
             return e;
         });
         return resp;
+    }
+
+    private rehydrateDataContent<T extends DataContent>(dataContent: T): T {
+        if (dataContent.blobReference !== undefined) {
+            dataContent.blobData = undefined;
+            dataContent.url = `${"process.env.BLOB_URL_PATTERN".replace(
+                "{canisterId}",
+                dataContent.blobReference.canisterId
+            )}${dataContent.blobReference.blobId}`;
+        }
+        return dataContent;
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {

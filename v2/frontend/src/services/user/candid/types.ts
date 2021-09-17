@@ -1,4 +1,9 @@
 import type { Principal } from '@dfinity/principal';
+export interface AudioContent {
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'caption' : [] | [string],
+}
 export interface BlobReference {
   'blob_size' : number,
   'blob_id' : bigint,
@@ -202,6 +207,14 @@ export interface GroupReplyContext {
   'user_id' : UserId,
   'event_index' : EventIndex,
 }
+export interface ImageContent {
+  'height' : number,
+  'mime_type' : string,
+  'blob_reference' : [] | [BlobReference],
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
+}
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
@@ -229,18 +242,12 @@ export interface MarkReadArgs {
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null };
-export interface MediaContent {
-  'height' : number,
-  'mime_type' : string,
-  'blob_reference' : [] | [BlobReference],
-  'thumbnail_data' : string,
-  'caption' : [] | [string],
-  'width' : number,
-}
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
-  { 'Media' : MediaContent } |
-  { 'Cycles' : CyclesContent };
+  { 'Image' : ImageContent } |
+  { 'Cycles' : CyclesContent } |
+  { 'Audio' : AudioContent } |
+  { 'Video' : VideoContent };
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -308,7 +315,9 @@ export interface PrivateReplyContext {
   'event_index' : EventIndex,
 }
 export interface PutChunkArgs {
+  'total_chunks' : number,
   'blob_id' : bigint,
+  'mime_type' : string,
   'bytes' : Array<number>,
   'index' : number,
 }
@@ -317,12 +326,6 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
-export interface PutFirstChunkArgs {
-  'total_chunks' : number,
-  'blob_id' : bigint,
-  'mime_type' : string,
-  'bytes' : Array<number>,
-}
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [ChatId],
   'message_index' : MessageIndex,
@@ -486,6 +489,15 @@ export interface Version {
   'minor' : number,
   'patch' : number,
 }
+export interface VideoContent {
+  'height' : number,
+  'image_blob_reference' : [] | [BlobReference],
+  'video_blob_reference' : [] | [BlobReference],
+  'mime_type' : string,
+  'thumbnail_data' : string,
+  'caption' : [] | [string],
+  'width' : number,
+}
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
@@ -498,7 +510,6 @@ export interface _SERVICE {
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
-  'put_first_chunk' : (arg_0: PutFirstChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
     >,

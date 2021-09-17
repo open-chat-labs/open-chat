@@ -43,7 +43,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
-  const MediaContent = IDL.Record({
+  const ImageContent = IDL.Record({
     'height' : IDL.Nat32,
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -55,11 +55,27 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'amount' : IDL.Nat,
   });
+  const AudioContent = IDL.Record({
+    'mime_type' : IDL.Text,
+    'blob_reference' : IDL.Opt(BlobReference),
+    'caption' : IDL.Opt(IDL.Text),
+  });
+  const VideoContent = IDL.Record({
+    'height' : IDL.Nat32,
+    'image_blob_reference' : IDL.Opt(BlobReference),
+    'video_blob_reference' : IDL.Opt(BlobReference),
+    'mime_type' : IDL.Text,
+    'thumbnail_data' : IDL.Text,
+    'caption' : IDL.Opt(IDL.Text),
+    'width' : IDL.Nat32,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
-    'Media' : MediaContent,
+    'Image' : ImageContent,
     'Cycles' : CyclesContent,
+    'Audio' : AudioContent,
+    'Video' : VideoContent,
   });
   const MessageId = IDL.Nat;
   const PrivateReplyContext = IDL.Record({
@@ -156,7 +172,9 @@ export const idlFactory = ({ IDL }) => {
     'video_message_count' : IDL.Nat64,
   });
   const PutChunkArgs = IDL.Record({
+    'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
+    'mime_type' : IDL.Text,
     'bytes' : IDL.Vec(IDL.Nat8),
     'index' : IDL.Nat32,
   });
@@ -166,12 +184,6 @@ export const idlFactory = ({ IDL }) => {
     'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
-  });
-  const PutFirstChunkArgs = IDL.Record({
-    'total_chunks' : IDL.Nat32,
-    'blob_id' : IDL.Nat,
-    'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -357,7 +369,6 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
-    'put_first_chunk' : IDL.Func([PutFirstChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],

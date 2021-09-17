@@ -5,6 +5,7 @@ import type {
     EventWrapper,
     MergedUpdatesResponse,
 } from "../domain/chat/chat";
+import { blobbyContentTypes } from "../domain/chat/chat.utils";
 import { rollbar } from "./logging";
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -124,19 +125,7 @@ export async function getCachedMessages<T extends ChatEvent>(
 function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrapper<T> {
     if (ev.event.kind !== "group_message" && ev.event.kind !== "direct_message") return ev;
 
-    if (ev.event.content.kind === "media_content") {
-        return {
-            ...ev,
-            event: {
-                ...ev.event,
-                content: {
-                    ...ev.event.content,
-                    blobData: undefined,
-                },
-            },
-        };
-    }
-    if (ev.event.content.kind === "file_content") {
+    if (blobbyContentTypes.includes(ev.event.content.kind)) {
         return {
             ...ev,
             event: {
