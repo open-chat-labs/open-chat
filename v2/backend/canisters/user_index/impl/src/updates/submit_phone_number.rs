@@ -79,7 +79,6 @@ mod tests {
     use crate::model::user::ConfirmedUser;
     use crate::Data;
     use candid::Principal;
-    use types::CanisterCreationStatusInternal;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -143,9 +142,8 @@ mod tests {
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: env.caller,
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            username: None,
-            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             date_confirmed: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(env, data);
 
@@ -166,9 +164,8 @@ mod tests {
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: Principal::from_slice(&[2]),
             phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
-            username: None,
-            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             date_confirmed: env.now,
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

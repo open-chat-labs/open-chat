@@ -1,6 +1,8 @@
 use candid::Principal;
 use phonenumber::PhoneNumber;
 use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
+#[cfg(test)]
+use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum User {
@@ -160,6 +162,37 @@ impl CreatedUser {
             user_id: self.user_id,
             username: if include_username { Some(self.username.clone()) } else { None },
             seconds_since_last_online,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for ConfirmedUser {
+    fn default() -> Self {
+        ConfirmedUser {
+            principal: Principal::anonymous(),
+            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            username: None,
+            canister_creation_status: CanisterCreationStatusInternal::Pending(None),
+            date_confirmed: 0,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for CreatedUser {
+    fn default() -> Self {
+        CreatedUser {
+            principal: Principal::anonymous(),
+            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            user_id: Principal::anonymous().into(),
+            username: String::new(),
+            date_created: 0,
+            date_updated: 0,
+            last_online: 0,
+            wasm_version: Version::new(0, 0, 0),
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
         }
     }
 }

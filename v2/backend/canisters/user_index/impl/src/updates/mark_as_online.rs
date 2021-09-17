@@ -25,7 +25,6 @@ mod tests {
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use std::str::FromStr;
-    use types::Version;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -40,9 +39,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         }));
         env.now += 10000;
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
