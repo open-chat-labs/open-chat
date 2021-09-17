@@ -103,8 +103,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                         message_id: message.messageId,
                         sender_name: senderName,
                         replies_to: apiOptional(
-                            // todo - this is a problem - reply context does not contain messageId.
-                            (_replyContext) => ({ message_id: BigInt(0) }),
+                            (replyContext) => ({ message_id: replyContext.messageId }),
                             message.repliesTo
                         ),
                     }),

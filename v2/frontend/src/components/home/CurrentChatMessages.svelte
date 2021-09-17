@@ -119,8 +119,8 @@
     }
 
     function scrollToIndex(index: number) {
-        scrollToElement(document.getElementById(`message-${index}`));
-        setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 100);
+        scrollToElement(document.getElementById(`event-${index}`));
+        setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
     }
 
     function resetScroll() {
@@ -172,7 +172,7 @@
     }
 
     function goToMessage(ev: CustomEvent<number>) {
-        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
+        machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
@@ -329,6 +329,7 @@
                     {/if}
                     <ChatEvent
                         {observer}
+                        focused={$machine.context.focusIndex === evt.index}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}

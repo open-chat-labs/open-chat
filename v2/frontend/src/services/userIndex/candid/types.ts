@@ -206,6 +206,7 @@ export interface GroupNameChanged {
 export interface GroupReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface ImageContent {
@@ -298,6 +299,7 @@ export interface ParticipantsRemoved {
 export interface PhoneNumber { 'country_code' : number, 'number' : string }
 export interface PrivateReplyContext {
   'chat_id' : ChatId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
@@ -332,6 +334,7 @@ export type SmsMessagesResponse = {
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }

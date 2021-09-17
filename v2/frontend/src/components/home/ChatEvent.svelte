@@ -22,10 +22,12 @@
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
+    export let focused: boolean;
 </script>
 
 {#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
     <ChatMessage
+        {focused}
         {observer}
         {confirmed}
         {readByMe}
@@ -39,7 +41,7 @@
         on:goToMessage
         on:replyPrivatelyTo
         on:replyTo
-        index={event.index}
+        eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
 {:else if event.event.kind === "group_chat_created"}

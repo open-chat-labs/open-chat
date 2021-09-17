@@ -65,7 +65,7 @@
 <Link on:click={zoomToMessage}>
     <div class="reply-wrapper" class:me={sentByMe(repliesTo)} class:rtl={$rtlStore}>
         <h4 class="username">
-            {getUsernameFromReplyContext(repliesTo)} ({repliesTo.eventIndex})
+            {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if content !== undefined}
             <ChatMessageContent {content} />

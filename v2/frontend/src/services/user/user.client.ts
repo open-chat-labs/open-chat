@@ -129,7 +129,7 @@ export class UserClient extends CandidService implements IUserClient {
                                     replyContext.kind === "direct_private_reply_context"
                                         ? [Principal.fromText(replyContext.chatId)]
                                         : [],
-                                message_index: replyContext.eventIndex, // todo - this needs to be changed to messageId
+                                message_id: replyContext.messageId,
                             }),
                             message.repliesTo
                         ),

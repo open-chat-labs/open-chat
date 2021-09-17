@@ -80,11 +80,13 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const PrivateReplyContext = IDL.Record({
     'chat_id' : ChatId,
+    'message_id' : MessageId,
     'event_index' : EventIndex,
   });
   const StandardReplyContext = IDL.Record({
     'content' : MessageContent,
     'sent_by_me' : IDL.Bool,
+    'message_id' : MessageId,
     'event_index' : EventIndex,
   });
   const DirectReplyContext = IDL.Variant({
@@ -228,7 +230,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ReplyContextArgs = IDL.Record({
     'chat_id_if_other' : IDL.Opt(ChatId),
-    'message_index' : MessageIndex,
+    'message_id' : MessageId,
   });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -279,6 +281,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({
     'content' : MessageContent,
     'user_id' : UserId,
+    'message_id' : MessageId,
     'event_index' : EventIndex,
   });
   const GroupMessage = IDL.Record({
@@ -368,6 +371,7 @@ export const idlFactory = ({ IDL }) => {
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'put_avatar_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],

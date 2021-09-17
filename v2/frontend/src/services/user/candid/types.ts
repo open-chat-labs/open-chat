@@ -205,6 +205,7 @@ export interface GroupNameChanged {
 export interface GroupReplyContext {
   'content' : MessageContent,
   'user_id' : UserId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface ImageContent {
@@ -312,6 +313,7 @@ export interface ParticipantsRemoved {
 }
 export interface PrivateReplyContext {
   'chat_id' : ChatId,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface PutChunkArgs {
@@ -328,7 +330,7 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'ChunkTooBig' : null };
 export interface ReplyContextArgs {
   'chat_id_if_other' : [] | [ChatId],
-  'message_index' : MessageIndex,
+  'message_id' : MessageId,
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
@@ -383,6 +385,7 @@ export type SetAvatarResponse = { 'InvalidMimeType' : number } |
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
+  'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface Subscription {
@@ -509,6 +512,7 @@ export interface _SERVICE {
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'put_avatar_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse

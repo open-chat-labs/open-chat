@@ -28,6 +28,7 @@ function mockRepliesTo(index: number): GroupChatReplyContext {
         },
         userId: sender,
         eventIndex: jumpTo,
+        messageId: newMessageId(),
     };
 }
 

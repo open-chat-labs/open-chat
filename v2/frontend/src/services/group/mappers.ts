@@ -377,5 +377,6 @@ function replyContext(candid: ApiGroupReplyContext): GroupChatReplyContext {
         content: messageContent(candid.content),
         userId: candid.user_id.toString(),
         eventIndex: candid.event_index,
+        messageId: candid.message_id,
     };
 }
