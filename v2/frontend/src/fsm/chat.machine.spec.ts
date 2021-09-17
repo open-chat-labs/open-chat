@@ -244,8 +244,8 @@ describe("chat machine transitions", () => {
         testTransition(
             chatMachine.withContext(directContext),
             { user_states: "idle" },
-            { type: "SHOW_PARTICIPANTS" },
-            { user_states: "showing_participants" }
+            { type: "SHOW_GROUP_DETAILS" },
+            { user_states: "showing_group" }
         );
     });
     test("add participants", () => {
@@ -253,7 +253,7 @@ describe("chat machine transitions", () => {
             chatMachine.withContext(directContext),
             { user_states: "idle" },
             { type: "ADD_PARTICIPANT" },
-            { user_states: "showing_participants" }
+            { user_states: "showing_group" }
         );
     });
     test("clear focus index", () => {

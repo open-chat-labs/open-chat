@@ -9,8 +9,8 @@
     export let blocked: boolean;
     export let unconfirmed: Set<bigint>;
 
-    function showParticipants() {
-        machine.send({ type: "SHOW_PARTICIPANTS" });
+    function showGroupDetails() {
+        machine.send({ type: "SHOW_GROUP_DETAILS" });
     }
 
     function addParticipants() {
@@ -27,7 +27,7 @@
         on:blockUser
         on:unblockUser
         on:addParticipants={addParticipants}
-        on:showParticipants={showParticipants}
+        on:showGroupDetails={showGroupDetails}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
     <CurrentChatMessages {unconfirmed} on:chatWith {machine} />

@@ -87,6 +87,7 @@ export const schema: MachineConfig<ParticipantsContext, any, ParticipantsEvents>
     },
     states: {
         done: { type: "final" },
+
         init: {
             always: [
                 {

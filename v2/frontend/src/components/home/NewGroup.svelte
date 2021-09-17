@@ -11,13 +11,13 @@
     import TextArea from "../TextArea.svelte";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import type { GroupMachine } from "../../fsm/group.machine";
+    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    export let machine: ActorRefFrom<GroupMachine>;
+    export let machine: ActorRefFrom<AddGroupMachine>;
 
     let groupName: string = $machine.context.candidateGroup.name;
     let groupDesc: string = $machine.context.candidateGroup.description;

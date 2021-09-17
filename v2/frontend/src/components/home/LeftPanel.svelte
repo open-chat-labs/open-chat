@@ -7,32 +7,33 @@
     import JoinGroup from "./JoinGroup.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
-    import type { GroupMachine } from "../../fsm/group.machine";
+    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
 
     export let machine: ActorRefFrom<HomeMachine>;
 
-    $: groupMachine = $machine.children.groupMachine as ActorRefFrom<GroupMachine>;
+    $: addGroupMachine = $machine.children.addGroupMachine as ActorRefFrom<AddGroupMachine>;
 
     $: joiningGroup = $machine.matches({ loaded_chats: "join_group" });
 
     $: newChat = $machine.matches({ loaded_chats: "new_chat" });
 
     $: newGroup =
-        groupMachine !== undefined && $groupMachine.matches({ data_collection: "group_form" });
+        addGroupMachine !== undefined &&
+        $addGroupMachine.matches({ data_collection: "group_form" });
 
     $: choosingParticipants =
-        groupMachine !== undefined &&
-        ($groupMachine.matches({ data_collection: "choosing_participants" }) ||
-            $groupMachine.matches({ data_collection: "adding_participants" }));
+        addGroupMachine !== undefined &&
+        ($addGroupMachine.matches({ data_collection: "choosing_participants" }) ||
+            $addGroupMachine.matches({ data_collection: "adding_participants" }));
 </script>
 
 <Panel left>
     {#if newChat}
         <NewChat {machine} />
     {:else if newGroup}
-        <NewGroup machine={groupMachine} />
+        <NewGroup machine={addGroupMachine} />
     {:else if choosingParticipants}
-        <ChooseParticipants machine={groupMachine} />
+        <ChooseParticipants machine={addGroupMachine} />
     {:else if joiningGroup}
         <JoinGroup {machine} />
     {:else}

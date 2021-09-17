@@ -10,10 +10,10 @@
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserSummary } from "../../domain/user/user";
     import type { UserSearchMachine } from "../../fsm/userSearch.machine";
-    import type { GroupMachine } from "../../fsm/group.machine";
+    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
     import SelectUsers from "./SelectUsers.svelte";
 
-    export let machine: ActorRefFrom<GroupMachine>;
+    export let machine: ActorRefFrom<AddGroupMachine>;
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 

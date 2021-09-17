@@ -13,7 +13,7 @@ import { pure } from "xstate/lib/actions";
 import { push } from "svelte-spa-router";
 import type { ApiAddParticipantsResponse } from "../services/group/candid/idl";
 
-export interface GroupContext {
+export interface AddGroupContext {
     user: UserSummary;
     serviceContainer: ServiceContainer;
     candidateGroup: CandidateGroupChat;
@@ -29,7 +29,7 @@ export const nullGroup = {
     participants: [],
 };
 
-export type GroupEvents =
+export type AddGroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
     | { type: "COMPLETE" }
     | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroupChat }
@@ -43,7 +43,7 @@ export type GroupEvents =
     | { type: "done.invoke.addParticipants"; data: ApiAddParticipantsResponse }
     | { type: "error.platform.addParticipants"; data: Error };
 
-const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
+const liveConfig: Partial<MachineOptions<AddGroupContext, AddGroupEvents>> = {
     services: {
         createGroup: (ctx, _) => {
             return ctx.serviceContainer.createGroupChat(ctx.candidateGroup);
@@ -58,8 +58,8 @@ const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
-    id: "group_machine",
+export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
+    id: "add_group_machine",
     type: "parallel",
     states: {
         canister_creation: {
@@ -250,5 +250,5 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
     },
 };
 
-export const groupMachine = createMachine<GroupContext, GroupEvents>(schema, liveConfig);
-export type GroupMachine = typeof groupMachine;
+export const addGroupMachine = createMachine<AddGroupContext, AddGroupEvents>(schema, liveConfig);
+export type AddGroupMachine = typeof addGroupMachine;

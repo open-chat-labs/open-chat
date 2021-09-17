@@ -65,7 +65,7 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
-    | { type: "SHOW_PARTICIPANTS" }
+    | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
     | {
@@ -312,8 +312,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         events: ctx.events.filter((e) => e.event !== ev.data),
                     })),
                 },
-                SHOW_PARTICIPANTS: ".showing_participants",
-                ADD_PARTICIPANT: ".showing_participants",
+                SHOW_GROUP_DETAILS: ".showing_group",
+                ADD_PARTICIPANT: ".showing_group",
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({ focusIndex: undefined })),
@@ -397,7 +397,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         },
                     },
                 },
-                showing_participants: {
+                showing_group: {
                     invoke: {
                         id: "participantsMachine",
                         src: participantsMachine,

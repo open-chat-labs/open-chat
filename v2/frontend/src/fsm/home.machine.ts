@@ -32,7 +32,7 @@ import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
-import { groupMachine, nullGroup } from "./group.machine";
+import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import { markReadMachine } from "./markread.machine";
 
 const ONE_MINUTE = 60 * 1000;
@@ -76,8 +76,8 @@ export type HomeEvents =
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
     | { type: "error.platform.getUpdates"; data: Error }
-    | { type: "done.invoke.groupMachine"; data: GroupChatSummary }
-    | { type: "error.platform.groupMachine"; data: Error }
+    | { type: "done.invoke.addGroupMachine"; data: GroupChatSummary }
+    | { type: "error.platform.addGroupMachine"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
@@ -518,8 +518,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 new_group: {
                     invoke: {
-                        id: "groupMachine",
-                        src: groupMachine,
+                        id: "addGroupMachine",
+                        src: addGroupMachine,
                         data: (ctx, _) => {
                             return {
                                 user: ctx.user,

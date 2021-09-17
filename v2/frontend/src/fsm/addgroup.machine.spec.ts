@@ -2,11 +2,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { ServiceContainer } from "../services/serviceContainer";
 import { testTransition } from "./machine.spec.utils";
-import { GroupContext, groupMachine, nullGroup } from "./group.machine";
+import { AddGroupContext, addGroupMachine, nullGroup } from "./addgroup.machine";
 
 const testUser = { userId: "123456", username: "test user", secondsSinceLastOnline: 0 };
 
-const testContext: GroupContext = {
+const testContext: AddGroupContext = {
     user: { userId: "abcdefg", username: "me", secondsSinceLastOnline: 0 },
     serviceContainer: {} as ServiceContainer,
     error: undefined,
@@ -20,7 +20,7 @@ describe("group machine transitions", () => {
     describe("canister creation state", () => {
         test("choose participants", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { canister_creation: "idle" },
                 { type: "CHOOSE_PARTICIPANTS", data: { ...nullGroup, name: "My fancy group" } },
                 { canister_creation: "creating" }
@@ -29,7 +29,7 @@ describe("group machine transitions", () => {
         });
         test("choose participants when already created", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { canister_creation: "created" },
                 { type: "CHOOSE_PARTICIPANTS", data: { ...nullGroup, name: "My fancy group" } },
                 { canister_creation: "creating" }
@@ -38,7 +38,7 @@ describe("group machine transitions", () => {
         });
         test("create group succeeds", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { canister_creation: "creating" },
                 { type: "done.invoke.createGroup", data: { kind: "success", canisterId: "12345" } },
                 { canister_creation: "created" }
@@ -48,7 +48,7 @@ describe("group machine transitions", () => {
         });
         test("create group expected failure", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { canister_creation: "creating" },
                 { type: "done.invoke.createGroup", data: { kind: "invalid_name" } },
                 { canister_creation: "unexpected_error" }
@@ -58,7 +58,7 @@ describe("group machine transitions", () => {
         test("create group exception", () => {
             const err = new Error("oh no");
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { canister_creation: "creating" },
                 { type: "error.platform.createGroup", data: err },
                 { canister_creation: "unexpected_error" }
@@ -69,7 +69,7 @@ describe("group machine transitions", () => {
     describe("data collection state", () => {
         test("cancel new group", () => {
             testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { data_collection: "group_form" },
                 { type: "CANCEL_NEW_GROUP" },
                 { data_collection: "done" }
@@ -77,7 +77,7 @@ describe("group machine transitions", () => {
         });
         test("choose participants", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { data_collection: "group_form" },
                 { type: "CHOOSE_PARTICIPANTS", data: { ...nullGroup, name: "My fancy group" } },
                 { data_collection: "choosing_participants" }
@@ -86,7 +86,7 @@ describe("group machine transitions", () => {
         });
         test("cancel choosing participants", () => {
             testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { data_collection: "choosing_participants" },
                 { type: "CANCEL_CHOOSE_PARTICIPANTS" },
                 { data_collection: "group_form" }
@@ -94,7 +94,7 @@ describe("group machine transitions", () => {
         });
         test("remove participant", () => {
             const ctx = testTransition(
-                groupMachine.withContext({
+                addGroupMachine.withContext({
                     ...testContext,
                     candidateGroup: {
                         ...testContext.candidateGroup,
@@ -114,7 +114,7 @@ describe("group machine transitions", () => {
         });
         test("complete selection", () => {
             testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { data_collection: "choosing_participants" },
                 { type: "COMPLETE" },
                 { data_collection: "adding_participants" }
@@ -122,7 +122,7 @@ describe("group machine transitions", () => {
         });
         test("received a user from the user search machine", () => {
             const ctx = testTransition(
-                groupMachine.withContext(testContext),
+                addGroupMachine.withContext(testContext),
                 { data_collection: "choosing_participants" },
                 { type: "done.invoke.userSearchMachine", data: testUser },
                 { data_collection: "choosing_participants" }

@@ -47,9 +47,9 @@
         }
     }
 
-    function showParticipants() {
+    function showGroupDetails() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("showParticipants");
+            dispatch("showGroupDetails");
         }
     }
 
@@ -157,9 +157,9 @@
                     {/if}
                 {:else if selectedChatSummary.kind === "group_chat"}
                     <Menu>
-                        <MenuItem on:click={showParticipants}>
+                        <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("participants")}</div>
+                            <div slot="text">{$_("groupDetails")}</div>
                         </MenuItem>
                         <MenuItem on:click={leaveGroup}>
                             <LocationExit size={"1.2em"} color={"#aaa"} slot="icon" />
