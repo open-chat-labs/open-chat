@@ -58,6 +58,12 @@
       ],
       "type": "persistent"
     },
+    "nns_dapp_testnet": {
+      "providers": [
+        "http://[2a00:fb01:400:42:5000:82ff:fed6:dfdc]:8080"
+      ],
+      "type": "persistent"
+    },    
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
