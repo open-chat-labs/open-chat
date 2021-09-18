@@ -407,6 +407,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             return {
                                 serviceContainer: ctx.serviceContainer,
                                 chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
+                                editedChatSummary: { ...ctx.chatSummary },
                                 userLookup: ctx.userLookup,
                                 history: [
                                     ev.type === "ADD_PARTICIPANT"

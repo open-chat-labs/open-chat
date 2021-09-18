@@ -14,28 +14,41 @@
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
     let groupAvatar: string | undefined = undefined;
-    let groupName: string = $machine.context.chatSummary.name;
-    let groupDesc: string = $machine.context.chatSummary.description;
 
-    $: isPublic =
-        $machine.context.chatSummary.kind === "group_chat" && $machine.context.chatSummary.public;
+    let groupName = $machine.context.editedChatSummary.name;
+    let groupDesc = $machine.context.editedChatSummary.description;
+    let isPublic = $machine.context.editedChatSummary.public;
+
+    $: dirty = groupName !== $machine.context.chatSummary.name;
 
     function close() {
-        machine.send({ type: "CLOSE_GROUP_DETAILS" });
+        // todo - check if we have any unsaved changes and show a modal
+        if (dirty) {
+            if (confirm("Are you sure?")) {
+                machine.send({ type: "CLOSE_GROUP_DETAILS" });
+            }
+        } else {
+            machine.send({ type: "CLOSE_GROUP_DETAILS" });
+        }
     }
 
     function showParticipants() {
+        machine.send({ type: "SYNC_CHAT_DETAILS", data: { name: groupName, desc: groupDesc } });
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
     function groupAvatarSelected(ev: CustomEvent<string>) {
         groupAvatar = ev.detail;
     }
+
+    function updateGroup() {
+        console.log("updating the group");
+    }
 </script>
 
 <GroupDetailsHeader on:showParticipants={showParticipants} on:close={close} />
 
-<form class="group-form">
+<form class="group-form" on:submit|preventDefault={updateGroup}>
     <div class="form-fields">
         <div class="sub-section photo">
             <EditableAvatar image={groupAvatar} on:imageSelected={groupAvatarSelected} />
@@ -81,7 +94,7 @@
         </div>
     </div>
     <div class="cta">
-        <Button fill={true}>{$_("update")}</Button>
+        <Button disabled={!dirty} fill={true}>{$_("update")}</Button>
     </div>
 </form>
 

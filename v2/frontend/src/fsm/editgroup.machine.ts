@@ -18,6 +18,7 @@ export type Mode = "show_participants" | "add_participants" | "group_details";
 export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;
+    editedChatSummary: GroupChatSummary;
     userLookup: UserLookup;
     history: Mode[]; // this is used to control where we go "back" to
     error?: Error;
@@ -48,6 +49,7 @@ export type EditGroupEvents =
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "SAVE_PARTICIPANTS" }
     | { type: "SHOW_PARTICIPANTS" }
+    | { type: "SYNC_CHAT_DETAILS"; data: { name: string; desc: string } }
     | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
@@ -378,6 +380,15 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                 SHOW_PARTICIPANTS: {
                     actions: assign(({ history }) => push(history, "show_participants")),
                     target: "show_participants",
+                },
+                SYNC_CHAT_DETAILS: {
+                    actions: assign((ctx, ev) => ({
+                        editedChatSummary: {
+                            ...ctx.editedChatSummary,
+                            name: ev.data.name,
+                            description: ev.data.desc,
+                        },
+                    })),
                 },
             },
             states: {
