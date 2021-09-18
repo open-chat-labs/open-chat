@@ -13,14 +13,30 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 import { toastStore } from "../stores/toast";
 
+export type Mode = "show_participants" | "add_participants" | "group_details";
+
 export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;
     userLookup: UserLookup;
-    add: boolean; // used to track whether we go straight into the adding_participant state
+    history: Mode[]; // this is used to control where we go "back" to
     error?: Error;
     usersToAdd: UserSummary[];
     user?: UserSummary;
+}
+
+function pop(history: Mode[]): Partial<EditGroupContext> {
+    history.pop();
+    return {
+        history,
+    };
+}
+
+function push(history: Mode[], next: Mode): Partial<EditGroupContext> {
+    history.push(next);
+    return {
+        history,
+    };
 }
 
 export type EditGroupEvents =
@@ -31,6 +47,8 @@ export type EditGroupEvents =
     | { type: "ADD_PARTICIPANT" }
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "SAVE_PARTICIPANTS" }
+    | { type: "SHOW_PARTICIPANTS" }
+    | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
     | { type: "error.platform.removeParticipant"; data: Error }
@@ -42,7 +60,20 @@ export type EditGroupEvents =
     | { type: "error.platform.userSearchMachine"; data: Error };
 
 const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
-    guards: {},
+    guards: {
+        showParticipantsNext: (ctx, _) => {
+            return ctx.history[ctx.history.length - 1] === "show_participants";
+        },
+        addParticipantsNext: (ctx, _) => {
+            return ctx.history[ctx.history.length - 1] === "add_participants";
+        },
+        groupDetailsNext: (ctx, _) => {
+            return ctx.history[ctx.history.length - 1] === "group_details";
+        },
+        done: (ctx, _) => {
+            return ctx.history.length === 0;
+        },
+    },
     services: {
         removeParticipant: (ctx, ev) => {
             if (ev.type === "REMOVE_PARTICIPANT") {
@@ -77,32 +108,170 @@ const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
     id: "edit_group_machine",
-    initial: "init",
-    on: {
-        HIDE_PARTICIPANTS: ".done", // todo make sure this goes to the parent.idle state correctly
-        REMOVE_PARTICIPANT: ".removing_participant",
-        DISMISS_AS_ADMIN: ".dismissing_participant",
-        MAKE_ADMIN: ".making_admin",
-        ADD_PARTICIPANT: ".adding_participants",
-    },
+    initial: "navigate",
     states: {
         done: { type: "final" },
 
-        init: {
+        navigate: {
+            id: "navigate",
             always: [
                 {
-                    cond: (ctx, _) => ctx.add,
-                    target: "adding_participants",
+                    cond: "showParticipantsNext",
+                    target: "show_participants",
                 },
                 {
-                    cond: (ctx, _) => !ctx.add,
-                    target: "idle",
+                    cond: "addParticipantsNext",
+                    target: "add_participants",
+                },
+                {
+                    cond: "groupDetailsNext",
+                    target: "group_details",
+                },
+                {
+                    cond: "done",
+                    target: "done",
                 },
             ],
         },
-        idle: { id: "showing_participants_idle", entry: assign((_ctx, _ev) => ({ add: false })) },
-        adding_participants: {
+
+        show_participants: {
+            initial: "idle",
+            on: {
+                HIDE_PARTICIPANTS: {
+                    actions: assign(({ history }) => pop(history)),
+                    target: "#navigate",
+                },
+                REMOVE_PARTICIPANT: ".removing_participant",
+                DISMISS_AS_ADMIN: ".dismissing_participant",
+                MAKE_ADMIN: ".making_admin",
+                ADD_PARTICIPANT: {
+                    actions: assign(({ history }) => push(history, "add_participants")),
+                    target: "add_participants",
+                },
+            },
+            states: {
+                idle: {},
+                making_admin: {
+                    // optimistically set the user standard in memory
+                    // if the operation fails, undo it
+                    entry: assign((ctx, ev) => {
+                        if (ctx.chatSummary.kind === "group_chat" && ev.type === "MAKE_ADMIN") {
+                            return {
+                                chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
+                                    ...p,
+                                    role: "admin",
+                                })),
+                            };
+                        }
+                        return {};
+                    }),
+                    invoke: {
+                        id: "makeAdmin",
+                        src: "makeAdmin",
+                        onDone: {
+                            target: "idle",
+                            actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
+                                if (ev.data !== "success") {
+                                    // todo - we need to undo the operation here, but we don't have
+                                    // the data any more. Tsk.
+                                    toastStore.showFailureToast("makeAdminFailed");
+                                }
+                                return {};
+                            }),
+                        },
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
+                },
+                dismissing_participant: {
+                    // optimistically set the user standard in memory
+                    // if the operation fails, undo it
+                    entry: assign((ctx, ev) => {
+                        if (
+                            ctx.chatSummary.kind === "group_chat" &&
+                            ev.type === "DISMISS_AS_ADMIN"
+                        ) {
+                            return {
+                                chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
+                                    ...p,
+                                    role: "standard",
+                                })),
+                            };
+                        }
+                        return {};
+                    }),
+                    invoke: {
+                        id: "dismissAsAdmin",
+                        src: "dismissAsAdmin",
+                        onDone: {
+                            target: "idle",
+                            actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
+                                if (ev.data !== "success") {
+                                    // todo - we need to undo the operation here, but we don't have
+                                    // the data any more. Tsk.
+                                    toastStore.showFailureToast("dismissAsAdminFailed");
+                                }
+                                return {};
+                            }),
+                        },
+                        onError: {
+                            target: "..unexpected_error",
+                            actions: assign({
+                                error: (_, { data }) => data,
+                            }),
+                        },
+                    },
+                },
+                removing_participant: {
+                    entry: assign((ctx, ev) => {
+                        if (
+                            ctx.chatSummary.kind === "group_chat" &&
+                            ev.type === "REMOVE_PARTICIPANT"
+                        ) {
+                            return {
+                                chatSummary: removeParticipant(ctx.chatSummary, ev.data),
+                            };
+                        }
+                        return {};
+                    }),
+                    invoke: {
+                        id: "removeParticipant",
+                        src: "removeParticipant",
+                        onDone: {
+                            target: "idle",
+                            actions: assign(
+                                (ctx, ev: DoneInvokeEvent<RemoveParticipantResponse>) => {
+                                    if (ev.data !== "success") {
+                                        // todo - we need to undo the operation here, but we don't have
+                                        // the data any more. Tsk.
+                                        toastStore.showFailureToast("removeParticipantFailed");
+                                    }
+                                    return {};
+                                }
+                            ),
+                        },
+                        onError: {
+                            // todo - need to make sure that this actually works - I'm not sure it does
+                            actions: escalate((_, { data }) => data),
+                        },
+                    },
+                },
+            },
+        },
+
+        add_participants: {
             initial: "choosing_participants",
+            on: {
+                CANCEL_ADD_PARTICIPANT: {
+                    actions: assign(({ history }) => pop(history)),
+                    target: "#navigate",
+                },
+                "error.platform.userSearchMachine": "..unexpected_error",
+            },
             states: {
                 choosing_participants: {
                     on: {
@@ -159,8 +328,11 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                         onDone: {
                             // todo - here we need to check for any failure and if it fails,
                             // remove the participant we added and toast (and log) the error
-                            target: "#showing_participants_idle",
-                            actions: assign((_ctx, _ev) => ({ usersToAdd: [] })),
+                            target: "#navigate",
+                            actions: [
+                                assign(({ history }) => pop(history)),
+                                assign((_ctx, _ev) => ({ usersToAdd: [] })),
+                            ],
                         },
                         onError: {
                             internal: true,
@@ -194,110 +366,22 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     }),
                 },
             },
+        },
+
+        group_details: {
+            initial: "idle",
             on: {
-                CANCEL_ADD_PARTICIPANT: "idle",
-                "error.platform.userSearchMachine": "..unexpected_error",
-            },
-        },
-        making_admin: {
-            // optimistically set the user standard in memory
-            // if the operation fails, undo it
-            entry: assign((ctx, ev) => {
-                if (ctx.chatSummary.kind === "group_chat" && ev.type === "MAKE_ADMIN") {
-                    return {
-                        chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
-                            ...p,
-                            role: "admin",
-                        })),
-                    };
-                }
-                return {};
-            }),
-            invoke: {
-                id: "makeAdmin",
-                src: "makeAdmin",
-                onDone: {
-                    target: "idle",
-                    actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
-                        if (ev.data !== "success") {
-                            // todo - we need to undo the operation here, but we don't have
-                            // the data any more. Tsk.
-                            toastStore.showFailureToast("makeAdminFailed");
-                        }
-                        return {};
-                    }),
+                CLOSE_GROUP_DETAILS: {
+                    actions: assign(({ history }) => pop(history)),
+                    target: "#navigate",
                 },
-                onError: {
-                    target: "..unexpected_error",
-                    actions: assign({
-                        error: (_, { data }) => data,
-                    }),
+                SHOW_PARTICIPANTS: {
+                    actions: assign(({ history }) => push(history, "show_participants")),
+                    target: "show_participants",
                 },
             },
-        },
-        dismissing_participant: {
-            // optimistically set the user standard in memory
-            // if the operation fails, undo it
-            entry: assign((ctx, ev) => {
-                if (ctx.chatSummary.kind === "group_chat" && ev.type === "DISMISS_AS_ADMIN") {
-                    return {
-                        chatSummary: updateParticipant(ctx.chatSummary, ev.data, (p) => ({
-                            ...p,
-                            role: "standard",
-                        })),
-                    };
-                }
-                return {};
-            }),
-            invoke: {
-                id: "dismissAsAdmin",
-                src: "dismissAsAdmin",
-                onDone: {
-                    target: "idle",
-                    actions: assign((ctx, ev: DoneInvokeEvent<ChangeAdminResponse>) => {
-                        if (ev.data !== "success") {
-                            // todo - we need to undo the operation here, but we don't have
-                            // the data any more. Tsk.
-                            toastStore.showFailureToast("dismissAsAdminFailed");
-                        }
-                        return {};
-                    }),
-                },
-                onError: {
-                    target: "..unexpected_error",
-                    actions: assign({
-                        error: (_, { data }) => data,
-                    }),
-                },
-            },
-        },
-        removing_participant: {
-            entry: assign((ctx, ev) => {
-                if (ctx.chatSummary.kind === "group_chat" && ev.type === "REMOVE_PARTICIPANT") {
-                    return {
-                        chatSummary: removeParticipant(ctx.chatSummary, ev.data),
-                    };
-                }
-                return {};
-            }),
-            invoke: {
-                id: "removeParticipant",
-                src: "removeParticipant",
-                onDone: {
-                    target: "idle",
-                    actions: assign((ctx, ev: DoneInvokeEvent<RemoveParticipantResponse>) => {
-                        if (ev.data !== "success") {
-                            // todo - we need to undo the operation here, but we don't have
-                            // the data any more. Tsk.
-                            toastStore.showFailureToast("removeParticipantFailed");
-                        }
-                        return {};
-                    }),
-                },
-                onError: {
-                    // todo - need to make sure that this actually works - I'm not sure it does
-                    actions: escalate((_, { data }) => data),
-                },
+            states: {
+                idle: {},
             },
         },
     },

@@ -2,6 +2,7 @@
     import type { ActorRefFrom } from "xstate";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
+    import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
@@ -20,7 +21,11 @@
         $machine.context.chatSummary.kind === "group_chat" && $machine.context.chatSummary.public;
 
     function close() {
-        machine.send({ type: "HIDE_PARTICIPANTS" });
+        machine.send({ type: "CLOSE_GROUP_DETAILS" });
+    }
+
+    function showParticipants() {
+        machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
     function groupAvatarSelected(ev: CustomEvent<string>) {
@@ -28,7 +33,7 @@
     }
 </script>
 
-<GroupDetailsHeader on:close={close} />
+<GroupDetailsHeader on:showParticipants={showParticipants} on:close={close} />
 
 <form class="group-form">
     <div class="form-fields">
@@ -51,14 +56,33 @@
             invalid={false}
             maxlength={MAX_DESC_LENGTH}
             placeholder={$_("newGroupDesc")} />
+
+        <div class="sub-section">
+            {#if isPublic}
+                <h4>{$_("publicGroup")}</h4>
+            {:else}
+                <h4>{$_("privateGroup")}</h4>
+            {/if}
+
+            <div class="info">
+                {#if isPublic}
+                    <p>
+                        {$_("publicGroupInfo")}
+                    </p>
+                    <p>
+                        {$_("publicGroupUnique")}
+                    </p>
+                {:else}
+                    <p>
+                        {$_("privateGroupInfo")}
+                    </p>
+                {/if}
+            </div>
+        </div>
     </div>
-    <!-- <div class="cta">
-        <Button
-            fill={true}
-            disabled={!valid || $machine.matches({ canister_creation: "creating" })}
-            loading={$machine.matches({ canister_creation: "creating" })}
-            >{$_("submitNewGroup")}</Button>
-    </div> -->
+    <div class="cta">
+        <Button fill={true}>{$_("update")}</Button>
+    </div>
 </form>
 
 <style type="text/scss">
@@ -68,6 +92,13 @@
 
     .photo-legend {
         margin-top: $sp4;
+    }
+
+    .cta {
+        position: absolute;
+        bottom: 0;
+        height: 57px;
+        width: 100%;
     }
 
     .group-form {
@@ -92,5 +123,17 @@
         background-color: var(--sub-section-bg);
         margin-bottom: $sp4;
         @include box-shadow(1);
+
+        h4 {
+            margin-bottom: $sp4;
+        }
+    }
+
+    .info {
+        @include font(light, normal, fs-90);
+
+        p {
+            margin-bottom: $sp4;
+        }
     }
 </style>

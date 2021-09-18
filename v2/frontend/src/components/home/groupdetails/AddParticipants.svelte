@@ -31,12 +31,12 @@
 </script>
 
 <SectionHeader>
+    <h4>{$_("addParticipants")}</h4>
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
             <Close size={"1.2em"} color={"#aaa"} />
         </HoverIcon>
     </span>
-    <h4>{$_("addParticipants")}</h4>
 </SectionHeader>
 
 {#if userSearchMachine !== undefined}

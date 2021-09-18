@@ -408,7 +408,13 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 serviceContainer: ctx.serviceContainer,
                                 chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
                                 userLookup: ctx.userLookup,
-                                add: ev.type === "ADD_PARTICIPANT",
+                                history: [
+                                    ev.type === "ADD_PARTICIPANT"
+                                        ? "add_participants"
+                                        : ev.type === "SHOW_PARTICIPANTS"
+                                        ? "show_participants"
+                                        : "group_details",
+                                ],
                                 user: ctx.user,
                                 error: undefined,
                                 usersToAdd: [],

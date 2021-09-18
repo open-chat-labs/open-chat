@@ -9,11 +9,11 @@
 </script>
 
 <Panel right>
-    {#if $machine.matches("editing_group_details")}
+    {#if $machine.matches("group_details")}
         <GroupDetails {machine} />
-    {:else if $machine.matches("adding_participants")}
+    {:else if $machine.matches("add_participants")}
         <AddParticipants {machine} />
-    {:else}
+    {:else if $machine.matches("show_participants")}
         <Participants {machine} on:blockUser on:chatWith />
     {/if}
 </Panel>

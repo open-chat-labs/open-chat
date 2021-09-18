@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
@@ -9,9 +10,17 @@
     function close() {
         dispatch("close");
     }
+    function showParticipants() {
+        dispatch("showParticipants");
+    }
 </script>
 
 <SectionHeader>
+    <span title={$_("participants")} class="participants" on:click={showParticipants}>
+        <HoverIcon>
+            <AccountMultiplePlus size={"1.2em"} color={"#aaa"} />
+        </HoverIcon>
+    </span>
     <h4>{$_("groupDetails")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
@@ -26,7 +35,8 @@
         margin: 0;
         text-align: center;
     }
-    .close {
+    .close,
+    .participants {
         flex: 0 0 30px;
     }
 </style>
