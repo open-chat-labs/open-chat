@@ -99,25 +99,27 @@ fn start_stream_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blob_i
 
     if let Some(blob) = blob_storage.get_blob(&blob_id) {
         let next_chunk_index = 1;
-        if blob_storage.exists(blob_id, next_chunk_index) {
-            let streaming_strategy = Some(StreamingStrategy::Callback {
+        let streaming_strategy = if blob_storage.exists(blob_id, next_chunk_index) {
+            Some(StreamingStrategy::Callback {
                 callback: Func {
                     principal: canister_id,
                     method: "http_request_streaming_callback".to_string(),
                 },
                 token: build_token(blob_id, next_chunk_index),
-            });
+            })
+        } else {
+            None
+        };
 
-            return Some(HttpResponse {
-                status_code: 200,
-                headers: vec![
-                    HeaderField("Content-Type".to_string(), blob.mime_type().to_string()),
-                    HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
-                ],
-                body: Cow::Owned(blob.chunk(0).unwrap().clone()),
-                streaming_strategy,
-            });
-        }
+        return Some(HttpResponse {
+            status_code: 200,
+            headers: vec![
+                HeaderField("Content-Type".to_string(), blob.mime_type().to_string()),
+                HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
+            ],
+            body: Cow::Owned(blob.chunk(0).unwrap().clone()),
+            streaming_strategy,
+        });
     }
 
     None
@@ -129,5 +131,32 @@ fn build_token(blob_id: u128, index: u32) -> Token {
         content_encoding: String::default(),
         index: index.into(),
         sha256: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_avatar_from_url() {
+        const BLOB_ID: u128 = 367253521351235123;
+        match extract_request_type(&format!("/avatar/{}", BLOB_ID)) {
+            RequestType::Avatar(Some(id)) => assert_eq!(BLOB_ID, id),
+            _ => assert!(false),
+        }
+    }
+
+    #[test]
+    fn extract_blob_from_url() {
+        assert!(matches!(
+            extract_request_type("/blobs/78278371289379212398"),
+            RequestType::Blob(_)
+        ));
+    }
+
+    #[test]
+    fn extract_other_from_url() {
+        assert!(matches!(extract_request_type("blah"), RequestType::Other));
     }
 }
