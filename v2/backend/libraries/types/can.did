@@ -19,8 +19,6 @@ type BlobReference =
     record {
         canister_id: CanisterId;
         blob_id: nat;
-        blob_size: nat32;
-        chunk_size: nat32;
     };
 
 type CanisterCreationStatus =
@@ -175,6 +173,7 @@ type GroupChatSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
+        avatar_blob_id: opt nat;
         is_public: bool;
         min_visible_event_index: EventIndex;
         min_visible_message_index: MessageIndex;
@@ -191,6 +190,7 @@ type GroupChatSummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
+        avatar_blob_id: opt nat;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;
@@ -407,6 +407,7 @@ type UserSummary =
         user_id: UserId;
         username: text;
         seconds_since_last_online: nat32;
+        avatar_blob_id: opt nat;
     };
 
 type PartialUserSummary =
@@ -414,6 +415,7 @@ type PartialUserSummary =
         user_id: UserId;
         username: opt text;
         seconds_since_last_online: nat32;
+        avatar_blob_id: opt nat;
     };
 
 type Version =

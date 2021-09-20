@@ -21,6 +21,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             last_updated,
             name: runtime_state.data.name.clone(),
             description: runtime_state.data.description.clone(),
+            avatar_blob_id: runtime_state.data.avatar_blob_id,
             is_public: runtime_state.data.is_public,
             min_visible_event_index: participant.min_visible_event_index,
             min_visible_message_index: participant.min_visible_message_index,

@@ -79,6 +79,17 @@ impl User {
         true
     }
 
+    pub fn set_avatar_blob_id(&mut self, avatar_blob_id: Option<u128>, now: TimestampMillis) -> bool {
+        match self {
+            User::Created(u) => {
+                u.avatar_blob_id = avatar_blob_id;
+                u.date_updated = now;
+                true
+            }
+            _ => false,
+        }
+    }
+
     pub fn set_canister_creation_status(&mut self, canister_creation_status: CanisterCreationStatusInternal) -> bool {
         match self {
             User::Confirmed(u) => u.canister_creation_status = canister_creation_status,
@@ -140,6 +151,7 @@ pub struct CreatedUser {
     pub wasm_version: Version,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
+    pub avatar_blob_id: Option<u128>,
 }
 
 impl CreatedUser {
@@ -151,6 +163,7 @@ impl CreatedUser {
             user_id: self.user_id,
             username: self.username.clone(),
             seconds_since_last_online,
+            avatar_blob_id: self.avatar_blob_id,
         }
     }
 
@@ -162,6 +175,7 @@ impl CreatedUser {
             user_id: self.user_id,
             username: if include_username { Some(self.username.clone()) } else { None },
             seconds_since_last_online,
+            avatar_blob_id: self.avatar_blob_id,
         }
     }
 }
@@ -193,6 +207,7 @@ impl Default for CreatedUser {
             wasm_version: Version::new(0, 0, 0),
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
+            avatar_blob_id: None,
         }
     }
 }

@@ -133,6 +133,7 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cyc
                                 amount: cycles,
                                 date: now,
                             }],
+                            avatar_blob_id: None,
                         };
                         User::Created(created_user)
                     }

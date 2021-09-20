@@ -155,6 +155,16 @@ impl UserMap {
         false
     }
 
+    pub fn set_avatar_id(&mut self, user_id: &UserId, avatar_blob_id: Option<u128>, now: TimestampMillis) -> bool {
+        if let Some(principal) = self.user_id_to_principal.get(user_id) {
+            if let Some(user) = self.users_by_principal.get_mut(principal) {
+                return user.set_avatar_blob_id(avatar_blob_id, now);
+            }
+        }
+
+        false
+    }
+
     pub fn values(&self) -> hash_map::Values<'_, Principal, User> {
         self.users_by_principal.values()
     }
@@ -180,7 +190,7 @@ mod tests {
     use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
     use std::str::FromStr;
-    use types::{CanisterCreationStatusInternal, Version};
+    use types::CanisterCreationStatusInternal;
 
     #[test]
     fn add_with_no_clashes() {
@@ -225,9 +235,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 1,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
         user_map.add(created.clone());
 
@@ -363,9 +371,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 3,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
         assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
         assert_eq!(user_map.users_by_principal.len(), 1);
@@ -392,9 +398,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
 
         let mut updated = original.clone();
@@ -433,9 +437,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
 
         let other = User::Created(CreatedUser {
@@ -446,9 +448,7 @@ mod tests {
             date_created: 2,
             date_updated: 2,
             last_online: 2,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
 
         let mut updated = original.clone();
@@ -482,9 +482,7 @@ mod tests {
             date_created: 1,
             date_updated: 1,
             last_online: 1,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
 
         let other = User::Created(CreatedUser {
@@ -495,9 +493,7 @@ mod tests {
             date_created: 2,
             date_updated: 2,
             last_online: 2,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
 
         let mut updated = original.clone();
@@ -551,9 +547,7 @@ mod tests {
             date_created: 3,
             date_updated: 3,
             last_online: 3,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
-            cycle_top_ups: Vec::new(),
+            ..Default::default()
         });
         user_map.add(created.clone());
 

@@ -25,10 +25,10 @@ fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             ) {
                 PutChunkResult::Success => Success,
                 PutChunkResult::Complete => {
-                    if let Some(existing_avatar_reference) = runtime_state.data.avatar_blob_reference {
-                        runtime_state.data.blob_storage.delete_blob(&existing_avatar_reference);
+                    if let Some(avatar_blob_id) = runtime_state.data.avatar_blob_id {
+                        runtime_state.data.blob_storage.delete_blob(&avatar_blob_id);
                     }
-                    runtime_state.data.avatar_blob_reference = Some(args.blob_id);
+                    runtime_state.data.avatar_blob_id = Some(args.blob_id);
                     Success
                 }
                 PutChunkResult::BlobAlreadyExists => BlobAlreadyExists,
