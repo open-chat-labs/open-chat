@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
-import { escalate } from "xstate/lib/actions";
+import { escalate, pure } from "xstate/lib/actions";
 import { userSearchMachine } from "./userSearch.machine";
 import type {
     GroupChatSummary,
@@ -50,12 +50,15 @@ export type EditGroupEvents =
     | { type: "SAVE_PARTICIPANTS" }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SYNC_CHAT_DETAILS"; data: { name: string; desc: string } }
+    | { type: "SAVE_GROUP_DETAILS"; data: { name: string; desc: string } }
     | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin" }
     | { type: "error.platform.dismissAsAdmin"; data: Error }
+    | { type: "done.invoke.saveGroup" }
+    | { type: "error.platform.saveGroup"; data: Error }
     | { type: "done.invoke.makeAdmin" }
     | { type: "error.platform.makeAdmin"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
@@ -104,6 +107,14 @@ const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
             }
             throw new Error("Unexpected event type provided to EditGroupMachine.addParticipant");
         },
+        saveGroup: (_ctx, _ev) => {
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    console.log("pretended to update the group");
+                    resolve();
+                }, 500);
+            });
+        },
     },
 };
 
@@ -112,7 +123,10 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
     id: "edit_group_machine",
     initial: "navigate",
     states: {
-        done: { type: "final" },
+        done: {
+            type: "final",
+            data: (ctx, _ev) => ctx.chatSummary,
+        },
 
         navigate: {
             id: "navigate",
@@ -390,9 +404,41 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                         },
                     })),
                 },
+                SAVE_GROUP_DETAILS: {
+                    target: ".saving_group",
+                    actions: assign((ctx, ev) => ({
+                        editedChatSummary: {
+                            ...ctx.editedChatSummary,
+                            name: ev.data.name,
+                            description: ev.data.desc,
+                        },
+                    })),
+                },
             },
             states: {
-                idle: {},
+                idle: {
+                    id: "group_details_idle",
+                },
+                saving_group: {
+                    invoke: {
+                        id: "saveGroup",
+                        src: "saveGroup",
+                        onDone: {
+                            target: "#navigate",
+                            actions: [
+                                assign(({ history }) => pop(history)),
+                                assign((ctx, _ev) => ({ chatSummary: ctx.editedChatSummary })),
+                            ],
+                        },
+                        onError: {
+                            target: "#group_details_idle",
+                            actions: pure((_ctx, _ev) => {
+                                toastStore.showFailureToast("updateGroupFailed");
+                                return undefined;
+                            }),
+                        },
+                    },
+                },
             },
         },
     },

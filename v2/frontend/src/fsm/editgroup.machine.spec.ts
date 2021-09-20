@@ -29,6 +29,7 @@ const groupChat: GroupChatSummary = {
 const testContext: EditGroupContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: groupChat,
+    editedChatSummary: { ...groupChat },
     userLookup: {},
     history: ["group_details"],
     user: {
@@ -40,45 +41,108 @@ const testContext: EditGroupContext = {
     usersToAdd: [],
 };
 
-describe("participant machine transitions", () => {
-    test("hide participants", () => {
-        testTransition(
-            editGroupMachine.withContext(testContext),
-            "idle",
-            { type: "HIDE_PARTICIPANTS" },
-            "done"
-        );
+describe("edit group machine transitions", () => {
+    describe("group details transitions", () => {
+        test("close group details", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "idle" },
+                { type: "CLOSE_GROUP_DETAILS" },
+                "done"
+            );
+        });
+        test("show participants", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "idle" },
+                { type: "SHOW_PARTICIPANTS" },
+                "show_participants"
+            );
+        });
+        test("sync chat details", () => {
+            const ctx = testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "idle" },
+                { type: "SYNC_CHAT_DETAILS", data: { name: "updated name", desc: "updated desc" } },
+                { group_details: "idle" }
+            );
+            expect(ctx.editedChatSummary.name).toEqual("updated name");
+            expect(ctx.editedChatSummary.description).toEqual("updated desc");
+        });
+        test("save chat details", () => {
+            const ctx = testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "idle" },
+                {
+                    type: "SAVE_GROUP_DETAILS",
+                    data: { name: "updated name", desc: "updated desc" },
+                },
+                { group_details: "saving_group" }
+            );
+            expect(ctx.editedChatSummary.name).toEqual("updated name");
+            expect(ctx.editedChatSummary.description).toEqual("updated desc");
+        });
+        test("save chat details success", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "saving_group" },
+                "done.invoke.saveGroup",
+                "done"
+            );
+        });
+        test("save chat details failure", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { group_details: "saving_group" },
+                { type: "error.platform.saveGroup", data: new Error("fail") },
+                { group_details: "idle" }
+            );
+        });
     });
-    test("remove participant", () => {
-        testTransition(
-            editGroupMachine.withContext(testContext),
-            "idle",
-            { type: "REMOVE_PARTICIPANT", data: "123" },
-            "removing_participant"
-        );
+
+    describe("add participants transitions", () => {
+        test("cancel add participant", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { add_participants: "choosing_participants" },
+                { type: "CANCEL_ADD_PARTICIPANT" },
+                "done"
+            );
+        });
     });
-    test("dismiss as admin", () => {
-        testTransition(
-            editGroupMachine.withContext(testContext),
-            "idle",
-            { type: "DISMISS_AS_ADMIN", data: "123" },
-            "dismissing_participant"
-        );
-    });
-    test("add participant", () => {
-        testTransition(
-            editGroupMachine.withContext(testContext),
-            "idle",
-            { type: "ADD_PARTICIPANT" },
-            "adding_participants"
-        );
-    });
-    test("cancel add participant", () => {
-        testTransition(
-            editGroupMachine.withContext(testContext),
-            "adding_participants",
-            { type: "CANCEL_ADD_PARTICIPANT" },
-            "idle"
-        );
+
+    describe("show participants transitions", () => {
+        test("hide participants", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { show_participants: "idle" },
+                { type: "HIDE_PARTICIPANTS" },
+                "done"
+            );
+        });
+        test("remove participant", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { show_participants: "idle" },
+                { type: "REMOVE_PARTICIPANT", data: "123" },
+                { show_participants: "removing_participant" }
+            );
+        });
+        test("dismiss as admin", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { show_participants: "idle" },
+                { type: "DISMISS_AS_ADMIN", data: "123" },
+                { show_participants: "dismissing_participant" }
+            );
+        });
+        test("add participant", () => {
+            testTransition(
+                editGroupMachine.withContext(testContext),
+                { show_participants: "idle" },
+                { type: "ADD_PARTICIPANT" },
+                { add_participants: "choosing_participants" }
+            );
+        });
     });
 });

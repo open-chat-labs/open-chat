@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    let inp: HTMLInputElement;
+    let inp: HTMLTextAreaElement;
     export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string = "";

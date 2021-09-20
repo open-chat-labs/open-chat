@@ -31,6 +31,8 @@
     export let user: UserSummary | undefined;
     export let blocked: boolean;
 
+    $: isGroup = selectedChatSummary.kind === "group_chat";
+
     function clearSelection() {
         dispatch("clearSelection");
     }
@@ -131,7 +133,13 @@
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
-            {chat.name}
+            {#if isGroup}
+                <span on:click={showGroupDetails} class="group-details">
+                    {chat.name}
+                </span>
+            {:else}
+                {chat.name}
+            {/if}
         </div>
         <div class="chat-subtext" title={chat.subtext}>
             {chat.subtext}
@@ -206,6 +214,10 @@
 
     .avatar {
         flex: 0 0 55px;
+    }
+
+    .group-details {
+        cursor: pointer;
     }
 
     .chat-details {

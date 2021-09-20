@@ -19,6 +19,7 @@ import type {
     DirectMessage,
     GroupMessage,
     SendMessageSuccess,
+    GroupChatSummary,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
@@ -422,8 +423,15 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             };
                         },
                         onDone: {
-                            // todo - do we need to pass back the updated chat summary and merge it maybe?
                             target: "#ui_idle",
+                            actions: assign((ctx, ev: DoneInvokeEvent<GroupChatSummary>) => {
+                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
+                                    return {
+                                        chatSummary: ev.data,
+                                    };
+                                }
+                                return {};
+                            }),
                         },
                         onError: {
                             // todo - can this really *fail* or would we just deal with it in the sub machine?

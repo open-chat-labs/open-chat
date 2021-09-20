@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
@@ -18,16 +20,21 @@
     let groupName = $machine.context.editedChatSummary.name;
     let groupDesc = $machine.context.editedChatSummary.description;
     let isPublic = $machine.context.editedChatSummary.public;
+    let showConfirmation = false;
+    let confirmed = false;
 
-    $: dirty = groupName !== $machine.context.chatSummary.name;
+    $: dirty =
+        groupName !== $machine.context.chatSummary.name ||
+        groupDesc !== $machine.context.chatSummary.description;
+
+    $: saving = $machine.matches({ group_details: "saving_group" });
 
     function close() {
-        // todo - check if we have any unsaved changes and show a modal
-        if (dirty) {
-            if (confirm("Are you sure?")) {
-                machine.send({ type: "CLOSE_GROUP_DETAILS" });
-            }
+        if (dirty && !confirmed) {
+            confirmed = true;
+            showConfirmation = true;
         } else {
+            showConfirmation = false;
             machine.send({ type: "CLOSE_GROUP_DETAILS" });
         }
     }
@@ -42,7 +49,7 @@
     }
 
     function updateGroup() {
-        console.log("updating the group");
+        machine.send({ type: "SAVE_GROUP_DETAILS", data: { name: groupName, desc: groupDesc } });
     }
 </script>
 
@@ -94,11 +101,30 @@
         </div>
     </div>
     <div class="cta">
-        <Button disabled={!dirty} fill={true}>{$_("update")}</Button>
+        <Button loading={saving} disabled={!dirty} fill={true}>{$_("update")}</Button>
     </div>
 </form>
 
+<Overlay active={showConfirmation}>
+    <ModalContent fill={true}>
+        <span slot="header">{$_("areYouSure")}</span>
+        <span slot="body">
+            <p class="unsaved">
+                {$_("unsavedGroupChanges")}
+            </p>
+        </span>
+        <span slot="footer">
+            <Button small={true} on:click={updateGroup}>{$_("save")}</Button>
+            <Button small={true} on:click={close} secondary={true}>{$_("discard")}</Button>
+        </span>
+    </ModalContent>
+</Overlay>
+
 <style type="text/scss">
+    .unsaved {
+        padding: $sp5;
+    }
+
     .photo {
         text-align: center;
     }
