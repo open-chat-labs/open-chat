@@ -6,7 +6,6 @@
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
-    import { changeDimensions } from "../utils/media";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
@@ -15,7 +14,8 @@
     let avatar: string | null | undefined;
     let originalImage = new Image();
     let showModal = false;
-    let CROP_SIZE = 250;
+    let CROP_SIZE = 300;
+    let SAVE_SIZE = 150;
     let cropData: CropData | undefined = undefined;
 
     function addPhoto() {
@@ -46,11 +46,11 @@
         } = cropData;
 
         const canvas: HTMLCanvasElement = document.createElement("canvas");
-        canvas.width = CROP_SIZE;
-        canvas.height = CROP_SIZE;
+        canvas.width = SAVE_SIZE;
+        canvas.height = SAVE_SIZE;
         canvas
             .getContext("2d")
-            ?.drawImage(originalImage, x, y, width, height, 0, 0, CROP_SIZE, CROP_SIZE);
+            ?.drawImage(originalImage, x, y, width, height, 0, 0, SAVE_SIZE, SAVE_SIZE);
 
         canvas.toBlob(async (blob: Blob | null) => {
             if (blob) {
