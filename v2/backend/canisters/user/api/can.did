@@ -43,19 +43,6 @@ type MarkReadResponse =
         ChatNotFound;
     };
 
-type SetAvatarArgs =
-    record {
-        mime_type: text;
-        bytes: vec nat8;
-    };
-
-type SetAvatarResponse =
-    variant {
-        Success;
-        FileTooBig: nat32;
-        InvalidMimeType: nat32;
-    }; 
-
 type BlockUserArgs =
     record {
         user_id: UserId;        
@@ -91,6 +78,7 @@ type PutChunkResponse =
         BlobAlreadyExists;
         ChunkAlreadyExists;
         ChunkTooBig;
+        BlobTooBig;
         Full;
     }; 
 
@@ -104,7 +92,8 @@ type CreateGroupArgs =
 
 type CreateGroupFieldTooLongResult =
     record {
-        chat_id: ChatId;
+        length_provided: nat32;
+        max_length: nat32;
     };
 
 type CreateGroupSuccessResult =
@@ -279,7 +268,6 @@ type InitArgs =
 service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     put_avatar_chunk: (PutChunkArgs) -> (PutChunkResponse);

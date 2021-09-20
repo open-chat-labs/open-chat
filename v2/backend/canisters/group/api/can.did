@@ -35,19 +35,6 @@ type MarkReadResponse =
         NotInGroup;
     };
 
-type SetAvatarArgs =
-    record {
-        mime_type: text;
-        bytes: vec nat8;
-    };
-
-type SetAvatarResponse =
-    variant {
-        Success;
-        FileTooBig: nat32;
-        InvalidMimeType: nat32;
-    };
-
 type BlockUserArgs =
     record {
         user_id: UserId;
@@ -166,6 +153,7 @@ type PutAvatarChunkResponse =
         BlobAlreadyExists;
         ChunkAlreadyExists;
         ChunkTooBig;
+        BlobTooBig;
         Full;
     };
 
@@ -286,7 +274,6 @@ type MetricsResponse =
 
 service: {
     // Admin only
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
