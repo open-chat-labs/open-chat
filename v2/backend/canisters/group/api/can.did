@@ -176,6 +176,23 @@ type PutChunkResponse =
         Full;
     };
 
+type UpdateGroupArgs =
+    record {
+        name: text;
+        description: text;
+    };
+
+type UpdateGroupResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        NameTooLong: FieldTooLongResult;
+        DescriptionTooLong: FieldTooLongResult;
+        Unchanged;
+        NameTaken;
+        InternalError;
+    };
+
 type SummaryArgs =
     record {
     };
@@ -280,6 +297,7 @@ service: {
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
+    update_group(UpdateGroupArgs) -> (UpdateGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 

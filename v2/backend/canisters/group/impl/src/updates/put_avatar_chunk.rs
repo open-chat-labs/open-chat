@@ -48,5 +48,5 @@ fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         }
     }
 
-    CallerNotGroupAdmin
+    NotAuthorized
 }

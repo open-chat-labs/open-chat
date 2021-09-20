@@ -11,3 +11,4 @@ generate_c2c_call!(active_groups);
 generate_c2c_call!(c2c_create_group);
 generate_c2c_call!(c2c_mark_active);
 generate_c2c_call!(c2c_notify_low_balance);
+generate_c2c_call!(c2c_update_group);

@@ -35,4 +35,8 @@ impl Role {
     pub fn can_set_avatar(&self) -> bool {
         matches!(self, Role::Admin)
     }
+
+    pub fn can_update_group(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
 }

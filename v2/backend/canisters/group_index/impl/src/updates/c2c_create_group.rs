@@ -61,7 +61,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
     let user_id = runtime_state.env.caller().into();
 
     if args.is_public && !runtime_state.data.public_groups.reserve_name(args.name.clone(), now) {
-        Err(PublicGroupAlreadyExists)
+        Err(NameTaken)
     } else {
         let canister_wasm = runtime_state.data.group_canister_wasm.clone();
         let init_canister_args = group_canister::init::Args {

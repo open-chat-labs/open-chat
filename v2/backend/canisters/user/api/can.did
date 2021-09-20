@@ -90,12 +90,6 @@ type CreateGroupArgs =
         history_visible_to_new_joiners: bool;
     };
 
-type CreateGroupFieldTooLongResult =
-    record {
-        length_provided: nat32;
-        max_length: nat32;
-    };
-
 type CreateGroupSuccessResult =
     record {
         chat_id: ChatId;
@@ -104,9 +98,9 @@ type CreateGroupSuccessResult =
 type CreateGroupResponse =
     variant {
         Success: CreateGroupSuccessResult;
-        NameTooLong: CreateGroupFieldTooLongResult;
-        DescriptionTooLong: CreateGroupFieldTooLongResult;
-        PublicGroupAlreadyExists;
+        NameTooLong: FieldTooLongResult;
+        DescriptionTooLong: FieldTooLongResult;
+        NameTaken;
         Throttled;
         InternalError;
     };
