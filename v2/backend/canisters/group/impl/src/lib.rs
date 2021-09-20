@@ -48,7 +48,7 @@ pub struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
-    pub avatar_blob_reference: Option<u128>,
+    pub avatar_blob_id: Option<u128>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -82,7 +82,7 @@ impl Data {
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            avatar_blob_reference: None,
+            avatar_blob_id: None,
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::model::user::{CreatedUser, User};
 use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use types::CanisterCreationStatusInternal;
+use types::{CanisterCreationStatusInternal, CyclesTopUp};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -40,7 +40,9 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 return UserUnconfirmed;
             }
             User::Confirmed(user) => {
-                if let CanisterCreationStatusInternal::Created(canister_id, wasm_version) = &user.canister_creation_status {
+                if let CanisterCreationStatusInternal::Created(canister_id, wasm_version, cycles) =
+                    &user.canister_creation_status
+                {
                     let created_user = CreatedUser {
                         principal: user.principal,
                         phone_number: user.phone_number.clone(),
@@ -51,6 +53,11 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         last_online: now,
                         wasm_version: *wasm_version,
                         upgrade_in_progress: false,
+                        cycle_top_ups: vec![CyclesTopUp {
+                            amount: *cycles,
+                            date: now,
+                        }],
+                        avatar_blob_id: None,
                     };
                     User::Created(created_user)
                 } else {
@@ -84,7 +91,6 @@ mod tests {
     use candid::Principal;
     use phonenumber::PhoneNumber;
     use std::str::FromStr;
-    use types::Version;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -99,8 +105,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -127,8 +132,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -151,8 +155,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
@@ -162,8 +165,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -206,8 +208,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -230,8 +231,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
@@ -254,8 +254,7 @@ mod tests {
             date_created: env.now,
             date_updated: env.now,
             last_online: env.now,
-            upgrade_in_progress: false,
-            wasm_version: Version::new(0, 0, 0),
+            ..Default::default()
         }));
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 

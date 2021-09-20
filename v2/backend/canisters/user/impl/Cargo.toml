@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = "0.7.5"
+cycles_utils = { path = "../../../libraries/cycles_utils" }
 futures = "0.3.16"
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
@@ -31,3 +32,5 @@ types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils", features = ["range-set"] }
 user_canister = { path = "../api" }
 user_canister_c2c_client = { path = "../c2c_client" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

@@ -1,4 +1,5 @@
-use crate::{Data, RuntimeState, RUNTIME_STATE};
+use crate::{Data, RuntimeState, LOW_CYCLES_BALANCE_THRESHOLD, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::init;
 use user_canister::init::Args;
 use utils::env::canister::CanisterEnv;
@@ -22,5 +23,9 @@ fn init(args: Args) {
         let runtime_state = RuntimeState::new(env, data);
 
         *state.borrow_mut() = Some(runtime_state);
+
+        cycles_utils::init_cycles_balance_checker(LOW_CYCLES_BALANCE_THRESHOLD, user_index_canister_id);
     });
+
+    check_cycles_balance();
 }

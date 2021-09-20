@@ -1,9 +1,12 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use cycles_utils::check_cycles_balance;
 use group_canister::block_user::*;
 use ic_cdk_macros::update;
 
 #[update]
 fn block_user(args: Args) -> Response {
+    check_cycles_balance();
+
     RUNTIME_STATE.with(|state| block_user_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
