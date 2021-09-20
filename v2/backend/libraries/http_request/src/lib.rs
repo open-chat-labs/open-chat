@@ -47,13 +47,16 @@ pub fn continue_streaming_blob(token: Token, blob_storage: &BlobStorage) -> Stre
         let chunk_index = token.index.0.to_u32().unwrap();
         if let Some(bytes) = blob_storage.get_chunk(blob_id, chunk_index) {
             let next_chunk_index = chunk_index + 1;
-            if blob_storage.exists(blob_id, next_chunk_index) {
-                let token = Some(build_token(blob_id, next_chunk_index));
-                return StreamingCallbackHttpResponse {
-                    body: bytes.clone(),
-                    token,
-                };
-            }
+            let token = if blob_storage.exists(blob_id, next_chunk_index) {
+                Some(build_token(blob_id, next_chunk_index))
+            } else {
+                None
+            };
+
+            return StreamingCallbackHttpResponse {
+                body: bytes.clone(),
+                token,
+            };
         }
     };
 
