@@ -121,7 +121,7 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
     let now = runtime_state.env.now();
     let min_visible_event_index;
     let min_visible_message_index;
-    if runtime_state.data.history_visible_to_new_joiners {
+    if runtime_state.data.is_public {
         min_visible_event_index = EventIndex::default();
         min_visible_message_index = MessageIndex::default();
     } else {

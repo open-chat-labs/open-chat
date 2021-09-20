@@ -57,7 +57,6 @@ async fn create_group_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
         is_public: false,
         name: name.clone(),
         description: description.clone(),
-        history_visible_to_new_joiners: false,
     };
 
     let chat_id = create_group(&user1_agent, user1_id, &args, vec![user2_id, user3_id]).await;

@@ -99,12 +99,12 @@ type CreateGroupArgs =
         is_public: bool;
         name: text;
         description: text;
-        history_visible_to_new_joiners: bool;
     };
 
 type CreateGroupFieldTooLongResult =
     record {
-        chat_id: ChatId;
+        length_provided: nat32;
+        max_length: nat32;
     };
 
 type CreateGroupSuccessResult =

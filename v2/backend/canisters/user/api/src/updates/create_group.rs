@@ -10,7 +10,6 @@ pub struct Args {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub history_visible_to_new_joiners: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

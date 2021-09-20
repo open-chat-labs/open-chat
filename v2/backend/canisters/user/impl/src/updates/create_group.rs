@@ -68,7 +68,6 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             creator_principal: runtime_state.env.caller(),
             name: args.name,
             description: args.description,
-            history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         };
         Ok(PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,

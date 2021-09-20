@@ -68,8 +68,6 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<CreateCanist
             is_public: args.is_public,
             name: args.name.clone(),
             description: args.description.clone(),
-            // History is always visible on public groups
-            history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
             created_by_principal: args.creator_principal,
             created_by_user_id: user_id,
             mark_active_duration: MARK_ACTIVE_DURATION,
