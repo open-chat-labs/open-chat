@@ -50,6 +50,12 @@
         canvas
             .getContext("2d")
             ?.drawImage(originalImage, x, y, width, height, 0, 0, CROP_SIZE, CROP_SIZE);
+        // canvas.toBlob((blob: Blob | null) => {
+        //     if (blob) {
+        //         new Uint8Array(blob.arrayBuffer());
+        //     }
+        //     return new Uint8Array(blob!.arrayBuffer);
+        // }, "image/jpg");
         image = canvas.toDataURL("image/jpeg");
         showModal = false;
         dispatch("imageSelected", image);
