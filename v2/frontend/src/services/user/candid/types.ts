@@ -5,10 +5,8 @@ export interface AudioContent {
   'caption' : [] | [string],
 }
 export interface BlobReference {
-  'blob_size' : number,
   'blob_id' : bigint,
   'canister_id' : CanisterId,
-  'chunk_size' : number,
 }
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null };
@@ -145,6 +143,7 @@ export interface GroupChatSummary {
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
+  'avatar_blob_id' : [] | [bigint],
   'joined' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
@@ -158,6 +157,7 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
+  'avatar_blob_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
@@ -286,6 +286,7 @@ export interface NotificationEnvelope {
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
+  'avatar_blob_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface Participant {
@@ -426,6 +427,7 @@ export interface UserMessageMatch {
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
+  'avatar_blob_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export type V1ChatId = bigint;

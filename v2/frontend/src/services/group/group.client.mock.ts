@@ -68,10 +68,8 @@ function mockImageMessage(index: number): GroupMessage {
             width: 250,
             mimeType: "image/jpeg",
             blobReference: {
-                blobSize: CHUNK_SIZE_BYTES * 2,
                 blobId: BigInt(0),
                 canisterId: "doesnt_matter",
-                chunkSize: CHUNK_SIZE_BYTES,
             },
             thumbnailData: "",
         },

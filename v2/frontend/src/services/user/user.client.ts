@@ -35,6 +35,7 @@ import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { replace } from "svelte-spa-router";
+import type { BlobReference } from "../../domain/data/data";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -107,6 +108,10 @@ export class UserClient extends CandidService implements IUserClient {
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
         };
+    }
+
+    setAvatar(data: Uint8Array): Promise<BlobReference> {
+        return DataClient.create(this.identity, this.userId).setAvatar(data);
     }
 
     sendMessage(

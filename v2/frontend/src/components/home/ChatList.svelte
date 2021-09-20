@@ -11,14 +11,40 @@
     import { _ } from "svelte-i18n";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
+    import { toastStore } from "../../stores/toast";
 
     export let machine: ActorRefFrom<HomeMachine>;
 
+    $: user = $machine.context.user
+        ? $machine.context.userLookup[$machine.context.user?.userId]
+        : undefined;
+
     function filterChats(_event: { detail: string }) {}
+
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        // optimistic update
+        machine.send({
+            type: "UPDATE_USER_AVATAR",
+            data: {
+                blobData: ev.detail.data,
+                blobUrl: ev.detail.url,
+            },
+        });
+        $machine.context.serviceContainer
+            ?.setUserAvatar(ev.detail.data)
+            .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
+            .catch((_err) => console.log(_err));
+    }
 </script>
 
-{#if $machine.context.user}
-    <CurrentUser on:logout user={$machine.context.user} on:newchat on:joinGroup on:newGroup />
+{#if user}
+    <CurrentUser
+        on:userAvatarSelected={userAvatarSelected}
+        on:logout
+        {user}
+        on:newchat
+        on:joinGroup
+        on:newGroup />
     <div class="body">
         <SearchChats on:filter={filterChats} />
         {#if $machine.matches("loading_chats")}

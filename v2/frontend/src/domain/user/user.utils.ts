@@ -1,3 +1,4 @@
+import type { DataContent } from "../data/data";
 import {
     PartialUserSummary,
     PhoneNumber,
@@ -9,11 +10,8 @@ import {
 
 const ONLINE_THRESHOLD = 120;
 
-export function avatarUrl(userId: string): string {
-    // todo - we will use a dummy avatar url for the time being
-    return "https://i.pravatar.cc/300";
-    const url = new URL(window.location.toString());
-    return `${url.protocol}//${userId}${url.host}/avatar`;
+export function avatarUrl(dataContent: DataContent): string {
+    return dataContent.blobUrl ?? "../assets/unknownUserAvatar.svg";
 }
 
 export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {

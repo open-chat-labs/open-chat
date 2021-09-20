@@ -364,10 +364,8 @@ function fileContent(candid: ApiFileContent): FileContent {
 
 function blobReference(candid: ApiBlobReference): BlobReference {
     return {
-        blobSize: candid.blob_size,
         blobId: candid.blob_id,
         canisterId: candid.canister_id.toString(),
-        chunkSize: candid.chunk_size,
     };
 }
 

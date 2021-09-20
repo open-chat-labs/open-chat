@@ -6,6 +6,7 @@
     import { createEventDispatcher } from "svelte";
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
+    import { changeDimensions } from "../utils/media";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
@@ -14,7 +15,7 @@
     let avatar: string | null | undefined;
     let originalImage = new Image();
     let showModal = false;
-    let CROP_SIZE = 300;
+    let CROP_SIZE = 250;
     let cropData: CropData | undefined = undefined;
 
     function addPhoto() {
@@ -50,15 +51,17 @@
         canvas
             .getContext("2d")
             ?.drawImage(originalImage, x, y, width, height, 0, 0, CROP_SIZE, CROP_SIZE);
-        // canvas.toBlob((blob: Blob | null) => {
-        //     if (blob) {
-        //         new Uint8Array(blob.arrayBuffer());
-        //     }
-        //     return new Uint8Array(blob!.arrayBuffer);
-        // }, "image/jpg");
-        image = canvas.toDataURL("image/jpeg");
-        showModal = false;
-        dispatch("imageSelected", image);
+
+        canvas.toBlob(async (blob: Blob | null) => {
+            if (blob) {
+                const array = await blob.arrayBuffer();
+                const data = new Uint8Array(array);
+                image = canvas.toDataURL("image/jpg");
+                showModal = false;
+                console.log("image size: ", data.length);
+                dispatch("imageSelected", { url: image, data });
+            }
+        }, "image/jpg");
     }
 
     function onCrop(ev: CustomEvent<CropData>): void {

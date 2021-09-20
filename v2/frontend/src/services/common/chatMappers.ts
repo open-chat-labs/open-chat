@@ -82,9 +82,7 @@ function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
     return apiOptional(
         (b) => ({
             blob_id: b.blobId,
-            blob_size: b.blobSize,
             canister_id: Principal.fromText(b.canisterId),
-            chunk_size: b.chunkSize,
         }),
         domain
     );

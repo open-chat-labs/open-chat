@@ -1,3 +1,4 @@
+import type { DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent =
@@ -12,12 +13,6 @@ export interface CyclesContent {
     kind: "cycles_content";
     caption?: string;
     amount: bigint;
-}
-
-export interface DataContent {
-    blobReference?: BlobReference;
-    blobData?: Uint8Array;
-    url?: string;
 }
 
 export interface ImageContent extends DataContent {
@@ -56,13 +51,6 @@ export interface FileContent extends DataContent {
     name: string;
     caption?: string;
     mimeType: string;
-}
-
-export interface BlobReference {
-    blobSize: number;
-    blobId: bigint;
-    canisterId: string;
-    chunkSize: number;
 }
 
 export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;

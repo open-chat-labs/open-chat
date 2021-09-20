@@ -49,6 +49,10 @@ export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSu
     return {
         userId: candid.user_id.toString(),
         username: optional(candid.username, identity),
+        blobReference: optional(candid.avatar_blob_id, (id) => ({
+            blobId: id,
+            canisterId: candid.user_id.toString(),
+        })),
         secondsSinceLastOnline: candid.seconds_since_last_online,
     };
 }
@@ -58,6 +62,10 @@ export function userSummary(candid: ApiUserSummary): UserSummary {
         userId: candid.user_id.toString(),
         username: candid.username,
         secondsSinceLastOnline: candid.seconds_since_last_online,
+        blobReference: optional(candid.avatar_blob_id, (id) => ({
+            blobId: id,
+            canisterId: candid.user_id.toString(),
+        })),
     };
 }
 

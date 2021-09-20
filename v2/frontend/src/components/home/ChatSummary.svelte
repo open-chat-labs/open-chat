@@ -24,7 +24,7 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(chatSummary.them),
+                avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
             };
         }

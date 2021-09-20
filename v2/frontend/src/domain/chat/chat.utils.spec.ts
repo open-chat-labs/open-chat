@@ -1,4 +1,5 @@
-import type { UserLookup, UserSummary } from "../user/user";
+import { DataClient } from "../../services/data/data.client";
+import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
     GroupChatSummary,
@@ -509,19 +510,27 @@ describe("extract userids from chat summaries", () => {
     });
 });
 
+function createUser(userId: string, username: string, lastonline: number): PartialUserSummary {
+    return {
+        userId,
+        username,
+        secondsSinceLastOnline: lastonline,
+    };
+}
+
 describe("get participants string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
     const lookup: UserLookup = {
-        a: { userId: "a", username: "Mr A", secondsSinceLastOnline: 200 },
-        b: { userId: "b", username: "Mr B", secondsSinceLastOnline: 20 },
-        c: { userId: "c", username: "Mr C", secondsSinceLastOnline: 20 },
-        d: { userId: "d", username: "Mr D", secondsSinceLastOnline: 20 },
-        e: { userId: "e", username: "Mr E", secondsSinceLastOnline: 10 },
-        f: { userId: "f", username: "Mr F", secondsSinceLastOnline: 10 },
-        g: { userId: "g", username: "Mr G", secondsSinceLastOnline: 10 },
-        z: { userId: "z", username: "Mr Z", secondsSinceLastOnline: 10 },
+        a: createUser("a", "Mr A", 200),
+        b: createUser("b", "Mr B", 20),
+        c: createUser("c", "Mr C", 20),
+        d: createUser("d", "Mr D", 20),
+        e: createUser("e", "Mr E", 10),
+        f: createUser("f", "Mr F", 10),
+        g: createUser("g", "Mr G", 10),
+        z: createUser("z", "Mr Z", 10),
     };
 
     const user = lookup.z as UserSummary;

@@ -13,8 +13,8 @@
     let videoPlayer: HTMLVideoElement;
 
     onDestroy(() => {
-        content.videoData.url && URL.revokeObjectURL(content.videoData.url);
-        content.imageData.url && URL.revokeObjectURL(content.imageData.url);
+        content.videoData.blobUrl && URL.revokeObjectURL(content.videoData.blobUrl);
+        content.imageData.blobUrl && URL.revokeObjectURL(content.imageData.blobUrl);
     });
 </script>
 
@@ -23,12 +23,12 @@
         bind:this={videoPlayer}
         preload="none"
         {style}
-        poster={content.imageData.url}
+        poster={content.imageData.blobUrl}
         class:landscape
         controls>
         <track kind="captions" />
-        {#if content.videoData.url}
-            <source src={content.videoData.url} />
+        {#if content.videoData.blobUrl}
+            <source src={content.videoData.blobUrl} />
         {/if}
     </video>
 </div>

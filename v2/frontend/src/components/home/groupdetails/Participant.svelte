@@ -52,7 +52,7 @@
 <div class="participant" class:me on:click={participantSelected} role="button">
     <span class="avatar">
         <Avatar
-            url={avatarUrl(participant.userId)}
+            url={avatarUrl(participant)}
             status={getUserStatus(userLookup, participant.userId)}
             size={AvatarSize.Small} />
 

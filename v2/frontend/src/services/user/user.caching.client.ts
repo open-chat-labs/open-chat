@@ -24,6 +24,7 @@ import {
 } from "../../utils/caching";
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
+import type { BlobReference } from "../../domain/data/data";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -96,5 +97,9 @@ export class CachingUserClient implements IUserClient {
 
     markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return this.client.markMessagesRead(userId, ranges);
+    }
+
+    setAvatar(data: Uint8Array): Promise<BlobReference> {
+        return this.client.setAvatar(data);
     }
 }

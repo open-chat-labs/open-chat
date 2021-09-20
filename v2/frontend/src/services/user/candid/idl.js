@@ -31,10 +31,8 @@ export const idlFactory = ({ IDL }) => {
     'from_index' : EventIndex,
   });
   const BlobReference = IDL.Record({
-    'blob_size' : IDL.Nat32,
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
-    'chunk_size' : IDL.Nat32,
   });
   const FileContent = IDL.Record({
     'name' : IDL.Text,
@@ -303,6 +301,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'avatar_blob_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
@@ -331,6 +330,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Vec(MessageIndexRange),
+    'avatar_blob_id' : IDL.Opt(IDL.Nat),
     'joined' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
