@@ -60,8 +60,4 @@ export class CachingGroupClient implements IGroupClient {
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return this.client.markMessagesRead(ranges);
     }
-
-    setAvatar(data: Uint8Array): Promise<BlobReference> {
-        return this.client.setAvatar(data);
-    }
 }

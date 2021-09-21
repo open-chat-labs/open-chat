@@ -1,6 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import type {
-    BlobReference,
     CyclesContent,
     FileContent,
     ImageContent,
@@ -9,6 +8,7 @@ import type {
     MessageContent,
     TextContent,
 } from "../../domain/chat/chat";
+import type { BlobReference } from "../../domain/data/data";
 import { identity } from "../../utils/mapping";
 import type {
     ApiBlobReference,
@@ -105,5 +105,6 @@ function apiFileContent(domain: FileContent): ApiFileContent {
         mime_type: domain.mimeType,
         blob_reference: apiBlobReference(domain.blobReference),
         caption: apiOptional(identity, domain.caption),
+        file_size: domain.fileSize,
     };
 }

@@ -10,6 +10,11 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface Avatar {
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
+}
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -39,8 +44,20 @@ export interface ConfirmationCodeSms {
   'phone_number' : string,
 }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export interface DeletedDirectMessage {
+  'sent_by_me' : boolean,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
+export interface DeletedGroupMessage {
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : MessageDeleted } |
+  { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
@@ -83,9 +100,14 @@ export interface DirectMessageNotification {
 export type DirectReplyContext = { 'Private' : PrivateReplyContext } |
   { 'Standard' : StandardReplyContext };
 export type EventIndex = number;
+export interface FieldTooLongResult {
+  'length_provided' : number,
+  'max_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
+  'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
@@ -102,7 +124,9 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : MessageDeleted } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'DeletedMessage' : DeletedGroupMessage } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
   'event' : GroupChatEvent,
@@ -201,6 +225,10 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
+export interface MessageDeleted {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {

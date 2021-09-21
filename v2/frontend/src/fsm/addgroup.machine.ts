@@ -8,7 +8,6 @@ import type { CandidateGroupChat, CreateGroupResponse } from "../domain/chat/cha
 import { pure } from "xstate/lib/actions";
 import { push } from "svelte-spa-router";
 import type { ApiAddParticipantsResponse } from "../services/group/candid/idl";
-import type { BlobReference } from "../domain/data/data";
 
 export interface AddGroupContext {
     user: UserSummary;
@@ -26,8 +25,6 @@ export const nullGroup = {
     participants: [],
 };
 
-type CreatedGroup = { createGroupResponse: CreateGroupResponse; setAvatarResponse?: BlobReference };
-
 export type AddGroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
     | { type: "COMPLETE" }
@@ -37,7 +34,7 @@ export type AddGroupEvents =
     | { type: "REMOVE_PARTICIPANT"; data: string }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error }
-    | { type: "done.invoke.createGroup"; data: CreatedGroup }
+    | { type: "done.invoke.createGroup"; data: CreateGroupResponse }
     | { type: "error.platform.createGroup"; data: Error }
     | { type: "done.invoke.addParticipants"; data: ApiAddParticipantsResponse }
     | { type: "error.platform.addParticipants"; data: Error };
@@ -45,16 +42,7 @@ export type AddGroupEvents =
 const liveConfig: Partial<MachineOptions<AddGroupContext, AddGroupEvents>> = {
     services: {
         createGroup: (ctx, _) => {
-            return ctx.serviceContainer.createGroupChat(ctx.candidateGroup).then((resp) => {
-                if (resp.kind === "success" && ctx.candidateGroup.avatar?.blobData) {
-                    return ctx.serviceContainer
-                        .setGroupAvatar(resp.canisterId, ctx.candidateGroup.avatar.blobData)
-                        .then((avatarResp) => {
-                            return { createGroupResponse: resp, setAvatarResponse: avatarResp };
-                        });
-                }
-                return { createGroupResponse: resp };
-            });
+            return ctx.serviceContainer.createGroupChat(ctx.candidateGroup);
         },
         addParticipants: (ctx, _) => {
             return ctx.serviceContainer.addParticipants(
@@ -71,7 +59,7 @@ function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefine
     if (resp.kind === "internal_error") return "groupCreationFailed";
     if (resp.kind === "invalid_name") return "groupNameInvalid";
     if (resp.kind === "name_too_long") return "groupNameTooLong";
-    if (resp.kind === "public_group_already_exists") return "groupAlreadyExists";
+    if (resp.kind === "group_name_taken") return "groupAlreadyExists";
     if (resp.kind === "throttled") return "groupCreationFailed";
 }
 
@@ -89,30 +77,30 @@ export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
                         src: "createGroup",
                         onDone: [
                             {
-                                cond: (_, ev: DoneInvokeEvent<CreatedGroup>) =>
-                                    ev.data.createGroupResponse.kind !== "success",
+                                cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
+                                    ev.data.kind !== "success",
                                 target: ["#group_form", "idle"],
                                 actions: pure((_ctx, ev) => {
-                                    const err = groupCreationErrorMessage(
-                                        ev.data.createGroupResponse
-                                    );
+                                    const err = groupCreationErrorMessage(ev.data);
                                     if (err) toastStore.showFailureToast(err);
                                     return [];
                                 }),
                             },
                             {
-                                cond: (_, ev: DoneInvokeEvent<CreatedGroup>) =>
-                                    ev.data.createGroupResponse.kind === "success",
+                                cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
+                                    ev.data.kind === "success",
                                 target: "created",
-                                actions: assign((_ctx, ev: DoneInvokeEvent<CreatedGroup>) => {
-                                    if (ev.data.createGroupResponse.kind === "success") {
-                                        return {
-                                            createdGroupId: ev.data.createGroupResponse.canisterId,
-                                            error: undefined,
-                                        };
+                                actions: assign(
+                                    (_ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
+                                        if (ev.data.kind === "success") {
+                                            return {
+                                                createdGroupId: ev.data.canisterId,
+                                                error: undefined,
+                                            };
+                                        }
+                                        return {};
                                     }
-                                    return {};
-                                }),
+                                ),
                             },
                         ],
                         onError: {

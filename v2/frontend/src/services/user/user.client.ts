@@ -26,6 +26,7 @@ import {
     leaveGroupResponse,
     markReadResponse,
     sendMessageResponse,
+    setAvatarResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { mergeChatUpdates } from "../../domain/chat/chat.utils";
@@ -34,7 +35,6 @@ import { UserClientMock } from "./user.client.mock";
 import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import { replace } from "svelte-spa-router";
 import type { BlobReference } from "../../domain/data/data";
 
 export class UserClient extends CandidService implements IUserClient {
@@ -63,6 +63,13 @@ export class UserClient extends CandidService implements IUserClient {
                 name: group.name,
                 description: group.description,
                 history_visible_to_new_joiners: group.historyVisible,
+                avatar: apiOptional((data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data: Array.from(data),
+                        mime_type: "image/jpg",
+                    };
+                }, group.avatar?.blobData),
             }),
             createGroupResponse
         );
@@ -74,7 +81,8 @@ export class UserClient extends CandidService implements IUserClient {
         toIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.handleResponse(
-            this.userService.events({
+            // todo - will come back and refactor this to the new endpoint in another PR
+            this.userService.events_range({
                 user_id: Principal.fromText(userId),
                 to_index: toIndex,
                 from_index: fromIndex,
@@ -110,8 +118,24 @@ export class UserClient extends CandidService implements IUserClient {
         };
     }
 
-    setAvatar(data: Uint8Array): Promise<BlobReference> {
-        return DataClient.create(this.identity, this.userId).setAvatar(data);
+    setAvatar(bytes: Uint8Array): Promise<BlobReference> {
+        const blobId = DataClient.newBlobId();
+        return this.handleResponse(
+            this.userService.set_avatar({
+                id: blobId,
+                data: Array.from(bytes),
+                mime_type: "image/jpg",
+            }),
+            setAvatarResponse
+        ).then((resp) => {
+            if (resp === "success") {
+                return {
+                    blobId,
+                    canisterId: this.userId,
+                };
+            }
+            throw new Error("Unable to set avatar");
+        });
     }
 
     sendMessage(

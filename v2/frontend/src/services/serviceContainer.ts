@@ -294,8 +294,4 @@ export class ServiceContainer {
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.userClient.setAvatar(data);
     }
-
-    setGroupAvatar(chatId: string, data: Uint8Array): Promise<BlobReference> {
-        return this.getGroupClient(chatId).setAvatar(data);
-    }
 }

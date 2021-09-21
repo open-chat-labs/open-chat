@@ -9,7 +9,6 @@ import type {
     MessageIndexRange,
     MarkReadResponse,
 } from "../../domain/chat/chat";
-import type { BlobReference } from "../../domain/data/data";
 
 export interface IGroupClient {
     chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>>;
@@ -19,5 +18,4 @@ export interface IGroupClient {
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
-    setAvatar(data: Uint8Array): Promise<BlobReference>;
 }

@@ -156,8 +156,4 @@ export class GroupClientMock implements IGroupClient {
             }, 300);
         });
     }
-
-    setAvatar(_data: Uint8Array): Promise<BlobReference> {
-        throw new Error("not implemented");
-    }
 }

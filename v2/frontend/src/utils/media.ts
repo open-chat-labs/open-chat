@@ -123,8 +123,7 @@ export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
 
 export function messageMetaData(content: MessageContent): string | undefined {
     if (content.kind === "file_content") {
-        const size = content.blobData?.byteLength ?? content.blobReference?.blobSize ?? 0;
-        return `${content.mimeType}-${(size / 1000).toFixed(2)}kb`;
+        return `${content.mimeType}-${(content.fileSize / 1000).toFixed(2)}kb`;
     }
 }
 
@@ -222,6 +221,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     mimeType: mimeType,
                     blobData: new Uint8Array(data),
                     blobUrl: blobUrl,
+                    fileSize: data.byteLength,
                 };
             }
             resolve(content);

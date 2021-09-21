@@ -27,7 +27,6 @@ import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import type { BlobReference } from "../../domain/data/data";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -50,7 +49,8 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
         return this.handleResponse(
-            this.groupService.events({
+            //todo - refactor this use the new method
+            this.groupService.events_range({
                 to_index: toIndex,
                 from_index: fromIndex,
             }),
@@ -120,9 +120,5 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             markReadResponse
         );
-    }
-
-    setAvatar(data: Uint8Array): Promise<BlobReference> {
-        return DataClient.create(this.identity, this.chatId).setAvatar(data);
     }
 }

@@ -51,6 +51,7 @@ export interface FileContent extends DataContent {
     name: string;
     caption?: string;
     mimeType: string;
+    fileSize: number;
 }
 
 export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
@@ -286,7 +287,8 @@ export type CreateGroupResponse =
     | CreateGroupInvalidName
     | CreateGroupNameTooLong
     | CreateGroupDescriptionTooLong
-    | CreateGroupPublicGroupAlreadyExists
+    | GroupNameTaken
+    | AvatarTooBig
     | CreateGroupThrottled;
 
 export type CreateGroupSuccess = {
@@ -310,8 +312,12 @@ export type CreateGroupDescriptionTooLong = {
     kind: "description_too_long";
 };
 
-export type CreateGroupPublicGroupAlreadyExists = {
-    kind: "public_group_already_exists";
+export type GroupNameTaken = {
+    kind: "group_name_taken";
+};
+
+export type AvatarTooBig = {
+    kind: "avatar_too_big";
 };
 
 export type CreateGroupThrottled = {
@@ -400,7 +406,10 @@ export type PutChunkResponse =
     | "put_chunk_too_big"
     | "chunk_already_exists"
     | "caller_not_in_group"
+    | "blob_too_big"
     | "blob_already_exists";
+
+export type SetAvatarResponse = "avatar_too_big" | "success";
 
 export type ChangeAdminResponse =
     | "user_not_in_group"
