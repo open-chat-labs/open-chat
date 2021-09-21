@@ -7,6 +7,8 @@ use user_canister::put_chunk::*;
 use user_index_canister::c2c_set_avatar;
 use utils::blob_storage::PutChunkResult;
 
+const MAX_AVATAR_CHUNK_COUNT: u32 = 2;
+
 #[update]
 fn put_avatar_chunk(args: Args) -> Response {
     check_cycles_balance();
@@ -18,6 +20,10 @@ fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     runtime_state.trap_if_caller_not_owner();
 
     let now = runtime_state.env.now();
+
+    if args.total_chunks > MAX_AVATAR_CHUNK_COUNT {
+        return BlobTooBig;
+    }
 
     match runtime_state.data.blob_storage.put_chunk(
         args.blob_id,

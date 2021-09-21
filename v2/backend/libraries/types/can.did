@@ -131,6 +131,12 @@ type DirectReplyContext =
         Private: PrivateReplyContext;
     };
 
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
 type FileContent =
     record {
         name: text;

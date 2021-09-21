@@ -70,30 +70,6 @@ fn build_avatar_location(blob_id: u128) -> String {
     format!("/avatar/{}", blob_id)
 }
 
-enum RequestType {
-    Avatar(Option<u128>),
-    Blob(u128),
-    Other,
-}
-
-fn extract_request_type(path: &str) -> RequestType {
-    let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
-
-    if path == "avatar" {
-        return RequestType::Avatar(None);
-    } else if let Some(parts) = path.split_once('/') {
-        if let Ok(blob_id) = u128::from_str(parts.1) {
-            if parts.0 == "blobs" {
-                return RequestType::Blob(blob_id);
-            } else if parts.0 == "avatar" {
-                return RequestType::Avatar(Some(blob_id));
-            }
-        }
-    }
-
-    RequestType::Other
-}
-
 fn start_stream_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blob_id: u128) -> Option<HttpResponse> {
     const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
@@ -132,6 +108,30 @@ fn build_token(blob_id: u128, index: u32) -> Token {
         index: index.into(),
         sha256: None,
     }
+}
+
+enum RequestType {
+    Avatar(Option<u128>),
+    Blob(u128),
+    Other,
+}
+
+fn extract_request_type(path: &str) -> RequestType {
+    let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
+
+    if path == "avatar" {
+        return RequestType::Avatar(None);
+    } else if let Some(parts) = path.split_once('/') {
+        if let Ok(blob_id) = u128::from_str(parts.1) {
+            if parts.0 == "blobs" {
+                return RequestType::Blob(blob_id);
+            } else if parts.0 == "avatar" {
+                return RequestType::Avatar(Some(blob_id));
+            }
+        }
+    }
+
+    RequestType::Other
 }
 
 #[cfg(test)]

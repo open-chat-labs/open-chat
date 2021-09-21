@@ -4,6 +4,8 @@ use group_canister::put_avatar_chunk::*;
 use ic_cdk_macros::update;
 use utils::blob_storage::PutChunkResult;
 
+const MAX_AVATAR_CHUNK_COUNT: u32 = 2;
+
 #[update]
 fn put_avatar_chunk(args: Args) -> Response {
     RUNTIME_STATE.with(|state| put_avatar_chunk_impl(args, state.borrow_mut().as_mut().unwrap()))
@@ -11,6 +13,11 @@ fn put_avatar_chunk(args: Args) -> Response {
 
 fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
+
+    if args.total_chunks > MAX_AVATAR_CHUNK_COUNT {
+        return BlobTooBig;
+    }
+
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.role.can_set_avatar() {
             let now = runtime_state.env.now();
@@ -41,5 +48,5 @@ fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         }
     }
 
-    CallerNotGroupAdmin
+    NotAuthorized
 }

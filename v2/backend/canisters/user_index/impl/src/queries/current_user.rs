@@ -48,6 +48,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     username: u.username.clone(),
                     account_balance: 0,
                     canister_upgrade_status,
+                    avatar_blob_id: u.avatar_blob_id,
                 })
             }
         }

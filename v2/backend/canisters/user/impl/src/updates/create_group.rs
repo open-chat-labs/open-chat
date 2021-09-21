@@ -1,9 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
+use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, ChatId};
+use types::{CanisterId, ChatId, FieldTooLongResult};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
@@ -26,7 +27,7 @@ async fn create_group(args: Args) -> Response {
                 RUNTIME_STATE.with(|state| commit(r.chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
-            c2c_create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
+            c2c_create_group::Response::NameTaken => NameTaken,
             c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
             c2c_create_group::Response::InternalError => InternalError,
         },

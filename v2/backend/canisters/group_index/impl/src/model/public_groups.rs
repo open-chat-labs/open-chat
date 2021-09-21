@@ -21,7 +21,7 @@ impl PublicGroups {
     }
 
     pub fn reserve_name(&mut self, name: String, now: TimestampMillis) -> bool {
-        if self.name_to_id_map.contains_key(&name) {
+        if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
             false
         } else {
             match self.groups_pending.entry(name) {
@@ -75,6 +75,22 @@ impl PublicGroups {
 
         all_matches.iter().take(max_results as usize).map(|m| m.1.into()).collect()
     }
+
+    pub fn update_group(&mut self, chat_id: &ChatId, name: String, description: String) -> UpdateGroupResult {
+        match self.groups.get_mut(chat_id) {
+            None => UpdateGroupResult::ChatNotFound,
+            Some(mut group) => {
+                if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
+                    UpdateGroupResult::NameTaken
+                } else {
+                    self.name_to_id_map.remove(&group.name);
+                    group.name = name;
+                    group.description = description;
+                    UpdateGroupResult::Success
+                }
+            }
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -87,6 +103,12 @@ pub struct PublicGroupInfo {
     marked_active_until: TimestampMillis,
     wasm_version: Version,
     cycle_top_ups: Vec<CyclesTopUp>,
+}
+
+pub enum UpdateGroupResult {
+    Success,
+    ChatNotFound,
+    NameTaken,
 }
 
 impl PublicGroupInfo {

@@ -35,19 +35,6 @@ type MarkReadResponse =
         NotInGroup;
     };
 
-type SetAvatarArgs =
-    record {
-        mime_type: text;
-        bytes: vec nat8;
-    };
-
-type SetAvatarResponse =
-    variant {
-        Success;
-        FileTooBig: nat32;
-        InvalidMimeType: nat32;
-    };
-
 type BlockUserArgs =
     record {
         user_id: UserId;
@@ -166,6 +153,7 @@ type PutAvatarChunkResponse =
         BlobAlreadyExists;
         ChunkAlreadyExists;
         ChunkTooBig;
+        BlobTooBig;
         Full;
     };
 
@@ -186,6 +174,23 @@ type PutChunkResponse =
         ChunkAlreadyExists;
         ChunkTooBig;
         Full;
+    };
+
+type UpdateGroupArgs =
+    record {
+        name: text;
+        description: text;
+    };
+
+type UpdateGroupResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        NameTooLong: FieldTooLongResult;
+        DescriptionTooLong: FieldTooLongResult;
+        Unchanged;
+        NameTaken;
+        InternalError;
     };
 
 type SummaryArgs =
@@ -286,13 +291,13 @@ type MetricsResponse =
 
 service: {
     // Admin only
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
+    update_group(UpdateGroupArgs) -> (UpdateGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
