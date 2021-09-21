@@ -1,12 +1,13 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatId, FieldTooLongResult};
+use types::{Avatar, ChatId, FieldTooLongResult};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
     pub description: String,
+    pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
 }
 
@@ -15,6 +16,7 @@ pub enum Response {
     Success(SuccessResult),
     NameTooLong(FieldTooLongResult),
     DescriptionTooLong(FieldTooLongResult),
+    AvatarTooBig(FieldTooLongResult),
     NameTaken,
     Throttled,
     InternalError,

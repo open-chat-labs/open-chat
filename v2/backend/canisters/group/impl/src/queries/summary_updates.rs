@@ -29,7 +29,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
                 name: updates_from_events.name,
                 description: updates_from_events.description,
-                avatar_blob_id: runtime_state.data.avatar_blob_id,
+                avatar_id: runtime_state.data.avatar.as_ref().map(|a| a.id),
                 participants_added_or_updated: updates_from_events.participants_added_or_updated,
                 participants_removed: updates_from_events.participants_removed,
                 latest_message: updates_from_events.latest_message,
@@ -50,7 +50,7 @@ struct UpdatesFromEvents {
     latest_update: Option<TimestampMillis>,
     name: Option<String>,
     description: Option<String>,
-    avatar_blob_id: Option<u128>,
+    avatar_id: Option<u128>,
     participants_added_or_updated: Vec<Participant>,
     participants_removed: Vec<UserId>,
     latest_message: Option<EventWrapper<GroupMessage>>,
@@ -64,8 +64,6 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
         runtime_state,
         users_updated: HashSet::new(),
     };
-
-    let mut avatar_changed = false;
 
     // Iterate through events starting from most recent
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
@@ -95,9 +93,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
                 }
             }
             GroupChatEventInternal::AvatarChanged(a) => {
-                if !avatar_changed {
-                    updates.avatar_blob_id = a.new_avatar;
-                    avatar_changed = true;
+                if updates.avatar_id.is_none() {
+                    updates.avatar_id = Some(a.new_avatar);
                 }
             }
             GroupChatEventInternal::ParticipantsAdded(p) => {

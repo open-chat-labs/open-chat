@@ -15,6 +15,13 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
+type Avatar = 
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
 type BlobReference =
     record {
         canister_id: CanisterId;

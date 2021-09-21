@@ -4,7 +4,7 @@ use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, ChatId, FieldTooLongResult};
+use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
@@ -63,6 +63,15 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
+    } else if args
+        .avatar
+        .as_ref()
+        .map_or(false, |a| a.data.len() > MAX_AVATAR_SIZE as usize)
+    {
+        Err(AvatarTooBig(FieldTooLongResult {
+            length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
+            max_length: MAX_AVATAR_SIZE as u32,
+        }))
     } else {
         let create_group_args = c2c_create_group::Args {
             is_public: args.is_public,
@@ -70,6 +79,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             name: args.name,
             description: args.description,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
+            avatar: args.avatar,
         };
         Ok(PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,

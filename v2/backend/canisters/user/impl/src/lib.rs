@@ -3,7 +3,7 @@ use crate::model::group_chats::GroupChats;
 use candid::Principal;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, UserId, Version};
+use types::{Avatar, CanisterId, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -50,7 +50,7 @@ pub struct Data {
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
-    pub avatar_blob_id: Option<u128>,
+    pub avatar: Option<Avatar>,
 }
 
 impl Data {
@@ -71,7 +71,7 @@ impl Data {
             notification_canister_ids,
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            avatar_blob_id: None,
+            avatar: None,
         }
     }
 }

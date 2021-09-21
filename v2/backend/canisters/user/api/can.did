@@ -99,6 +99,7 @@ type CreateGroupArgs =
         is_public: bool;
         name: text;
         description: text;
+        avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
     };
 
@@ -112,6 +113,7 @@ type CreateGroupResponse =
         Success: CreateGroupSuccessResult;
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
+        AvatarTooBig: FieldTooLongResult;
         NameTaken;
         Throttled;
         InternalError;
@@ -143,6 +145,19 @@ type LeaveGroupResponse =
         GroupNotFound;
         InternalError: text;
         NotInGroup;
+    }; 
+
+type SetAvatarArgs =
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        AvatarTooBig: FieldTooLongResult;
     }; 
 
 type GroupChatUpdatesSince =
@@ -279,12 +294,12 @@ service: (InitArgs) -> {
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
-    put_avatar_chunk: (PutChunkArgs) -> (PutChunkResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
-
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+    
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

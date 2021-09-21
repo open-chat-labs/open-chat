@@ -45,7 +45,7 @@ pub struct GroupDescriptionChanged {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct AvatarChanged {
-    pub new_avatar: Option<u128>,
+    pub new_avatar: u128,
     pub previous_avatar: Option<u128>,
     pub changed_by: UserId,
 }

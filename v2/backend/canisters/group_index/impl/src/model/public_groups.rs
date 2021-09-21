@@ -20,11 +20,11 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn reserve_name(&mut self, name: String, now: TimestampMillis) -> bool {
-        if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
+    pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
+        if self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name) {
             false
         } else {
-            match self.groups_pending.entry(name) {
+            match self.groups_pending.entry(name.to_owned()) {
                 Occupied(_) => false,
                 Vacant(e) => {
                     e.insert(now);
@@ -80,7 +80,7 @@ impl PublicGroups {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(mut group) => {
-                if self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name) {
+                if group.name != name && (self.name_to_id_map.contains_key(&name) || self.groups_pending.contains_key(&name)) {
                     UpdateGroupResult::NameTaken
                 } else {
                     self.name_to_id_map.remove(&group.name);

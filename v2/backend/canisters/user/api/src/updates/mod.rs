@@ -10,4 +10,5 @@ pub mod leave_group;
 pub mod mark_read;
 pub mod put_chunk;
 pub mod send_message;
+pub mod set_avatar;
 pub mod unblock_user;

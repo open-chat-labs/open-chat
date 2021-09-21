@@ -9,7 +9,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let canister_id = runtime_state.env.canister_id();
         let canister_data = CanisterData {
             blob_storage: &runtime_state.data.blob_storage,
-            avatar_blob_id: runtime_state.data.avatar_blob_id,
+            avatar: &runtime_state.data.avatar,
         };
         http_request_impl(request, canister_id, canister_data)
     }
