@@ -50,6 +50,7 @@ pub struct FileContent {
     pub name: String,
     pub caption: Option<String>,
     pub mime_type: String,
+    pub file_size: u32,
     pub blob_reference: Option<BlobReference>,
 }
 

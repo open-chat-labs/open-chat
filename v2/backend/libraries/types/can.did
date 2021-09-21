@@ -136,6 +136,7 @@ type FileContent =
         name: text;
         caption: opt text;
         mime_type: text;
+        file_size: nat32;
         blob_reference: opt BlobReference;
     };
 
