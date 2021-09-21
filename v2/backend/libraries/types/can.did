@@ -205,7 +205,7 @@ type GroupChatSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
         is_public: bool;
         min_visible_event_index: EventIndex;
         min_visible_message_index: MessageIndex;
@@ -222,7 +222,7 @@ type GroupChatSummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;

@@ -59,6 +59,7 @@ import { UnsupportedValueError } from "../../utils/error";
 import type { BlobReference } from "../../domain/data/data";
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
+    console.log(candid);
     if ("Success" in candid) {
         return "success";
     }
@@ -259,7 +260,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 candid.Group.participants_removed.map((p) => p.toString())
             ),
             latestEventIndex: optional(candid.Group.latest_event_index, identity),
-            avatarBlobReference: optional(candid.Group.avatar_blob_id, (blobId) => ({
+            avatarBlobReference: optional(candid.Group.avatar_id, (blobId) => ({
                 blobId,
                 canisterId: candid.Group.chat_id.toString(),
             })),
@@ -305,7 +306,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
-            blobReference: optional(candid.Group.avatar_blob_id, (blobId) => ({
+            blobReference: optional(candid.Group.avatar_id, (blobId) => ({
                 blobId,
                 canisterId: candid.Group.chat_id.toString(),
             })),

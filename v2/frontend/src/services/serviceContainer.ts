@@ -222,7 +222,10 @@ export class ServiceContainer {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser();
+        return this._userIndexClient.getCurrentUser().then((user) => {
+            console.log(user);
+            return user;
+        });
     }
 
     upgradeUser(): Promise<UpgradeCanisterResponse> {
