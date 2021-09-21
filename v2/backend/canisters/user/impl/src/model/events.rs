@@ -16,10 +16,10 @@ pub struct Events {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEventInternal {
-    Message(MessageInternal),
-    DeletedMessage(DeletedDirectMessage),
+    Message(Box<MessageInternal>),
+    DeletedMessage(Box<DeletedDirectMessage>),
     DirectChatCreated(DirectChatCreated),
-    MessageDeleted(MessageId),
+    MessageDeleted(Box<MessageId>),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -79,7 +79,7 @@ impl Events {
             }),
         };
         let message = self.hydrate_message(&message_internal);
-        let event_index = self.push_event(DirectChatEventInternal::Message(message_internal), args.now);
+        let event_index = self.push_event(DirectChatEventInternal::Message(Box::new(message_internal)), args.now);
         (event_index, message)
     }
 
@@ -98,14 +98,14 @@ impl Events {
                     _ => return DeleteMessageResult::NotFound,
                 };
 
-                let deletion_event_index = self.push_event(DirectChatEventInternal::MessageDeleted(message_id), now);
+                let deletion_event_index = self.push_event(DirectChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                 let event = self.get_internal_mut(event_index).unwrap();
-                event.event = DirectChatEventInternal::DeletedMessage(DeletedDirectMessage {
+                event.event = DirectChatEventInternal::DeletedMessage(Box::new(DeletedDirectMessage {
                     message_index: deleted_message.message_index,
                     message_id: deleted_message.message_id,
                     sent_by_me: true,
                     deletion_event_index,
-                })
+                }))
             }
         }
 
@@ -244,11 +244,11 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
             DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
-            DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(d.clone()),
+            DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(*d.clone()),
             DirectChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
             DirectChatEventInternal::MessageDeleted(message_id) => DirectChatEvent::MessageDeleted(MessageDeleted {
                 deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
-                message_id: *message_id,
+                message_id: **message_id,
             }),
         };
 
@@ -316,5 +316,17 @@ impl Events {
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+
+    #[test]
+    fn enum_size() {
+        let size = size_of::<DirectChatEventInternal>();
+        assert_eq!(size, 16);
     }
 }

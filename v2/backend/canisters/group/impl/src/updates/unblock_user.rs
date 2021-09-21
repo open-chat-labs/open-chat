@@ -35,7 +35,7 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .push_event(GroupChatEventInternal::UsersUnblocked(event), now);
+                .push_event(GroupChatEventInternal::UsersUnblocked(Box::new(event)), now);
 
             handle_activity_notification(runtime_state);
             Success
