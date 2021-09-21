@@ -3,7 +3,7 @@ use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
 use std::cell::RefCell;
-use types::{CanisterId, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -38,6 +38,7 @@ pub struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,
+    pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
     pub events: Events,
@@ -48,7 +49,6 @@ pub struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
-    pub avatar_blob_id: Option<u128>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -57,6 +57,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
+        avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -72,6 +73,7 @@ impl Data {
             is_public,
             name,
             description,
+            avatar,
             history_visible_to_new_joiners,
             participants,
             events,
@@ -82,7 +84,6 @@ impl Data {
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            avatar_blob_id: None,
         }
     }
 }

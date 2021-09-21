@@ -970,6 +970,7 @@ dependencies = [
  "range-set",
  "search",
  "serde",
+ "serde_bytes",
  "types",
  "user_canister",
  "user_canister_c2c_client",

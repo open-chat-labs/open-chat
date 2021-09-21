@@ -8,7 +8,9 @@ use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged};
+use types::{
+    AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, MAX_AVATAR_SIZE,
+};
 
 #[update]
 async fn update_group(args: Args) -> Response {
@@ -65,11 +67,18 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
+    } else if args
+        .avatar
+        .as_ref()
+        .map_or(false, |a| a.data.len() > MAX_AVATAR_SIZE as usize)
+    {
+        Err(AvatarTooBig(FieldTooLongResult {
+            length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
+            max_length: MAX_AVATAR_SIZE as u32,
+        }))
     } else if let Some(participant) = runtime_state.data.participants.get_by_principal(caller) {
         if !participant.role.can_update_group() {
             Err(NotAuthorized)
-        } else if runtime_state.data.name != args.name && runtime_state.data.description != args.description {
-            Err(Unchanged)
         } else {
             Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
@@ -85,35 +94,45 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 fn commit(args: Args, runtime_state: &mut RuntimeState) {
     let user_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
+    let events = &mut runtime_state.data.events;
 
     if runtime_state.data.name != args.name {
-        let event = GroupNameChanged {
-            new_name: args.name.clone(),
-            previous_name: runtime_state.data.name.clone(),
-            changed_by: user_id,
-        };
-
-        runtime_state
-            .data
-            .events
-            .push_event(GroupChatEventInternal::GroupNameChanged(Box::new(event)), now);
+        events.push_event(
+            GroupChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
+                new_name: args.name.clone(),
+                previous_name: runtime_state.data.name.clone(),
+                changed_by: user_id,
+            })),
+            now,
+        );
 
         runtime_state.data.name = args.name;
     }
 
     if runtime_state.data.description != args.description {
-        let event = GroupDescriptionChanged {
-            new_description: args.description.clone(),
-            previous_description: runtime_state.data.description.clone(),
-            changed_by: user_id,
-        };
-
-        runtime_state
-            .data
-            .events
-            .push_event(GroupChatEventInternal::GroupDescriptionChanged(Box::new(event)), now);
+        events.push_event(
+            GroupChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
+                new_description: args.description.clone(),
+                previous_description: runtime_state.data.description.clone(),
+                changed_by: user_id,
+            })),
+            now,
+        );
 
         runtime_state.data.description = args.description;
+    }
+
+    if let Some(avatar) = args.avatar {
+        events.push_event(
+            GroupChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
+                new_avatar: avatar.id,
+                previous_avatar: runtime_state.data.avatar.as_ref().map(|a| a.id),
+                changed_by: runtime_state.env.caller().into(),
+            })),
+            now,
+        );
+
+        runtime_state.data.avatar = Some(avatar);
     }
 
     handle_activity_notification(runtime_state);
