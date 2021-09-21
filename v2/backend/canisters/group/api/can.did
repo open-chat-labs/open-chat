@@ -232,7 +232,7 @@ type SummaryUpdatesResponse =
         NotInGroup;
     };
 
-type EventsArgs =
+type EventsRangeArgs =
     record {
         from_index: EventIndex;
         to_index: EventIndex;
@@ -321,7 +321,7 @@ service: {
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
-    events: (EventsArgs) -> (EventsResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsRangeResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
     metrics: (MetricsArgs) -> (MetricsResponse) query;

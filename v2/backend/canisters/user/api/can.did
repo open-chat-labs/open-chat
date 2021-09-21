@@ -178,7 +178,7 @@ type EventsSuccessResult =
         events: vec DirectChatEventWrapper;
     };
 
-type EventsArgs =
+type EventsRangeArgs =
     record {
         user_id: UserId;
         from_index: EventIndex;
@@ -283,7 +283,7 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     
-    events: (EventsArgs) -> (EventsResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsRangeResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
 

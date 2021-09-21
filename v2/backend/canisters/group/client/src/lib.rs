@@ -4,8 +4,8 @@ use group_canister::*;
 use ic_agent::Agent;
 
 // Queries
-generate_query_call!(events);
 generate_query_call!(events_by_index);
+generate_query_call!(events_range);
 generate_query_call!(http_request);
 generate_query_call!(summary);
 generate_query_call!(summary_updates);
