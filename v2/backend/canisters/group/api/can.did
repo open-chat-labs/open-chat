@@ -34,6 +34,32 @@ type DeleteMessagesResponse =
         NotInGroup;
     };
 
+type AddReactionArgs =
+    record {
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type AddReactionResponse =
+    variant {
+        Success;
+        MessageNotFound;
+        ChatNotFound;
+    };
+
+type RemoveReactionArgs =
+    record {
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type RemoveReactionResponse =
+    variant {
+        Success;
+        MessageNotFound;
+        ChatNotFound;
+    };
+
 type MarkReadArgs =
     record {
         message_ranges: vec MessageIndexRange;
@@ -318,6 +344,8 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
+    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 

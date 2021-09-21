@@ -88,7 +88,9 @@ type DirectChatEvent =
         Message: DirectMessage;
         DeletedMessage: DeletedDirectMessage;
         DirectChatCreated: DirectChatCreated;
-        MessageDeleted: MessageDeleted;
+        MessageDeleted: UpdatedMessage;
+        MessageReactionAdded: UpdatedMessage;
+        MessageReactionRemoved: UpdatedMessage;
     };
 
 type DirectChatEventWrapper =
@@ -124,6 +126,7 @@ type DirectMessage =
         sent_by_me: bool;
         content: MessageContent;
         replies_to: opt DirectReplyContext;
+        reactions: vec record { text; vec bool; };
     };
 
 type DirectMessageEventWrapper =
@@ -182,7 +185,9 @@ type GroupChatEvent =
         ParticipantLeft: ParticipantLeft;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
-        MessageDeleted: MessageDeleted;
+        MessageDeleted: UpdatedMessage;
+        MessageReactionAdded: UpdatedMessage;
+        MessageReactionRemoved: UpdatedMessage;
     };
 
 type GroupChatEventWrapper =
@@ -237,6 +242,7 @@ type GroupMessage =
         sender: UserId;
         content: MessageContent;
         replies_to: opt GroupReplyContext;
+        reactions: vec record { text; vec UserId; };
     };
 
 type GroupMessageEventWrapper =
@@ -297,16 +303,16 @@ type MessageContent =
         Cycles: CyclesContent;
     };
 
-type MessageDeleted =
-    record {
-        event_index: EventIndex;
-        message_id: MessageId;
-    };
-
 type MessageIndexRange =
     record {
         from: MessageIndex;
         to: MessageIndex;
+    };
+
+type UpdatedMessage =
+    record {
+        event_index: EventIndex;
+        message_id: MessageId;
     };
 
 type UserMessageMatch = 

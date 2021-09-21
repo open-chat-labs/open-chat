@@ -4,7 +4,7 @@ use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::*;
 
 pub struct Events {
@@ -31,6 +31,8 @@ pub enum GroupChatEventInternal {
     UsersBlocked(Box<UsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
     MessageDeleted(Box<MessageId>),
+    MessageReactionAdded(Box<MessageId>),
+    MessageReactionRemoved(Box<MessageId>),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -40,11 +42,12 @@ pub struct MessageInternal {
     sender: UserId,
     content: MessageContent,
     replies_to: Option<GroupReplyContextInternal>,
+    reactions: Vec<(String, HashSet<UserId>)>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupReplyContextInternal {
-    pub message_id: MessageId,
+    message_id: MessageId,
 }
 
 pub struct PushMessageArgs {
@@ -60,6 +63,18 @@ pub enum DeleteMessageResult {
     AlreadyDeleted,
     NotAuthorized,
     NotFound,
+}
+
+pub enum AddReactionResult {
+    Success,
+    AlreadyAdded,
+    MessageNotFound,
+}
+
+pub enum RemoveReactionResult {
+    Success,
+    ReactionNotFound,
+    MessageNotFound,
 }
 
 impl Events {
@@ -93,6 +108,7 @@ impl Events {
             replies_to: args.replies_to.map(|r| GroupReplyContextInternal {
                 message_id: r.message_id,
             }),
+            reactions: Vec::new(),
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(GroupChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -144,6 +160,59 @@ impl Events {
             event,
         });
         event_index
+    }
+
+    pub fn add_reaction(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        reaction: String,
+        now: TimestampMillis,
+    ) -> AddReactionResult {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(GroupChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
+                if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                    if !users.insert(user_id) {
+                        return AddReactionResult::AlreadyAdded;
+                    }
+                } else {
+                    message.reactions.push((reaction, vec![user_id].into_iter().collect()));
+                }
+
+                self.push_event(GroupChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                return AddReactionResult::Success;
+            }
+        }
+
+        AddReactionResult::MessageNotFound
+    }
+
+    pub fn remove_reaction(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        reaction: String,
+        now: TimestampMillis,
+    ) -> RemoveReactionResult {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(GroupChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
+                return if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                    if !users.remove(&user_id) {
+                        return RemoveReactionResult::ReactionNotFound;
+                    }
+                    if users.is_empty() {
+                        message.reactions.retain(|(r, _)| *r != reaction);
+                    }
+
+                    self.push_event(GroupChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    RemoveReactionResult::Success
+                } else {
+                    RemoveReactionResult::ReactionNotFound
+                };
+            }
+        }
+
+        RemoveReactionResult::MessageNotFound
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<GroupChatEvent>> {
@@ -268,6 +337,11 @@ impl Events {
             sender: message.sender,
             content: message.content.clone(),
             replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
+            reactions: message
+                .reactions
+                .iter()
+                .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
+                .collect(),
         }
     }
 
@@ -334,10 +408,13 @@ impl Events {
             GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
             GroupChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
             GroupChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
-            GroupChatEventInternal::MessageDeleted(message_id) => GroupChatEvent::MessageDeleted(MessageDeleted {
-                deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
-                message_id: **message_id,
-            }),
+            GroupChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.hydrate_updated_message(**m)),
+            GroupChatEventInternal::MessageReactionAdded(m) => {
+                GroupChatEvent::MessageReactionAdded(self.hydrate_updated_message(**m))
+            }
+            GroupChatEventInternal::MessageReactionRemoved(m) => {
+                GroupChatEvent::MessageReactionRemoved(self.hydrate_updated_message(**m))
+            }
         };
 
         EventWrapper {
@@ -363,6 +440,13 @@ impl Events {
                 }
             })
             .flatten()
+    }
+
+    fn hydrate_updated_message(&self, message_id: MessageId) -> UpdatedMessage {
+        UpdatedMessage {
+            event_index: self.message_id_map.get(&message_id).map_or(EventIndex::default(), |e| *e),
+            message_id,
+        }
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<GroupChatEventInternal>> {

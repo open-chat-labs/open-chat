@@ -3,6 +3,7 @@ use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
 mod add_participants;
+mod add_reaction;
 mod block_user;
 mod c2c_join_group;
 mod c2c_leave_group;
@@ -13,6 +14,7 @@ mod put_avatar_chunk;
 mod put_chunk;
 mod remove_admin;
 mod remove_participant;
+mod remove_reaction;
 mod send_message;
 mod unblock_user;
 mod update_group;

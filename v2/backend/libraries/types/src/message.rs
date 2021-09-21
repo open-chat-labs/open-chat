@@ -10,6 +10,7 @@ pub struct DirectMessage {
     pub sent_by_me: bool,
     pub content: MessageContent,
     pub replies_to: Option<DirectReplyContext>,
+    pub reactions: Vec<(String, Vec<bool>)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -19,6 +20,7 @@ pub struct GroupMessage {
     pub sender: UserId,
     pub content: MessageContent,
     pub replies_to: Option<GroupReplyContext>,
+    pub reactions: Vec<(String, Vec<UserId>)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

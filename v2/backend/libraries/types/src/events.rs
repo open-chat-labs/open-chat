@@ -19,7 +19,9 @@ pub enum GroupChatEvent {
     ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
-    MessageDeleted(MessageDeleted),
+    MessageDeleted(UpdatedMessage),
+    MessageReactionAdded(UpdatedMessage),
+    MessageReactionRemoved(UpdatedMessage),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -97,8 +99,8 @@ pub struct ParticipantsDismissedAsAdmin {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct MessageDeleted {
-    pub deleted_message_event_index: EventIndex,
+pub struct UpdatedMessage {
+    pub event_index: EventIndex,
     pub message_id: MessageId,
 }
 
@@ -107,7 +109,9 @@ pub enum DirectChatEvent {
     Message(DirectMessage),
     DeletedMessage(DeletedDirectMessage),
     DirectChatCreated(DirectChatCreated),
-    MessageDeleted(MessageDeleted),
+    MessageDeleted(UpdatedMessage),
+    MessageReactionAdded(UpdatedMessage),
+    MessageReactionRemoved(UpdatedMessage),
 }
 
 #[derive(CandidType, Deserialize, Copy, Clone, Debug)]
