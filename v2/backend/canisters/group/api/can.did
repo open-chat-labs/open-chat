@@ -232,10 +232,23 @@ type SummaryUpdatesResponse =
         NotInGroup;
     };
 
+type EventsArgs =
+    record {
+        start_index: EventIndex;
+        ascending: bool;
+        max_messages: nat32;
+        max_events: nat32;
+    };
+
 type EventsRangeArgs =
     record {
         from_index: EventIndex;
         to_index: EventIndex;
+    };
+
+type EventsByIndexArgs =
+    record {
+        events: vec GroupChatEventWrapper;
     };
 
 type EventsSuccessResult =
@@ -245,17 +258,6 @@ type EventsSuccessResult =
     };
 
 type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        ChatNotFound;
-    }; 
-
-type EventsByIndexArgs =
-    record {
-        events: vec GroupChatEventWrapper;
-    };
-
-type EventsByIndexResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
@@ -321,8 +323,9 @@ service: {
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsRangeResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+    events: (EventsArgs) -> (EventsResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

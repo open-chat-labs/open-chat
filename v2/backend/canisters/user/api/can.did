@@ -173,9 +173,12 @@ type UpdatesResponse =
         }
     };
 
-type EventsSuccessResult =
+type EventsArgs =
     record {
-        events: vec DirectChatEventWrapper;
+        start_index: EventIndex;
+        ascending: bool;
+        max_messages: nat32;
+        max_events: nat32;
     };
 
 type EventsRangeArgs =
@@ -185,23 +188,22 @@ type EventsRangeArgs =
         to_index: EventIndex;
     };
 
-type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        ChatNotFound;
-    };
-
 type EventsByIndexArgs =
     record {
         user_id: UserId;
         events: vec EventIndex;
     };
 
-type EventsByIndexResponse =
+type EventsSuccessResult =
+    record {
+        events: vec DirectChatEventWrapper;
+    };
+
+type EventsResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
-    }; 
+    };
 
 type SearchMessagesArgs =
     record {
@@ -282,9 +284,10 @@ service: (InitArgs) -> {
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
-    
-    events_range: (EventsRangeArgs) -> (EventsRangeResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+
+    events: (EventsArgs) -> (EventsResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
 
     metrics: (MetricsArgs) -> (MetricsResponse) query;
