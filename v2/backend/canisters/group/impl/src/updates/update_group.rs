@@ -1,3 +1,5 @@
+use crate::model::events::GroupChatEventInternal;
+use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
@@ -6,7 +8,7 @@ use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, ChatId, FieldTooLongResult};
+use types::{CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged};
 
 #[update]
 async fn update_group(args: Args) -> Response {
@@ -81,6 +83,38 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 }
 
 fn commit(args: Args, runtime_state: &mut RuntimeState) {
-    runtime_state.data.name = args.name;
-    runtime_state.data.description = args.description;
+    let user_id = runtime_state.env.caller().into();
+    let now = runtime_state.env.now();
+
+    if runtime_state.data.name != args.name {
+        let event = GroupNameChanged {
+            new_name: args.name.clone(),
+            previous_name: runtime_state.data.name.clone(),
+            changed_by: user_id,
+        };
+
+        runtime_state
+            .data
+            .events
+            .push_event(GroupChatEventInternal::GroupNameChanged(Box::new(event)), now);
+
+        runtime_state.data.name = args.name;
+    }
+
+    if runtime_state.data.description != args.description {
+        let event = GroupDescriptionChanged {
+            new_description: args.description.clone(),
+            previous_description: runtime_state.data.description.clone(),
+            changed_by: user_id,
+        };
+
+        runtime_state
+            .data
+            .events
+            .push_event(GroupChatEventInternal::GroupDescriptionChanged(Box::new(event)), now);
+
+        runtime_state.data.description = args.description;
+    }
+
+    handle_activity_notification(runtime_state);
 }
