@@ -41,7 +41,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                 runtime_state
                     .data
                     .events
-                    .push_event(GroupChatEventInternal::ParticipantJoined(event), now);
+                    .push_event(GroupChatEventInternal::ParticipantJoined(Box::new(event)), now);
 
                 handle_activity_notification(runtime_state);
 
