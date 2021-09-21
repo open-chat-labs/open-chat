@@ -208,6 +208,39 @@ impl Events {
         self.latest_message_index
     }
 
+    pub fn from_index(
+        &self,
+        start: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> Vec<EventWrapper<DirectChatEvent>> {
+        if let Some(index) = self.get_index(start) {
+            let iter = self.events.iter().skip(index);
+            let iter: Box<dyn Iterator<Item = &EventWrapper<DirectChatEventInternal>>> =
+                if ascending { Box::new(iter) } else { Box::new(iter.rev()) };
+
+            let mut events = Vec::new();
+            let mut messages_count: u32 = 0;
+            for event in iter.take(max_events as usize).map(|e| self.hydrate_event(e)) {
+                let is_message = matches!(event.event, DirectChatEvent::Message(_));
+
+                events.push(event);
+
+                if is_message {
+                    messages_count += 1;
+                    if messages_count == max_messages {
+                        break;
+                    }
+                }
+            }
+
+            events
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn search_messages(&self, now: TimestampMillis, search_term: &str, max_results: u8) -> Vec<UserMessageMatch> {
         let query = Query::parse(search_term);
 

@@ -234,8 +234,21 @@ type SummaryUpdatesResponse =
 
 type EventsArgs =
     record {
+        start_index: EventIndex;
+        ascending: bool;
+        max_messages: nat32;
+        max_events: nat32;
+    };
+
+type EventsRangeArgs =
+    record {
         from_index: EventIndex;
         to_index: EventIndex;
+    };
+
+type EventsByIndexArgs =
+    record {
+        events: vec GroupChatEventWrapper;
     };
 
 type EventsSuccessResult =
@@ -245,17 +258,6 @@ type EventsSuccessResult =
     };
 
 type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        ChatNotFound;
-    }; 
-
-type EventsByIndexArgs =
-    record {
-        events: vec GroupChatEventWrapper;
-    };
-
-type EventsByIndexResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
@@ -308,7 +310,7 @@ service: {
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
-    update_group(UpdateGroupArgs) -> (UpdateGroupResponse);
+    update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
@@ -322,7 +324,8 @@ service: {
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     events: (EventsArgs) -> (EventsResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

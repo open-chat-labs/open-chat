@@ -4,10 +4,8 @@ use types::{EventIndex, EventWrapper, GroupChatEvent};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub start_index: EventIndex,
-    pub ascending: bool,
-    pub max_messages: u32,
-    pub max_events: u32,
+    pub from_index: EventIndex,
+    pub to_index: EventIndex,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

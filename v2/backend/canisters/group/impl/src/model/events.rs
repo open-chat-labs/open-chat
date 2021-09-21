@@ -228,6 +228,39 @@ impl Events {
         self.events.iter()
     }
 
+    pub fn from_index(
+        &self,
+        start: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> Vec<EventWrapper<GroupChatEvent>> {
+        if let Some(index) = self.get_index(start) {
+            let iter = self.events.iter().skip(index);
+            let iter: Box<dyn Iterator<Item = &EventWrapper<GroupChatEventInternal>>> =
+                if ascending { Box::new(iter) } else { Box::new(iter.rev()) };
+
+            let mut events = Vec::new();
+            let mut messages_count: u32 = 0;
+            for event in iter.take(max_events as usize).map(|e| self.hydrate_event(e)) {
+                let is_message = matches!(event.event, GroupChatEvent::Message(_));
+
+                events.push(event);
+
+                if is_message {
+                    messages_count += 1;
+                    if messages_count == max_messages {
+                        break;
+                    }
+                }
+            }
+
+            events
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
         GroupMessage {
             message_index: message.message_index,
