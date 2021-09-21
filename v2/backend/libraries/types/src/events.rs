@@ -10,6 +10,7 @@ pub enum GroupChatEvent {
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
+    AvatarChanged(AvatarChanged),
     ParticipantsAdded(ParticipantsAdded),
     ParticipantsRemoved(ParticipantsRemoved),
     ParticipantJoined(ParticipantJoined),
@@ -39,6 +40,13 @@ pub struct GroupNameChanged {
 pub struct GroupDescriptionChanged {
     pub new_description: String,
     pub previous_description: String,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct AvatarChanged {
+    pub new_avatar: Option<u128>,
+    pub previous_avatar: Option<u128>,
     pub changed_by: UserId,
 }
 

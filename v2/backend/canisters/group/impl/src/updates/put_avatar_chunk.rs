@@ -1,7 +1,10 @@
+use crate::model::events::GroupChatEventInternal;
+use crate::updates::handle_activity_notification;
 use crate::updates::put_avatar_chunk::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::put_avatar_chunk::*;
 use ic_cdk_macros::update;
+use types::AvatarChanged;
 use utils::blob_storage::PutChunkResult;
 
 const MAX_AVATAR_CHUNK_COUNT: u32 = 2;
@@ -35,7 +38,21 @@ fn put_avatar_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                     if let Some(avatar_blob_id) = runtime_state.data.avatar_blob_id {
                         runtime_state.data.blob_storage.delete_blob(&avatar_blob_id);
                     }
+
+                    let event = AvatarChanged {
+                        new_avatar: Some(args.blob_id),
+                        previous_avatar: runtime_state.data.avatar_blob_id,
+                        changed_by: runtime_state.env.caller().into(),
+                    };
+
+                    runtime_state
+                        .data
+                        .events
+                        .push_event(GroupChatEventInternal::AvatarChanged(Box::new(event)), now);
+
                     runtime_state.data.avatar_blob_id = Some(args.blob_id);
+
+                    handle_activity_notification(runtime_state);
                     Success
                 }
                 PutChunkResult::BlobAlreadyExists => BlobAlreadyExists,

@@ -50,6 +50,7 @@ struct UpdatesFromEvents {
     latest_update: Option<TimestampMillis>,
     name: Option<String>,
     description: Option<String>,
+    avatar_blob_id: Option<u128>,
     participants_added_or_updated: Vec<Participant>,
     participants_removed: Vec<UserId>,
     latest_message: Option<EventWrapper<GroupMessage>>,
@@ -63,6 +64,8 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
         runtime_state,
         users_updated: HashSet::new(),
     };
+
+    let mut avatar_changed = false;
 
     // Iterate through events starting from most recent
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
@@ -89,6 +92,12 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
             GroupChatEventInternal::GroupDescriptionChanged(n) => {
                 if updates.description.is_none() {
                     updates.description = Some(n.new_description.clone());
+                }
+            }
+            GroupChatEventInternal::AvatarChanged(a) => {
+                if !avatar_changed {
+                    updates.avatar_blob_id = a.new_avatar;
+                    avatar_changed = true;
                 }
             }
             GroupChatEventInternal::ParticipantsAdded(p) => {
