@@ -10,8 +10,11 @@ import {
 
 const ONLINE_THRESHOLD = 120;
 
-export function avatarUrl(dataContent: DataContent): string {
-    return dataContent.blobUrl ?? "../assets/unknownUserAvatar.svg";
+export function avatarUrl(
+    dataContent?: DataContent,
+    fallback = "../assets/unknownUserAvatar.svg"
+): string {
+    return dataContent?.blobUrl ?? fallback;
 }
 
 export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {

@@ -26,7 +26,6 @@ import type {
     ApiMarkReadResponse,
 } from "./candid/idl";
 import type {
-    BlobReference,
     ChatSummary,
     CyclesContent,
     FileContent,
@@ -55,6 +54,7 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
+import type { BlobReference } from "../../domain/data/data";
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
@@ -240,6 +240,10 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 candid.Group.participants_removed.map((p) => p.toString())
             ),
             latestEventIndex: optional(candid.Group.latest_event_index, identity),
+            avatarBlobReference: optional(candid.Group.avatar_blob_id, (blobId) => ({
+                blobId,
+                canisterId: candid.Group.chat_id.toString(),
+            })),
         };
     }
     if ("Direct" in candid) {
@@ -282,6 +286,10 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
+            blobReference: optional(candid.Group.avatar_blob_id, (blobId) => ({
+                blobId,
+                canisterId: candid.Group.chat_id.toString(),
+            })),
         };
     }
     if ("Direct" in candid) {

@@ -9,13 +9,22 @@
     import TextArea from "../../TextArea.svelte";
     import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
+    import type { DataContent } from "../../../domain/data/data";
+    import { avatarUrl } from "../../../domain/user/user.utils";
 
     export let machine: ActorRefFrom<EditGroupMachine>;
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
-    let groupAvatar: string | undefined = undefined;
+
+    let groupAvatar: DataContent | undefined = $machine.context.editedChatSummary.blobUrl
+        ? {
+              blobUrl: $machine.context.editedChatSummary.blobUrl,
+              blobData: $machine.context.editedChatSummary.blobData,
+              blobReference: $machine.context.editedChatSummary.blobReference,
+          }
+        : undefined;
 
     let groupName = $machine.context.editedChatSummary.name;
     let groupDesc = $machine.context.editedChatSummary.description;
@@ -25,7 +34,8 @@
 
     $: dirty =
         groupName !== $machine.context.chatSummary.name ||
-        groupDesc !== $machine.context.chatSummary.description;
+        groupDesc !== $machine.context.chatSummary.description ||
+        groupAvatar?.blobUrl !== $machine.context.chatSummary.blobUrl;
 
     $: saving = $machine.matches({ group_details: "saving_group" });
 
@@ -40,16 +50,25 @@
     }
 
     function showParticipants() {
-        machine.send({ type: "SYNC_CHAT_DETAILS", data: { name: groupName, desc: groupDesc } });
+        machine.send({
+            type: "SYNC_CHAT_DETAILS",
+            data: { name: groupName, desc: groupDesc, avatar: groupAvatar },
+        });
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
-    function groupAvatarSelected(ev: CustomEvent<string>) {
-        groupAvatar = ev.detail;
+    function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
+        groupAvatar = {
+            blobUrl: ev.detail.url,
+            blobData: ev.detail.data,
+        };
     }
 
     function updateGroup() {
-        machine.send({ type: "SAVE_GROUP_DETAILS", data: { name: groupName, desc: groupDesc } });
+        machine.send({
+            type: "SAVE_GROUP_DETAILS",
+            data: { name: groupName, desc: groupDesc, avatar: groupAvatar },
+        });
     }
 </script>
 
@@ -58,7 +77,9 @@
 <form class="group-form" on:submit|preventDefault={updateGroup}>
     <div class="form-fields">
         <div class="sub-section photo">
-            <EditableAvatar image={groupAvatar} on:imageSelected={groupAvatarSelected} />
+            <EditableAvatar
+                image={avatarUrl(groupAvatar, "../assets/group.svg")}
+                on:imageSelected={groupAvatarSelected} />
             <p class="photo-legend">{$_("addGroupPhoto")}</p>
         </div>
 

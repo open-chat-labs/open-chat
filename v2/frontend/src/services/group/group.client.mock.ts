@@ -12,6 +12,7 @@ import type {
     MarkReadResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
+import type { BlobReference } from "../../domain/data/data";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
@@ -148,11 +149,15 @@ export class GroupClientMock implements IGroupClient {
         });
     }
 
-    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+    markMessagesRead(_ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");
             }, 300);
         });
+    }
+
+    setAvatar(_data: Uint8Array): Promise<BlobReference> {
+        throw new Error("not implemented");
     }
 }

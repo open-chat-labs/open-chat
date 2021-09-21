@@ -31,7 +31,7 @@
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: "assets/group.svg",
+            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
         };
     }
 

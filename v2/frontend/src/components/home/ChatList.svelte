@@ -12,6 +12,7 @@
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
     import { toastStore } from "../../stores/toast";
+    import { rollbar } from "../../utils/logging";
 
     export let machine: ActorRefFrom<HomeMachine>;
 
@@ -33,7 +34,10 @@
         $machine.context.serviceContainer
             ?.setUserAvatar(ev.detail.data)
             .then((_resp) => toastStore.showSuccessToast("avatarUpdated"))
-            .catch((_err) => console.log(_err));
+            .catch((err) => {
+                rollbar.error("Failed to update user's avatar", err);
+                toastStore.showFailureToast("avatarUpdateFailed");
+            });
     }
 </script>
 

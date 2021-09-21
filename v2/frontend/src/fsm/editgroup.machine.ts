@@ -12,6 +12,7 @@ import type { UserLookup, UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 import { toastStore } from "../stores/toast";
+import type { DataContent } from "../domain/data/data";
 
 export type Mode = "show_participants" | "add_participants" | "group_details";
 
@@ -49,8 +50,8 @@ export type EditGroupEvents =
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "SAVE_PARTICIPANTS" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SYNC_CHAT_DETAILS"; data: { name: string; desc: string } }
-    | { type: "SAVE_GROUP_DETAILS"; data: { name: string; desc: string } }
+    | { type: "SYNC_CHAT_DETAILS"; data: { name: string; desc: string; avatar?: DataContent } }
+    | { type: "SAVE_GROUP_DETAILS"; data: { name: string; desc: string; avatar?: DataContent } }
     | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
@@ -399,6 +400,7 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     actions: assign((ctx, ev) => ({
                         editedChatSummary: {
                             ...ctx.editedChatSummary,
+                            ...ev.data.avatar,
                             name: ev.data.name,
                             description: ev.data.desc,
                         },
@@ -409,6 +411,7 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     actions: assign((ctx, ev) => ({
                         editedChatSummary: {
                             ...ctx.editedChatSummary,
+                            ...ev.data.avatar,
                             name: ev.data.name,
                             description: ev.data.desc,
                         },

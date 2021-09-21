@@ -12,6 +12,7 @@ import type {
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
+import type { BlobReference } from "../../domain/data/data";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -58,5 +59,9 @@ export class CachingGroupClient implements IGroupClient {
 
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return this.client.markMessagesRead(ranges);
+    }
+
+    setAvatar(data: Uint8Array): Promise<BlobReference> {
+        return this.client.setAvatar(data);
     }
 }

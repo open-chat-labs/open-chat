@@ -177,7 +177,7 @@ export class ServiceContainer {
         return resp;
     }
 
-    private rehydrateDataContent<T extends DataContent>(
+    rehydrateDataContent<T extends DataContent>(
         dataContent: T,
         blobType: "blobs" | "avatar",
         key?: string
@@ -209,7 +209,16 @@ export class ServiceContainer {
     }
 
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
-        return this.userClient.getUpdates(chatSummaries, args);
+        return this.userClient.getUpdates(chatSummaries, args).then((resp) => {
+            return {
+                ...resp,
+                chatSummaries: resp.chatSummaries.map((chat) => {
+                    return chat.kind === "direct_chat"
+                        ? chat
+                        : this.rehydrateDataContent(chat, "avatar", chat.chatId);
+                }),
+            };
+        });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
@@ -284,5 +293,9 @@ export class ServiceContainer {
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.userClient.setAvatar(data);
+    }
+
+    setGroupAvatar(chatId: string, data: Uint8Array): Promise<BlobReference> {
+        return this.getGroupClient(chatId).setAvatar(data);
     }
 }

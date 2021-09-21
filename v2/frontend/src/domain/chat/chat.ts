@@ -1,4 +1,4 @@
-import type { DataContent } from "../data/data";
+import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent =
@@ -218,6 +218,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     name?: string;
     description?: string;
     latestMessage?: EventWrapper<GroupMessage>;
+    avatarBlobReference?: BlobReference;
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -250,18 +251,19 @@ export type DirectChatSummary = ChatSummaryCommon & {
     latestMessage?: EventWrapper<DirectMessage>;
 };
 
-export type GroupChatSummary = ChatSummaryCommon & {
-    kind: "group_chat";
-    name: string;
-    description: string;
-    participants: Participant[];
-    public: boolean;
-    joined: bigint;
-    minVisibleEventIndex: number;
-    minVisibleMessageIndex: number;
-    lastUpdated: bigint;
-    latestMessage?: EventWrapper<GroupMessage>;
-};
+export type GroupChatSummary = DataContent &
+    ChatSummaryCommon & {
+        kind: "group_chat";
+        name: string;
+        description: string;
+        participants: Participant[];
+        public: boolean;
+        joined: bigint;
+        minVisibleEventIndex: number;
+        minVisibleMessageIndex: number;
+        lastUpdated: bigint;
+        latestMessage?: EventWrapper<GroupMessage>;
+    };
 
 export type CandidateParticipant = {
     role: ParticipantRole;
@@ -274,7 +276,7 @@ export type CandidateGroupChat = {
     historyVisible: boolean;
     isPublic: boolean;
     participants: CandidateParticipant[];
-    avatar?: string;
+    avatar?: DataContent;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
