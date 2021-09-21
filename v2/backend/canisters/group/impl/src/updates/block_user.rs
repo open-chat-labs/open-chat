@@ -68,7 +68,7 @@ fn commit(blocked_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::UsersBlocked(event), now);
+        .push_event(GroupChatEventInternal::UsersBlocked(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }

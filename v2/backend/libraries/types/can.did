@@ -15,6 +15,13 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
+type Avatar = 
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
 type BlobReference =
     record {
         canister_id: CanisterId;
@@ -65,6 +72,20 @@ type CyclesContent =
         caption: opt text;
     };
 
+type DeletedDirectMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sent_by_me: bool;
+    };
+
+type DeletedGroupMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sender: UserId;
+    };
+
 type DirectChatCreated =
     record {
     };
@@ -72,7 +93,9 @@ type DirectChatCreated =
 type DirectChatEvent =
     variant {
         Message: DirectMessage;
+        DeletedMessage: DeletedDirectMessage;
         DirectChatCreated: DirectChatCreated;
+        MessageDeleted: MessageDeleted;
     };
 
 type DirectChatEventWrapper =
@@ -131,11 +154,18 @@ type DirectReplyContext =
         Private: PrivateReplyContext;
     };
 
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
 type FileContent =
     record {
         name: text;
         caption: opt text;
         mime_type: text;
+        file_size: nat32;
         blob_reference: opt BlobReference;
     };
 
@@ -149,6 +179,7 @@ type GroupChatCreated =
 type GroupChatEvent =
     variant {
         Message: GroupMessage;
+        DeletedMessage: DeletedGroupMessage;
         GroupChatCreated: GroupChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
@@ -158,6 +189,7 @@ type GroupChatEvent =
         ParticipantLeft: ParticipantLeft;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
+        MessageDeleted: MessageDeleted;
     };
 
 type GroupChatEventWrapper =
@@ -270,6 +302,12 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
+    };
+
+type MessageDeleted =
+    record {
+        event_index: EventIndex;
+        message_id: MessageId;
     };
 
 type MessageIndexRange =

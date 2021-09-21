@@ -1,9 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
+use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use log::error;
-use types::{CanisterId, ChatId};
+use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
@@ -26,7 +27,7 @@ async fn create_group(args: Args) -> Response {
                 RUNTIME_STATE.with(|state| commit(r.chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
-            c2c_create_group::Response::PublicGroupAlreadyExists => PublicGroupAlreadyExists,
+            c2c_create_group::Response::NameTaken => NameTaken,
             c2c_create_group::Response::CyclesBalanceTooLow => InternalError,
             c2c_create_group::Response::InternalError => InternalError,
         },
@@ -62,6 +63,15 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             length_provided: args.description.len() as u32,
             max_length: MAX_GROUP_DESCRIPTION_LENGTH,
         }))
+    } else if args
+        .avatar
+        .as_ref()
+        .map_or(false, |a| a.data.len() > MAX_AVATAR_SIZE as usize)
+    {
+        Err(AvatarTooBig(FieldTooLongResult {
+            length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
+            max_length: MAX_AVATAR_SIZE as u32,
+        }))
     } else {
         let create_group_args = c2c_create_group::Args {
             is_public: args.is_public,
@@ -69,6 +79,7 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             name: args.name,
             description: args.description,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
+            avatar: args.avatar,
         };
         Ok(PrepareResult {
             group_index_canister_id: runtime_state.data.group_index_canister_id,

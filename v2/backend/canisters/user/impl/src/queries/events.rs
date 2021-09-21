@@ -1,6 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::ChatId;
 use user_canister::events::{Response::*, *};
 
 #[query]
@@ -11,10 +10,11 @@ fn events(args: Args) -> Response {
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
-    let their_user_id = args.user_id;
-    let chat_id = ChatId::from(their_user_id);
-    if let Some(chat) = runtime_state.data.direct_chats.get(&chat_id) {
-        let events = chat.events.get_range(args.from_index, args.to_index);
+    if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
+        let events = chat
+            .events
+            .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
+
         Success(SuccessResult { events })
     } else {
         ChatNotFound

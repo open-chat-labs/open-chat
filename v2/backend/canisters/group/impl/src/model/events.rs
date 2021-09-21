@@ -16,18 +16,21 @@ pub struct Events {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum GroupChatEventInternal {
-    Message(MessageInternal),
-    GroupChatCreated(GroupChatCreated),
-    GroupNameChanged(GroupNameChanged),
-    GroupDescriptionChanged(GroupDescriptionChanged),
-    ParticipantsAdded(ParticipantsAdded),
-    ParticipantsRemoved(ParticipantsRemoved),
-    ParticipantJoined(ParticipantJoined),
-    ParticipantLeft(ParticipantLeft),
-    ParticipantsPromotedToAdmin(ParticipantsPromotedToAdmin),
-    ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
-    UsersBlocked(UsersBlocked),
-    UsersUnblocked(UsersUnblocked),
+    Message(Box<MessageInternal>),
+    DeletedMessage(Box<DeletedGroupMessage>),
+    GroupChatCreated(Box<GroupChatCreated>),
+    GroupNameChanged(Box<GroupNameChanged>),
+    GroupDescriptionChanged(Box<GroupDescriptionChanged>),
+    AvatarChanged(Box<AvatarChanged>),
+    ParticipantsAdded(Box<ParticipantsAdded>),
+    ParticipantsRemoved(Box<ParticipantsRemoved>),
+    ParticipantJoined(Box<ParticipantJoined>),
+    ParticipantLeft(Box<ParticipantLeft>),
+    ParticipantsPromotedToAdmin(Box<ParticipantsPromotedToAdmin>),
+    ParticipantsDismissedAsAdmin(Box<ParticipantsDismissedAsAdmin>),
+    UsersBlocked(Box<UsersBlocked>),
+    UsersUnblocked(Box<UsersUnblocked>),
+    MessageDeleted(Box<MessageId>),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -52,6 +55,13 @@ pub struct PushMessageArgs {
     pub now: TimestampMillis,
 }
 
+pub enum DeleteMessageResult {
+    Success,
+    AlreadyDeleted,
+    NotAuthorized,
+    NotFound,
+}
+
 impl Events {
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
         let mut events = Events {
@@ -62,11 +72,11 @@ impl Events {
         };
 
         events.push_event(
-            GroupChatEventInternal::GroupChatCreated(GroupChatCreated {
+            GroupChatEventInternal::GroupChatCreated(Box::new(GroupChatCreated {
                 name,
                 description,
                 created_by,
-            }),
+            })),
             now,
         );
 
@@ -85,8 +95,37 @@ impl Events {
             }),
         };
         let message = self.hydrate_message(&message_internal);
-        let event_index = self.push_event(GroupChatEventInternal::Message(message_internal), args.now);
+        let event_index = self.push_event(GroupChatEventInternal::Message(Box::new(message_internal)), args.now);
         (event_index, message)
+    }
+
+    pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal(event_index) {
+                let deleted_message = match &event.event {
+                    GroupChatEventInternal::Message(message) => {
+                        if message.sender == caller {
+                            message.clone()
+                        } else {
+                            return DeleteMessageResult::NotAuthorized;
+                        }
+                    }
+                    GroupChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
+                    _ => return DeleteMessageResult::NotFound,
+                };
+
+                let deletion_event_index = self.push_event(GroupChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                let event = self.get_internal_mut(event_index).unwrap();
+                event.event = GroupChatEventInternal::DeletedMessage(Box::new(DeletedGroupMessage {
+                    message_index: deleted_message.message_index,
+                    message_id: deleted_message.message_id,
+                    sender: deleted_message.sender,
+                    deletion_event_index,
+                }))
+            }
+        }
+
+        DeleteMessageResult::NotFound
     }
 
     pub fn push_event(&mut self, event: GroupChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -189,6 +228,39 @@ impl Events {
         self.events.iter()
     }
 
+    pub fn from_index(
+        &self,
+        start: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> Vec<EventWrapper<GroupChatEvent>> {
+        if let Some(index) = self.get_index(start) {
+            let iter = self.events.iter().skip(index);
+            let iter: Box<dyn Iterator<Item = &EventWrapper<GroupChatEventInternal>>> =
+                if ascending { Box::new(iter) } else { Box::new(iter.rev()) };
+
+            let mut events = Vec::new();
+            let mut messages_count: u32 = 0;
+            for event in iter.take(max_events as usize).map(|e| self.hydrate_event(e)) {
+                let is_message = matches!(event.event, GroupChatEvent::Message(_));
+
+                events.push(event);
+
+                if is_message {
+                    messages_count += 1;
+                    if messages_count == max_messages {
+                        break;
+                    }
+                }
+            }
+
+            events
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
         GroupMessage {
             message_index: message.message_index,
@@ -249,17 +321,23 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
             GroupChatEventInternal::Message(m) => GroupChatEvent::Message(self.hydrate_message(m)),
-            GroupChatEventInternal::GroupChatCreated(g) => GroupChatEvent::GroupChatCreated(g.clone()),
-            GroupChatEventInternal::GroupNameChanged(g) => GroupChatEvent::GroupNameChanged(g.clone()),
-            GroupChatEventInternal::GroupDescriptionChanged(g) => GroupChatEvent::GroupDescriptionChanged(g.clone()),
-            GroupChatEventInternal::ParticipantsAdded(p) => GroupChatEvent::ParticipantsAdded(p.clone()),
-            GroupChatEventInternal::ParticipantsRemoved(p) => GroupChatEvent::ParticipantsRemoved(p.clone()),
-            GroupChatEventInternal::ParticipantJoined(p) => GroupChatEvent::ParticipantJoined(p.clone()),
-            GroupChatEventInternal::ParticipantLeft(p) => GroupChatEvent::ParticipantLeft(p.clone()),
-            GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(p.clone()),
-            GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(p.clone()),
-            GroupChatEventInternal::UsersBlocked(p) => GroupChatEvent::UsersBlocked(p.clone()),
-            GroupChatEventInternal::UsersUnblocked(p) => GroupChatEvent::UsersUnblocked(p.clone()),
+            GroupChatEventInternal::DeletedMessage(d) => GroupChatEvent::DeletedMessage(*d.clone()),
+            GroupChatEventInternal::GroupChatCreated(g) => GroupChatEvent::GroupChatCreated(*g.clone()),
+            GroupChatEventInternal::GroupNameChanged(g) => GroupChatEvent::GroupNameChanged(*g.clone()),
+            GroupChatEventInternal::GroupDescriptionChanged(g) => GroupChatEvent::GroupDescriptionChanged(*g.clone()),
+            GroupChatEventInternal::AvatarChanged(g) => GroupChatEvent::AvatarChanged(*g.clone()),
+            GroupChatEventInternal::ParticipantsAdded(p) => GroupChatEvent::ParticipantsAdded(*p.clone()),
+            GroupChatEventInternal::ParticipantsRemoved(p) => GroupChatEvent::ParticipantsRemoved(*p.clone()),
+            GroupChatEventInternal::ParticipantJoined(p) => GroupChatEvent::ParticipantJoined(*p.clone()),
+            GroupChatEventInternal::ParticipantLeft(p) => GroupChatEvent::ParticipantLeft(*p.clone()),
+            GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(*p.clone()),
+            GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(*p.clone()),
+            GroupChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(*u.clone()),
+            GroupChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(*u.clone()),
+            GroupChatEventInternal::MessageDeleted(message_id) => GroupChatEvent::MessageDeleted(MessageDeleted {
+                deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
+                message_id: **message_id,
+            }),
         };
 
         EventWrapper {
@@ -288,14 +366,37 @@ impl Events {
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<GroupChatEventInternal>> {
-        if self.events.is_empty() {
-            return None;
-        }
-
-        let earliest_event_index: u32 = self.events.first().unwrap().index.into();
-        let as_u32: u32 = event_index.into();
-        let index = (as_u32 - earliest_event_index) as usize;
+        let index = self.get_index(event_index)?;
 
         self.events.get(index)
+    }
+
+    fn get_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<GroupChatEventInternal>> {
+        let index = self.get_index(event_index)?;
+
+        self.events.get_mut(index)
+    }
+
+    fn get_index(&self, event_index: EventIndex) -> Option<usize> {
+        if let Some(first_event) = self.events.first() {
+            let earliest_event_index: u32 = first_event.index.into();
+            let as_u32: u32 = event_index.into();
+            let index = (as_u32 - earliest_event_index) as usize;
+            Some(index)
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::mem::size_of;
+
+    #[test]
+    fn enum_size() {
+        let size = size_of::<GroupChatEventInternal>();
+        assert_eq!(size, 16);
     }
 }

@@ -1,5 +1,6 @@
 use candid::Principal;
 
+mod avatar;
 mod canister_creation_status;
 mod canister_upgrade_status;
 mod canister_wasm;
@@ -10,6 +11,7 @@ mod cycles;
 mod event_index;
 mod event_wrapper;
 mod events;
+mod field_too_long;
 mod group_match;
 mod http;
 mod indexed_event;
@@ -27,6 +29,7 @@ mod user_id;
 mod user_summary;
 mod version;
 
+pub use avatar::*;
 pub use canister_creation_status::*;
 pub use canister_upgrade_status::*;
 pub use canister_wasm::*;
@@ -37,6 +40,7 @@ pub use cycles::*;
 pub use event_index::*;
 pub use event_wrapper::*;
 pub use events::*;
+pub use field_too_long::*;
 pub use group_match::*;
 pub use http::*;
 pub use indexed_event::*;

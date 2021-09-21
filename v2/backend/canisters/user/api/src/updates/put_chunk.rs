@@ -17,5 +17,6 @@ pub enum Response {
     BlobAlreadyExists,
     ChunkAlreadyExists,
     ChunkTooBig,
+    BlobTooBig,
     Full,
 }

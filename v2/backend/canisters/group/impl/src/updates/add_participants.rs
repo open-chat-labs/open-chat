@@ -143,7 +143,7 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::ParticipantsAdded(event), now);
+        .push_event(GroupChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }

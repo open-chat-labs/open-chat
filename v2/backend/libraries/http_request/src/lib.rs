@@ -3,42 +3,52 @@ use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::str::FromStr;
-use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token};
+use types::{
+    Avatar, CanisterId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy, Token,
+};
 use utils::blob_storage::BlobStorage;
+
+const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
 pub struct CanisterData<'a> {
     pub blob_storage: &'a BlobStorage,
-    pub avatar_blob_id: Option<u128>,
+    pub avatar: &'a Option<Avatar>,
 }
 
 pub fn http_request_impl(request: HttpRequest, canister_id: CanisterId, canister_data: CanisterData) -> HttpResponse {
-    let blob_id = match extract_request_type(&request.url) {
-        RequestType::Avatar(blob_id) => {
-            if let Some(avatar_blob_id) = canister_data.avatar_blob_id {
-                if let Some(blob_id) = blob_id {
-                    if blob_id == avatar_blob_id {
-                        blob_id
+    match extract_request_type(&request.url) {
+        RequestType::Avatar(id) => {
+            if let Some(avatar) = &canister_data.avatar {
+                if let Some(requested_id) = id {
+                    if requested_id == avatar.id {
+                        HttpResponse {
+                            status_code: 200,
+                            headers: vec![
+                                HeaderField("Content-Type".to_string(), avatar.mime_type.to_owned()),
+                                HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_owned()),
+                            ],
+                            body: Cow::Owned(avatar.data.clone()),
+                            streaming_strategy: None,
+                        }
                     } else {
-                        let location = build_avatar_location(avatar_blob_id);
-                        return HttpResponse::moved_permanently(&location);
+                        let location = build_avatar_location(avatar.id);
+                        HttpResponse::moved_permanently(&location)
                     }
                 } else {
-                    let location = build_avatar_location(avatar_blob_id);
-                    return HttpResponse::moved_temporariliy(&location, Some(3600));
+                    let location = build_avatar_location(avatar.id);
+                    HttpResponse::moved_temporariliy(&location, Some(3600))
                 }
-            } else if blob_id.is_some() {
-                return HttpResponse::gone();
+            } else if id.is_some() {
+                HttpResponse::gone()
             } else {
-                return HttpResponse::not_found();
+                HttpResponse::not_found()
             }
         }
-        RequestType::Blob(blob_id) => blob_id,
-        RequestType::Other => return HttpResponse::not_found(),
-    };
-
-    match start_stream_blob(canister_id, canister_data.blob_storage, blob_id) {
-        Some(response) => response,
-        None => HttpResponse::gone(),
+        RequestType::Blob(blob_id) => match start_streaming_blob(canister_id, canister_data.blob_storage, blob_id) {
+            Some(response) => response,
+            None => HttpResponse::gone(),
+        },
+        RequestType::Other => HttpResponse::not_found(),
     }
 }
 
@@ -70,33 +80,7 @@ fn build_avatar_location(blob_id: u128) -> String {
     format!("/avatar/{}", blob_id)
 }
 
-enum RequestType {
-    Avatar(Option<u128>),
-    Blob(u128),
-    Other,
-}
-
-fn extract_request_type(path: &str) -> RequestType {
-    let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
-
-    if path == "avatar" {
-        return RequestType::Avatar(None);
-    } else if let Some(parts) = path.split_once('/') {
-        if let Ok(blob_id) = u128::from_str(parts.1) {
-            if parts.0 == "blobs" {
-                return RequestType::Blob(blob_id);
-            } else if parts.0 == "avatar" {
-                return RequestType::Avatar(Some(blob_id));
-            }
-        }
-    }
-
-    RequestType::Other
-}
-
-fn start_stream_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blob_id: u128) -> Option<HttpResponse> {
-    const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
-
+fn start_streaming_blob(canister_id: CanisterId, blob_storage: &BlobStorage, blob_id: u128) -> Option<HttpResponse> {
     if let Some(blob) = blob_storage.get_blob(&blob_id) {
         let next_chunk_index = 1;
         let streaming_strategy = if blob_storage.exists(blob_id, next_chunk_index) {
@@ -132,6 +116,30 @@ fn build_token(blob_id: u128, index: u32) -> Token {
         index: index.into(),
         sha256: None,
     }
+}
+
+enum RequestType {
+    Avatar(Option<u128>),
+    Blob(u128),
+    Other,
+}
+
+fn extract_request_type(path: &str) -> RequestType {
+    let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
+
+    if path == "avatar" {
+        return RequestType::Avatar(None);
+    } else if let Some(parts) = path.split_once('/') {
+        if let Ok(blob_id) = u128::from_str(parts.1) {
+            if parts.0 == "blobs" {
+                return RequestType::Blob(blob_id);
+            } else if parts.0 == "avatar" {
+                return RequestType::Avatar(Some(blob_id));
+            }
+        }
+    }
+
+    RequestType::Other
 }
 
 #[cfg(test)]

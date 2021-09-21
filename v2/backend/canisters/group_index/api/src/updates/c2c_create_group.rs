@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use types::ChatId;
+use types::{Avatar, ChatId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -8,13 +8,14 @@ pub struct Args {
     pub creator_principal: Principal,
     pub name: String,
     pub description: String,
+    pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    PublicGroupAlreadyExists,
+    NameTaken,
     CyclesBalanceTooLow,
     InternalError,
 }

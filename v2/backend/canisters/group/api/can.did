@@ -21,7 +21,18 @@ type SendMessageResponse =
             timestamp: TimestampMillis;
         };
         NotInGroup;
-    }; 
+    };
+
+type DeleteMessagesArgs =
+    record {
+        message_ids: vec MessageId;
+    };
+
+type DeleteMessagesResponse =
+    variant {
+        Success;
+        NotInGroup;
+    };
 
 type MarkReadArgs =
     record {
@@ -33,19 +44,6 @@ type MarkReadResponse =
         Success;
         SuccessNoChange;
         NotInGroup;
-    };
-
-type SetAvatarArgs =
-    record {
-        mime_type: text;
-        bytes: vec nat8;
-    };
-
-type SetAvatarResponse =
-    variant {
-        Success;
-        FileTooBig: nat32;
-        InvalidMimeType: nat32;
     };
 
 type BlockUserArgs =
@@ -150,25 +148,6 @@ type RemoveAdminResponse =
         UserNotInGroup;
     };
 
-type PutAvatarChunkArgs =
-    record {
-        blob_id: nat;
-        mime_type: text;
-        total_chunks: nat32;
-        index: nat32;
-        bytes: blob;
-    };
-
-type PutAvatarChunkResponse =
-    variant {
-        Success;
-        CallerNotGroupAdmin;
-        BlobAlreadyExists;
-        ChunkAlreadyExists;
-        ChunkTooBig;
-        Full;
-    };
-
 type PutChunkArgs =
     record {
         blob_id: nat;
@@ -186,6 +165,24 @@ type PutChunkResponse =
         ChunkAlreadyExists;
         ChunkTooBig;
         Full;
+    };
+
+type UpdateGroupArgs =
+    record {
+        name: text;
+        description: text;
+        avatar: opt Avatar;
+    };
+
+type UpdateGroupResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        NameTooLong: FieldTooLongResult;
+        DescriptionTooLong: FieldTooLongResult;
+        Unchanged;
+        NameTaken;
+        InternalError;
     };
 
 type SummaryArgs =
@@ -218,8 +215,21 @@ type SummaryUpdatesResponse =
 
 type EventsArgs =
     record {
+        start_index: EventIndex;
+        ascending: bool;
+        max_messages: nat32;
+        max_events: nat32;
+    };
+
+type EventsRangeArgs =
+    record {
         from_index: EventIndex;
         to_index: EventIndex;
+    };
+
+type EventsByIndexArgs =
+    record {
+        events: vec GroupChatEventWrapper;
     };
 
 type EventsSuccessResult =
@@ -229,17 +239,6 @@ type EventsSuccessResult =
     };
 
 type EventsResponse =
-    variant {
-        Success: EventsSuccessResult;
-        ChatNotFound;
-    }; 
-
-type EventsByIndexArgs =
-    record {
-        events: vec GroupChatEventWrapper;
-    };
-
-type EventsByIndexResponse =
     variant {
         Success: EventsSuccessResult;
         ChatNotFound;
@@ -286,26 +285,27 @@ type MetricsResponse =
 
 service: {
     // Admin only
-    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
-    put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
+    update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse); 
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     events: (EventsArgs) -> (EventsResponse) query;
-    events_by_index: (EventsByIndexArgs) -> (EventsByIndexResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsResponse) query;
+    events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }
