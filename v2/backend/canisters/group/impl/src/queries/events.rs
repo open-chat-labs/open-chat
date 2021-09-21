@@ -9,11 +9,10 @@ fn events(args: Args) -> Response {
 
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_participant() {
-        let events =
-            runtime_state
-                .data
-                .events
-                .iter_from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
+        let events = runtime_state
+            .data
+            .events
+            .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
 
         let latest_event_index = runtime_state.data.events.last().index;
 

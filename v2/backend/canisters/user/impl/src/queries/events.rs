@@ -13,7 +13,7 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
         let events = chat
             .events
-            .iter_from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
+            .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
 
         Success(SuccessResult { events })
     } else {

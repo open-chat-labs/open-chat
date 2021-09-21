@@ -228,7 +228,7 @@ impl Events {
         self.events.iter()
     }
 
-    pub fn iter_from_index(
+    pub fn from_index(
         &self,
         start: EventIndex,
         ascending: bool,
