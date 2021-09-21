@@ -17,7 +17,9 @@ pub struct Events {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEventInternal {
     Message(MessageInternal),
+    DeletedMessage(DeletedDirectMessage),
     DirectChatCreated(DirectChatCreated),
+    MessageDeleted(MessageId),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -41,6 +43,13 @@ pub struct PushMessageArgs {
     pub content: MessageContent,
     pub replies_to: Option<DirectReplyContextArgs>,
     pub now: TimestampMillis,
+}
+
+pub enum DeleteMessageResult {
+    Success,
+    AlreadyDeleted,
+    NotAuthorized,
+    NotFound,
 }
 
 impl Events {
@@ -72,6 +81,35 @@ impl Events {
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(DirectChatEventInternal::Message(message_internal), args.now);
         (event_index, message)
+    }
+
+    pub fn delete_message(&mut self, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal(event_index) {
+                let deleted_message = match &event.event {
+                    DirectChatEventInternal::Message(message) => {
+                        if message.sent_by_me {
+                            message.clone()
+                        } else {
+                            return DeleteMessageResult::NotAuthorized;
+                        }
+                    }
+                    DirectChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
+                    _ => return DeleteMessageResult::NotFound,
+                };
+
+                let deletion_event_index = self.push_event(DirectChatEventInternal::MessageDeleted(message_id), now);
+                let event = self.get_internal_mut(event_index).unwrap();
+                event.event = DirectChatEventInternal::DeletedMessage(DeletedDirectMessage {
+                    message_index: deleted_message.message_index,
+                    message_id: deleted_message.message_id,
+                    sent_by_me: true,
+                    deletion_event_index,
+                })
+            }
+        }
+
+        DeleteMessageResult::NotFound
     }
 
     pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -206,7 +244,12 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
             DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
+            DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(d.clone()),
             DirectChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
+            DirectChatEventInternal::MessageDeleted(message_id) => DirectChatEvent::MessageDeleted(MessageDeleted {
+                deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
+                message_id: *message_id,
+            }),
         };
 
         EventWrapper {
@@ -253,14 +296,25 @@ impl Events {
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<DirectChatEventInternal>> {
-        if self.events.is_empty() {
-            return None;
-        }
-
-        let earliest_event_index: u32 = self.events.first().unwrap().index.into();
-        let as_u32: u32 = event_index.into();
-        let index = (as_u32 - earliest_event_index) as usize;
+        let index = self.get_index(event_index)?;
 
         self.events.get(index)
+    }
+
+    fn get_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<DirectChatEventInternal>> {
+        let index = self.get_index(event_index)?;
+
+        self.events.get_mut(index)
+    }
+
+    fn get_index(&self, event_index: EventIndex) -> Option<usize> {
+        if let Some(first_event) = self.events.first() {
+            let earliest_event_index: u32 = first_event.index.into();
+            let as_u32: u32 = event_index.into();
+            let index = (as_u32 - earliest_event_index) as usize;
+            Some(index)
+        } else {
+            None
+        }
     }
 }
