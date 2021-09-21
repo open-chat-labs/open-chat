@@ -191,7 +191,7 @@ impl Events {
                     if users.is_empty() {
                         message.reactions.retain(|(r, _)| *r != reaction);
                     }
-                    
+
                     self.push_event(DirectChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
                     RemoveReactionResult::Success
                 } else {
