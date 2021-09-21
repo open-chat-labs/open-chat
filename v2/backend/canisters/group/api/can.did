@@ -34,28 +34,16 @@ type DeleteMessagesResponse =
         NotInGroup;
     };
 
-type AddReactionArgs =
+type ToggleReactionArgs =
     record {
         message_id: MessageId;
         reaction: text;
     };
 
-type AddReactionResponse =
+type ToggleReactionResponse =
     variant {
-        Success;
-        MessageNotFound;
-        ChatNotFound;
-    };
-
-type RemoveReactionArgs =
-    record {
-        message_id: MessageId;
-        reaction: text;
-    };
-
-type RemoveReactionResponse =
-    variant {
-        Success;
+        Added;
+        Removed;
         MessageNotFound;
         ChatNotFound;
     };
@@ -344,8 +332,7 @@ service: {
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
-    add_reaction: (AddReactionArgs) -> (AddReactionResponse);
-    remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
+    toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 

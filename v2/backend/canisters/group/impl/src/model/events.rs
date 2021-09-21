@@ -65,15 +65,9 @@ pub enum DeleteMessageResult {
     NotFound,
 }
 
-pub enum AddReactionResult {
-    Success,
-    AlreadyAdded,
-    MessageNotFound,
-}
-
-pub enum RemoveReactionResult {
-    Success,
-    ReactionNotFound,
+pub enum ToggleReactionResult {
+    Added,
+    Removed,
     MessageNotFound,
 }
 
@@ -162,57 +156,41 @@ impl Events {
         event_index
     }
 
-    pub fn add_reaction(
+    pub fn toggle_reaction(
         &mut self,
         user_id: UserId,
         message_id: MessageId,
         reaction: String,
         now: TimestampMillis,
-    ) -> AddReactionResult {
+    ) -> ToggleReactionResult {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(GroupChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
-                if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
-                    if !users.insert(user_id) {
-                        return AddReactionResult::AlreadyAdded;
+                let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                    if users.insert(user_id) {
+                        true
+                    } else {
+                        users.remove(&user_id);
+                        if users.is_empty() {
+                            message.reactions.retain(|(r, _)| *r != reaction);
+                        }
+                        false
                     }
                 } else {
                     message.reactions.push((reaction, vec![user_id].into_iter().collect()));
-                }
+                    true
+                };
 
-                self.push_event(GroupChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
-                return AddReactionResult::Success;
-            }
-        }
-
-        AddReactionResult::MessageNotFound
-    }
-
-    pub fn remove_reaction(
-        &mut self,
-        user_id: UserId,
-        message_id: MessageId,
-        reaction: String,
-        now: TimestampMillis,
-    ) -> RemoveReactionResult {
-        if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(GroupChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
-                return if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
-                    if !users.remove(&user_id) {
-                        return RemoveReactionResult::ReactionNotFound;
-                    }
-                    if users.is_empty() {
-                        message.reactions.retain(|(r, _)| *r != reaction);
-                    }
-
-                    self.push_event(GroupChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
-                    RemoveReactionResult::Success
+                return if added {
+                    self.push_event(GroupChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    ToggleReactionResult::Added
                 } else {
-                    RemoveReactionResult::ReactionNotFound
+                    self.push_event(GroupChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    ToggleReactionResult::Removed
                 };
             }
         }
 
-        RemoveReactionResult::MessageNotFound
+        ToggleReactionResult::MessageNotFound
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<GroupChatEvent>> {

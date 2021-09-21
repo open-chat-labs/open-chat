@@ -10,13 +10,12 @@ generate_query_call!(http_request);
 generate_query_call!(updates);
 
 // Updates
-generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(create_group);
 generate_update_call!(leave_group);
 generate_update_call!(join_group);
 generate_update_call!(mark_read);
 generate_update_call!(put_chunk);
-generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
+generate_update_call!(toggle_reaction);
 generate_update_call!(unblock_user);

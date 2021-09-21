@@ -55,15 +55,9 @@ pub enum DeleteMessageResult {
     MessageNotFound,
 }
 
-pub enum AddReactionResult {
-    Success,
-    AlreadyAdded,
-    MessageNotFound,
-}
-
-pub enum RemoveReactionResult {
-    Success,
-    ReactionNotFound,
+pub enum ToggleReactionResult {
+    Added,
+    Removed,
     MessageNotFound,
 }
 
@@ -147,60 +141,42 @@ impl Events {
         event_index
     }
 
-    pub fn add_reaction(
+    pub fn toggle_reaction(
         &mut self,
         added_by_me: bool,
         message_id: MessageId,
         reaction: String,
         now: TimestampMillis,
-    ) -> AddReactionResult {
+    ) -> ToggleReactionResult {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(DirectChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
-                if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
-                    if users.contains(&added_by_me) {
-                        return AddReactionResult::AlreadyAdded;
-                    } else {
+                let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                    if !users.contains(&added_by_me) {
                         users.push(added_by_me);
+                        true
+                    } else {
+                        users.retain(|u| *u != added_by_me);
+                        if users.is_empty() {
+                            message.reactions.retain(|(r, _)| *r != reaction);
+                        }
+                        false
                     }
                 } else {
                     message.reactions.push((reaction, vec![added_by_me]));
-                }
+                    true
+                };
 
-                self.push_event(DirectChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
-                return AddReactionResult::Success;
-            }
-        }
-
-        AddReactionResult::MessageNotFound
-    }
-
-    pub fn remove_reaction(
-        &mut self,
-        added_by_me: bool,
-        message_id: MessageId,
-        reaction: String,
-        now: TimestampMillis,
-    ) -> RemoveReactionResult {
-        if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(DirectChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
-                return if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
-                    if !users.contains(&added_by_me) {
-                        return RemoveReactionResult::ReactionNotFound;
-                    }
-                    users.retain(|u| *u != added_by_me);
-                    if users.is_empty() {
-                        message.reactions.retain(|(r, _)| *r != reaction);
-                    }
-
-                    self.push_event(DirectChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
-                    RemoveReactionResult::Success
+                return if added {
+                    self.push_event(DirectChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    ToggleReactionResult::Added
                 } else {
-                    RemoveReactionResult::ReactionNotFound
+                    self.push_event(DirectChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    ToggleReactionResult::Removed
                 };
             }
         }
 
-        RemoveReactionResult::MessageNotFound
+        ToggleReactionResult::MessageNotFound
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<DirectChatEvent>> {

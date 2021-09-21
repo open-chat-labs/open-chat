@@ -1,17 +1,17 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageId, UserId};
+use types::MessageId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: UserId,
     pub message_id: MessageId,
     pub reaction: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Added,
+    Removed,
     MessageNotFound,
     ChatNotFound,
 }
