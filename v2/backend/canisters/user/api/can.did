@@ -30,6 +30,18 @@ type SendMessageResponse =
         RecipientBlocked;
     }; 
 
+type DeleteMessagesArgs =
+    record {
+        user_id: UserId;
+        message_ids: vec MessageId;
+    };
+
+type DeleteMessagesResponse =
+    variant {
+        Success;
+        ChatNotFound;
+    };
+
 type MarkReadArgs =
     record {
         user_id: UserId;
@@ -261,6 +273,7 @@ type InitArgs =
 
 service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);

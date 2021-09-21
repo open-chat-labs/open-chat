@@ -17,6 +17,7 @@ pub struct Events {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum GroupChatEventInternal {
     Message(MessageInternal),
+    DeletedMessage(DeletedGroupMessage),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
@@ -28,6 +29,7 @@ pub enum GroupChatEventInternal {
     ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
+    MessageDeleted(MessageId),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -50,6 +52,13 @@ pub struct PushMessageArgs {
     pub content: MessageContent,
     pub replies_to: Option<GroupReplyContextArgs>,
     pub now: TimestampMillis,
+}
+
+pub enum DeleteMessageResult {
+    Success,
+    AlreadyDeleted,
+    NotAuthorized,
+    NotFound,
 }
 
 impl Events {
@@ -87,6 +96,35 @@ impl Events {
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(GroupChatEventInternal::Message(message_internal), args.now);
         (event_index, message)
+    }
+
+    pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal(event_index) {
+                let deleted_message = match &event.event {
+                    GroupChatEventInternal::Message(message) => {
+                        if message.sender == caller {
+                            message.clone()
+                        } else {
+                            return DeleteMessageResult::NotAuthorized;
+                        }
+                    }
+                    GroupChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
+                    _ => return DeleteMessageResult::NotFound,
+                };
+
+                let deletion_event_index = self.push_event(GroupChatEventInternal::MessageDeleted(message_id), now);
+                let event = self.get_internal_mut(event_index).unwrap();
+                event.event = GroupChatEventInternal::DeletedMessage(DeletedGroupMessage {
+                    message_index: deleted_message.message_index,
+                    message_id: deleted_message.message_id,
+                    sender: deleted_message.sender,
+                    deletion_event_index,
+                })
+            }
+        }
+
+        DeleteMessageResult::NotFound
     }
 
     pub fn push_event(&mut self, event: GroupChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -249,6 +287,7 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
             GroupChatEventInternal::Message(m) => GroupChatEvent::Message(self.hydrate_message(m)),
+            GroupChatEventInternal::DeletedMessage(d) => GroupChatEvent::DeletedMessage(d.clone()),
             GroupChatEventInternal::GroupChatCreated(g) => GroupChatEvent::GroupChatCreated(g.clone()),
             GroupChatEventInternal::GroupNameChanged(g) => GroupChatEvent::GroupNameChanged(g.clone()),
             GroupChatEventInternal::GroupDescriptionChanged(g) => GroupChatEvent::GroupDescriptionChanged(g.clone()),
@@ -258,8 +297,12 @@ impl Events {
             GroupChatEventInternal::ParticipantLeft(p) => GroupChatEvent::ParticipantLeft(p.clone()),
             GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => GroupChatEvent::ParticipantsPromotedToAdmin(p.clone()),
             GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => GroupChatEvent::ParticipantsDismissedAsAdmin(p.clone()),
-            GroupChatEventInternal::UsersBlocked(p) => GroupChatEvent::UsersBlocked(p.clone()),
-            GroupChatEventInternal::UsersUnblocked(p) => GroupChatEvent::UsersUnblocked(p.clone()),
+            GroupChatEventInternal::UsersBlocked(u) => GroupChatEvent::UsersBlocked(u.clone()),
+            GroupChatEventInternal::UsersUnblocked(u) => GroupChatEvent::UsersUnblocked(u.clone()),
+            GroupChatEventInternal::MessageDeleted(message_id) => GroupChatEvent::MessageDeleted(MessageDeleted {
+                deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
+                message_id: *message_id,
+            }),
         };
 
         EventWrapper {
@@ -288,14 +331,25 @@ impl Events {
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<GroupChatEventInternal>> {
-        if self.events.is_empty() {
-            return None;
-        }
-
-        let earliest_event_index: u32 = self.events.first().unwrap().index.into();
-        let as_u32: u32 = event_index.into();
-        let index = (as_u32 - earliest_event_index) as usize;
+        let index = self.get_index(event_index)?;
 
         self.events.get(index)
+    }
+
+    fn get_internal_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapper<GroupChatEventInternal>> {
+        let index = self.get_index(event_index)?;
+
+        self.events.get_mut(index)
+    }
+
+    fn get_index(&self, event_index: EventIndex) -> Option<usize> {
+        if let Some(first_event) = self.events.first() {
+            let earliest_event_index: u32 = first_event.index.into();
+            let as_u32: u32 = event_index.into();
+            let index = (as_u32 - earliest_event_index) as usize;
+            Some(index)
+        } else {
+            None
+        }
     }
 }

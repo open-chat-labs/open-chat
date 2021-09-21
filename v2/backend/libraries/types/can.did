@@ -65,6 +65,20 @@ type CyclesContent =
         caption: opt text;
     };
 
+type DeletedDirectMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sent_by_me: bool;
+    };
+
+type DeletedGroupMessage =
+    record {
+        message_index: MessageIndex;
+        message_id: MessageId;
+        sender: UserId;
+    };
+
 type DirectChatCreated =
     record {
     };
@@ -72,7 +86,9 @@ type DirectChatCreated =
 type DirectChatEvent =
     variant {
         Message: DirectMessage;
+        DeletedMessage: DeletedDirectMessage;
         DirectChatCreated: DirectChatCreated;
+        MessageDeleted: MessageDeleted;
     };
 
 type DirectChatEventWrapper =
@@ -156,6 +172,7 @@ type GroupChatCreated =
 type GroupChatEvent =
     variant {
         Message: GroupMessage;
+        DeletedMessage: DeletedGroupMessage;
         GroupChatCreated: GroupChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
@@ -165,6 +182,7 @@ type GroupChatEvent =
         ParticipantLeft: ParticipantLeft;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
+        MessageDeleted: MessageDeleted;
     };
 
 type GroupChatEventWrapper =
@@ -277,6 +295,12 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
+    };
+
+type MessageDeleted =
+    record {
+        event_index: EventIndex;
+        message_id: MessageId;
     };
 
 type MessageIndexRange =
