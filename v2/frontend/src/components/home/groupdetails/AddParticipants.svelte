@@ -12,10 +12,13 @@
     import type { UserSearchMachine } from "../../../fsm/userSearch.machine";
     import SelectUsers from "../SelectUsers.svelte";
     import type { UserSummary } from "../../../domain/user/user";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
     $: busy = $machine.matches({ adding_participants: "saving_participants" });
+
+    $: closeIcon = $machine.context.history.length <= 1 ? "close" : "back";
 
     function cancelAddParticipant() {
         machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
@@ -34,7 +37,11 @@
     <h4>{$_("addParticipants")}</h4>
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            {#if closeIcon === "close"}
+                <Close size={"1.2em"} color={"#aaa"} />
+            {:else}
+                <ArrowLeft size={"1.2em"} color={"#aaa"} />
+            {/if}
         </HoverIcon>
     </span>
 </SectionHeader>

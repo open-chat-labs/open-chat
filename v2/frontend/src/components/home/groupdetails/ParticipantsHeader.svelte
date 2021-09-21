@@ -6,9 +6,11 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import type { FullParticipant } from "../../../domain/chat/chat";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
     export let me: FullParticipant | undefined;
     export let publicGroup: boolean;
+    export let closeIcon: "close" | "back";
 
     $: canAdd = me?.role === "admin" || publicGroup;
 
@@ -34,7 +36,11 @@
     <h4>{$_("participants")}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            {#if closeIcon === "close"}
+                <Close size={"1.2em"} color={"#aaa"} />
+            {:else}
+                <ArrowLeft size={"1.2em"} color={"#aaa"} />
+            {/if}
         </HoverIcon>
     </span>
 </SectionHeader>

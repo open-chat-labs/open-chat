@@ -22,7 +22,7 @@ export interface EditGroupContext {
     editedChatSummary: GroupChatSummary;
     userLookup: UserLookup;
     history: Mode[]; // this is used to control where we go "back" to
-    error?: Error;
+    error?: string;
     usersToAdd: UserSummary[];
     user?: UserSummary;
 }

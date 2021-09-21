@@ -11,7 +11,7 @@
 
     export let userSearchMachine: ActorRefFrom<UserSearchMachine>;
     export let selectedUsers: UserSummary[];
-    export let error: Error | undefined;
+    export let error: string | undefined;
 </script>
 
 <div class="selected">

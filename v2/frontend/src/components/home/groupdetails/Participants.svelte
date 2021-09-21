@@ -37,6 +37,8 @@
     $: publicGroup =
         $machine.context.chatSummary.kind === "group_chat" && $machine.context.chatSummary.public;
 
+    $: closeIcon = ($machine.context.history.length <= 1 ? "close" : "back") as "close" | "back";
+
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         machine.send({ type: "DISMISS_AS_ADMIN", data: ev.detail });
     }
@@ -50,7 +52,12 @@
     }
 </script>
 
-<ParticipantsHeader {publicGroup} {me} on:close={close} on:addParticipants={addParticipants} />
+<ParticipantsHeader
+    {closeIcon}
+    {publicGroup}
+    {me}
+    on:close={close}
+    on:addParticipants={addParticipants} />
 
 {#if me !== undefined}
     <Participant
