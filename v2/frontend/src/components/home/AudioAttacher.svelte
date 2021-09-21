@@ -6,8 +6,12 @@
     import { MAX_AUDIO_SIZE } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import { dataToBlobUrl } from "../../utils/blob";
+    import type { AudioContent } from "../../domain/chat/chat";
 
-    const dispatch = createEventDispatcher();
+    type EventMap = {
+        audioCaptured: AudioContent;
+    };
+    const dispatch = createEventDispatcher<EventMap>();
 
     export let recording: boolean = false;
     export let percentRecorded: number = 0;
@@ -76,13 +80,10 @@
                             toastStore.showFailureToast("maxAudioSize");
                         }
                         dispatch("audioCaptured", {
-                            kind: "media_content",
+                            kind: "audio_content",
                             mimeType: mimeType,
-                            width: 0,
-                            height: 0,
                             blobData: new Uint8Array(data),
-                            thumbnailData: "",
-                            url: dataToBlobUrl(data, mimeType),
+                            blobUrl: dataToBlobUrl(data, mimeType),
                         });
                     });
 

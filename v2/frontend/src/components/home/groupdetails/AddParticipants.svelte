@@ -5,7 +5,6 @@
     import Button from "../../Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
     import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
     export let machine: ActorRefFrom<EditGroupMachine>;
     import { _ } from "svelte-i18n";
@@ -16,7 +15,7 @@
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
-    $: busy = $machine.matches({ adding_participants: "saving_participants" });
+    $: busy = $machine.matches({ add_participants: "saving_participants" });
 
     $: closeIcon = $machine.context.history.length <= 1 ? "close" : "back";
 
@@ -56,12 +55,8 @@
     </div>
 {/if}
 
-{#if $machine.matches({ adding_participants: "saving_participants" })}
+{#if $machine.matches({ add_participants: "saving_participants" })}
     <Loading />
-{/if}
-
-{#if $machine.matches({ adding_participants: "unexpected_error" })}
-    <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
 {/if}
 
 <div class="cta">

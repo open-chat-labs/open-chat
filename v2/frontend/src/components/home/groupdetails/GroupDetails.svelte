@@ -163,18 +163,15 @@
 
     .group-form {
         flex: 1;
-        background-color: var(--section-bg);
         color: var(--section-txt);
         overflow: auto;
-        @include size-below(xs) {
-            background-color: transparent;
-        }
+        background-color: transparent;
     }
 
     .form-fields {
         padding: $sp4;
         @include size-below(xs) {
-            padding: $sp3;
+            padding: 0 $sp3;
         }
     }
 

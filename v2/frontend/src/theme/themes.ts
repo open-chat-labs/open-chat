@@ -5,6 +5,17 @@ const dark20 = "#454545";
 const dark25 = "#525252";
 const dark60 = "#ababab";
 
+// these are the gradients used in the logo (from light to dark)
+// const blueFrom = "#28aae2";
+// const blueTo = "#146b91";
+// const blueGradient = `linear-gradient(${blueFrom}, ${blueTo})`;
+// const orangeFrom = "#fbb03b";
+// const orangeTo = "#f05a24";
+// const orangeGradient = `linear-gradient(${orangeFrom}, ${orangeTo})`;
+// const purpleFrom = "#ed1e79";
+// const purpleTo = "#5f2583";
+// const purpleGradient = `linear-gradient(${purpleFrom}, ${purpleTo})`;
+
 export interface Theme {
     name: string;
     label: string;
