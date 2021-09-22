@@ -9,7 +9,7 @@ use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use log::error;
 use types::{
-    AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, MAX_AVATAR_SIZE,
+    AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId, MAX_AVATAR_SIZE,
 };
 
 #[update]
@@ -45,18 +45,19 @@ async fn update_group(args: Args) -> Response {
         };
     }
 
-    RUNTIME_STATE.with(|state| commit(args, state.borrow_mut().as_mut().unwrap()));
+    RUNTIME_STATE.with(|state| commit(prepare_result.my_user_id, args, state.borrow_mut().as_mut().unwrap()));
     Success
 }
 
 struct PrepareResult {
+    my_user_id: UserId,
     group_index_canister_id: CanisterId,
     is_public: bool,
     chat_id: ChatId,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = &runtime_state.env.caller();
+    let caller = runtime_state.env.caller();
     if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
         Err(NameTooLong(FieldTooLongResult {
             length_provided: args.name.len() as u32,
@@ -76,11 +77,12 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
             max_length: MAX_AVATAR_SIZE as u32,
         }))
-    } else if let Some(participant) = runtime_state.data.participants.get_by_principal(caller) {
+    } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if !participant.role.can_update_group() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
+                my_user_id: participant.user_id,
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 is_public: runtime_state.data.is_public,
                 chat_id: runtime_state.env.canister_id().into(),
@@ -91,8 +93,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(args: Args, runtime_state: &mut RuntimeState) {
-    let user_id = runtime_state.env.caller().into();
+fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let events = &mut runtime_state.data.events;
 
@@ -101,7 +102,7 @@ fn commit(args: Args, runtime_state: &mut RuntimeState) {
             GroupChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                 new_name: args.name.clone(),
                 previous_name: runtime_state.data.name.clone(),
-                changed_by: user_id,
+                changed_by: my_user_id,
             })),
             now,
         );
@@ -114,7 +115,7 @@ fn commit(args: Args, runtime_state: &mut RuntimeState) {
             GroupChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                 new_description: args.description.clone(),
                 previous_description: runtime_state.data.description.clone(),
-                changed_by: user_id,
+                changed_by: my_user_id,
             })),
             now,
         );
@@ -127,7 +128,7 @@ fn commit(args: Args, runtime_state: &mut RuntimeState) {
             GroupChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
                 new_avatar: avatar.id,
                 previous_avatar: runtime_state.data.avatar.as_ref().map(|a| a.id),
-                changed_by: runtime_state.env.caller().into(),
+                changed_by: my_user_id,
             })),
             now,
         );
