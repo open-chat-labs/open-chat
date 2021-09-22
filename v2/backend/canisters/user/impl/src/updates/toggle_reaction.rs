@@ -29,6 +29,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
+                    true,
                 ));
                 Added
             }
@@ -37,6 +38,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
+                    false,
                 ));
                 Removed
             }
@@ -47,7 +49,16 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-async fn toggle_reaction_on_recipients_canister(canister_id: CanisterId, message_id: MessageId, reaction: Reaction) {
-    let args = c2c_toggle_reaction::Args { message_id, reaction };
+async fn toggle_reaction_on_recipients_canister(
+    canister_id: CanisterId,
+    message_id: MessageId,
+    reaction: Reaction,
+    added: bool,
+) {
+    let args = c2c_toggle_reaction::Args {
+        message_id,
+        reaction,
+        added,
+    };
     let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
 }
