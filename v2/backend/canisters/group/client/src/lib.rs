@@ -15,3 +15,4 @@ generate_query_call!(summary_updates);
 generate_update_call!(add_participants);
 generate_update_call!(mark_read);
 generate_update_call!(send_message);
+generate_update_call!(toggle_reaction);

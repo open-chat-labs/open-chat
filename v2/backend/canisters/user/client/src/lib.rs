@@ -17,4 +17,5 @@ generate_update_call!(join_group);
 generate_update_call!(mark_read);
 generate_update_call!(put_chunk);
 generate_update_call!(send_message);
+generate_update_call!(toggle_reaction);
 generate_update_call!(unblock_user);

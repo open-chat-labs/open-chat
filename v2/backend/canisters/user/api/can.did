@@ -28,7 +28,23 @@ type SendMessageResponse =
         MessageTooLong: nat32;
         InvalidRequest;
         RecipientBlocked;
-    }; 
+    };
+
+type ToggleReactionArgs =
+    record {
+        user_id: UserId;
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type ToggleReactionResponse =
+    variant {
+        Added;
+        Removed;
+        InvalidReaction;
+        MessageNotFound;
+        ChatNotFound;
+    };
 
 type DeleteMessagesArgs =
     record {
@@ -291,6 +307,7 @@ type InitArgs =
 service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
+    toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);

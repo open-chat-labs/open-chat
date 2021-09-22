@@ -20,6 +20,8 @@ pub enum DirectChatEventInternal {
     DeletedMessage(Box<DeletedDirectMessage>),
     DirectChatCreated(DirectChatCreated),
     MessageDeleted(Box<MessageId>),
+    MessageReactionAdded(Box<MessageId>),
+    MessageReactionRemoved(Box<MessageId>),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -29,6 +31,7 @@ pub struct MessageInternal {
     pub sent_by_me: bool,
     pub content: MessageContent,
     pub replies_to: Option<DirectReplyContextInternal>,
+    pub reactions: Vec<(Reaction, Vec<bool>)>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -49,7 +52,13 @@ pub enum DeleteMessageResult {
     Success,
     AlreadyDeleted,
     NotAuthorized,
-    NotFound,
+    MessageNotFound,
+}
+
+pub enum ToggleReactionResult {
+    Added,
+    Removed,
+    MessageNotFound,
 }
 
 impl Events {
@@ -77,6 +86,7 @@ impl Events {
                 chat_id_if_other: r.chat_id_if_other,
                 message_id: r.message_id,
             }),
+            reactions: Vec::new(),
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(DirectChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -95,7 +105,7 @@ impl Events {
                         }
                     }
                     DirectChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
-                    _ => return DeleteMessageResult::NotFound,
+                    _ => return DeleteMessageResult::MessageNotFound,
                 };
 
                 let deletion_event_index = self.push_event(DirectChatEventInternal::MessageDeleted(Box::new(message_id)), now);
@@ -105,11 +115,12 @@ impl Events {
                     message_id: deleted_message.message_id,
                     sent_by_me: true,
                     deletion_event_index,
-                }))
+                }));
+                return DeleteMessageResult::Success;
             }
         }
 
-        DeleteMessageResult::NotFound
+        DeleteMessageResult::MessageNotFound
     }
 
     pub fn push_event(&mut self, event: DirectChatEventInternal, now: TimestampMillis) -> EventIndex {
@@ -128,6 +139,49 @@ impl Events {
             event,
         });
         event_index
+    }
+
+    pub fn toggle_reaction(
+        &mut self,
+        added_by_me: bool,
+        message_id: MessageId,
+        reaction: Reaction,
+        now: TimestampMillis,
+    ) -> ToggleReactionResult {
+        if !reaction.is_valid() {
+            // This should never happen because we validate earlier
+            panic!("Invalid reaction: {:?}", reaction);
+        }
+
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(DirectChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
+                let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
+                    if !users.contains(&added_by_me) {
+                        users.push(added_by_me);
+                        true
+                    } else {
+                        users.retain(|u| *u != added_by_me);
+                        if users.is_empty() {
+                            message.reactions.retain(|(r, _)| *r != reaction);
+                        }
+                        false
+                    }
+                } else {
+                    message.reactions.push((reaction, vec![added_by_me]));
+                    true
+                };
+
+                return if added {
+                    self.push_event(DirectChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    ToggleReactionResult::Added
+                } else {
+                    self.push_event(DirectChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    ToggleReactionResult::Removed
+                };
+            }
+        }
+
+        ToggleReactionResult::MessageNotFound
     }
 
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<DirectChatEvent>> {
@@ -279,10 +333,13 @@ impl Events {
             DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
             DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(*d.clone()),
             DirectChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
-            DirectChatEventInternal::MessageDeleted(message_id) => DirectChatEvent::MessageDeleted(MessageDeleted {
-                deleted_message_event_index: self.message_id_map.get(message_id).map_or(EventIndex::default(), |e| *e),
-                message_id: **message_id,
-            }),
+            DirectChatEventInternal::MessageDeleted(m) => DirectChatEvent::MessageDeleted(self.hydrate_updated_message(**m)),
+            DirectChatEventInternal::MessageReactionAdded(m) => {
+                DirectChatEvent::MessageReactionAdded(self.hydrate_updated_message(**m))
+            }
+            DirectChatEventInternal::MessageReactionRemoved(m) => {
+                DirectChatEvent::MessageReactionRemoved(self.hydrate_updated_message(**m))
+            }
         };
 
         EventWrapper {
@@ -299,6 +356,11 @@ impl Events {
             sent_by_me: message.sent_by_me,
             content: message.content.clone(),
             replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
+            reactions: message
+                .reactions
+                .iter()
+                .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
+                .collect(),
         }
     }
 
@@ -325,6 +387,13 @@ impl Events {
                     }
                 })
                 .flatten()
+        }
+    }
+
+    fn hydrate_updated_message(&self, message_id: MessageId) -> UpdatedMessage {
+        UpdatedMessage {
+            event_index: self.message_id_map.get(&message_id).map_or(EventIndex::default(), |e| *e),
+            message_id,
         }
     }
 
