@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub avatar_blob_id: u128,
+    pub avatar_id: u128,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
