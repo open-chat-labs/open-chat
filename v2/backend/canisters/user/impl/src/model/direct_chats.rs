@@ -13,6 +13,7 @@ impl DirectChats {
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }
+
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut DirectChat> {
         self.direct_chats.get_mut(chat_id)
     }
