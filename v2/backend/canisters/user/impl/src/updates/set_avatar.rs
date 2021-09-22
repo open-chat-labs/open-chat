@@ -34,12 +34,12 @@ fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let user_index_canister_id = runtime_state.data.user_index_canister_id;
 
-    ic_cdk::block_on(update_index_canister(user_index_canister_id, Some(id)));
+    ic_cdk::block_on(update_index_canister(user_index_canister_id, id));
 
     Success(id)
 }
 
-async fn update_index_canister(user_index_canister_id: CanisterId, avatar_blob_id: Option<u128>) {
+async fn update_index_canister(user_index_canister_id: CanisterId, avatar_blob_id: u128) {
     let args = user_index_canister::c2c_set_avatar::Args { avatar_blob_id };
     let _ = user_index_canister_c2c_client::c2c_set_avatar(user_index_canister_id, &args).await;
 }

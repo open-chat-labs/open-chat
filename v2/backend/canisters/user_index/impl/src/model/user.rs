@@ -79,10 +79,10 @@ impl User {
         true
     }
 
-    pub fn set_avatar_blob_id(&mut self, avatar_blob_id: Option<u128>, now: TimestampMillis) -> bool {
+    pub fn set_avatar_blob_id(&mut self, avatar_blob_id: u128, now: TimestampMillis) -> bool {
         match self {
             User::Created(u) => {
-                u.avatar_blob_id = avatar_blob_id;
+                u.avatar_blob_id = Some(avatar_blob_id);
                 u.date_updated = now;
                 true
             }
