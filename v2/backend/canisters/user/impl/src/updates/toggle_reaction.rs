@@ -2,7 +2,7 @@ use crate::model::events::ToggleReactionResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageId};
+use types::{CanisterId, MessageId, Reaction};
 use user_canister::c2c_toggle_reaction;
 use user_canister::toggle_reaction::{Response::*, *};
 
@@ -10,7 +10,11 @@ use user_canister::toggle_reaction::{Response::*, *};
 fn toggle_reaction(args: Args) -> Response {
     check_cycles_balance();
 
-    RUNTIME_STATE.with(|state| toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))
+    if args.reaction.is_valid() {
+        RUNTIME_STATE.with(|state| toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))
+    } else {
+        InvalidReaction
+    }
 }
 
 fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
@@ -43,7 +47,7 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-async fn toggle_reaction_on_recipients_canister(canister_id: CanisterId, message_id: MessageId, reaction: String) {
+async fn toggle_reaction_on_recipients_canister(canister_id: CanisterId, message_id: MessageId, reaction: Reaction) {
     let args = c2c_toggle_reaction::Args { message_id, reaction };
     let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
 }

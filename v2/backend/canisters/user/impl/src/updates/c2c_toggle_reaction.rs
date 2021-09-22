@@ -8,7 +8,11 @@ use user_canister::toggle_reaction::{Response::*, *};
 fn c2c_toggle_reaction(args: Args) -> Response {
     check_cycles_balance();
 
-    RUNTIME_STATE.with(|state| c2c_toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))
+    if args.reaction.is_valid() {
+        RUNTIME_STATE.with(|state| c2c_toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))
+    } else {
+        InvalidReaction
+    }
 }
 
 fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {

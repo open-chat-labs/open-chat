@@ -1,5 +1,5 @@
 use crate::reply_context::{DirectReplyContext, GroupReplyContext};
-use crate::{message_content::MessageContent, EventIndex, MessageId, MessageIndex, UserId};
+use crate::{message_content::MessageContent, EventIndex, MessageId, MessageIndex, Reaction, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ pub struct DirectMessage {
     pub sent_by_me: bool,
     pub content: MessageContent,
     pub replies_to: Option<DirectReplyContext>,
-    pub reactions: Vec<(String, Vec<bool>)>,
+    pub reactions: Vec<(Reaction, Vec<bool>)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -20,7 +20,7 @@ pub struct GroupMessage {
     pub sender: UserId,
     pub content: MessageContent,
     pub replies_to: Option<GroupReplyContext>,
-    pub reactions: Vec<(String, Vec<UserId>)>,
+    pub reactions: Vec<(Reaction, Vec<UserId>)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -31,7 +31,7 @@ pub struct MessageInternal {
     pub sent_by_me: bool,
     pub content: MessageContent,
     pub replies_to: Option<DirectReplyContextInternal>,
-    pub reactions: Vec<(String, Vec<bool>)>,
+    pub reactions: Vec<(Reaction, Vec<bool>)>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -145,9 +145,14 @@ impl Events {
         &mut self,
         added_by_me: bool,
         message_id: MessageId,
-        reaction: String,
+        reaction: Reaction,
         now: TimestampMillis,
     ) -> ToggleReactionResult {
+        if !reaction.is_valid() {
+            // This should never happen because we validate earlier
+            panic!("Invalid reaction: {:?}", reaction);
+        }
+
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
             if let Some(DirectChatEventInternal::Message(message)) = self.get_internal_mut(event_index).map(|e| &mut e.event) {
                 let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == reaction) {
