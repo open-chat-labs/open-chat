@@ -49,20 +49,5 @@
             width: 100px;
             height: 100px;
         }
-
-        &.online::after {
-            background-color: limegreen;
-        }
-
-        &.offline::after {
-            background-color: #ccc;
-        }
-
-        &.large::after {
-            bottom: 6px;
-            right: 6px;
-            height: 15px;
-            width: 15px;
-        }
     }
 </style>

@@ -439,7 +439,7 @@ export const themes: Themes = {
 
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
-            bd: "transparent",
+            bd: dark25,
             sh: "none",
         },
 

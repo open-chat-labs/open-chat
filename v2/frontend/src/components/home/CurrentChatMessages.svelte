@@ -215,7 +215,10 @@
             first.event.kind === "participant_left" ||
             first.event.kind === "participants_promoted_to_admin" ||
             first.event.kind === "participants_dismissed_as_admin" ||
-            first.event.kind === "participants_removed"
+            first.event.kind === "participants_removed" ||
+            first.event.kind === "avatar_changed" ||
+            first.event.kind === "desc_changed" ||
+            first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
         }
@@ -269,6 +272,9 @@
             evt.event.kind === "participants_added" ||
             evt.event.kind === "participants_removed" ||
             evt.event.kind === "participant_left" ||
+            evt.event.kind === "avatar_changed" ||
+            evt.event.kind === "desc_changed" ||
+            evt.event.kind === "name_changed" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {

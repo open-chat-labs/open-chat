@@ -54,7 +54,7 @@
         {#if userSearchMachine !== undefined}
             <SelectUsers
                 on:deleteUser={deleteParticipant}
-                error={$machine.context.error}
+                error={undefined}
                 {selectedUsers}
                 {userSearchMachine} />
         {:else}

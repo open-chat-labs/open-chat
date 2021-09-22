@@ -6,12 +6,18 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
 
+    export let saving: boolean;
+
     const dispatch = createEventDispatcher();
     function close() {
-        dispatch("close");
+        if (!saving) {
+            dispatch("close");
+        }
     }
     function showParticipants() {
-        dispatch("showParticipants");
+        if (!saving) {
+            dispatch("showParticipants");
+        }
     }
 </script>
 

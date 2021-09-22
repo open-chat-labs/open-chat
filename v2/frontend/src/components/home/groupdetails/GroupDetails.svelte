@@ -18,15 +18,17 @@
     const MAX_DESC_LENGTH = 1024;
 
     // todo this is not quite right yet as we forget changes
-    let groupAvatar: UpdatedAvatar | undefined = $machine.context.chatSummary.blobUrl
+    let groupAvatar: UpdatedAvatar | undefined = $machine.context.updatedGroup.avatar
+        ? $machine.context.updatedGroup.avatar
+        : $machine.context.chatSummary.blobUrl
         ? {
-              blobUrl: $machine.context.chatSummary.blobUrl!,
+              blobUrl: $machine.context.chatSummary.blobUrl,
               blobData: $machine.context.chatSummary.blobData,
           }
         : undefined;
 
-    let groupName = $machine.context.chatSummary.name;
-    let groupDesc = $machine.context.chatSummary.description;
+    let groupName = $machine.context.updatedGroup.name;
+    let groupDesc = $machine.context.updatedGroup.desc;
     let isPublic = $machine.context.chatSummary.public;
     let showConfirmation = false;
     let confirmed = false;
@@ -36,6 +38,7 @@
     $: avatarDirty = groupAvatar?.blobUrl !== $machine.context.chatSummary.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
     $: saving = $machine.matches({ group_details: "saving_group" });
+
     $: updatedGroup = {
         name: nameDirty ? groupName : $machine.context.chatSummary.name,
         desc: descDirty ? groupDesc : $machine.context.chatSummary.description,
@@ -69,12 +72,13 @@
     }
 </script>
 
-<GroupDetailsHeader on:showParticipants={showParticipants} on:close={close} />
+<GroupDetailsHeader {saving} on:showParticipants={showParticipants} on:close={close} />
 
 <form class="group-form" on:submit|preventDefault={updateGroup}>
     <div class="form-fields">
         <div class="sub-section photo">
             <EditableAvatar
+                disabled={saving}
                 image={avatarUrl(groupAvatar, "../assets/group.svg")}
                 on:imageSelected={groupAvatarSelected} />
             <p class="photo-legend">{$_("addGroupPhoto")}</p>
@@ -82,6 +86,7 @@
 
         <Input
             invalid={false}
+            disabled={saving}
             autofocus={false}
             bind:value={groupName}
             minlength={MIN_LENGTH}
@@ -90,6 +95,7 @@
             placeholder={$_("newGroupName")} />
 
         <TextArea
+            disabled={saving}
             bind:value={groupDesc}
             invalid={false}
             maxlength={MAX_DESC_LENGTH}
@@ -132,15 +138,29 @@
             </p>
         </span>
         <span slot="footer">
-            <Button small={true} on:click={updateGroup}>{$_("save")}</Button>
-            <Button small={true} on:click={close} secondary={true}>{$_("discard")}</Button>
+            <div class="buttons">
+                <Button loading={saving} disabled={saving} small={true} on:click={updateGroup}
+                    >{$_("save")}</Button>
+                <Button disabled={saving} small={true} on:click={close} secondary={true}
+                    >{$_("discard")}</Button>
+            </div>
         </span>
     </ModalContent>
 </Overlay>
 
 <style type="text/scss">
+    :global(.buttons button) {
+        margin-right: $sp3;
+    }
+
     .unsaved {
         padding: $sp5;
+    }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
     }
 
     .photo {

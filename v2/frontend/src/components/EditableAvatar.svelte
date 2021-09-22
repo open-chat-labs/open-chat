@@ -9,6 +9,7 @@
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
+    export let disabled: boolean = false;
 
     let fileinput: HTMLInputElement;
     let avatar: string | null | undefined;
@@ -19,7 +20,9 @@
     let cropData: CropData | undefined = undefined;
 
     function addPhoto() {
-        fileinput.click();
+        if (!disabled) {
+            fileinput.click();
+        }
     }
 
     function onFileSelected(e: { currentTarget: HTMLInputElement }) {

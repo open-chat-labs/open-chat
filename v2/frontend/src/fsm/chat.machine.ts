@@ -405,10 +405,16 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         id: "editGroupMachine",
                         src: editGroupMachine,
                         data: (ctx, ev) => {
+                            if (ctx.chatSummary.kind !== "group_chat") {
+                                throw new Error("Cannot edit a direct chat");
+                            }
                             return {
                                 serviceContainer: ctx.serviceContainer,
                                 chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
-                                updatedGroup: {},
+                                updatedGroup: {
+                                    name: ctx.chatSummary.name,
+                                    desc: ctx.chatSummary.description,
+                                },
                                 userLookup: ctx.userLookup,
                                 history: [
                                     ev.type === "ADD_PARTICIPANT"
