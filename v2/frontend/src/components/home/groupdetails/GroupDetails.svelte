@@ -7,9 +7,8 @@
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
+    import type { EditGroupMachine, UpdatedAvatar } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
-    import type { DataContent } from "../../../domain/data/data";
     import { avatarUrl } from "../../../domain/user/user.utils";
 
     export let machine: ActorRefFrom<EditGroupMachine>;
@@ -18,26 +17,30 @@
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    let groupAvatar: DataContent | undefined = $machine.context.editedChatSummary.blobUrl
+    // todo this is not quite right yet as we forget changes
+    let groupAvatar: UpdatedAvatar | undefined = $machine.context.chatSummary.blobUrl
         ? {
-              blobUrl: $machine.context.editedChatSummary.blobUrl,
-              blobData: $machine.context.editedChatSummary.blobData,
-              blobReference: $machine.context.editedChatSummary.blobReference,
+              blobUrl: $machine.context.chatSummary.blobUrl!,
+              blobData: $machine.context.chatSummary.blobData,
           }
         : undefined;
 
-    let groupName = $machine.context.editedChatSummary.name;
-    let groupDesc = $machine.context.editedChatSummary.description;
-    let isPublic = $machine.context.editedChatSummary.public;
+    let groupName = $machine.context.chatSummary.name;
+    let groupDesc = $machine.context.chatSummary.description;
+    let isPublic = $machine.context.chatSummary.public;
     let showConfirmation = false;
     let confirmed = false;
 
-    $: dirty =
-        groupName !== $machine.context.chatSummary.name ||
-        groupDesc !== $machine.context.chatSummary.description ||
-        groupAvatar?.blobUrl !== $machine.context.chatSummary.blobUrl;
-
+    $: nameDirty = groupName !== $machine.context.chatSummary.name;
+    $: descDirty = groupDesc !== $machine.context.chatSummary.description;
+    $: avatarDirty = groupAvatar?.blobUrl !== $machine.context.chatSummary.blobUrl;
+    $: dirty = nameDirty || descDirty || avatarDirty;
     $: saving = $machine.matches({ group_details: "saving_group" });
+    $: updatedGroup = {
+        name: nameDirty ? groupName : $machine.context.chatSummary.name,
+        desc: descDirty ? groupDesc : $machine.context.chatSummary.description,
+        avatar: avatarDirty ? groupAvatar : undefined,
+    };
 
     function close() {
         if (dirty && !confirmed) {
@@ -50,10 +53,7 @@
     }
 
     function showParticipants() {
-        machine.send({
-            type: "SYNC_CHAT_DETAILS",
-            data: { name: groupName, desc: groupDesc, avatar: groupAvatar },
-        });
+        machine.send({ type: "SYNC_CHAT_DETAILS", data: updatedGroup });
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
 
@@ -65,10 +65,7 @@
     }
 
     function updateGroup() {
-        machine.send({
-            type: "SAVE_GROUP_DETAILS",
-            data: { name: groupName, desc: groupDesc, avatar: groupAvatar },
-        });
+        machine.send({ type: "SAVE_GROUP_DETAILS", data: updatedGroup });
     }
 </script>
 

@@ -69,6 +69,7 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'user_id' : UserId,
+      'avatar_blob_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'account_balance' : bigint,
     }

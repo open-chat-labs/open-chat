@@ -8,6 +8,7 @@ import type {
     RemoveParticipantResponse,
     MessageIndexRange,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -18,4 +19,5 @@ export interface IGroupClient {
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
 }

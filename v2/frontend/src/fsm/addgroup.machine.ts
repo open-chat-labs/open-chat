@@ -14,7 +14,6 @@ export interface AddGroupContext {
     serviceContainer: ServiceContainer;
     candidateGroup: CandidateGroupChat;
     createdGroupId?: string;
-    error?: string;
 }
 
 export const nullGroup = {
@@ -95,7 +94,6 @@ export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
                                         if (ev.data.kind === "success") {
                                             return {
                                                 createdGroupId: ev.data.canisterId,
-                                                error: undefined,
                                             };
                                         }
                                         return {};

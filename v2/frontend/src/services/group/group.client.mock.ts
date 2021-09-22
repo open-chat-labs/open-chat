@@ -10,6 +10,7 @@ import type {
     RemoveParticipantResponse,
     MessageIndexRange,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
@@ -150,6 +151,14 @@ export class GroupClientMock implements IGroupClient {
     }
 
     markMessagesRead(_ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    updateGroup(_name: string, _desc: string, _avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");

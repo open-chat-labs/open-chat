@@ -51,6 +51,7 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
+      'avatar_blob_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'account_balance' : IDL.Nat,
     }),

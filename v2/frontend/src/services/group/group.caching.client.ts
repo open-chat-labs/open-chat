@@ -8,6 +8,7 @@ import type {
     RemoveParticipantResponse,
     MessageIndexRange,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -59,5 +60,9 @@ export class CachingGroupClient implements IGroupClient {
 
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
         return this.client.markMessagesRead(ranges);
+    }
+
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+        return this.client.updateGroup(name, desc, avatar);
     }
 }

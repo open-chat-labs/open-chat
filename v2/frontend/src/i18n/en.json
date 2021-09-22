@@ -22,6 +22,7 @@
     "chooseParticipants": "Choose participants",
     "confirmParticipants": "Confirm participants",
     "groupCreationFailed": "Sorry we were unable to create your group",
+    "groupUpdateFailed": "Sorry we were unable to update your group",
     "groupCreatedBy": "{username} created the group",
     "directChatCreatedAt": "chat created at",
     "skip": "Skip",

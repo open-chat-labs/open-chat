@@ -7,19 +7,29 @@ import type {
     ChangeAdminResponse,
     RemoveParticipantResponse,
     ParticipantRole,
+    UpdateGroupResponse,
 } from "../domain/chat/chat";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 import { toastStore } from "../stores/toast";
-import type { DataContent } from "../domain/data/data";
 
 export type Mode = "show_participants" | "add_participants" | "group_details";
 
+export type UpdatedAvatar = {
+    blobUrl?: string;
+    blobData?: Uint8Array;
+};
+
+export type UpdatedGroup = {
+    name: string;
+    desc: string;
+    avatar?: UpdatedAvatar;
+};
 export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;
-    editedChatSummary: GroupChatSummary;
+    updatedGroup: UpdatedGroup;
     userLookup: UserLookup;
     history: Mode[]; // this is used to control where we go "back" to
     error?: string;
@@ -50,15 +60,15 @@ export type EditGroupEvents =
     | { type: "HIDE_PARTICIPANTS" }
     | { type: "SAVE_PARTICIPANTS" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SYNC_CHAT_DETAILS"; data: { name: string; desc: string; avatar?: DataContent } }
-    | { type: "SAVE_GROUP_DETAILS"; data: { name: string; desc: string; avatar?: DataContent } }
+    | { type: "SYNC_CHAT_DETAILS"; data: UpdatedGroup }
+    | { type: "SAVE_GROUP_DETAILS"; data: UpdatedGroup }
     | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin" }
     | { type: "error.platform.dismissAsAdmin"; data: Error }
-    | { type: "done.invoke.saveGroup" }
+    | { type: "done.invoke.saveGroup"; data: UpdateGroupResponse }
     | { type: "error.platform.saveGroup"; data: Error }
     | { type: "done.invoke.makeAdmin" }
     | { type: "error.platform.makeAdmin"; data: Error }
@@ -108,16 +118,26 @@ const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
             }
             throw new Error("Unexpected event type provided to EditGroupMachine.addParticipant");
         },
-        saveGroup: (_ctx, _ev) => {
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    console.log("pretended to update the group");
-                    resolve();
-                }, 500);
-            });
+        saveGroup: (ctx, _ev) => {
+            return ctx.serviceContainer.updateGroup(
+                ctx.chatSummary.chatId,
+                ctx.updatedGroup.name,
+                ctx.updatedGroup.desc,
+                ctx.updatedGroup.avatar?.blobData
+            );
         },
     },
 };
+
+function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+    if (resp === "success") return undefined;
+    if (resp === "unchanged") return undefined;
+    if (resp === "desc_too_long") return "groupDescTooLong";
+    if (resp === "internal_error") return "groupUpdateFailed";
+    if (resp === "not_authorised") return "groupUpdateFailed";
+    if (resp === "name_too_long") return "groupNameTooLong";
+    if (resp === "name_taken") return "groupAlreadyExists";
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
@@ -397,24 +417,14 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     target: "show_participants",
                 },
                 SYNC_CHAT_DETAILS: {
-                    actions: assign((ctx, ev) => ({
-                        editedChatSummary: {
-                            ...ctx.editedChatSummary,
-                            ...ev.data.avatar,
-                            name: ev.data.name,
-                            description: ev.data.desc,
-                        },
+                    actions: assign((_ctx, ev) => ({
+                        updatedGroup: ev.data,
                     })),
                 },
                 SAVE_GROUP_DETAILS: {
                     target: ".saving_group",
-                    actions: assign((ctx, ev) => ({
-                        editedChatSummary: {
-                            ...ctx.editedChatSummary,
-                            ...ev.data.avatar,
-                            name: ev.data.name,
-                            description: ev.data.desc,
-                        },
+                    actions: assign((_ctx, ev) => ({
+                        updatedGroup: ev.data,
                     })),
                 },
             },
@@ -426,17 +436,28 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     invoke: {
                         id: "saveGroup",
                         src: "saveGroup",
-                        onDone: {
-                            target: "#navigate",
-                            actions: [
-                                assign(({ history }) => pop(history)),
-                                assign((ctx, _ev) => ({ chatSummary: ctx.editedChatSummary })),
-                            ],
-                        },
+                        onDone: [
+                            {
+                                cond: (_, ev: DoneInvokeEvent<UpdateGroupResponse>) =>
+                                    ev.data !== "success",
+                                target: "#group_details_idle",
+                                actions: pure((_ctx, ev) => {
+                                    const err = groupUpdateErrorMessage(ev.data);
+                                    if (err) toastStore.showFailureToast(err);
+                                    return [];
+                                }),
+                            },
+                            {
+                                cond: (_, ev: DoneInvokeEvent<UpdateGroupResponse>) =>
+                                    ev.data === "success",
+                                target: "#navigate",
+                                actions: [assign(({ history }) => pop(history))],
+                            },
+                        ],
                         onError: {
                             target: "#group_details_idle",
                             actions: pure((_ctx, _ev) => {
-                                toastStore.showFailureToast("updateGroupFailed");
+                                toastStore.showFailureToast("groupUpdateFailed");
                                 return undefined;
                             }),
                         },

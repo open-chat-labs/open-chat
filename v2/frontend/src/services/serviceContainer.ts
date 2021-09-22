@@ -36,6 +36,7 @@ import type {
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -120,6 +121,15 @@ export class ServiceContainer {
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.userClient.createGroup(candidate);
+    }
+
+    updateGroup(
+        chatId: string,
+        name: string,
+        desc: string,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
+        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
     }
 
     addParticipants(chatId: string, userIds: string[]): Promise<AddParticipantsResponse> {

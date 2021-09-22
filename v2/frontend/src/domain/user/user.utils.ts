@@ -1,4 +1,3 @@
-import type { DataContent } from "../data/data";
 import {
     PartialUserSummary,
     PhoneNumber,
@@ -10,8 +9,8 @@ import {
 
 const ONLINE_THRESHOLD = 120;
 
-export function avatarUrl(
-    dataContent?: DataContent,
+export function avatarUrl<T extends { blobUrl?: string }>(
+    dataContent?: T,
     fallback = "../assets/unknownUserAvatar.svg"
 ): string {
     return dataContent?.blobUrl ?? fallback;
