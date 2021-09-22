@@ -15,6 +15,13 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
+type Avatar = 
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
 type BlobReference =
     record {
         canister_id: CanisterId;
@@ -179,6 +186,7 @@ type GroupChatEvent =
         GroupChatCreated: GroupChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
+        AvatarChanged: AvatarChanged;
         ParticipantsAdded: ParticipantsAdded;
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
@@ -203,7 +211,7 @@ type GroupChatSummary =
         last_updated: TimestampMillis;
         name: text;
         description: text;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
         is_public: bool;
         min_visible_event_index: EventIndex;
         min_visible_message_index: MessageIndex;
@@ -220,7 +228,7 @@ type GroupChatSummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         latest_message: opt GroupMessageEventWrapper;
@@ -230,8 +238,15 @@ type GroupChatSummaryUpdates =
 
 type GroupDescriptionChanged =
     record {
-        new_description: opt text;
-        previous_description: opt text;
+        new_description: text;
+        previous_description: text;
+        changed_by: UserId;
+    };
+
+type AvatarChanged =
+    record {
+        new_avatar: nat;
+        previous_avatar: opt nat;
         changed_by: UserId;
     };
 
@@ -444,7 +459,7 @@ type UserSummary =
         user_id: UserId;
         username: text;
         seconds_since_last_online: nat32;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
     };
 
 type PartialUserSummary =
@@ -452,7 +467,7 @@ type PartialUserSummary =
         user_id: UserId;
         username: opt text;
         seconds_since_last_online: nat32;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
     };
 
 type Version =

@@ -16,7 +16,7 @@
     let rightRotation: number = 0;
 
     onDestroy(() => {
-        content.url && URL.revokeObjectURL(content.url);
+        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
     });
 
     function timeupdate() {
@@ -42,8 +42,8 @@
     on:pause={() => (playing = false)}
     bind:this={audioPlayer}>
     <track kind="captions" />
-    {#if content.url}
-        <source src={content.url} />
+    {#if content.blobUrl}
+        <source src={content.blobUrl} />
     {/if}
 </audio>
 

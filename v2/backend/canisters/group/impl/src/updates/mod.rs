@@ -9,7 +9,6 @@ mod c2c_leave_group;
 mod delete_messages;
 mod make_admin;
 mod mark_read;
-mod put_avatar_chunk;
 mod put_chunk;
 mod remove_admin;
 mod remove_participant;

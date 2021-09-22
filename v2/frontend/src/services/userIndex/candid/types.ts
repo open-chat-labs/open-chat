@@ -4,11 +4,19 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface Avatar {
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
+}
+export interface AvatarChanged {
+  'changed_by' : UserId,
+  'previous_avatar' : [] | [bigint],
+  'new_avatar' : bigint,
+}
 export interface BlobReference {
-  'blob_size' : number,
   'blob_id' : bigint,
   'canister_id' : CanisterId,
-  'chunk_size' : number,
 }
 export type CanisterCreationStatus = { 'InProgress' : null } |
   { 'Created' : null } |
@@ -66,14 +74,27 @@ export type CurrentUserResponse = {
     'Created' : {
       'username' : string,
       'user_id' : UserId,
+      'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'account_balance' : bigint,
     }
   } |
   { 'UserNotFound' : null };
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export interface DeletedDirectMessage {
+  'sent_by_me' : boolean,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
+export interface DeletedGroupMessage {
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : MessageDeleted } |
+  { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
@@ -116,9 +137,14 @@ export interface DirectMessageNotification {
 export type DirectReplyContext = { 'Private' : PrivateReplyContext } |
   { 'Standard' : StandardReplyContext };
 export type EventIndex = number;
+export interface FieldTooLongResult {
+  'length_provided' : number,
+  'max_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
+  'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
@@ -135,7 +161,10 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : MessageDeleted } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'DeletedMessage' : DeletedGroupMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
   'event' : GroupChatEvent,
@@ -151,6 +180,7 @@ export interface GroupChatSummary {
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
   'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
@@ -163,13 +193,14 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
+  'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
-  'new_description' : [] | [string],
-  'previous_description' : [] | [string],
+  'new_description' : string,
+  'previous_description' : string,
   'changed_by' : UserId,
 }
 export interface GroupMessage {
@@ -236,6 +267,10 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
+export interface MessageDeleted {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -271,6 +306,7 @@ export interface NotifyBalanceArgs { 'balance' : bigint }
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface Participant {
@@ -394,6 +430,7 @@ export type UserResponse = { 'Success' : UserSummary } |
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface UsersArgs {

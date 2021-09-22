@@ -1,15 +1,20 @@
+import type { DataContent } from "../data/data";
+
 export type UserLastOnline = {
     userId: string;
     secondsSinceLastOnline: number;
 };
 
-export type UserSummary = UserLastOnline & {
-    username: string;
-};
+export type UserSummary = UserLastOnline &
+    DataContent & {
+        username: string;
+    };
 
-export type PartialUserSummary = UserLastOnline & {
-    username?: string;
-};
+// todo - remember why this exists
+export type PartialUserSummary = UserLastOnline &
+    DataContent & {
+        username?: string;
+    };
 
 export type UserLookup = Record<string, PartialUserSummary>;
 

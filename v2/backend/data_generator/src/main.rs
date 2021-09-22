@@ -80,6 +80,7 @@ async fn run_data_generator(
                     name: lipsum::lipsum_words_from_seed(2, rng.next_u64()),
                     description: lipsum::lipsum_words_from_seed(15, rng.next_u64()),
                     history_visible_to_new_joiners: false,
+                    avatar: None,
                 };
                 let participants = all_user_ids.iter().filter(|&id| *id != u).cloned().collect();
                 let chat_id = create_group(&a, u, &args, participants).await;

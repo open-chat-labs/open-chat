@@ -163,26 +163,6 @@ type RemoveAdminResponse =
         UserNotInGroup;
     };
 
-type PutAvatarChunkArgs =
-    record {
-        blob_id: nat;
-        mime_type: text;
-        total_chunks: nat32;
-        index: nat32;
-        bytes: blob;
-    };
-
-type PutAvatarChunkResponse =
-    variant {
-        Success;
-        CallerNotGroupAdmin;
-        BlobAlreadyExists;
-        ChunkAlreadyExists;
-        ChunkTooBig;
-        BlobTooBig;
-        Full;
-    };
-
 type PutChunkArgs =
     record {
         blob_id: nat;
@@ -206,6 +186,7 @@ type UpdateGroupArgs =
     record {
         name: text;
         description: text;
+        avatar: opt Avatar;
     };
 
 type UpdateGroupResponse =
@@ -324,7 +305,6 @@ service: {
     make_admin: (MakeAdminArgs) -> (MakeAdminResponse);
     remove_admin: (RemoveAdminArgs) -> (RemoveAdminResponse);
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
-    put_avatar_chunk: (PutAvatarChunkArgs) -> (PutAvatarChunkResponse);
     update_group: (UpdateGroupArgs) -> (UpdateGroupResponse);
 
     // Can be called by admins or regular users of public groups

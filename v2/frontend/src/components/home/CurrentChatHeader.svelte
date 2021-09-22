@@ -31,6 +31,8 @@
     export let user: UserSummary | undefined;
     export let blocked: boolean;
 
+    $: isGroup = selectedChatSummary.kind === "group_chat";
+
     function clearSelection() {
         dispatch("clearSelection");
     }
@@ -44,6 +46,12 @@
     function unblockUser() {
         if (selectedChatSummary.kind === "direct_chat") {
             dispatch("unblockUser", { userId: selectedChatSummary.them });
+        }
+    }
+
+    function showGroupDetails() {
+        if (selectedChatSummary.kind === "group_chat") {
+            dispatch("showGroupDetails");
         }
     }
 
@@ -76,7 +84,7 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(chatSummary.them),
+                avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
                 subtext: "When user was last online | typing",
             };
@@ -85,7 +93,7 @@
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: "assets/group.svg",
+            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
             subtext: getParticipantsString(
                 user!,
                 users,
@@ -125,7 +133,13 @@
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
-            {chat.name}
+            {#if isGroup}
+                <span on:click={showGroupDetails} class="group-details">
+                    {chat.name}
+                </span>
+            {:else}
+                {chat.name}
+            {/if}
         </div>
         <div class="chat-subtext" title={chat.subtext}>
             {chat.subtext}
@@ -157,9 +171,9 @@
                     {/if}
                 {:else if selectedChatSummary.kind === "group_chat"}
                     <Menu>
-                        <MenuItem on:click={showParticipants}>
+                        <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("participants")}</div>
+                            <div slot="text">{$_("groupDetails")}</div>
                         </MenuItem>
                         <MenuItem on:click={leaveGroup}>
                             <LocationExit size={"1.2em"} color={"#aaa"} slot="icon" />
@@ -168,6 +182,10 @@
                         <MenuItem on:click={copyCode}>
                             <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("copyInviteCode")}</div>
+                        </MenuItem>
+                        <MenuItem on:click={showParticipants}>
+                            <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("participants")}</div>
                         </MenuItem>
                         {#if canAdminister(selectedChatSummary)}
                             <MenuItem on:click={addParticipants}>
@@ -196,6 +214,10 @@
 
     .avatar {
         flex: 0 0 55px;
+    }
+
+    .group-details {
+        cursor: pointer;
     }
 
     .chat-details {

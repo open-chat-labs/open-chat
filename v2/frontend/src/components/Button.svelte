@@ -35,8 +35,8 @@
 
         &.small {
             padding: $sp2 $sp5;
-            min-height: $sp5;
-            min-width: 0;
+            height: 25px;
+            min-width: 100px;
         }
 
         &:hover {

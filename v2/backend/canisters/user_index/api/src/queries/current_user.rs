@@ -40,7 +40,7 @@ pub struct ConfirmedResult {
 pub struct CreatedResult {
     pub user_id: UserId,
     pub username: String,
-    pub avatar_blob_id: Option<u128>,
+    pub avatar_id: Option<u128>,
     pub account_balance: u128,
     pub canister_upgrade_status: CanisterUpgradeStatus,
 }

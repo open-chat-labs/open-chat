@@ -24,9 +24,9 @@ import type {
     ApiUnblockUserResponse,
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
+    ApiSetAvatarResponse,
 } from "./candid/idl";
 import type {
-    BlobReference,
     ChatSummary,
     CyclesContent,
     FileContent,
@@ -52,9 +52,25 @@ import type {
     UnblockUserResponse,
     LeaveGroupResponse,
     MarkReadResponse,
+    SetAvatarResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
+import type { BlobReference } from "../../domain/data/data";
+
+export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
+    console.log(candid);
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AvatarTooBig" in candid) {
+        return "avatar_too_big";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", candid);
+}
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
@@ -100,6 +116,9 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
     }
     if ("BlobAlreadyExists" in candid) {
         return "blob_already_exists";
+    }
+    if ("BlobTooBig" in candid) {
+        return "blob_too_big";
     }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
@@ -148,8 +167,8 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "success", canisterId: candid.Success.chat_id.toString() };
     }
 
-    if ("PublicGroupAlreadyExists" in candid) {
-        return { kind: "public_group_already_exists" };
+    if ("NameTaken" in candid) {
+        return { kind: "group_name_taken" };
     }
 
     if ("InvalidName" in candid) {
@@ -170,6 +189,10 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
+    }
+
+    if ("AvatarTooBig" in candid) {
+        return { kind: "avatar_too_big" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -240,6 +263,10 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 candid.Group.participants_removed.map((p) => p.toString())
             ),
             latestEventIndex: optional(candid.Group.latest_event_index, identity),
+            avatarBlobReference: optional(candid.Group.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: candid.Group.chat_id.toString(),
+            })),
         };
     }
     if ("Direct" in candid) {
@@ -282,6 +309,10 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             minVisibleMessageIndex: candid.Group.min_visible_message_index,
             latestEventIndex: candid.Group.latest_event_index,
             lastUpdated: candid.Group.last_updated,
+            blobReference: optional(candid.Group.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: candid.Group.chat_id.toString(),
+            })),
         };
     }
     if ("Direct" in candid) {
@@ -414,15 +445,14 @@ function fileContent(candid: ApiFileContent): FileContent {
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
         caption: optional(candid.caption, identity),
+        fileSize: candid.file_size,
     };
 }
 
 function blobReference(candid: ApiBlobReference): BlobReference {
     return {
-        blobSize: candid.blob_size,
         blobId: candid.blob_id,
         canisterId: candid.canister_id.toString(),
-        chunkSize: candid.chunk_size,
     };
 }
 

@@ -32,8 +32,9 @@ import { chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
-import { groupMachine, nullGroup } from "./group.machine";
+import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import { markReadMachine } from "./markread.machine";
+import type { DataContent } from "../domain/data/data";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -68,6 +69,7 @@ export type HomeEvents =
     | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
+    | { type: "UPDATE_USER_AVATAR"; data: DataContent }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
@@ -76,8 +78,8 @@ export type HomeEvents =
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
     | { type: "error.platform.getUpdates"; data: Error }
-    | { type: "done.invoke.groupMachine"; data: GroupChatSummary }
-    | { type: "error.platform.groupMachine"; data: Error }
+    | { type: "done.invoke.addGroupMachine"; data: GroupChatSummary }
+    | { type: "error.platform.addGroupMachine"; data: Error }
     | { type: "done.invoke.userSearchMachine"; data: UserSummary }
     | { type: "error.platform.userSearchMachine"; data: Error };
 
@@ -93,6 +95,7 @@ type ChatsResponse = {
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
 async function getUpdates(
+    user: User,
     serviceContainer: ServiceContainer,
     userLookup: UserLookup,
     chatSummaries: ChatSummary[],
@@ -106,6 +109,7 @@ async function getUpdates(
                 : { updatesSince: undefined }
         );
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
+        userIds.add(user.userId);
         const usersResponse = await serviceContainer.getUsers(
             missingUserIds(userLookup, userIds),
             BigInt(0)
@@ -136,6 +140,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     services: {
         getUpdates: async (ctx, _) =>
             getUpdates(
+                ctx.user!,
                 ctx.serviceContainer!,
                 ctx.userLookup,
                 ctx.chatSummaries,
@@ -166,6 +171,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                     callback({
                         type: "CHATS_UPDATED",
                         data: await getUpdates(
+                            ctx.user!,
                             ctx.serviceContainer!,
                             userLookup,
                             chatSummaries,
@@ -261,6 +267,28 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                UPDATE_USER_AVATAR: {
+                    actions: assign((ctx, ev) => {
+                        if (ctx.user) {
+                            const user = {
+                                ...ctx.user,
+                                ...ev.data,
+                            };
+                            const partialUser = ctx.userLookup[ctx.user.userId];
+                            if (partialUser) {
+                                ctx.userLookup[ctx.user.userId] = {
+                                    ...partialUser,
+                                    ...ev.data,
+                                };
+                            }
+                            return {
+                                user: user,
+                                userLookup: ctx.userLookup,
+                            };
+                        }
+                        return {};
+                    }),
+                },
                 LEAVE_GROUP: {
                     internal: true,
                     actions: [
@@ -518,8 +546,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 new_group: {
                     invoke: {
-                        id: "groupMachine",
-                        src: groupMachine,
+                        id: "addGroupMachine",
+                        src: addGroupMachine,
                         data: (ctx, _) => {
                             return {
                                 user: ctx.user,

@@ -1,21 +1,23 @@
 <script lang="ts">
     import type { ActorRefFrom } from "xstate";
-    import SectionHeader from "../SectionHeader.svelte";
-    import Loading from "../Loading.svelte";
-    import Button from "../Button.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Loading from "../../Loading.svelte";
+    import Button from "../../Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    export let machine: ActorRefFrom<ParticipantsMachine>;
+    import HoverIcon from "../../HoverIcon.svelte";
+    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
+    export let machine: ActorRefFrom<EditGroupMachine>;
     import { _ } from "svelte-i18n";
-    import type { UserSearchMachine } from "../../fsm/userSearch.machine";
-    import type { ParticipantsMachine } from "../../fsm/participants.machine";
-    import SelectUsers from "./SelectUsers.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSearchMachine } from "../../../fsm/userSearch.machine";
+    import SelectUsers from "../SelectUsers.svelte";
+    import type { UserSummary } from "../../../domain/user/user";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
     $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
-    $: busy = $machine.matches({ adding_participants: "saving_participants" });
+    $: busy = $machine.matches({ add_participants: "saving_participants" });
+
+    $: closeIcon = $machine.context.history.length <= 1 ? "close" : "back";
 
     function cancelAddParticipant() {
         machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
@@ -31,12 +33,16 @@
 </script>
 
 <SectionHeader>
+    <h4>{$_("addParticipants")}</h4>
     <span title={$_("close")} class="close" on:click={cancelAddParticipant}>
         <HoverIcon>
-            <Close size={"1.2em"} color={"#aaa"} />
+            {#if closeIcon === "close"}
+                <Close size={"1.2em"} color={"#aaa"} />
+            {:else}
+                <ArrowLeft size={"1.2em"} color={"#aaa"} />
+            {/if}
         </HoverIcon>
     </span>
-    <h4>{$_("addParticipants")}</h4>
 </SectionHeader>
 
 {#if userSearchMachine !== undefined}
@@ -49,12 +55,8 @@
     </div>
 {/if}
 
-{#if $machine.matches({ adding_participants: "saving_participants" })}
+{#if $machine.matches({ add_participants: "saving_participants" })}
     <Loading />
-{/if}
-
-{#if $machine.matches({ adding_participants: "unexpected_error" })}
-    <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
 {/if}
 
 <div class="cta">

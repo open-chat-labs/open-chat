@@ -74,7 +74,7 @@ export async function extractVideoThumbnail(
     });
 }
 
-function changeDimensions(
+export function changeDimensions(
     original: HTMLImageElement | HTMLVideoElement,
     mimeType: string,
     originalDimensions: Dimensions,
@@ -123,8 +123,7 @@ export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
 
 export function messageMetaData(content: MessageContent): string | undefined {
     if (content.kind === "file_content") {
-        const size = content.blobData?.byteLength ?? content.blobReference?.blobSize ?? 0;
-        return `${content.mimeType}-${(size / 1000).toFixed(2)}kb`;
+        return `${content.mimeType}-${(content.fileSize / 1000).toFixed(2)}kb`;
     }
 }
 
@@ -188,7 +187,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     height: extract.dimensions.height,
                     blobData: new Uint8Array(data),
                     thumbnailData: extract.url,
-                    url: blobUrl,
+                    blobUrl: blobUrl,
                 };
             } else if (isVideo) {
                 const [thumb, image] = await extractVideoThumbnail(blobUrl, mimeType);
@@ -200,11 +199,11 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     height: image.dimensions.height,
                     imageData: {
                         blobData: new Uint8Array(image.data),
-                        url: image.url,
+                        blobUrl: image.url,
                     },
                     videoData: {
                         blobData: new Uint8Array(data),
-                        url: blobUrl,
+                        blobUrl: blobUrl,
                     },
                     thumbnailData: thumb.url,
                 };
@@ -213,7 +212,7 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     kind: "audio_content",
                     mimeType: mimeType,
                     blobData: new Uint8Array(data),
-                    url: blobUrl,
+                    blobUrl: blobUrl,
                 };
             } else {
                 content = {
@@ -221,7 +220,8 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
                     name: file.name,
                     mimeType: mimeType,
                     blobData: new Uint8Array(data),
-                    url: blobUrl,
+                    blobUrl: blobUrl,
+                    fileSize: data.byteLength,
                 };
             }
             resolve(content);

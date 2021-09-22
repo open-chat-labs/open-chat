@@ -10,8 +10,10 @@ import type {
     RemoveParticipantResponse,
     MessageIndexRange,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 import { newMessageId } from "../../domain/chat/chat.utils";
+import type { BlobReference } from "../../domain/data/data";
 import { fill, randomNum, randomPara } from "../../utils/mockutils";
 import type { IGroupClient } from "./group.client.interface";
 
@@ -68,10 +70,8 @@ function mockImageMessage(index: number): GroupMessage {
             width: 250,
             mimeType: "image/jpeg",
             blobReference: {
-                blobSize: CHUNK_SIZE_BYTES * 2,
                 blobId: BigInt(0),
                 canisterId: "doesnt_matter",
-                chunkSize: CHUNK_SIZE_BYTES,
             },
             thumbnailData: "",
         },
@@ -150,7 +150,15 @@ export class GroupClientMock implements IGroupClient {
         });
     }
 
-    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+    markMessagesRead(_ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+        return new Promise((res) => {
+            setTimeout(() => {
+                res("success");
+            }, 300);
+        });
+    }
+
+    updateGroup(_name: string, _desc: string, _avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return new Promise((res) => {
             setTimeout(() => {
                 res("success");

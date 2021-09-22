@@ -1,6 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import type {
-    BlobReference,
     CyclesContent,
     FileContent,
     ImageContent,
@@ -9,6 +8,7 @@ import type {
     MessageContent,
     TextContent,
 } from "../../domain/chat/chat";
+import type { BlobReference } from "../../domain/data/data";
 import { identity } from "../../utils/mapping";
 import type {
     ApiBlobReference,
@@ -82,9 +82,7 @@ function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
     return apiOptional(
         (b) => ({
             blob_id: b.blobId,
-            blob_size: b.blobSize,
             canister_id: Principal.fromText(b.canisterId),
-            chunk_size: b.chunkSize,
         }),
         domain
     );
@@ -107,5 +105,6 @@ function apiFileContent(domain: FileContent): ApiFileContent {
         mime_type: domain.mimeType,
         blob_reference: apiBlobReference(domain.blobReference),
         caption: apiOptional(identity, domain.caption),
+        file_size: domain.fileSize,
     };
 }

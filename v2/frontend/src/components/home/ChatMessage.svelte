@@ -1,5 +1,3 @@
-<svelte:options immutable={true} />
-
 <script lang="ts">
     import Link from "../Link.svelte";
     import { AvatarSize } from "../../domain/user/user";
@@ -200,7 +198,7 @@
     <Link on:click={chatWithUser}>
         <div class="avatar-section">
             <div class="avatar">
-                <Avatar url={avatarUrl(senderId)} status={userStatus} size={AvatarSize.Tiny} />
+                <Avatar url={avatarUrl(sender)} status={userStatus} size={AvatarSize.Tiny} />
             </div>
 
             <h4 class="username">{username}</h4>

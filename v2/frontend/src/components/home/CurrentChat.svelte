@@ -9,6 +9,10 @@
     export let blocked: boolean;
     export let unconfirmed: Set<bigint>;
 
+    function showGroupDetails() {
+        machine.send({ type: "SHOW_GROUP_DETAILS" });
+    }
+
     function showParticipants() {
         machine.send({ type: "SHOW_PARTICIPANTS" });
     }
@@ -27,6 +31,7 @@
         on:blockUser
         on:unblockUser
         on:addParticipants={addParticipants}
+        on:showGroupDetails={showGroupDetails}
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />

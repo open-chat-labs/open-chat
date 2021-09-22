@@ -5,9 +5,6 @@
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Palette from "svelte-material-icons/Palette.svelte";
-    import ShieldLock from "svelte-material-icons/ShieldLock.svelte";
-    import TestTube from "svelte-material-icons/TestTube.svelte";
-    import Cog from "svelte-material-icons/Cogs.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -17,11 +14,11 @@
     import { modalStore, ModalType } from "../../stores/modal";
     import { avatarUrl } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import type { User } from "../../domain/user/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
-    export let user: User;
+    export let user: PartialUserSummary;
 
     function newChat() {
         dispatch("newchat");
@@ -35,16 +32,8 @@
         dispatch("joinGroup");
     }
 
-    function internetIdentity() {
-        dispatch("internetIdentity");
-    }
-
-    function showSettings() {
-        dispatch("showSettings");
-    }
-
-    function userAvatarSelected(ev: CustomEvent<string>): void {
-        console.log(ev.detail);
+    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
+        dispatch("userAvatarSelected", ev.detail);
     }
 </script>
 
@@ -56,9 +45,7 @@
     </span>
     <div class="current-user">
         {#if $screenWidth !== ScreenWidth.ExtraSmall}
-            <EditableAvatar
-                image={avatarUrl(user.userId.toString())}
-                on:imageSelected={userAvatarSelected} />
+            <EditableAvatar image={avatarUrl(user)} on:imageSelected={userAvatarSelected} />
         {/if}
         <h4 class="name">{user.username}</h4>
     </div>
@@ -77,27 +64,15 @@
                     </MenuItem>
                     <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">New group</span>
+                        <span slot="text">{$_("newGroup")}</span>
                     </MenuItem>
                     <MenuItem on:click={joinGroup}>
                         <AccountMultiplePlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Join group</span>
+                        <span slot="text">{$_("joinGroup")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => modalStore.showModal(ModalType.ThemeSelection)}>
                         <Palette size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Change theme</span>
-                    </MenuItem>
-                    <MenuItem on:click={internetIdentity}>
-                        <ShieldLock size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Internet identity</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => modalStore.showModal(ModalType.TestMode)}>
-                        <TestTube size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Test mode</span>
-                    </MenuItem>
-                    <MenuItem on:click={showSettings}>
-                        <Cog size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">Settings</span>
+                        <span slot="text">{$_("changeTheme")}</span>
                     </MenuItem>
                 </Menu>
             </span>

@@ -12,11 +12,11 @@ fn init(args: Args) {
     RUNTIME_STATE.with(|state| {
         let env = Box::new(CanisterEnv::new(false));
         let group_index_canister_id = env.caller();
-
         let data = Data::new(
             args.is_public,
             args.name,
             args.description,
+            args.avatar,
             args.history_visible_to_new_joiners,
             args.created_by_principal,
             args.created_by_user_id,

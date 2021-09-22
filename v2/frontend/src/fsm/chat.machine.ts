@@ -19,6 +19,7 @@ import type {
     DirectMessage,
     GroupMessage,
     SendMessageSuccess,
+    GroupChatSummary,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
@@ -30,7 +31,7 @@ import {
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { participantsMachine } from "./participants.machine";
+import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
@@ -65,6 +66,7 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
+    | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
@@ -312,8 +314,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         events: ctx.events.filter((e) => e.event !== ev.data),
                     })),
                 },
-                SHOW_PARTICIPANTS: ".showing_participants",
-                ADD_PARTICIPANT: ".showing_participants",
+                SHOW_GROUP_DETAILS: ".showing_group",
+                SHOW_PARTICIPANTS: ".showing_group",
+                ADD_PARTICIPANT: ".showing_group",
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({ focusIndex: undefined })),
@@ -397,24 +400,44 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         },
                     },
                 },
-                showing_participants: {
+                showing_group: {
                     invoke: {
-                        id: "participantsMachine",
-                        src: participantsMachine,
+                        id: "editGroupMachine",
+                        src: editGroupMachine,
                         data: (ctx, ev) => {
+                            if (ctx.chatSummary.kind !== "group_chat") {
+                                throw new Error("Cannot edit a direct chat");
+                            }
                             return {
                                 serviceContainer: ctx.serviceContainer,
                                 chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
+                                updatedGroup: {
+                                    name: ctx.chatSummary.name,
+                                    desc: ctx.chatSummary.description,
+                                },
                                 userLookup: ctx.userLookup,
-                                add: ev.type === "ADD_PARTICIPANT",
+                                history: [
+                                    ev.type === "ADD_PARTICIPANT"
+                                        ? "add_participants"
+                                        : ev.type === "SHOW_PARTICIPANTS"
+                                        ? "show_participants"
+                                        : "group_details",
+                                ],
                                 user: ctx.user,
                                 error: undefined,
                                 usersToAdd: [],
                             };
                         },
                         onDone: {
-                            // todo - do we need to pass back the updated chat summary and merge it maybe?
                             target: "#ui_idle",
+                            actions: assign((ctx, ev: DoneInvokeEvent<GroupChatSummary>) => {
+                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
+                                    return {
+                                        chatSummary: ev.data,
+                                    };
+                                }
+                                return {};
+                            }),
                         },
                         onError: {
                             // todo - can this really *fail* or would we just deal with it in the sub machine?

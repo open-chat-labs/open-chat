@@ -16,7 +16,7 @@
 
 <div class="pill">
     <div class="avatar">
-        <Avatar url={avatarUrl(user.userId)} status={UserStatus.None} size={AvatarSize.Small} />
+        <Avatar url={avatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
     </div>
     <div class="username">{user.username}</div>
     <div on:click={deleteUser} class="delete">
