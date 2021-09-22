@@ -66,7 +66,7 @@
             <div class="user" on:click={() => onSelect(user)}>
                 <span class="avatar">
                     <Avatar
-                        url={avatarUrl(user.userId)}
+                        url={avatarUrl(user)}
                         status={userStatus(user)}
                         size={AvatarSize.Small} />
                 </span>

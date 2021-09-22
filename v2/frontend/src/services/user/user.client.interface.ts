@@ -14,6 +14,7 @@ import type {
     MarkReadResponse,
     MessageIndexRange,
 } from "../../domain/chat/chat";
+import type { BlobReference } from "../../domain/data/data";
 
 export interface IUserClient {
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
@@ -32,4 +33,5 @@ export interface IUserClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
     markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
+    setAvatar(data: Uint8Array): Promise<BlobReference>;
 }

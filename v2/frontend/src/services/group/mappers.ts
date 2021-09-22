@@ -17,9 +17,9 @@ import type {
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiTextContent,
+    ApiUpdateGroupResponse,
 } from "./candid/idl";
 import type {
-    BlobReference,
     FileContent,
     EventsResponse,
     ImageContent,
@@ -38,11 +38,13 @@ import type {
     ChangeAdminResponse,
     RemoveParticipantResponse,
     MarkReadResponse,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import type { ApiCyclesContent } from "../user/candid/idl";
 import type { Principal } from "@dfinity/principal";
+import type { BlobReference } from "../../domain/data/data";
 
 // todo - these message data types look very similar to the direct chat counterparts but they are logically separate and in
 // some aspects actually different so we will map them independently for the time being
@@ -50,6 +52,31 @@ import type { Principal } from "@dfinity/principal";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("DescriptionTooLong" in candid) {
+        return "desc_too_long";
+    }
+    if ("NameTooLong" in candid) {
+        return "name_too_long";
+    }
+    if ("Unchanged" in candid) {
+        return "unchanged";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("NameTaken" in candid) {
+        return "name_taken";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
@@ -251,6 +278,27 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             userId: candid.ParticipantLeft.user_id.toString(),
         };
     }
+
+    if ("GroupNameChanged" in candid) {
+        return {
+            kind: "name_changed",
+            changedBy: candid.GroupNameChanged.changed_by.toString(),
+        };
+    }
+
+    if ("GroupDescriptionChanged" in candid) {
+        return {
+            kind: "desc_changed",
+            changedBy: candid.GroupDescriptionChanged.changed_by.toString(),
+        };
+    }
+
+    if ("AvatarChanged" in candid) {
+        return {
+            kind: "avatar_changed",
+            changedBy: candid.AvatarChanged.changed_by.toString(),
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
     // ParticipantJoined
     // GroupDescChanged
@@ -359,15 +407,14 @@ function fileContent(candid: ApiFileContent): FileContent {
         mimeType: candid.mime_type,
         blobReference: optional(candid.blob_reference, blobReference),
         caption: optional(candid.caption, identity),
+        fileSize: candid.file_size,
     };
 }
 
 function blobReference(candid: ApiBlobReference): BlobReference {
     return {
-        blobSize: candid.blob_size,
         blobId: candid.blob_id,
         canisterId: candid.canister_id.toString(),
-        chunkSize: candid.chunk_size,
     };
 }
 

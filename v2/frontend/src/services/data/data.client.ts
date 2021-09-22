@@ -3,9 +3,10 @@ import { CandidService } from "../candidService";
 import { putChunkResponse } from "../user/mappers";
 import type { IDataClient } from "./data.client.interface";
 import { DataClientMock } from "./data.client.mock";
-import type { BlobReference, MessageContent, PutChunkResponse } from "../../domain/chat/chat";
+import type { MessageContent, PutChunkResponse } from "../../domain/chat/chat";
 import { v1 as uuidv1 } from "uuid";
 import type { Identity } from "@dfinity/agent";
+import type { BlobReference } from "../../domain/data/data";
 
 const CHUNK_SIZE_BYTES = 1024 * 500; // 500KB
 
@@ -43,12 +44,12 @@ export class DataClient extends CandidService implements IDataClient {
         );
     }
 
-    private newBlobId(): bigint {
+    static newBlobId(): bigint {
         return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
     }
 
     private async uploadBlobData(mimeType: string, data: Uint8Array): Promise<BlobReference> {
-        const blobId = this.newBlobId();
+        const blobId = DataClient.newBlobId();
         const size = data.byteLength;
         const chunks = [];
         for (let byteStart = 0; byteStart < size; byteStart += CHUNK_SIZE_BYTES) {
@@ -59,8 +60,6 @@ export class DataClient extends CandidService implements IDataClient {
 
         const blobReference = {
             blobId,
-            chunkSize: CHUNK_SIZE_BYTES,
-            blobSize: size,
             canisterId: this.canisterId,
         };
 

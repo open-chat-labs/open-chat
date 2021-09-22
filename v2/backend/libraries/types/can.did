@@ -183,6 +183,7 @@ type GroupChatEvent =
         GroupChatCreated: GroupChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
+        AvatarChanged: AvatarChanged;
         ParticipantsAdded: ParticipantsAdded;
         ParticipantsRemoved: ParticipantsRemoved;
         ParticipantJoined: ParticipantJoined;
@@ -232,8 +233,15 @@ type GroupChatSummaryUpdates =
 
 type GroupDescriptionChanged =
     record {
-        new_description: opt text;
-        previous_description: opt text;
+        new_description: text;
+        previous_description: text;
+        changed_by: UserId;
+    };
+
+type AvatarChanged =
+    record {
+        new_avatar: nat;
+        previous_avatar: opt nat;
         changed_by: UserId;
     };
 

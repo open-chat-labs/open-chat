@@ -13,6 +13,8 @@ import type {
 } from "../domain/user/user";
 import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
+import Identicon from "identicon.js";
+import md5 from "md5";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -34,8 +36,7 @@ import type {
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
-    BlobReference,
-    DataContent,
+    UpdateGroupResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -44,6 +45,16 @@ import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
+import type { BlobReference, DataContent } from "../domain/data/data";
+
+function buildIdenticonUrl(userId: string) {
+    const identicon = new Identicon(md5(userId), {
+        margin: 0,
+        format: "svg",
+        // background: [230, 230, 230, 230],
+    });
+    return `data:image/svg+xml;base64,${identicon}`;
+}
 
 export class ServiceContainer {
     private _userIndexClient: IUserIndexClient;
@@ -112,6 +123,15 @@ export class ServiceContainer {
         return this.userClient.createGroup(candidate);
     }
 
+    updateGroup(
+        chatId: string,
+        name: string,
+        desc: string,
+        avatar?: Uint8Array
+    ): Promise<UpdateGroupResponse> {
+        return this.getGroupClient(chatId).updateGroup(name, desc, avatar);
+    }
+
     addParticipants(chatId: string, userIds: string[]): Promise<AddParticipantsResponse> {
         return this.getGroupClient(chatId).addParticipants(userIds);
     }
@@ -149,14 +169,16 @@ export class ServiceContainer {
                         e.event.content.kind === "audio_content") &&
                     e.event.content.blobReference !== undefined
                 ) {
-                    e.event.content = this.rehydrateDataContent(e.event.content);
+                    e.event.content = this.rehydrateDataContent(e.event.content, "blobs");
                 }
                 if (e.event.content.kind === "video_content") {
                     e.event.content.videoData = this.rehydrateDataContent(
-                        e.event.content.videoData
+                        e.event.content.videoData,
+                        "blobs"
                     );
                     e.event.content.imageData = this.rehydrateDataContent(
-                        e.event.content.imageData
+                        e.event.content.imageData,
+                        "blobs"
                     );
                 }
             }
@@ -165,31 +187,55 @@ export class ServiceContainer {
         return resp;
     }
 
-    private rehydrateDataContent<T extends DataContent>(dataContent: T): T {
+    rehydrateDataContent<T extends DataContent>(
+        dataContent: T,
+        blobType: "blobs" | "avatar",
+        key?: string
+    ): T {
         if (dataContent.blobReference !== undefined) {
             dataContent.blobData = undefined;
-            dataContent.url = `${"process.env.BLOB_URL_PATTERN".replace(
-                "{canisterId}",
-                dataContent.blobReference.canisterId
-            )}${dataContent.blobReference.blobId}`;
+            dataContent.blobUrl = `${"process.env.BLOB_URL_PATTERN"
+                .replace("{canisterId}", dataContent.blobReference.canisterId)
+                .replace("{blobType}", blobType)}${dataContent.blobReference.blobId}`;
+        } else {
+            if (blobType === "avatar" && key) {
+                dataContent.blobUrl = buildIdenticonUrl(key);
+            }
         }
         return dataContent;
     }
 
     searchUsers(searchTerm: string): Promise<UserSummary[]> {
-        return this._userIndexClient.searchUsers(searchTerm);
+        return this._userIndexClient
+            .searchUsers(searchTerm)
+            .then((users) => users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)));
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
-        return this._userIndexClient.getUsers(userIds, since);
+        return this._userIndexClient.getUsers(userIds, since).then((resp) => ({
+            timestamp: resp.timestamp,
+            users: resp.users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)),
+        }));
     }
 
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
-        return this.userClient.getUpdates(chatSummaries, args);
+        return this.userClient.getUpdates(chatSummaries, args).then((resp) => {
+            return {
+                ...resp,
+                chatSummaries: resp.chatSummaries.map((chat) => {
+                    return chat.kind === "direct_chat"
+                        ? chat
+                        : this.rehydrateDataContent(chat, "avatar", chat.chatId);
+                }),
+            };
+        });
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser();
+        return this._userIndexClient.getCurrentUser().then((user) => {
+            console.log(user);
+            return user;
+        });
     }
 
     upgradeUser(): Promise<UpgradeCanisterResponse> {
@@ -256,5 +302,9 @@ export class ServiceContainer {
         ranges: MessageIndexRange[]
     ): Promise<MarkReadResponse> {
         return this.getGroupClient(chatId).markMessagesRead(ranges);
+    }
+
+    setUserAvatar(data: Uint8Array): Promise<BlobReference> {
+        return this.userClient.setAvatar(data);
     }
 }

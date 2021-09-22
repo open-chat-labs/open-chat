@@ -10,6 +10,7 @@ import type {
     RemoveParticipantResponse,
     MarkReadResponse,
     MessageIndexRange,
+    UpdateGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -19,6 +20,7 @@ import {
     sendMessageResponse,
     removeParticipantResponse,
     markReadResponse,
+    updateGroupResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -27,6 +29,7 @@ import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
+import type { BlobReference } from "../../domain/data/data";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -49,7 +52,8 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
         return this.handleResponse(
-            this.groupService.events({
+            //todo - refactor this use the new method
+            this.groupService.events_range({
                 to_index: toIndex,
                 from_index: fromIndex,
             }),
@@ -118,6 +122,24 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_ranges: ranges,
             }),
             markReadResponse
+        );
+    }
+
+    updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
+        return this.handleResponse(
+            this.groupService.update_group({
+                name: name,
+                description: desc,
+                avatar: apiOptional(
+                    (data) => ({
+                        id: DataClient.newBlobId(),
+                        mime_type: "image/jpg",
+                        data: Array.from(data),
+                    }),
+                    avatar
+                ),
+            }),
+            updateGroupResponse
         );
     }
 }

@@ -44,6 +44,7 @@ import {
     UnblockUserResponse,
     LeaveGroupResponse,
     MarkReadResponse,
+    SetAvatarResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -90,6 +91,7 @@ export {
     UnblockUserResponse as ApiUnblockUserResponse,
     LeaveGroupResponse as ApiLeaveGroupResponse,
     MarkReadResponse as ApiMarkReadResponse,
+    SetAvatarResponse as ApiSetAvatarResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

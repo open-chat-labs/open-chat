@@ -1,3 +1,4 @@
+import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 
 export type MessageContent =
@@ -12,12 +13,6 @@ export interface CyclesContent {
     kind: "cycles_content";
     caption?: string;
     amount: bigint;
-}
-
-export interface DataContent {
-    blobReference?: BlobReference;
-    blobData?: Uint8Array;
-    url?: string;
 }
 
 export interface ImageContent extends DataContent {
@@ -56,13 +51,7 @@ export interface FileContent extends DataContent {
     name: string;
     caption?: string;
     mimeType: string;
-}
-
-export interface BlobReference {
-    blobSize: number;
-    blobId: bigint;
-    canisterId: string;
-    chunkSize: number;
+    fileSize: number;
 }
 
 export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
@@ -126,6 +115,9 @@ export type GroupChatEvent =
     | ParticipantsPromotedToAdmin
     | ParticipantsRemoved
     | ParticipantLeft
+    | GroupNameChanged
+    | AvatarChanged
+    | GroupDescChanged
     | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -143,6 +135,21 @@ export type ParticipantsAdded = {
 export type ParticipantLeft = {
     kind: "participant_left";
     userId: string;
+};
+
+export type GroupNameChanged = {
+    kind: "name_changed";
+    changedBy: string;
+};
+
+export type GroupDescChanged = {
+    kind: "desc_changed";
+    changedBy: string;
+};
+
+export type AvatarChanged = {
+    kind: "avatar_changed";
+    changedBy: string;
 };
 
 export type ParticipantsRemoved = {
@@ -230,6 +237,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     name?: string;
     description?: string;
     latestMessage?: EventWrapper<GroupMessage>;
+    avatarBlobReference?: BlobReference;
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -262,18 +270,19 @@ export type DirectChatSummary = ChatSummaryCommon & {
     latestMessage?: EventWrapper<DirectMessage>;
 };
 
-export type GroupChatSummary = ChatSummaryCommon & {
-    kind: "group_chat";
-    name: string;
-    description: string;
-    participants: Participant[];
-    public: boolean;
-    joined: bigint;
-    minVisibleEventIndex: number;
-    minVisibleMessageIndex: number;
-    lastUpdated: bigint;
-    latestMessage?: EventWrapper<GroupMessage>;
-};
+export type GroupChatSummary = DataContent &
+    ChatSummaryCommon & {
+        kind: "group_chat";
+        name: string;
+        description: string;
+        participants: Participant[];
+        public: boolean;
+        joined: bigint;
+        minVisibleEventIndex: number;
+        minVisibleMessageIndex: number;
+        lastUpdated: bigint;
+        latestMessage?: EventWrapper<GroupMessage>;
+    };
 
 export type CandidateParticipant = {
     role: ParticipantRole;
@@ -286,7 +295,7 @@ export type CandidateGroupChat = {
     historyVisible: boolean;
     isPublic: boolean;
     participants: CandidateParticipant[];
-    avatar?: string;
+    avatar?: DataContent;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -296,7 +305,8 @@ export type CreateGroupResponse =
     | CreateGroupInvalidName
     | CreateGroupNameTooLong
     | CreateGroupDescriptionTooLong
-    | CreateGroupPublicGroupAlreadyExists
+    | GroupNameTaken
+    | AvatarTooBig
     | CreateGroupThrottled;
 
 export type CreateGroupSuccess = {
@@ -320,8 +330,12 @@ export type CreateGroupDescriptionTooLong = {
     kind: "description_too_long";
 };
 
-export type CreateGroupPublicGroupAlreadyExists = {
-    kind: "public_group_already_exists";
+export type GroupNameTaken = {
+    kind: "group_name_taken";
+};
+
+export type AvatarTooBig = {
+    kind: "avatar_too_big";
 };
 
 export type CreateGroupThrottled = {
@@ -410,7 +424,10 @@ export type PutChunkResponse =
     | "put_chunk_too_big"
     | "chunk_already_exists"
     | "caller_not_in_group"
+    | "blob_too_big"
     | "blob_already_exists";
+
+export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
 export type ChangeAdminResponse =
     | "user_not_in_group"
@@ -433,3 +450,12 @@ export type UnblockUserResponse = "success";
 export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
 
 export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found" | "not_in_group";
+
+export type UpdateGroupResponse =
+    | "success"
+    | "not_authorised"
+    | "name_too_long"
+    | "desc_too_long"
+    | "unchanged"
+    | "name_taken"
+    | "internal_error";

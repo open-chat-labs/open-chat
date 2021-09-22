@@ -7,38 +7,57 @@ export const idlFactory = ({ IDL }) => {
   const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const Avatar = IDL.Record({
+    'id' : IDL.Nat,
+    'data' : IDL.Vec(IDL.Nat8),
+    'mime_type' : IDL.Text,
+  });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
+    'avatar' : IDL.Opt(Avatar),
+  });
+  const FieldTooLongResult = IDL.Record({
+    'length_provided' : IDL.Nat32,
+    'max_length' : IDL.Nat32,
   });
   const ChatId = CanisterId;
-  const CreateGroupFieldTooLongResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
-    'PublicGroupAlreadyExists' : IDL.Null,
-    'DescriptionTooLong' : CreateGroupFieldTooLongResult,
+    'DescriptionTooLong' : FieldTooLongResult,
     'Throttled' : IDL.Null,
+    'AvatarTooBig' : FieldTooLongResult,
     'Success' : CreateGroupSuccessResult,
-    'NameTooLong' : CreateGroupFieldTooLongResult,
+    'NameTooLong' : FieldTooLongResult,
+    'NameTaken' : IDL.Null,
     'InternalError' : IDL.Null,
+  });
+  const MessageId = IDL.Nat;
+  const DeleteMessagesArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_ids' : IDL.Vec(MessageId),
+  });
+  const DeleteMessagesResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
-    'user_id' : UserId,
-    'to_index' : EventIndex,
-    'from_index' : EventIndex,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
+    'ascending' : IDL.Bool,
+    'start_index' : EventIndex,
   });
   const BlobReference = IDL.Record({
-    'blob_size' : IDL.Nat32,
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
-    'chunk_size' : IDL.Nat32,
   });
   const FileContent = IDL.Record({
     'name' : IDL.Text,
     'mime_type' : IDL.Text,
+    'file_size' : IDL.Nat32,
     'blob_reference' : IDL.Opt(BlobReference),
     'caption' : IDL.Opt(IDL.Text),
   });
@@ -77,7 +96,6 @@ export const idlFactory = ({ IDL }) => {
     'Audio' : AudioContent,
     'Video' : VideoContent,
   });
-  const MessageId = IDL.Nat;
   const PrivateReplyContext = IDL.Record({
     'chat_id' : ChatId,
     'message_id' : MessageId,
@@ -101,9 +119,20 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(DirectReplyContext),
     'message_index' : MessageIndex,
   });
+  const MessageDeleted = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+  });
+  const DeletedDirectMessage = IDL.Record({
+    'sent_by_me' : IDL.Bool,
+    'message_id' : MessageId,
+    'message_index' : MessageIndex,
+  });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
     'Message' : DirectMessage,
+    'MessageDeleted' : MessageDeleted,
+    'DeletedMessage' : DeletedDirectMessage,
     'DirectChatCreated' : DirectChatCreated,
   });
   const TimestampMillis = IDL.Nat64;
@@ -123,9 +152,10 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
   });
-  const EventsByIndexResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : EventsSuccessResult,
+  const EventsRangeArgs = IDL.Record({
+    'user_id' : UserId,
+    'to_index' : EventIndex,
+    'from_index' : EventIndex,
   });
   const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const JoinGroupResponse = IDL.Variant({
@@ -182,6 +212,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PutChunkResponse = IDL.Variant({
     'ChunkAlreadyExists' : IDL.Null,
+    'BlobTooBig' : IDL.Null,
     'Full' : IDL.Null,
     'BlobAlreadyExists' : IDL.Null,
     'Success' : IDL.Null,
@@ -253,13 +284,14 @@ export const idlFactory = ({ IDL }) => {
     'RecipientNotFound' : IDL.Null,
   });
   const SetAvatarArgs = IDL.Record({
+    'id' : IDL.Nat,
+    'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
-    'bytes' : IDL.Vec(IDL.Nat8),
   });
   const SetAvatarResponse = IDL.Variant({
-    'InvalidMimeType' : IDL.Nat32,
-    'FileTooBig' : IDL.Nat32,
-    'Success' : IDL.Null,
+    'AvatarTooBig' : FieldTooLongResult,
+    'Success' : IDL.Nat,
+    'InternalError' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -303,6 +335,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(GroupMessageEventWrapper),
@@ -332,6 +365,7 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'joined' : TimestampMillis,
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
@@ -361,17 +395,22 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
+    'delete_messages' : IDL.Func(
+        [DeleteMessagesArgs],
+        [DeleteMessagesResponse],
+        [],
+      ),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
-        [EventsByIndexResponse],
+        [EventsResponse],
         ['query'],
       ),
+    'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
-    'put_avatar_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],

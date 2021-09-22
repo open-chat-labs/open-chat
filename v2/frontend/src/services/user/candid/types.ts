@@ -4,11 +4,19 @@ export interface AudioContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export interface Avatar {
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
+}
+export interface AvatarChanged {
+  'changed_by' : UserId,
+  'previous_avatar' : [] | [bigint],
+  'new_avatar' : bigint,
+}
 export interface BlobReference {
-  'blob_size' : number,
   'blob_id' : bigint,
   'canister_id' : CanisterId,
-  'chunk_size' : number,
 }
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null };
@@ -41,18 +49,39 @@ export interface CreateGroupArgs {
   'name' : string,
   'description' : string,
   'history_visible_to_new_joiners' : boolean,
+  'avatar' : [] | [Avatar],
 }
-export interface CreateGroupFieldTooLongResult { 'chat_id' : ChatId }
-export type CreateGroupResponse = { 'PublicGroupAlreadyExists' : null } |
-  { 'DescriptionTooLong' : CreateGroupFieldTooLongResult } |
+export type CreateGroupResponse = {
+    'DescriptionTooLong' : FieldTooLongResult
+  } |
   { 'Throttled' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : CreateGroupSuccessResult } |
-  { 'NameTooLong' : CreateGroupFieldTooLongResult } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export interface DeleteMessagesArgs {
+  'user_id' : UserId,
+  'message_ids' : Array<MessageId>,
+}
+export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
+export interface DeletedDirectMessage {
+  'sent_by_me' : boolean,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
+export interface DeletedGroupMessage {
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'message_index' : MessageIndex,
+}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : MessageDeleted } |
+  { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
@@ -96,24 +125,33 @@ export type DirectReplyContext = { 'Private' : PrivateReplyContext } |
   { 'Standard' : StandardReplyContext };
 export type EventIndex = number;
 export interface EventsArgs {
-  'user_id' : UserId,
-  'to_index' : EventIndex,
-  'from_index' : EventIndex,
+  'max_messages' : number,
+  'max_events' : number,
+  'ascending' : boolean,
+  'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
   'user_id' : UserId,
   'events' : Array<EventIndex>,
 }
-export type EventsByIndexResponse = { 'ChatNotFound' : null } |
-  { 'Success' : EventsSuccessResult };
+export interface EventsRangeArgs {
+  'user_id' : UserId,
+  'to_index' : EventIndex,
+  'from_index' : EventIndex,
+}
 export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<DirectChatEventWrapper>,
 }
+export interface FieldTooLongResult {
+  'length_provided' : number,
+  'max_length' : number,
+}
 export interface FileContent {
   'name' : string,
   'mime_type' : string,
+  'file_size' : number,
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
@@ -130,7 +168,10 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
+  { 'MessageDeleted' : MessageDeleted } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'DeletedMessage' : DeletedGroupMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
   'event' : GroupChatEvent,
@@ -146,6 +187,7 @@ export interface GroupChatSummary {
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
   'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
@@ -158,6 +200,7 @@ export interface GroupChatSummaryUpdates {
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
+  'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'latest_message' : [] | [GroupMessageEventWrapper],
@@ -167,8 +210,8 @@ export interface GroupChatUpdatesSince {
   'chat_id' : ChatId,
 }
 export interface GroupDescriptionChanged {
-  'new_description' : [] | [string],
-  'previous_description' : [] | [string],
+  'new_description' : string,
+  'previous_description' : string,
   'changed_by' : UserId,
 }
 export interface GroupMessage {
@@ -249,6 +292,10 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
+export interface MessageDeleted {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -286,6 +333,7 @@ export interface NotificationEnvelope {
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface Participant {
@@ -324,6 +372,7 @@ export interface PutChunkArgs {
   'index' : number,
 }
 export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
+  { 'BlobTooBig' : null } |
   { 'Full' : null } |
   { 'BlobAlreadyExists' : null } |
   { 'Success' : null } |
@@ -378,10 +427,14 @@ export type SendMessageResponse = { 'BalanceExceeded' : null } |
   { 'InvalidRequest' : null } |
   { 'MessageTooLong' : number } |
   { 'RecipientNotFound' : null };
-export interface SetAvatarArgs { 'mime_type' : string, 'bytes' : Array<number> }
-export type SetAvatarResponse = { 'InvalidMimeType' : number } |
-  { 'FileTooBig' : number } |
-  { 'Success' : null };
+export interface SetAvatarArgs {
+  'id' : bigint,
+  'data' : Array<number>,
+  'mime_type' : string,
+}
+export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : bigint } |
+  { 'InternalError' : null };
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
@@ -426,6 +479,7 @@ export interface UserMessageMatch {
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export type V1ChatId = bigint;
@@ -504,15 +558,16 @@ export interface VideoContent {
 export interface _SERVICE {
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'create_group' : (arg_0: CreateGroupArgs) => Promise<CreateGroupResponse>,
-  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
-  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<
-      EventsByIndexResponse
+  'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
+      DeleteMessagesResponse
     >,
+  'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
+  'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
+  'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
-  'put_avatar_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse

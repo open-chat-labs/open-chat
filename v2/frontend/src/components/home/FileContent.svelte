@@ -13,13 +13,13 @@
     let color = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
     onDestroy(() => {
-        content.url && URL.revokeObjectURL(content.url);
+        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
     });
 </script>
 
-{#if content.url}
+{#if content.blobUrl}
     <a
-        href={content.url}
+        href={content.blobUrl}
         title={$_("downloadFile", { values: { name: content.name } })}
         download={content.name}
         role="button"

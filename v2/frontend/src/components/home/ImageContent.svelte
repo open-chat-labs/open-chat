@@ -11,13 +11,13 @@
     let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
 
     onDestroy(() => {
-        content.url && URL.revokeObjectURL(content.url);
+        content.blobUrl && URL.revokeObjectURL(content.blobUrl);
     });
 </script>
 
-{#if content.url !== undefined}
+{#if content.blobUrl !== undefined}
     <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->
-    <object class:landscape title={content.caption} data={content.url} type={content.mimeType}>
+    <object class:landscape title={content.caption} data={content.blobUrl} type={content.mimeType}>
         <img class:landscape {style} src={content.thumbnailData} alt={content.caption} />
     </object>
 {/if}

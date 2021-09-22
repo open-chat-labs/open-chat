@@ -51,6 +51,7 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Record({
       'username' : IDL.Text,
       'user_id' : UserId,
+      'avatar_id' : IDL.Opt(IDL.Nat),
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'account_balance' : IDL.Nat,
     }),
@@ -95,6 +96,7 @@ export const idlFactory = ({ IDL }) => {
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
     'user_id' : UserId,
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'seconds_since_last_online' : IDL.Nat32,
   });
   const SearchResponse = IDL.Variant({
@@ -176,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
   const PartialUserSummary = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : UserId,
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'seconds_since_last_online' : IDL.Nat32,
   });
   const UsersResponse = IDL.Variant({

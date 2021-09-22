@@ -11,19 +11,21 @@
     import TextArea from "../TextArea.svelte";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import type { GroupMachine } from "../../fsm/group.machine";
+    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
+    import type { DataContent } from "../../domain/data/data";
+    import { avatarUrl } from "../../domain/user/user.utils";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    export let machine: ActorRefFrom<GroupMachine>;
+    export let machine: ActorRefFrom<AddGroupMachine>;
 
     let groupName: string = $machine.context.candidateGroup.name;
     let groupDesc: string = $machine.context.candidateGroup.description;
     let historyVisible: boolean = $machine.context.candidateGroup.historyVisible;
     let isPublic: boolean = $machine.context.candidateGroup.isPublic;
-    let groupAvatar: string | undefined = $machine.context.candidateGroup.avatar;
+    let groupAvatar: DataContent | undefined = $machine.context.candidateGroup.avatar;
 
     $: valid = groupName.length > MIN_LENGTH && groupName.length <= MAX_LENGTH;
 
@@ -52,8 +54,11 @@
         }
     }
 
-    function groupAvatarSelected(ev: CustomEvent<string>) {
-        groupAvatar = ev.detail;
+    function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
+        groupAvatar = {
+            blobUrl: ev.detail.url,
+            blobData: ev.detail.data,
+        };
     }
 </script>
 
@@ -70,7 +75,9 @@
 <form class="group-form" on:submit|preventDefault={chooseParticipants}>
     <div class="form-fields">
         <div class="sub-section photo">
-            <EditableAvatar image={groupAvatar} on:imageSelected={groupAvatarSelected} />
+            <EditableAvatar
+                image={avatarUrl(groupAvatar, "../assets/group.svg")}
+                on:imageSelected={groupAvatarSelected} />
             <p class="photo-legend">{$_("addGroupPhoto")}</p>
         </div>
 

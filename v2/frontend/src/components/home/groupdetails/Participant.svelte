@@ -7,17 +7,17 @@
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import AccountLock from "svelte-material-icons/AccountLock.svelte";
-    import { AvatarSize } from "../../domain/user/user";
-    import type { UserLookup } from "../../domain/user/user";
-    import Avatar from "../Avatar.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import { AvatarSize } from "../../../domain/user/user";
+    import type { UserLookup } from "../../../domain/user/user";
+    import Avatar from "../../Avatar.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuItem from "../../MenuItem.svelte";
     import { _ } from "svelte-i18n";
-    import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
+    import { avatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
-    import type { FullParticipant, ParticipantRole } from "../../domain/chat/chat";
+    import type { FullParticipant, ParticipantRole } from "../../../domain/chat/chat";
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
@@ -52,7 +52,7 @@
 <div class="participant" class:me on:click={participantSelected} role="button">
     <span class="avatar">
         <Avatar
-            url={avatarUrl(participant.userId)}
+            url={avatarUrl(participant)}
             status={getUserStatus(userLookup, participant.userId)}
             size={AvatarSize.Small} />
 

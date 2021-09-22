@@ -4,21 +4,16 @@ import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { toastStore } from "../stores/toast";
-import type {
-    CandidateGroupChat,
-    CreateGroupResponse,
-    GroupChatSummary,
-} from "../domain/chat/chat";
+import type { CandidateGroupChat, CreateGroupResponse } from "../domain/chat/chat";
 import { pure } from "xstate/lib/actions";
 import { push } from "svelte-spa-router";
 import type { ApiAddParticipantsResponse } from "../services/group/candid/idl";
 
-export interface GroupContext {
+export interface AddGroupContext {
     user: UserSummary;
     serviceContainer: ServiceContainer;
     candidateGroup: CandidateGroupChat;
-    createdGroup?: GroupChatSummary;
-    error?: Error;
+    createdGroupId?: string;
 }
 
 export const nullGroup = {
@@ -29,7 +24,7 @@ export const nullGroup = {
     participants: [],
 };
 
-export type GroupEvents =
+export type AddGroupEvents =
     | { type: "CANCEL_NEW_GROUP" }
     | { type: "COMPLETE" }
     | { type: "CHOOSE_PARTICIPANTS"; data: CandidateGroupChat }
@@ -43,29 +38,38 @@ export type GroupEvents =
     | { type: "done.invoke.addParticipants"; data: ApiAddParticipantsResponse }
     | { type: "error.platform.addParticipants"; data: Error };
 
-const liveConfig: Partial<MachineOptions<GroupContext, GroupEvents>> = {
+const liveConfig: Partial<MachineOptions<AddGroupContext, AddGroupEvents>> = {
     services: {
         createGroup: (ctx, _) => {
             return ctx.serviceContainer.createGroupChat(ctx.candidateGroup);
         },
         addParticipants: (ctx, _) => {
             return ctx.serviceContainer.addParticipants(
-                ctx.createdGroup!.chatId,
+                ctx.createdGroupId!,
                 ctx.candidateGroup.participants.map((p) => p.user.userId)
             );
         },
     },
 };
 
+function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+    if (resp.kind === "success") return undefined;
+    if (resp.kind === "description_too_long") return "groupDescTooLong";
+    if (resp.kind === "internal_error") return "groupCreationFailed";
+    if (resp.kind === "invalid_name") return "groupNameInvalid";
+    if (resp.kind === "name_too_long") return "groupNameTooLong";
+    if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+    if (resp.kind === "throttled") return "groupCreationFailed";
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
-    id: "group_machine",
+export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
+    id: "add_group_machine",
     type: "parallel",
     states: {
         canister_creation: {
             initial: "idle",
             states: {
-                unexpected_error: {},
                 creating: {
                     invoke: {
                         id: "createGroup",
@@ -74,49 +78,34 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                             {
                                 cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
                                     ev.data.kind !== "success",
-                                target: "unexpected_error",
-                                actions: assign((_ctx, _ev) => {
-                                    toastStore.showFailureToast("groupCreationFailed");
-                                    return {
-                                        error: new Error("groupCreationFailed"),
-                                    };
+                                target: ["#group_form", "idle"],
+                                actions: pure((_ctx, ev) => {
+                                    const err = groupCreationErrorMessage(ev.data);
+                                    if (err) toastStore.showFailureToast(err);
+                                    return [];
                                 }),
                             },
                             {
                                 cond: (_, ev: DoneInvokeEvent<CreateGroupResponse>) =>
                                     ev.data.kind === "success",
                                 target: "created",
-                                actions: assign((ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
-                                    if (ev.data.kind === "success") {
-                                        const now = BigInt(+new Date());
-                                        const chat: GroupChatSummary = {
-                                            kind: "group_chat",
-                                            name: ctx.candidateGroup.name,
-                                            description: ctx.candidateGroup.description,
-                                            participants: [],
-                                            public: ctx.candidateGroup.isPublic,
-                                            joined: now,
-                                            minVisibleEventIndex: 0,
-                                            minVisibleMessageIndex: 0,
-                                            chatId: ev.data.canisterId,
-                                            readByMe: [],
-                                            latestMessage: undefined,
-                                            latestEventIndex: 0,
-                                            lastUpdated: now,
-                                        };
-                                        return {
-                                            createdGroup: chat,
-                                            error: undefined,
-                                        };
+                                actions: assign(
+                                    (_ctx, ev: DoneInvokeEvent<CreateGroupResponse>) => {
+                                        if (ev.data.kind === "success") {
+                                            return {
+                                                createdGroupId: ev.data.canisterId,
+                                            };
+                                        }
+                                        return {};
                                     }
-                                    return {};
-                                }),
+                                ),
                             },
                         ],
                         onError: {
-                            target: "unexpected_error",
-                            actions: assign({
-                                error: (_, { data }) => data,
+                            target: ["#group_form", "idle"],
+                            actions: pure((_ctx, _ev) => {
+                                toastStore.showFailureToast("groupCreationFailed");
+                                return [];
                             }),
                         },
                     },
@@ -152,6 +141,7 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
             states: {
                 done: { type: "final" },
                 group_form: {
+                    id: "group_form",
                     on: {
                         CANCEL_NEW_GROUP: "done",
                         CHOOSE_PARTICIPANTS: {
@@ -175,7 +165,6 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                                 },
                             })),
                         },
-                        "error.platform.userSearchMachine": "..unexpected_error",
                         COMPLETE: {
                             target: "adding_participants",
                         },
@@ -209,13 +198,10 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                             }),
                         },
                         onError: {
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
-                            ],
+                            actions: pure((_ctx, _ev) => {
+                                toastStore.showFailureToast("userSearchFailed");
+                                return [];
+                            }),
                         },
                     },
                 },
@@ -228,20 +214,17 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
                             actions: pure((ctx, _) => {
                                 // todo - there is a bunch of error handling missing here
                                 // we are currently assuming success
-                                if (ctx.createdGroup) {
-                                    push(`/${ctx.createdGroup.chatId}`); // trigger the selection of the chat
+                                if (ctx.createdGroupId) {
+                                    push(`/${ctx.createdGroupId}`); // trigger the selection of the chat
                                 }
                                 return undefined;
                             }),
                         },
                         onError: {
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
-                            ],
+                            actions: pure((_ctx, _ev) => {
+                                toastStore.showFailureToast("addParticipantsFailed");
+                                return [];
+                            }),
                         },
                     },
                 },
@@ -250,5 +233,5 @@ export const schema: MachineConfig<GroupContext, any, GroupEvents> = {
     },
 };
 
-export const groupMachine = createMachine<GroupContext, GroupEvents>(schema, liveConfig);
-export type GroupMachine = typeof groupMachine;
+export const addGroupMachine = createMachine<AddGroupContext, AddGroupEvents>(schema, liveConfig);
+export type AddGroupMachine = typeof addGroupMachine;

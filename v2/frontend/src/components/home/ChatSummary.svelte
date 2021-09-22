@@ -24,14 +24,14 @@
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(chatSummary.them),
+                avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
-            avatarUrl: "assets/group.svg",
+            avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
         };
     }
 

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import Participant from "./Participant.svelte";
+    import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import type { ActorRefFrom } from "xstate";
-    import type { ParticipantsMachine } from "../../fsm/participants.machine";
-    import VirtualList from "../VirtualList.svelte";
-    import type { FullParticipant } from "../../domain/chat/chat";
+    import VirtualList from "../../VirtualList.svelte";
+    import type { FullParticipant } from "../../../domain/chat/chat";
+    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
 
-    export let machine: ActorRefFrom<ParticipantsMachine>;
+    export let machine: ActorRefFrom<EditGroupMachine>;
 
     function close() {
         machine.send({ type: "HIDE_PARTICIPANTS" });
@@ -37,6 +37,8 @@
     $: publicGroup =
         $machine.context.chatSummary.kind === "group_chat" && $machine.context.chatSummary.public;
 
+    $: closeIcon = ($machine.context.history.length <= 1 ? "close" : "back") as "close" | "back";
+
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         machine.send({ type: "DISMISS_AS_ADMIN", data: ev.detail });
     }
@@ -50,7 +52,12 @@
     }
 </script>
 
-<ParticipantsHeader {publicGroup} {me} on:close={close} on:addParticipants={addParticipants} />
+<ParticipantsHeader
+    {closeIcon}
+    {publicGroup}
+    {me}
+    on:close={close}
+    on:addParticipants={addParticipants} />
 
 {#if me !== undefined}
     <Participant

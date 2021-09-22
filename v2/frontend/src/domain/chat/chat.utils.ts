@@ -23,6 +23,7 @@ import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
+import { CanisterInstallMode } from "@dfinity/agent";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -371,6 +372,7 @@ function mergeUpdatedGroupChat(
         updated: updatedChat.participantsAddedOrUpdated,
         removed: updatedChat.participantsRemoved,
     });
+    chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
     return chat;
 }
 
