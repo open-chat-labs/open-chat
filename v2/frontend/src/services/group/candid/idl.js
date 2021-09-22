@@ -47,8 +47,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
-    'new_description' : IDL.Opt(IDL.Text),
-    'previous_description' : IDL.Opt(IDL.Text),
+    'new_description' : IDL.Text,
+    'previous_description' : IDL.Text,
     'changed_by' : UserId,
   });
   const GroupChatCreated = IDL.Record({
@@ -143,6 +143,11 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'message_index' : MessageIndex,
   });
+  const AvatarChanged = IDL.Record({
+    'changed_by' : UserId,
+    'previous_avatar' : IDL.Opt(IDL.Nat),
+    'new_avatar' : IDL.Nat,
+  });
   const ParticipantsAdded = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'added_by' : UserId,
@@ -159,6 +164,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageDeleted' : MessageDeleted,
     'GroupNameChanged' : GroupNameChanged,
     'DeletedMessage' : DeletedGroupMessage,
+    'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
   const TimestampMillis = IDL.Nat64;

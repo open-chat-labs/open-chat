@@ -15,6 +15,11 @@ export interface Avatar {
   'data' : Array<number>,
   'mime_type' : string,
 }
+export interface AvatarChanged {
+  'changed_by' : UserId,
+  'previous_avatar' : [] | [bigint],
+  'new_avatar' : bigint,
+}
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -127,6 +132,7 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'MessageDeleted' : MessageDeleted } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'DeletedMessage' : DeletedGroupMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
   'event' : GroupChatEvent,
@@ -161,8 +167,8 @@ export interface GroupChatSummaryUpdates {
   'latest_message' : [] | [GroupMessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
-  'new_description' : [] | [string],
-  'previous_description' : [] | [string],
+  'new_description' : string,
+  'previous_description' : string,
   'changed_by' : UserId,
 }
 export interface GroupMatch {
@@ -263,7 +269,7 @@ export interface NotificationEnvelope {
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
-  'avatar_blob_id' : [] | [bigint],
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface Participant {
@@ -330,7 +336,7 @@ export interface UserMessageMatch {
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
-  'avatar_blob_id' : [] | [bigint],
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export type V1ChatId = bigint;

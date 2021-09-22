@@ -9,6 +9,11 @@ export interface Avatar {
   'data' : Array<number>,
   'mime_type' : string,
 }
+export interface AvatarChanged {
+  'changed_by' : UserId,
+  'previous_avatar' : [] | [bigint],
+  'new_avatar' : bigint,
+}
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
@@ -166,6 +171,7 @@ export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
   { 'MessageDeleted' : MessageDeleted } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'DeletedMessage' : DeletedGroupMessage } |
+  { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
   'event' : GroupChatEvent,
@@ -204,8 +210,8 @@ export interface GroupChatUpdatesSince {
   'chat_id' : ChatId,
 }
 export interface GroupDescriptionChanged {
-  'new_description' : [] | [string],
-  'previous_description' : [] | [string],
+  'new_description' : string,
+  'previous_description' : string,
   'changed_by' : UserId,
 }
 export interface GroupMessage {
@@ -327,7 +333,7 @@ export interface NotificationEnvelope {
 export interface PartialUserSummary {
   'username' : [] | [string],
   'user_id' : UserId,
-  'avatar_blob_id' : [] | [bigint],
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export interface Participant {
@@ -427,7 +433,8 @@ export interface SetAvatarArgs {
   'mime_type' : string,
 }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : bigint };
+  { 'Success' : bigint } |
+  { 'InternalError' : null };
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
@@ -472,7 +479,7 @@ export interface UserMessageMatch {
 export interface UserSummary {
   'username' : string,
   'user_id' : UserId,
-  'avatar_blob_id' : [] | [bigint],
+  'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
 }
 export type V1ChatId = bigint;

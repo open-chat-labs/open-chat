@@ -278,6 +278,27 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             userId: candid.ParticipantLeft.user_id.toString(),
         };
     }
+
+    if ("GroupNameChanged" in candid) {
+        return {
+            kind: "name_changed",
+            changedBy: candid.GroupNameChanged.changed_by.toString(),
+        };
+    }
+
+    if ("GroupDescriptionChanged" in candid) {
+        return {
+            kind: "desc_changed",
+            changedBy: candid.GroupDescriptionChanged.changed_by.toString(),
+        };
+    }
+
+    if ("AvatarChanged" in candid) {
+        return {
+            kind: "avatar_changed",
+            changedBy: candid.AvatarChanged.changed_by.toString(),
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
     // ParticipantJoined
     // GroupDescChanged

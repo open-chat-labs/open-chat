@@ -291,6 +291,7 @@ export const idlFactory = ({ IDL }) => {
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
+    'InternalError' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });

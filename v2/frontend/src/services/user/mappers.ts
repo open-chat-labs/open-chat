@@ -66,6 +66,9 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
     if ("AvatarTooBig" in candid) {
         return "avatar_too_big";
     }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
     throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", candid);
 }
 

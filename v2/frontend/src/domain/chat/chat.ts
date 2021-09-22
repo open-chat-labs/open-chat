@@ -115,6 +115,9 @@ export type GroupChatEvent =
     | ParticipantsPromotedToAdmin
     | ParticipantsRemoved
     | ParticipantLeft
+    | GroupNameChanged
+    | AvatarChanged
+    | GroupDescChanged
     | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -132,6 +135,21 @@ export type ParticipantsAdded = {
 export type ParticipantLeft = {
     kind: "participant_left";
     userId: string;
+};
+
+export type GroupNameChanged = {
+    kind: "name_changed";
+    changedBy: string;
+};
+
+export type GroupDescChanged = {
+    kind: "desc_changed";
+    changedBy: string;
+};
+
+export type AvatarChanged = {
+    kind: "avatar_changed";
+    changedBy: string;
 };
 
 export type ParticipantsRemoved = {
@@ -409,7 +427,7 @@ export type PutChunkResponse =
     | "blob_too_big"
     | "blob_already_exists";
 
-export type SetAvatarResponse = "avatar_too_big" | "success";
+export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error";
 
 export type ChangeAdminResponse =
     | "user_not_in_group"
