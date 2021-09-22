@@ -167,7 +167,7 @@ type CurrentUserResponse =
             username: text;
             account_balance: nat;
             canister_upgrade_status: CanisterUpgradeStatus;
-            avatar_blob_id: opt nat;
+            avatar_id: opt nat;
         };
     };
 

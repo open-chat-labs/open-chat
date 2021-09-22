@@ -445,7 +445,7 @@ type UserSummary =
         user_id: UserId;
         username: text;
         seconds_since_last_online: nat32;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
     };
 
 type PartialUserSummary =
@@ -453,7 +453,7 @@ type PartialUserSummary =
         user_id: UserId;
         username: opt text;
         seconds_since_last_online: nat32;
-        avatar_blob_id: opt nat;
+        avatar_id: opt nat;
     };
 
 type Version =

@@ -158,6 +158,7 @@ type SetAvatarResponse =
     variant {
         Success: nat;
         AvatarTooBig: FieldTooLongResult;
+        InternalError;
     }; 
 
 type GroupChatUpdatesSince =
