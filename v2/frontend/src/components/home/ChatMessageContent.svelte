@@ -42,9 +42,3 @@
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
 {/if}
-
-<style type="text/scss">
-    .containsEmoji {
-        @include font(book, normal, fs-140);
-    }
-</style>

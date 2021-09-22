@@ -29,6 +29,7 @@ const fileMessageContent: FileContent = {
     name: "stuff_in_a_file.pdf",
     blobData: undefined,
     mimeType: "file/pdf",
+    fileSize: 10000,
 };
 
 const testDirectMessage: DirectMessage = {
@@ -242,7 +243,7 @@ describe("chat machine transitions", () => {
     });
     test("show participants", () => {
         testTransition(
-            chatMachine.withContext(directContext),
+            chatMachine.withContext(groupContext),
             { user_states: "idle" },
             { type: "SHOW_GROUP_DETAILS" },
             { user_states: "showing_group" }
@@ -250,7 +251,7 @@ describe("chat machine transitions", () => {
     });
     test("add participants", () => {
         testTransition(
-            chatMachine.withContext(directContext),
+            chatMachine.withContext(groupContext),
             { user_states: "idle" },
             { type: "ADD_PARTICIPANT" },
             { user_states: "showing_group" }

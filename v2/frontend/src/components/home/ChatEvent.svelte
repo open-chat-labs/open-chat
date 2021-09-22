@@ -8,6 +8,8 @@
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import GroupChangedEvent from "./GroupChangedEvent.svelte";
+    import { _ } from "svelte-i18n";
 
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
@@ -84,6 +86,27 @@
         changedBy={event.event.dismissedBy}
         resourceKey={"dismissedBy"}
         {userLookup}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "name_changed"}
+    <GroupChangedEvent
+        {user}
+        {userLookup}
+        changedBy={event.event.changedBy}
+        property={$_("groupName")}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "desc_changed"}
+    <GroupChangedEvent
+        {user}
+        {userLookup}
+        changedBy={event.event.changedBy}
+        property={$_("groupDesc")}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "avatar_changed"}
+    <GroupChangedEvent
+        {user}
+        {userLookup}
+        changedBy={event.event.changedBy}
+        property={$_("groupAvatar")}
         timestamp={event.timestamp} />
 {:else}
     <div>Unexpected event type</div>

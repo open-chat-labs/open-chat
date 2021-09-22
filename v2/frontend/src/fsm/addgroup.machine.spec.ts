@@ -9,8 +9,7 @@ const testUser = { userId: "123456", username: "test user", secondsSinceLastOnli
 const testContext: AddGroupContext = {
     user: { userId: "abcdefg", username: "me", secondsSinceLastOnline: 0 },
     serviceContainer: {} as ServiceContainer,
-    error: undefined,
-    createdGroup: undefined,
+    createdGroupId: undefined,
     candidateGroup: nullGroup,
 };
 
@@ -43,27 +42,17 @@ describe("group machine transitions", () => {
                 { type: "done.invoke.createGroup", data: { kind: "success", canisterId: "12345" } },
                 { canister_creation: "created" }
             );
-            expect(ctx.createdGroup).not.toBe(undefined);
-            expect(ctx.createdGroup?.chatId).toEqual("12345");
+            expect(ctx.createdGroupId).not.toBe(undefined);
+            expect(ctx.createdGroupId).toEqual("12345");
         });
         test("create group expected failure", () => {
             const ctx = testTransition(
                 addGroupMachine.withContext(testContext),
                 { canister_creation: "creating" },
                 { type: "done.invoke.createGroup", data: { kind: "invalid_name" } },
-                { canister_creation: "unexpected_error" }
+                { canister_creation: "idle" }
             );
-            expect(ctx.createdGroup).toBe(undefined);
-        });
-        test("create group exception", () => {
-            const err = new Error("oh no");
-            const ctx = testTransition(
-                addGroupMachine.withContext(testContext),
-                { canister_creation: "creating" },
-                { type: "error.platform.createGroup", data: err },
-                { canister_creation: "unexpected_error" }
-            );
-            expect(ctx.error).toEqual(err);
+            expect(ctx.createdGroupId).toBe(undefined);
         });
     });
     describe("data collection state", () => {

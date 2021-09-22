@@ -29,7 +29,7 @@ const groupChat: GroupChatSummary = {
 const testContext: EditGroupContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: groupChat,
-    editedChatSummary: { ...groupChat },
+    updatedGroup: { name: groupChat.name, desc: groupChat.description },
     userLookup: {},
     history: ["group_details"],
     user: {
@@ -66,8 +66,8 @@ describe("edit group machine transitions", () => {
                 { type: "SYNC_CHAT_DETAILS", data: { name: "updated name", desc: "updated desc" } },
                 { group_details: "idle" }
             );
-            expect(ctx.editedChatSummary.name).toEqual("updated name");
-            expect(ctx.editedChatSummary.description).toEqual("updated desc");
+            expect(ctx.updatedGroup.name).toEqual("updated name");
+            expect(ctx.updatedGroup.desc).toEqual("updated desc");
         });
         test("save chat details", () => {
             const ctx = testTransition(
@@ -79,15 +79,15 @@ describe("edit group machine transitions", () => {
                 },
                 { group_details: "saving_group" }
             );
-            expect(ctx.editedChatSummary.name).toEqual("updated name");
-            expect(ctx.editedChatSummary.description).toEqual("updated desc");
+            expect(ctx.updatedGroup.name).toEqual("updated name");
+            expect(ctx.updatedGroup.desc).toEqual("updated desc");
         });
         test("save chat details success", () => {
             testTransition(
                 editGroupMachine.withContext(testContext),
                 { group_details: "saving_group" },
                 "done.invoke.saveGroup",
-                "done"
+                { group_details: "idle" }
             );
         });
         test("save chat details failure", () => {

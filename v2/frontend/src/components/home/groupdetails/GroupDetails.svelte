@@ -17,7 +17,6 @@
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    // todo this is not quite right yet as we forget changes
     let groupAvatar: UpdatedAvatar | undefined = $machine.context.updatedGroup.avatar
         ? $machine.context.updatedGroup.avatar
         : $machine.context.chatSummary.blobUrl
@@ -125,7 +124,7 @@
         </div>
     </div>
     <div class="cta">
-        <Button loading={saving} disabled={!dirty} fill={true}>{$_("update")}</Button>
+        <Button loading={saving} disabled={!dirty || saving} fill={true}>{$_("update")}</Button>
     </div>
 </form>
 
