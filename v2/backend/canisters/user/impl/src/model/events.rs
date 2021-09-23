@@ -184,6 +184,17 @@ impl Events {
         ToggleReactionResult::MessageNotFound
     }
 
+    pub fn reaction_exists(&self, added_by_me: bool, message_id: &MessageId, reaction: &Reaction) -> bool {
+        if let Some(&event_index) = self.message_id_map.get(message_id) {
+            if let Some(DirectChatEventInternal::Message(message)) = self.get_internal(event_index).map(|e| &e.event) {
+                if let Some((_, users)) = message.reactions.iter().find(|(r, _)| r == reaction) {
+                    return users.contains(&added_by_me);
+                }
+            }
+        }
+        false
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<DirectChatEvent>> {
         self.get_internal(event_index).map(|e| self.hydrate_event(e))
     }
