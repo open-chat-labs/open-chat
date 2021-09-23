@@ -26,6 +26,7 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         .data
         .activity_notification_state
         .start_if_required(now, mark_active_duration);
+
     if requires_notification {
         ic_cdk::block_on(call_group_index_canister(
             runtime_state.data.group_index_canister_id,
