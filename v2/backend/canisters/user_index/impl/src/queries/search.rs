@@ -12,8 +12,12 @@ fn search(args: Args) -> Response {
 }
 
 fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
     let caller = runtime_state.env.caller();
+    if !runtime_state.data.users.is_valid_caller(&caller) {
+        panic!("Request is not from an OpenChat user");
+    }
+
+    let now = runtime_state.env.now();
     let users = &runtime_state.data.users;
     let mut search_term = args.search_term;
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);

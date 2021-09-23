@@ -130,6 +130,12 @@ impl UserMap {
             .flatten()
     }
 
+    /// Returns true if the caller is an OpenChat user or an OpenChat user's canister
+    pub fn is_valid_caller(&self, caller: &Principal) -> bool {
+        self.users_by_principal.contains_key(caller) ||
+            self.user_id_to_principal.contains_key(caller.into())
+    }
+
     pub fn remove_by_principal(&mut self, principal: &Principal) -> Option<User> {
         if let Some(user) = self.users_by_principal.remove(principal) {
             self.phone_number_to_principal.remove(user.get_phone_number());
