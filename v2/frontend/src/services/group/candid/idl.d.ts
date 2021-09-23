@@ -1,8 +1,8 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
-    GroupMessage,
-    GroupReplyContext,
+    Message,
+    ReplyContext,
     UserId,
     ReplyContext,
     MessageContent,
@@ -39,9 +39,9 @@ export {
     PutChunkResponse as ApiPutChunkResponse,
     SendMessageArgs as ApiSendMessageArgs,
     SendMessageResponse as ApiSendMessageResponse,
-    GroupMessage as ApiGroupMessage,
+    Message as ApiMessage,
     UserId as ApiUserId,
-    GroupReplyContext as ApiGroupReplyContext,
+    ReplyContext as ApiReplyContext,
     MessageContent as ApiMessageContent,
     FileContent as ApiFileContent,
     TextContent as ApiTextContent,

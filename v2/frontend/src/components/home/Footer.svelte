@@ -7,12 +7,8 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import { chatStore } from "../../stores/chat";
-    import type { DirectMessage, GroupMessage, MessageContent } from "../../domain/chat/chat";
-    import {
-        createDirectMessage,
-        createGroupMessage,
-        latestLoadedMessageIndex,
-    } from "../../domain/chat/chat.utils";
+    import type { MessageContent } from "../../domain/chat/chat";
+    import { createMessage, latestLoadedMessageIndex } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
@@ -20,7 +16,6 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
 
-    const EmojiPicker = () => import("./EmojiPicker.svelte");
     let showEmojiPicker = false;
 
     function cancelReply() {
@@ -45,24 +40,13 @@
             const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
             const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
 
-            let msg: GroupMessage | DirectMessage | undefined;
-            if ($machine.context.chatSummary.kind === "group_chat") {
-                msg = createGroupMessage(
-                    $machine.context.user!.userId,
-                    nextIndex,
-                    textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    fileToAttach
-                );
-            }
-            if ($machine.context.chatSummary.kind === "direct_chat") {
-                msg = createDirectMessage(
-                    nextIndex,
-                    textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    fileToAttach
-                );
-            }
+            const msg = createMessage(
+                $machine.context.user!.userId,
+                nextIndex,
+                textContent ?? undefined,
+                $machine.context.replyingTo,
+                fileToAttach
+            );
             dispatch("unconfirmedMessage", msg!.messageId);
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)

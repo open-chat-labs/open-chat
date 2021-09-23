@@ -13,9 +13,8 @@
     import Avatar from "../Avatar.svelte";
     import type {
         ChatSummary,
-        DirectMessage,
+        Message,
         EnhancedReplyContext,
-        GroupMessage,
         ReplyContext,
     } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
@@ -36,7 +35,7 @@
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
-    export let msg: GroupMessage | DirectMessage;
+    export let msg: Message;
     export let me: boolean;
     export let userLookup: UserLookup;
     export let eventIndex: number;
@@ -50,7 +49,7 @@
 
     let msgElement: HTMLElement;
 
-    let senderId = getSenderId();
+    let senderId = msg.sender;
     let groupChat = chatSummary.kind === "group_chat";
     let sender = userLookup[senderId];
     let username = sender?.username;
@@ -79,57 +78,28 @@
 
     onDestroy(() => observer.unobserve(msgElement));
 
-    function getSenderId() {
-        if (msg.kind === "direct_message" && chatSummary.kind === "direct_chat") {
-            return msg.sentByMe ? user!.userId : chatSummary.them;
-        }
-        if (msg.kind === "group_message") {
-            return msg.sender;
-        }
-        throw Error("Unable to determine sender Id");
-    }
-
     function chatWithUser() {
         dispatch("chatWith", senderId);
     }
 
-    function createReplyContext(privately: boolean): EnhancedReplyContext<ReplyContext> {
-        if (privately) {
-            return {
-                kind: "direct_private_reply_context",
-                chatId: chatSummary.chatId,
-                eventIndex: eventIndex,
-                content: msg.content,
-                sender,
-                messageId: msg.messageId,
-            };
-        } else if (groupChat) {
-            return {
-                kind: "group_reply_context",
-                content: msg.content,
-                userId: senderId,
-                eventIndex: eventIndex,
-                sender,
-                messageId: msg.messageId,
-            };
-        } else {
-            return {
-                kind: "direct_standard_reply_context",
-                content: msg.content,
-                sentByMe: me,
-                eventIndex: eventIndex,
-                sender,
-                messageId: msg.messageId,
-            };
-        }
+    function createReplyContext(): EnhancedReplyContext<ReplyContext> {
+        return {
+            userId: senderId,
+            chatId: chatSummary.chatId,
+            eventIndex: eventIndex,
+            content: msg.content,
+            sender,
+            messageId: msg.messageId,
+        };
     }
 
     function reply() {
-        dispatch("replyTo", createReplyContext(false));
+        dispatch("replyTo", createReplyContext());
     }
 
     function replyPrivately() {
-        dispatch("replyPrivatelyTo", createReplyContext(true));
+        // todo - this is going to need a bit of attention
+        dispatch("replyPrivatelyTo", createReplyContext());
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -258,7 +228,7 @@
 </div>
 
 <div class="message-footer" class:last>
-    {#if msg.kind === "group_message" && msg.reactions.length > 0}
+    {#if msg.reactions.length > 0}
         <div class="reactions" class:me>
             {#each msg.reactions as { reaction }}
                 <div
@@ -290,14 +260,6 @@
 
 <style type="text/scss">
     $size: 10px;
-
-    :global(.modal-content .header) {
-        display: none;
-    }
-
-    :global(.modal-content .footer) {
-        display: none;
-    }
 
     :global(.time-and-ticks > svg) {
         width: 16px;

@@ -27,7 +27,7 @@
     export let focused: boolean;
 </script>
 
-{#if event.event.kind === "group_message" || event.event.kind === "direct_message"}
+{#if event.event.kind === "message"}
     <ChatMessage
         {focused}
         {observer}

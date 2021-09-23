@@ -7,9 +7,13 @@ import type {
     VideoContent,
     MessageContent,
     TextContent,
+    Message,
+    ReplyContext,
+    Reaction,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
-import { identity } from "../../utils/mapping";
+import { UnsupportedValueError } from "../../utils/error";
+import { identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiCyclesContent,
@@ -18,8 +22,132 @@ import type {
     ApiAudioContent,
     ApiVideoContent,
     ApiMessageContent,
+    ApiMessage,
     ApiTextContent,
+    ApiReplyContext,
 } from "../user/candid/idl";
+
+export function message(candid: ApiMessage): Message {
+    return {
+        kind: "message",
+        content: messageContent(candid.content),
+        sender: candid.sender.toString(),
+        repliesTo: optional(candid.replies_to, replyContext),
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+        reactions: reactions(candid.reactions),
+    };
+}
+
+function messageContent(candid: ApiMessageContent): MessageContent {
+    if ("File" in candid) {
+        return fileContent(candid.File);
+    }
+    if ("Text" in candid) {
+        return textContent(candid.Text);
+    }
+    if ("Image" in candid) {
+        return imageContent(candid.Image);
+    }
+    if ("Video" in candid) {
+        return videoContent(candid.Video);
+    }
+    if ("Audio" in candid) {
+        return audioContent(candid.Audio);
+    }
+    if ("Cycles" in candid) {
+        return cyclesContent(candid.Cycles);
+    }
+    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function cyclesContent(candid: ApiCyclesContent): CyclesContent {
+    return {
+        kind: "cycles_content",
+        caption: optional(candid.caption, identity),
+        amount: candid.amount,
+    };
+}
+
+function imageContent(candid: ApiImageContent): ImageContent {
+    return {
+        kind: "image_content",
+        height: candid.height,
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.blob_reference, blobReference),
+        thumbnailData: candid.thumbnail_data,
+        caption: optional(candid.caption, identity),
+        width: candid.width,
+    };
+}
+
+function videoContent(candid: ApiVideoContent): VideoContent {
+    return {
+        kind: "video_content",
+        height: candid.height,
+        mimeType: candid.mime_type,
+        videoData: {
+            blobReference: optional(candid.video_blob_reference, blobReference),
+        },
+        imageData: {
+            blobReference: optional(candid.image_blob_reference, blobReference),
+        },
+        thumbnailData: candid.thumbnail_data,
+        caption: optional(candid.caption, identity),
+        width: candid.width,
+    };
+}
+
+function audioContent(candid: ApiAudioContent): AudioContent {
+    return {
+        kind: "audio_content",
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.blob_reference, blobReference),
+        caption: optional(candid.caption, identity),
+    };
+}
+
+function textContent(candid: ApiTextContent): TextContent {
+    return {
+        kind: "text_content",
+        text: candid.text,
+    };
+}
+
+function fileContent(candid: ApiFileContent): FileContent {
+    return {
+        kind: "file_content",
+        name: candid.name,
+        mimeType: candid.mime_type,
+        blobReference: optional(candid.blob_reference, blobReference),
+        caption: optional(candid.caption, identity),
+        fileSize: candid.file_size,
+    };
+}
+
+function blobReference(candid: ApiBlobReference): BlobReference {
+    return {
+        blobId: candid.blob_id,
+        canisterId: candid.canister_id.toString(),
+    };
+}
+
+function replyContext(candid: ApiReplyContext): ReplyContext {
+    return {
+        content: optional(candid.content, messageContent),
+        chatId: "",
+        userId: candid.user_id.toString(),
+        eventIndex: candid.event_index,
+        messageId: candid.message_id,
+    };
+}
+
+function reactions(candid: [string, Principal[]][]): Reaction[] {
+    return candid.map(([reaction, userIds]) => ({
+        reaction,
+        userIds: new Set(userIds.map((u) => u.toString())),
+    }));
+}
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {
     switch (domain.kind) {

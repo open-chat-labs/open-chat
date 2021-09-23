@@ -22,9 +22,7 @@
         EnhancedReplyContext,
         ReplyContext,
         ChatEvent as ChatEventType,
-        DirectChatReplyContext,
-        GroupMessage,
-        DirectMessage,
+        Message,
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
@@ -173,9 +171,7 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
-    function selectReaction(
-        ev: CustomEvent<{ message: GroupMessage | DirectMessage; reaction: string }>
-    ) {
+    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         console.log(ev.detail.message, ev.detail.reaction);
         // optimistic update
         machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
@@ -210,7 +206,7 @@
         machine.send({ type: "REPLY_TO", data: ev.detail });
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext<DirectChatReplyContext>>) {
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
@@ -220,7 +216,7 @@
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
-        if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+        if (e.event.kind === "message") {
             return e.event.messageId.toString();
         } else {
             return e.index.toString();
@@ -229,14 +225,11 @@
 
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
         const first = group[0]!;
-        if (first.event.kind === "direct_message") {
-            return `${first.event.sentByMe}_${first.event.messageId}`;
+        if (first.event.kind === "message") {
+            return `${first.event.sender}_${first.event.messageId}`;
         }
         if (first.event.kind === "direct_chat_created") {
             return `${first.event.kind}_${first.index}`;
-        }
-        if (first.event.kind === "group_message") {
-            return `${first.event.sender}_${first.event.messageId}`;
         }
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
@@ -297,8 +290,8 @@
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message") {
-            return evt.event.sentByMe;
+        if (evt.event.kind === "message") {
+            return evt.event.sender === $machine.context.user?.userId;
         }
         if (
             evt.event.kind === "direct_chat_created" ||
@@ -315,9 +308,6 @@
         ) {
             return false;
         }
-        if (evt.event.kind === "group_message") {
-            return evt.event.sender === $machine.context.user?.userId;
-        }
         if (evt.event.kind === "group_chat_created") {
             return evt.event.created_by === $machine.context.user?.userId;
         }
@@ -325,14 +315,14 @@
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+        if (evt.event.kind === "message") {
             return !unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message") {
+        if (evt.event.kind === "message") {
             return messageIsReadByThem($machine.context.chatSummary, evt.event);
         }
         return true;
@@ -342,7 +332,7 @@
         if (isMe(evt)) {
             return true;
         } else {
-            if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            if (evt.event.kind === "message") {
                 return messageIsReadByMe($machine.context.chatSummary, evt.event);
             }
         }
@@ -365,7 +355,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if (evt.event.kind === "group_message" || evt.event.kind === "direct_message") && evt.event.messageIndex === firstUnreadMessageIndex}
+                    {#if evt.event.kind === "message" && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent

@@ -1,14 +1,6 @@
 import type {
-    ApiBlobReference,
     ApiChatSummary,
-    ApiCyclesContent,
-    ApiFileContent,
     ApiEventsResponse,
-    ApiImageContent,
-    ApiAudioContent,
-    ApiVideoContent,
-    ApiMessageContent,
-    ApiTextContent,
     ApiUpdatesResponse,
     ApiParticipant,
     ApiCreateGroupResponse,
@@ -21,26 +13,16 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiMessage,
-    ApiReplyContext,
 } from "./candid/idl";
 import type {
     ChatSummary,
-    CyclesContent,
-    FileContent,
     UpdatesResponse,
     EventsResponse,
     EventWrapper,
-    ImageContent,
-    VideoContent,
-    AudioContent,
-    MessageContent,
-    TextContent,
     Participant,
     ChatSummaryUpdates,
     CreateGroupResponse,
     DirectChatEvent,
-    Message,
     SendMessageResponse,
     PutChunkResponse,
     BlockUserResponse,
@@ -48,13 +30,10 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
-    Reaction,
-    ReplyContext,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import type { BlobReference } from "../../domain/data/data";
-import type { Principal } from "@dfinity/principal";
+import { message } from "../common/chatMappers";
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
     console.log(candid);
@@ -336,126 +315,5 @@ function participant(candid: ApiParticipant): Participant {
     return {
         role: "Admin" in candid.role ? "admin" : "standard",
         userId: candid.user_id.toString(),
-    };
-}
-
-function message(candid: ApiMessage): Message {
-    return {
-        kind: "message",
-        content: messageContent(candid.content),
-        sender: candid.sender.toString(),
-        repliesTo: optional(candid.replies_to, replyContext),
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-        reactions: reactions(candid.reactions),
-    };
-}
-
-function reactions(candid: [string, Principal[]][]): Reaction[] {
-    return candid.map(([reaction, userIds]) => ({
-        reaction,
-        userIds: new Set(userIds.map((u) => u.toString())),
-    }));
-}
-
-function messageContent(candid: ApiMessageContent): MessageContent {
-    if ("File" in candid) {
-        return fileContent(candid.File);
-    }
-    if ("Text" in candid) {
-        return textContent(candid.Text);
-    }
-    if ("Image" in candid) {
-        return imageContent(candid.Image);
-    }
-    if ("Video" in candid) {
-        return videoContent(candid.Video);
-    }
-    if ("Audio" in candid) {
-        return audioContent(candid.Audio);
-    }
-    if ("Cycles" in candid) {
-        return cyclesContent(candid.Cycles);
-    }
-    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
-}
-
-function cyclesContent(candid: ApiCyclesContent): CyclesContent {
-    return {
-        kind: "cycles_content",
-        caption: optional(candid.caption, identity),
-        amount: candid.amount,
-    };
-}
-
-function imageContent(candid: ApiImageContent): ImageContent {
-    return {
-        kind: "image_content",
-        height: candid.height,
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        thumbnailData: candid.thumbnail_data,
-        caption: optional(candid.caption, identity),
-        width: candid.width,
-    };
-}
-
-function videoContent(candid: ApiVideoContent): VideoContent {
-    return {
-        kind: "video_content",
-        height: candid.height,
-        mimeType: candid.mime_type,
-        videoData: {
-            blobReference: optional(candid.video_blob_reference, blobReference),
-        },
-        imageData: {
-            blobReference: optional(candid.image_blob_reference, blobReference),
-        },
-        thumbnailData: candid.thumbnail_data,
-        caption: optional(candid.caption, identity),
-        width: candid.width,
-    };
-}
-
-function audioContent(candid: ApiAudioContent): AudioContent {
-    return {
-        kind: "audio_content",
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        caption: optional(candid.caption, identity),
-    };
-}
-
-function textContent(candid: ApiTextContent): TextContent {
-    return {
-        kind: "text_content",
-        text: candid.text,
-    };
-}
-
-function fileContent(candid: ApiFileContent): FileContent {
-    return {
-        kind: "file_content",
-        name: candid.name,
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        caption: optional(candid.caption, identity),
-        fileSize: candid.file_size,
-    };
-}
-
-function blobReference(candid: ApiBlobReference): BlobReference {
-    return {
-        blobId: candid.blob_id,
-        canisterId: candid.canister_id.toString(),
-    };
-}
-
-function replyContext(candid: ApiReplyContext): ReplyContext {
-    return {
-        content: optional(candid.content, messageContent),
-        userId: candid.user_id.toString(),
-        eventIndex: candid.event_index,
-        messageId: candid.message_id,
     };
 }

@@ -59,6 +59,7 @@ export type ReplyContext = {
     userId: string;
     messageId: bigint;
     eventIndex: number;
+    chatId: string;
 };
 
 export type EnhancedReplyContext<T extends ReplyContext> = T & {

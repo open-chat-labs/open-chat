@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ChatSummary, MessageContent, ReplyContext } from "../../domain/chat/chat";
+    import type { ChatSummary, ReplyContext } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -17,49 +17,20 @@
     export let repliesTo: ReplyContext;
 
     function sentByMe(replyContext: ReplyContext): boolean {
-        return replyContext.kind === "direct_standard_reply_context" && replyContext.sentByMe;
+        return replyContext.userId === user?.userId;
     }
 
     function zoomToMessage() {
-        if (repliesTo.kind === "direct_standard_reply_context") {
+        if (repliesTo.chatId === chatSummary.chatId) {
             dispatch("goToMessage", repliesTo.eventIndex);
-        }
-
-        if (repliesTo.kind === "direct_private_reply_context") {
+        } else {
             push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);
         }
-
-        if (repliesTo.kind === "group_reply_context") {
-            dispatch("goToMessage", repliesTo.eventIndex);
-        }
-    }
-
-    function messageContentFromReplyContent(
-        replyContext: ReplyContext
-    ): MessageContent | undefined {
-        return replyContext.kind === "direct_private_reply_context"
-            ? undefined
-            : replyContext.content;
     }
 
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
-        if (replyContext.kind === "direct_standard_reply_context") {
-            if (replyContext.sentByMe) {
-                return user!.username;
-            } else {
-                if (chatSummary.kind === "direct_chat") {
-                    return userLookup[chatSummary.them]?.username ?? $_("unknownUser");
-                }
-            }
-        }
-        if (replyContext.kind === "group_reply_context") {
-            return userLookup[replyContext.userId]?.username ?? $_("unknownUser");
-        }
-        // for the private reply context - we do not currently have the message content or the userId - we need them both
-        return "todo - someone else";
+        return userLookup[replyContext.userId]?.username ?? $_("unknownUser");
     }
-
-    $: content = messageContentFromReplyContent(repliesTo);
 </script>
 
 <Link on:click={zoomToMessage}>
@@ -67,11 +38,10 @@
         <h4 class="username">
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
-        {#if content !== undefined}
-            <ChatMessageContent {content} />
-        {/if}
-        {#if repliesTo.kind === "direct_private_reply_context"}
-            {`Private reply to message from chatId ${repliesTo.chatId}`}
+        {#if repliesTo.content !== undefined}
+            <ChatMessageContent content={repliesTo.content} />
+        {:else}
+            {"TODO - we don't have the message content for this"}
         {/if}
     </div>
 </Link>
