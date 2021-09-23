@@ -10,9 +10,12 @@ fn events_range(args: Args) -> Response {
 fn events_range_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_participant() {
         let events = runtime_state.data.events.get_range(args.from_index, args.to_index);
+        let affected_events = runtime_state.data.events.affected_events(&events);
         let latest_event_index = runtime_state.data.events.last().index;
+
         Success(SuccessResult {
             events,
+            affected_events,
             latest_event_index,
         })
     } else {

@@ -250,6 +250,7 @@ type EventsByIndexArgs =
 type EventsSuccessResult =
     record {
         events: vec GroupChatEventWrapper;
+        affected_events: vec GroupChatEventWrapper;
         latest_event_index: EventIndex;
     };
 
