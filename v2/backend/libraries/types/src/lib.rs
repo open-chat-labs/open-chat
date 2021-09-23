@@ -29,6 +29,7 @@ mod subscription;
 mod user_id;
 mod user_summary;
 mod version;
+pub mod webrtc;
 
 pub use avatar::*;
 pub use canister_creation_status::*;
