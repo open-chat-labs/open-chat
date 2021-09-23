@@ -11,6 +11,7 @@ import type {
     MarkReadResponse,
     MessageIndexRange,
     UpdateGroupResponse,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -21,15 +22,14 @@ import {
     removeParticipantResponse,
     markReadResponse,
     updateGroupResponse,
+    toggleReactionResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
-import { GroupClientMock } from "./group.client.mock";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import type { BlobReference } from "../../domain/data/data";
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -40,22 +40,19 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
-        if (process.env.MOCK_SERVICES) {
-            return db
-                ? new CachingGroupClient(db, chatId, new GroupClientMock())
-                : new GroupClientMock();
-        }
         return db && process.env.CLIENT_CACHING
             ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
             : new GroupClient(identity, chatId);
     }
 
-    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
+    chatEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<GroupChatEvent>> {
         return this.handleResponse(
             //todo - refactor this use the new method
-            this.groupService.events_range({
-                to_index: toIndex,
-                from_index: fromIndex,
+            this.groupService.events({
+                max_messages: 20,
+                max_events: 50,
+                ascending: ascending,
+                start_index: startIndex,
             }),
             getEventsResponse
         );
@@ -140,6 +137,16 @@ export class GroupClient extends CandidService implements IGroupClient {
                 ),
             }),
             updateGroupResponse
+        );
+    }
+
+    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
+        return this.handleResponse(
+            this.groupService.toggle_reaction({
+                message_id: messageId,
+                reaction,
+            }),
+            toggleReactionResponse
         );
     }
 }

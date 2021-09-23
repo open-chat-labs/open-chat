@@ -45,6 +45,10 @@ export const idlFactory = ({ IDL }) => {
     'ascending' : IDL.Bool,
     'start_index' : EventIndex,
   });
+  const UpdatedMessage = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+  });
   const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
@@ -122,6 +126,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
   const ParticipantsDismissedAsAdmin = IDL.Record({
@@ -129,10 +134,6 @@ export const idlFactory = ({ IDL }) => {
     'dismissed_by' : UserId,
   });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
-  const MessageDeleted = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
     'new_name' : IDL.Text,
@@ -153,15 +154,17 @@ export const idlFactory = ({ IDL }) => {
     'added_by' : UserId,
   });
   const GroupChatEvent = IDL.Variant({
+    'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
+    'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'Message' : GroupMessage,
     'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'ParticipantLeft' : ParticipantLeft,
-    'MessageDeleted' : MessageDeleted,
+    'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
     'DeletedMessage' : DeletedGroupMessage,
     'AvatarChanged' : AvatarChanged,
@@ -341,6 +344,17 @@ export const idlFactory = ({ IDL }) => {
     'SuccessNoUpdates' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
+  const ToggleReactionArgs = IDL.Record({
+    'message_id' : MessageId,
+    'reaction' : IDL.Text,
+  });
+  const ToggleReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'InvalidReaction' : IDL.Null,
+    'Added' : IDL.Null,
+    'Removed' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -412,6 +426,11 @@ export const idlFactory = ({ IDL }) => {
         [SummaryUpdatesArgs],
         [SummaryUpdatesResponse],
         ['query'],
+      ),
+    'toggle_reaction' : IDL.Func(
+        [ToggleReactionArgs],
+        [ToggleReactionResponse],
+        [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'update_group' : IDL.Func([UpdateGroupArgs], [UpdateGroupResponse], []),

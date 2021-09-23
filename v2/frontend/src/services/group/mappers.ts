@@ -18,6 +18,7 @@ import type {
     ApiSendMessageResponse,
     ApiTextContent,
     ApiUpdateGroupResponse,
+    ApiToggleReactionResponse,
 } from "./candid/idl";
 import type {
     FileContent,
@@ -39,6 +40,8 @@ import type {
     RemoveParticipantResponse,
     MarkReadResponse,
     UpdateGroupResponse,
+    Reaction,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -52,6 +55,25 @@ import type { BlobReference } from "../../domain/data/data";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
+    if ("Added" in candid) {
+        return "added";
+    }
+    if ("Removed" in candid) {
+        return "removed";
+    }
+    if ("InvalidReaction" in candid) {
+        return "invalid";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
 }
 
 export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
@@ -299,6 +321,26 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             changedBy: candid.AvatarChanged.changed_by.toString(),
         };
     }
+
+    if ("MessageReactionAdded" in candid) {
+        return {
+            kind: "reaction_added",
+            message: {
+                eventIndex: candid.MessageReactionAdded.event_index,
+                messageId: candid.MessageReactionAdded.message_id,
+            },
+        };
+    }
+
+    if ("MessageReactionRemoved" in candid) {
+        return {
+            kind: "reaction_removed",
+            message: {
+                eventIndex: candid.MessageReactionRemoved.event_index,
+                messageId: candid.MessageReactionRemoved.message_id,
+            },
+        };
+    }
     // todo - we know there are other event types that we are not dealing with yet
     // ParticipantJoined
     // GroupDescChanged
@@ -322,7 +364,15 @@ function message(candid: ApiGroupMessage): GroupMessage {
         repliesTo: optional(candid.replies_to, replyContext),
         messageId: candid.message_id,
         messageIndex: candid.message_index,
+        reactions: reactions(candid.reactions),
     };
+}
+
+function reactions(candid: [string, Principal[]][]): Reaction[] {
+    return candid.map(([reaction, userIds]) => ({
+        reaction,
+        userIds: new Set(userIds.map((u) => u.toString())),
+    }));
 }
 
 function messageContent(candid: ApiMessageContent): MessageContent {

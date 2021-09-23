@@ -86,8 +86,10 @@ export interface DeletedGroupMessage {
   'message_index' : MessageIndex,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'Message' : DirectMessage } |
-  { 'MessageDeleted' : MessageDeleted } |
+export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
@@ -115,6 +117,7 @@ export interface DirectMessage {
   'sent_by_me' : boolean,
   'message_id' : MessageId,
   'replies_to' : [] | [DirectReplyContext],
+  'reactions' : Array<[string, Array<boolean>]>,
   'message_index' : MessageIndex,
 }
 export interface DirectMessageEventWrapper {
@@ -164,15 +167,17 @@ export interface GroupChatCreated {
   'description' : string,
   'created_by' : UserId,
 }
-export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
+export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : MessageDeleted } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'DeletedMessage' : DeletedGroupMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -219,6 +224,7 @@ export interface GroupMessage {
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
+  'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
 export interface GroupMessageEventWrapper {
@@ -278,10 +284,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
-export interface MessageDeleted {
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -428,6 +430,15 @@ export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface ToggleReactionArgs {
+  'message_id' : MessageId,
+  'reaction' : string,
+}
+export type ToggleReactionResponse = { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'InvalidReaction' : null } |
+  { 'Added' : null } |
+  { 'Removed' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
@@ -448,6 +459,10 @@ export type UpdateGroupResponse = {
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'InternalError' : null };
+export interface UpdatedMessage {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export type UserId = CanisterId;
 export interface UserMessageMatch {
   'content' : MessageContent,
@@ -560,6 +575,9 @@ export interface _SERVICE {
   'summary' : (arg_0: SummaryArgs) => Promise<SummaryResponse>,
   'summary_updates' : (arg_0: SummaryUpdatesArgs) => Promise<
       SummaryUpdatesResponse
+    >,
+  'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
+      ToggleReactionResponse
     >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'update_group' : (arg_0: UpdateGroupArgs) => Promise<UpdateGroupResponse>,

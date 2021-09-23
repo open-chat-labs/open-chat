@@ -73,9 +73,9 @@
 
     $: {
         if ($emojiStore !== undefined) {
-            if ($emojiStore.native && inp) {
+            if (inp) {
                 restoreSelection();
-                document.execCommand("insertText", false, $emojiStore.native);
+                document.execCommand("insertText", false, $emojiStore);
                 saveSelection();
                 emojiStore.set(undefined);
             }

@@ -569,7 +569,11 @@ function themeByName(name: string | null): Theme {
     return themes[name as keyof Themes] ?? themes.light;
 }
 
-export function loadSavedTheme(): string {
+export function getCurrentThemeName(): string {
+    return localStorage.getItem("openchat_theme") ?? "light";
+}
+
+export function loadAndApplySavedTheme(): string {
     const themeName = localStorage.getItem("openchat_theme");
     const theme = themeByName(themeName);
     writeCssVars("--", theme);

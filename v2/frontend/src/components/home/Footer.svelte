@@ -2,7 +2,6 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import Lazy from "../Lazy.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
@@ -16,6 +15,7 @@
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
+    import Loading from "../Loading.svelte";
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
@@ -148,7 +148,11 @@
             {/if}
         {/if}
         {#if showEmojiPicker}
-            <Lazy component={EmojiPicker} />
+            {#await import("./EmojiPicker.svelte")}
+                <div class="loading-emoji"><Loading /></div>
+            {:then picker}
+                <svelte:component this={picker.default} />
+            {/await}
         {/if}
     </div>
     <MessageEntry
@@ -162,6 +166,10 @@
 </div>
 
 <style type="text/scss">
+    .loading-emoji {
+        height: 400px;
+    }
+
     .footer {
         position: relative;
     }

@@ -9,10 +9,11 @@ import type {
     MessageIndexRange,
     MarkReadResponse,
     UpdateGroupResponse,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
-    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>>;
+    chatEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse>;
     sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse>;
     makeAdmin(userId: string): Promise<ChangeAdminResponse>;
@@ -20,4 +21,5 @@ export interface IGroupClient {
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
+    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
 }

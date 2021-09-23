@@ -60,8 +60,10 @@ export interface DeletedGroupMessage {
   'message_index' : MessageIndex,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'Message' : DirectMessage } |
-  { 'MessageDeleted' : MessageDeleted } |
+export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
@@ -89,6 +91,7 @@ export interface DirectMessage {
   'sent_by_me' : boolean,
   'message_id' : MessageId,
   'replies_to' : [] | [DirectReplyContext],
+  'reactions' : Array<[string, Array<boolean>]>,
   'message_index' : MessageIndex,
 }
 export interface DirectMessageEventWrapper {
@@ -121,15 +124,17 @@ export interface GroupChatCreated {
   'description' : string,
   'created_by' : UserId,
 }
-export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
+export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : MessageDeleted } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'DeletedMessage' : DeletedGroupMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -181,6 +186,7 @@ export interface GroupMessage {
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
+  'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
 export interface GroupMessageEventWrapper {
@@ -231,10 +237,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
-export interface MessageDeleted {
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -326,6 +328,10 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface UpdatedMessage {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export type UserId = CanisterId;
 export interface UserMessageMatch {
   'content' : MessageContent,

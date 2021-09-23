@@ -1,6 +1,5 @@
 import { writable } from "svelte/store";
-import type { BaseEmoji } from "emoji-mart";
-const { subscribe, set } = writable<BaseEmoji | undefined>(undefined);
+const { subscribe, set } = writable<string | undefined>(undefined);
 
 export const emojiStore = {
     subscribe,

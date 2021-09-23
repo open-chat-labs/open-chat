@@ -98,10 +98,16 @@ export type DirectMessage = MessageCommon & {
     repliesTo?: DirectChatReplyContext;
 };
 
+export type Reaction = {
+    reaction: string;
+    userIds: Set<string>;
+};
+
 export type GroupMessage = MessageCommon & {
     kind: "group_message";
     sender: string;
     repliesTo?: GroupChatReplyContext;
+    reactions: Reaction[];
 };
 
 export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
@@ -117,6 +123,8 @@ export type GroupChatEvent =
     | ParticipantLeft
     | GroupNameChanged
     | AvatarChanged
+    | ReactionAdded
+    | ReactionRemoved
     | GroupDescChanged
     | ParticipantsDismissedAsAdmin;
 
@@ -150,6 +158,21 @@ export type GroupDescChanged = {
 export type AvatarChanged = {
     kind: "avatar_changed";
     changedBy: string;
+};
+
+export type ReactionAdded = {
+    kind: "reaction_added";
+    message: StaleMessage;
+};
+
+export type ReactionRemoved = {
+    kind: "reaction_removed";
+    message: StaleMessage;
+};
+
+export type StaleMessage = {
+    eventIndex: number;
+    messageId: bigint;
 };
 
 export type ParticipantsRemoved = {
@@ -459,3 +482,10 @@ export type UpdateGroupResponse =
     | "unchanged"
     | "name_taken"
     | "internal_error";
+
+export type ToggleReactionResponse =
+    | "added"
+    | "removed"
+    | "invalid"
+    | "message_not_found"
+    | "chat_not_found";

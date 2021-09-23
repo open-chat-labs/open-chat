@@ -45,10 +45,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'user_id' : UserId,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
     'start_index' : EventIndex,
+  });
+  const UpdatedMessage = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
   });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
@@ -117,11 +122,8 @@ export const idlFactory = ({ IDL }) => {
     'sent_by_me' : IDL.Bool,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(DirectReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Bool))),
     'message_index' : MessageIndex,
-  });
-  const MessageDeleted = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
   });
   const DeletedDirectMessage = IDL.Record({
     'sent_by_me' : IDL.Bool,
@@ -130,8 +132,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
+    'MessageReactionRemoved' : UpdatedMessage,
+    'MessageReactionAdded' : UpdatedMessage,
     'Message' : DirectMessage,
-    'MessageDeleted' : MessageDeleted,
+    'MessageDeleted' : UpdatedMessage,
     'DeletedMessage' : DeletedDirectMessage,
     'DirectChatCreated' : DirectChatCreated,
   });
@@ -291,7 +295,18 @@ export const idlFactory = ({ IDL }) => {
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
-    'InternalError' : IDL.Null,
+  });
+  const ToggleReactionArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_id' : MessageId,
+    'reaction' : IDL.Text,
+  });
+  const ToggleReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'InvalidReaction' : IDL.Null,
+    'Added' : IDL.Null,
+    'Removed' : IDL.Null,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -321,6 +336,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
   const GroupMessageEventWrapper = IDL.Record({
@@ -424,6 +440,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'toggle_reaction' : IDL.Func(
+        [ToggleReactionArgs],
+        [ToggleReactionResponse],
+        [],
+      ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
   });

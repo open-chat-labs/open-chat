@@ -20,8 +20,8 @@ export interface IUserClient {
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
     chatEvents(
         userId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     sendMessage(

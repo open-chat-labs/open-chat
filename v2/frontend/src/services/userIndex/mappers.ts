@@ -169,7 +169,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     }
 
     if ("Created" in candid) {
-        console.log("User candid", candid);
         return {
             kind: "created_user",
             userId: candid.Created.user_id.toString(),

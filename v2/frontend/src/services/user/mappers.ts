@@ -53,10 +53,12 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
+    Reaction,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import type { BlobReference } from "../../domain/data/data";
+import type { Principal } from "@dfinity/principal";
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
     console.log(candid);
@@ -349,7 +351,15 @@ function groupMessage(candid: ApiGroupMessage): GroupMessage {
         repliesTo: optional(candid.replies_to, groupReplyContext),
         messageId: candid.message_id,
         messageIndex: candid.message_index,
+        reactions: reactions(candid.reactions),
     };
+}
+
+function reactions(candid: [string, Principal[]][]): Reaction[] {
+    return candid.map(([reaction, userIds]) => ({
+        reaction,
+        userIds: new Set(userIds.map((u) => u.toString())),
+    }));
 }
 
 function directMessage(candid: ApiDirectMessage): DirectMessage {

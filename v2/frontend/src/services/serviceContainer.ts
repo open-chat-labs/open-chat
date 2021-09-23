@@ -37,6 +37,7 @@ import type {
     MessageIndexRange,
     MarkReadResponse,
     UpdateGroupResponse,
+    ToggleReactionResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -138,18 +139,22 @@ export class ServiceContainer {
 
     directChatEvents(
         theirUserId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(this.userClient.chatEvents(theirUserId, fromIndex, toIndex));
+        return this.rehydrateMediaData(
+            this.userClient.chatEvents(theirUserId, startIndex, ascending)
+        );
     }
 
     groupChatEvents(
         chatId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
+        return this.rehydrateMediaData(
+            this.getGroupClient(chatId).chatEvents(startIndex, ascending)
+        );
     }
 
     private async rehydrateMediaData<T extends ChatEvent>(
@@ -232,10 +237,7 @@ export class ServiceContainer {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser().then((user) => {
-            console.log(user);
-            return user;
-        });
+        return this._userIndexClient.getCurrentUser();
     }
 
     upgradeUser(): Promise<UpgradeCanisterResponse> {
@@ -306,5 +308,13 @@ export class ServiceContainer {
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.userClient.setAvatar(data);
+    }
+
+    toggleGroupChatReaction(
+        chatId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.getGroupClient(chatId).toggleReaction(messageId, reaction);
     }
 }

@@ -18,12 +18,12 @@ import type {
     ReplyContext,
     UpdateArgs,
     MessageIndexRange,
+    Reaction,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { CanisterInstallMode } from "@dfinity/agent";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
@@ -252,6 +252,7 @@ export function createGroupMessage(
         repliesTo: replyingTo,
         messageId: newMessageId(),
         messageIndex,
+        reactions: [],
     };
 }
 
@@ -517,4 +518,25 @@ export function updateParticipant(
 export function removeParticipant(chat: GroupChatSummary, id: string): GroupChatSummary {
     chat.participants = chat.participants.filter((p) => p.userId !== id);
     return chat;
+}
+
+export function toggleGroupReaction(
+    userId: string,
+    reactions: Reaction[],
+    reaction: string
+): Reaction[] {
+    const r = reactions.find((r) => r.reaction === reaction);
+    if (r === undefined) {
+        reactions.push({ reaction, userIds: new Set([userId]) });
+    } else {
+        if (r.userIds.has(userId)) {
+            r.userIds.delete(userId);
+            if (r.userIds.size === 0) {
+                return reactions.filter((r) => r.reaction !== reaction);
+            }
+        } else {
+            r.userIds.add(userId);
+        }
+    }
+    return reactions;
 }

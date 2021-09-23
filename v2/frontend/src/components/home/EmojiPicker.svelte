@@ -1,65 +1,38 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-
-    import { NimblePicker } from "emoji-mart";
-    import type { Data, BaseEmoji } from "emoji-mart";
-    import React from "react";
-    import { define } from "remount/es5";
-    import data from "emoji-mart/data/all.json";
-    import "emoji-mart/css/emoji-mart.css";
+    import { createEventDispatcher, onMount } from "svelte";
     import { emojiStore } from "../../stores/emoji";
+    import "emoji-picker-element";
+    import { getCurrentThemeName } from "../../theme/themes";
 
-    let wrapper: HTMLDivElement;
+    export let mode: "message" | "reaction" = "message";
+
+    const dispatch = createEventDispatcher();
+    let theme: string = getCurrentThemeName();
 
     onMount(() => {
-        const Picker = () =>
-            React.createElement(NimblePicker, {
-                theme: "auto",
-                data: data as unknown as Data,
-                native: true,
-                onSelect: (emoji) => {
-                    emojiStore.set(emoji as BaseEmoji);
-                },
-                emoji: "point_up",
-                title: "Emoji",
-                showPreview: true,
-                perLine: 3,
-                style: {
-                    width: "100%",
-                    border: "none",
-                    borderRadius: "0",
-                    backgroundColor: "var(--entry-bg)",
-                },
-            });
-
-        try {
-            define({ "emoji-picker": Picker });
-        } catch (err) {}
-
-        const picker = document.createElement("emoji-picker");
-        wrapper.appendChild(picker);
+        document.querySelector("emoji-picker")?.addEventListener("emoji-click", (event) => {
+            if (mode === "reaction") {
+                dispatch("emojiSelected", event.detail.unicode);
+            } else {
+                emojiStore.set(event.detail.unicode);
+            }
+        });
     });
 </script>
 
-<div bind:this={wrapper} />
+<emoji-picker
+    class:message={mode === "message"}
+    class:reaction={mode === "reaction"}
+    class:dark={theme === "batman"}
+    class:light={theme === "light"} />
 
 <style type="text/scss">
-    :global(.emoji-mart-preview) {
-        display: none;
-    }
-
-    :global(.emoji-mart-bar) {
-        border: none;
-    }
-
-    :global(#emoji-mart-search-1) {
-        background-color: var(--entry-input-bg);
-        color: var(--entry-input-txt);
-        border: none;
-    }
-
-    :global(.emoji-mart-category-label span) {
-        background-color: var(--entry-bg) !important;
-        color: var(--entry-input-txt);
+    emoji-picker {
+        width: 100%;
+        --num-columns: 12;
+        --emoji-padding: 0.3rem;
+        @include size-below(xs) {
+            --num-columns: 6;
+        }
     }
 </style>

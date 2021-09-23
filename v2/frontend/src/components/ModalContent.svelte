@@ -49,6 +49,7 @@
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
     }
+
     .body {
         flex: 1;
         padding: $sp6 $sp4;

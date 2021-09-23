@@ -79,8 +79,10 @@ export interface DeletedGroupMessage {
   'message_index' : MessageIndex,
 }
 export type DirectChatCreated = {};
-export type DirectChatEvent = { 'Message' : DirectMessage } |
-  { 'MessageDeleted' : MessageDeleted } |
+export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
+  { 'Message' : DirectMessage } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'DeletedMessage' : DeletedDirectMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
@@ -108,6 +110,7 @@ export interface DirectMessage {
   'sent_by_me' : boolean,
   'message_id' : MessageId,
   'replies_to' : [] | [DirectReplyContext],
+  'reactions' : Array<[string, Array<boolean>]>,
   'message_index' : MessageIndex,
 }
 export interface DirectMessageEventWrapper {
@@ -125,6 +128,7 @@ export type DirectReplyContext = { 'Private' : PrivateReplyContext } |
   { 'Standard' : StandardReplyContext };
 export type EventIndex = number;
 export interface EventsArgs {
+  'user_id' : UserId,
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -160,15 +164,17 @@ export interface GroupChatCreated {
   'description' : string,
   'created_by' : UserId,
 }
-export type GroupChatEvent = { 'ParticipantJoined' : ParticipantJoined } |
+export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+  { 'ParticipantJoined' : ParticipantJoined } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : GroupMessage } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
-  { 'MessageDeleted' : MessageDeleted } |
+  { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'DeletedMessage' : DeletedGroupMessage } |
   { 'AvatarChanged' : AvatarChanged } |
@@ -219,6 +225,7 @@ export interface GroupMessage {
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
+  'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
 export interface GroupMessageEventWrapper {
@@ -292,10 +299,6 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
-export interface MessageDeleted {
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -433,8 +436,7 @@ export interface SetAvatarArgs {
   'mime_type' : string,
 }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : bigint } |
-  { 'InternalError' : null };
+  { 'Success' : bigint };
 export interface StandardReplyContext {
   'content' : MessageContent,
   'sent_by_me' : boolean,
@@ -453,8 +455,22 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface ToggleReactionArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+  'reaction' : string,
+}
+export type ToggleReactionResponse = { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'InvalidReaction' : null } |
+  { 'Added' : null } |
+  { 'Removed' : null };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
+export interface UpdatedMessage {
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }
 export type UpdatesResponse = {
     'Success' : {
@@ -577,6 +593,9 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
+      ToggleReactionResponse
+    >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

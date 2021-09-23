@@ -43,6 +43,7 @@
         on:goToMessage
         on:replyPrivatelyTo
         on:replyTo
+        on:selectReaction
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
@@ -108,6 +109,6 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
-{:else}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed"}
     <div>Unexpected event type</div>
 {/if}

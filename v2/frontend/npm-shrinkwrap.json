@@ -21,6 +21,7 @@
                 "@xstate/test": "^0.4.2",
                 "country-telephone-data": "^0.6.3",
                 "emoji-mart": "^3.0.1",
+                "emoji-picker-element": "^1.8.1",
                 "idb": "^6.1.2",
                 "identicon.js": "^2.3.3",
                 "md5": "^2.3.0",
@@ -5424,6 +5425,11 @@
             "peerDependencies": {
                 "react": "^0.14.0 || ^15.0.0-0 || ^16.0.0 || ^17.0.0"
             }
+        },
+        "node_modules/emoji-picker-element": {
+            "version": "1.8.1",
+            "resolved": "https://registry.npmjs.org/emoji-picker-element/-/emoji-picker-element-1.8.1.tgz",
+            "integrity": "sha512-ibliBMR74JuoPOJXGDX/RtyW1BULENfDoAY9V2mpbfcnEiqElZ9EdUrtQbwyjjHZzYS+W5nngwcI8UNNCDh6cw=="
         },
         "node_modules/emoji-regex": {
             "version": "8.0.0",
@@ -18256,6 +18262,11 @@
                 "@babel/runtime": "^7.0.0",
                 "prop-types": "^15.6.0"
             }
+        },
+        "emoji-picker-element": {
+            "version": "1.8.1",
+            "resolved": "https://registry.npmjs.org/emoji-picker-element/-/emoji-picker-element-1.8.1.tgz",
+            "integrity": "sha512-ibliBMR74JuoPOJXGDX/RtyW1BULENfDoAY9V2mpbfcnEiqElZ9EdUrtQbwyjjHZzYS+W5nngwcI8UNNCDh6cw=="
         },
         "emoji-regex": {
             "version": "8.0.0",

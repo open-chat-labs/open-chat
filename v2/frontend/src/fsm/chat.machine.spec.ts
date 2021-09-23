@@ -15,7 +15,12 @@ import type {
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
 import { ServiceContainer } from "../services/serviceContainer";
-import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
+import {
+    ChatContext,
+    chatMachine,
+    newMessageCriteria,
+    previousMessagesCriteria,
+} from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
 import { markReadMachine } from "./markread.machine";
 
@@ -361,7 +366,7 @@ describe("required message range calculation", () => {
                     latestEventIndex: 101,
                 },
             };
-            expect(newMessagesRange(ctx)).toEqual([101, 101]);
+            expect(newMessageCriteria(ctx)).toEqual([101, 101]);
         });
         test("from greater than to", () => {
             // this is not really a valid scenario, but we should deal with it
@@ -374,17 +379,17 @@ describe("required message range calculation", () => {
                     latestEventIndex: 101,
                 },
             };
-            expect(newMessagesRange(ctx)).toBe(undefined);
+            expect(newMessageCriteria(ctx)).toBe(undefined);
         });
         test("no messages loaded", () => {
-            expect(newMessagesRange(directContext)).toBe(undefined);
+            expect(newMessageCriteria(directContext)).toBe(undefined);
         });
         test("no latest message on chat", () => {
             const ctx = {
                 ...directContext,
                 events: [eventMessage<DirectMessage>("direct_message", 200)],
             };
-            expect(newMessagesRange(ctx)).toBe(undefined);
+            expect(newMessageCriteria(ctx)).toBe(undefined);
         });
         test("normal scenario", () => {
             const ctx = {
@@ -396,7 +401,7 @@ describe("required message range calculation", () => {
                     latestEventIndex: 110,
                 },
             };
-            expect(newMessagesRange(ctx)).toEqual([101, 110]);
+            expect(newMessageCriteria(ctx)).toEqual([101, 110]);
         });
     });
 
@@ -411,7 +416,7 @@ describe("required message range calculation", () => {
                         latestEventIndex: 9,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+                expect(previousMessagesCriteria(ctx)).toEqual([0, 9]);
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
@@ -423,7 +428,7 @@ describe("required message range calculation", () => {
                         latestEventIndex: 100,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([90, 100]);
             });
             test("takes into account focus index", () => {
                 // should go to focusIndex - page_size
@@ -436,7 +441,7 @@ describe("required message range calculation", () => {
                         latestEventIndex: 100,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([50, 100]);
             });
             test("limited by page size if nothing else", () => {
                 const ctx: ChatContext = {
@@ -447,7 +452,7 @@ describe("required message range calculation", () => {
                         latestEventIndex: 100,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([80, 100]);
             });
         });
 
@@ -457,7 +462,7 @@ describe("required message range calculation", () => {
                     ...directContext,
                     events: [eventMessage<DirectMessage>("direct_message", 10)],
                 };
-                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+                expect(previousMessagesCriteria(ctx)).toEqual([0, 9]);
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
@@ -468,7 +473,7 @@ describe("required message range calculation", () => {
                         minVisibleEventIndex: 90,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([90, 100]);
             });
             test("takes into account focus index", () => {
                 // should go to focusIndex - page_size
@@ -478,7 +483,7 @@ describe("required message range calculation", () => {
                     focusIndex: 70,
                     chatSummary: { ...directChat },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([50, 100]);
             });
             test("limited by page size if nothing else", () => {
                 const ctx: ChatContext = {
@@ -486,7 +491,7 @@ describe("required message range calculation", () => {
                     events: [eventMessage<DirectMessage>("direct_message", 101)],
                     chatSummary: { ...directChat },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([80, 100]);
             });
         });
     });

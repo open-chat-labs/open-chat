@@ -35,21 +35,23 @@ export class CachingUserClient implements IUserClient {
 
     async chatEvents(
         userId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const cachedMsgs = await getCachedMessages<DirectChatEvent>(
-            this.db,
-            userId,
-            fromIndex,
-            toIndex
-        );
-        return (
-            cachedMsgs ??
-            this.client
-                .chatEvents(userId, fromIndex, toIndex)
-                .then(setCachedMessages(this.db, userId))
-        );
+        // todo - come back and sort out caching
+        // const cachedMsgs = await getCachedMessages<DirectChatEvent>(
+        //     this.db,
+        //     userId,
+        //     fromIndex,
+        //     toIndex
+        // );
+        // return (
+        //     cachedMsgs ??
+        //     this.client
+        //         .chatEvents(userId, fromIndex, toIndex)
+        //         .then(setCachedMessages(this.db, userId))
+        // );
+        return this.client.chatEvents(userId, startIndex, ascending);
     }
 
     async getUpdates(

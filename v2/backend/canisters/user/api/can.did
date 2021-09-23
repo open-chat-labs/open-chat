@@ -206,6 +206,7 @@ type UpdatesResponse =
 
 type EventsArgs =
     record {
+        user_id: UserId;
         start_index: EventIndex;
         ascending: bool;
         max_messages: nat32;

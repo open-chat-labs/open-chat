@@ -31,6 +31,7 @@ import {
     RemoveParticipantResponse,
     MarkReadResponse,
     UpdateGroupResponse,
+    ToggleReactionResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -63,6 +64,7 @@ export {
     RemoveParticipantResponse as ApiRemoveParticipantResponse,
     MarkReadResponse as ApiMarkReadResponse,
     UpdateGroupResponse as ApiUpdateGroupResponse,
+    ToggleReactionResponse as ApiToggleReactionResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -1,4 +1,3 @@
-import { DataClient } from "../../services/data/data.client";
 import type { PartialUserSummary, UserLookup, UserSummary } from "../user/user";
 import type {
     DirectChatSummary,
@@ -76,6 +75,7 @@ const groupChatWithMessage: GroupChatSummary = {
                 kind: "text_content",
                 text: "some message",
             },
+            reactions: [],
         },
         timestamp: BigInt(0),
         index: 0,
@@ -643,6 +643,7 @@ describe("merging updates", () => {
                     repliesTo: undefined,
                     messageId: newMessageId(),
                     messageIndex: 300,
+                    reactions: [],
                 },
                 index: 300,
                 timestamp: BigInt(400),

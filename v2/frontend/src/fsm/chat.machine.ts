@@ -26,6 +26,7 @@ import {
     latestAvailableEventIndex,
     latestLoadedEventIndex,
     setLastMessageOnChat,
+    toggleGroupReaction,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -69,6 +70,7 @@ export type ChatEvents =
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
+    | { type: "TOGGLE_REACTION"; data: { message: GroupMessage | DirectMessage; reaction: string } }
     | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
     | {
           type: "UPDATE_MESSAGE";
@@ -107,16 +109,21 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
-    userId: string,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
-    fromIndex: number,
-    toIndex: number
+    startIndex: number,
+    ascending: boolean
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
+        return serviceContainer.directChatEvents(chatSummary.them, startIndex, ascending);
     }
-    const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
+    console.log("criteria: ", startIndex, ascending);
+    const events = serviceContainer
+        .groupChatEvents(chatSummary.chatId, startIndex, ascending)
+        .then((resp) => {
+            console.log(resp);
+            return resp;
+        });
     return events;
 }
 
@@ -133,12 +140,11 @@ export function earliestIndex(ctx: ChatContext): number {
     return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
 }
 
-export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
+export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
-    if (lastLoaded !== undefined) {
+    if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
-        const to = latestAvailableEventIndex(ctx.chatSummary) ?? 0;
-        return clampRange([from, to]);
+        return [from, true];
     } else {
         // this implies that we have not loaded any messages which should never happen
         return undefined;
@@ -159,32 +165,19 @@ export function highestUnloadedEventIndex(ctx: ChatContext): number {
 
 /**
  * This gives us the range of messages that we must request when loading *previous* messages
+ * todo - this no longer deals with zooming to a specific historical message
+ * we need to come up with an all new mechanism for that. Probably recursively calling the
+ * service until a specific message is available.
  */
-export function previousMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const to = highestUnloadedEventIndex(ctx);
-    const candidateFrom =
-        ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
-    const min = earliestAvailableEventIndex(ctx);
-    const from = Math.max(min, candidateFrom);
-    return clampRange([from, to]);
+export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | undefined {
+    return [highestUnloadedEventIndex(ctx), false];
 }
 
-export function clampRange([from, to]: [number, number]): [number, number] | undefined {
-    if (from > to) {
-        return undefined;
-    } else {
-        return [from, to];
-    }
-}
-
-export function requiredMessageRange(
-    ctx: ChatContext,
-    ev: ChatEvents
-): [number, number] | undefined {
+export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
     if (ev.type === "CHAT_UPDATED") {
-        return newMessagesRange(ctx);
+        return newMessageCriteria(ctx);
     } else {
-        return previousMessagesRange(ctx);
+        return previousMessagesCriteria(ctx);
     }
 }
 
@@ -192,18 +185,12 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {},
     services: {
         loadEventsAndUsers: async (ctx, ev) => {
-            const range = requiredMessageRange(ctx, ev);
+            const criteria = requiredCriteria(ctx, ev);
 
             const [userLookup, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                range
-                    ? loadEvents(
-                          ctx.user!.userId,
-                          ctx.serviceContainer!,
-                          ctx.chatSummary,
-                          range[0],
-                          range[1]
-                      )
+                criteria
+                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
                     : { events: [] },
             ]);
             return {
@@ -303,6 +290,44 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     },
                                     index: ev.data.resp.eventIndex,
                                     timestamp: ev.data.resp.timestamp,
+                                };
+                            }
+                            return e;
+                        }),
+                    })),
+                },
+                TOGGLE_REACTION: {
+                    actions: assign((ctx, ev) => ({
+                        // todo - this would be much nicer if reactions were a homogenous type between message types
+                        // or maybe we can just make it generic quite nicely
+                        events: ctx.events.map((e) => {
+                            if (
+                                e.event.kind === "direct_message" &&
+                                ev.data.message.kind === "direct_message" &&
+                                e.event.messageId === ev.data.message.messageId
+                            ) {
+                                return {
+                                    ...e,
+                                    event: {
+                                        ...e.event,
+                                    },
+                                };
+                            }
+                            if (
+                                e.event.kind === "group_message" &&
+                                ev.data.message.kind === "group_message" &&
+                                e.event.messageId === ev.data.message.messageId
+                            ) {
+                                return {
+                                    ...e,
+                                    event: {
+                                        ...e.event,
+                                        reactions: toggleGroupReaction(
+                                            ctx.user!.userId,
+                                            e.event.reactions,
+                                            ev.data.reaction
+                                        ),
+                                    },
                                 };
                             }
                             return e;

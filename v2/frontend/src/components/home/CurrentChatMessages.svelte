@@ -23,6 +23,8 @@
         ReplyContext,
         ChatEvent as ChatEventType,
         DirectChatReplyContext,
+        GroupMessage,
+        DirectMessage,
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
@@ -171,6 +173,35 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
+    function selectReaction(
+        ev: CustomEvent<{ message: GroupMessage | DirectMessage; reaction: string }>
+    ) {
+        console.log(ev.detail.message, ev.detail.reaction);
+        // optimistic update
+        machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+
+        // trigger api call
+        $machine.context.serviceContainer
+            .toggleGroupChatReaction(
+                $machine.context.chatSummary.chatId,
+                ev.detail.message.messageId,
+                ev.detail.reaction
+            )
+            .then((resp) => {
+                if (resp === "added" || resp === "removed") {
+                    console.log("Reaction ", resp);
+                    // commit to cache on success
+                } else {
+                    // toggle again to undo
+                    machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                }
+            })
+            .catch((_err) => {
+                // toggle again to undo
+                machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+            });
+    }
+
     function goToMessage(ev: CustomEvent<number>) {
         machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
     }
@@ -199,13 +230,13 @@
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
         const first = group[0]!;
         if (first.event.kind === "direct_message") {
-            return `${first.event.sentByMe}_${first.index}`;
+            return `${first.event.sentByMe}_${first.event.messageId}`;
         }
         if (first.event.kind === "direct_chat_created") {
             return `${first.event.kind}_${first.index}`;
         }
         if (first.event.kind === "group_message") {
-            return `${first.event.sender}_${first.index}`;
+            return `${first.event.sender}_${first.event.messageId}`;
         }
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
@@ -218,6 +249,8 @@
             first.event.kind === "participants_removed" ||
             first.event.kind === "avatar_changed" ||
             first.event.kind === "desc_changed" ||
+            first.event.kind === "reaction_added" ||
+            first.event.kind === "reaction_removed" ||
             first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
@@ -275,6 +308,8 @@
             evt.event.kind === "avatar_changed" ||
             evt.event.kind === "desc_changed" ||
             evt.event.kind === "name_changed" ||
+            evt.event.kind === "reaction_added" ||
+            evt.event.kind === "reaction_removed" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {
@@ -348,6 +383,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:goToMessage={goToMessage}
+                        on:selectReaction={selectReaction}
                         event={evt} />
                 {/each}
             {/each}
