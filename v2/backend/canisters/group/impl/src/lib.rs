@@ -3,7 +3,7 @@ use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -54,6 +54,7 @@ pub struct Data {
 #[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
+        chat_id: ChatId,
         is_public: bool,
         name: String,
         description: String,
@@ -67,7 +68,7 @@ impl Data {
         wasm_version: Version,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = Events::new(name.clone(), description.clone(), creator_user_id, now);
+        let events = Events::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,

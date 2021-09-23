@@ -13,6 +13,7 @@ fn init(args: Args) {
         let env = Box::new(CanisterEnv::new(false));
         let group_index_canister_id = env.caller();
         let data = Data::new(
+            env.canister_id().into(),
             args.is_public,
             args.name,
             args.description,

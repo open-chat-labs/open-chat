@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 use types::*;
 
 pub struct Events {
+    chat_id: ChatId,
     events: Vec<EventWrapper<GroupChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
@@ -17,7 +18,7 @@ pub struct Events {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum GroupChatEventInternal {
     Message(Box<MessageInternal>),
-    DeletedMessage(Box<DeletedGroupMessage>),
+    DeletedMessage(Box<DeletedMessage>),
     GroupChatCreated(Box<GroupChatCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
     GroupDescriptionChanged(Box<GroupDescriptionChanged>),
@@ -41,12 +42,12 @@ pub struct MessageInternal {
     message_id: MessageId,
     sender: UserId,
     content: MessageContent,
-    replies_to: Option<GroupReplyContextInternal>,
+    replies_to: Option<ReplyContextInternal>,
     reactions: Vec<(Reaction, HashSet<UserId>)>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GroupReplyContextInternal {
+pub struct ReplyContextInternal {
     message_id: MessageId,
 }
 
@@ -72,8 +73,9 @@ pub enum ToggleReactionResult {
 }
 
 impl Events {
-    pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
+    pub fn new(chat_id: ChatId, name: String, description: String, created_by: UserId, now: TimestampMillis) -> Events {
         let mut events = Events {
+            chat_id,
             events: Vec::new(),
             message_id_map: HashMap::new(),
             latest_message_event_index: None,
@@ -92,14 +94,14 @@ impl Events {
         events
     }
 
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, GroupMessage) {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
-            replies_to: args.replies_to.map(|r| GroupReplyContextInternal {
+            replies_to: args.replies_to.map(|r| ReplyContextInternal {
                 message_id: r.message_id,
             }),
             reactions: Vec::new(),
@@ -126,7 +128,7 @@ impl Events {
 
                 let deletion_event_index = self.push_event(GroupChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                 let event = self.get_internal_mut(event_index).unwrap();
-                event.event = GroupChatEventInternal::DeletedMessage(Box::new(DeletedGroupMessage {
+                event.event = GroupChatEventInternal::DeletedMessage(Box::new(DeletedMessage {
                     message_index: deleted_message.message_index,
                     message_id: deleted_message.message_id,
                     sender: deleted_message.sender,
@@ -246,7 +248,7 @@ impl Events {
             .collect()
     }
 
-    pub fn latest_message(&self) -> Option<EventWrapper<GroupMessage>> {
+    pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
 
         self.get_internal(event_index)
@@ -313,8 +315,8 @@ impl Events {
         }
     }
 
-    pub fn hydrate_message(&self, message: &MessageInternal) -> GroupMessage {
-        GroupMessage {
+    pub fn hydrate_message(&self, message: &MessageInternal) -> Message {
+        Message {
             message_index: message.message_index,
             message_id: message.message_id,
             sender: message.sender,
@@ -407,16 +409,17 @@ impl Events {
         }
     }
 
-    fn hydrate_reply_context(&self, reply_context: &GroupReplyContextInternal) -> Option<GroupReplyContext> {
+    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
         let event_index = *self.message_id_map.get(&reply_context.message_id)?;
         self.get_internal(event_index)
             .map(|e| {
                 if let GroupChatEventInternal::Message(m) = &e.event {
-                    Some(GroupReplyContext {
+                    Some(ReplyContext {
+                        chat_id: self.chat_id,
+                        sender: m.sender,
                         event_index,
                         message_id: reply_context.message_id,
-                        user_id: m.sender,
-                        content: m.content.clone(),
+                        content: Some(m.content.clone()),
                     })
                 } else {
                     None

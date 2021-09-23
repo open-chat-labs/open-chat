@@ -3,6 +3,7 @@ import "../../../libraries/types/can.did";
 type ReplyContextArgs =
     record {
         chat_id_if_other: opt ChatId;
+        sender: UserId;
         message_id: MessageId;
     };
 
