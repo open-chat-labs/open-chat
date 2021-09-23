@@ -1,5 +1,4 @@
-pub mod add_webrtc_answer;
-pub mod add_webrtc_offer;
+pub mod add_webrtc_endpoint;
 pub mod block_user;
 pub mod c2c_mark_read;
 pub mod c2c_remove_from_group;
@@ -12,7 +11,7 @@ pub mod join_group;
 pub mod leave_group;
 pub mod mark_read;
 pub mod put_chunk;
-pub mod remove_webrtc_connection_details;
+pub mod remove_webrtc_endpoints;
 pub mod send_message;
 pub mod set_avatar;
 pub mod toggle_reaction;

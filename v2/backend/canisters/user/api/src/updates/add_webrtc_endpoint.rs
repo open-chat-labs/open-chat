@@ -1,14 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::UserId;
+use types::webrtc::Endpoint;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub id: String,
-    pub offer_id: String,
-    pub from: UserId,
-    pub connection_string: String,
-    pub ice_candidates: Vec<String>,
+    pub endpoint: Endpoint,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
