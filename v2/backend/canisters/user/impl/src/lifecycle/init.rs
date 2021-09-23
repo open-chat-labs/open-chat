@@ -15,6 +15,7 @@ fn init(args: Args) {
 
         let data = Data::new(
             args.owner,
+            env.canister_id().into(),
             user_index_canister_id,
             args.group_index_canister_id,
             args.notification_canister_ids,

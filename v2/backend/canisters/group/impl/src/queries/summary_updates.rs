@@ -4,7 +4,7 @@ use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashSet;
-use types::{EventIndex, EventWrapper, GroupChatSummaryUpdates, GroupMessage, Participant, TimestampMillis, UserId};
+use types::{EventIndex, EventWrapper, GroupChatSummaryUpdates, Message, Participant, TimestampMillis, UserId};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
@@ -53,7 +53,7 @@ struct UpdatesFromEvents {
     avatar_id: Option<u128>,
     participants_added_or_updated: Vec<Participant>,
     participants_removed: Vec<UserId>,
-    latest_message: Option<EventWrapper<GroupMessage>>,
+    latest_message: Option<EventWrapper<Message>>,
     latest_event_index: Option<EventIndex>,
 }
 
