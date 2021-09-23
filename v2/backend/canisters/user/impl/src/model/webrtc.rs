@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::webrtc::*;
 use types::{TimestampMillis, UserId};
 
@@ -58,9 +58,8 @@ impl ConnectionDetailsMap {
             .collect()
     }
 
-    pub fn remove_connection_details(&mut self, user_ids: &[UserId]) {
-        for user_id in user_ids {
-            self.connection_details_per_user.remove(user_id);
-        }
+    pub fn remove_connection_details(&mut self, ids: &HashSet<String>) {
+        self.connection_details_per_user
+            .retain(|_, connection_details| !ids.contains(connection_details.get_id()));
     }
 }

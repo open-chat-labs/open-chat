@@ -205,7 +205,7 @@ type AddWebRtcAnswerResponse =
 
 type RemoveWebRtcConnectionDetailsArgs =
     record {
-        user_ids: vec UserId;
+        ids: vec text;
     };
 
 type RemoveWebRtcConnectionDetailsResponse =

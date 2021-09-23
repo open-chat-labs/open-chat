@@ -1,10 +1,9 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub user_ids: Vec<UserId>,
+    pub ids: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

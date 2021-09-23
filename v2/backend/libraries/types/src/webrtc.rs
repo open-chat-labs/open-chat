@@ -28,6 +28,20 @@ pub struct Answer {
 }
 
 impl ConnectionDetails {
+    pub fn get_id(&self) -> &str {
+        match self {
+            ConnectionDetails::Offer(o) => &o.id,
+            ConnectionDetails::Answer(a) => &a.id,
+        }
+    }
+
+    pub fn get_from_user(&self) -> &UserId {
+        match self {
+            ConnectionDetails::Offer(o) => &o.from,
+            ConnectionDetails::Answer(a) => &a.from,
+        }
+    }
+
     pub fn get_timestamp(&self) -> TimestampMillis {
         match self {
             ConnectionDetails::Offer(o) => o.timestamp,
