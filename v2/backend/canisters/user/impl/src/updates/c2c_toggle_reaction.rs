@@ -2,7 +2,7 @@ use crate::model::events::ToggleReactionResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
-use user_canister::toggle_reaction::{Response::*, *};
+use user_canister::c2c_toggle_reaction::{Response::*, *};
 
 #[update]
 fn c2c_toggle_reaction(args: Args) -> Response {
@@ -21,9 +21,15 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
 
+        let exists = chat.events.reaction_exists(false, &args.message_id, &args.reaction);
+
+        if exists == args.added {
+            return if args.added { Added } else { Removed };
+        }
+
         match chat.events.toggle_reaction(false, args.message_id, args.reaction, now) {
             ToggleReactionResult::Added => Added,
-            ToggleReactionResult::Removed => Added,
+            ToggleReactionResult::Removed => Removed,
             ToggleReactionResult::MessageNotFound => MessageNotFound,
         }
     } else {
