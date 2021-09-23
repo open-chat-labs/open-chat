@@ -131,9 +131,8 @@ impl UserMap {
     }
 
     /// Returns true if the caller is an OpenChat user or an OpenChat user's canister
-    pub fn is_valid_caller(&self, caller: &Principal) -> bool {
-        self.users_by_principal.contains_key(caller) ||
-            self.user_id_to_principal.contains_key(caller.into())
+    pub fn is_valid_caller(&self, caller: Principal) -> bool {
+        self.users_by_principal.contains_key(&caller) || self.user_id_to_principal.contains_key(&caller.into())
     }
 
     pub fn remove_by_principal(&mut self, principal: &Principal) -> Option<User> {
