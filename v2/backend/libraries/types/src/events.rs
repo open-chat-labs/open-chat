@@ -1,12 +1,11 @@
-use crate::message::{DirectMessage, GroupMessage};
-use crate::{DeletedDirectMessage, DeletedGroupMessage, EventIndex, MessageId, UserId};
+use crate::{DeletedMessage, EventIndex, Message, MessageId, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum GroupChatEvent {
-    Message(GroupMessage),
-    DeletedMessage(DeletedGroupMessage),
+    Message(Message),
+    DeletedMessage(DeletedMessage),
     GroupChatCreated(GroupChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
@@ -106,8 +105,8 @@ pub struct UpdatedMessage {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEvent {
-    Message(DirectMessage),
-    DeletedMessage(DeletedDirectMessage),
+    Message(Message),
+    DeletedMessage(DeletedMessage),
     DirectChatCreated(DirectChatCreated),
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),

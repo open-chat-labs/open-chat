@@ -8,6 +8,8 @@ use types::*;
 use user_canister::send_message::DirectReplyContextArgs;
 
 pub struct Events {
+    my_user_id: UserId,
+    their_user_id: UserId,
     events: Vec<EventWrapper<DirectChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
@@ -17,7 +19,7 @@ pub struct Events {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum DirectChatEventInternal {
     Message(Box<MessageInternal>),
-    DeletedMessage(Box<DeletedDirectMessage>),
+    DeletedMessage(Box<DeletedMessageInternal>),
     DirectChatCreated(DirectChatCreated),
     MessageDeleted(Box<MessageId>),
     MessageReactionAdded(Box<MessageId>),
@@ -30,13 +32,21 @@ pub struct MessageInternal {
     pub message_id: MessageId,
     pub sent_by_me: bool,
     pub content: MessageContent,
-    pub replies_to: Option<DirectReplyContextInternal>,
+    pub replies_to: Option<ReplyContextInternal>,
     pub reactions: Vec<(Reaction, Vec<bool>)>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct DirectReplyContextInternal {
+pub struct DeletedMessageInternal {
+    pub message_id: MessageId,
+    pub sent_by_me: bool,
+    pub deletion_event_index: EventIndex,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct ReplyContextInternal {
     pub chat_id_if_other: Option<ChatId>,
+    pub sender: UserId,
     pub message_id: MessageId,
 }
 
@@ -62,8 +72,10 @@ pub enum ToggleReactionResult {
 }
 
 impl Events {
-    pub fn new(now: TimestampMillis) -> Events {
+    pub fn new(my_user_id: UserId, their_user_id: UserId, now: TimestampMillis) -> Events {
         let mut events = Events {
+            my_user_id,
+            their_user_id,
             events: Vec::new(),
             message_id_map: HashMap::new(),
             latest_message_event_index: None,
@@ -75,15 +87,16 @@ impl Events {
         events
     }
 
-    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, DirectMessage) {
+    pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
         let message_index = self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr());
         let message_internal = MessageInternal {
             message_index,
             message_id: args.message_id,
             sent_by_me: args.sent_by_me,
             content: args.content,
-            replies_to: args.replies_to.map(|r| DirectReplyContextInternal {
+            replies_to: args.replies_to.map(|r| ReplyContextInternal {
                 chat_id_if_other: r.chat_id_if_other,
+                sender: r.sender,
                 message_id: r.message_id,
             }),
             reactions: Vec::new(),
@@ -110,8 +123,7 @@ impl Events {
 
                 let deletion_event_index = self.push_event(DirectChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                 let event = self.get_internal_mut(event_index).unwrap();
-                event.event = DirectChatEventInternal::DeletedMessage(Box::new(DeletedDirectMessage {
-                    message_index: deleted_message.message_index,
+                event.event = DirectChatEventInternal::DeletedMessage(Box::new(DeletedMessageInternal {
                     message_id: deleted_message.message_id,
                     sent_by_me: true,
                     deletion_event_index,
@@ -184,6 +196,17 @@ impl Events {
         ToggleReactionResult::MessageNotFound
     }
 
+    pub fn reaction_exists(&self, added_by_me: bool, message_id: &MessageId, reaction: &Reaction) -> bool {
+        if let Some(&event_index) = self.message_id_map.get(message_id) {
+            if let Some(DirectChatEventInternal::Message(message)) = self.get_internal(event_index).map(|e| &e.event) {
+                if let Some((_, users)) = message.reactions.iter().find(|(r, _)| r == reaction) {
+                    return users.contains(&added_by_me);
+                }
+            }
+        }
+        false
+    }
+
     pub fn get(&self, event_index: EventIndex) -> Option<EventWrapper<DirectChatEvent>> {
         self.get_internal(event_index).map(|e| self.hydrate_event(e))
     }
@@ -236,7 +259,7 @@ impl Events {
             .collect()
     }
 
-    pub fn latest_message(&self) -> Option<EventWrapper<DirectMessage>> {
+    pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
 
         self.get_internal(event_index)
@@ -331,7 +354,7 @@ impl Events {
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {
         let event_data = match &event.event {
             DirectChatEventInternal::Message(m) => DirectChatEvent::Message(self.hydrate_message(m)),
-            DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(*d.clone()),
+            DirectChatEventInternal::DeletedMessage(d) => DirectChatEvent::DeletedMessage(self.hydrate_deleted_message(d)),
             DirectChatEventInternal::DirectChatCreated(d) => DirectChatEvent::DirectChatCreated(*d),
             DirectChatEventInternal::MessageDeleted(m) => DirectChatEvent::MessageDeleted(self.hydrate_updated_message(**m)),
             DirectChatEventInternal::MessageReactionAdded(m) => {
@@ -349,44 +372,74 @@ impl Events {
         }
     }
 
-    fn hydrate_message(&self, message: &MessageInternal) -> DirectMessage {
-        DirectMessage {
+    fn hydrate_message(&self, message: &MessageInternal) -> Message {
+        Message {
             message_index: message.message_index,
             message_id: message.message_id,
-            sent_by_me: message.sent_by_me,
+            sender: if message.sent_by_me { self.my_user_id } else { self.their_user_id },
             content: message.content.clone(),
             replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
             reactions: message
                 .reactions
                 .iter()
-                .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
+                .map(|(r, u)| {
+                    (
+                        r.clone(),
+                        u.iter()
+                            .map(|me| if *me { self.my_user_id } else { self.their_user_id })
+                            .collect(),
+                    )
+                })
                 .collect(),
         }
     }
 
-    fn hydrate_reply_context(&self, reply_context: &DirectReplyContextInternal) -> Option<DirectReplyContext> {
+    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
         let event_index = *self.message_id_map.get(&reply_context.message_id)?;
-        if let Some(chat_id) = reply_context.chat_id_if_other {
-            Some(DirectReplyContext::Private(PrivateReplyContext {
-                chat_id,
-                event_index,
-                message_id: reply_context.message_id,
-            }))
-        } else {
+        let content = if reply_context.chat_id_if_other.is_none() {
             self.get_internal(event_index)
-                .map(|e| {
-                    if let DirectChatEventInternal::Message(m) = &e.event {
-                        Some(DirectReplyContext::Standard(StandardReplyContext {
-                            event_index: e.index,
-                            message_id: reply_context.message_id,
-                            sent_by_me: m.sent_by_me,
-                            content: m.content.clone(),
-                        }))
-                    } else {
-                        None
-                    }
-                })
+                .map(
+                    |e| {
+                        if let DirectChatEventInternal::Message(m) = &e.event {
+                            Some(m.content.clone())
+                        } else {
+                            None
+                        }
+                    },
+                )
                 .flatten()
+        } else {
+            None
+        };
+
+        Some(ReplyContext {
+            chat_id: reply_context.chat_id_if_other.unwrap_or_else(|| self.their_user_id.into()),
+            sender: reply_context.sender,
+            event_index,
+            message_id: reply_context.message_id,
+            content,
+        })
+    }
+
+    fn hydrate_deleted_message(&self, deleted_message: &DeletedMessageInternal) -> DeletedMessage {
+        let message_index = self
+            .message_id_map
+            .get(&deleted_message.message_id)
+            .map(|e| self.get_internal(*e))
+            .flatten()
+            .map_or(MessageIndex::default(), |e| {
+                if let DirectChatEventInternal::Message(m) = &e.event {
+                    m.message_index
+                } else {
+                    MessageIndex::default()
+                }
+            });
+
+        DeletedMessage {
+            message_index,
+            message_id: deleted_message.message_id,
+            sender: if deleted_message.sent_by_me { self.my_user_id } else { self.their_user_id },
+            deletion_event_index: deleted_message.deletion_event_index,
         }
     }
 

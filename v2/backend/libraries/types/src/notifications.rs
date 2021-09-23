@@ -1,6 +1,4 @@
-use crate::chat_id::ChatId;
-use crate::UserId;
-use crate::{message, v1_message};
+use crate::{v1_message, ChatId, Message, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -22,7 +20,7 @@ pub enum Notification {
 pub struct DirectMessageNotification {
     pub sender: UserId,
     pub sender_name: String,
-    pub message: message::DirectMessage,
+    pub message: Message,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -31,7 +29,7 @@ pub struct GroupMessageNotification {
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,
-    pub message: message::GroupMessage,
+    pub message: Message,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

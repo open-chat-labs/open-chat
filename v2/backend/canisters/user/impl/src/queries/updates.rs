@@ -257,6 +257,10 @@ fn finalize(
     }
 
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
+    let webrtc_connection_details = runtime_state
+        .data
+        .webrtc_connection_details_map
+        .get_connection_details(updates_since);
 
     SuccessResult {
         chats_added,
@@ -264,5 +268,6 @@ fn finalize(
         chats_removed: Vec::new(), // TODO
         timestamp: now,
         blocked_users,
+        webrtc_connection_details,
     }
 }

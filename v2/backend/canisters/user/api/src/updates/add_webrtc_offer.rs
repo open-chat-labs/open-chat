@@ -1,15 +1,16 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{UserId, UserSummary};
+use types::UserId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: Option<UserId>,
-    pub username: Option<String>,
+    pub id: String,
+    pub from: UserId,
+    pub connection_string: String,
+    pub ice_candidates: Vec<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(UserSummary),
-    UserNotFound,
+    Success,
 }

@@ -17,11 +17,11 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, now: TimestampMillis) -> DirectChat {
+    pub fn new(my_user_id: UserId, their_user_id: UserId, now: TimestampMillis) -> DirectChat {
         DirectChat {
-            them,
+            them: their_user_id,
             date_created: now,
-            events: Events::new(now),
+            events: Events::new(my_user_id, their_user_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me: RangeSet::new(),
             read_by_me_updated: now,

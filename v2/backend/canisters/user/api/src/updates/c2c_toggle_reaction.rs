@@ -6,6 +6,7 @@ use types::{MessageId, Reaction};
 pub struct Args {
     pub message_id: MessageId,
     pub reaction: Reaction,
+    pub added: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

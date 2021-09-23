@@ -1,5 +1,6 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
+use crate::model::webrtc;
 use candid::Principal;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -51,11 +52,13 @@ pub struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
+    pub webrtc_connection_details_map: webrtc::ConnectionDetailsMap,
 }
 
 impl Data {
     pub fn new(
         owner: Principal,
+        my_user_id: UserId,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
@@ -63,7 +66,7 @@ impl Data {
     ) -> Data {
         Data {
             owner,
-            direct_chats: DirectChats::default(),
+            direct_chats: DirectChats::new(my_user_id),
             group_chats: GroupChats::default(),
             blocked_users: HashSet::new(),
             user_index_canister_id,
@@ -72,6 +75,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
+            webrtc_connection_details_map: webrtc::ConnectionDetailsMap::default(),
         }
     }
 }

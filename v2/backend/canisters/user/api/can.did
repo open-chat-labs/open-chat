@@ -3,6 +3,7 @@ import "../../../libraries/types/can.did";
 type ReplyContextArgs =
     record {
         chat_id_if_other: opt ChatId;
+        sender: UserId;
         message_id: MessageId;
     };
 
@@ -176,6 +177,43 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
+type AddWebRtcOfferArgs =
+    record {
+        id: text;
+        from: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
+    };
+
+type AddWebRtcOfferResponse =
+    variant {
+        Success;
+    }; 
+
+type AddWebRtcAnswerArgs =
+    record {
+        id: text;
+        offer_id: text;
+        from: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
+    };
+
+type AddWebRtcAnswerResponse =
+    variant {
+        Success;
+    }; 
+
+type RemoveWebRtcConnectionDetailsArgs =
+    record {
+        ids: vec text;
+    };
+
+type RemoveWebRtcConnectionDetailsResponse =
+    variant {
+        Success;
+    }; 
+
 type GroupChatUpdatesSince =
     record {
         chat_id: ChatId;
@@ -201,6 +239,7 @@ type UpdatesResponse =
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
             blocked_users: vec UserId;
+            webrtc_connection_details: vec WebRtcConnectionDetails;
         }
     };
 
@@ -317,17 +356,17 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+    add_webrtc_offer: (AddWebRtcOfferArgs) -> (AddWebRtcOfferResponse);
+    add_webrtc_answer: (AddWebRtcAnswerArgs) -> (AddWebRtcAnswerResponse);
+    remove_webrtc_connection_details: (RemoveWebRtcConnectionDetailsArgs) -> (RemoveWebRtcConnectionDetailsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
+    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
+    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
 
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 
-    // Search just the messages of one direct chat
-    search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query;
-
-    // Use ICQC to search all group chats too - use Tantivy
-    search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query;
 }

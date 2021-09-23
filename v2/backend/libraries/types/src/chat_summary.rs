@@ -1,4 +1,4 @@
-use crate::{message, ChatId, EventIndex, EventWrapper, MessageIndex, MessageIndexRange, Participant, TimestampMillis, UserId};
+use crate::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, MessageIndexRange, Participant, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -20,7 +20,7 @@ impl ChatSummary {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
-    pub latest_message: EventWrapper<message::DirectMessage>,
+    pub latest_message: EventWrapper<Message>,
     pub latest_event_index: EventIndex,
     pub date_created: TimestampMillis,
     pub read_by_me: Vec<MessageIndexRange>,
@@ -44,7 +44,7 @@ pub struct GroupChatSummary {
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
     pub participants: Vec<Participant>,
-    pub latest_message: Option<EventWrapper<message::GroupMessage>>,
+    pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub read_by_me: Vec<MessageIndexRange>,
@@ -65,7 +65,7 @@ pub enum ChatSummaryUpdates {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
-    pub latest_message: Option<EventWrapper<message::DirectMessage>>,
+    pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub read_by_them: Option<Vec<MessageIndexRange>>,
@@ -80,7 +80,7 @@ pub struct GroupChatSummaryUpdates {
     pub avatar_id: Option<u128>,
     pub participants_added_or_updated: Vec<Participant>,
     pub participants_removed: Vec<UserId>,
-    pub latest_message: Option<EventWrapper<message::GroupMessage>>,
+    pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
 }

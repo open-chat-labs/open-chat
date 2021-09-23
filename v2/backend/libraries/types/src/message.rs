@@ -1,40 +1,30 @@
-use crate::reply_context::{DirectReplyContext, GroupReplyContext};
-use crate::{message_content::MessageContent, EventIndex, MessageId, MessageIndex, Reaction, UserId};
+use crate::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DirectMessage {
-    pub message_index: MessageIndex,
-    pub message_id: MessageId,
-    pub sent_by_me: bool,
-    pub content: MessageContent,
-    pub replies_to: Option<DirectReplyContext>,
-    pub reactions: Vec<(Reaction, Vec<bool>)>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupMessage {
+pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
-    pub replies_to: Option<GroupReplyContext>,
+    pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DeletedDirectMessage {
-    pub message_index: MessageIndex,
-    pub message_id: MessageId,
-    pub sent_by_me: bool,
-    pub deletion_event_index: EventIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct DeletedGroupMessage {
+pub struct DeletedMessage {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub sender: UserId,
     pub deletion_event_index: EventIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ReplyContext {
+    pub chat_id: ChatId,
+    pub sender: UserId,
+    pub event_index: EventIndex,
+    pub message_id: MessageId,
+    pub content: Option<MessageContent>,
 }
