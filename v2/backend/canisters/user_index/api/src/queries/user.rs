@@ -10,6 +10,6 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    UserNotFound,
     Success(UserSummary),
+    UserNotFound,
 }
