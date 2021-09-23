@@ -581,19 +581,19 @@ type WebRtcConnectionDetails =
 type WebRtcOffer =
     record {
         id: text;
-        user_id: UserId;
+        from: UserId;
         connection_string: text;
         ice_candidates: vec text;
-        age_seconds: nat32;
+        timestamp: TimestampMillis;
     };
 
 type WebRtcAnswer =
     record {
         id: text;
         offer_id: text;
-        user_id: UserId;
+        from: UserId;
         connection_string: text;
         ice_candidates: vec text;
-        age_seconds: nat32;
+        timestamp: TimestampMillis;
     };
 
