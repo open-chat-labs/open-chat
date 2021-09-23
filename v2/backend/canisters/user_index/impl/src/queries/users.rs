@@ -8,10 +8,7 @@ fn users(args: Args) -> Response {
 }
 
 fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if !runtime_state.data.users.is_valid_caller(caller) {
-        panic!("Request is not from an OpenChat user");
-    }
+    runtime_state.trap_if_caller_not_open_chat_user();
 
     let now = runtime_state.env.now();
     let updated_since = args.updated_since.unwrap_or(0);

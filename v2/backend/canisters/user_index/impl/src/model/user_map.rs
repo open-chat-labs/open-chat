@@ -130,7 +130,6 @@ impl UserMap {
             .flatten()
     }
 
-    /// Returns true if the caller is an OpenChat user or an OpenChat user's canister
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
         self.users_by_principal.contains_key(&caller) || self.user_id_to_principal.contains_key(&caller.into())
     }
