@@ -571,3 +571,29 @@ type VideoContent =
         image_blob_reference: opt BlobReference;
         video_blob_reference: opt BlobReference;
     };
+
+type WebRtcConnectionDetails =
+    variant {
+        Offer: WebRtcOffer;
+        Answer: WebRtcAnswer;
+    };
+
+type WebRtcOffer =
+    record {
+        id: text;
+        from: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
+        timestamp: TimestampMillis;
+    };
+
+type WebRtcAnswer =
+    record {
+        id: text;
+        offer_id: text;
+        from: UserId;
+        connection_string: text;
+        ice_candidates: vec text;
+        timestamp: TimestampMillis;
+    };
+
