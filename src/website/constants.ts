@@ -27,5 +27,5 @@ export const UNCONFIRMED_GROUP_CHAT = "ug";
 
 export const ABOUT_US = {
     title: "TEST MODE",
-    text: "OpenChat is running in test mode. Maximum users 50,000. Old media files scavenged. Dummy cycle balance. Accounts may get reset on coming beta release. Enjoy! - OpenChat devs",
+    text: "OpenChat is running in test mode. Maximum users 100,000. Old media files scavenged. Dummy cycle balance. Accounts may get reset on main release expected in November. Enjoy! - OpenChat devs",
 };
