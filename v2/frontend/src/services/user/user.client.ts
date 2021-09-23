@@ -9,7 +9,7 @@ import type {
     DirectChatEvent,
     MergedUpdatesResponse,
     ChatSummary,
-    DirectMessage,
+    Message,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -35,6 +35,7 @@ import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
+import type { UserSummary } from "../../domain/user/user";
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -137,8 +138,9 @@ export class UserClient extends CandidService implements IUserClient {
 
     sendMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
         return DataClient.create(this.identity, this.userId)
             .uploadData(message.content)
@@ -147,14 +149,15 @@ export class UserClient extends CandidService implements IUserClient {
                     this.userService.send_message({
                         content: apiMessageContent(message.content),
                         recipient: Principal.fromText(recipientId),
-                        sender_name: senderName,
+                        sender_name: sender.username,
                         message_id: message.messageId,
                         replies_to: apiOptional(
                             (replyContext) => ({
-                                chat_id_if_other:
-                                    replyContext.kind === "direct_private_reply_context"
-                                        ? [Principal.fromText(replyContext.chatId)]
-                                        : [],
+                                sender: Principal.fromText(sender.userId),
+                                chat_id_if_other: apiOptional(
+                                    (id) => Principal.fromText(id),
+                                    replyingToChatId
+                                ),
                                 message_id: replyContext.messageId,
                             }),
                             message.repliesTo

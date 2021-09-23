@@ -5,6 +5,21 @@ export const idlFactory = ({ IDL }) => {
     'notification_canister_ids' : IDL.Vec(CanisterId),
   });
   const UserId = CanisterId;
+  const AddWebRtcAnswerArgs = IDL.Record({
+    'id' : IDL.Text,
+    'from' : UserId,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+    'offer_id' : IDL.Text,
+  });
+  const AddWebRtcAnswerResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const AddWebRtcOfferArgs = IDL.Record({
+    'id' : IDL.Text,
+    'from' : UserId,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+  });
+  const AddWebRtcOfferResponse = IDL.Variant({ 'Success' : IDL.Null });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Avatar = IDL.Record({
@@ -101,32 +116,23 @@ export const idlFactory = ({ IDL }) => {
     'Audio' : AudioContent,
     'Video' : VideoContent,
   });
-  const PrivateReplyContext = IDL.Record({
-    'chat_id' : ChatId,
+  const ReplyContext = IDL.Record({
+    'content' : IDL.Opt(MessageContent),
+    'user_id' : UserId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
-  });
-  const StandardReplyContext = IDL.Record({
-    'content' : MessageContent,
-    'sent_by_me' : IDL.Bool,
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const DirectReplyContext = IDL.Variant({
-    'Private' : PrivateReplyContext,
-    'Standard' : StandardReplyContext,
   });
   const MessageIndex = IDL.Nat32;
-  const DirectMessage = IDL.Record({
+  const Message = IDL.Record({
     'content' : MessageContent,
-    'sent_by_me' : IDL.Bool,
+    'sender' : UserId,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(DirectReplyContext),
-    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Bool))),
+    'replies_to' : IDL.Opt(ReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
-  const DeletedDirectMessage = IDL.Record({
-    'sent_by_me' : IDL.Bool,
+  const DeletedMessage = IDL.Record({
+    'sender' : UserId,
     'message_id' : MessageId,
     'message_index' : MessageIndex,
   });
@@ -134,9 +140,9 @@ export const idlFactory = ({ IDL }) => {
   const DirectChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'MessageReactionAdded' : UpdatedMessage,
-    'Message' : DirectMessage,
+    'Message' : Message,
     'MessageDeleted' : UpdatedMessage,
-    'DeletedMessage' : DeletedDirectMessage,
+    'DeletedMessage' : DeletedMessage,
     'DirectChatCreated' : DirectChatCreated,
   });
   const TimestampMillis = IDL.Nat64;
@@ -222,6 +228,12 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
   });
+  const RemoveWebRtcConnectionDetailsArgs = IDL.Record({
+    'ids' : IDL.Vec(IDL.Text),
+  });
+  const RemoveWebRtcConnectionDetailsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -264,6 +276,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const ReplyContextArgs = IDL.Record({
+    'sender' : UserId,
     'chat_id_if_other' : IDL.Opt(ChatId),
     'message_id' : MessageId,
   });
@@ -325,22 +338,8 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const GroupReplyContext = IDL.Record({
-    'content' : MessageContent,
-    'user_id' : UserId,
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const GroupMessage = IDL.Record({
-    'content' : MessageContent,
-    'sender' : UserId,
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
-    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
-    'message_index' : MessageIndex,
-  });
-  const GroupMessageEventWrapper = IDL.Record({
-    'event' : GroupMessage,
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
   });
@@ -354,23 +353,37 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
-  });
-  const DirectMessageEventWrapper = IDL.Record({
-    'event' : DirectMessage,
-    'timestamp' : TimestampMillis,
-    'index' : EventIndex,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
-    'latest_message' : IDL.Opt(DirectMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const ChatSummaryUpdates = IDL.Variant({
     'Group' : GroupChatSummaryUpdates,
     'Direct' : DirectChatSummaryUpdates,
+  });
+  const WebRtcAnswer = IDL.Record({
+    'id' : IDL.Text,
+    'from' : UserId,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+    'offer_id' : IDL.Text,
+    'timestamp' : TimestampMillis,
+  });
+  const WebRtcOffer = IDL.Record({
+    'id' : IDL.Text,
+    'from' : UserId,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+    'timestamp' : TimestampMillis,
+  });
+  const WebRtcConnectionDetails = IDL.Variant({
+    'Answer' : WebRtcAnswer,
+    'Offer' : WebRtcOffer,
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
@@ -385,7 +398,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
     'date_created' : TimestampMillis,
@@ -393,7 +406,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'read_by_them' : IDL.Vec(MessageIndexRange),
-    'latest_message' : DirectMessageEventWrapper,
+    'latest_message' : MessageEventWrapper,
   });
   const ChatSummary = IDL.Variant({
     'Group' : GroupChatSummary,
@@ -403,12 +416,23 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
+      'webrtc_connection_details' : IDL.Vec(WebRtcConnectionDetails),
       'chats_added' : IDL.Vec(ChatSummary),
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
     }),
   });
   return IDL.Service({
+    'add_webrtc_answer' : IDL.Func(
+        [AddWebRtcAnswerArgs],
+        [AddWebRtcAnswerResponse],
+        [],
+      ),
+    'add_webrtc_offer' : IDL.Func(
+        [AddWebRtcOfferArgs],
+        [AddWebRtcOfferResponse],
+        [],
+      ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_messages' : IDL.Func(
@@ -428,6 +452,11 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
+    'remove_webrtc_connection_details' : IDL.Func(
+        [RemoveWebRtcConnectionDetailsArgs],
+        [RemoveWebRtcConnectionDetailsResponse],
+        [],
+      ),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],

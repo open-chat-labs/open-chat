@@ -75,12 +75,7 @@ export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
 export type DeleteMessagesResponse = { 'Success' : null } |
   { 'NotInGroup' : null };
-export interface DeletedDirectMessage {
-  'sent_by_me' : boolean,
-  'message_id' : MessageId,
-  'message_index' : MessageIndex,
-}
-export interface DeletedGroupMessage {
+export interface DeletedMessage {
   'sender' : UserId,
   'message_id' : MessageId,
   'message_index' : MessageIndex,
@@ -88,9 +83,9 @@ export interface DeletedGroupMessage {
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
-  { 'Message' : DirectMessage } |
+  { 'Message' : Message } |
   { 'MessageDeleted' : UpdatedMessage } |
-  { 'DeletedMessage' : DeletedDirectMessage } |
+  { 'DeletedMessage' : DeletedMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
@@ -103,36 +98,21 @@ export interface DirectChatSummary {
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
-  'latest_message' : DirectMessageEventWrapper,
+  'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
   'read_by_them' : [] | [Array<MessageIndexRange>],
-  'latest_message' : [] | [DirectMessageEventWrapper],
-}
-export interface DirectMessage {
-  'content' : MessageContent,
-  'sent_by_me' : boolean,
-  'message_id' : MessageId,
-  'replies_to' : [] | [DirectReplyContext],
-  'reactions' : Array<[string, Array<boolean>]>,
-  'message_index' : MessageIndex,
-}
-export interface DirectMessageEventWrapper {
-  'event' : DirectMessage,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
   'recipient' : UserId,
   'sender' : UserId,
-  'message' : DirectMessage,
+  'message' : Message,
   'sender_name' : string,
 }
-export type DirectReplyContext = { 'Private' : PrivateReplyContext } |
-  { 'Standard' : StandardReplyContext };
 export type EventIndex = number;
 export interface EventsArgs {
   'max_messages' : number,
@@ -174,12 +154,12 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
-  { 'Message' : GroupMessage } |
+  { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
-  { 'DeletedMessage' : DeletedGroupMessage } |
+  { 'DeletedMessage' : DeletedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
@@ -200,7 +180,7 @@ export interface GroupChatSummary {
   'latest_event_index' : EventIndex,
   'min_visible_message_index' : MessageIndex,
   'chat_id' : ChatId,
-  'latest_message' : [] | [GroupMessageEventWrapper],
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
@@ -212,25 +192,12 @@ export interface GroupChatSummaryUpdates {
   'avatar_id' : [] | [bigint],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
-  'latest_message' : [] | [GroupMessageEventWrapper],
+  'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
   'changed_by' : UserId,
-}
-export interface GroupMessage {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'reactions' : Array<[string, Array<UserId>]>,
-  'message_index' : MessageIndex,
-}
-export interface GroupMessageEventWrapper {
-  'event' : GroupMessage,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
 }
 export interface GroupMessageMatch {
   'content' : MessageContent,
@@ -241,7 +208,7 @@ export interface GroupMessageMatch {
 export interface GroupMessageNotification {
   'sender' : UserId,
   'recipients' : Array<UserId>,
-  'message' : GroupMessage,
+  'message' : Message,
   'sender_name' : string,
   'chat_id' : ChatId,
   'group_name' : string,
@@ -250,12 +217,6 @@ export interface GroupNameChanged {
   'changed_by' : UserId,
   'new_name' : string,
   'previous_name' : string,
-}
-export interface GroupReplyContext {
-  'content' : MessageContent,
-  'user_id' : UserId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
 }
 export interface ImageContent {
   'height' : number,
@@ -278,12 +239,25 @@ export interface MarkReadArgs { 'message_ranges' : Array<MessageIndexRange> }
 export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'Success' : null } |
   { 'NotInGroup' : null };
+export interface Message {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContext],
+  'reactions' : Array<[string, Array<UserId>]>,
+  'message_index' : MessageIndex,
+}
 export type MessageContent = { 'File' : FileContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent };
+export interface MessageEventWrapper {
+  'event' : Message,
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -344,11 +318,6 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export interface PrivateReplyContext {
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export interface PutChunkArgs {
   'total_chunks' : number,
   'blob_id' : bigint,
@@ -374,6 +343,12 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'Success' : null } |
   { 'CannotRemoveSelf' : null } |
   { 'InternalError' : string };
+export interface ReplyContext {
+  'content' : [] | [MessageContent],
+  'user_id' : UserId,
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+}
 export interface ReplyContextArgs { 'message_id' : MessageId }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
@@ -403,12 +378,6 @@ export type SendMessageResponse = {
     }
   } |
   { 'NotInGroup' : null };
-export interface StandardReplyContext {
-  'content' : MessageContent,
-  'sent_by_me' : boolean,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -548,6 +517,23 @@ export interface VideoContent {
   'thumbnail_data' : string,
   'caption' : [] | [string],
   'width' : number,
+}
+export interface WebRtcAnswer {
+  'id' : string,
+  'from' : UserId,
+  'connection_string' : string,
+  'ice_candidates' : Array<string>,
+  'offer_id' : string,
+  'timestamp' : TimestampMillis,
+}
+export type WebRtcConnectionDetails = { 'Answer' : WebRtcAnswer } |
+  { 'Offer' : WebRtcOffer };
+export interface WebRtcOffer {
+  'id' : string,
+  'from' : UserId,
+  'connection_string' : string,
+  'ice_candidates' : Array<string>,
+  'timestamp' : TimestampMillis,
 }
 export interface _SERVICE {
   'add_participants' : (arg_0: AddParticipantsArgs) => Promise<

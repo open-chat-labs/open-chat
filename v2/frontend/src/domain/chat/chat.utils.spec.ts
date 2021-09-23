@@ -29,14 +29,15 @@ const defaultDirectChat: DirectChatSummary = {
     readByThem: [],
     latestMessage: {
         event: {
-            kind: "direct_message",
-            sentByMe: true,
+            kind: "message",
+            sender: "abcdefg",
             messageId: newMessageId(),
             messageIndex: 100,
             content: {
                 kind: "text_content",
                 text: "some message",
             },
+            reactions: [],
         },
         timestamp: BigInt(0),
         index: 0,
@@ -67,7 +68,7 @@ const groupChatWithMessage: GroupChatSummary = {
     minVisibleEventIndex: 10,
     latestMessage: {
         event: {
-            kind: "group_message",
+            kind: "message",
             sender: "abscdefg",
             messageId: newMessageId(),
             messageIndex: 100,
@@ -612,15 +613,16 @@ describe("merging updates", () => {
             latestEventIndex: 300,
             latestMessage: {
                 event: {
-                    kind: "direct_message",
+                    kind: "message",
                     content: {
                         kind: "text_content",
                         text: "test message",
                     },
-                    sentByMe: true,
+                    sender: "abcdefg",
                     repliesTo: undefined,
                     messageId: newMessageId(),
                     messageIndex: 300,
+                    reactions: [],
                 },
                 index: 300,
                 timestamp: BigInt(400),
@@ -634,7 +636,7 @@ describe("merging updates", () => {
             readByMe: [],
             latestMessage: {
                 event: {
-                    kind: "group_message",
+                    kind: "message",
                     content: {
                         kind: "text_content",
                         text: "test message",

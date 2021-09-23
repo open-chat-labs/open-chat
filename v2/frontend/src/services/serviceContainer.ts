@@ -26,9 +26,8 @@ import type {
     ChatSummary,
     MergedUpdatesResponse,
     AddParticipantsResponse,
-    GroupMessage,
+    Message,
     SendMessageResponse,
-    DirectMessage,
     ChangeAdminResponse,
     RemoveParticipantResponse,
     BlockUserResponse,
@@ -47,6 +46,7 @@ import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
+import { UnsupportedValueError } from "../utils/error";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -90,34 +90,30 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    sendMessage(
-        chat: ChatSummary,
-        user: UserSummary,
-        msg: GroupMessage | DirectMessage
-    ): Promise<SendMessageResponse> {
-        if (chat.kind === "group_chat" && msg.kind === "group_message") {
+    sendMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<SendMessageResponse> {
+        if (chat.kind === "group_chat") {
             return this.sendGroupMessage(chat.chatId, user.username, msg);
         }
-        if (chat.kind === "direct_chat" && msg.kind === "direct_message") {
-            return this.sendDirectMessage(chat.them, user.username, msg);
+        if (chat.kind === "direct_chat") {
+            return this.sendDirectMessage(chat.them, user, msg);
         }
-        throw new Error(`Unexpected chat type and msg type combination: ${chat.kind}, ${msg.kind}`);
+        throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
     private sendGroupMessage(
         chatId: string,
         senderName: string,
-        message: GroupMessage
+        message: Message
     ): Promise<SendMessageResponse> {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
     private sendDirectMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message
     ): Promise<SendMessageResponse> {
-        return this.userClient.sendMessage(recipientId, senderName, message);
+        return this.userClient.sendMessage(recipientId, sender, message);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -167,7 +163,7 @@ export class ServiceContainer {
         }
 
         resp.events = resp.events.map((e) => {
-            if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+            if (e.event.kind === "message") {
                 if (
                     (e.event.content.kind === "file_content" ||
                         e.event.content.kind === "image_content" ||

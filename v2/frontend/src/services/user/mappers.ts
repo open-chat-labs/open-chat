@@ -8,16 +8,12 @@ import type {
     ApiAudioContent,
     ApiVideoContent,
     ApiMessageContent,
-    ApiGroupReplyContext,
     ApiTextContent,
     ApiUpdatesResponse,
     ApiParticipant,
     ApiCreateGroupResponse,
     ApiChatSummaryUpdates,
-    ApiGroupMessage,
     ApiDirectChatEventWrapper,
-    ApiDirectReplyContext,
-    ApiDirectMessage,
     ApiSendMessageResponse,
     ApiPutChunkResponse,
     ApiBlockUserResponse,
@@ -25,6 +21,8 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
+    ApiMessage,
+    ApiReplyContext,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -42,10 +40,7 @@ import type {
     ChatSummaryUpdates,
     CreateGroupResponse,
     DirectChatEvent,
-    GroupMessage,
-    DirectMessage,
-    GroupChatReplyContext,
-    DirectChatReplyContext,
+    Message,
     SendMessageResponse,
     PutChunkResponse,
     BlockUserResponse,
@@ -54,6 +49,7 @@ import type {
     MarkReadResponse,
     SetAvatarResponse,
     Reaction,
+    ReplyContext,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -216,7 +212,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
 function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
     if ("Message" in candid.event) {
         return {
-            event: directMessage(candid.event.Message),
+            event: message(candid.event.Message),
             index: candid.index,
             timestamp: candid.timestamp,
         };
@@ -256,7 +252,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: groupMessage(ev.event),
+                event: message(ev.event),
             })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
@@ -280,7 +276,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: directMessage(ev.event),
+                event: message(ev.event),
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
         };
@@ -298,7 +294,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                 return {
                     index: ev.index,
                     timestamp: ev.timestamp,
-                    event: groupMessage(ev.event),
+                    event: message(ev.event),
                 };
             }),
             readByMe: candid.Group.read_by_me,
@@ -324,7 +320,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             latestMessage: {
                 index: candid.Direct.latest_message.index,
                 timestamp: candid.Direct.latest_message.timestamp,
-                event: directMessage(candid.Direct.latest_message.event),
+                event: message(candid.Direct.latest_message.event),
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
@@ -343,12 +339,12 @@ function participant(candid: ApiParticipant): Participant {
     };
 }
 
-function groupMessage(candid: ApiGroupMessage): GroupMessage {
+function message(candid: ApiMessage): Message {
     return {
-        kind: "group_message",
+        kind: "message",
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
-        repliesTo: optional(candid.replies_to, groupReplyContext),
+        repliesTo: optional(candid.replies_to, replyContext),
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
@@ -360,17 +356,6 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
         reaction,
         userIds: new Set(userIds.map((u) => u.toString())),
     }));
-}
-
-function directMessage(candid: ApiDirectMessage): DirectMessage {
-    return {
-        kind: "direct_message",
-        content: messageContent(candid.content),
-        sentByMe: candid.sent_by_me,
-        repliesTo: optional(candid.replies_to, directReplyContext),
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-    };
 }
 
 function messageContent(candid: ApiMessageContent): MessageContent {
@@ -466,35 +451,11 @@ function blobReference(candid: ApiBlobReference): BlobReference {
     };
 }
 
-function groupReplyContext(candid: ApiGroupReplyContext): GroupChatReplyContext {
+function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
-        kind: "group_reply_context",
-        content: messageContent(candid.content),
+        content: optional(candid.content, messageContent),
         userId: candid.user_id.toString(),
         eventIndex: candid.event_index,
         messageId: candid.message_id,
     };
-}
-
-function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyContext {
-    if ("Private" in candid) {
-        return {
-            kind: "direct_private_reply_context",
-            chatId: candid.Private.chat_id.toString(),
-            eventIndex: candid.Private.event_index,
-            messageId: candid.Private.message_id,
-        };
-    }
-
-    if ("Standard" in candid) {
-        return {
-            kind: "direct_standard_reply_context",
-            content: messageContent(candid.Standard.content),
-            sentByMe: candid.Standard.sent_by_me,
-            eventIndex: candid.Standard.event_index,
-            messageId: candid.Standard.message_id,
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiDirectReplyContext type received", candid);
 }

@@ -13,12 +13,11 @@ import type {
     GroupChatSummaryUpdates,
     UpdatesResponse,
     ChatEvent,
-    GroupMessage,
-    DirectMessage,
     ReplyContext,
     UpdateArgs,
     MessageIndexRange,
     Reaction,
+    Message,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -117,19 +116,12 @@ export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSum
     return chat;
 }
 
-export function messageIsReadByThem(
-    chat: ChatSummary,
-    { messageIndex, kind }: GroupMessage | DirectMessage
-): boolean {
+export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
-    if (kind === "group_message") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
 }
 
-export function messageIsReadByMe(
-    chat: ChatSummary,
-    { messageIndex }: GroupMessage | DirectMessage
-): boolean {
+export function messageIsReadByMe(chat: ChatSummary, { messageIndex }: Message): boolean {
     return indexIsInRanges(messageIndex, chat.readByMe);
 }
 
@@ -210,43 +202,15 @@ export const blobbyContentTypes = [
     "audio_content",
 ];
 
-export function createDirectMessage(
-    messageIndex: number,
-    content: string | undefined,
-    replyingTo: ReplyContext | undefined,
-    fileToAttach: MessageContent | undefined
-): DirectMessage {
-    // todo - this is awful but it is hopefully temporary
-    if (
-        replyingTo &&
-        replyingTo.kind !== "direct_private_reply_context" &&
-        replyingTo.kind !== "direct_standard_reply_context"
-    ) {
-        throw new Error("Trying to create a direct message with the wrong kind of reply context");
-    }
-    return {
-        kind: "direct_message",
-        content: getMessageContent(content, fileToAttach),
-        sentByMe: true,
-        repliesTo: replyingTo,
-        messageId: newMessageId(),
-        messageIndex,
-    };
-}
-
-export function createGroupMessage(
+export function createMessage(
     userId: string,
     messageIndex: number,
     content: string | undefined,
     replyingTo: ReplyContext | undefined,
     fileToAttach: MessageContent | undefined
-): GroupMessage {
-    // todo - this is awful but it is hopefully temporary
-    if (replyingTo && replyingTo.kind !== "group_reply_context") {
-        throw new Error("Trying to create a group message with the wrong kind of reply context");
-    }
+): Message {
     return {
-        kind: "group_message",
+        kind: "message",
         content: getMessageContent(content, fileToAttach),
         sender: userId,
         repliesTo: replyingTo,
@@ -406,19 +370,11 @@ function mergeThings<A, U>(
 }
 
 function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
-    if (a.event.kind === b.event.kind) {
-        if (a.event.kind === "direct_message" && b.event.kind === "direct_message") {
-            return (
-                a.event.sentByMe === b.event.sentByMe &&
-                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-            );
-        }
-        if (a.event.kind === "group_message" && b.event.kind === "group_message") {
-            return (
-                a.event.sender === b.event.sender &&
-                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-            );
-        }
+    if (a.event.kind === "message" && b.event.kind === "message") {
+        return (
+            a.event.sender === b.event.sender &&
+            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+        );
     }
     return false;
 }
@@ -451,27 +407,13 @@ export function identity<T>(x: T): T {
     return x;
 }
 
-export function setLastMessageOnChat(
-    chat: ChatSummary,
-    ev: EventWrapper<DirectMessage | GroupMessage>
-): ChatSummary {
-    if (chat.kind === "direct_chat" && ev.event.kind === "direct_message") {
-        return {
-            ...chat,
-            latestMessage: ev as EventWrapper<DirectMessage>,
-            latestEventIndex: ev.index,
-            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
-        };
-    }
-    if (chat.kind === "group_chat" && ev.event.kind === "group_message") {
-        return {
-            ...chat,
-            latestMessage: ev as EventWrapper<GroupMessage>,
-            latestEventIndex: ev.index,
-            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
-        };
-    }
-    return chat;
+export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
+    return {
+        ...chat,
+        latestMessage: ev,
+        latestEventIndex: ev.index,
+        readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
+    };
 }
 
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {

@@ -6,15 +6,16 @@ import type {
     DirectChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
-    DirectMessage,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
     MarkReadResponse,
     MessageIndexRange,
+    Message,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
+import type { UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
@@ -26,8 +27,9 @@ export interface IUserClient {
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     sendMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;

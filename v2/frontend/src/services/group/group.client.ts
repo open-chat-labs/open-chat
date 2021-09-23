@@ -4,7 +4,7 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
-    GroupMessage,
+    Message,
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
@@ -94,7 +94,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return DataClient.create(this.identity, this.chatId)
             .uploadData(message.content)
             .then(() => {

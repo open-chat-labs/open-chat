@@ -15,15 +15,12 @@ import type {
     MessageContent,
     ChatEvent,
     ReplyContext,
-    DirectChatReplyContext,
-    DirectMessage,
-    GroupMessage,
     SendMessageSuccess,
     GroupChatSummary,
+    Message,
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
-    latestAvailableEventIndex,
     latestLoadedEventIndex,
     setLastMessageOnChat,
     toggleGroupReaction,
@@ -37,8 +34,6 @@ import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
-
-const PAGE_SIZE = 20;
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
@@ -69,12 +64,12 @@ export type ChatEvents =
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
-    | { type: "TOGGLE_REACTION"; data: { message: GroupMessage | DirectMessage; reaction: string } }
-    | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
+    | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
+    | { type: "TOGGLE_REACTION"; data: { message: Message; reaction: string } }
+    | { type: "REMOVE_MESSAGE"; data: Message }
     | {
           type: "UPDATE_MESSAGE";
-          data: { candidate: GroupMessage | DirectMessage; resp: SendMessageSuccess };
+          data: { candidate: Message; resp: SendMessageSuccess };
       }
     | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
@@ -85,7 +80,7 @@ export type ChatEvents =
       }
     | {
           type: "REPLY_PRIVATELY_TO";
-          data: EnhancedReplyContext<DirectChatReplyContext>;
+          data: EnhancedReplyContext<ReplyContext>;
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
@@ -298,24 +293,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 TOGGLE_REACTION: {
                     actions: assign((ctx, ev) => ({
-                        // todo - this would be much nicer if reactions were a homogenous type between message types
-                        // or maybe we can just make it generic quite nicely
                         events: ctx.events.map((e) => {
                             if (
-                                e.event.kind === "direct_message" &&
-                                ev.data.message.kind === "direct_message" &&
-                                e.event.messageId === ev.data.message.messageId
-                            ) {
-                                return {
-                                    ...e,
-                                    event: {
-                                        ...e.event,
-                                    },
-                                };
-                            }
-                            if (
-                                e.event.kind === "group_message" &&
-                                ev.data.message.kind === "group_message" &&
+                                e.event.kind === "message" &&
+                                ev.data.message.kind === "message" &&
                                 e.event.messageId === ev.data.message.messageId
                             ) {
                                 return {

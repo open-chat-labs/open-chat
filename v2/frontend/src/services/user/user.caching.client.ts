@@ -6,13 +6,13 @@ import type {
     DirectChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
-    DirectMessage,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    Message,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -25,6 +25,7 @@ import {
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
+import type { UserSummary } from "../../domain/user/user";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -79,10 +80,11 @@ export class CachingUserClient implements IUserClient {
 
     sendMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return this.client.sendMessage(recipientId, senderName, message);
+        return this.client.sendMessage(recipientId, sender, message, replyingToChatId);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

@@ -54,48 +54,26 @@ export interface FileContent extends DataContent {
     fileSize: number;
 }
 
-export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
-
-export type GroupChatReplyContext = {
-    kind: "group_reply_context";
-    content: MessageContent;
+export type ReplyContext = {
+    content?: MessageContent;
     userId: string;
-    eventIndex: number;
     messageId: bigint;
+    eventIndex: number;
 };
-
-export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
 
 export type EnhancedReplyContext<T extends ReplyContext> = T & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };
 
-export interface PrivateReplyContext {
-    kind: "direct_private_reply_context";
-    chatId: string;
-    eventIndex: number;
-    messageId: bigint;
-}
-
-export interface StandardReplyContext {
-    kind: "direct_standard_reply_context";
-    content: MessageContent;
-    sentByMe: boolean;
-    eventIndex: number;
-    messageId: bigint;
-}
-
-export type MessageCommon = {
+export type Message = {
+    kind: "message";
     messageId: bigint;
     messageIndex: number;
+    sender: string;
     content: MessageContent;
-};
-
-export type DirectMessage = MessageCommon & {
-    kind: "direct_message";
-    sentByMe: boolean;
-    repliesTo?: DirectChatReplyContext;
+    repliesTo?: ReplyContext;
+    reactions: Reaction[];
 };
 
 export type Reaction = {
@@ -103,19 +81,12 @@ export type Reaction = {
     userIds: Set<string>;
 };
 
-export type GroupMessage = MessageCommon & {
-    kind: "group_message";
-    sender: string;
-    repliesTo?: GroupChatReplyContext;
-    reactions: Reaction[];
-};
-
 export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = DirectMessage | DirectChatCreated;
+export type DirectChatEvent = Message | ReactionAdded | ReactionRemoved | DirectChatCreated;
 
 export type GroupChatEvent =
-    | GroupMessage
+    | Message
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin
@@ -248,7 +219,7 @@ type ChatSummaryUpdatesCommon = {
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestMessage?: EventWrapper<DirectMessage>;
+    latestMessage?: EventWrapper<Message>;
     readByThem?: MessageIndexRange[];
 };
 
@@ -259,7 +230,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     lastUpdated: bigint;
     name?: string;
     description?: string;
-    latestMessage?: EventWrapper<GroupMessage>;
+    latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
 };
 
@@ -290,7 +261,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
     them: string;
     readByThem: MessageIndexRange[];
     dateCreated: bigint;
-    latestMessage?: EventWrapper<DirectMessage>;
+    latestMessage?: EventWrapper<Message>;
 };
 
 export type GroupChatSummary = DataContent &
@@ -304,7 +275,7 @@ export type GroupChatSummary = DataContent &
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
-        latestMessage?: EventWrapper<GroupMessage>;
+        latestMessage?: EventWrapper<Message>;
     };
 
 export type CandidateParticipant = {

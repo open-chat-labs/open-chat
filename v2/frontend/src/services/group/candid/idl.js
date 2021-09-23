@@ -114,18 +114,18 @@ export const idlFactory = ({ IDL }) => {
     'Audio' : AudioContent,
     'Video' : VideoContent,
   });
-  const GroupReplyContext = IDL.Record({
-    'content' : MessageContent,
+  const ReplyContext = IDL.Record({
+    'content' : IDL.Opt(MessageContent),
     'user_id' : UserId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
   const MessageIndex = IDL.Nat32;
-  const GroupMessage = IDL.Record({
+  const Message = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
+    'replies_to' : IDL.Opt(ReplyContext),
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
@@ -139,7 +139,7 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
-  const DeletedGroupMessage = IDL.Record({
+  const DeletedMessage = IDL.Record({
     'sender' : UserId,
     'message_id' : MessageId,
     'message_index' : MessageIndex,
@@ -161,12 +161,12 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
-    'Message' : GroupMessage,
+    'Message' : Message,
     'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
-    'DeletedMessage' : DeletedGroupMessage,
+    'DeletedMessage' : DeletedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
@@ -298,8 +298,8 @@ export const idlFactory = ({ IDL }) => {
     'date_added' : TimestampMillis,
   });
   const ChatId = CanisterId;
-  const GroupMessageEventWrapper = IDL.Record({
-    'event' : GroupMessage,
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
   });
@@ -316,7 +316,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const SummaryResponse = IDL.Variant({
     'Success' : GroupChatSummary,
@@ -334,7 +334,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const SummaryUpdatesSuccess = IDL.Record({
     'updates' : GroupChatSummaryUpdates,
