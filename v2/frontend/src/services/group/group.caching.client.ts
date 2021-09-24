@@ -14,8 +14,7 @@ import type {
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
-// import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
-import type { ChatSchema } from "../../utils/caching";
+import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -32,20 +31,19 @@ export class CachingGroupClient implements IGroupClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        // const cachedMsgs = await getCachedMessages<GroupChatEvent>(
-        //     this.db,
-        //     this.chatId,
-        //     startIndex,
-        //     ascending
-        // );
-        // return (
-        //     cachedMsgs ??
-        //     this.client
-        //         .chatEvents(startIndex, ascending)
-        //         .then(setCachedMessages(this.db, this.chatId))
-        // );
-        // todo - we need to come back to this and make caching work again
-        return this.client.chatEvents(eventIndexRange, startIndex, ascending);
+        const cachedMsgs = await getCachedMessages<GroupChatEvent>(
+            this.db,
+            eventIndexRange,
+            this.chatId,
+            startIndex,
+            ascending
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEvents(eventIndexRange, startIndex, ascending)
+                .then(setCachedMessages(this.db, this.chatId))
+        );
     }
 
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {

@@ -14,7 +14,6 @@ import type {
     MarkReadResponse,
     Message,
     IndexRange,
-    EventWrapper,
     ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
@@ -43,20 +42,19 @@ export class CachingUserClient implements IUserClient {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        // todo - come back and sort out caching
-        // const cachedMsgs = await getCachedMessages<DirectChatEvent>(
-        //     this.db,
-        //     userId,
-        //     fromIndex,
-        //     toIndex
-        // );
-        // return (
-        //     cachedMsgs ??
-        //     this.client
-        //         .chatEvents(userId, fromIndex, toIndex)
-        //         .then(setCachedMessages(this.db, userId))
-        // );
-        return this.client.chatEvents(eventIndexRange, userId, startIndex, ascending);
+        const cachedMsgs = await getCachedMessages<DirectChatEvent>(
+            this.db,
+            eventIndexRange,
+            userId,
+            startIndex,
+            ascending
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEvents(eventIndexRange, userId, startIndex, ascending)
+                .then(setCachedMessages(this.db, userId))
+        );
     }
 
     async getUpdates(

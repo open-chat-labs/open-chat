@@ -21,6 +21,7 @@ import type {
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
+    getMinVisibleEventIndex,
     indexRangeForChat,
     latestLoadedEventIndex,
     setLastMessageOnChat,
@@ -172,7 +173,9 @@ export function highestUnloadedEventIndex(ctx: ChatContext): number {
  * service until a specific message is available.
  */
 export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | undefined {
-    return [highestUnloadedEventIndex(ctx), false];
+    const start = highestUnloadedEventIndex(ctx);
+    const min = getMinVisibleEventIndex(ctx.chatSummary);
+    return start > min ? [start, false] : undefined;
 }
 
 export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
