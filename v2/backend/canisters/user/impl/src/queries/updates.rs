@@ -246,15 +246,13 @@ fn finalize(
                 None
             };
 
-            let webrtc_session_details = runtime_state.data.webrtc_session_details_map.events(updates_since);
-
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.them.into(),
                 latest_message,
                 latest_event_index,
                 read_by_me,
                 read_by_them,
-                webrtc_session_details,
+                webrtc_session_details: direct_chat.webrtc_session_details.clone(),
             }));
         }
     }

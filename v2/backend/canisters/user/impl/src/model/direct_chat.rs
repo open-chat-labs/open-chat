@@ -3,6 +3,7 @@ use chat_events::DirectChatEvents;
 use range_set::RangeSet;
 use std::cmp::max;
 use std::ops::RangeInclusive;
+use types::webrtc::SessionDetailsEvent;
 use types::{TimestampMillis, UserId};
 
 pub struct DirectChat {
@@ -14,6 +15,7 @@ pub struct DirectChat {
     pub read_by_me_updated: TimestampMillis,
     pub read_by_them: RangeSet<[RangeInclusive<u32>; 2]>,
     pub read_by_them_updated: TimestampMillis,
+    pub webrtc_session_details: Option<SessionDetailsEvent>,
 }
 
 impl DirectChat {
@@ -27,6 +29,7 @@ impl DirectChat {
             read_by_me_updated: now,
             read_by_them: RangeSet::new(),
             read_by_them_updated: now,
+            webrtc_session_details: None,
         }
     }
 

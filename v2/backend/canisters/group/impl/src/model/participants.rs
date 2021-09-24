@@ -1,10 +1,10 @@
+use crate::model::webrtc_session_details_map::WebRtcSessionDetailsMap;
 use candid::Principal;
 use range_set::RangeSet;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::ops::RangeInclusive;
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
-use utils::webrtc_session_details_map::WebRtcSessionDetailsMap;
 
 #[derive(Default)]
 pub struct Participants {
