@@ -35,6 +35,10 @@ impl DirectChats {
         })
     }
 
+    pub fn get_all_mut(&mut self) -> impl Iterator<Item = &mut DirectChat> {
+        self.direct_chats.values_mut()
+    }
+
     pub fn exists(&self, user_id: UserId) -> bool {
         self.direct_chats.contains_key(&user_id.into())
     }

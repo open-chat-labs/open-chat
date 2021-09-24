@@ -70,7 +70,7 @@ pub struct DirectChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub read_by_them: Option<Vec<MessageIndexRange>>,
-    pub webrtc_session_details: Vec<SessionDetailsEvent>,
+    pub webrtc_session_details: Option<SessionDetailsEvent>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
