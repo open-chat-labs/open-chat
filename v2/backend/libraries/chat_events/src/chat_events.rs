@@ -534,7 +534,10 @@ mod tests {
         let results = events.from_index(10.into(), true, 10, 40);
 
         assert_eq!(
-            results.iter().filter(|e| matches!(e.event, ChatEventInternal::Message(_))).count(),
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
             10
         );
         assert_eq!(results.first().unwrap().index, 10.into());
@@ -548,7 +551,10 @@ mod tests {
         let results = events.from_index(40.into(), false, 10, 40);
 
         assert_eq!(
-            results.iter().filter(|e| matches!(e.event, ChatEventInternal::Message(_))).count(),
+            results
+                .iter()
+                .filter(|e| matches!(e.event, ChatEventInternal::Message(_)))
+                .count(),
             10
         );
         assert_eq!(results.first().unwrap().index, 21.into());
