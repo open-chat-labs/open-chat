@@ -31,10 +31,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         now,
     };
 
-    let (chat_id, event_index, message) = runtime_state
-        .data
-        .direct_chats
-        .push_message(true, args.recipient, None, push_message_args);
+    let (chat_id, event_index, message) =
+        runtime_state
+            .data
+            .direct_chats
+            .push_message(true, args.recipient, None, push_message_args);
 
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
     ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
