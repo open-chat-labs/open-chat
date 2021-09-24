@@ -23,7 +23,9 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             None
         };
 
-        if updates_from_events.latest_update.is_some() || read_by_me.is_some() {
+        let webrtc_session_details = participant.webrtc_session_details_map.events(args.updates_since);
+
+        if updates_from_events.latest_update.is_some() || read_by_me.is_some() || !webrtc_session_details.is_empty() {
             let updates = GroupChatSummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
                 last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
@@ -35,6 +37,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 latest_message: updates_from_events.latest_message,
                 latest_event_index: updates_from_events.latest_event_index,
                 read_by_me,
+                webrtc_session_details,
             };
             Success(SuccessResult { updates })
         } else {

@@ -177,22 +177,23 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
-type AddWebRtcEndpointArgs =
+type AddWebRtcSessionDetailsArgs =
     record {
-        endpoint: WebRtcEndpoint;
+        session_details: WebRtcSessionDetails;
     };
 
-type AddWebRtcEndpointResponse =
+type AddWebRtcSessionDetailsResponse =
     variant {
         Success;
+        Blocked;
     }; 
 
-type RemoveWebRtcEndpointsArgs =
+type RemoveWebRtcSessionDetailsArgs =
     record {
         ids: vec text;
     };
 
-type RemoveWebRtcEndpointsResponse =
+type RemoveWebRtcSessionDetailsResponse =
     variant {
         Success;
     }; 
@@ -339,8 +340,8 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    add_webrtc_endpoint: (AddWebRtcEndpointArgs) -> (AddWebRtcEndpointResponse);
-    remove_webrtc_endpoints: (RemoveWebRtcEndpointsArgs) -> (RemoveWebRtcEndpointsResponse);
+    add_webrtc_session_details: (AddWebRtcSessionDetailsArgs) -> (AddWebRtcSessionDetailsResponse);
+    remove_webrtc_session_details: (RemoveWebRtcSessionDetailsArgs) -> (RemoveWebRtcSessionDetailsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;

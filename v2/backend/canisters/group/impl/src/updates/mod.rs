@@ -3,6 +3,7 @@ use group_index_canister::c2c_mark_active;
 use types::{CanisterId, Milliseconds};
 
 mod add_participants;
+mod add_webrtc_session_details;
 mod block_user;
 mod c2c_join_group;
 mod c2c_leave_group;
@@ -12,6 +13,7 @@ mod mark_read;
 mod put_chunk;
 mod remove_admin;
 mod remove_participant;
+mod remove_webrtc_session_details;
 mod send_message;
 mod toggle_reaction;
 mod unblock_user;
