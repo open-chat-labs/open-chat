@@ -1,6 +1,6 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::remove_participant::{Response::*, *};
 use ic_cdk_macros::update;
@@ -65,7 +65,7 @@ fn commit(removed_by: UserId, user_id: UserId, runtime_state: &mut RuntimeState)
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::ParticipantsRemoved(Box::new(event)), now);
+        .push_event(ChatEventInternal::ParticipantsRemoved(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }

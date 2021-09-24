@@ -1,6 +1,6 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_leave_group::{Response::*, *};
 use ic_cdk_macros::update;
@@ -24,7 +24,7 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .push_event(GroupChatEventInternal::ParticipantLeft(Box::new(event)), now);
+                .push_event(ChatEventInternal::ParticipantLeft(Box::new(event)), now);
 
             handle_activity_notification(runtime_state);
 

@@ -3,49 +3,49 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ConnectionDetails {
+pub enum SessionDetails {
     Offer(Offer),
     Answer(Answer),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Offer {
-    pub id: String,
-    pub from: UserId,
-    pub connection_string: String,
-    pub ice_candidates: Vec<String>,
-    pub timestamp: TimestampMillis,
+    pub user_id: UserId,
+    pub endpoint: Endpoint,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Answer {
-    pub id: String,
+    pub user_id: UserId,
     pub offer_id: String,
-    pub from: UserId,
+    pub endpoint: Endpoint,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Endpoint {
+    pub id: String,
     pub connection_string: String,
     pub ice_candidates: Vec<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SessionDetailsEvent {
+    pub session_details: SessionDetails,
     pub timestamp: TimestampMillis,
 }
 
-impl ConnectionDetails {
-    pub fn get_id(&self) -> &str {
+impl SessionDetails {
+    pub fn id(&self) -> &str {
         match self {
-            ConnectionDetails::Offer(o) => &o.id,
-            ConnectionDetails::Answer(a) => &a.id,
+            SessionDetails::Offer(o) => &o.endpoint.id,
+            SessionDetails::Answer(a) => &a.endpoint.id,
         }
     }
 
-    pub fn get_from_user(&self) -> &UserId {
+    pub fn user_id(&self) -> UserId {
         match self {
-            ConnectionDetails::Offer(o) => &o.from,
-            ConnectionDetails::Answer(a) => &a.from,
-        }
-    }
-
-    pub fn get_timestamp(&self) -> TimestampMillis {
-        match self {
-            ConnectionDetails::Offer(o) => o.timestamp,
-            ConnectionDetails::Answer(a) => a.timestamp,
+            SessionDetails::Offer(o) => o.user_id,
+            SessionDetails::Answer(a) => a.user_id,
         }
     }
 }

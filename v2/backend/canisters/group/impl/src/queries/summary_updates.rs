@@ -1,5 +1,5 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
@@ -23,7 +23,9 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             None
         };
 
-        if updates_from_events.latest_update.is_some() || read_by_me.is_some() {
+        let webrtc_session_details = participant.webrtc_session_details_map.events(args.updates_since);
+
+        if updates_from_events.latest_update.is_some() || read_by_me.is_some() || !webrtc_session_details.is_empty() {
             let updates = GroupChatSummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
                 last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
@@ -35,6 +37,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 latest_message: updates_from_events.latest_message,
                 latest_event_index: updates_from_events.latest_event_index,
                 read_by_me,
+                webrtc_session_details,
             };
             Success(SuccessResult { updates })
         } else {
@@ -73,7 +76,7 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
         }
 
         match &event_wrapper.event {
-            GroupChatEventInternal::Message(m) => {
+            ChatEventInternal::Message(m) => {
                 if updates.latest_message.is_none() {
                     updates.latest_message = Some(EventWrapper {
                         index: event_wrapper.index,
@@ -82,43 +85,43 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
                     })
                 }
             }
-            GroupChatEventInternal::GroupNameChanged(n) => {
+            ChatEventInternal::GroupNameChanged(n) => {
                 if updates.name.is_none() {
                     updates.name = Some(n.new_name.clone());
                 }
             }
-            GroupChatEventInternal::GroupDescriptionChanged(n) => {
+            ChatEventInternal::GroupDescriptionChanged(n) => {
                 if updates.description.is_none() {
                     updates.description = Some(n.new_description.clone());
                 }
             }
-            GroupChatEventInternal::AvatarChanged(a) => {
+            ChatEventInternal::AvatarChanged(a) => {
                 if updates.avatar_id.is_none() {
                     updates.avatar_id = Some(a.new_avatar);
                 }
             }
-            GroupChatEventInternal::ParticipantsAdded(p) => {
+            ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
                     participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }
             }
-            GroupChatEventInternal::ParticipantsRemoved(p) => {
+            ChatEventInternal::ParticipantsRemoved(p) => {
                 for user_id in p.user_ids.iter() {
                     participant_updates_handler.mark_user_updated(&mut updates, *user_id, true);
                 }
             }
-            GroupChatEventInternal::ParticipantJoined(p) => {
+            ChatEventInternal::ParticipantJoined(p) => {
                 participant_updates_handler.mark_user_updated(&mut updates, p.user_id, false);
             }
-            GroupChatEventInternal::ParticipantLeft(p) => {
+            ChatEventInternal::ParticipantLeft(p) => {
                 participant_updates_handler.mark_user_updated(&mut updates, p.user_id, true);
             }
-            GroupChatEventInternal::ParticipantsPromotedToAdmin(p) => {
+            ChatEventInternal::ParticipantsPromotedToAdmin(p) => {
                 for user_id in p.user_ids.iter() {
                     participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }
             }
-            GroupChatEventInternal::ParticipantsDismissedAsAdmin(p) => {
+            ChatEventInternal::ParticipantsDismissedAsAdmin(p) => {
                 for user_id in p.user_ids.iter() {
                     participant_updates_handler.mark_user_updated(&mut updates, *user_id, false);
                 }

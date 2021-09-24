@@ -1,5 +1,5 @@
-use crate::model::events::ToggleReactionResult;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ToggleReactionResult;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageId, Reaction};
@@ -21,9 +21,13 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     runtime_state.trap_if_caller_not_owner();
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        match chat.events.toggle_reaction(true, args.message_id, args.reaction.clone(), now) {
+        match chat
+            .events
+            .toggle_reaction(my_user_id, args.message_id, args.reaction.clone(), now)
+        {
             ToggleReactionResult::Added => {
                 ic_cdk::block_on(toggle_reaction_on_recipients_canister(
                     args.user_id.into(),

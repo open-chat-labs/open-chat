@@ -1,12 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type ReplyContextArgs =
-    record {
-        chat_id_if_other: opt ChatId;
-        sender: UserId;
-        message_id: MessageId;
-    };
-
 type SendMessageArgs =
     record {
         recipient: UserId;
@@ -177,39 +170,23 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
-type AddWebRtcOfferArgs =
+type AddWebRtcSessionDetailsArgs =
     record {
-        id: text;
-        from: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
+        session_details: WebRtcSessionDetails;
     };
 
-type AddWebRtcOfferResponse =
+type AddWebRtcSessionDetailsResponse =
     variant {
         Success;
+        Blocked;
     }; 
 
-type AddWebRtcAnswerArgs =
-    record {
-        id: text;
-        offer_id: text;
-        from: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
-    };
-
-type AddWebRtcAnswerResponse =
-    variant {
-        Success;
-    }; 
-
-type RemoveWebRtcConnectionDetailsArgs =
+type RemoveWebRtcSessionDetailsArgs =
     record {
         ids: vec text;
     };
 
-type RemoveWebRtcConnectionDetailsResponse =
+type RemoveWebRtcSessionDetailsResponse =
     variant {
         Success;
     }; 
@@ -239,7 +216,7 @@ type UpdatesResponse =
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
             blocked_users: vec UserId;
-            webrtc_connection_details: vec WebRtcConnectionDetails;
+            webrtc_endpoint_events: vec WebRtcEndpointEvent;
         }
     };
 
@@ -295,7 +272,7 @@ type SearchMessagesResponse =
 
 type SearchMessagesSuccessResult =
     record {
-        matches: vec UserMessageMatch;
+        matches: vec MessageMatch;
     };
 
 type SearchAllMessagesArgs =
@@ -306,16 +283,11 @@ type SearchAllMessagesArgs =
 
 type SearchAllMessagesResponse =
     variant {
-        Success: SearchAllMessagesSuccessResult;
+        Success: SearchMessagesSuccessResult;
         TermTooShort: nat8;
         TermTooLong: nat8;
         InvalidTerm;
     }; 
-
-type SearchAllMessagesSuccessResult =
-    record {
-        matches: vec CombinedMessageMatch;
-    };
 
 type MetricsArgs =
     record {
@@ -357,9 +329,8 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    add_webrtc_offer: (AddWebRtcOfferArgs) -> (AddWebRtcOfferResponse);
-    add_webrtc_answer: (AddWebRtcAnswerArgs) -> (AddWebRtcAnswerResponse);
-    remove_webrtc_connection_details: (RemoveWebRtcConnectionDetailsArgs) -> (RemoveWebRtcConnectionDetailsResponse);
+    add_webrtc_session_details: (AddWebRtcSessionDetailsArgs) -> (AddWebRtcSessionDetailsResponse);
+    remove_webrtc_session_details: (RemoveWebRtcSessionDetailsArgs) -> (RemoveWebRtcSessionDetailsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;
@@ -369,5 +340,4 @@ service: (InitArgs) -> {
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
 
     metrics: (MetricsArgs) -> (MetricsResponse) query;
-
 }

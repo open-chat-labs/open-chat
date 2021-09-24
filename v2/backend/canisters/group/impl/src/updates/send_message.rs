@@ -1,6 +1,6 @@
-use crate::model::events::PushMessageArgs;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;

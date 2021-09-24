@@ -1,7 +1,6 @@
-use crate::send_message::DirectReplyContextArgs;
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageContent, MessageId, MessageIndex};
+use types::{MessageContent, MessageId, MessageIndex, ReplyContextArgs};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -9,7 +8,7 @@ pub struct Args {
     pub sender_message_index: MessageIndex,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<DirectReplyContextArgs>,
+    pub replies_to: Option<ReplyContextArgs>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

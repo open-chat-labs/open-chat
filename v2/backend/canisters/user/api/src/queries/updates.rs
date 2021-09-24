@@ -1,6 +1,5 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::webrtc::ConnectionDetails;
 use types::{ChatId, ChatSummary, ChatSummaryUpdates, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
@@ -32,5 +31,4 @@ pub struct SuccessResult {
     pub chats_updated: Vec<ChatSummaryUpdates>,
     pub chats_removed: Vec<ChatId>,
     pub blocked_users: Vec<UserId>,
-    pub webrtc_connection_details: Vec<ConnectionDetails>,
 }

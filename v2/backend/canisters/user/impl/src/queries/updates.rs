@@ -252,15 +252,12 @@ fn finalize(
                 latest_event_index,
                 read_by_me,
                 read_by_them,
+                webrtc_session_details: direct_chat.webrtc_session_details.clone(),
             }));
         }
     }
 
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
-    let webrtc_connection_details = runtime_state
-        .data
-        .webrtc_connection_details_map
-        .get_connection_details(updates_since);
 
     SuccessResult {
         chats_added,
@@ -268,6 +265,5 @@ fn finalize(
         chats_removed: Vec::new(), // TODO
         timestamp: now,
         blocked_users,
-        webrtc_connection_details,
     }
 }

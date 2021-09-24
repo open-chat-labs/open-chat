@@ -1,7 +1,7 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::update_group::*;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
@@ -99,7 +99,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
     if runtime_state.data.name != args.name {
         events.push_event(
-            GroupChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
+            ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                 new_name: args.name.clone(),
                 previous_name: runtime_state.data.name.clone(),
                 changed_by: my_user_id,
@@ -112,7 +112,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
     if runtime_state.data.description != args.description {
         events.push_event(
-            GroupChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
+            ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                 new_description: args.description.clone(),
                 previous_description: runtime_state.data.description.clone(),
                 changed_by: my_user_id,
@@ -125,7 +125,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
     if let Some(avatar) = args.avatar {
         events.push_event(
-            GroupChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
+            ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
                 new_avatar: avatar.id,
                 previous_avatar: runtime_state.data.avatar.as_ref().map(|a| a.id),
                 changed_by: my_user_id,

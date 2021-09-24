@@ -117,6 +117,7 @@ type DirectChatSummaryUpdates =
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
         read_by_them: opt vec MessageIndexRange;
+        webrtc_session_details: vec WebRtcSessionDetailsEvent;
     };
 
 type DirectMessageNotification =
@@ -204,6 +205,7 @@ type GroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
+        webrtc_session_details: vec WebRtcSessionDetailsEvent;
     };
 
 type GroupDescriptionChanged =
@@ -301,23 +303,7 @@ type UpdatedMessage =
         message_id: MessageId;
     };
 
-type UserMessageMatch = 
-    record {
-        event_index: EventIndex;
-        content: MessageContent;
-        sent_by_me: bool;
-        score: nat32;
-    };
-
-type GroupMessageMatch = 
-    record {
-        event_index: EventIndex;
-        content: MessageContent;
-        sender: UserId;
-        score: nat32;
-    };
-
-type CombinedMessageMatch = 
+type MessageMatch =
     record {
         chat_id: ChatId;
         event_index: EventIndex;
@@ -379,6 +365,13 @@ type ParticipantsRemoved =
     record {
         user_ids: vec UserId;
         removed_by: UserId;
+    };
+
+type ReplyContextArgs =
+    record {
+        chat_id_if_other: opt ChatId;
+        sender: UserId;
+        message_id: MessageId;
     };
 
 type Role =
@@ -528,28 +521,34 @@ type VideoContent =
         video_blob_reference: opt BlobReference;
     };
 
-type WebRtcConnectionDetails =
+type WebRtcSessionDetails =
     variant {
         Offer: WebRtcOffer;
         Answer: WebRtcAnswer;
     };
 
-type WebRtcOffer =
+type WebRtcOffer = 
     record {
-        id: text;
-        from: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
-        timestamp: TimestampMillis;
+        user_id: UserId;
+        endpoint: WebRtcEndpoint;
     };
 
-type WebRtcAnswer =
+type WebRtcAnswer {
     record {
-        id: text;
+        user_id: UserId;
         offer_id: text;
-        from: UserId;
-        connection_string: text;
-        ice_candidates: vec text;
-        timestamp: TimestampMillis;
+        endpoint: WebRtcEndpoint;
     };
 
+type WebRtcEndpoint =
+    record {
+        id: text;
+        connection_string: text;
+        ice_candidates: vec text;
+    };
+
+type WebRtcSessionDetailsEvent =
+    record {
+        session_details: WebRtcSessionDetails;
+        timestamp: TimestampMillis;
+    };
