@@ -4,22 +4,32 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'notification_canister_ids' : IDL.Vec(CanisterId),
   });
-  const UserId = CanisterId;
-  const AddWebRtcAnswerArgs = IDL.Record({
+  const WebRtcEndpoint = IDL.Record({
     'id' : IDL.Text,
-    'from' : UserId,
     'connection_string' : IDL.Text,
     'ice_candidates' : IDL.Vec(IDL.Text),
+  });
+  const UserId = CanisterId;
+  const WebRtcAnswer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
     'offer_id' : IDL.Text,
   });
-  const AddWebRtcAnswerResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const AddWebRtcOfferArgs = IDL.Record({
-    'id' : IDL.Text,
-    'from' : UserId,
-    'connection_string' : IDL.Text,
-    'ice_candidates' : IDL.Vec(IDL.Text),
+  const WebRtcOffer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
   });
-  const AddWebRtcOfferResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const WebRtcSessionDetails = IDL.Variant({
+    'Answer' : WebRtcAnswer,
+    'Offer' : WebRtcOffer,
+  });
+  const AddWebRtcSessionDetailsArgs = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+  });
+  const AddWebRtcSessionDetailsResponse = IDL.Variant({
+    'Blocked' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Avatar = IDL.Record({
@@ -230,29 +240,29 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
   });
-  const RemoveWebRtcConnectionDetailsArgs = IDL.Record({
+  const RemoveWebRtcSessionDetailsArgs = IDL.Record({
     'ids' : IDL.Vec(IDL.Text),
   });
-  const RemoveWebRtcConnectionDetailsResponse = IDL.Variant({
+  const RemoveWebRtcSessionDetailsResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const CombinedMessageMatch = IDL.Record({
+  const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
     'event_index' : EventIndex,
   });
-  const SearchAllMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(CombinedMessageMatch),
+  const SearchMessagesSuccessResult = IDL.Record({
+    'matches' : IDL.Vec(MessageMatch),
   });
   const SearchAllMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
-    'Success' : SearchAllMessagesSuccessResult,
+    'Success' : SearchMessagesSuccessResult,
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
@@ -260,15 +270,6 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'user_id' : UserId,
     'search_term' : IDL.Text,
-  });
-  const UserMessageMatch = IDL.Record({
-    'content' : MessageContent,
-    'score' : IDL.Nat32,
-    'sent_by_me' : IDL.Bool,
-    'event_index' : EventIndex,
-  });
-  const SearchMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(UserMessageMatch),
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
@@ -334,6 +335,10 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : IDL.Opt(UpdatesSince) });
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+    'timestamp' : TimestampMillis,
+  });
   const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
   const Participant = IDL.Record({
     'role' : Role,
@@ -346,6 +351,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const GroupChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
@@ -358,6 +364,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
@@ -367,25 +374,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatSummaryUpdates = IDL.Variant({
     'Group' : GroupChatSummaryUpdates,
     'Direct' : DirectChatSummaryUpdates,
-  });
-  const WebRtcAnswer = IDL.Record({
-    'id' : IDL.Text,
-    'from' : UserId,
-    'connection_string' : IDL.Text,
-    'ice_candidates' : IDL.Vec(IDL.Text),
-    'offer_id' : IDL.Text,
-    'timestamp' : TimestampMillis,
-  });
-  const WebRtcOffer = IDL.Record({
-    'id' : IDL.Text,
-    'from' : UserId,
-    'connection_string' : IDL.Text,
-    'ice_candidates' : IDL.Vec(IDL.Text),
-    'timestamp' : TimestampMillis,
-  });
-  const WebRtcConnectionDetails = IDL.Variant({
-    'Answer' : WebRtcAnswer,
-    'Offer' : WebRtcOffer,
   });
   const GroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
@@ -418,21 +406,15 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({
       'chats_updated' : IDL.Vec(ChatSummaryUpdates),
       'blocked_users' : IDL.Vec(UserId),
-      'webrtc_connection_details' : IDL.Vec(WebRtcConnectionDetails),
       'chats_added' : IDL.Vec(ChatSummary),
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
     }),
   });
   return IDL.Service({
-    'add_webrtc_answer' : IDL.Func(
-        [AddWebRtcAnswerArgs],
-        [AddWebRtcAnswerResponse],
-        [],
-      ),
-    'add_webrtc_offer' : IDL.Func(
-        [AddWebRtcOfferArgs],
-        [AddWebRtcOfferResponse],
+    'add_webrtc_session_details' : IDL.Func(
+        [AddWebRtcSessionDetailsArgs],
+        [AddWebRtcSessionDetailsResponse],
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
@@ -454,9 +436,9 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
-    'remove_webrtc_connection_details' : IDL.Func(
-        [RemoveWebRtcConnectionDetailsArgs],
-        [RemoveWebRtcConnectionDetailsResponse],
+    'remove_webrtc_session_details' : IDL.Func(
+        [RemoveWebRtcSessionDetailsArgs],
+        [RemoveWebRtcSessionDetailsResponse],
         [],
       ),
     'search_all_messages' : IDL.Func(

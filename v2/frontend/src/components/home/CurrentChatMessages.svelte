@@ -20,7 +20,6 @@
     import type {
         EventWrapper,
         EnhancedReplyContext,
-        ReplyContext,
         ChatEvent as ChatEventType,
         Message,
     } from "../../domain/chat/chat";
@@ -211,11 +210,11 @@
         machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         machine.send({ type: "REPLY_TO", data: ev.detail });
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 

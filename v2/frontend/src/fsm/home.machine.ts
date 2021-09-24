@@ -13,11 +13,9 @@ import {
 import type { ServiceContainer } from "../services/serviceContainer";
 import type {
     ChatSummary,
-    DirectChatReplyContext,
     DirectChatSummary,
     EnhancedReplyContext,
     GroupChatSummary,
-    ReplyContext,
 } from "../domain/chat/chat";
 import {
     setMessageRead,
@@ -51,7 +49,7 @@ export interface HomeContext {
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
-    replyingTo?: EnhancedReplyContext<ReplyContext>;
+    replyingTo?: EnhancedReplyContext;
     blockedUsers: Set<string>;
     unconfirmed: Set<bigint>;
 }
@@ -70,7 +68,7 @@ export type HomeEvents =
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
-    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext<DirectChatReplyContext> }
+    | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }

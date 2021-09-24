@@ -533,7 +533,7 @@ type WebRtcOffer =
         endpoint: WebRtcEndpoint;
     };
 
-type WebRtcAnswer {
+type WebRtcAnswer =
     record {
         user_id: UserId;
         offer_id: text;

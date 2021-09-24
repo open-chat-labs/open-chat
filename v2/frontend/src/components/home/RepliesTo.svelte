@@ -17,7 +17,7 @@
     export let repliesTo: ReplyContext;
 
     function sentByMe(replyContext: ReplyContext): boolean {
-        return replyContext.userId === user?.userId;
+        return replyContext.senderId === user?.userId;
     }
 
     function zoomToMessage() {
@@ -29,7 +29,7 @@
     }
 
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
-        return userLookup[replyContext.userId]?.username ?? $_("unknownUser");
+        return userLookup[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 

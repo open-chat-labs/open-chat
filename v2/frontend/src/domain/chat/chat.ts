@@ -64,7 +64,7 @@ export type ReplyContext = {
     chatId: string;
 };
 
-export type EnhancedReplyContext<T extends ReplyContext> = T & {
+export type EnhancedReplyContext = ReplyContext & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };

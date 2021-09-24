@@ -22,6 +22,31 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
+  const WebRtcEndpoint = IDL.Record({
+    'id' : IDL.Text,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+  });
+  const WebRtcAnswer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
+    'offer_id' : IDL.Text,
+  });
+  const WebRtcOffer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
+  });
+  const WebRtcSessionDetails = IDL.Variant({
+    'Answer' : WebRtcAnswer,
+    'Offer' : WebRtcOffer,
+  });
+  const AddWebRtcSessionDetailsArgs = IDL.Record({
+    'session_details' : IDL.Vec(WebRtcSessionDetails),
+  });
+  const AddWebRtcSessionDetailsResponse = IDL.Variant({
+    'Blocked' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
     'GroupNotPublic' : IDL.Null,
@@ -258,18 +283,25 @@ export const idlFactory = ({ IDL }) => {
     'CannotRemoveSelf' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RemoveWebRtcSessionDetailsArgs = IDL.Record({
+    'ids' : IDL.Vec(IDL.Text),
+  });
+  const RemoveWebRtcSessionDetailsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const GroupMessageMatch = IDL.Record({
+  const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
+    'chat_id' : ChatId,
     'event_index' : EventIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(GroupMessageMatch),
+    'matches' : IDL.Vec(MessageMatch),
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
@@ -278,7 +310,11 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const ReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
+  const ReplyContextArgs = IDL.Record({
+    'sender' : UserId,
+    'chat_id_if_other' : IDL.Opt(ChatId),
+    'message_id' : MessageId,
+  });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender_name' : IDL.Text,
@@ -326,7 +362,12 @@ export const idlFactory = ({ IDL }) => {
     'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+    'timestamp' : TimestampMillis,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
@@ -394,6 +435,11 @@ export const idlFactory = ({ IDL }) => {
         [AddParticipantsResponse],
         [],
       ),
+    'add_webrtc_session_details' : IDL.Func(
+        [AddWebRtcSessionDetailsArgs],
+        [AddWebRtcSessionDetailsResponse],
+        [],
+      ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
@@ -415,6 +461,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
+        [],
+      ),
+    'remove_webrtc_session_details' : IDL.Func(
+        [RemoveWebRtcSessionDetailsArgs],
+        [RemoveWebRtcSessionDetailsResponse],
         [],
       ),
     'search_messages' : IDL.Func(

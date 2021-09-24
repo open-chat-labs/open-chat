@@ -31,13 +31,6 @@ export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
-export interface CombinedMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-}
 export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
 export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
@@ -107,6 +100,7 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -172,6 +166,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
@@ -187,12 +182,6 @@ export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
   'changed_by' : UserId,
-}
-export interface GroupMessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
-  'score' : number,
-  'event_index' : EventIndex,
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
@@ -252,6 +241,13 @@ export type MessageIndex = number;
 export interface MessageIndexRange {
   'to' : MessageIndex,
   'from' : MessageIndex,
+}
+export interface MessageMatch {
+  'content' : MessageContent,
+  'sender' : UserId,
+  'score' : number,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -318,6 +314,11 @@ export interface ReplyContext {
   'chat_id' : ChatId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
+}
+export interface ReplyContextArgs {
+  'sender' : UserId,
+  'chat_id_if_other' : [] | [ChatId],
+  'message_id' : MessageId,
 }
 export type ResendCodeArgs = {};
 export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
@@ -395,12 +396,6 @@ export interface UserArgs {
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
-export interface UserMessageMatch {
-  'content' : MessageContent,
-  'score' : number,
-  'sent_by_me' : boolean,
-  'event_index' : EventIndex,
-}
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
@@ -493,20 +488,20 @@ export interface VideoContent {
   'width' : number,
 }
 export interface WebRtcAnswer {
-  'id' : string,
-  'from' : UserId,
-  'connection_string' : string,
-  'ice_candidates' : Array<string>,
+  'endpoint' : WebRtcEndpoint,
+  'user_id' : UserId,
   'offer_id' : string,
-  'timestamp' : TimestampMillis,
 }
-export type WebRtcConnectionDetails = { 'Answer' : WebRtcAnswer } |
-  { 'Offer' : WebRtcOffer };
-export interface WebRtcOffer {
+export interface WebRtcEndpoint {
   'id' : string,
-  'from' : UserId,
   'connection_string' : string,
   'ice_candidates' : Array<string>,
+}
+export interface WebRtcOffer { 'endpoint' : WebRtcEndpoint, 'user_id' : UserId }
+export type WebRtcSessionDetails = { 'Answer' : WebRtcAnswer } |
+  { 'Offer' : WebRtcOffer };
+export interface WebRtcSessionDetailsEvent {
+  'session_details' : WebRtcSessionDetails,
   'timestamp' : TimestampMillis,
 }
 export interface _SERVICE {

@@ -14,7 +14,6 @@ import type {
     EnhancedReplyContext,
     MessageContent,
     ChatEvent,
-    ReplyContext,
     SendMessageSuccess,
     GroupChatSummary,
     Message,
@@ -45,7 +44,7 @@ export interface ChatContext {
     error?: Error;
     events: EventWrapper<ChatEvent>[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
-    replyingTo?: EnhancedReplyContext<ReplyContext>;
+    replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
     markMessages: ActorRefFrom<MarkReadMachine>;
 }
@@ -78,11 +77,11 @@ export type ChatEvents =
     | { type: "CLEAR_FOCUS_INDEX" }
     | {
           type: "REPLY_TO";
-          data: EnhancedReplyContext<ReplyContext>;
+          data: EnhancedReplyContext;
       }
     | {
           type: "REPLY_PRIVATELY_TO";
-          data: EnhancedReplyContext<ReplyContext>;
+          data: EnhancedReplyContext;
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }

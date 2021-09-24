@@ -11,12 +11,7 @@
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type {
-        ChatSummary,
-        Message,
-        EnhancedReplyContext,
-        ReplyContext,
-    } from "../../domain/chat/chat";
+    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -82,7 +77,7 @@
         dispatch("chatWith", senderId);
     }
 
-    function createReplyContext(): EnhancedReplyContext<ReplyContext> {
+    function createReplyContext(): EnhancedReplyContext {
         return {
             senderId,
             chatId: chatSummary.chatId,
