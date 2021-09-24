@@ -12,7 +12,11 @@ fn add_webrtc_endpoint(args: Args) -> Response {
 }
 
 fn add_webrtc_endpoint_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.webrtc_endpoints_map.add_endpoint(EndpointEvent {
+    if !runtime_state.data.direct_chats.exists(args.endpoint.user_id) {
+        ic_cdk::trap("Not authorized to add webrtc endpoint");
+    }
+
+    runtime_state.data.webrtc_endpoints_map.add(EndpointEvent {
         endpoint: args.endpoint,
         timestamp: runtime_state.env.now(),
     });
