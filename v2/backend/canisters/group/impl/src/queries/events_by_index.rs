@@ -10,9 +10,12 @@ fn events_by_index(args: Args) -> Response {
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if runtime_state.is_caller_participant() {
         let events = runtime_state.data.events.get_by_index(args.events);
+        let affected_events = runtime_state.data.events.affected_events(&events);
         let latest_event_index = runtime_state.data.events.last().index;
+
         Success(SuccessResult {
             events,
+            affected_events,
             latest_event_index,
         })
     } else {

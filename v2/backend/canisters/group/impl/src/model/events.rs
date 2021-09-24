@@ -1,5 +1,6 @@
 use candid::CandidType;
 use group_canister::send_message::GroupReplyContextArgs;
+use itertools::Itertools;
 use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
@@ -290,9 +291,13 @@ impl Events {
         max_events: u32,
     ) -> Vec<EventWrapper<GroupChatEvent>> {
         if let Some(index) = self.get_index(start) {
-            let iter = self.events.iter().skip(index);
-            let iter: Box<dyn Iterator<Item = &EventWrapper<GroupChatEventInternal>>> =
-                if ascending { Box::new(iter) } else { Box::new(iter.rev()) };
+            let iter: Box<dyn Iterator<Item = &EventWrapper<GroupChatEventInternal>>> = if ascending {
+                let range = &self.events[index..];
+                Box::new(range.iter())
+            } else {
+                let range = &self.events[..=index];
+                Box::new(range.iter().rev())
+            };
 
             let mut events = Vec::new();
             let mut messages_count: u32 = 0;
@@ -308,7 +313,9 @@ impl Events {
                     }
                 }
             }
-
+            if !ascending {
+                events.reverse();
+            }
             events
         } else {
             Vec::new()
@@ -375,6 +382,26 @@ impl Events {
                 score: m.0,
             })
             .collect()
+    }
+
+    pub fn affected_events(&self, events: &[EventWrapper<GroupChatEvent>]) -> Vec<EventWrapper<GroupChatEvent>> {
+        // We use this set to exclude events that are already in the input list
+        let event_ids_set: HashSet<_> = events.iter().map(|e| e.index).collect();
+
+        let affected_event_ids = events
+            .iter()
+            .filter_map(|e| {
+                if let Some(affected_event_id) = e.event.affected_event() {
+                    if !event_ids_set.contains(&e.index) {
+                        return Some(affected_event_id);
+                    }
+                }
+                None
+            })
+            .unique()
+            .collect();
+
+        self.get_by_index(affected_event_ids)
     }
 
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {
@@ -462,11 +489,96 @@ impl Events {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Principal;
     use std::mem::size_of;
 
     #[test]
     fn enum_size() {
         let size = size_of::<GroupChatEventInternal>();
         assert_eq!(size, 16);
+    }
+
+    #[test]
+    fn from_index_message_limit() {
+        let events = setup_events();
+
+        let results = events.from_index(10.into(), true, 10, 40);
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, GroupChatEvent::Message(_)))
+                .count(),
+            10
+        );
+        assert_eq!(results.first().unwrap().index, 10.into());
+        assert_eq!(results.last().unwrap().index, 29.into());
+    }
+
+    #[test]
+    fn from_index_message_limit_rev() {
+        let events = setup_events();
+
+        let results = events.from_index(40.into(), false, 10, 40);
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, GroupChatEvent::Message(_)))
+                .count(),
+            10
+        );
+        assert_eq!(results.first().unwrap().index, 21.into());
+        assert_eq!(results.last().unwrap().index, 40.into());
+    }
+
+    #[test]
+    fn from_index_event_limit() {
+        let events = setup_events();
+
+        let results = events.from_index(10.into(), true, 15, 25);
+
+        assert_eq!(results.len(), 25);
+        assert_eq!(results.first().unwrap().index, 10.into());
+        assert_eq!(results.last().unwrap().index, 34.into());
+    }
+
+    #[test]
+    fn from_index_event_limit_rev() {
+        let events = setup_events();
+
+        let results = events.from_index(40.into(), false, 15, 25);
+
+        assert_eq!(results.len(), 25);
+        assert_eq!(results.first().unwrap().index, 16.into());
+        assert_eq!(results.last().unwrap().index, 40.into());
+    }
+
+    fn setup_events() -> Events {
+        let user_id = Principal::from_slice(&[1]).into();
+
+        let mut events = Events::new(
+            Principal::from_slice(&[2]).into(),
+            "name".to_owned(),
+            "desc".to_owned(),
+            user_id,
+            1,
+        );
+
+        for i in 2..50 {
+            let message_id = i.into();
+            events.push_message(PushMessageArgs {
+                sender: user_id,
+                message_id,
+                content: MessageContent::Text(TextContent {
+                    text: "hello".to_owned(),
+                }),
+                replies_to: None,
+                now: i as u64,
+            });
+            events.push_event(GroupChatEventInternal::MessageReactionAdded(Box::new(message_id)), i as u64);
+        }
+
+        events
     }
 }
