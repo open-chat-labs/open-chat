@@ -143,6 +143,7 @@ export function earliestIndex(ctx: ChatContext): number {
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
+    console.log("chat_updated: ", lastLoaded, ctx.chatSummary.latestEventIndex);
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
         return [from, true];
@@ -229,6 +230,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     internal: true,
                     actions: assign((_, ev) => {
                         return {
+                            // todo - this is a problem because it may update the
+                            // latestEventIndex and the latestMessageIndex
+                            // this means that we might be creating messages using the same
+                            // indexes over and over.
                             chatSummary: ev.data,
                         };
                     }),

@@ -224,11 +224,12 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function eventKey(e: EventWrapper<ChatEventType>): string {
+    function eventKey(e: EventWrapper<ChatEventType>): string | ChatEventType {
         if (e.event.kind === "message") {
             return e.event.messageId.toString();
         } else {
-            return e.index.toString();
+            return e.event;
+            //return e.index.toString();
         }
     }
 

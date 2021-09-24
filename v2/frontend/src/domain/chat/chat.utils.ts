@@ -398,8 +398,20 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
     return events[0]?.index;
 }
 
-export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
-    return chat.latestMessage?.event.messageIndex;
+// export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
+//     return chat.latestMessage?.event.messageIndex;
+// }
+
+export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+    let idx = undefined;
+    for (let i = events.length - 1; i >= 0; i--) {
+        const e = events[i].event;
+        if (e.kind === "message") {
+            idx = e.messageIndex;
+            break;
+        }
+    }
+    return idx;
 }
 
 export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {

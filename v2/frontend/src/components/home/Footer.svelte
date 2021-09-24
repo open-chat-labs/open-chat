@@ -8,7 +8,11 @@
     import { toastStore } from "../../stores/toast";
     import { chatStore } from "../../stores/chat";
     import type { MessageContent } from "../../domain/chat/chat";
-    import { createMessage, latestLoadedMessageIndex } from "../../domain/chat/chat.utils";
+    import {
+        createMessage,
+        latestLoadedEventIndex,
+        latestLoadedMessageIndex,
+    } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
@@ -37,8 +41,8 @@
 
             // todo - we also have a problem for group chats with hidden history - we don't know what the index
             // should be at all in that case
-            const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
-            const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
+            const nextIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
 
             const msg = createMessage(
                 $machine.context.user!.userId,
