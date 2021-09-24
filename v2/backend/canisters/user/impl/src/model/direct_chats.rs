@@ -4,17 +4,12 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, EventIndex, Message, MessageIndex, TimestampMillis, UserId};
 
+#[derive(Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
 }
 
 impl DirectChats {
-    pub fn new() -> DirectChats {
-        DirectChats {
-            direct_chats: HashMap::new(),
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

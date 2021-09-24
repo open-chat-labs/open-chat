@@ -65,7 +65,7 @@ impl Data {
     ) -> Data {
         Data {
             owner,
-            direct_chats: DirectChats::new(),
+            direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
             blocked_users: HashSet::new(),
             user_index_canister_id,
