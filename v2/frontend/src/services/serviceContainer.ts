@@ -38,6 +38,7 @@ import type {
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,
+    EventWrapper,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -156,16 +157,8 @@ export class ServiceContainer {
         );
     }
 
-    private async rehydrateMediaData<T extends ChatEvent>(
-        eventsPromise: Promise<EventsResponse<T>>
-    ): Promise<EventsResponse<T>> {
-        const resp = await eventsPromise;
-
-        if (resp === "chat_not_found") {
-            return resp;
-        }
-
-        resp.events = resp.events.map((e) => {
+    private reydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
+        return events.map((e) => {
             if (e.event.kind === "message") {
                 if (
                     (e.event.content.kind === "file_content" ||
@@ -188,6 +181,19 @@ export class ServiceContainer {
             }
             return e;
         });
+    }
+
+    private async rehydrateMediaData<T extends ChatEvent>(
+        eventsPromise: Promise<EventsResponse<T>>
+    ): Promise<EventsResponse<T>> {
+        const resp = await eventsPromise;
+
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        resp.events = this.reydrateEventList(resp.events);
+        resp.affectedEvents = this.reydrateEventList(resp.affectedEvents);
         return resp;
     }
 

@@ -163,7 +163,8 @@ export async function getCachedMessages<T extends ChatEvent>(
         console.log("cache hit: ", events.length, +new Date() - start);
     }
 
-    return complete ? { events } : undefined;
+    // todo - come back and deal with affectedEvents
+    return complete ? { events, affectedEvents: [] } : undefined;
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised

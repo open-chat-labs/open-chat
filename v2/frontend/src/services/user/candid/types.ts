@@ -92,7 +92,6 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -180,7 +179,6 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],

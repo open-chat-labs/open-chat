@@ -530,3 +530,14 @@ export function nextIndex(ascending: boolean, events: EventWrapper<ChatEvent>[])
 export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
+
+// todo - this is not very efficient at the moment
+export function replaceAffected(
+    events: EventWrapper<ChatEvent>[],
+    affectedEvents: EventWrapper<ChatEvent>[]
+): EventWrapper<ChatEvent>[] {
+    return events.map((ev) => {
+        const aff = affectedEvents.find((a) => a.index === ev.index);
+        return aff ?? ev;
+    });
+}

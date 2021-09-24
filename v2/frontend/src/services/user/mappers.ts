@@ -201,6 +201,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
+            affectedEvents: candid.Success.affected_events.map(event),
         };
     }
     if ("ChatNotFound" in candid) {

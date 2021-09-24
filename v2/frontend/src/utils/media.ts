@@ -1,4 +1,4 @@
-import type { DirectMessage, GroupMessage, MessageContent } from "../domain/chat/chat";
+import type { Message, MessageContent } from "../domain/chat/chat";
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
@@ -111,7 +111,7 @@ type MediaExtract = {
     data: ArrayBuffer;
 };
 
-export function fillMessage(msg: GroupMessage | DirectMessage): boolean {
+export function fillMessage(msg: Message): boolean {
     if (msg.content.kind === "image_content") {
         return (
             (msg.content.caption === undefined || msg.content.caption === "") &&

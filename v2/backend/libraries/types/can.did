@@ -117,7 +117,7 @@ type DirectChatSummaryUpdates =
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
         read_by_them: opt vec MessageIndexRange;
-        webrtc_session_details: vec WebRtcSessionDetailsEvent;
+        // webrtc_session_details: vec WebRtcSessionDetailsEvent;
     };
 
 type DirectMessageNotification =
@@ -205,7 +205,7 @@ type GroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
-        webrtc_session_details: vec WebRtcSessionDetailsEvent;
+        // webrtc_session_details: vec WebRtcSessionDetailsEvent;
     };
 
 type GroupDescriptionChanged =

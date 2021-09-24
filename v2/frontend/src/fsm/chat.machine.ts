@@ -23,6 +23,7 @@ import {
     getMinVisibleEventIndex,
     indexRangeForChat,
     latestLoadedEventIndex,
+    replaceAffected,
     setLastMessageOnChat,
     toggleGroupReaction,
     userIdsFromChatSummaries,
@@ -52,6 +53,7 @@ export interface ChatContext {
 type LoadEventsResponse = {
     userLookup: UserLookup;
     events: EventWrapper<ChatEvent>[];
+    affectedEvents: EventWrapper<ChatEvent>[];
 };
 
 export type ChatEvents =
@@ -194,11 +196,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
-                    : { events: [] },
+                    : { events: [], affectedEvents: [] },
             ]);
             return {
                 userLookup,
                 events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
+                affectedEvents:
+                    eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
             };
         },
     },
@@ -207,9 +211,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
                       userLookup: ev.data.userLookup,
-                      events: dedupe(
-                          (a, b) => a.index === b.index,
-                          [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
+                      // todo - we also need to update the cache for any affected event
+                      events: replaceAffected(
+                          dedupe(
+                              (a, b) => a.index === b.index,
+                              [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
+                          ),
+                          ev.data.affectedEvents
                       ),
                   }
                 : {}
