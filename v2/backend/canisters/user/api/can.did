@@ -1,12 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type ReplyContextArgs =
-    record {
-        chat_id_if_other: opt ChatId;
-        sender: UserId;
-        message_id: MessageId;
-    };
-
 type SendMessageArgs =
     record {
         recipient: UserId;
@@ -278,7 +271,7 @@ type SearchMessagesResponse =
 
 type SearchMessagesSuccessResult =
     record {
-        matches: vec UserMessageMatch;
+        matches: vec MessageMatch;
     };
 
 type SearchAllMessagesArgs =
@@ -289,16 +282,11 @@ type SearchAllMessagesArgs =
 
 type SearchAllMessagesResponse =
     variant {
-        Success: SearchAllMessagesSuccessResult;
+        Success: SearchMessagesSuccessResult;
         TermTooShort: nat8;
         TermTooLong: nat8;
         InvalidTerm;
     }; 
-
-type SearchAllMessagesSuccessResult =
-    record {
-        matches: vec CombinedMessageMatch;
-    };
 
 type MetricsArgs =
     record {

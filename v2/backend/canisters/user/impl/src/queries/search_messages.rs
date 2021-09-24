@@ -1,5 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
+use types::EventIndex;
 use user_canister::search_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
@@ -28,9 +29,12 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(dc) => dc,
     };
 
-    let matches = direct_chat
-        .events
-        .search_messages(runtime_state.env.now(), &args.search_term, args.max_results);
+    let matches = direct_chat.events.search_messages(
+        runtime_state.env.now(),
+        EventIndex::default(),
+        &args.search_term,
+        args.max_results,
+    );
 
     Success(SuccessResult { matches })
 }

@@ -8,14 +8,7 @@ pub struct Args {
     pub recipient: UserId,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<DirectReplyContextArgs>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct DirectReplyContextArgs {
-    pub chat_id_if_other: Option<ChatId>,
-    pub sender: UserId,
-    pub message_id: MessageId,
+    pub replies_to: Option<ReplyContextArgs>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

@@ -1,7 +1,7 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
@@ -41,7 +41,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                 runtime_state
                     .data
                     .events
-                    .push_event(GroupChatEventInternal::ParticipantJoined(Box::new(event)), now);
+                    .push_event(ChatEventInternal::ParticipantJoined(Box::new(event)), now);
 
                 handle_activity_notification(runtime_state);
 

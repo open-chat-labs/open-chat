@@ -21,6 +21,13 @@ pub struct DeletedMessage {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ReplyContextArgs {
+    pub chat_id_if_other: Option<ChatId>,
+    pub sender: UserId,
+    pub message_id: MessageId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_id: ChatId,
     pub sender: UserId,

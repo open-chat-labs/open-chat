@@ -303,23 +303,7 @@ type UpdatedMessage =
         message_id: MessageId;
     };
 
-type UserMessageMatch = 
-    record {
-        event_index: EventIndex;
-        content: MessageContent;
-        sent_by_me: bool;
-        score: nat32;
-    };
-
-type GroupMessageMatch = 
-    record {
-        event_index: EventIndex;
-        content: MessageContent;
-        sender: UserId;
-        score: nat32;
-    };
-
-type CombinedMessageMatch = 
+type MessageMatch =
     record {
         chat_id: ChatId;
         event_index: EventIndex;
@@ -381,6 +365,13 @@ type ParticipantsRemoved =
     record {
         user_ids: vec UserId;
         removed_by: UserId;
+    };
+
+type ReplyContextArgs =
+    record {
+        chat_id_if_other: opt ChatId;
+        sender: UserId;
+        message_id: MessageId;
     };
 
 type Role =

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{UserId, UserMessageMatch};
+use types::{MessageMatch, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -20,5 +20,5 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub matches: Vec<UserMessageMatch>,
+    pub matches: Vec<MessageMatch>,
 }

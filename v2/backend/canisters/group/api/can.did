@@ -1,10 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type ReplyContextArgs =
-    record {
-        message_id: MessageId;
-    };
-
 type SendMessageArgs =
     record {
         message_id: MessageId;
@@ -298,7 +293,7 @@ type SearchMessagesResponse =
 
 type SearchMessagesSuccessResult =
     record {
-        matches: vec GroupMessageMatch;
+        matches: vec MessageMatch;
     };
 
 type MetricsArgs =
