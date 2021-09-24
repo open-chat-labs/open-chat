@@ -313,7 +313,9 @@ impl Events {
                     }
                 }
             }
-
+            if !ascending {
+                events.reverse();
+            }
             events
         } else {
             Vec::new()
@@ -526,8 +528,8 @@ mod tests {
                 .count(),
             10
         );
-        assert_eq!(results.first().unwrap().index, 40.into());
-        assert_eq!(results.last().unwrap().index, 21.into());
+        assert_eq!(results.first().unwrap().index, 21.into());
+        assert_eq!(results.last().unwrap().index, 40.into());
     }
 
     #[test]
@@ -548,8 +550,8 @@ mod tests {
         let results = events.from_index(40.into(), false, 15, 25);
 
         assert_eq!(results.len(), 25);
-        assert_eq!(results.first().unwrap().index, 40.into());
-        assert_eq!(results.last().unwrap().index, 16.into());
+        assert_eq!(results.first().unwrap().index, 16.into());
+        assert_eq!(results.last().unwrap().index, 40.into());
     }
 
     fn setup_events() -> Events {
