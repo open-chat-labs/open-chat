@@ -1,7 +1,7 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
-use crate::model::events::Events;
 use crate::model::participants::Participants;
 use candid::Principal;
+use chat_events::GroupChatEvents;
 use std::cell::RefCell;
 use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
@@ -41,7 +41,7 @@ pub struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: Events,
+    pub events: GroupChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -68,7 +68,7 @@ impl Data {
         wasm_version: Version,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = Events::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,

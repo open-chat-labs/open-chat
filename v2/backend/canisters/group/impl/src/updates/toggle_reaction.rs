@@ -1,6 +1,6 @@
-use crate::model::events::ToggleReactionResult;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ToggleReactionResult;
 use cycles_utils::check_cycles_balance;
 use group_canister::toggle_reaction::{Response::*, *};
 use ic_cdk_macros::update;

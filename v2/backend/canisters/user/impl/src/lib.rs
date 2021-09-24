@@ -58,7 +58,6 @@ pub struct Data {
 impl Data {
     pub fn new(
         owner: Principal,
-        my_user_id: UserId,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
@@ -66,7 +65,7 @@ impl Data {
     ) -> Data {
         Data {
             owner,
-            direct_chats: DirectChats::new(my_user_id),
+            direct_chats: DirectChats::new(),
             group_chats: GroupChats::default(),
             blocked_users: HashSet::new(),
             user_index_canister_id,

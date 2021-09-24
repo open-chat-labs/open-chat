@@ -1,5 +1,5 @@
-use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageIndex};
@@ -16,16 +16,16 @@ fn send_message(args: Args) -> Response {
 fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
-    let my_user_id = runtime_state.env.canister_id().into();
-
-    if runtime_state.data.blocked_users.contains(&my_user_id) {
+    if runtime_state.data.blocked_users.contains(&args.recipient) {
         return RecipientBlocked;
     }
+
+    let my_user_id = runtime_state.env.canister_id().into();
 
     let now = runtime_state.env.now();
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
-        sent_by_me: true,
+        sender: my_user_id,
         content: args.content.clone(),
         replies_to: args.replies_to.clone(),
         now,
@@ -34,7 +34,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let (chat_id, event_index, message) = runtime_state
         .data
         .direct_chats
-        .push_message(args.recipient, None, push_message_args);
+        .push_message(true, args.recipient, None, push_message_args);
 
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
     ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));

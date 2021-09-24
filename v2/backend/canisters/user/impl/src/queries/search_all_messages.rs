@@ -1,10 +1,10 @@
-use crate::model::events::DirectChatEventInternal;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use ic_cdk_macros::query;
 use log::error;
 use search::*;
 use types::UserId;
-use types::{ChatId, CombinedMessageMatch, GroupMessageMatch};
+use types::{ChatId, MessageMatch};
 use user_canister::search_all_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
@@ -59,42 +59,37 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     Ok(PrepareResult { group_chats, me })
 }
 
-fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<CombinedMessageMatch> {
+fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<MessageMatch> {
     let now = runtime_state.env.now();
-    let me: UserId = runtime_state.env.caller().into();
     let query = Query::parse(&args.search_term);
 
     let mut matches: Vec<_> = runtime_state
         .data
         .direct_chats
         .get_all(Some(0))
-        .flat_map(|dc| dc.events.get_all().map(move |e| (dc.them, e)))
-        .filter_map(|(user_id, e)| match &e.event {
-            DirectChatEventInternal::Message(m) => {
+        .flat_map(|dc| dc.events.iter().map(move |e| (dc.them, e)))
+        .filter_map(|(their_user_id, e)| match &e.event {
+            ChatEventInternal::Message(m) => {
                 let mut document: Document = (&m.content).into();
                 document.set_age(now - e.timestamp);
                 match document.calculate_score(&query) {
                     0 => None,
-                    n => Some((user_id, e.index, n, m)),
+                    n => Some(MessageMatch {
+                        chat_id: their_user_id.into(),
+                        sender: m.sender,
+                        event_index: e.index,
+                        score: n,
+                        content: m.content.clone(),
+                    }),
                 }
             }
             _ => None,
         })
         .collect();
 
-    matches.sort_unstable_by(|m1, m2| m2.0.cmp(&m1.0));
+    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
 
-    matches
-        .iter()
-        .take(args.max_results as usize)
-        .map(|m| CombinedMessageMatch {
-            chat_id: m.0.into(),
-            sender: if m.3.sent_by_me { me } else { m.0 },
-            event_index: m.1,
-            score: m.2,
-            content: m.3.content.clone(),
-        })
-        .collect()
+    matches.into_iter().take(args.max_results as usize).collect()
 }
 
 async fn search_all_group_chats(
@@ -102,7 +97,7 @@ async fn search_all_group_chats(
     search_term: String,
     max_results: u8,
     user_id: UserId,
-) -> Vec<CombinedMessageMatch> {
+) -> Vec<MessageMatch> {
     let args = group_canister::c2c_search_messages::Args {
         user_id,
         search_term,
@@ -140,25 +135,9 @@ async fn search_all_group_chats(
         );
     }
 
-    let mut matches: Vec<(ChatId, GroupMessageMatch)> = successes
-        .into_iter()
-        .flat_map(|r| {
-            let chat_id = r.chat_id;
-            r.matches.into_iter().map(move |m| (chat_id, m))
-        })
-        .collect();
+    let mut matches: Vec<MessageMatch> = successes.into_iter().flat_map(|r| r.matches).collect();
 
-    matches.sort_unstable_by(|m1, m2| m2.1.score.cmp(&m1.1.score));
+    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
 
-    matches
-        .iter()
-        .take(max_results as usize)
-        .map(|m| CombinedMessageMatch {
-            chat_id: m.0,
-            sender: m.1.sender,
-            event_index: m.1.event_index,
-            score: m.1.score,
-            content: m.1.content.clone(),
-        })
-        .collect()
+    matches.into_iter().take(max_results as usize).collect()
 }

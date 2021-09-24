@@ -14,10 +14,11 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     runtime_state.trap_if_caller_not_owner();
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
         for message_id in args.message_ids.into_iter() {
-            chat.events.delete_message(message_id, now);
+            chat.events.delete_message(my_user_id, message_id, now);
         }
 
         Success

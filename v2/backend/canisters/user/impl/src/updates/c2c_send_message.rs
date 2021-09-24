@@ -1,5 +1,5 @@
-use crate::model::events::PushMessageArgs;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
@@ -61,7 +61,7 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
-        sent_by_me: false,
+        sender: sender_user_id,
         content: args.content,
         replies_to: args.replies_to,
         now: runtime_state.env.now(),
@@ -71,7 +71,7 @@ fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         runtime_state
             .data
             .direct_chats
-            .push_message(sender_user_id, Some(args.sender_message_index), push_message_args);
+            .push_message(false, sender_user_id, Some(args.sender_message_index), push_message_args);
 
     let random = runtime_state.env.random_u32() as usize;
 

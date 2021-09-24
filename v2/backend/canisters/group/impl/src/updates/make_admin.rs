@@ -1,7 +1,7 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::updates::make_admin::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::make_admin::*;
 use ic_cdk_macros::update;
@@ -32,7 +32,7 @@ fn make_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     runtime_state
                         .data
                         .events
-                        .push_event(GroupChatEventInternal::ParticipantsPromotedToAdmin(Box::new(event)), now);
+                        .push_event(ChatEventInternal::ParticipantsPromotedToAdmin(Box::new(event)), now);
 
                     handle_activity_notification(runtime_state);
                     Success

@@ -1,7 +1,7 @@
-use crate::model::events::GroupChatEventInternal;
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
+use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
@@ -143,7 +143,7 @@ fn commit(added_by: UserId, users: &[(UserId, Principal)], runtime_state: &mut R
     runtime_state
         .data
         .events
-        .push_event(GroupChatEventInternal::ParticipantsAdded(Box::new(event)), now);
+        .push_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), now);
 
     handle_activity_notification(runtime_state);
 }
