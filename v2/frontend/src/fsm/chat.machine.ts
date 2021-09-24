@@ -143,7 +143,6 @@ export function earliestIndex(ctx: ChatContext): number {
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
-    console.log("chat_updated: ", lastLoaded, ctx.chatSummary.latestEventIndex);
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
         return [from, true];
