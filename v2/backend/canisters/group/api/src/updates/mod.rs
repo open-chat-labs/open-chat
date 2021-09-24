@@ -1,4 +1,5 @@
 pub mod add_participants;
+pub mod add_webrtc_session_details;
 pub mod block_user;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
@@ -8,6 +9,7 @@ pub mod mark_read;
 pub mod put_chunk;
 pub mod remove_admin;
 pub mod remove_participant;
+pub mod remove_webrtc_session_details;
 pub mod send_message;
 pub mod toggle_reaction;
 pub mod unblock_user;

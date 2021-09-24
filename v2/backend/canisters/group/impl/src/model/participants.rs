@@ -4,6 +4,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::ops::RangeInclusive;
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
+use utils::webrtc_session_details_map::WebRtcSessionDetailsMap;
 
 #[derive(Default)]
 pub struct Participants {
@@ -23,6 +24,7 @@ impl Participants {
             mute_notifications: false,
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
+            webrtc_session_details_map: WebRtcSessionDetailsMap::default(),
         };
 
         Participants {
@@ -54,6 +56,7 @@ impl Participants {
                         mute_notifications: false,
                         min_visible_event_index,
                         min_visible_message_index,
+                        webrtc_session_details_map: WebRtcSessionDetailsMap::default(),
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
@@ -146,6 +149,7 @@ pub struct ParticipantInternal {
     pub mute_notifications: bool,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
+    pub webrtc_session_details_map: WebRtcSessionDetailsMap,
 }
 
 impl From<ParticipantInternal> for Participant {

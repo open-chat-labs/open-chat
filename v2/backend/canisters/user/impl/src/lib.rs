@@ -1,12 +1,12 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
-use crate::model::webrtc_endpoints_map::WebRtcEndpointsMap;
 use candid::Principal;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{Avatar, CanisterId, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
+use utils::webrtc_session_details_map::WebRtcSessionDetailsMap;
 
 mod lifecycle;
 mod model;
@@ -52,7 +52,7 @@ pub struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
-    pub webrtc_endpoints_map: WebRtcEndpointsMap,
+    pub webrtc_session_details_map: WebRtcSessionDetailsMap,
 }
 
 impl Data {
@@ -75,7 +75,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
-            webrtc_endpoints_map: WebRtcEndpointsMap::default(),
+            webrtc_session_details_map: WebRtcSessionDetailsMap::default(),
         }
     }
 }
