@@ -1,5 +1,6 @@
 use candid::CandidType;
 use group_canister::send_message::GroupReplyContextArgs;
+use itertools::Itertools;
 use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
@@ -375,6 +376,26 @@ impl Events {
                 score: m.0,
             })
             .collect()
+    }
+
+    pub fn affected_events(&self, events: &[EventWrapper<GroupChatEvent>]) -> Vec<EventWrapper<GroupChatEvent>> {
+        // We use this set to exclude events that are already in the input list
+        let event_ids_set: HashSet<_> = events.iter().map(|e| e.index).collect();
+
+        let affected_event_ids = events
+            .iter()
+            .filter_map(|e| {
+                if let Some(affected_event_id) = e.event.affected_event() {
+                    if !event_ids_set.contains(&e.index) {
+                        return Some(affected_event_id);
+                    }
+                }
+                None
+            })
+            .unique()
+            .collect();
+
+        self.get_by_index(affected_event_ids)
     }
 
     fn hydrate_event(&self, event: &EventWrapper<GroupChatEventInternal>) -> EventWrapper<GroupChatEvent> {

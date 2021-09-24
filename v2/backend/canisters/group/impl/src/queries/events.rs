@@ -14,10 +14,12 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             .events
             .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
 
+        let affected_events = runtime_state.data.events.affected_events(&events);
         let latest_event_index = runtime_state.data.events.last().index;
 
         Success(SuccessResult {
             events,
+            affected_events,
             latest_event_index,
         })
     } else {

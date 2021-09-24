@@ -23,6 +23,17 @@ pub enum GroupChatEvent {
     MessageReactionRemoved(UpdatedMessage),
 }
 
+impl GroupChatEvent {
+    pub fn affected_event(&self) -> Option<EventIndex> {
+        match self {
+            GroupChatEvent::MessageDeleted(m) => Some(m.event_index),
+            GroupChatEvent::MessageReactionAdded(r) => Some(r.event_index),
+            GroupChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            _ => None,
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct GroupChatCreated {
     pub name: String,
@@ -111,6 +122,17 @@ pub enum DirectChatEvent {
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
+}
+
+impl DirectChatEvent {
+    pub fn affected_event(&self) -> Option<EventIndex> {
+        match self {
+            DirectChatEvent::MessageDeleted(m) => Some(m.event_index),
+            DirectChatEvent::MessageReactionAdded(r) => Some(r.event_index),
+            DirectChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
+            _ => None,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Copy, Clone, Debug)]

@@ -964,6 +964,7 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
+ "itertools 0.10.1",
  "log",
  "notifications_canister",
  "notifications_canister_c2c_client",

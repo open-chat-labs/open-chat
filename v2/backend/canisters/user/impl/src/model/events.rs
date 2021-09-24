@@ -1,9 +1,10 @@
 use candid::CandidType;
+use itertools::Itertools;
 use search::*;
 use serde::Deserialize;
 use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::*;
 use user_canister::send_message::DirectReplyContextArgs;
 
@@ -349,6 +350,26 @@ impl Events {
                 sent_by_me: m.1.sent_by_me,
             })
             .collect()
+    }
+
+    pub fn affected_events(&self, events: &[EventWrapper<DirectChatEvent>]) -> Vec<EventWrapper<DirectChatEvent>> {
+        // We use this set to exclude events that are already in the input list
+        let event_ids_set: HashSet<_> = events.iter().map(|e| e.index).collect();
+
+        let affected_event_ids = events
+            .iter()
+            .filter_map(|e| {
+                if let Some(affected_event_id) = e.event.affected_event() {
+                    if !event_ids_set.contains(&e.index) {
+                        return Some(affected_event_id);
+                    }
+                }
+                None
+            })
+            .unique()
+            .collect();
+
+        self.get_by_index(affected_event_ids)
     }
 
     fn hydrate_event(&self, event: &EventWrapper<DirectChatEventInternal>) -> EventWrapper<DirectChatEvent> {

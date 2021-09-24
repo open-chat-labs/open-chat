@@ -267,6 +267,7 @@ type EventsByIndexArgs =
 type EventsSuccessResult =
     record {
         events: vec DirectChatEventWrapper;
+        affected_events: vec DirectChatEventWrapper;
     };
 
 type EventsResponse =
