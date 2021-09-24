@@ -315,6 +315,7 @@ export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
 export interface ReplyContext {
   'content' : [] | [MessageContent],
   'user_id' : UserId,
+  'chat_id' : ChatId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }

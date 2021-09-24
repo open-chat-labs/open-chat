@@ -37,6 +37,7 @@ import type {
     MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
+    IndexRange,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -134,22 +135,24 @@ export class ServiceContainer {
     }
 
     directChatEvents(
+        eventIndexRange: IndexRange,
         theirUserId: string,
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateMediaData(
-            this.userClient.chatEvents(theirUserId, startIndex, ascending)
+            this.userClient.chatEvents(eventIndexRange, theirUserId, startIndex, ascending)
         );
     }
 
     groupChatEvents(
+        eventIndexRange: IndexRange,
         chatId: string,
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateMediaData(
-            this.getGroupClient(chatId).chatEvents(startIndex, ascending)
+            this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
         );
     }
 

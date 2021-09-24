@@ -9,6 +9,8 @@ export type MessageContent =
     | AudioContent
     | CyclesContent;
 
+export type IndexRange = [number, number];
+
 export interface CyclesContent {
     kind: "cycles_content";
     caption?: string;

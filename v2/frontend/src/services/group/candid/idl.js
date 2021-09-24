@@ -114,9 +114,11 @@ export const idlFactory = ({ IDL }) => {
     'Audio' : AudioContent,
     'Video' : VideoContent,
   });
+  const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'content' : IDL.Opt(MessageContent),
     'user_id' : UserId,
+    'chat_id' : ChatId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
@@ -297,7 +299,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const ChatId = CanisterId;
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,

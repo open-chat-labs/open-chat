@@ -16,6 +16,8 @@ import type {
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    IndexRange,
+    EventWrapper,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -29,13 +31,15 @@ import {
     setAvatarResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
+
+const MAX_RECURSION = 10;
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -72,12 +76,17 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    chatEvents(
+    async chatEvents(
+        eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        previouslyLoadedEvents: EventWrapper<DirectChatEvent>[] = [],
+        iterations = 0
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.handleResponse(
+        console.log("index range: ", eventIndexRange);
+        console.log("loading messages from: ", startIndex, " : ", ascending);
+        const resp = await this.handleResponse(
             this.userService.events({
                 user_id: Principal.fromText(userId),
                 max_messages: 20,
@@ -87,6 +96,35 @@ export class UserClient extends CandidService implements IUserClient {
             }),
             getEventsResponse
         );
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        // merge the retrieved events with the events accumulated from the previous iteration(s)
+        const merged = ascending
+            ? [...previouslyLoadedEvents, ...resp.events]
+            : [...resp.events, ...previouslyLoadedEvents];
+
+        // check whether we have accumulated enough messages to display
+        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
+            console.log("we got enough visible messages to display now");
+            return resp;
+        } else if (iterations < MAX_RECURSION) {
+            // recurse and get the next chunk since we don't yet have enough events
+            console.log("we don't have enough message, recursing", resp.events);
+            return this.chatEvents(
+                eventIndexRange,
+                userId,
+                nextIndex(ascending, merged),
+                ascending,
+                merged,
+                iterations + 1
+            );
+        } else {
+            throw new Error(
+                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`
+            );
+        }
     }
 
     async getUpdates(

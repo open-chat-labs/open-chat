@@ -13,6 +13,8 @@ import type {
     MarkReadResponse,
     MessageIndexRange,
     Message,
+    IndexRange,
+    EventWrapper,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
@@ -20,9 +22,12 @@ import type { UserSummary } from "../../domain/user/user";
 export interface IUserClient {
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
     chatEvents(
+        eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
-        ascending: boolean
+        ascending: boolean,
+        previouslyLoadedEvents?: EventWrapper<DirectChatEvent>[],
+        iterations?: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
     sendMessage(

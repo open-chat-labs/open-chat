@@ -13,6 +13,8 @@ import type {
     MessageIndexRange,
     MarkReadResponse,
     Message,
+    IndexRange,
+    EventWrapper,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -35,6 +37,7 @@ export class CachingUserClient implements IUserClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
     async chatEvents(
+        eventIndexRange: IndexRange,
         userId: string,
         startIndex: number,
         ascending: boolean
@@ -52,7 +55,7 @@ export class CachingUserClient implements IUserClient {
         //         .chatEvents(userId, fromIndex, toIndex)
         //         .then(setCachedMessages(this.db, userId))
         // );
-        return this.client.chatEvents(userId, startIndex, ascending);
+        return this.client.chatEvents(eventIndexRange, userId, startIndex, ascending);
     }
 
     async getUpdates(

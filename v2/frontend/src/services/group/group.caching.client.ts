@@ -2,7 +2,7 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
-    GroupMessage,
+    Message,
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
@@ -10,6 +10,7 @@ import type {
     MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
+    IndexRange,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -27,6 +28,7 @@ export class CachingGroupClient implements IGroupClient {
         private client: IGroupClient
     ) {}
     async chatEvents(
+        eventIndexRange: IndexRange,
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
@@ -43,14 +45,14 @@ export class CachingGroupClient implements IGroupClient {
         //         .then(setCachedMessages(this.db, this.chatId))
         // );
         // todo - we need to come back to this and make caching work again
-        return this.client.chatEvents(startIndex, ascending);
+        return this.client.chatEvents(eventIndexRange, startIndex, ascending);
     }
 
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
         return this.client.addParticipants(userIds);
     }
 
-    sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return this.client.sendMessage(senderName, message);
     }
 

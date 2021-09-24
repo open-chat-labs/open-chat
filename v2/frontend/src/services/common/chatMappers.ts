@@ -135,7 +135,7 @@ function blobReference(candid: ApiBlobReference): BlobReference {
 function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         content: optional(candid.content, messageContent),
-        chatId: "",
+        chatId: candid.chat_id.toString(),
         userId: candid.user_id.toString(),
         eventIndex: candid.event_index,
         messageId: candid.message_id,

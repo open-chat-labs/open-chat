@@ -21,6 +21,7 @@ import type {
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
+    indexRangeForChat,
     latestLoadedEventIndex,
     setLastMessageOnChat,
     toggleGroupReaction,
@@ -110,11 +111,16 @@ function loadEvents(
     ascending: boolean
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(chatSummary.them, startIndex, ascending);
+        return serviceContainer.directChatEvents(
+            indexRangeForChat(chatSummary),
+            chatSummary.them,
+            startIndex,
+            ascending
+        );
     }
     console.log("criteria: ", startIndex, ascending);
     const events = serviceContainer
-        .groupChatEvents(chatSummary.chatId, startIndex, ascending)
+        .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
         .then((resp) => {
             console.log(resp);
             return resp;

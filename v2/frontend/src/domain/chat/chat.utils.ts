@@ -18,6 +18,7 @@ import type {
     MessageIndexRange,
     Reaction,
     Message,
+    IndexRange,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -25,6 +26,7 @@ import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
+const EVENT_PAGE_SIZE = 20;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -69,6 +71,11 @@ export function userIdsFromChatSummaries(
 export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     if (chat.kind === "direct_chat") return 0;
     return chat.minVisibleMessageIndex;
+}
+
+export function getMinVisibleEventIndex(chat: ChatSummary): number {
+    if (chat.kind === "direct_chat") return 0;
+    return chat.minVisibleEventIndex;
 }
 
 export function getUnreadMessages(chat: ChatSummary): number {
@@ -481,4 +488,33 @@ export function toggleGroupReaction(
         }
     }
     return reactions;
+}
+
+export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
+    return ew.event.kind !== "reaction_added" && ew.event.kind !== "reaction_removed";
+}
+
+export function enoughVisibleMessages(
+    ascending: boolean,
+    [minIndex, maxIndex]: IndexRange,
+    events: EventWrapper<ChatEvent>[]
+): boolean {
+    const filtered = events.filter(eventIsVisible);
+    if (filtered.length >= EVENT_PAGE_SIZE) {
+        return true;
+    } else if (ascending) {
+        // if there are no more events then we have enough by definition
+        return events[events.length - 1].index === maxIndex;
+    } else {
+        // if there are no previous events then we have enough by definition
+        return events[0].index === minIndex;
+    }
+}
+
+export function nextIndex(ascending: boolean, events: EventWrapper<ChatEvent>[]): number {
+    return ascending ? events[events.length - 1].index + 1 : events[0].index - 1;
+}
+
+export function indexRangeForChat(chat: ChatSummary): IndexRange {
+    return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }

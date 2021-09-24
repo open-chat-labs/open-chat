@@ -12,6 +12,8 @@ import type {
     MessageIndexRange,
     UpdateGroupResponse,
     ToggleReactionResponse,
+    EventWrapper,
+    IndexRange,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -30,6 +32,9 @@ import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
+import { enoughVisibleMessages, nextIndex } from "../../domain/chat/chat.utils";
+
+const MAX_RECURSION = 10;
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -45,9 +50,14 @@ export class GroupClient extends CandidService implements IGroupClient {
             : new GroupClient(identity, chatId);
     }
 
-    chatEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<GroupChatEvent>> {
-        return this.handleResponse(
-            //todo - refactor this use the new method
+    async chatEvents(
+        eventIndexRange: IndexRange,
+        startIndex: number,
+        ascending: boolean,
+        previouslyLoadedEvents: EventWrapper<GroupChatEvent>[] = [],
+        iterations = 0
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        const resp = await this.handleResponse(
             this.groupService.events({
                 max_messages: 20,
                 max_events: 50,
@@ -56,6 +66,34 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             getEventsResponse
         );
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        // merge the retrieved events with the events accumulated from the previous iteration(s)
+        const merged = ascending
+            ? [...previouslyLoadedEvents, ...resp.events]
+            : [...resp.events, ...previouslyLoadedEvents];
+
+        // check whether we have accumulated enough messages to display
+        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
+            console.log("we got enough visible messages to display now");
+            return resp;
+        } else if (iterations < MAX_RECURSION) {
+            // recurse and get the next chunk since we don't yet have enough events
+            console.log("we don't have enough message, recursing", resp.events);
+            return this.chatEvents(
+                eventIndexRange,
+                nextIndex(ascending, merged),
+                ascending,
+                merged,
+                iterations + 1
+            );
+        } else {
+            throw new Error(
+                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`
+            );
+        }
     }
 
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
