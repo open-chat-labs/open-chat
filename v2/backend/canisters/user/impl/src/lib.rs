@@ -1,6 +1,6 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
-use crate::model::webrtc;
+use crate::model::webrtc_endpoints_map::WebRtcEndpointsMap;
 use candid::Principal;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -52,7 +52,7 @@ pub struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
-    pub webrtc_connection_details_map: webrtc::ConnectionDetailsMap,
+    pub webrtc_endpoints_map: WebRtcEndpointsMap,
 }
 
 impl Data {
@@ -75,7 +75,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
-            webrtc_connection_details_map: webrtc::ConnectionDetailsMap::default(),
+            webrtc_endpoints_map: WebRtcEndpointsMap::default(),
         }
     }
 }
