@@ -315,7 +315,7 @@ function repliesToGroup(): EnhancedReplyContext<ReplyContext> {
             kind: "text_content",
             text: "some text",
         },
-        userId: "abcdef",
+        senderId: "abcdef",
         eventIndex: 0,
         messageId: newMessageId(),
     };

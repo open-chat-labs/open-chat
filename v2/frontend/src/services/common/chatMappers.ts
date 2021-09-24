@@ -136,7 +136,7 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         content: optional(candid.content, messageContent),
         chatId: candid.chat_id.toString(),
-        userId: candid.user_id.toString(),
+        senderId: candid.sender.toString(),
         eventIndex: candid.event_index,
         messageId: candid.message_id,
     };

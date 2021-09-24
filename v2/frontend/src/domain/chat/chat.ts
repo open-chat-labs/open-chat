@@ -58,7 +58,7 @@ export interface FileContent extends DataContent {
 
 export type ReplyContext = {
     content?: MessageContent;
-    userId: string;
+    senderId: string;
     messageId: bigint;
     eventIndex: number;
     chatId: string;

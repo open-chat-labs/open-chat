@@ -16,13 +16,14 @@ export abstract class CandidService {
 
     protected async handleResponse<From, To>(
         service: Promise<From>,
-        mapper: (from: From) => To
+        mapper: (from: From) => To,
+        args?: unknown
     ): Promise<To> {
         let response: From;
         try {
             response = await service;
         } catch (e) {
-            console.log(e);
+            console.log(e, args);
             throw toHttpError(e as Error);
         }
         return mapper(response);

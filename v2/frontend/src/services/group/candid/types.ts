@@ -128,6 +128,7 @@ export interface EventsRangeArgs {
 export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
+  'affected_events' : Array<GroupChatEventWrapper>,
   'events' : Array<GroupChatEventWrapper>,
   'latest_event_index' : EventIndex,
 }
@@ -345,7 +346,7 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'InternalError' : string };
 export interface ReplyContext {
   'content' : [] | [MessageContent],
-  'user_id' : UserId,
+  'sender' : UserId,
   'chat_id' : ChatId,
   'message_id' : MessageId,
   'event_index' : EventIndex,

@@ -118,7 +118,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ReplyContext = IDL.Record({
     'content' : IDL.Opt(MessageContent),
-    'user_id' : UserId,
+    'sender' : UserId,
     'chat_id' : ChatId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
@@ -153,6 +153,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const EventsSuccessResult = IDL.Record({
+    'affected_events' : IDL.Vec(DirectChatEventWrapper),
     'events' : IDL.Vec(DirectChatEventWrapper),
   });
   const EventsResponse = IDL.Variant({

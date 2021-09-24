@@ -145,7 +145,8 @@ export class UserClient extends CandidService implements IUserClient {
                       ]
                     : [],
             }),
-            (resp) => getUpdatesResponse(resp)
+            (resp) => getUpdatesResponse(resp),
+            args
         );
         return {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),

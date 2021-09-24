@@ -84,7 +84,7 @@
 
     function createReplyContext(): EnhancedReplyContext<ReplyContext> {
         return {
-            userId: senderId,
+            senderId,
             chatId: chatSummary.chatId,
             eventIndex: eventIndex,
             content: msg.content,

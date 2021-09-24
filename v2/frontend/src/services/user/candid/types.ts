@@ -141,6 +141,7 @@ export interface EventsRangeArgs {
 export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
+  'affected_events' : Array<DirectChatEventWrapper>,
   'events' : Array<DirectChatEventWrapper>,
 }
 export interface FieldTooLongResult {
@@ -368,7 +369,7 @@ export interface RemoveWebRtcConnectionDetailsArgs { 'ids' : Array<string> }
 export type RemoveWebRtcConnectionDetailsResponse = { 'Success' : null };
 export interface ReplyContext {
   'content' : [] | [MessageContent],
-  'user_id' : UserId,
+  'sender' : UserId,
   'chat_id' : ChatId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
