@@ -294,9 +294,13 @@ impl Events {
         max_events: u32,
     ) -> Vec<EventWrapper<DirectChatEvent>> {
         if let Some(index) = self.get_index(start) {
-            let iter = self.events.iter().skip(index);
-            let iter: Box<dyn Iterator<Item = &EventWrapper<DirectChatEventInternal>>> =
-                if ascending { Box::new(iter) } else { Box::new(iter.rev()) };
+            let iter: Box<dyn Iterator<Item = &EventWrapper<DirectChatEventInternal>>> = if ascending {
+                let range = &self.events[index..];
+                Box::new(range.iter())
+            } else {
+                let range = &self.events[..=index];
+                Box::new(range.iter().rev())
+            };
 
             let mut events = Vec::new();
             let mut messages_count: u32 = 0;
@@ -498,11 +502,91 @@ impl Events {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Principal;
     use std::mem::size_of;
 
     #[test]
     fn enum_size() {
         let size = size_of::<DirectChatEventInternal>();
         assert_eq!(size, 16);
+    }
+
+    #[test]
+    fn from_index_message_limit() {
+        let events = setup_events();
+
+        let results = events.from_index(10.into(), true, 10, 40);
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, DirectChatEvent::Message(_)))
+                .count(),
+            10
+        );
+        assert_eq!(results.first().unwrap().index, 10.into());
+        assert_eq!(results.last().unwrap().index, 29.into());
+    }
+
+    #[test]
+    fn from_index_message_limit_rev() {
+        let events = setup_events();
+
+        let results = events.from_index(40.into(), false, 10, 40);
+
+        assert_eq!(
+            results
+                .iter()
+                .filter(|e| matches!(e.event, DirectChatEvent::Message(_)))
+                .count(),
+            10
+        );
+        assert_eq!(results.first().unwrap().index, 40.into());
+        assert_eq!(results.last().unwrap().index, 21.into());
+    }
+
+    #[test]
+    fn from_index_event_limit() {
+        let events = setup_events();
+
+        let results = events.from_index(10.into(), true, 15, 25);
+
+        assert_eq!(results.len(), 25);
+        assert_eq!(results.first().unwrap().index, 10.into());
+        assert_eq!(results.last().unwrap().index, 34.into());
+    }
+
+    #[test]
+    fn from_index_event_limit_rev() {
+        let events = setup_events();
+
+        let results = events.from_index(40.into(), false, 15, 25);
+
+        assert_eq!(results.len(), 25);
+        assert_eq!(results.first().unwrap().index, 40.into());
+        assert_eq!(results.last().unwrap().index, 16.into());
+    }
+
+    fn setup_events() -> Events {
+        let my_user_id = Principal::from_slice(&[1]).into();
+        let their_user_id = Principal::from_slice(&[2]).into();
+
+        let mut events = Events::new(my_user_id, their_user_id, 1);
+
+        for i in 2..50 {
+            let message_id = i.into();
+            events.push_message(PushMessageArgs {
+                sent_by_me: true,
+                message_id,
+                content: MessageContent::Text(TextContent {
+                    text: "hello".to_owned(),
+                }),
+                replies_to: None,
+                now: i as u64,
+            });
+            events.push_event(DirectChatEventInternal::MessageReactionAdded(Box::new(message_id)), i as u64);
+        }
+
+        events
     }
 }
