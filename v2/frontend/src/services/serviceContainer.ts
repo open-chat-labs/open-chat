@@ -316,4 +316,12 @@ export class ServiceContainer {
     ): Promise<ToggleReactionResponse> {
         return this.getGroupClient(chatId).toggleReaction(messageId, reaction);
     }
+
+    toggleDirectChatReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.userClient.toggleReaction(otherUserId, messageId, reaction);
+    }
 }

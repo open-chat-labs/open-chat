@@ -117,7 +117,7 @@
 
 {#if showEmojiPicker}
     <Overlay active={showEmojiPicker}>
-        <ModalContent fill={true}>
+        <ModalContent hideFooter={true} hideHeader={true} fill={true}>
             <span slot="body">
                 {#await import("./EmojiPicker.svelte")}
                     <div class="loading-emoji"><Loading /></div>
@@ -133,26 +133,25 @@
     </Overlay>
 {/if}
 
-<div
-    bind:this={msgElement}
-    class="chat-message-wrapper"
-    class:me
-    class:last
-    data-index={msg.messageIndex}
-    id={`event-${eventIndex}`}>
-    {#if me}
-        <div class="actions">
-            <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                <HoverIcon>
-                    <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
-                </HoverIcon>
+<div class="message-wrapper" class:last>
+    <div
+        bind:this={msgElement}
+        class="message"
+        class:me
+        data-index={msg.messageIndex}
+        id={`event-${eventIndex}`}>
+        {#if me}
+            <div class="actions">
+                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                    <HoverIcon>
+                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                    </HoverIcon>
+                </div>
             </div>
-        </div>
-    {/if}
+        {/if}
 
-    <div class="chat-message">
         <div
-            class="chat-bubble"
+            class="message-bubble"
             class:focused
             class:fill
             class:me
@@ -215,47 +214,50 @@
                 </MenuIcon>
             </div>
         </div>
-    </div>
-    {#if !me}
-        <div class="actions">
-            <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                <HoverIcon>
-                    <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
-                </HoverIcon>
+        {#if !me}
+            <div class="actions">
+                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                    <HoverIcon>
+                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                    </HoverIcon>
+                </div>
             </div>
-        </div>
-    {/if}
-</div>
+        {/if}
+    </div>
 
-<div class="message-footer" class:last>
-    {#if msg.reactions.length > 0}
-        <div class="reactions" class:me>
-            {#each msg.reactions as { reaction }}
-                <div
-                    in:pop={{ duration: 500 }}
-                    on:click={() => toggleReaction(reaction)}
-                    class="reaction">
-                    {reaction}
-                </div>
-            {/each}
-        </div>
-    {/if}
-    {#if groupChat && !me && last}
-        <div class="sender">
-            <Link on:click={chatWithUser}>
-                <div class="avatar-section">
-                    <div class="avatar">
-                        <Avatar
-                            url={avatarUrl(sender)}
-                            status={userStatus}
-                            size={AvatarSize.Tiny} />
+    <div class="message-footer" class:last>
+        {#if msg.reactions.length > 0}
+            <div class="message-reactions" class:me>
+                {#each msg.reactions as { reaction, userIds }}
+                    <div
+                        in:pop={{ duration: 500 }}
+                        on:click={() => toggleReaction(reaction)}
+                        class="message-reaction">
+                        {reaction}
+                        <span class="reaction-count">
+                            {userIds.size > 9 ? "9+" : userIds.size}
+                        </span>
                     </div>
+                {/each}
+            </div>
+        {/if}
+        {#if groupChat && !me && last}
+            <div class="message-sender">
+                <Link on:click={chatWithUser}>
+                    <div class="avatar-section">
+                        <div class="avatar">
+                            <Avatar
+                                url={avatarUrl(sender)}
+                                status={userStatus}
+                                size={AvatarSize.Tiny} />
+                        </div>
 
-                    <h4 class="username">{username}</h4>
-                </div>
-            </Link>
-        </div>
-    {/if}
+                        <h4 class="username">{username}</h4>
+                    </div>
+                </Link>
+            </div>
+        {/if}
+    </div>
 </div>
 
 <style type="text/scss">
@@ -266,17 +268,23 @@
         height: 16px;
     }
 
-    :global(.chat-message .loading) {
+    :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
     }
 
-    :global(.chat-message .content a) {
+    :global(.message-bubble .content a) {
         text-decoration: underline;
     }
 
-    :global(.chat-message .content ul) {
+    :global(.message-bubble .content ul) {
         margin: 0 $sp4;
+    }
+
+    .message-wrapper {
+        &.last {
+            margin-bottom: $sp4;
+        }
     }
 
     .meta {
@@ -316,7 +324,7 @@
 
     .avatar-section {
         position: relative;
-        display: flex;
+        display: inline-flex;
         align-items: center;
 
         .avatar {
@@ -325,15 +333,11 @@
     }
 
     .message-footer {
-        &.last {
-            margin-bottom: $sp5;
+        .message-sender {
+            margin-bottom: $sp2;
         }
 
-        .sender {
-            margin-top: $sp2;
-        }
-
-        .reactions {
+        .message-reactions {
             display: flex;
             justify-content: flex-start;
             flex-wrap: wrap;
@@ -342,31 +346,35 @@
                 justify-content: flex-end;
             }
 
-            .reaction {
-                border-radius: 50%;
-                background-color: #efefef;
+            .message-reaction {
+                border-radius: $sp4;
+                background-color: var(--reaction-bg);
+                color: var(--reaction-txt);
                 cursor: pointer;
-                width: $sp5;
                 height: $sp5;
+                padding: $sp2;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 margin-left: 1px;
                 margin-right: 1px;
+                margin-bottom: $sp2;
+
+                .reaction-count {
+                    @include font(book, normal, fs-60);
+                    margin-left: $sp2;
+                }
             }
         }
     }
 
-    .chat-message-wrapper {
+    .message {
         display: flex;
         justify-content: flex-start;
+        margin-bottom: $sp2;
 
         &.me {
             justify-content: flex-end;
-
-            // &.last {
-            //     margin-bottom: $sp5;
-            // }
         }
 
         .actions {
@@ -384,12 +392,7 @@
         }
     }
 
-    .chat-message {
-        max-width: 90%;
-        min-width: 50%;
-    }
-
-    .chat-bubble {
+    .message-bubble {
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
@@ -399,7 +402,8 @@
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $sp5;
-        margin-bottom: $sp3;
+        max-width: 90%;
+        min-width: 50%;
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -467,7 +471,6 @@
 
     .username {
         margin: 0;
-        margin-bottom: $sp2;
         @include font(bold, normal, fs-100);
         color: #fff;
     }

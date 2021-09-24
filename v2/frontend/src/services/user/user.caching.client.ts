@@ -15,6 +15,7 @@ import type {
     Message,
     IndexRange,
     EventWrapper,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -108,5 +109,13 @@ export class CachingUserClient implements IUserClient {
 
     setAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.client.setAvatar(data);
+    }
+
+    toggleReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.client.toggleReaction(otherUserId, messageId, reaction);
     }
 }

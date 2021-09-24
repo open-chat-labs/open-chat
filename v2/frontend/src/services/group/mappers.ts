@@ -219,6 +219,7 @@ export function addParticipantsResponse(
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<GroupChatEvent> {
     if ("Success" in candid) {
+        console.log("event response: ", candid);
         return {
             events: candid.Success.events.map(event),
         };
@@ -230,7 +231,6 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
 }
 
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
-    console.log(candid);
     if ("Message" in candid) {
         return message(candid.Message);
     }

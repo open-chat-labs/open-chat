@@ -176,24 +176,33 @@
         // optimistic update
         machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
 
-        // trigger api call
-        $machine.context.serviceContainer
-            .toggleGroupChatReaction(
-                $machine.context.chatSummary.chatId,
-                ev.detail.message.messageId,
-                ev.detail.reaction
-            )
+        const apiPromise =
+            $machine.context.chatSummary.kind === "group_chat"
+                ? $machine.context.serviceContainer.toggleGroupChatReaction(
+                      $machine.context.chatSummary.chatId,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction
+                  )
+                : $machine.context.serviceContainer.toggleDirectChatReaction(
+                      $machine.context.chatSummary.them,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction
+                  );
+
+        apiPromise
             .then((resp) => {
                 if (resp === "added" || resp === "removed") {
                     console.log("Reaction ", resp);
                     // commit to cache on success
                 } else {
                     // toggle again to undo
+                    console.log(resp);
                     machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
                 }
             })
             .catch((_err) => {
                 // toggle again to undo
+                console.log(_err);
                 machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
             });
     }

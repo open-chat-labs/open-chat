@@ -18,6 +18,7 @@ import type {
     MarkReadResponse,
     IndexRange,
     EventWrapper,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -29,6 +30,7 @@ import {
     markReadResponse,
     sendMessageResponse,
     setAvatarResponse,
+    toggleReactionResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
@@ -241,6 +243,21 @@ export class UserClient extends CandidService implements IUserClient {
                 message_ranges: ranges,
             }),
             markReadResponse
+        );
+    }
+
+    toggleReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.handleResponse(
+            this.userService.toggle_reaction({
+                user_id: Principal.fromText(otherUserId),
+                message_id: messageId,
+                reaction,
+            }),
+            toggleReactionResponse
         );
     }
 }

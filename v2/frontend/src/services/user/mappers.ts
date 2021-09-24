@@ -13,6 +13,8 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
+    ApiToggleReactionResponse,
+    ApiDirectChatEvent,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -30,10 +32,30 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import { message } from "../common/chatMappers";
+
+export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
+    if ("Added" in candid) {
+        return "added";
+    }
+    if ("Removed" in candid) {
+        return "removed";
+    }
+    if ("InvalidReaction" in candid) {
+        return "invalid";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
+}
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
     console.log(candid);
@@ -189,23 +211,45 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
 }
 
 function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
-    if ("Message" in candid.event) {
+    return {
+        event: directChatEvent(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
+function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
+    if ("Message" in candid) {
+        return message(candid.Message);
+    }
+
+    if ("DirectChatCreated" in candid) {
         return {
-            event: message(candid.event.Message),
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "direct_chat_created",
         };
     }
-    if ("DirectChatCreated" in candid.event) {
+
+    if ("MessageReactionAdded" in candid) {
         return {
-            event: {
-                kind: "direct_chat_created",
+            kind: "reaction_added",
+            message: {
+                eventIndex: candid.MessageReactionAdded.event_index,
+                messageId: candid.MessageReactionAdded.message_id,
             },
-            index: candid.index,
-            timestamp: candid.timestamp,
         };
     }
-    throw new Error("Unexpected ApiDirectChatEventWrapper type received");
+
+    if ("MessageReactionRemoved" in candid) {
+        return {
+            kind: "reaction_removed",
+            message: {
+                eventIndex: candid.MessageReactionRemoved.event_index,
+                messageId: candid.MessageReactionRemoved.message_id,
+            },
+        };
+    }
+    // todo - we know there are other event types that we are not dealing with yet
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {

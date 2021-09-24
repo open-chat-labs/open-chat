@@ -43,6 +43,7 @@ import {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
+    ToggleReactionResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -88,6 +89,7 @@ export {
     LeaveGroupResponse as ApiLeaveGroupResponse,
     MarkReadResponse as ApiMarkReadResponse,
     SetAvatarResponse as ApiSetAvatarResponse,
+    ToggleReactionResponse as ApiToggleReactionResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
