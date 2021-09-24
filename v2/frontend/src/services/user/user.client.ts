@@ -103,6 +103,7 @@ export class UserClient extends CandidService implements IUserClient {
         }
 
         // merge the retrieved events with the events accumulated from the previous iteration(s)
+        // todo - we also need to merge affected events
         const merged = ascending
             ? [...previouslyLoadedEvents, ...resp.events]
             : [...resp.events, ...previouslyLoadedEvents];
@@ -110,7 +111,7 @@ export class UserClient extends CandidService implements IUserClient {
         // check whether we have accumulated enough messages to display
         if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
             console.log("we got enough visible messages to display now");
-            return resp;
+            return { ...resp, events: merged };
         } else if (iterations < MAX_RECURSION) {
             // recurse and get the next chunk since we don't yet have enough events
             console.log("we don't have enough message, recursing", resp.events);

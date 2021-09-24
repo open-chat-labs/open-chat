@@ -532,6 +532,8 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
 }
 
 // todo - this is not very efficient at the moment
+// todo - also we can't straight overwrite the affected event, we have to *merge* it
+// otherwise we might lose local reactions (in fact we *will*)
 export function replaceAffected(
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[]
