@@ -36,14 +36,14 @@ macro_rules! generate_common_methods {
 
         pub fn affected_events(&self, events: &[EventWrapper<$chat_event_event>]) -> Vec<EventWrapper<$chat_event_event>> {
             // We use this set to exclude events that are already in the input list
-            let event_ids_set: HashSet<_> = events.iter().map(|e| e.index).collect();
+            let event_indexes_set: HashSet<_> = events.iter().map(|e| e.index).collect();
 
-            let affected_event_ids = events
+            let affected_event_indexes = events
                 .iter()
                 .filter_map(|e| {
-                    if let Some(affected_event_id) = e.event.affected_event() {
-                        if !event_ids_set.contains(&e.index) {
-                            return Some(affected_event_id);
+                    if let Some(affected_event_index) = e.event.affected_event() {
+                        if !event_indexes_set.contains(&affected_event_index) {
+                            return Some(affected_event_index);
                         }
                     }
                     None
@@ -51,7 +51,7 @@ macro_rules! generate_common_methods {
                 .unique()
                 .collect();
 
-            self.get_by_index(affected_event_ids)
+            self.get_by_index(affected_event_indexes)
         }
     };
 }
