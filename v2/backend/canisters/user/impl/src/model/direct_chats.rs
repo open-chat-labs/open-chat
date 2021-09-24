@@ -35,6 +35,10 @@ impl DirectChats {
         })
     }
 
+    pub fn exists(&self, user_id: UserId) -> bool {
+        self.direct_chats.contains_key(&user_id.into())
+    }
+
     pub fn push_message(
         &mut self,
         their_user_id: UserId,

@@ -14,6 +14,6 @@ fn remove_webrtc_endpoints(args: Args) -> Response {
 
 fn remove_webrtc_endpoints_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let ids = HashSet::from_iter(args.ids);
-    runtime_state.data.webrtc_endpoints_map.remove_endpoints(&ids);
+    runtime_state.data.webrtc_endpoints_map.remove(&ids);
     Response::Success
 }
