@@ -531,15 +531,46 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
+// todo - I really wish this didn't need to be this complicated, but I fear it does
+function mergeReactions(existing: Reaction[], incoming: Reaction[]): Reaction[] {
+    return incoming.reduce<Reaction[]>((merged, reaction) => {
+        const ex = existing.find((r) => r.reaction === reaction.reaction);
+        if (ex !== undefined) {
+            ex.userIds = new Set([...reaction.userIds, ...ex.userIds]);
+        } else {
+            merged.push(reaction);
+        }
+        return merged;
+    }, existing);
+}
+
+function mergeMessageEvents(
+    existing: EventWrapper<ChatEvent>,
+    incoming?: EventWrapper<ChatEvent>
+): EventWrapper<ChatEvent> {
+    if (
+        incoming !== undefined &&
+        existing.event.kind === "message" &&
+        incoming.event.kind === "message"
+    ) {
+        incoming.event.reactions = mergeReactions(
+            existing.event.reactions,
+            incoming.event.reactions
+        );
+        return incoming;
+    }
+    return existing;
+}
+
 // todo - this is not very efficient at the moment
-// todo - also we can't straight overwrite the affected event, we have to *merge* it
-// otherwise we might lose local reactions (in fact we *will*)
 export function replaceAffected(
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     return events.map((ev) => {
-        const aff = affectedEvents.find((a) => a.index === ev.index);
-        return aff ?? ev;
+        return mergeMessageEvents(
+            ev,
+            affectedEvents.find((a) => a.index === ev.index)
+        );
     });
 }
