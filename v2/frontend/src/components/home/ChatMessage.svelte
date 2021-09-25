@@ -93,7 +93,6 @@
     }
 
     function replyPrivately() {
-        // todo - this is going to need a bit of attention
         dispatch("replyPrivatelyTo", createReplyContext());
     }
 

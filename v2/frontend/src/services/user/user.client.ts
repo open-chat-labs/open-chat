@@ -184,29 +184,29 @@ export class UserClient extends CandidService implements IUserClient {
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
+        console.log("replying to chat: ", replyingToChatId);
         return DataClient.create(this.identity, this.userId)
             .uploadData(message.content)
             .then(() => {
-                return this.handleResponse(
-                    this.userService.send_message({
-                        content: apiMessageContent(message.content),
-                        recipient: Principal.fromText(recipientId),
-                        sender_name: sender.username,
-                        message_id: message.messageId,
-                        replies_to: apiOptional(
-                            (replyContext) => ({
-                                sender: Principal.fromText(sender.userId),
-                                chat_id_if_other: apiOptional(
-                                    (id) => Principal.fromText(id),
-                                    replyingToChatId
-                                ),
-                                message_id: replyContext.messageId,
-                            }),
-                            message.repliesTo
-                        ),
-                    }),
-                    sendMessageResponse
-                );
+                const req = {
+                    content: apiMessageContent(message.content),
+                    recipient: Principal.fromText(recipientId),
+                    sender_name: sender.username,
+                    message_id: message.messageId,
+                    replies_to: apiOptional(
+                        (replyContext) => ({
+                            sender: Principal.fromText(sender.userId),
+                            chat_id_if_other: apiOptional(
+                                (id) => Principal.fromText(id),
+                                replyingToChatId
+                            ),
+                            message_id: replyContext.messageId,
+                        }),
+                        message.repliesTo
+                    ),
+                };
+                console.log("Sending message: ", req);
+                return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
     }
 

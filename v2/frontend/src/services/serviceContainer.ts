@@ -97,7 +97,11 @@ export class ServiceContainer {
             return this.sendGroupMessage(chat.chatId, user.username, msg);
         }
         if (chat.kind === "direct_chat") {
-            return this.sendDirectMessage(chat.them, user, msg);
+            const replyingToChatId =
+                msg.repliesTo && chat.chatId !== msg.repliesTo.chatId
+                    ? msg.repliesTo.chatId
+                    : undefined;
+            return this.sendDirectMessage(chat.them, user, msg, replyingToChatId);
         }
         throw new UnsupportedValueError("Unexpect chat type", chat);
     }
@@ -113,9 +117,10 @@ export class ServiceContainer {
     private sendDirectMessage(
         recipientId: string,
         sender: UserSummary,
-        message: Message
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return this.userClient.sendMessage(recipientId, sender, message);
+        return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
