@@ -20,6 +20,7 @@ import type {
 } from "../domain/chat/chat";
 import {
     earliestLoadedEventIndex,
+    eventIsVisible,
     getMinVisibleEventIndex,
     indexRangeForChat,
     latestLoadedEventIndex,
@@ -260,7 +261,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             actions: [
                                 "assignEventsResponse",
                                 pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                    if (ev.data.events.length > 0) {
+                                    if (ev.data.events.some(eventIsVisible)) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
                                             event: "loaded_new_messages",
