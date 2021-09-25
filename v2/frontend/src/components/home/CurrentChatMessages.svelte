@@ -118,8 +118,14 @@
     }
 
     function scrollToIndex(index: number) {
-        scrollToElement(document.getElementById(`event-${index}`));
-        setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        const element = document.getElementById(`event-${index}`);
+        if (!element) {
+            messagesDiv.scrollTop = 0;
+            onScroll();
+        } else {
+            scrollToElement(element);
+            setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        }
     }
 
     function resetScroll() {
@@ -171,7 +177,6 @@
     }
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        console.log(ev.detail.message, ev.detail.reaction);
         // optimistic update
         machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
 
@@ -190,18 +195,15 @@
 
         apiPromise
             .then((resp) => {
-                if (resp === "added" || resp === "removed") {
-                    console.log("Reaction ", resp);
-                    // commit to cache on success
-                } else {
+                if (resp !== "added" && resp !== "removed") {
                     // toggle again to undo
-                    console.log(resp);
+                    console.log("Reaction failed: ", resp);
                     machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
                 }
             })
-            .catch((_err) => {
+            .catch((err) => {
                 // toggle again to undo
-                console.log(_err);
+                console.log("Reaction failed: ", err);
                 machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
             });
     }
@@ -281,6 +283,7 @@
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
+                    console.log("reply: just loaded some messages");
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
