@@ -24,6 +24,7 @@ import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
+import { overwriteEvents } from "../../utils/caching";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -546,13 +547,9 @@ function mergeReactions(existing: Reaction[], incoming: Reaction[]): Reaction[] 
 
 function mergeMessageEvents(
     existing: EventWrapper<ChatEvent>,
-    incoming?: EventWrapper<ChatEvent>
+    incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
-    if (
-        incoming !== undefined &&
-        existing.event.kind === "message" &&
-        incoming.event.kind === "message"
-    ) {
+    if (existing.event.kind === "message" && incoming.event.kind === "message") {
         incoming.event.reactions = mergeReactions(
             existing.event.reactions,
             incoming.event.reactions
@@ -564,13 +561,23 @@ function mergeMessageEvents(
 
 // todo - this is not very efficient at the moment
 export function replaceAffected(
+    chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
-    return events.map((ev) => {
-        return mergeMessageEvents(
-            ev,
-            affectedEvents.find((a) => a.index === ev.index)
-        );
+    const toCacheBust: EventWrapper<ChatEvent>[] = [];
+    const updated = events.map((ev) => {
+        const aff = affectedEvents.find((a) => a.index === ev.index);
+        if (aff !== undefined) {
+            const merged = mergeMessageEvents(ev, aff);
+            toCacheBust.push(merged);
+            return merged;
+        }
+        return ev;
     });
+    if (toCacheBust.length > 0) {
+        // Note - this is fire and forget which is a tiny bit dodgy
+        overwriteEvents(chatId, toCacheBust);
+    }
+    return updated;
 }

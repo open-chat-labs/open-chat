@@ -163,7 +163,7 @@ export async function getCachedMessages<T extends ChatEvent>(
         console.log("cache hit: ", events.length, +new Date() - start);
     }
 
-    // todo - come back and deal with affectedEvents
+    // if we are retrieving completely from the cache, affectedEvents is always empty
     return complete ? { events, affectedEvents: [] } : undefined;
 }
 
@@ -200,6 +200,21 @@ export function setCachedMessages<T extends ChatEvent>(
         await tx.done;
         return resp;
     };
+}
+
+export async function overwriteEvents<T extends ChatEvent>(
+    chatId: string,
+    events: EventWrapper<T>[]
+): Promise<void> {
+    if (db === undefined) {
+        throw new Error("Unable to open indexDB, cannot overwrite cache entries");
+    }
+    const tx = (await db).transaction("chat_messages", "readwrite");
+    const store = tx.objectStore("chat_messages");
+    events.forEach(async (event) => {
+        await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
+    });
+    await tx.done;
 }
 
 export const db = openMessageCache();
