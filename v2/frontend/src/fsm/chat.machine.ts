@@ -37,6 +37,7 @@ import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
+import { overwriteCachedEvents } from "../utils/caching";
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
@@ -321,7 +322,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 ev.data.message.kind === "message" &&
                                 e.event.messageId === ev.data.message.messageId
                             ) {
-                                return {
+                                const updatedEvent = {
                                     ...e,
                                     event: {
                                         ...e.event,
@@ -332,6 +333,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         ),
                                     },
                                 };
+                                overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
+                                return updatedEvent;
                             }
                             return e;
                         }),

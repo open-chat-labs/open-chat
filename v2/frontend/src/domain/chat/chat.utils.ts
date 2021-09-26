@@ -24,7 +24,7 @@ import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { overwriteEvents } from "../../utils/caching";
+import { overwriteCachedEvents } from "../../utils/caching";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -392,7 +392,7 @@ function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEven
 }
 
 export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events).map(groupBySender);
+    return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
 export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -577,7 +577,7 @@ export function replaceAffected(
     });
     if (toCacheBust.length > 0) {
         // Note - this is fire and forget which is a tiny bit dodgy
-        overwriteEvents(chatId, toCacheBust);
+        overwriteCachedEvents(chatId, toCacheBust);
     }
     return updated;
 }

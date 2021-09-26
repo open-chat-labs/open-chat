@@ -202,10 +202,12 @@ export function setCachedMessages<T extends ChatEvent>(
     };
 }
 
-export async function overwriteEvents<T extends ChatEvent>(
+export async function overwriteCachedEvents<T extends ChatEvent>(
     chatId: string,
     events: EventWrapper<T>[]
 ): Promise<void> {
+    if (!process.env.CLIENT_CACHING) return;
+
     if (db === undefined) {
         throw new Error("Unable to open indexDB, cannot overwrite cache entries");
     }
