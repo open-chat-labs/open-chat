@@ -532,25 +532,47 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
-// todo - I really wish this didn't need to be this complicated, but I fear it does
-function mergeReactions(existing: Reaction[], incoming: Reaction[]): Reaction[] {
+// I really wish this didn't need to be this complicated, but I fear it does
+export function mergeReactions(
+    myUserId: string,
+    existing: Reaction[],
+    incoming: Reaction[]
+): Reaction[] {
     return incoming.reduce<Reaction[]>((merged, reaction) => {
         const ex = existing.find((r) => r.reaction === reaction.reaction);
+        // does the incoming reaction exist in the local list of reactions at all
         if (ex !== undefined) {
             ex.userIds = new Set([...reaction.userIds, ...ex.userIds]);
         } else {
-            merged.push(reaction);
+            if (reaction.userIds.has(myUserId)) {
+                if (reaction.userIds.size === 1) {
+                    // only contains me - this means that it is definitely stale and should be ignored
+                    return merged;
+                } else {
+                    // someone else added it, so we should merge it but *without* my userId
+                    reaction.userIds.delete(myUserId);
+                    merged.push({
+                        reaction: reaction.reaction,
+                        userIds: reaction.userIds,
+                    });
+                }
+            } else {
+                // incoming reaction contains only other users - preserve as is
+                merged.push(reaction);
+            }
         }
         return merged;
     }, existing);
 }
 
 function mergeMessageEvents(
+    myUserId: string,
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>
 ): EventWrapper<ChatEvent> {
     if (existing.event.kind === "message" && incoming.event.kind === "message") {
         incoming.event.reactions = mergeReactions(
+            myUserId,
             existing.event.reactions,
             incoming.event.reactions
         );
@@ -561,6 +583,7 @@ function mergeMessageEvents(
 
 // todo - this is not very efficient at the moment
 export function replaceAffected(
+    myUserId: string,
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[]
@@ -569,7 +592,7 @@ export function replaceAffected(
     const updated = events.map((ev) => {
         const aff = affectedEvents.find((a) => a.index === ev.index);
         if (aff !== undefined) {
-            const merged = mergeMessageEvents(ev, aff);
+            const merged = mergeMessageEvents(myUserId, ev, aff);
             toCacheBust.push(merged);
             return merged;
         }

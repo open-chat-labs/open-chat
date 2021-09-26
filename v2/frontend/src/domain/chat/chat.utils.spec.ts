@@ -6,6 +6,7 @@ import type {
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     MessageIndexRange,
+    Reaction,
 } from "./chat";
 import {
     compareMessageRange,
@@ -16,6 +17,7 @@ import {
     insertIndexIntoRanges,
     mergeChatUpdates,
     mergeMessageIndexRanges,
+    mergeReactions,
     newMessageId,
     setMessageRead,
     userIdsFromChatSummaries,
@@ -720,4 +722,115 @@ describe("merging updates", () => {
     });
 
     test.todo("chats end up in the right order");
+});
+
+describe("merge reactions", () => {
+    const me = "z";
+
+    test("existing list is empty", () => {
+        const existing: Reaction[] = [];
+        const incoming = [
+            {
+                reaction: "a",
+                userIds: new Set<string>(["1", "2"]),
+            },
+            {
+                reaction: "b",
+                userIds: new Set<string>(["1", "2", "3"]),
+            },
+        ];
+        expect(mergeReactions(me, [...existing], incoming)).toEqual(incoming);
+    });
+
+    describe("incoming has, existing does not have", () => {
+        test("incoming reaction only contains me", () => {
+            // this *must* be stale so we should ignore it and therefore it should *not* be in the merged result
+            const existing: Reaction[] = [];
+            const incoming = [
+                {
+                    reaction: "a",
+                    userIds: new Set<string>(["z"]),
+                },
+            ];
+            const merged = mergeReactions(me, [...existing], incoming);
+            expect(merged).toEqual(existing);
+        });
+
+        test("incoming reaction contains me and another", () => {
+            // we should merge it in, but remove our userId
+            const existing: Reaction[] = [];
+            const incoming = [
+                {
+                    reaction: "a",
+                    userIds: new Set<string>(["z", "x"]),
+                },
+            ];
+            const merged = mergeReactions(me, [...existing], incoming);
+            expect(merged).toEqual([
+                {
+                    reaction: "a",
+                    userIds: new Set<string>(["x"]),
+                },
+            ]);
+        });
+
+        test("incoming reaction contains only other users", () => {
+            // we should merge it in unchanged
+            const existing: Reaction[] = [];
+            const incoming = [
+                {
+                    reaction: "a",
+                    userIds: new Set<string>(["a", "x"]),
+                },
+            ];
+            const merged = mergeReactions(me, [...existing], incoming);
+            expect(merged).toEqual([
+                {
+                    reaction: "a",
+                    userIds: new Set<string>(["a", "x"]),
+                },
+            ]);
+        });
+    });
+
+    describe("existing has, incoming does not have", () => {
+        // the only way this happens is if someone else has removed the reaction
+
+        test("existing contains my userId", () => {
+            // this implies I have added it locally so we need to preserve it
+        });
+
+        test("existing does not contain my userId", () => {
+            // this implies someone else removed it so we should remove it
+        });
+    });
+
+    describe("reaction exists in both lists", () => {
+        describe("existing does not contain our userId", () => {
+            test("incoming does not contain our user", () => {
+                // removed locally, but still exists
+                // preserve
+            });
+            describe("incoming does contain our userId", () => {
+                test("incoming contains no other userIds", () => {
+                    // everyone has removed it
+                    // remove it
+                });
+                test("incoming contains other userIds", () => {
+                    // we removed it, but others have added it
+                    // preserve, but remove our userId
+                });
+            });
+        });
+        describe("existing does contain our userId", () => {
+            test("incoming also contains our userId", () => {
+                // someone else added it
+                // preserve as is
+            });
+            test("incoming does not contains our userId", () => {
+                // we added it locally
+                // preserve and add our userId
+            });
+        });
+    });
 });

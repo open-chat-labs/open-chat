@@ -215,6 +215,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       userLookup: ev.data.userLookup,
                       // todo - we also need to update the cache for any affected event
                       events: replaceAffected(
+                          ctx.user!.userId,
                           ctx.chatSummary.chatId,
                           dedupe(
                               (a, b) => a.index === b.index,
