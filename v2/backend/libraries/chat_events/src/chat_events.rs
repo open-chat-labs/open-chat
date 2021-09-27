@@ -86,6 +86,7 @@ pub struct MessageInternal {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContextInternal>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
+    pub last_updated: Option<TimestampMillis>,
 }
 
 pub struct PushMessageArgs {
@@ -162,6 +163,7 @@ impl ChatEvents {
             content: args.content,
             replies_to: args.replies_to,
             reactions: Vec::new(),
+            last_updated: None,
         };
         let message = self.hydrate_message(&message_internal);
         let event_index = self.push_event(ChatEventInternal::Message(Box::new(message_internal)), args.now);
@@ -205,6 +207,7 @@ impl ChatEvents {
                                 DeleteMessageResult::AlreadyDeleted
                             } else {
                                 message.content = MessageContent::Deleted;
+                                message.last_updated = Some(now);
                                 self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                                 DeleteMessageResult::Success
                             }
@@ -274,19 +277,24 @@ impl ChatEvents {
     }
 
     pub fn latest_message(&self) -> Option<EventWrapper<Message>> {
+        self.latest_message_if_updated(0)
+    }
+
+    pub fn latest_message_if_updated(&self, since: TimestampMillis) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
 
         self.get_internal(event_index)
             .map(|e| {
                 if let ChatEventInternal::Message(m) = &e.event {
-                    Some(EventWrapper {
-                        index: e.index,
-                        timestamp: e.timestamp,
-                        event: self.hydrate_message(m),
-                    })
-                } else {
-                    None
+                    if e.timestamp > since || m.last_updated.unwrap_or(0) > since {
+                        return Some(EventWrapper {
+                            index: e.index,
+                            timestamp: e.timestamp,
+                            event: self.hydrate_message(m),
+                        });
+                    }
                 }
+                None
             })
             .flatten()
     }
@@ -319,6 +327,7 @@ impl ChatEvents {
                 .iter()
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
+            edited: message.last_updated.is_some(),
         }
     }
 
