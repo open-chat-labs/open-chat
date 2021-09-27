@@ -1,5 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
+use types::EventIndex;
 use user_canister::events::{Response::*, *};
 
 #[query]
@@ -11,9 +12,13 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
-        let events = chat
-            .events
-            .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
+        let events = chat.events.from_index(
+            args.start_index,
+            args.ascending,
+            args.max_messages,
+            args.max_events,
+            EventIndex::default(),
+        );
 
         let affected_events = chat.events.affected_events(&events);
 
