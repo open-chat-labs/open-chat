@@ -26,13 +26,13 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .events
             .toggle_reaction(participant.user_id, args.message_id, args.reaction, now)
         {
-            ToggleReactionResult::Added => {
+            ToggleReactionResult::Added(e) => {
                 handle_activity_notification(runtime_state);
-                Added
+                Added(e)
             }
-            ToggleReactionResult::Removed => {
+            ToggleReactionResult::Removed(e) => {
                 handle_activity_notification(runtime_state);
-                Removed
+                Removed(e)
             }
             ToggleReactionResult::MessageNotFound => MessageNotFound,
         }

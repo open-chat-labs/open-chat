@@ -28,23 +28,23 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .events
             .toggle_reaction(my_user_id, args.message_id, args.reaction.clone(), now)
         {
-            ToggleReactionResult::Added => {
+            ToggleReactionResult::Added(e) => {
                 ic_cdk::block_on(toggle_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
                     true,
                 ));
-                Added
+                Added(e)
             }
-            ToggleReactionResult::Removed => {
+            ToggleReactionResult::Removed(e) => {
                 ic_cdk::block_on(toggle_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
                     false,
                 ));
-                Removed
+                Removed(e)
             }
             ToggleReactionResult::MessageNotFound => MessageNotFound,
         }

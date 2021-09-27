@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageId, Reaction, UserId};
+use types::{EventIndex, MessageId, Reaction, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -11,8 +11,8 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Added,
-    Removed,
+    Added(EventIndex),
+    Removed(EventIndex),
     InvalidReaction,
     MessageNotFound,
     ChatNotFound,
