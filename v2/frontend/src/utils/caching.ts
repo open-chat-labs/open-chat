@@ -9,7 +9,6 @@ import type {
 import { blobbyContentTypes } from "../domain/chat/chat.utils";
 import { rollbar } from "./logging";
 
-export const MAX_EVENTS = 50;
 export const MAX_MSGS = 20;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -113,7 +112,7 @@ async function aggregateEvents<T extends ChatEvent>(
     let currentIndex = startIndex;
     const events: EventWrapper<T>[] = [];
 
-    while (numMessages < MAX_MSGS && events.length < MAX_EVENTS) {
+    while (numMessages < MAX_MSGS) {
         // if we have exceeded the range of this chat then we have succeeded
         if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
             return [true, events];
@@ -139,7 +138,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
     }
 
-    return [numMessages >= MAX_MSGS || events.length >= MAX_EVENTS, events];
+    return [numMessages >= MAX_MSGS, ascending ? events : events.reverse()];
 }
 
 export async function getCachedMessages<T extends ChatEvent>(

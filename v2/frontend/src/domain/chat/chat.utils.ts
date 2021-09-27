@@ -619,7 +619,6 @@ export function replaceAffected(
 export function pruneLocalReactions(
     reactions: Record<string, LocalReaction[]>
 ): Record<string, LocalReaction[]> {
-    console.log("Pruning locally recorded reactions older than ten seconds");
     const limit = +new Date() - 10000;
     return Object.entries(reactions).reduce((pruned, [k, v]) => {
         const filtered = v.filter((r) => r.timestamp > limit);
