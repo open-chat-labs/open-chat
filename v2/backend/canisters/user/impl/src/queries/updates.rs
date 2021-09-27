@@ -224,13 +224,7 @@ fn finalize(
                 read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.clone()),
             }));
         } else {
-            let mut latest_message = None;
-            if let Some(m) = direct_chat.events.latest_message() {
-                if m.timestamp > updates_since {
-                    latest_message = Some(m.clone());
-                }
-            }
-
+            let latest_message = direct_chat.events.latest_message_if_updated(updates_since);
             let latest_event = direct_chat.events.last();
             let latest_event_index = if latest_event.timestamp > updates_since { Some(latest_event.index) } else { None };
 

@@ -10,6 +10,7 @@ pub struct Message {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
+    pub edited: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
