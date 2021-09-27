@@ -129,11 +129,9 @@ function loadEvents(
             ascending
         );
     }
-    console.log("criteria: ", startIndex, ascending);
     const events = serviceContainer
         .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
         .then((resp) => {
-            console.log(resp);
             return resp;
         });
     return events;
@@ -184,7 +182,7 @@ export function highestUnloadedEventIndex(ctx: ChatContext): number {
 export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const start = highestUnloadedEventIndex(ctx);
     const min = getMinVisibleEventIndex(ctx.chatSummary);
-    return start > min ? [start, false] : undefined;
+    return start >= min ? [start, false] : undefined;
 }
 
 export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
