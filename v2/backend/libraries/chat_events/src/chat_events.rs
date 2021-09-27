@@ -107,8 +107,8 @@ pub enum DeleteMessageResult {
 }
 
 pub enum ToggleReactionResult {
-    Added,
-    Removed,
+    Added(EventIndex),
+    Removed(EventIndex),
     MessageNotFound,
 }
 
@@ -257,11 +257,11 @@ impl ChatEvents {
                 };
 
                 return if added {
-                    self.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
-                    ToggleReactionResult::Added
+                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
+                    ToggleReactionResult::Added(new_event_index)
                 } else {
-                    self.push_event(ChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
-                    ToggleReactionResult::Removed
+                    let new_event_index = self.push_event(ChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
+                    ToggleReactionResult::Removed(new_event_index)
                 };
             }
         }
