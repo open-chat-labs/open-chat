@@ -205,7 +205,7 @@ type GroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
-        webrtc_session_details: vec WebRtcSessionDetailsEvent;
+        // webrtc_session_details: vec WebRtcSessionDetailsEvent;
     };
 
 type GroupDescriptionChanged =
@@ -261,7 +261,7 @@ type ReplyContext =
         chat_id: ChatId;
         event_index: EventIndex;
         message_id: MessageId;
-        user_id: UserId;
+        sender: UserId;
         content: opt MessageContent;
     };
 

@@ -26,6 +26,11 @@ export interface Theme {
     error: string;
     accent: string;
 
+    reaction: {
+        bg: string;
+        txt: string;
+    };
+
     timeline: {
         txt: string;
         bg: string;
@@ -202,6 +207,11 @@ const defaultTheme = {
     error: "#CF6679",
     accent: "hotpink",
 
+    reaction: {
+        bg: "#efefef",
+        txt: "#191919",
+    },
+
     timeline: {
         txt: "rgba(255,255,255,0.9)",
         bg: "transparent",
@@ -377,6 +387,11 @@ export const themes: Themes = {
         // error: "#800000",
         error: "#CF6679",
         accent: "hotpink",
+
+        reaction: {
+            bg: dark25,
+            txt: dark60,
+        },
 
         timeline: {
             txt: "rgba(255,255,255,0.7)",
@@ -569,7 +584,11 @@ function themeByName(name: string | null): Theme {
     return themes[name as keyof Themes] ?? themes.light;
 }
 
-export function loadSavedTheme(): string {
+export function getCurrentThemeName(): string {
+    return localStorage.getItem("openchat_theme") ?? "light";
+}
+
+export function loadAndApplySavedTheme(): string {
     const themeName = localStorage.getItem("openchat_theme");
     const theme = themeByName(themeName);
     writeCssVars("--", theme);

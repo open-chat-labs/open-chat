@@ -3,10 +3,13 @@ import type {
     ChatEvent,
     EventsResponse,
     EventWrapper,
+    IndexRange,
     MergedUpdatesResponse,
 } from "../domain/chat/chat";
 import { blobbyContentTypes } from "../domain/chat/chat.utils";
 import { rollbar } from "./logging";
+
+export const MAX_MSGS = 20;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -98,32 +101,74 @@ export function setCachedChats(
     };
 }
 
+async function aggregateEvents<T extends ChatEvent>(
+    db: Database,
+    [min, max]: IndexRange,
+    chatId: string,
+    startIndex: number,
+    ascending: boolean
+): Promise<[boolean, EventWrapper<T>[]]> {
+    let numMessages = 0;
+    let currentIndex = startIndex;
+    const events: EventWrapper<T>[] = [];
+
+    while (numMessages < MAX_MSGS) {
+        // if we have exceeded the range of this chat then we have succeeded
+        if ((currentIndex > max && ascending) || (currentIndex < min && !ascending)) {
+            return [true, events];
+        }
+
+        const key = createCacheKey(chatId, currentIndex);
+        const evt = await (await db).get("chat_messages", key);
+        if (evt) {
+            if (evt.event.kind === "message") {
+                numMessages += 1;
+            }
+            events.push(evt as EventWrapper<T>);
+        } else {
+            console.log("Couldn't find key: ", key);
+            // as soon as we draw a blank, bale out
+            break;
+        }
+
+        if (ascending) {
+            currentIndex += 1;
+        } else {
+            currentIndex -= 1;
+        }
+    }
+
+    return [numMessages >= MAX_MSGS, ascending ? events : events.reverse()];
+}
+
 export async function getCachedMessages<T extends ChatEvent>(
     db: Database,
+    eventIndexRange: IndexRange,
     chatId: string,
-    fromIndex: number,
-    toIndex: number
+    startIndex: number,
+    ascending: boolean
 ): Promise<EventsResponse<T> | undefined> {
-    const cachedMsgs = await (
-        await db
-    ).getAll(
-        "chat_messages",
-        IDBKeyRange.bound(createCacheKey(chatId, fromIndex), createCacheKey(chatId, toIndex))
+    console.log("cache: ", eventIndexRange, startIndex, ascending);
+    const start = +new Date();
+    const [complete, events] = await aggregateEvents<T>(
+        db,
+        eventIndexRange,
+        chatId,
+        startIndex,
+        ascending
     );
-    console.log("cache", cachedMsgs.length, toIndex - fromIndex);
-    if (cachedMsgs.length === toIndex - fromIndex + 1) {
-        // the range is inclusive
-        console.log("cache hit!");
 
-        // we tell typescript a little white lie here because blobData will be undefined on any MediaContent
-        // records
-        return { events: cachedMsgs as EventWrapper<T>[] };
+    if (complete) {
+        console.log("cache hit: ", events.length, +new Date() - start);
     }
+
+    // if we are retrieving completely from the cache, affectedEvents is always empty
+    return complete ? { events, affectedEvents: [] } : undefined;
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
 function makeSerialisable<T extends ChatEvent>(ev: EventWrapper<T>): EventWrapper<T> {
-    if (ev.event.kind !== "group_message" && ev.event.kind !== "direct_message") return ev;
+    if (ev.event.kind !== "message") return ev;
 
     if (blobbyContentTypes.includes(ev.event.content.kind)) {
         return {
@@ -154,6 +199,23 @@ export function setCachedMessages<T extends ChatEvent>(
         await tx.done;
         return resp;
     };
+}
+
+export async function overwriteCachedEvents<T extends ChatEvent>(
+    chatId: string,
+    events: EventWrapper<T>[]
+): Promise<void> {
+    if (!process.env.CLIENT_CACHING) return;
+
+    if (db === undefined) {
+        throw new Error("Unable to open indexDB, cannot overwrite cache entries");
+    }
+    const tx = (await db).transaction("chat_messages", "readwrite");
+    const store = tx.objectStore("chat_messages");
+    events.forEach(async (event) => {
+        await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
+    });
+    await tx.done;
 }
 
 export const db = openMessageCache();

@@ -20,9 +20,8 @@
     import type {
         EventWrapper,
         EnhancedReplyContext,
-        ReplyContext,
         ChatEvent as ChatEventType,
-        DirectChatReplyContext,
+        Message,
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
@@ -119,8 +118,14 @@
     }
 
     function scrollToIndex(index: number) {
-        scrollToElement(document.getElementById(`event-${index}`));
-        setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        const element = document.getElementById(`event-${index}`);
+        if (!element) {
+            messagesDiv.scrollTop = 0;
+            onScroll();
+        } else {
+            scrollToElement(element);
+            setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        }
     }
 
     function resetScroll() {
@@ -171,15 +176,47 @@
         return useDayNameOnly ? toDayOfWeekString(date) : toLongDateString(date);
     }
 
+    function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
+        // optimistic update
+        machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+
+        const apiPromise =
+            $machine.context.chatSummary.kind === "group_chat"
+                ? $machine.context.serviceContainer.toggleGroupChatReaction(
+                      $machine.context.chatSummary.chatId,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction
+                  )
+                : $machine.context.serviceContainer.toggleDirectChatReaction(
+                      $machine.context.chatSummary.them,
+                      ev.detail.message.messageId,
+                      ev.detail.reaction
+                  );
+
+        apiPromise
+            .then((resp) => {
+                if (resp !== "added" && resp !== "removed") {
+                    // toggle again to undo
+                    console.log("Reaction failed: ", resp);
+                    machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                }
+            })
+            .catch((err) => {
+                // toggle again to undo
+                console.log("Reaction failed: ", err);
+                machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+            });
+    }
+
     function goToMessage(ev: CustomEvent<number>) {
         machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext<ReplyContext>>) {
+    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         machine.send({ type: "REPLY_TO", data: ev.detail });
     }
 
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext<DirectChatReplyContext>>) {
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
@@ -188,24 +225,22 @@
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
 
-    function eventKey(e: EventWrapper<ChatEventType>): string {
-        if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+    function eventKey(e: EventWrapper<ChatEventType>): string | ChatEventType {
+        if (e.event.kind === "message") {
             return e.event.messageId.toString();
         } else {
-            return e.index.toString();
+            return e.event;
+            //return e.index.toString();
         }
     }
 
     function userGroupKey(group: EventWrapper<ChatEventType>[]): string {
         const first = group[0]!;
-        if (first.event.kind === "direct_message") {
-            return `${first.event.sentByMe}_${first.index}`;
+        if (first.event.kind === "message") {
+            return `${first.event.sender}_${first.event.messageId}`;
         }
         if (first.event.kind === "direct_chat_created") {
             return `${first.event.kind}_${first.index}`;
-        }
-        if (first.event.kind === "group_message") {
-            return `${first.event.sender}_${first.index}`;
         }
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
@@ -218,6 +253,8 @@
             first.event.kind === "participants_removed" ||
             first.event.kind === "avatar_changed" ||
             first.event.kind === "desc_changed" ||
+            first.event.kind === "reaction_added" ||
+            first.event.kind === "reaction_removed" ||
             first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
@@ -246,6 +283,7 @@
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
+                    console.log("reply: just loaded some messages");
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
@@ -264,8 +302,8 @@
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message") {
-            return evt.event.sentByMe;
+        if (evt.event.kind === "message") {
+            return evt.event.sender === $machine.context.user?.userId;
         }
         if (
             evt.event.kind === "direct_chat_created" ||
@@ -275,13 +313,12 @@
             evt.event.kind === "avatar_changed" ||
             evt.event.kind === "desc_changed" ||
             evt.event.kind === "name_changed" ||
+            evt.event.kind === "reaction_added" ||
+            evt.event.kind === "reaction_removed" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {
             return false;
-        }
-        if (evt.event.kind === "group_message") {
-            return evt.event.sender === $machine.context.user?.userId;
         }
         if (evt.event.kind === "group_chat_created") {
             return evt.event.created_by === $machine.context.user?.userId;
@@ -290,14 +327,14 @@
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+        if (evt.event.kind === "message") {
             return !unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "direct_message") {
+        if (evt.event.kind === "message") {
             return messageIsReadByThem($machine.context.chatSummary, evt.event);
         }
         return true;
@@ -307,7 +344,7 @@
         if (isMe(evt)) {
             return true;
         } else {
-            if (evt.event.kind === "direct_message" || evt.event.kind === "group_message") {
+            if (evt.event.kind === "message") {
                 return messageIsReadByMe($machine.context.chatSummary, evt.event);
             }
         }
@@ -330,7 +367,7 @@
             </div>
             {#each dayGroup as userGroup, _ui (userGroupKey(userGroup))}
                 {#each userGroup as evt, i (eventKey(evt))}
-                    {#if (evt.event.kind === "group_message" || evt.event.kind === "direct_message") && evt.event.messageIndex === firstUnreadMessageIndex}
+                    {#if evt.event.kind === "message" && evt.event.messageIndex === firstUnreadMessageIndex}
                         <div id="new-msgs" class="new-msgs">{$_("new")}</div>
                     {/if}
                     <ChatEvent
@@ -348,6 +385,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:goToMessage={goToMessage}
+                        on:selectReaction={selectReaction}
                         event={evt} />
                 {/each}
             {/each}

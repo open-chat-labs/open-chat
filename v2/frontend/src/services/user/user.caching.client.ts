@@ -6,13 +6,15 @@ import type {
     DirectChatEvent,
     ChatSummary,
     MergedUpdatesResponse,
-    DirectMessage,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    Message,
+    IndexRange,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -25,6 +27,7 @@ import {
 import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
+import type { UserSummary } from "../../domain/user/user";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -34,20 +37,22 @@ export class CachingUserClient implements IUserClient {
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
 
     async chatEvents(
+        eventIndexRange: IndexRange,
         userId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
         const cachedMsgs = await getCachedMessages<DirectChatEvent>(
             this.db,
+            eventIndexRange,
             userId,
-            fromIndex,
-            toIndex
+            startIndex,
+            ascending
         );
         return (
             cachedMsgs ??
             this.client
-                .chatEvents(userId, fromIndex, toIndex)
+                .chatEvents(eventIndexRange, userId, startIndex, ascending)
                 .then(setCachedMessages(this.db, userId))
         );
     }
@@ -77,10 +82,11 @@ export class CachingUserClient implements IUserClient {
 
     sendMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return this.client.sendMessage(recipientId, senderName, message);
+        return this.client.sendMessage(recipientId, sender, message, replyingToChatId);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -101,5 +107,13 @@ export class CachingUserClient implements IUserClient {
 
     setAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.client.setAvatar(data);
+    }
+
+    toggleReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.client.toggleReaction(otherUserId, messageId, reaction);
     }
 }

@@ -4,23 +4,22 @@
     import type { UserLookup, UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import ModalContent from "../ModalContent.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
+    import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type {
-        ChatSummary,
-        DirectMessage,
-        EnhancedReplyContext,
-        GroupMessage,
-        ReplyContext,
-    } from "../../domain/chat/chat";
+    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
+    import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
@@ -31,7 +30,7 @@
 
     export let chatSummary: ChatSummary;
     export let user: UserSummary | undefined;
-    export let msg: GroupMessage | DirectMessage;
+    export let msg: Message;
     export let me: boolean;
     export let userLookup: UserLookup;
     export let eventIndex: number;
@@ -45,13 +44,14 @@
 
     let msgElement: HTMLElement;
 
-    let senderId = getSenderId();
+    let senderId = msg.sender;
     let groupChat = chatSummary.kind === "group_chat";
     let sender = userLookup[senderId];
     let username = sender?.username;
     let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
     let fill = fillMessage(msg);
+    let showEmojiPicker = false;
 
     afterUpdate(() => {
         // todo - keep an eye on this
@@ -73,138 +73,186 @@
 
     onDestroy(() => observer.unobserve(msgElement));
 
-    function getSenderId() {
-        if (msg.kind === "direct_message" && chatSummary.kind === "direct_chat") {
-            return msg.sentByMe ? user!.userId : chatSummary.them;
-        }
-        if (msg.kind === "group_message") {
-            return msg.sender;
-        }
-        throw Error("Unable to determine sender Id");
-    }
-
     function chatWithUser() {
         dispatch("chatWith", senderId);
     }
 
-    function createReplyContext(privately: boolean): EnhancedReplyContext<ReplyContext> {
-        if (privately) {
-            return {
-                kind: "direct_private_reply_context",
-                chatId: chatSummary.chatId,
-                eventIndex: eventIndex,
-                content: msg.content,
-                sender,
-                messageId: msg.messageId,
-            };
-        } else if (groupChat) {
-            return {
-                kind: "group_reply_context",
-                content: msg.content,
-                userId: senderId,
-                eventIndex: eventIndex,
-                sender,
-                messageId: msg.messageId,
-            };
-        } else {
-            return {
-                kind: "direct_standard_reply_context",
-                content: msg.content,
-                sentByMe: me,
-                eventIndex: eventIndex,
-                sender,
-                messageId: msg.messageId,
-            };
-        }
+    function createReplyContext(): EnhancedReplyContext {
+        return {
+            senderId,
+            chatId: chatSummary.chatId,
+            eventIndex: eventIndex,
+            content: msg.content,
+            sender,
+            messageId: msg.messageId,
+        };
     }
 
     function reply() {
-        dispatch("replyTo", createReplyContext(false));
+        dispatch("replyTo", createReplyContext());
     }
 
     function replyPrivately() {
-        dispatch("replyPrivatelyTo", createReplyContext(true));
+        dispatch("replyPrivatelyTo", createReplyContext());
+    }
+
+    function selectReaction(ev: CustomEvent<string>) {
+        toggleReaction(ev.detail);
+    }
+
+    function toggleReaction(reaction: string) {
+        dispatch("selectReaction", {
+            message: msg,
+            reaction,
+        });
+        showEmojiPicker = false;
     }
 </script>
 
-<div
-    bind:this={msgElement}
-    class="chat-message-wrapper"
-    class:me
-    data-index={msg.messageIndex}
-    id={`event-${eventIndex}`}>
-    <div
-        class="chat-message"
-        class:focused
-        class:fill
-        class:me
-        class:last
-        class:readByMe
-        class:rtl={$rtlStore}>
-        {#if msg.repliesTo !== undefined}
-            <RepliesTo {chatSummary} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
-        {/if}
-
-        <ChatMessageContent {me} content={msg.content} />
-        <!-- <pre>M: {msg.messageIndex} E: {index}</pre> -->
-
-        {#if metaData}
-            {#await metaData then meta}
-                <div class="meta">
-                    {meta}
-                </div>
-            {/await}
-        {/if}
-        <div class="time-and-ticks">
-            <span class="time">
-                {toShortTimeString(new Date(Number(timestamp)))}
+{#if showEmojiPicker}
+    <Overlay active={showEmojiPicker}>
+        <ModalContent hideFooter={true} hideHeader={true} fill={true}>
+            <span slot="body">
+                {#await import("./EmojiPicker.svelte")}
+                    <div class="loading-emoji"><Loading /></div>
+                {:then picker}
+                    <svelte:component
+                        this={picker.default}
+                        on:emojiSelected={selectReaction}
+                        mode={"reaction"} />
+                {/await}
             </span>
-            {#if me && confirmed}
-                {#if readByThem}
-                    <DoubleTick />
-                {:else}
-                    <Tick />
-                {/if}
-            {/if}
-        </div>
+            <span slot="footer" />
+        </ModalContent>
+    </Overlay>
+{/if}
 
-        <div class="menu" class:rtl={$rtlStore}>
-            <MenuIcon>
-                <div class="menu-icon" slot="icon">
+<div class="message-wrapper" class:last>
+    <div
+        bind:this={msgElement}
+        class="message"
+        class:me
+        data-index={msg.messageIndex}
+        id={`event-${eventIndex}`}>
+        {#if me}
+            <div class="actions">
+                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
-                        <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
                     </HoverIcon>
                 </div>
-                <div slot="menu">
-                    <Menu>
-                        <MenuItem on:click={reply}>
-                            <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("reply")}</div>
-                        </MenuItem>
-                        {#if groupChat && !me}
-                            <MenuItem on:click={replyPrivately}>
-                                <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                <div slot="text">{$_("replyPrivately")}</div>
-                            </MenuItem>
-                        {/if}
-                    </Menu>
-                </div>
-            </MenuIcon>
-        </div>
-    </div>
-</div>
+            </div>
+        {/if}
 
-{#if groupChat && !me && last}
-    <Link on:click={chatWithUser}>
-        <div class="avatar-section">
-            <div class="avatar">
-                <Avatar url={avatarUrl(sender)} status={userStatus} size={AvatarSize.Tiny} />
+        <div
+            class="message-bubble"
+            class:focused
+            class:fill
+            class:me
+            class:last
+            class:readByMe
+            class:rtl={$rtlStore}>
+            {#if msg.repliesTo !== undefined}
+                <RepliesTo
+                    {chatSummary}
+                    {user}
+                    {userLookup}
+                    on:goToMessage
+                    repliesTo={msg.repliesTo} />
+            {/if}
+
+            <ChatMessageContent {me} content={msg.content} />
+            <!-- <pre>M: {msg.messageIndex} E: {index}</pre> -->
+
+            {#if metaData}
+                {#await metaData then meta}
+                    <div class="meta">
+                        {meta}
+                    </div>
+                {/await}
+            {/if}
+            <div class="time-and-ticks">
+                <span class="time">
+                    {toShortTimeString(new Date(Number(timestamp)))}
+                </span>
+                {#if me && confirmed}
+                    {#if readByThem}
+                        <DoubleTick />
+                    {:else}
+                        <Tick />
+                    {/if}
+                {/if}
             </div>
 
-            <h4 class="username">{username}</h4>
+            <div class="menu" class:rtl={$rtlStore}>
+                <MenuIcon>
+                    <div class="menu-icon" slot="icon">
+                        <HoverIcon>
+                            <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                        </HoverIcon>
+                    </div>
+                    <div slot="menu">
+                        <Menu>
+                            <MenuItem on:click={reply}>
+                                <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("reply")}</div>
+                            </MenuItem>
+                            {#if groupChat && !me}
+                                <MenuItem on:click={replyPrivately}>
+                                    <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                    <div slot="text">{$_("replyPrivately")}</div>
+                                </MenuItem>
+                            {/if}
+                        </Menu>
+                    </div>
+                </MenuIcon>
+            </div>
         </div>
-    </Link>
-{/if}
+        {#if !me}
+            <div class="actions">
+                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                    <HoverIcon>
+                        <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
+                    </HoverIcon>
+                </div>
+            </div>
+        {/if}
+    </div>
+
+    <div class="message-footer" class:last>
+        {#if msg.reactions.length > 0}
+            <div class="message-reactions" class:me>
+                {#each msg.reactions as { reaction, userIds }}
+                    <div
+                        in:pop={{ duration: 500 }}
+                        on:click={() => toggleReaction(reaction)}
+                        class="message-reaction">
+                        {reaction}
+                        <span class="reaction-count">
+                            {userIds.size > 9 ? "9+" : userIds.size}
+                        </span>
+                    </div>
+                {/each}
+            </div>
+        {/if}
+        {#if groupChat && !me && last}
+            <div class="message-sender">
+                <Link on:click={chatWithUser}>
+                    <div class="avatar-section">
+                        <div class="avatar">
+                            <Avatar
+                                url={avatarUrl(sender)}
+                                status={userStatus}
+                                size={AvatarSize.Tiny} />
+                        </div>
+
+                        <h4 class="username">{username}</h4>
+                    </div>
+                </Link>
+            </div>
+        {/if}
+    </div>
+</div>
 
 <style type="text/scss">
     $size: 10px;
@@ -214,17 +262,23 @@
         height: 16px;
     }
 
-    :global(.chat-message .loading) {
+    :global(.message .loading) {
         min-height: 100px;
         min-width: 250px;
     }
 
-    :global(.chat-message .content a) {
+    :global(.message-bubble .content a) {
         text-decoration: underline;
     }
 
-    :global(.chat-message .content ul) {
+    :global(.message-bubble .content ul) {
         margin: 0 $sp4;
+    }
+
+    .message-wrapper {
+        &.last {
+            margin-bottom: $sp4;
+        }
     }
 
     .meta {
@@ -264,8 +318,7 @@
 
     .avatar-section {
         position: relative;
-        margin-bottom: $sp5;
-        display: flex;
+        display: inline-flex;
         align-items: center;
 
         .avatar {
@@ -273,29 +326,78 @@
         }
     }
 
-    .chat-message-wrapper {
+    .message-footer {
+        .message-sender {
+            margin-bottom: $sp2;
+        }
+
+        .message-reactions {
+            display: flex;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+
+            &.me {
+                justify-content: flex-end;
+            }
+
+            .message-reaction {
+                border-radius: $sp4;
+                background-color: var(--reaction-bg);
+                color: var(--reaction-txt);
+                cursor: pointer;
+                height: $sp5;
+                padding: $sp2;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-left: 1px;
+                margin-right: 1px;
+                margin-bottom: $sp2;
+
+                .reaction-count {
+                    @include font(book, normal, fs-60);
+                    margin-left: $sp2;
+                }
+            }
+        }
+    }
+
+    .message {
         display: flex;
         justify-content: flex-start;
-        align-items: flex-end;
+        margin-bottom: $sp2;
 
         &.me {
             justify-content: flex-end;
         }
+
+        .actions {
+            transition: opacity 200ms ease-in-out;
+            display: flex;
+            opacity: 0;
+            padding: $sp3;
+            justify-content: center;
+            align-items: center;
+        }
+
+        &:hover .actions {
+            // todo - need to consider how this works on mobile
+            opacity: 1;
+        }
     }
 
-    .chat-message {
+    .message-bubble {
         transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
             border ease-in-out 300ms, transform ease-in-out 200ms;
         position: relative;
         padding: $sp4;
         border: 1px solid var(--currentChat-msg-bd);
-        max-width: 90%;
-        min-width: 50%;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
-        margin-bottom: $sp3;
         border-radius: $sp5;
+        max-width: 90%;
+        min-width: 50%;
 
         &:hover {
             box-shadow: 0 5px 10px var(--currentChat-msg-hv);
@@ -322,7 +424,6 @@
             }
 
             &.last {
-                margin-bottom: $sp5;
                 border-radius: $sp5 $sp5 0 $sp5;
             }
         }
@@ -364,7 +465,6 @@
 
     .username {
         margin: 0;
-        margin-bottom: $sp2;
         @include font(bold, normal, fs-100);
         color: #fff;
     }

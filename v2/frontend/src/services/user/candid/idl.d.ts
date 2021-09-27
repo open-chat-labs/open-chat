@@ -1,9 +1,7 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
-    GroupMessage,
-    GroupReplyContext,
-    DirectReplyContext,
+    ReplyContext,
     ChatSummaryUpdates,
     GroupChatSummaryUpdates,
     DirectChatSummaryUpdates,
@@ -15,7 +13,7 @@ import {
     ChatSummary,
     GroupChatSummary,
     DirectChatSummary,
-    DirectMessage,
+    Message,
     DirectChatEvent,
     UserId,
     MessageContent,
@@ -45,14 +43,14 @@ import {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
+    ToggleReactionResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
     SendMessageArgs as ApiSendMessageArgs,
     SendMessageResponse as ApiSendMessageResponse,
-    GroupMessage as ApiGroupMessage,
-    GroupReplyContext as ApiGroupReplyContext,
-    DirectReplyContext as ApiDirectReplyContext,
+    Message as ApiMessage,
+    ReplyContext as ApiReplyContext,
     ChatSummaryUpdates as ApiChatSummaryUpdates,
     GroupChatSummaryUpdates as ApiGroupChatSummaryUpdates,
     DirectChatSummaryUpdates as ApiDirectChatSummaryUpdates,
@@ -65,7 +63,6 @@ export {
     DirectChatEventWrapper as ApiDirectChatEventWrapper,
     GroupChatSummary as ApiGroupChatSummary,
     DirectChatSummary as ApiDirectChatSummary,
-    DirectMessage as ApiDirectMessage,
     UserId as ApiUserId,
     MessageContent as ApiMessageContent,
     FileContent as ApiFileContent,
@@ -92,6 +89,7 @@ export {
     LeaveGroupResponse as ApiLeaveGroupResponse,
     MarkReadResponse as ApiMarkReadResponse,
     SetAvatarResponse as ApiSetAvatarResponse,
+    ToggleReactionResponse as ApiToggleReactionResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
 
     import "./i18n/i18n";
-    import { loadSavedTheme } from "./theme/themes";
+    import { loadAndApplySavedTheme } from "./theme/themes";
     import { rtlStore } from "./stores/rtl";
     import { _ } from "svelte-i18n";
     import { identityService } from "./fsm/identity.machine";
@@ -20,7 +20,7 @@
     import Lazy from "./components/Lazy.svelte";
 
     onMount(() => {
-        loadSavedTheme();
+        loadAndApplySavedTheme();
         calculateHeight();
     });
 

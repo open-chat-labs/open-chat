@@ -20,7 +20,7 @@ const fakeUser: CurrentUserResponse = {
 };
 
 const fakeIdentity: Identity = {
-    getPrincipal: () => ({} as Principal),
+    getPrincipal: () => ({ toText: () => "" } as Principal),
     transformRequest: (_req: HttpAgentRequest) => Promise.resolve({}),
 };
 
@@ -76,11 +76,14 @@ describe("identity machine end to end", () => {
     });
 
     test("successfully loaded user", (done) => {
+        mockServiceContainer.createUserClient = jest.fn();
         const config = testConfig();
         testSequence(
             ["requesting_identity", "loading_user", "logged_in"],
             done,
-            identityMachine.withConfig(config),
+            identityMachine
+                .withConfig(config)
+                .withContext({ serviceContainer: mockServiceContainer }),
             (state) => {
                 expect(config.services!.getIdentity).toHaveBeenCalled();
                 expect(state.context.identity).toEqual(fakeIdentity);

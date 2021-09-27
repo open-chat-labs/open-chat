@@ -2,25 +2,24 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import Lazy from "../Lazy.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import { chatStore } from "../../stores/chat";
-    import type { DirectMessage, GroupMessage, MessageContent } from "../../domain/chat/chat";
+    import type { MessageContent } from "../../domain/chat/chat";
     import {
-        createDirectMessage,
-        createGroupMessage,
+        createMessage,
+        latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
+    import Loading from "../Loading.svelte";
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
 
-    const EmojiPicker = () => import("./EmojiPicker.svelte");
     let showEmojiPicker = false;
 
     function cancelReply() {
@@ -42,27 +41,16 @@
 
             // todo - we also have a problem for group chats with hidden history - we don't know what the index
             // should be at all in that case
-            const nextIndex = (latestLoadedMessageIndex($machine.context.chatSummary) ?? -1) + 1;
-            const nextEventIndex = $machine.context.chatSummary.latestEventIndex + 1;
+            const nextIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
 
-            let msg: GroupMessage | DirectMessage | undefined;
-            if ($machine.context.chatSummary.kind === "group_chat") {
-                msg = createGroupMessage(
-                    $machine.context.user!.userId,
-                    nextIndex,
-                    textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    fileToAttach
-                );
-            }
-            if ($machine.context.chatSummary.kind === "direct_chat") {
-                msg = createDirectMessage(
-                    nextIndex,
-                    textContent ?? undefined,
-                    $machine.context.replyingTo,
-                    fileToAttach
-                );
-            }
+            const msg = createMessage(
+                $machine.context.user!.userId,
+                nextIndex,
+                textContent ?? undefined,
+                $machine.context.replyingTo,
+                fileToAttach
+            );
             dispatch("unconfirmedMessage", msg!.messageId);
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
@@ -148,7 +136,11 @@
             {/if}
         {/if}
         {#if showEmojiPicker}
-            <Lazy component={EmojiPicker} />
+            {#await import("./EmojiPicker.svelte")}
+                <div class="loading-emoji"><Loading /></div>
+            {:then picker}
+                <svelte:component this={picker.default} />
+            {/await}
         {/if}
     </div>
     <MessageEntry
@@ -162,6 +154,10 @@
 </div>
 
 <style type="text/scss">
+    .loading-emoji {
+        height: 400px;
+    }
+
     .footer {
         position: relative;
     }

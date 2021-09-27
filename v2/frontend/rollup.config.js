@@ -4,7 +4,6 @@ import sveltePreprocess from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import livereload from "rollup-plugin-livereload";
-import alias from "@rollup/plugin-alias";
 import { terser } from "rollup-plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import css from "rollup-plugin-css-only";
@@ -48,19 +47,6 @@ export default {
         dir: "public/build",
     },
     plugins: [
-        alias({
-            entries: [
-                {
-                    find: "react",
-                    replacement: require.resolve("preact/compat"),
-                },
-                {
-                    find: "react-dom",
-                    replacement: require.resolve("preact/compat"),
-                },
-            ],
-        }),
-
         svelte({
             preprocess: sveltePreprocess({
                 sourceMap: !production,

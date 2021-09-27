@@ -14,18 +14,22 @@ import type {
     EnhancedReplyContext,
     MessageContent,
     ChatEvent,
-    ReplyContext,
-    DirectChatReplyContext,
-    DirectMessage,
-    GroupMessage,
     SendMessageSuccess,
     GroupChatSummary,
+    Message,
+    LocalReaction,
 } from "../domain/chat/chat";
 import {
+    containsReaction,
     earliestLoadedEventIndex,
-    latestAvailableEventIndex,
+    eventIsVisible,
+    getMinVisibleEventIndex,
+    indexRangeForChat,
     latestLoadedEventIndex,
+    pruneLocalReactions,
+    replaceAffected,
     setLastMessageOnChat,
+    toggleReaction,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -36,8 +40,9 @@ import { toastStore } from "../stores/toast";
 import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
+import { overwriteCachedEvents } from "../utils/caching";
 
-const PAGE_SIZE = 20;
+const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
@@ -47,14 +52,16 @@ export interface ChatContext {
     error?: Error;
     events: EventWrapper<ChatEvent>[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
-    replyingTo?: EnhancedReplyContext<ReplyContext>;
+    replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
     markMessages: ActorRefFrom<MarkReadMachine>;
+    localReactions: Record<string, LocalReaction[]>;
 }
 
 type LoadEventsResponse = {
     userLookup: UserLookup;
     events: EventWrapper<ChatEvent>[];
+    affectedEvents: EventWrapper<ChatEvent>[];
 };
 
 export type ChatEvents =
@@ -68,22 +75,24 @@ export type ChatEvents =
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: EventWrapper<DirectMessage | GroupMessage> }
-    | { type: "REMOVE_MESSAGE"; data: GroupMessage | DirectMessage }
+    | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
+    | { type: "TOGGLE_REACTION"; data: { message: Message; reaction: string } }
+    | { type: "REMOVE_MESSAGE"; data: Message }
     | {
           type: "UPDATE_MESSAGE";
-          data: { candidate: GroupMessage | DirectMessage; resp: SendMessageSuccess };
+          data: { candidate: Message; resp: SendMessageSuccess };
       }
     | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
+    | { type: "PRUNE_LOCAL_REACTIONS" }
     | { type: "CLEAR_FOCUS_INDEX" }
     | {
           type: "REPLY_TO";
-          data: EnhancedReplyContext<ReplyContext>;
+          data: EnhancedReplyContext;
       }
     | {
           type: "REPLY_PRIVATELY_TO";
-          data: EnhancedReplyContext<DirectChatReplyContext>;
+          data: EnhancedReplyContext;
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
@@ -107,16 +116,26 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
-    userId: string,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
-    fromIndex: number,
-    toIndex: number
+    startIndex: number,
+    ascending: boolean
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(chatSummary.them, fromIndex, toIndex);
+        return serviceContainer.directChatEvents(
+            indexRangeForChat(chatSummary),
+            chatSummary.them,
+            startIndex,
+            ascending
+        );
     }
-    const events = serviceContainer.groupChatEvents(chatSummary.chatId, fromIndex, toIndex);
+    console.log("criteria: ", startIndex, ascending);
+    const events = serviceContainer
+        .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
+        .then((resp) => {
+            console.log(resp);
+            return resp;
+        });
     return events;
 }
 
@@ -133,12 +152,11 @@ export function earliestIndex(ctx: ChatContext): number {
     return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
 }
 
-export function newMessagesRange(ctx: ChatContext): [number, number] | undefined {
+export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const lastLoaded = latestLoadedEventIndex(ctx.events);
-    if (lastLoaded !== undefined) {
+    if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
-        const to = latestAvailableEventIndex(ctx.chatSummary) ?? 0;
-        return clampRange([from, to]);
+        return [from, true];
     } else {
         // this implies that we have not loaded any messages which should never happen
         return undefined;
@@ -159,32 +177,21 @@ export function highestUnloadedEventIndex(ctx: ChatContext): number {
 
 /**
  * This gives us the range of messages that we must request when loading *previous* messages
+ * todo - this no longer deals with zooming to a specific historical message
+ * we need to come up with an all new mechanism for that. Probably recursively calling the
+ * service until a specific message is available.
  */
-export function previousMessagesRange(ctx: ChatContext): [number, number] | undefined {
-    const to = highestUnloadedEventIndex(ctx);
-    const candidateFrom =
-        ctx.focusIndex !== undefined ? ctx.focusIndex - PAGE_SIZE : to - PAGE_SIZE;
-    const min = earliestAvailableEventIndex(ctx);
-    const from = Math.max(min, candidateFrom);
-    return clampRange([from, to]);
+export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | undefined {
+    const start = highestUnloadedEventIndex(ctx);
+    const min = getMinVisibleEventIndex(ctx.chatSummary);
+    return start > min ? [start, false] : undefined;
 }
 
-export function clampRange([from, to]: [number, number]): [number, number] | undefined {
-    if (from > to) {
-        return undefined;
-    } else {
-        return [from, to];
-    }
-}
-
-export function requiredMessageRange(
-    ctx: ChatContext,
-    ev: ChatEvents
-): [number, number] | undefined {
+export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
     if (ev.type === "CHAT_UPDATED") {
-        return newMessagesRange(ctx);
+        return newMessageCriteria(ctx);
     } else {
-        return previousMessagesRange(ctx);
+        return previousMessagesCriteria(ctx);
     }
 }
 
@@ -192,23 +199,30 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {},
     services: {
         loadEventsAndUsers: async (ctx, ev) => {
-            const range = requiredMessageRange(ctx, ev);
+            const criteria = requiredCriteria(ctx, ev);
 
             const [userLookup, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
-                range
-                    ? loadEvents(
-                          ctx.user!.userId,
-                          ctx.serviceContainer!,
-                          ctx.chatSummary,
-                          range[0],
-                          range[1]
-                      )
-                    : { events: [] },
+                criteria
+                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
+                    : { events: [], affectedEvents: [] },
             ]);
             return {
                 userLookup,
                 events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
+                affectedEvents:
+                    eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
+            };
+        },
+        pruneLocalReactions: (_ctx, _ev) => (callback) => {
+            const intervalId = setInterval(
+                () => callback("PRUNE_LOCAL_REACTIONS"),
+                PRUNE_LOCAL_REACTIONS_INTERVAL
+            );
+
+            return () => {
+                console.log("stopping the local reactions pruner");
+                clearInterval(intervalId);
             };
         },
     },
@@ -217,9 +231,15 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
                       userLookup: ev.data.userLookup,
-                      events: dedupe(
-                          (a, b) => a.index === b.index,
-                          [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
+                      events: replaceAffected(
+                          ctx.user!.userId,
+                          ctx.chatSummary.chatId,
+                          dedupe(
+                              (a, b) => a.index === b.index,
+                              [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
+                          ),
+                          ev.data.affectedEvents,
+                          ctx.localReactions
                       ),
                   }
                 : {}
@@ -232,6 +252,24 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
     id: "chat_machine",
     type: "parallel",
     states: {
+        pruning_local_reactions: {
+            initial: "pruning",
+            states: {
+                pruning: {
+                    invoke: {
+                        id: "pruneLocalReactions",
+                        src: "pruneLocalReactions",
+                    },
+                    on: {
+                        PRUNE_LOCAL_REACTIONS: {
+                            actions: assign((ctx, _) => ({
+                                localReactions: pruneLocalReactions(ctx.localReactions),
+                            })),
+                        },
+                    },
+                },
+            },
+        },
         loading_new_messages: {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
@@ -241,6 +279,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     internal: true,
                     actions: assign((_, ev) => {
                         return {
+                            // todo - this is a problem because it may update the
+                            // latestEventIndex and the latestMessageIndex
+                            // this means that we might be creating messages using the same
+                            // indexes over and over.
                             chatSummary: ev.data,
                         };
                     }),
@@ -257,7 +299,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             actions: [
                                 "assignEventsResponse",
                                 pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                    if (ev.data.events.length > 0) {
+                                    if (ev.data.events.some(eventIsVisible)) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
                                             event: "loaded_new_messages",
@@ -308,6 +350,51 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             return e;
                         }),
                     })),
+                },
+                TOGGLE_REACTION: {
+                    actions: assign((ctx, ev) => {
+                        const key = ev.data.message.messageId.toString();
+                        if (ctx.localReactions[key] === undefined) {
+                            ctx.localReactions[key] = [];
+                        }
+                        const messageReactions = ctx.localReactions[key];
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (
+                                    e.event.kind === "message" &&
+                                    ev.data.message.kind === "message" &&
+                                    e.event.messageId === ev.data.message.messageId
+                                ) {
+                                    const addOrRemove = containsReaction(
+                                        ctx.user!.userId,
+                                        ev.data.reaction,
+                                        e.event.reactions
+                                    )
+                                        ? "remove"
+                                        : "add";
+                                    messageReactions.push({
+                                        reaction: ev.data.reaction,
+                                        timestamp: +new Date(),
+                                        kind: addOrRemove,
+                                    });
+                                    const updatedEvent = {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            reactions: toggleReaction(
+                                                ctx.user!.userId,
+                                                e.event.reactions,
+                                                ev.data.reaction
+                                            ),
+                                        },
+                                    };
+                                    overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
+                                    return updatedEvent;
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
                 },
                 REMOVE_MESSAGE: {
                     actions: assign((ctx, ev) => ({

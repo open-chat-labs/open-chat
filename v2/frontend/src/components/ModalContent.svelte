@@ -5,6 +5,8 @@
     import { rtlStore } from "../stores/rtl";
 
     export let fill: boolean = false;
+    export let hideHeader: boolean = false;
+    export let hideFooter: boolean = false;
 </script>
 
 <div
@@ -12,19 +14,23 @@
     in:fade={{ duration: 100, delay: 200 }}
     out:fade={{ duration: 100 }}
     on:click|stopPropagation>
-    <div class="header">
-        <h3>
-            <slot name="header" />
-        </h3>
-    </div>
+    {#if !hideHeader}
+        <div class="header">
+            <h3>
+                <slot name="header" />
+            </h3>
+        </div>
+    {/if}
     <div class="body" class:fill>
         <slot name="body" />
     </div>
-    <div class="footer" class:rtl={$rtlStore}>
-        <slot name="footer">
-            <Link on:click={modalStore.hideModal}>Close</Link>
-        </slot>
-    </div>
+    {#if !hideFooter}
+        <div class="footer" class:rtl={$rtlStore}>
+            <slot name="footer">
+                <Link on:click={modalStore.hideModal}>Close</Link>
+            </slot>
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -49,6 +55,7 @@
         color: var(--modal-header-txt);
         border-bottom: 1px solid var(--modal-header-bd);
     }
+
     .body {
         flex: 1;
         padding: $sp6 $sp4;

@@ -9,13 +9,16 @@ import type {
     DirectChatEvent,
     MergedUpdatesResponse,
     ChatSummary,
-    DirectMessage,
+    Message,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
     MessageIndexRange,
     MarkReadResponse,
+    IndexRange,
+    EventWrapper,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -27,15 +30,18 @@ import {
     markReadResponse,
     sendMessageResponse,
     setAvatarResponse,
+    toggleReactionResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { mergeChatUpdates } from "../../domain/chat/chat.utils";
+import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
-import { UserClientMock } from "./user.client.mock";
 import { CachingUserClient } from "./user.caching.client";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
+import type { UserSummary } from "../../domain/user/user";
+
+const MAX_RECURSION = 10;
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
@@ -48,9 +54,6 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     static create(userId: string, identity: Identity, db?: Database): IUserClient {
-        if (process.env.MOCK_SERVICES) {
-            return db ? new CachingUserClient(db, new UserClientMock()) : new UserClientMock();
-        }
         return db && process.env.CLIENT_CACHING
             ? new CachingUserClient(db, new UserClient(identity, userId))
             : new UserClient(identity, userId);
@@ -75,20 +78,56 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    chatEvents(
+    async chatEvents(
+        eventIndexRange: IndexRange,
         userId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean,
+        previouslyLoadedEvents: EventWrapper<DirectChatEvent>[] = [],
+        iterations = 0
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.handleResponse(
-            // todo - will come back and refactor this to the new endpoint in another PR
-            this.userService.events_range({
+        console.log("index range: ", eventIndexRange);
+        console.log("loading messages from: ", startIndex, " : ", ascending);
+        const resp = await this.handleResponse(
+            this.userService.events({
                 user_id: Principal.fromText(userId),
-                to_index: toIndex,
-                from_index: fromIndex,
+                max_messages: 20,
+                max_events: 50,
+                start_index: startIndex,
+                ascending,
             }),
             getEventsResponse
         );
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        // merge the retrieved events with the events accumulated from the previous iteration(s)
+        // todo - we also need to merge affected events
+        const merged = ascending
+            ? [...previouslyLoadedEvents, ...resp.events]
+            : [...resp.events, ...previouslyLoadedEvents];
+
+        // check whether we have accumulated enough messages to display
+        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
+            console.log("we got enough visible messages to display now");
+            return { ...resp, events: merged };
+        } else if (iterations < MAX_RECURSION) {
+            // recurse and get the next chunk since we don't yet have enough events
+            console.log("we don't have enough message, recursing", resp.events);
+            return this.chatEvents(
+                eventIndexRange,
+                userId,
+                nextIndex(ascending, merged),
+                ascending,
+                merged,
+                iterations + 1
+            );
+        } else {
+            throw new Error(
+                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`
+            );
+        }
     }
 
     async getUpdates(
@@ -109,7 +148,8 @@ export class UserClient extends CandidService implements IUserClient {
                       ]
                     : [],
             }),
-            (resp) => getUpdatesResponse(resp)
+            (resp) => getUpdatesResponse(resp),
+            args
         );
         return {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
@@ -140,31 +180,33 @@ export class UserClient extends CandidService implements IUserClient {
 
     sendMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
+        console.log("replying to chat: ", replyingToChatId);
         return DataClient.create(this.identity, this.userId)
             .uploadData(message.content)
             .then(() => {
-                return this.handleResponse(
-                    this.userService.send_message({
-                        content: apiMessageContent(message.content),
-                        recipient: Principal.fromText(recipientId),
-                        sender_name: senderName,
-                        message_id: message.messageId,
-                        replies_to: apiOptional(
-                            (replyContext) => ({
-                                chat_id_if_other:
-                                    replyContext.kind === "direct_private_reply_context"
-                                        ? [Principal.fromText(replyContext.chatId)]
-                                        : [],
-                                message_id: replyContext.messageId,
-                            }),
-                            message.repliesTo
-                        ),
-                    }),
-                    sendMessageResponse
-                );
+                const req = {
+                    content: apiMessageContent(message.content),
+                    recipient: Principal.fromText(recipientId),
+                    sender_name: sender.username,
+                    message_id: message.messageId,
+                    replies_to: apiOptional(
+                        (replyContext) => ({
+                            sender: Principal.fromText(sender.userId),
+                            chat_id_if_other: apiOptional(
+                                (id) => Principal.fromText(id),
+                                replyingToChatId
+                            ),
+                            message_id: replyContext.messageId,
+                        }),
+                        message.repliesTo
+                    ),
+                };
+                console.log("Sending message: ", req);
+                return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
     }
 
@@ -202,6 +244,21 @@ export class UserClient extends CandidService implements IUserClient {
                 message_ranges: ranges,
             }),
             markReadResponse
+        );
+    }
+
+    toggleReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.handleResponse(
+            this.userService.toggle_reaction({
+                user_id: Principal.fromText(otherUserId),
+                message_id: messageId,
+                reaction,
+            }),
+            toggleReactionResponse
         );
     }
 }

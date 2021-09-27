@@ -9,6 +9,8 @@ export type MessageContent =
     | AudioContent
     | CyclesContent;
 
+export type IndexRange = [number, number];
+
 export interface CyclesContent {
     kind: "cycles_content";
     caption?: string;
@@ -54,62 +56,46 @@ export interface FileContent extends DataContent {
     fileSize: number;
 }
 
-export type ReplyContext = GroupChatReplyContext | DirectChatReplyContext;
-
-export type GroupChatReplyContext = {
-    kind: "group_reply_context";
-    content: MessageContent;
-    userId: string;
-    eventIndex: number;
+export type ReplyContext = {
+    content?: MessageContent;
+    senderId: string;
     messageId: bigint;
+    eventIndex: number;
+    chatId: string;
 };
 
-export type DirectChatReplyContext = StandardReplyContext | PrivateReplyContext;
-
-export type EnhancedReplyContext<T extends ReplyContext> = T & {
+export type EnhancedReplyContext = ReplyContext & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };
 
-export interface PrivateReplyContext {
-    kind: "direct_private_reply_context";
-    chatId: string;
-    eventIndex: number;
-    messageId: bigint;
-}
-
-export interface StandardReplyContext {
-    kind: "direct_standard_reply_context";
-    content: MessageContent;
-    sentByMe: boolean;
-    eventIndex: number;
-    messageId: bigint;
-}
-
-export type MessageCommon = {
+export type Message = {
+    kind: "message";
     messageId: bigint;
     messageIndex: number;
-    content: MessageContent;
-};
-
-export type DirectMessage = MessageCommon & {
-    kind: "direct_message";
-    sentByMe: boolean;
-    repliesTo?: DirectChatReplyContext;
-};
-
-export type GroupMessage = MessageCommon & {
-    kind: "group_message";
     sender: string;
-    repliesTo?: GroupChatReplyContext;
+    content: MessageContent;
+    repliesTo?: ReplyContext;
+    reactions: Reaction[];
+};
+
+export type LocalReaction = {
+    reaction: string;
+    timestamp: number;
+    kind: "add" | "remove";
+};
+
+export type Reaction = {
+    reaction: string;
+    userIds: Set<string>;
 };
 
 export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = DirectMessage | DirectChatCreated;
+export type DirectChatEvent = Message | ReactionAdded | ReactionRemoved | DirectChatCreated;
 
 export type GroupChatEvent =
-    | GroupMessage
+    | Message
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin
@@ -117,6 +103,8 @@ export type GroupChatEvent =
     | ParticipantLeft
     | GroupNameChanged
     | AvatarChanged
+    | ReactionAdded
+    | ReactionRemoved
     | GroupDescChanged
     | ParticipantsDismissedAsAdmin;
 
@@ -152,6 +140,21 @@ export type AvatarChanged = {
     changedBy: string;
 };
 
+export type ReactionAdded = {
+    kind: "reaction_added";
+    message: StaleMessage;
+};
+
+export type ReactionRemoved = {
+    kind: "reaction_removed";
+    message: StaleMessage;
+};
+
+export type StaleMessage = {
+    eventIndex: number;
+    messageId: bigint;
+};
+
 export type ParticipantsRemoved = {
     kind: "participants_removed";
     userIds: string[];
@@ -185,6 +188,7 @@ export type EventWrapper<T extends ChatEvent> = {
 
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
+    affectedEvents: EventWrapper<T>[];
 };
 
 export type GroupChatUpdatesSince = {
@@ -225,7 +229,7 @@ type ChatSummaryUpdatesCommon = {
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
-    latestMessage?: EventWrapper<DirectMessage>;
+    latestMessage?: EventWrapper<Message>;
     readByThem?: MessageIndexRange[];
 };
 
@@ -236,7 +240,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     lastUpdated: bigint;
     name?: string;
     description?: string;
-    latestMessage?: EventWrapper<GroupMessage>;
+    latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
 };
 
@@ -267,7 +271,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
     them: string;
     readByThem: MessageIndexRange[];
     dateCreated: bigint;
-    latestMessage?: EventWrapper<DirectMessage>;
+    latestMessage?: EventWrapper<Message>;
 };
 
 export type GroupChatSummary = DataContent &
@@ -281,7 +285,7 @@ export type GroupChatSummary = DataContent &
         minVisibleEventIndex: number;
         minVisibleMessageIndex: number;
         lastUpdated: bigint;
-        latestMessage?: EventWrapper<GroupMessage>;
+        latestMessage?: EventWrapper<Message>;
     };
 
 export type CandidateParticipant = {
@@ -459,3 +463,10 @@ export type UpdateGroupResponse =
     | "unchanged"
     | "name_taken"
     | "internal_error";
+
+export type ToggleReactionResponse =
+    | "added"
+    | "removed"
+    | "invalid"
+    | "message_not_found"
+    | "chat_not_found";

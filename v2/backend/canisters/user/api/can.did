@@ -33,8 +33,8 @@ type ToggleReactionArgs =
 
 type ToggleReactionResponse =
     variant {
-        Added;
-        Removed;
+        Added: EventIndex;
+        Removed: EventIndex;
         InvalidReaction;
         MessageNotFound;
         ChatNotFound;
@@ -221,6 +221,7 @@ type UpdatesResponse =
 
 type EventsArgs =
     record {
+        user_id: UserId;
         start_index: EventIndex;
         ascending: bool;
         max_messages: nat32;

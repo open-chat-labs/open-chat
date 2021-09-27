@@ -2,18 +2,19 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
-    GroupMessage,
+    Message,
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
     MessageIndexRange,
     MarkReadResponse,
     UpdateGroupResponse,
+    ToggleReactionResponse,
+    IndexRange,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
 import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
-import type { BlobReference } from "../../domain/data/data";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -25,16 +26,23 @@ export class CachingGroupClient implements IGroupClient {
         private chatId: string,
         private client: IGroupClient
     ) {}
-    async chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
+    async chatEvents(
+        eventIndexRange: IndexRange,
+        startIndex: number,
+        ascending: boolean
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const cachedMsgs = await getCachedMessages<GroupChatEvent>(
             this.db,
+            eventIndexRange,
             this.chatId,
-            fromIndex,
-            toIndex
+            startIndex,
+            ascending
         );
         return (
             cachedMsgs ??
-            this.client.chatEvents(fromIndex, toIndex).then(setCachedMessages(this.db, this.chatId))
+            this.client
+                .chatEvents(eventIndexRange, startIndex, ascending)
+                .then(setCachedMessages(this.db, this.chatId))
         );
     }
 
@@ -42,7 +50,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.addParticipants(userIds);
     }
 
-    sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return this.client.sendMessage(senderName, message);
     }
 
@@ -64,5 +72,9 @@ export class CachingGroupClient implements IGroupClient {
 
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return this.client.updateGroup(name, desc, avatar);
+    }
+
+    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
+        return this.client.toggleReaction(messageId, reaction);
     }
 }

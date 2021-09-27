@@ -4,7 +4,32 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'notification_canister_ids' : IDL.Vec(CanisterId),
   });
+  const WebRtcEndpoint = IDL.Record({
+    'id' : IDL.Text,
+    'connection_string' : IDL.Text,
+    'ice_candidates' : IDL.Vec(IDL.Text),
+  });
   const UserId = CanisterId;
+  const WebRtcAnswer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
+    'offer_id' : IDL.Text,
+  });
+  const WebRtcOffer = IDL.Record({
+    'endpoint' : WebRtcEndpoint,
+    'user_id' : UserId,
+  });
+  const WebRtcSessionDetails = IDL.Variant({
+    'Answer' : WebRtcAnswer,
+    'Offer' : WebRtcOffer,
+  });
+  const AddWebRtcSessionDetailsArgs = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+  });
+  const AddWebRtcSessionDetailsResponse = IDL.Variant({
+    'Blocked' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Avatar = IDL.Record({
@@ -45,10 +70,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
+    'user_id' : UserId,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
     'start_index' : EventIndex,
+  });
+  const UpdatedMessage = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
   });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
@@ -96,43 +126,34 @@ export const idlFactory = ({ IDL }) => {
     'Audio' : AudioContent,
     'Video' : VideoContent,
   });
-  const PrivateReplyContext = IDL.Record({
+  const ReplyContext = IDL.Record({
+    'content' : IDL.Opt(MessageContent),
+    'sender' : UserId,
     'chat_id' : ChatId,
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const StandardReplyContext = IDL.Record({
-    'content' : MessageContent,
-    'sent_by_me' : IDL.Bool,
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const DirectReplyContext = IDL.Variant({
-    'Private' : PrivateReplyContext,
-    'Standard' : StandardReplyContext,
-  });
   const MessageIndex = IDL.Nat32;
-  const DirectMessage = IDL.Record({
+  const Message = IDL.Record({
     'content' : MessageContent,
-    'sent_by_me' : IDL.Bool,
+    'sender' : UserId,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(DirectReplyContext),
+    'replies_to' : IDL.Opt(ReplyContext),
+    'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
-  const MessageDeleted = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const DeletedDirectMessage = IDL.Record({
-    'sent_by_me' : IDL.Bool,
+  const DeletedMessage = IDL.Record({
+    'sender' : UserId,
     'message_id' : MessageId,
     'message_index' : MessageIndex,
   });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
-    'Message' : DirectMessage,
-    'MessageDeleted' : MessageDeleted,
-    'DeletedMessage' : DeletedDirectMessage,
+    'MessageReactionRemoved' : UpdatedMessage,
+    'MessageReactionAdded' : UpdatedMessage,
+    'Message' : Message,
+    'MessageDeleted' : UpdatedMessage,
+    'DeletedMessage' : DeletedMessage,
     'DirectChatCreated' : DirectChatCreated,
   });
   const TimestampMillis = IDL.Nat64;
@@ -142,6 +163,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const EventsSuccessResult = IDL.Record({
+    'affected_events' : IDL.Vec(DirectChatEventWrapper),
     'events' : IDL.Vec(DirectChatEventWrapper),
   });
   const EventsResponse = IDL.Variant({
@@ -218,23 +240,29 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'ChunkTooBig' : IDL.Null,
   });
+  const RemoveWebRtcSessionDetailsArgs = IDL.Record({
+    'ids' : IDL.Vec(IDL.Text),
+  });
+  const RemoveWebRtcSessionDetailsResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const SearchAllMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
-  const CombinedMessageMatch = IDL.Record({
+  const MessageMatch = IDL.Record({
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
     'event_index' : EventIndex,
   });
-  const SearchAllMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(CombinedMessageMatch),
+  const SearchMessagesSuccessResult = IDL.Record({
+    'matches' : IDL.Vec(MessageMatch),
   });
   const SearchAllMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
-    'Success' : SearchAllMessagesSuccessResult,
+    'Success' : SearchMessagesSuccessResult,
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
@@ -242,15 +270,6 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'user_id' : UserId,
     'search_term' : IDL.Text,
-  });
-  const UserMessageMatch = IDL.Record({
-    'content' : MessageContent,
-    'score' : IDL.Nat32,
-    'sent_by_me' : IDL.Bool,
-    'event_index' : EventIndex,
-  });
-  const SearchMessagesSuccessResult = IDL.Record({
-    'matches' : IDL.Vec(UserMessageMatch),
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
@@ -260,6 +279,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
   });
   const ReplyContextArgs = IDL.Record({
+    'sender' : UserId,
     'chat_id_if_other' : IDL.Opt(ChatId),
     'message_id' : MessageId,
   });
@@ -291,7 +311,18 @@ export const idlFactory = ({ IDL }) => {
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
-    'InternalError' : IDL.Null,
+  });
+  const ToggleReactionArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_id' : MessageId,
+    'reaction' : IDL.Text,
+  });
+  const ToggleReactionResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'InvalidReaction' : IDL.Null,
+    'Added' : EventIndex,
+    'Removed' : EventIndex,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -310,21 +341,8 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
-  const GroupReplyContext = IDL.Record({
-    'content' : MessageContent,
-    'user_id' : UserId,
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const GroupMessage = IDL.Record({
-    'content' : MessageContent,
-    'sender' : UserId,
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
-    'message_index' : MessageIndex,
-  });
-  const GroupMessageEventWrapper = IDL.Record({
-    'event' : GroupMessage,
+  const MessageEventWrapper = IDL.Record({
+    'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
   });
@@ -338,19 +356,19 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
-  const DirectMessageEventWrapper = IDL.Record({
-    'event' : DirectMessage,
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
     'timestamp' : TimestampMillis,
-    'index' : EventIndex,
   });
   const DirectChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Opt(WebRtcSessionDetailsEvent),
     'read_by_me' : IDL.Opt(IDL.Vec(MessageIndexRange)),
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'read_by_them' : IDL.Opt(IDL.Vec(MessageIndexRange)),
-    'latest_message' : IDL.Opt(DirectMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const ChatSummaryUpdates = IDL.Variant({
     'Group' : GroupChatSummaryUpdates,
@@ -369,7 +387,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'min_visible_message_index' : MessageIndex,
     'chat_id' : ChatId,
-    'latest_message' : IDL.Opt(GroupMessageEventWrapper),
+    'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const DirectChatSummary = IDL.Record({
     'date_created' : TimestampMillis,
@@ -377,7 +395,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me' : IDL.Vec(MessageIndexRange),
     'latest_event_index' : EventIndex,
     'read_by_them' : IDL.Vec(MessageIndexRange),
-    'latest_message' : DirectMessageEventWrapper,
+    'latest_message' : MessageEventWrapper,
   });
   const ChatSummary = IDL.Variant({
     'Group' : GroupChatSummary,
@@ -393,6 +411,11 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   return IDL.Service({
+    'add_webrtc_session_details' : IDL.Func(
+        [AddWebRtcSessionDetailsArgs],
+        [AddWebRtcSessionDetailsResponse],
+        [],
+      ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_messages' : IDL.Func(
@@ -412,6 +435,11 @@ export const idlFactory = ({ IDL }) => {
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
+    'remove_webrtc_session_details' : IDL.Func(
+        [RemoveWebRtcSessionDetailsArgs],
+        [RemoveWebRtcSessionDetailsResponse],
+        [],
+      ),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
         [SearchAllMessagesResponse],
@@ -424,6 +452,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'toggle_reaction' : IDL.Func(
+        [ToggleReactionArgs],
+        [ToggleReactionResponse],
+        [],
+      ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
   });

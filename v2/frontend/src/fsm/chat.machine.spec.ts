@@ -4,18 +4,21 @@ import type { Identity } from "@dfinity/agent";
 import { spawn } from "xstate";
 import type {
     DirectChatSummary,
-    DirectMessage,
+    Message,
     EnhancedReplyContext,
     EventWrapper,
     FileContent,
     GroupChatSummary,
-    GroupMessage,
-    ReplyContext,
     TextContent,
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
 import { ServiceContainer } from "../services/serviceContainer";
-import { ChatContext, chatMachine, newMessagesRange, previousMessagesRange } from "./chat.machine";
+import {
+    ChatContext,
+    chatMachine,
+    newMessageCriteria,
+    previousMessagesCriteria,
+} from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
 import { markReadMachine } from "./markread.machine";
 
@@ -32,13 +35,14 @@ const fileMessageContent: FileContent = {
     fileSize: 10000,
 };
 
-const testDirectMessage: DirectMessage = {
-    kind: "direct_message",
-    sentByMe: true,
+const testDirectMessage: Message = {
+    kind: "message",
+    sender: "abcdefg",
     repliesTo: undefined,
     messageId: newMessageId(),
     messageIndex: 100,
     content: textMessageContent,
+    reactions: [],
 };
 
 const directChat: DirectChatSummary = {
@@ -80,6 +84,7 @@ const directContext: ChatContext = {
     },
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
+    localReactions: {},
 };
 
 const serviceContainer = new ServiceContainer({} as Identity);
@@ -96,6 +101,7 @@ const groupContext: ChatContext = {
     },
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
+    localReactions: {},
 };
 
 describe("chat machine transitions", () => {
@@ -277,126 +283,103 @@ describe("chat machine transitions", () => {
     });
 });
 
-type MessageKind = "group_message" | "direct_message";
-
-function eventMessage<T extends GroupMessage | DirectMessage>(
-    kind: MessageKind,
-    index: number
-): EventWrapper<T> {
+function eventMessage(index: number): EventWrapper<Message> {
     return {
-        event: textMessage<T>(kind, index),
+        event: textMessage(index),
         index,
         timestamp: BigInt(+new Date()),
     };
 }
 
-function repliesTo(): EnhancedReplyContext<ReplyContext> {
+function repliesTo(): EnhancedReplyContext {
     return {
-        kind: "direct_standard_reply_context",
         content: {
             kind: "text_content",
             text: "some text",
         },
-        sentByMe: true,
+        senderId: "abcdefg",
         eventIndex: 0,
         messageId: newMessageId(),
+        chatId: "chatId",
     };
 }
 
-function repliesToGroup(): EnhancedReplyContext<ReplyContext> {
+function repliesToGroup(): EnhancedReplyContext {
     return {
-        kind: "group_reply_context",
         content: {
             kind: "text_content",
             text: "some text",
         },
-        userId: "abcdef",
+        senderId: "abcdef",
         eventIndex: 0,
         messageId: newMessageId(),
+        chatId: "chatId",
     };
 }
 
-function textMessage<T extends GroupMessage | DirectMessage>(kind: MessageKind, index: number): T {
-    return kind === "direct_message"
-        ? ({
-              kind,
-              content: {
-                  kind: "text_content",
-                  text: "some text",
-              },
-              sentByMe: true,
-              repliesTo: undefined,
-              messageId: newMessageId(),
-              messageIndex: index,
-          } as T)
-        : ({
-              kind,
-              content: {
-                  kind: "text_content",
-                  text: "some text",
-              },
-              sender: "abcdef",
-              repliesTo: undefined,
-              messageId: newMessageId(),
-              messageIndex: index,
-          } as T);
+function textMessage(index: number): Message {
+    return {
+        kind: "message",
+        content: {
+            kind: "text_content",
+            text: "some text",
+        },
+        sender: "abcdef",
+        repliesTo: undefined,
+        messageId: newMessageId(),
+        messageIndex: index,
+        reactions: [],
+    };
 }
 
 describe("required message range calculation", () => {
     describe("updating chats", () => {
-        /**
-         * from: latestMessageIndexLoaded
-         * to: latestMessage?.messageIndex
-         *
-         * if there are no messages loaded then we should not be loading updates so do nothing
-         * if there is no latest message then there cannot be anything to load so do nothing
-         */
         test("from equals to", () => {
             const ctx = {
                 ...directContext,
-                events: [eventMessage<DirectMessage>("direct_message", 100)],
+                events: [eventMessage(100)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage<DirectMessage>("direct_message", 101),
+                    latestMessage: eventMessage(101),
                     latestEventIndex: 101,
                 },
             };
-            expect(newMessagesRange(ctx)).toEqual([101, 101]);
+            expect(newMessageCriteria(ctx)).toEqual([101, true]);
         });
         test("from greater than to", () => {
             // this is not really a valid scenario, but we should deal with it
             const ctx = {
                 ...directContext,
-                events: [eventMessage<DirectMessage>("direct_message", 200)],
+                events: [eventMessage(200)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage<DirectMessage>("direct_message", 101),
+                    latestMessage: eventMessage(101),
                     latestEventIndex: 101,
                 },
             };
-            expect(newMessagesRange(ctx)).toBe(undefined);
+            expect(newMessageCriteria(ctx)).toBe(undefined);
         });
         test("no messages loaded", () => {
-            expect(newMessagesRange(directContext)).toBe(undefined);
+            expect(newMessageCriteria(directContext)).toBe(undefined);
         });
         test("no latest message on chat", () => {
             const ctx = {
                 ...directContext,
-                events: [eventMessage<DirectMessage>("direct_message", 200)],
+                events: [eventMessage(200)],
             };
-            expect(newMessagesRange(ctx)).toBe(undefined);
+            expect(newMessageCriteria(ctx)).toBe(undefined);
         });
         test("normal scenario", () => {
             const ctx = {
                 ...directContext,
-                events: [eventMessage<DirectMessage>("direct_message", 100)],
+                events: [eventMessage(100)],
                 chatSummary: {
                     ...directChat,
-                    latestMessage: eventMessage<DirectMessage>("direct_message", 110),
+                    latestMessage: eventMessage(110),
                     latestEventIndex: 110,
                 },
             };
-            expect(newMessagesRange(ctx)).toEqual([101, 110]);
+            expect(newMessageCriteria(ctx)).toEqual([101, true]);
         });
     });
 
@@ -407,11 +390,11 @@ describe("required message range calculation", () => {
                     ...directContext,
                     chatSummary: {
                         ...directChat,
-                        latestMessage: eventMessage<DirectMessage>("direct_message", 9),
+                        latestMessage: eventMessage(9),
                         latestEventIndex: 9,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+                expect(previousMessagesCriteria(ctx)).toEqual([9, false]);
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
@@ -419,35 +402,11 @@ describe("required message range calculation", () => {
                     chatSummary: {
                         ...groupChat,
                         minVisibleEventIndex: 90,
-                        latestMessage: eventMessage<GroupMessage>("group_message", 100),
+                        latestMessage: eventMessage(100),
                         latestEventIndex: 100,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
-            });
-            test("takes into account focus index", () => {
-                // should go to focusIndex - page_size
-                const ctx: ChatContext = {
-                    ...directContext,
-                    focusIndex: 70,
-                    chatSummary: {
-                        ...directChat,
-                        latestMessage: eventMessage<DirectMessage>("direct_message", 100),
-                        latestEventIndex: 100,
-                    },
-                };
-                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
-            });
-            test("limited by page size if nothing else", () => {
-                const ctx: ChatContext = {
-                    ...directContext,
-                    chatSummary: {
-                        ...directChat,
-                        latestMessage: eventMessage<DirectMessage>("direct_message", 100),
-                        latestEventIndex: 100,
-                    },
-                };
-                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([100, false]);
             });
         });
 
@@ -455,38 +414,20 @@ describe("required message range calculation", () => {
             test("cannot go back beyond zero for direct chat", () => {
                 const ctx = {
                     ...directContext,
-                    events: [eventMessage<DirectMessage>("direct_message", 10)],
+                    events: [eventMessage(10)],
                 };
-                expect(previousMessagesRange(ctx)).toEqual([0, 9]);
+                expect(previousMessagesCriteria(ctx)).toEqual([9, false]);
             });
             test("cannot go back beyond min index for group chat", () => {
                 const ctx: ChatContext = {
                     ...directContext,
-                    events: [eventMessage<DirectMessage>("direct_message", 101)],
+                    events: [eventMessage(101)],
                     chatSummary: {
                         ...groupChat,
                         minVisibleEventIndex: 90,
                     },
                 };
-                expect(previousMessagesRange(ctx)).toEqual([90, 100]);
-            });
-            test("takes into account focus index", () => {
-                // should go to focusIndex - page_size
-                const ctx: ChatContext = {
-                    ...directContext,
-                    events: [eventMessage<DirectMessage>("direct_message", 101)],
-                    focusIndex: 70,
-                    chatSummary: { ...directChat },
-                };
-                expect(previousMessagesRange(ctx)).toEqual([50, 100]);
-            });
-            test("limited by page size if nothing else", () => {
-                const ctx: ChatContext = {
-                    ...directContext,
-                    events: [eventMessage<DirectMessage>("direct_message", 101)],
-                    chatSummary: { ...directChat },
-                };
-                expect(previousMessagesRange(ctx)).toEqual([80, 100]);
+                expect(previousMessagesCriteria(ctx)).toEqual([100, false]);
             });
         });
     });

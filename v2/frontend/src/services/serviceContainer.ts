@@ -26,9 +26,8 @@ import type {
     ChatSummary,
     MergedUpdatesResponse,
     AddParticipantsResponse,
-    GroupMessage,
+    Message,
     SendMessageResponse,
-    DirectMessage,
     ChangeAdminResponse,
     RemoveParticipantResponse,
     BlockUserResponse,
@@ -37,6 +36,9 @@ import type {
     MessageIndexRange,
     MarkReadResponse,
     UpdateGroupResponse,
+    ToggleReactionResponse,
+    IndexRange,
+    EventWrapper,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -46,6 +48,7 @@ import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
+import { UnsupportedValueError } from "../utils/error";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -89,34 +92,35 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    sendMessage(
-        chat: ChatSummary,
-        user: UserSummary,
-        msg: GroupMessage | DirectMessage
-    ): Promise<SendMessageResponse> {
-        if (chat.kind === "group_chat" && msg.kind === "group_message") {
+    sendMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<SendMessageResponse> {
+        if (chat.kind === "group_chat") {
             return this.sendGroupMessage(chat.chatId, user.username, msg);
         }
-        if (chat.kind === "direct_chat" && msg.kind === "direct_message") {
-            return this.sendDirectMessage(chat.them, user.username, msg);
+        if (chat.kind === "direct_chat") {
+            const replyingToChatId =
+                msg.repliesTo && chat.chatId !== msg.repliesTo.chatId
+                    ? msg.repliesTo.chatId
+                    : undefined;
+            return this.sendDirectMessage(chat.them, user, msg, replyingToChatId);
         }
-        throw new Error(`Unexpected chat type and msg type combination: ${chat.kind}, ${msg.kind}`);
+        throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
     private sendGroupMessage(
         chatId: string,
         senderName: string,
-        message: GroupMessage
+        message: Message
     ): Promise<SendMessageResponse> {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
     private sendDirectMessage(
         recipientId: string,
-        senderName: string,
-        message: DirectMessage
+        sender: UserSummary,
+        message: Message,
+        replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        return this.userClient.sendMessage(recipientId, senderName, message);
+        return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -137,32 +141,30 @@ export class ServiceContainer {
     }
 
     directChatEvents(
+        eventIndexRange: IndexRange,
         theirUserId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(this.userClient.chatEvents(theirUserId, fromIndex, toIndex));
+        return this.rehydrateMediaData(
+            this.userClient.chatEvents(eventIndexRange, theirUserId, startIndex, ascending)
+        );
     }
 
     groupChatEvents(
+        eventIndexRange: IndexRange,
         chatId: string,
-        fromIndex: number,
-        toIndex: number
+        startIndex: number,
+        ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.rehydrateMediaData(this.getGroupClient(chatId).chatEvents(fromIndex, toIndex));
+        return this.rehydrateMediaData(
+            this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
+        );
     }
 
-    private async rehydrateMediaData<T extends ChatEvent>(
-        eventsPromise: Promise<EventsResponse<T>>
-    ): Promise<EventsResponse<T>> {
-        const resp = await eventsPromise;
-
-        if (resp === "chat_not_found") {
-            return resp;
-        }
-
-        resp.events = resp.events.map((e) => {
-            if (e.event.kind === "direct_message" || e.event.kind === "group_message") {
+    private reydrateEventList<T extends ChatEvent>(events: EventWrapper<T>[]): EventWrapper<T>[] {
+        return events.map((e) => {
+            if (e.event.kind === "message") {
                 if (
                     (e.event.content.kind === "file_content" ||
                         e.event.content.kind === "image_content" ||
@@ -184,6 +186,19 @@ export class ServiceContainer {
             }
             return e;
         });
+    }
+
+    private async rehydrateMediaData<T extends ChatEvent>(
+        eventsPromise: Promise<EventsResponse<T>>
+    ): Promise<EventsResponse<T>> {
+        const resp = await eventsPromise;
+
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        resp.events = this.reydrateEventList(resp.events);
+        resp.affectedEvents = this.reydrateEventList(resp.affectedEvents);
         return resp;
     }
 
@@ -232,10 +247,7 @@ export class ServiceContainer {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser().then((user) => {
-            console.log(user);
-            return user;
-        });
+        return this._userIndexClient.getCurrentUser();
     }
 
     upgradeUser(): Promise<UpgradeCanisterResponse> {
@@ -306,5 +318,21 @@ export class ServiceContainer {
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.userClient.setAvatar(data);
+    }
+
+    toggleGroupChatReaction(
+        chatId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.getGroupClient(chatId).toggleReaction(messageId, reaction);
+    }
+
+    toggleDirectChatReaction(
+        otherUserId: string,
+        messageId: bigint,
+        reaction: string
+    ): Promise<ToggleReactionResponse> {
+        return this.userClient.toggleReaction(otherUserId, messageId, reaction);
     }
 }

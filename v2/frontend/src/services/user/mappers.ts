@@ -1,23 +1,11 @@
 import type {
-    ApiBlobReference,
     ApiChatSummary,
-    ApiCyclesContent,
-    ApiFileContent,
     ApiEventsResponse,
-    ApiImageContent,
-    ApiAudioContent,
-    ApiVideoContent,
-    ApiMessageContent,
-    ApiGroupReplyContext,
-    ApiTextContent,
     ApiUpdatesResponse,
     ApiParticipant,
     ApiCreateGroupResponse,
     ApiChatSummaryUpdates,
-    ApiGroupMessage,
     ApiDirectChatEventWrapper,
-    ApiDirectReplyContext,
-    ApiDirectMessage,
     ApiSendMessageResponse,
     ApiPutChunkResponse,
     ApiBlockUserResponse,
@@ -25,27 +13,18 @@ import type {
     ApiLeaveGroupResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
+    ApiToggleReactionResponse,
+    ApiDirectChatEvent,
 } from "./candid/idl";
 import type {
     ChatSummary,
-    CyclesContent,
-    FileContent,
     UpdatesResponse,
     EventsResponse,
     EventWrapper,
-    ImageContent,
-    VideoContent,
-    AudioContent,
-    MessageContent,
-    TextContent,
     Participant,
     ChatSummaryUpdates,
     CreateGroupResponse,
     DirectChatEvent,
-    GroupMessage,
-    DirectMessage,
-    GroupChatReplyContext,
-    DirectChatReplyContext,
     SendMessageResponse,
     PutChunkResponse,
     BlockUserResponse,
@@ -53,10 +32,30 @@ import type {
     LeaveGroupResponse,
     MarkReadResponse,
     SetAvatarResponse,
+    ToggleReactionResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import type { BlobReference } from "../../domain/data/data";
+import { message } from "../common/chatMappers";
+
+export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
+    if ("Added" in candid) {
+        return "added";
+    }
+    if ("Removed" in candid) {
+        return "removed";
+    }
+    if ("InvalidReaction" in candid) {
+        return "invalid";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
+}
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
     console.log(candid);
@@ -202,6 +201,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
     if ("Success" in candid) {
         return {
             events: candid.Success.events.map(event),
+            affectedEvents: candid.Success.affected_events.map(event),
         };
     }
     if ("ChatNotFound" in candid) {
@@ -212,23 +212,45 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
 }
 
 function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
-    if ("Message" in candid.event) {
+    return {
+        event: directChatEvent(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+    };
+}
+
+function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
+    if ("Message" in candid) {
+        return message(candid.Message);
+    }
+
+    if ("DirectChatCreated" in candid) {
         return {
-            event: directMessage(candid.event.Message),
-            index: candid.index,
-            timestamp: candid.timestamp,
+            kind: "direct_chat_created",
         };
     }
-    if ("DirectChatCreated" in candid.event) {
+
+    if ("MessageReactionAdded" in candid) {
         return {
-            event: {
-                kind: "direct_chat_created",
+            kind: "reaction_added",
+            message: {
+                eventIndex: candid.MessageReactionAdded.event_index,
+                messageId: candid.MessageReactionAdded.message_id,
             },
-            index: candid.index,
-            timestamp: candid.timestamp,
         };
     }
-    throw new Error("Unexpected ApiDirectChatEventWrapper type received");
+
+    if ("MessageReactionRemoved" in candid) {
+        return {
+            kind: "reaction_removed",
+            message: {
+                eventIndex: candid.MessageReactionRemoved.event_index,
+                messageId: candid.MessageReactionRemoved.message_id,
+            },
+        };
+    }
+    // todo - we know there are other event types that we are not dealing with yet
+    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
@@ -254,7 +276,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestMessage: optional(candid.Group.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: groupMessage(ev.event),
+                event: message(ev.event),
             })),
             name: optional(candid.Group.name, identity),
             description: optional(candid.Group.description, identity),
@@ -278,7 +300,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
             latestMessage: optional(candid.Direct.latest_message, (ev) => ({
                 index: ev.index,
                 timestamp: ev.timestamp,
-                event: directMessage(ev.event),
+                event: message(ev.event),
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
         };
@@ -296,7 +318,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                 return {
                     index: ev.index,
                     timestamp: ev.timestamp,
-                    event: groupMessage(ev.event),
+                    event: message(ev.event),
                 };
             }),
             readByMe: candid.Group.read_by_me,
@@ -322,7 +344,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             latestMessage: {
                 index: candid.Direct.latest_message.index,
                 timestamp: candid.Direct.latest_message.timestamp,
-                event: directMessage(candid.Direct.latest_message.event),
+                event: message(candid.Direct.latest_message.event),
             },
             them: candid.Direct.them.toString(),
             latestEventIndex: candid.Direct.latest_event_index,
@@ -339,152 +361,4 @@ function participant(candid: ApiParticipant): Participant {
         role: "Admin" in candid.role ? "admin" : "standard",
         userId: candid.user_id.toString(),
     };
-}
-
-function groupMessage(candid: ApiGroupMessage): GroupMessage {
-    return {
-        kind: "group_message",
-        content: messageContent(candid.content),
-        sender: candid.sender.toString(),
-        repliesTo: optional(candid.replies_to, groupReplyContext),
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-    };
-}
-
-function directMessage(candid: ApiDirectMessage): DirectMessage {
-    return {
-        kind: "direct_message",
-        content: messageContent(candid.content),
-        sentByMe: candid.sent_by_me,
-        repliesTo: optional(candid.replies_to, directReplyContext),
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-    };
-}
-
-function messageContent(candid: ApiMessageContent): MessageContent {
-    if ("File" in candid) {
-        return fileContent(candid.File);
-    }
-    if ("Text" in candid) {
-        return textContent(candid.Text);
-    }
-    if ("Image" in candid) {
-        return imageContent(candid.Image);
-    }
-    if ("Video" in candid) {
-        return videoContent(candid.Video);
-    }
-    if ("Audio" in candid) {
-        return audioContent(candid.Audio);
-    }
-    if ("Cycles" in candid) {
-        return cyclesContent(candid.Cycles);
-    }
-    throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
-}
-
-function cyclesContent(candid: ApiCyclesContent): CyclesContent {
-    return {
-        kind: "cycles_content",
-        caption: optional(candid.caption, identity),
-        amount: candid.amount,
-    };
-}
-
-function imageContent(candid: ApiImageContent): ImageContent {
-    return {
-        kind: "image_content",
-        height: candid.height,
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        thumbnailData: candid.thumbnail_data,
-        caption: optional(candid.caption, identity),
-        width: candid.width,
-    };
-}
-
-function videoContent(candid: ApiVideoContent): VideoContent {
-    return {
-        kind: "video_content",
-        height: candid.height,
-        mimeType: candid.mime_type,
-        videoData: {
-            blobReference: optional(candid.video_blob_reference, blobReference),
-        },
-        imageData: {
-            blobReference: optional(candid.image_blob_reference, blobReference),
-        },
-        thumbnailData: candid.thumbnail_data,
-        caption: optional(candid.caption, identity),
-        width: candid.width,
-    };
-}
-
-function audioContent(candid: ApiAudioContent): AudioContent {
-    return {
-        kind: "audio_content",
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        caption: optional(candid.caption, identity),
-    };
-}
-
-function textContent(candid: ApiTextContent): TextContent {
-    return {
-        kind: "text_content",
-        text: candid.text,
-    };
-}
-
-function fileContent(candid: ApiFileContent): FileContent {
-    return {
-        kind: "file_content",
-        name: candid.name,
-        mimeType: candid.mime_type,
-        blobReference: optional(candid.blob_reference, blobReference),
-        caption: optional(candid.caption, identity),
-        fileSize: candid.file_size,
-    };
-}
-
-function blobReference(candid: ApiBlobReference): BlobReference {
-    return {
-        blobId: candid.blob_id,
-        canisterId: candid.canister_id.toString(),
-    };
-}
-
-function groupReplyContext(candid: ApiGroupReplyContext): GroupChatReplyContext {
-    return {
-        kind: "group_reply_context",
-        content: messageContent(candid.content),
-        userId: candid.user_id.toString(),
-        eventIndex: candid.event_index,
-        messageId: candid.message_id,
-    };
-}
-
-function directReplyContext(candid: ApiDirectReplyContext): DirectChatReplyContext {
-    if ("Private" in candid) {
-        return {
-            kind: "direct_private_reply_context",
-            chatId: candid.Private.chat_id.toString(),
-            eventIndex: candid.Private.event_index,
-            messageId: candid.Private.message_id,
-        };
-    }
-
-    if ("Standard" in candid) {
-        return {
-            kind: "direct_standard_reply_context",
-            content: messageContent(candid.Standard.content),
-            sentByMe: candid.Standard.sent_by_me,
-            eventIndex: candid.Standard.event_index,
-            messageId: candid.Standard.message_id,
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiDirectReplyContext type received", candid);
 }

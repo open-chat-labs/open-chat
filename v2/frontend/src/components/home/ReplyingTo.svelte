@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedReplyContext, ReplyContext } from "../../domain/chat/chat";
+    import type { EnhancedReplyContext } from "../../domain/chat/chat";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher } from "svelte";
@@ -11,7 +11,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let replyingTo: EnhancedReplyContext<ReplyContext>;
+    export let replyingTo: EnhancedReplyContext;
     export let user: UserSummary | undefined;
 
     $: me = replyingTo.sender?.userId === user?.userId;

@@ -37,8 +37,8 @@ type ToggleReactionArgs =
 
 type ToggleReactionResponse =
     variant {
-        Added;
-        Removed;
+        Added: EventIndex;
+        Removed: EventIndex;
         InvalidReaction;
         MessageNotFound;
         ChatNotFound;

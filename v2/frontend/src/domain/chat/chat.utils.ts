@@ -13,19 +13,22 @@ import type {
     GroupChatSummaryUpdates,
     UpdatesResponse,
     ChatEvent,
-    GroupMessage,
-    DirectMessage,
     ReplyContext,
     UpdateArgs,
     MessageIndexRange,
+    Reaction,
+    Message,
+    IndexRange,
+    LocalReaction,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
-import { CanisterInstallMode } from "@dfinity/agent";
+import { overwriteCachedEvents } from "../../utils/caching";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
+const EVENT_PAGE_SIZE = 20;
 
 export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
@@ -70,6 +73,11 @@ export function userIdsFromChatSummaries(
 export function getMinVisibleMessageIndex(chat: ChatSummary): number {
     if (chat.kind === "direct_chat") return 0;
     return chat.minVisibleMessageIndex;
+}
+
+export function getMinVisibleEventIndex(chat: ChatSummary): number {
+    if (chat.kind === "direct_chat") return 0;
+    return chat.minVisibleEventIndex;
 }
 
 export function getUnreadMessages(chat: ChatSummary): number {
@@ -117,19 +125,12 @@ export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSum
     return chat;
 }
 
-export function messageIsReadByThem(
-    chat: ChatSummary,
-    { messageIndex, kind }: GroupMessage | DirectMessage
-): boolean {
+export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
     if (chat.kind === "group_chat") return true;
-    if (kind === "group_message") return true;
     return indexIsInRanges(messageIndex, chat.readByThem);
 }
 
-export function messageIsReadByMe(
-    chat: ChatSummary,
-    { messageIndex }: GroupMessage | DirectMessage
-): boolean {
+export function messageIsReadByMe(chat: ChatSummary, { messageIndex }: Message): boolean {
     return indexIsInRanges(messageIndex, chat.readByMe);
 }
 
@@ -210,48 +211,21 @@ export const blobbyContentTypes = [
     "audio_content",
 ];
 
-export function createDirectMessage(
-    messageIndex: number,
-    content: string | undefined,
-    replyingTo: ReplyContext | undefined,
-    fileToAttach: MessageContent | undefined
-): DirectMessage {
-    // todo - this is awful but it is hopefully temporary
-    if (
-        replyingTo &&
-        replyingTo.kind !== "direct_private_reply_context" &&
-        replyingTo.kind !== "direct_standard_reply_context"
-    ) {
-        throw new Error("Trying to create a direct message with the wrong kind of reply context");
-    }
-    return {
-        kind: "direct_message",
-        content: getMessageContent(content, fileToAttach),
-        sentByMe: true,
-        repliesTo: replyingTo,
-        messageId: newMessageId(),
-        messageIndex,
-    };
-}
-
-export function createGroupMessage(
+export function createMessage(
     userId: string,
     messageIndex: number,
     content: string | undefined,
     replyingTo: ReplyContext | undefined,
     fileToAttach: MessageContent | undefined
-): GroupMessage {
-    // todo - this is awful but it is hopefully temporary
-    if (replyingTo && replyingTo.kind !== "group_reply_context") {
-        throw new Error("Trying to create a group message with the wrong kind of reply context");
-    }
+): Message {
     return {
-        kind: "group_message",
+        kind: "message",
         content: getMessageContent(content, fileToAttach),
         sender: userId,
         repliesTo: replyingTo,
         messageId: newMessageId(),
         messageIndex,
+        reactions: [],
     };
 }
 
@@ -405,19 +379,11 @@ function mergeThings<A, U>(
 }
 
 function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): boolean {
-    if (a.event.kind === b.event.kind) {
-        if (a.event.kind === "direct_message" && b.event.kind === "direct_message") {
-            return (
-                a.event.sentByMe === b.event.sentByMe &&
-                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-            );
-        }
-        if (a.event.kind === "group_message" && b.event.kind === "group_message") {
-            return (
-                a.event.sender === b.event.sender &&
-                b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
-            );
-        }
+    if (a.event.kind === "message" && b.event.kind === "message") {
+        return (
+            a.event.sender === b.event.sender &&
+            b.timestamp - a.timestamp < MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
+        );
     }
     return false;
 }
@@ -427,15 +393,27 @@ function groupBySender(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEven
 }
 
 export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<ChatEvent>[][][] {
-    return groupWhile(sameDate, events).map(groupBySender);
+    return groupWhile(sameDate, events.filter(eventIsVisible)).map(groupBySender);
 }
 
 export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[0]?.index;
 }
 
-export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
-    return chat.latestMessage?.event.messageIndex;
+// export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
+//     return chat.latestMessage?.event.messageIndex;
+// }
+
+export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
+    let idx = undefined;
+    for (let i = events.length - 1; i >= 0; i--) {
+        const e = events[i].event;
+        if (e.kind === "message") {
+            idx = e.messageIndex;
+            break;
+        }
+    }
+    return idx;
 }
 
 export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -450,27 +428,13 @@ export function identity<T>(x: T): T {
     return x;
 }
 
-export function setLastMessageOnChat(
-    chat: ChatSummary,
-    ev: EventWrapper<DirectMessage | GroupMessage>
-): ChatSummary {
-    if (chat.kind === "direct_chat" && ev.event.kind === "direct_message") {
-        return {
-            ...chat,
-            latestMessage: ev as EventWrapper<DirectMessage>,
-            latestEventIndex: ev.index,
-            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
-        };
-    }
-    if (chat.kind === "group_chat" && ev.event.kind === "group_message") {
-        return {
-            ...chat,
-            latestMessage: ev as EventWrapper<GroupMessage>,
-            latestEventIndex: ev.index,
-            readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
-        };
-    }
-    return chat;
+export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
+    return {
+        ...chat,
+        latestMessage: ev,
+        latestEventIndex: ev.index,
+        readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
+    };
 }
 
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {
@@ -517,4 +481,150 @@ export function updateParticipant(
 export function removeParticipant(chat: GroupChatSummary, id: string): GroupChatSummary {
     chat.participants = chat.participants.filter((p) => p.userId !== id);
     return chat;
+}
+
+export function toggleReaction(
+    userId: string,
+    reactions: Reaction[],
+    reaction: string
+): Reaction[] {
+    const r = reactions.find((r) => r.reaction === reaction);
+    if (r === undefined) {
+        reactions.push({ reaction, userIds: new Set([userId]) });
+    } else {
+        if (r.userIds.has(userId)) {
+            r.userIds.delete(userId);
+            if (r.userIds.size === 0) {
+                return reactions.filter((r) => r.reaction !== reaction);
+            }
+        } else {
+            r.userIds.add(userId);
+        }
+    }
+    return reactions;
+}
+
+export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
+    return ew.event.kind !== "reaction_added" && ew.event.kind !== "reaction_removed";
+}
+
+export function enoughVisibleMessages(
+    ascending: boolean,
+    [minIndex, maxIndex]: IndexRange,
+    events: EventWrapper<ChatEvent>[]
+): boolean {
+    const filtered = events.filter(eventIsVisible);
+    if (filtered.length >= EVENT_PAGE_SIZE) {
+        return true;
+    } else if (ascending) {
+        // if there are no more events then we have enough by definition
+        return events[events.length - 1].index === maxIndex;
+    } else {
+        // if there are no previous events then we have enough by definition
+        return events[0].index <= minIndex;
+    }
+}
+
+export function nextIndex(ascending: boolean, events: EventWrapper<ChatEvent>[]): number {
+    return ascending ? events[events.length - 1].index + 1 : events[0].index - 1;
+}
+
+export function indexRangeForChat(chat: ChatSummary): IndexRange {
+    return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
+}
+
+export function mergeReactions(
+    myUserId: string,
+    incoming: Reaction[],
+    localReactions: LocalReaction[]
+): Reaction[] {
+    const merged = localReactions.reduce<Reaction[]>((result, local) => {
+        return applyLocalReaction(myUserId, local, result);
+    }, incoming);
+    return merged;
+}
+
+function applyLocalReaction(
+    userId: string,
+    local: LocalReaction,
+    reactions: Reaction[]
+): Reaction[] {
+    const r = reactions.find((r) => r.reaction === local.reaction);
+    if (r === undefined) {
+        if (local.kind === "add") {
+            reactions.push({ reaction: local.reaction, userIds: new Set([userId]) });
+        }
+    } else {
+        if (local.kind === "add") {
+            r.userIds.add(userId);
+        } else {
+            r.userIds.delete(userId);
+            if (r.userIds.size === 0) {
+                reactions = reactions.filter((r) => r.reaction !== local.reaction);
+            }
+        }
+    }
+    return reactions;
+}
+
+export function containsReaction(userId: string, reaction: string, reactions: Reaction[]): boolean {
+    const r = reactions.find((r) => r.reaction === reaction);
+    return r ? r.userIds.has(userId) : false;
+}
+
+function mergeMessageEvents(
+    myUserId: string,
+    existing: EventWrapper<ChatEvent>,
+    incoming: EventWrapper<ChatEvent>,
+    localReactions: Record<string, LocalReaction[]>
+): EventWrapper<ChatEvent> {
+    if (existing.event.kind === "message" && incoming.event.kind === "message") {
+        const key = existing.event.messageId.toString();
+        const merged = mergeReactions(
+            myUserId,
+            incoming.event.reactions,
+            localReactions[key] ?? []
+        );
+        incoming.event.reactions = merged;
+        return incoming;
+    }
+    return existing;
+}
+
+// todo - this is not very efficient at the moment
+export function replaceAffected(
+    myUserId: string,
+    chatId: string,
+    events: EventWrapper<ChatEvent>[],
+    affectedEvents: EventWrapper<ChatEvent>[],
+    localReactions: Record<string, LocalReaction[]>
+): EventWrapper<ChatEvent>[] {
+    const toCacheBust: EventWrapper<ChatEvent>[] = [];
+    const updated = events.map((ev) => {
+        const aff = affectedEvents.find((a) => a.index === ev.index);
+        if (aff !== undefined) {
+            const merged = mergeMessageEvents(myUserId, ev, aff, localReactions);
+            toCacheBust.push(merged);
+            return merged;
+        }
+        return ev;
+    });
+    if (toCacheBust.length > 0) {
+        // Note - this is fire and forget which is a tiny bit dodgy
+        overwriteCachedEvents(chatId, toCacheBust);
+    }
+    return updated;
+}
+
+export function pruneLocalReactions(
+    reactions: Record<string, LocalReaction[]>
+): Record<string, LocalReaction[]> {
+    const limit = +new Date() - 10000;
+    return Object.entries(reactions).reduce((pruned, [k, v]) => {
+        const filtered = v.filter((r) => r.timestamp > limit);
+        if (filtered.length > 0) {
+            pruned[k] = filtered;
+        }
+        return pruned;
+    }, {} as Record<string, LocalReaction[]>);
 }

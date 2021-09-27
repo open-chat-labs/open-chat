@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { themes, saveSeletedTheme, loadSavedTheme } from "../theme/themes";
+    import { themes, saveSeletedTheme, loadAndApplySavedTheme } from "../theme/themes";
     import type { Themes } from "../theme/themes";
     import ModalContent from "./ModalContent.svelte";
     import Radio from "./Radio.svelte";
 
-    let currentTheme = loadSavedTheme();
+    let currentTheme = loadAndApplySavedTheme();
     let allThemes = Object.entries(themes);
 
     function selectTheme(e: any) {
@@ -22,8 +22,7 @@
             checked={currentTheme === "system"}
             id="system"
             on:change={selectTheme}
-            label="System default"
-        />
+            label="System default" />
         {#each allThemes as [name, theme]}
             <Radio
                 group="theme"
@@ -31,8 +30,7 @@
                 checked={theme.name === currentTheme}
                 id={name}
                 label={theme.label}
-                on:change={selectTheme}
-            />
+                on:change={selectTheme} />
         {/each}
     </span>
 </ModalContent>

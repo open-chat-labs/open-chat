@@ -4,13 +4,16 @@ import type {
     AddParticipantsResponse,
     EventsResponse,
     GroupChatEvent,
-    GroupMessage,
+    Message,
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
     MarkReadResponse,
     MessageIndexRange,
     UpdateGroupResponse,
+    ToggleReactionResponse,
+    EventWrapper,
+    IndexRange,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -21,15 +24,17 @@ import {
     removeParticipantResponse,
     markReadResponse,
     updateGroupResponse,
+    toggleReactionResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
-import { GroupClientMock } from "./group.client.mock";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
 import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
-import type { BlobReference } from "../../domain/data/data";
+import { enoughVisibleMessages, nextIndex } from "../../domain/chat/chat.utils";
+
+const MAX_RECURSION = 10;
 
 export class GroupClient extends CandidService implements IGroupClient {
     private groupService: GroupService;
@@ -40,25 +45,58 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     static create(chatId: string, identity: Identity, db?: Database): IGroupClient {
-        if (process.env.MOCK_SERVICES) {
-            return db
-                ? new CachingGroupClient(db, chatId, new GroupClientMock())
-                : new GroupClientMock();
-        }
         return db && process.env.CLIENT_CACHING
             ? new CachingGroupClient(db, chatId, new GroupClient(identity, chatId))
             : new GroupClient(identity, chatId);
     }
 
-    chatEvents(fromIndex: number, toIndex: number): Promise<EventsResponse<GroupChatEvent>> {
-        return this.handleResponse(
-            //todo - refactor this use the new method
-            this.groupService.events_range({
-                to_index: toIndex,
-                from_index: fromIndex,
+    async chatEvents(
+        eventIndexRange: IndexRange,
+        startIndex: number,
+        ascending: boolean,
+        previouslyLoadedEvents: EventWrapper<GroupChatEvent>[] = [],
+        iterations = 0
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        console.log("index range: ", eventIndexRange);
+        console.log("loading messages from: ", startIndex, " : ", ascending);
+        const resp = await this.handleResponse(
+            this.groupService.events({
+                max_messages: 20,
+                max_events: 50,
+                ascending: ascending,
+                start_index: startIndex,
             }),
             getEventsResponse
         );
+        if (resp === "chat_not_found") {
+            return resp;
+        }
+
+        // merge the retrieved events with the events accumulated from the previous iteration(s)
+        // todo - we also need to merge affected events
+        const merged = ascending
+            ? [...previouslyLoadedEvents, ...resp.events]
+            : [...resp.events, ...previouslyLoadedEvents];
+
+        // check whether we have accumulated enough messages to display
+        if (enoughVisibleMessages(ascending, eventIndexRange, merged)) {
+            console.log("we got enough visible messages to display now");
+            return { ...resp, events: merged };
+        } else if (iterations < MAX_RECURSION) {
+            // recurse and get the next chunk since we don't yet have enough events
+            console.log("we don't have enough message, recursing", resp.events);
+            return this.chatEvents(
+                eventIndexRange,
+                nextIndex(ascending, merged),
+                ascending,
+                merged,
+                iterations + 1
+            );
+        } else {
+            throw new Error(
+                `Reached the maximum number of iterations of ${MAX_RECURSION} when trying to load events`
+            );
+        }
     }
 
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse> {
@@ -97,7 +135,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
-    sendMessage(senderName: string, message: GroupMessage): Promise<SendMessageResponse> {
+    sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return DataClient.create(this.identity, this.chatId)
             .uploadData(message.content)
             .then(() => {
@@ -107,7 +145,12 @@ export class GroupClient extends CandidService implements IGroupClient {
                         message_id: message.messageId,
                         sender_name: senderName,
                         replies_to: apiOptional(
-                            (replyContext) => ({ message_id: replyContext.messageId }),
+                            // todo - this needs sorting out
+                            (replyContext) => ({
+                                message_id: replyContext.messageId,
+                                chat_id_if_other: [],
+                                sender: Principal.fromText(replyContext.senderId),
+                            }),
                             message.repliesTo
                         ),
                     }),
@@ -140,6 +183,16 @@ export class GroupClient extends CandidService implements IGroupClient {
                 ),
             }),
             updateGroupResponse
+        );
+    }
+
+    toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse> {
+        return this.handleResponse(
+            this.groupService.toggle_reaction({
+                message_id: messageId,
+                reaction,
+            }),
+            toggleReactionResponse
         );
     }
 }
