@@ -98,6 +98,10 @@ export type ChatEvents =
           type: "DELETE_MESSAGE";
           data: bigint;
       }
+    | {
+          type: "UNDELETE_MESSAGE";
+          data: Message;
+      }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
@@ -353,6 +357,27 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         }),
                     })),
                 },
+                UNDELETE_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (
+                                    e.event.kind === "message" &&
+                                    e.event.messageId === ev.data.messageId
+                                ) {
+                                    return {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            content: ev.data.content,
+                                        },
+                                    };
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
+                },
                 DELETE_MESSAGE: {
                     actions: assign((ctx, ev) => {
                         return {
@@ -362,7 +387,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         ...e,
                                         event: {
                                             ...e.event,
-                                            kind: "deleted_message",
+                                            content: { kind: "deleted_content" },
                                         },
                                     };
                                 }

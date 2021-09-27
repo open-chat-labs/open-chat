@@ -38,7 +38,7 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { deletedMessage, message, updatedMessage } from "../common/chatMappers";
+import { message, updatedMessage } from "../common/chatMappers";
 
 export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
     if ("Success" in candid) {
@@ -235,10 +235,6 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
 function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     if ("Message" in candid) {
         return message(candid.Message);
-    }
-
-    if ("DeletedMessage" in candid) {
-        return deletedMessage(candid.DeletedMessage);
     }
 
     if ("DirectChatCreated" in candid) {

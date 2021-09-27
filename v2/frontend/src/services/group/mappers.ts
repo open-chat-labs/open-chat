@@ -28,7 +28,7 @@ import type {
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
-import { deletedMessage, message, updatedMessage } from "../common/chatMappers";
+import { message, updatedMessage } from "../common/chatMappers";
 
 function principalToString(p: Principal): string {
     return p.toString();
@@ -246,9 +246,6 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
 function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     if ("Message" in candid) {
         return message(candid.Message);
-    }
-    if ("DeletedMessage" in candid) {
-        return deletedMessage(candid.DeletedMessage);
     }
     if ("GroupChatCreated" in candid) {
         return {

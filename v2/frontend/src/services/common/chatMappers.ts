@@ -10,7 +10,6 @@ import type {
     Message,
     ReplyContext,
     Reaction,
-    DeletedMessage,
     StaleMessage,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
@@ -27,7 +26,6 @@ import type {
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
-    ApiDeletedMessage,
     ApiUpdatedMessage,
 } from "../user/candid/idl";
 
@@ -40,15 +38,6 @@ export function message(candid: ApiMessage): Message {
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
-    };
-}
-
-export function deletedMessage(candid: ApiDeletedMessage): DeletedMessage {
-    return {
-        kind: "deleted_message",
-        sender: candid.sender.toString(),
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
     };
 }
 
@@ -74,6 +63,9 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     }
     if ("Audio" in candid) {
         return audioContent(candid.Audio);
+    }
+    if ("Deleted" in candid) {
+        return { kind: "deleted_content" };
     }
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
@@ -188,6 +180,9 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
 
         case "cycles_content":
             return { Cycles: apiCyclesContent(domain) };
+
+        case "deleted_content":
+            return { Deleted: null };
     }
 }
 

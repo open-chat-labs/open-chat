@@ -54,6 +54,8 @@
     let fill = fillMessage(msg);
     let showEmojiPicker = false;
 
+    $: deleted = msg.content.kind === "deleted_content";
+
     afterUpdate(() => {
         // todo - keep an eye on this
         console.log("updating ChatMessage component");
@@ -98,7 +100,7 @@
     }
 
     function deleteMessage() {
-        dispatch("deleteMessage", msg.messageId);
+        dispatch("deleteMessage", msg);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -139,7 +141,7 @@
         class:me
         data-index={msg.messageIndex}
         id={`event-${eventIndex}`}>
-        {#if me}
+        {#if me && !deleted}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -154,10 +156,11 @@
             class:focused
             class:fill
             class:me
+            class:deleted
             class:last
             class:readByMe
             class:rtl={$rtlStore}>
-            {#if msg.repliesTo !== undefined}
+            {#if msg.repliesTo !== undefined && !deleted}
                 <RepliesTo
                     {chatSummary}
                     {user}
@@ -167,9 +170,8 @@
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
-            <!-- <pre>M: {msg.messageIndex} E: {index}</pre> -->
 
-            {#if metaData}
+            {#if metaData && !deleted}
                 {#await metaData then meta}
                     <div class="meta">
                         {meta}
@@ -189,37 +191,39 @@
                 {/if}
             </div>
 
-            <div class="menu" class:rtl={$rtlStore}>
-                <MenuIcon>
-                    <div class="menu-icon" slot="icon">
-                        <HoverIcon>
-                            <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
-                        </HoverIcon>
-                    </div>
-                    <div slot="menu">
-                        <Menu>
-                            <MenuItem on:click={reply}>
-                                <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
-                                <div slot="text">{$_("reply")}</div>
-                            </MenuItem>
-                            {#if groupChat && !me}
-                                <MenuItem on:click={replyPrivately}>
-                                    <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("replyPrivately")}</div>
+            {#if !deleted}
+                <div class="menu" class:rtl={$rtlStore}>
+                    <MenuIcon>
+                        <div class="menu-icon" slot="icon">
+                            <HoverIcon>
+                                <ChevronDown size={"1.2em"} color={me ? "#fff" : "#aaa"} />
+                            </HoverIcon>
+                        </div>
+                        <div slot="menu">
+                            <Menu>
+                                <MenuItem on:click={reply}>
+                                    <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                    <div slot="text">{$_("reply")}</div>
                                 </MenuItem>
-                            {/if}
-                            {#if me}
-                                <MenuItem on:click={deleteMessage}>
-                                    <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("deleteMessage")}</div>
-                                </MenuItem>
-                            {/if}
-                        </Menu>
-                    </div>
-                </MenuIcon>
-            </div>
+                                {#if groupChat && !me}
+                                    <MenuItem on:click={replyPrivately}>
+                                        <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("replyPrivately")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if me}
+                                    <MenuItem on:click={deleteMessage}>
+                                        <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("deleteMessage")}</div>
+                                    </MenuItem>
+                                {/if}
+                            </Menu>
+                        </div>
+                    </MenuIcon>
+                </div>
+            {/if}
         </div>
-        {#if !me}
+        {#if !me && !deleted}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -231,7 +235,7 @@
     </div>
 
     <div class="message-footer" class:last>
-        {#if msg.reactions.length > 0}
+        {#if msg.reactions.length > 0 && !deleted}
             <div class="message-reactions" class:me>
                 {#each msg.reactions as { reaction, userIds }}
                     <div
@@ -471,6 +475,10 @@
         &.focused {
             transform: scale(0.9);
             border: 4px solid yellow;
+        }
+
+        &.deleted {
+            opacity: 0.8;
         }
     }
 

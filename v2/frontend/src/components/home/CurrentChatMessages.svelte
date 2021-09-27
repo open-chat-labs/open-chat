@@ -220,32 +220,31 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
-    function deleteMessage(ev: CustomEvent<bigint>) {
-        machine.send({ type: "DELETE_MESSAGE", data: ev.detail });
+    function deleteMessage(ev: CustomEvent<Message>) {
+        machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
 
         const apiPromise =
             $machine.context.chatSummary.kind === "group_chat"
                 ? $machine.context.serviceContainer.deleteGroupMessage(
                       $machine.context.chatSummary.chatId,
-                      ev.detail
+                      ev.detail.messageId
                   )
                 : $machine.context.serviceContainer.deleteDirectMessage(
                       $machine.context.chatSummary.them,
-                      ev.detail
+                      ev.detail.messageId
                   );
 
         apiPromise
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
-                    // toggle again to undo
                     console.log("Delete failed: ", resp);
-                    // machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                    machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
                 }
             })
             .catch((err) => {
-                // undo
                 console.log("Delete failed: ", err);
+                machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
             });
     }
 
@@ -284,7 +283,6 @@
             first.event.kind === "desc_changed" ||
             first.event.kind === "reaction_added" ||
             first.event.kind === "reaction_removed" ||
-            first.event.kind === "deleted_message" ||
             first.event.kind === "message_deleted" ||
             first.event.kind === "name_changed"
         ) {
@@ -333,7 +331,7 @@
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message" || evt.event.kind === "deleted_message") {
+        if (evt.event.kind === "message") {
             return evt.event.sender === $machine.context.user?.userId;
         }
         if (

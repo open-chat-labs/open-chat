@@ -125,6 +125,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
+    'Deleted' : IDL.Null,
   });
   const ReplyContext = IDL.Record({
     'content' : IDL.Opt(MessageContent),
@@ -142,18 +143,12 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(UserId))),
     'message_index' : MessageIndex,
   });
-  const DeletedMessage = IDL.Record({
-    'sender' : UserId,
-    'message_id' : MessageId,
-    'message_index' : MessageIndex,
-  });
   const DirectChatCreated = IDL.Record({});
   const DirectChatEvent = IDL.Variant({
     'MessageReactionRemoved' : UpdatedMessage,
     'MessageReactionAdded' : UpdatedMessage,
     'Message' : Message,
     'MessageDeleted' : UpdatedMessage,
-    'DeletedMessage' : DeletedMessage,
     'DirectChatCreated' : DirectChatCreated,
   });
   const TimestampMillis = IDL.Nat64;

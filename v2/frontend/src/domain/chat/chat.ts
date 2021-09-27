@@ -7,6 +7,7 @@ export type MessageContent =
     | ImageContent
     | VideoContent
     | AudioContent
+    | DeletedContent
     | CyclesContent;
 
 export type IndexRange = [number, number];
@@ -42,6 +43,10 @@ export interface AudioContent extends DataContent {
     caption?: string;
     mimeType: string;
 }
+
+export type DeletedContent = {
+    kind: "deleted_content";
+};
 
 export interface TextContent {
     kind: "text_content";
@@ -79,13 +84,6 @@ export type Message = {
     reactions: Reaction[];
 };
 
-export type DeletedMessage = {
-    kind: "deleted_message";
-    messageId: bigint;
-    messageIndex: number;
-    sender: string;
-};
-
 export type LocalReaction = {
     reaction: string;
     timestamp: number;
@@ -101,7 +99,6 @@ export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSucce
 
 export type DirectChatEvent =
     | Message
-    | DeletedMessage
     | MessageDeleted
     | ReactionAdded
     | ReactionRemoved
@@ -109,7 +106,6 @@ export type DirectChatEvent =
 
 export type GroupChatEvent =
     | Message
-    | DeletedMessage
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin

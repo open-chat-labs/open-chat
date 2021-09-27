@@ -7,6 +7,7 @@
     import AudioContent from "./AudioContent.svelte";
 
     import FileContent from "./FileContent.svelte";
+    import DeletedContent from "./DeletedContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { getContentAsText } from "../../domain/chat/chat.utils";
 
@@ -39,6 +40,8 @@
     <AudioContent {content} />
 {:else if content.kind === "file_content"}
     <FileContent {me} {content} />
+{:else if content.kind === "deleted_content"}
+    <DeletedContent />
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
 {/if}

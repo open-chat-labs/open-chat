@@ -49,6 +49,8 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "cycles_content") {
         // todo - format cycles
         text = "cycles_content";
+    } else if (content.kind === "deleted_content") {
+        text = "deleted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -189,7 +191,9 @@ export function getParticipantsString(
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
-    return content.kind !== "text_content" ? { ...content, caption } : content;
+    return content.kind !== "text_content" && content.kind !== "deleted_content"
+        ? { ...content, caption }
+        : content;
 }
 
 function getMessageContent(
@@ -591,9 +595,6 @@ function mergeMessageEvents(
                 localReactions[key] ?? []
             );
             incoming.event.reactions = merged;
-            return incoming;
-        }
-        if (incoming.event.kind === "deleted_message") {
             return incoming;
         }
     }

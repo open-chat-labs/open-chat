@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import ChatMessage from "./ChatMessage.svelte";
-    import DeletedMessage from "./DeletedMessage.svelte";
     import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
@@ -48,15 +47,6 @@
         on:deleteMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
-        msg={event.event} />
-{:else if event.event.kind === "deleted_message"}
-    <DeletedMessage
-        {chatSummary}
-        {me}
-        {userLookup}
-        {last}
-        on:chatWith
-        eventIndex={event.index}
         msg={event.event} />
 {:else if event.event.kind === "group_chat_created"}
     <GroupChatCreatedEvent event={event.event} {me} {userLookup} timestamp={event.timestamp} />
