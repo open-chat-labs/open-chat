@@ -19,6 +19,7 @@ import type {
     Reaction,
     Message,
     IndexRange,
+    LocalReaction,
 } from "./chat";
 import { groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
@@ -482,7 +483,7 @@ export function removeParticipant(chat: GroupChatSummary, id: string): GroupChat
     return chat;
 }
 
-export function toggleGroupReaction(
+export function toggleReaction(
     userId: string,
     reactions: Reaction[],
     reaction: string
@@ -532,50 +533,59 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
-// I really wish this didn't need to be this complicated, but I fear it does
 export function mergeReactions(
     myUserId: string,
-    existing: Reaction[],
-    incoming: Reaction[]
+    incoming: Reaction[],
+    localReactions: LocalReaction[]
 ): Reaction[] {
-    return incoming.reduce<Reaction[]>((merged, reaction) => {
-        const ex = existing.find((r) => r.reaction === reaction.reaction);
-        // does the incoming reaction exist in the local list of reactions at all
-        if (ex !== undefined) {
-            ex.userIds = new Set([...reaction.userIds, ...ex.userIds]);
+    const merged = localReactions.reduce<Reaction[]>((result, local) => {
+        return applyLocalReaction(myUserId, local, result);
+    }, incoming);
+    return merged;
+}
+
+function applyLocalReaction(
+    userId: string,
+    local: LocalReaction,
+    reactions: Reaction[]
+): Reaction[] {
+    const r = reactions.find((r) => r.reaction === local.reaction);
+    if (r === undefined) {
+        if (local.kind === "add") {
+            reactions.push({ reaction: local.reaction, userIds: new Set([userId]) });
+        }
+    } else {
+        if (local.kind === "add") {
+            r.userIds.add(userId);
         } else {
-            if (reaction.userIds.has(myUserId)) {
-                if (reaction.userIds.size === 1) {
-                    // only contains me - this means that it is definitely stale and should be ignored
-                    return merged;
-                } else {
-                    // someone else added it, so we should merge it but *without* my userId
-                    reaction.userIds.delete(myUserId);
-                    merged.push({
-                        reaction: reaction.reaction,
-                        userIds: reaction.userIds,
-                    });
-                }
-            } else {
-                // incoming reaction contains only other users - preserve as is
-                merged.push(reaction);
+            r.userIds.delete(userId);
+            if (r.userIds.size === 0) {
+                reactions = reactions.filter((r) => r.reaction !== local.reaction);
             }
         }
-        return merged;
-    }, existing);
+    }
+    return reactions;
+}
+
+export function containsReaction(userId: string, reaction: string, reactions: Reaction[]): boolean {
+    const r = reactions.find((r) => r.reaction === reaction);
+    return r ? r.userIds.has(userId) : false;
 }
 
 function mergeMessageEvents(
     myUserId: string,
     existing: EventWrapper<ChatEvent>,
-    incoming: EventWrapper<ChatEvent>
+    incoming: EventWrapper<ChatEvent>,
+    localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent> {
     if (existing.event.kind === "message" && incoming.event.kind === "message") {
-        incoming.event.reactions = mergeReactions(
+        const key = existing.event.messageId.toString();
+        const merged = mergeReactions(
             myUserId,
-            existing.event.reactions,
-            incoming.event.reactions
+            incoming.event.reactions,
+            localReactions[key] ?? []
         );
+        incoming.event.reactions = merged;
         return incoming;
     }
     return existing;
@@ -586,13 +596,14 @@ export function replaceAffected(
     myUserId: string,
     chatId: string,
     events: EventWrapper<ChatEvent>[],
-    affectedEvents: EventWrapper<ChatEvent>[]
+    affectedEvents: EventWrapper<ChatEvent>[],
+    localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent>[] {
     const toCacheBust: EventWrapper<ChatEvent>[] = [];
     const updated = events.map((ev) => {
         const aff = affectedEvents.find((a) => a.index === ev.index);
         if (aff !== undefined) {
-            const merged = mergeMessageEvents(myUserId, ev, aff);
+            const merged = mergeMessageEvents(myUserId, ev, aff, localReactions);
             toCacheBust.push(merged);
             return merged;
         }
@@ -603,4 +614,18 @@ export function replaceAffected(
         overwriteCachedEvents(chatId, toCacheBust);
     }
     return updated;
+}
+
+export function pruneLocalReactions(
+    reactions: Record<string, LocalReaction[]>
+): Record<string, LocalReaction[]> {
+    console.log("Pruning locally recorded reactions older than ten seconds");
+    const limit = +new Date() - 10000;
+    return Object.entries(reactions).reduce((pruned, [k, v]) => {
+        const filtered = v.filter((r) => r.timestamp > limit);
+        if (filtered.length > 0) {
+            pruned[k] = filtered;
+        }
+        return pruned;
+    }, {} as Record<string, LocalReaction[]>);
 }

@@ -372,6 +372,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     pending: [],
                                                 })
                                             ),
+                                            localReactions: {},
                                         }),
                                         `chat-${key}`
                                     ),

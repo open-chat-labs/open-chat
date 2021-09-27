@@ -79,6 +79,12 @@ export type Message = {
     reactions: Reaction[];
 };
 
+export type LocalReaction = {
+    reaction: string;
+    timestamp: number;
+    kind: "add" | "remove";
+};
+
 export type Reaction = {
     reaction: string;
     userIds: Set<string>;

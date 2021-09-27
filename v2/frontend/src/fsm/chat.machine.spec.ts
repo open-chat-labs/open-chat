@@ -84,6 +84,7 @@ const directContext: ChatContext = {
     },
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
+    localReactions: {},
 };
 
 const serviceContainer = new ServiceContainer({} as Identity);
@@ -100,6 +101,7 @@ const groupContext: ChatContext = {
     },
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
+    localReactions: {},
 };
 
 describe("chat machine transitions", () => {

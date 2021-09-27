@@ -17,16 +17,19 @@ import type {
     SendMessageSuccess,
     GroupChatSummary,
     Message,
+    LocalReaction,
 } from "../domain/chat/chat";
 import {
+    containsReaction,
     earliestLoadedEventIndex,
     eventIsVisible,
     getMinVisibleEventIndex,
     indexRangeForChat,
     latestLoadedEventIndex,
+    pruneLocalReactions,
     replaceAffected,
     setLastMessageOnChat,
-    toggleGroupReaction,
+    toggleReaction,
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
@@ -39,6 +42,8 @@ import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
 
+const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
+
 export interface ChatContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
@@ -50,6 +55,7 @@ export interface ChatContext {
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
     markMessages: ActorRefFrom<MarkReadMachine>;
+    localReactions: Record<string, LocalReaction[]>;
 }
 
 type LoadEventsResponse = {
@@ -78,6 +84,7 @@ export type ChatEvents =
       }
     | { type: "ATTACH_FILE"; data: MessageContent }
     | { type: "CLEAR_ATTACHMENT" }
+    | { type: "PRUNE_LOCAL_REACTIONS" }
     | { type: "CLEAR_FOCUS_INDEX" }
     | {
           type: "REPLY_TO";
@@ -207,13 +214,23 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                     eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
             };
         },
+        pruneLocalReactions: (_ctx, _ev) => (callback) => {
+            const intervalId = setInterval(
+                () => callback("PRUNE_LOCAL_REACTIONS"),
+                PRUNE_LOCAL_REACTIONS_INTERVAL
+            );
+
+            return () => {
+                console.log("stopping the local reactions pruner");
+                clearInterval(intervalId);
+            };
+        },
     },
     actions: {
         assignEventsResponse: assign((ctx, ev) =>
             ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
                       userLookup: ev.data.userLookup,
-                      // todo - we also need to update the cache for any affected event
                       events: replaceAffected(
                           ctx.user!.userId,
                           ctx.chatSummary.chatId,
@@ -221,7 +238,8 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                               (a, b) => a.index === b.index,
                               [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
                           ),
-                          ev.data.affectedEvents
+                          ev.data.affectedEvents,
+                          ctx.localReactions
                       ),
                   }
                 : {}
@@ -234,6 +252,24 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
     id: "chat_machine",
     type: "parallel",
     states: {
+        pruning_local_reactions: {
+            initial: "pruning",
+            states: {
+                pruning: {
+                    invoke: {
+                        id: "pruneLocalReactions",
+                        src: "pruneLocalReactions",
+                    },
+                    on: {
+                        PRUNE_LOCAL_REACTIONS: {
+                            actions: assign((ctx, _) => ({
+                                localReactions: pruneLocalReactions(ctx.localReactions),
+                            })),
+                        },
+                    },
+                },
+            },
+        },
         loading_new_messages: {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
@@ -316,30 +352,49 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     })),
                 },
                 TOGGLE_REACTION: {
-                    actions: assign((ctx, ev) => ({
-                        events: ctx.events.map((e) => {
-                            if (
-                                e.event.kind === "message" &&
-                                ev.data.message.kind === "message" &&
-                                e.event.messageId === ev.data.message.messageId
-                            ) {
-                                const updatedEvent = {
-                                    ...e,
-                                    event: {
-                                        ...e.event,
-                                        reactions: toggleGroupReaction(
-                                            ctx.user!.userId,
-                                            e.event.reactions,
-                                            ev.data.reaction
-                                        ),
-                                    },
-                                };
-                                overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
-                                return updatedEvent;
-                            }
-                            return e;
-                        }),
-                    })),
+                    actions: assign((ctx, ev) => {
+                        const key = ev.data.message.messageId.toString();
+                        if (ctx.localReactions[key] === undefined) {
+                            ctx.localReactions[key] = [];
+                        }
+                        const messageReactions = ctx.localReactions[key];
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (
+                                    e.event.kind === "message" &&
+                                    ev.data.message.kind === "message" &&
+                                    e.event.messageId === ev.data.message.messageId
+                                ) {
+                                    const addOrRemove = containsReaction(
+                                        ctx.user!.userId,
+                                        ev.data.reaction,
+                                        e.event.reactions
+                                    )
+                                        ? "remove"
+                                        : "add";
+                                    messageReactions.push({
+                                        reaction: ev.data.reaction,
+                                        timestamp: +new Date(),
+                                        kind: addOrRemove,
+                                    });
+                                    const updatedEvent = {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            reactions: toggleReaction(
+                                                ctx.user!.userId,
+                                                e.event.reactions,
+                                                ev.data.reaction
+                                            ),
+                                        },
+                                    };
+                                    overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
+                                    return updatedEvent;
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
                 },
                 REMOVE_MESSAGE: {
                     actions: assign((ctx, ev) => ({
