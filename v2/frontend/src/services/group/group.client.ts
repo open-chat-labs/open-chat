@@ -14,6 +14,7 @@ import type {
     ToggleReactionResponse,
     EventWrapper,
     IndexRange,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -25,6 +26,7 @@ import {
     markReadResponse,
     updateGroupResponse,
     toggleReactionResponse,
+    deleteMessageResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -193,6 +195,15 @@ export class GroupClient extends CandidService implements IGroupClient {
                 reaction,
             }),
             toggleReactionResponse
+        );
+    }
+
+    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
+        return this.handleResponse(
+            this.groupService.delete_messages({
+                message_ids: [messageId],
+            }),
+            deleteMessageResponse
         );
     }
 }

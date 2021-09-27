@@ -16,6 +16,7 @@ import type {
     IndexRange,
     EventWrapper,
     ToggleReactionResponse,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
@@ -47,4 +48,5 @@ export interface IUserClient {
         messageId: bigint,
         reaction: string
     ): Promise<ToggleReactionResponse>;
+    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
 }

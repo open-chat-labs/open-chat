@@ -15,6 +15,7 @@ import type {
     ApiSetAvatarResponse,
     ApiToggleReactionResponse,
     ApiDirectChatEvent,
+    ApiDeleteMessageResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -33,10 +34,21 @@ import type {
     MarkReadResponse,
     SetAvatarResponse,
     ToggleReactionResponse,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { message } from "../common/chatMappers";
+import { deletedMessage, message, updatedMessage } from "../common/chatMappers";
+
+export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
+}
 
 export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
     if ("Added" in candid) {
@@ -199,6 +211,7 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
+        console.log("Events: ", candid.Success.events);
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),
@@ -224,6 +237,10 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         return message(candid.Message);
     }
 
+    if ("DeletedMessage" in candid) {
+        return deletedMessage(candid.DeletedMessage);
+    }
+
     if ("DirectChatCreated" in candid) {
         return {
             kind: "direct_chat_created",
@@ -233,20 +250,21 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     if ("MessageReactionAdded" in candid) {
         return {
             kind: "reaction_added",
-            message: {
-                eventIndex: candid.MessageReactionAdded.event_index,
-                messageId: candid.MessageReactionAdded.message_id,
-            },
+            message: updatedMessage(candid.MessageReactionAdded),
+        };
+    }
+
+    if ("MessageDeleted" in candid) {
+        return {
+            kind: "message_deleted",
+            message: updatedMessage(candid.MessageDeleted),
         };
     }
 
     if ("MessageReactionRemoved" in candid) {
         return {
             kind: "reaction_removed",
-            message: {
-                eventIndex: candid.MessageReactionRemoved.event_index,
-                messageId: candid.MessageReactionRemoved.message_id,
-            },
+            message: updatedMessage(candid.MessageReactionRemoved),
         };
     }
     // todo - we know there are other event types that we are not dealing with yet

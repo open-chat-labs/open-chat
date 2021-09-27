@@ -505,7 +505,11 @@ export function toggleReaction(
 }
 
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return ew.event.kind !== "reaction_added" && ew.event.kind !== "reaction_removed";
+    return (
+        ew.event.kind !== "reaction_added" &&
+        ew.event.kind !== "message_deleted" &&
+        ew.event.kind !== "reaction_removed"
+    );
 }
 
 export function enoughVisibleMessages(
@@ -578,15 +582,20 @@ function mergeMessageEvents(
     incoming: EventWrapper<ChatEvent>,
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent> {
-    if (existing.event.kind === "message" && incoming.event.kind === "message") {
-        const key = existing.event.messageId.toString();
-        const merged = mergeReactions(
-            myUserId,
-            incoming.event.reactions,
-            localReactions[key] ?? []
-        );
-        incoming.event.reactions = merged;
-        return incoming;
+    if (existing.event.kind === "message") {
+        if (incoming.event.kind === "message") {
+            const key = existing.event.messageId.toString();
+            const merged = mergeReactions(
+                myUserId,
+                incoming.event.reactions,
+                localReactions[key] ?? []
+            );
+            incoming.event.reactions = merged;
+            return incoming;
+        }
+        if (incoming.event.kind === "deleted_message") {
+            return incoming;
+        }
     }
     return existing;
 }

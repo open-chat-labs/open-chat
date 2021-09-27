@@ -94,6 +94,10 @@ export type ChatEvents =
           type: "REPLY_PRIVATELY_TO";
           data: EnhancedReplyContext;
       }
+    | {
+          type: "DELETE_MESSAGE";
+          data: bigint;
+      }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
@@ -348,6 +352,24 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             return e;
                         }),
                     })),
+                },
+                DELETE_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (e.event.kind === "message" && e.event.messageId === ev.data) {
+                                    return {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            kind: "deleted_message",
+                                        },
+                                    };
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
                 },
                 TOGGLE_REACTION: {
                     actions: assign((ctx, ev) => {

@@ -79,6 +79,13 @@ export type Message = {
     reactions: Reaction[];
 };
 
+export type DeletedMessage = {
+    kind: "deleted_message";
+    messageId: bigint;
+    messageIndex: number;
+    sender: string;
+};
+
 export type LocalReaction = {
     reaction: string;
     timestamp: number;
@@ -92,10 +99,17 @@ export type Reaction = {
 
 export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = Message | ReactionAdded | ReactionRemoved | DirectChatCreated;
+export type DirectChatEvent =
+    | Message
+    | DeletedMessage
+    | MessageDeleted
+    | ReactionAdded
+    | ReactionRemoved
+    | DirectChatCreated;
 
 export type GroupChatEvent =
     | Message
+    | DeletedMessage
     | GroupChatCreated
     | ParticipantsAdded
     | ParticipantsPromotedToAdmin
@@ -103,6 +117,7 @@ export type GroupChatEvent =
     | ParticipantLeft
     | GroupNameChanged
     | AvatarChanged
+    | MessageDeleted
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
@@ -138,6 +153,11 @@ export type GroupDescChanged = {
 export type AvatarChanged = {
     kind: "avatar_changed";
     changedBy: string;
+};
+
+export type MessageDeleted = {
+    kind: "message_deleted";
+    message: StaleMessage;
 };
 
 export type ReactionAdded = {
@@ -470,3 +490,5 @@ export type ToggleReactionResponse =
     | "invalid"
     | "message_not_found"
     | "chat_not_found";
+
+export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

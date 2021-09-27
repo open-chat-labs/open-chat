@@ -220,6 +220,35 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
+    function deleteMessage(ev: CustomEvent<bigint>) {
+        machine.send({ type: "DELETE_MESSAGE", data: ev.detail });
+
+        const apiPromise =
+            $machine.context.chatSummary.kind === "group_chat"
+                ? $machine.context.serviceContainer.deleteGroupMessage(
+                      $machine.context.chatSummary.chatId,
+                      ev.detail
+                  )
+                : $machine.context.serviceContainer.deleteDirectMessage(
+                      $machine.context.chatSummary.them,
+                      ev.detail
+                  );
+
+        apiPromise
+            .then((resp) => {
+                // check it worked - undo if it didn't
+                if (resp !== "success") {
+                    // toggle again to undo
+                    console.log("Delete failed: ", resp);
+                    // machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                }
+            })
+            .catch((err) => {
+                // undo
+                console.log("Delete failed: ", err);
+            });
+    }
+
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
@@ -255,6 +284,8 @@
             first.event.kind === "desc_changed" ||
             first.event.kind === "reaction_added" ||
             first.event.kind === "reaction_removed" ||
+            first.event.kind === "deleted_message" ||
+            first.event.kind === "message_deleted" ||
             first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
@@ -302,7 +333,7 @@
     }
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (evt.event.kind === "message") {
+        if (evt.event.kind === "message" || evt.event.kind === "deleted_message") {
             return evt.event.sender === $machine.context.user?.userId;
         }
         if (
@@ -315,6 +346,7 @@
             evt.event.kind === "name_changed" ||
             evt.event.kind === "reaction_added" ||
             evt.event.kind === "reaction_removed" ||
+            evt.event.kind === "message_deleted" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {
@@ -384,6 +416,7 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
+                        on:deleteMessage={deleteMessage}
                         on:goToMessage={goToMessage}
                         on:selectReaction={selectReaction}
                         event={evt} />

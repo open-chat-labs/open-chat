@@ -22,6 +22,7 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
@@ -94,6 +95,10 @@
 
     function replyPrivately() {
         dispatch("replyPrivatelyTo", createReplyContext());
+    }
+
+    function deleteMessage() {
+        dispatch("deleteMessage", msg.messageId);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -201,6 +206,12 @@
                                 <MenuItem on:click={replyPrivately}>
                                     <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                     <div slot="text">{$_("replyPrivately")}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if me}
+                                <MenuItem on:click={deleteMessage}>
+                                    <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                    <div slot="text">{$_("deleteMessage")}</div>
                                 </MenuItem>
                             {/if}
                         </Menu>

@@ -44,6 +44,9 @@ import {
     MarkReadResponse,
     SetAvatarResponse,
     ToggleReactionResponse,
+    DeleteMessagesResponse,
+    DeletedMessage,
+    UpdatedMessage,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -90,6 +93,9 @@ export {
     MarkReadResponse as ApiMarkReadResponse,
     SetAvatarResponse as ApiSetAvatarResponse,
     ToggleReactionResponse as ApiToggleReactionResponse,
+    DeleteMessagesResponse as ApiDeleteMessageResponse,
+    DeletedMessage as ApiDeletedMessage,
+    UpdatedMessage as ApiUpdatedMessage,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

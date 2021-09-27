@@ -10,6 +10,8 @@ import type {
     Message,
     ReplyContext,
     Reaction,
+    DeletedMessage,
+    StaleMessage,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
@@ -25,6 +27,8 @@ import type {
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
+    ApiDeletedMessage,
+    ApiUpdatedMessage,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -36,6 +40,22 @@ export function message(candid: ApiMessage): Message {
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
+    };
+}
+
+export function deletedMessage(candid: ApiDeletedMessage): DeletedMessage {
+    return {
+        kind: "deleted_message",
+        sender: candid.sender.toString(),
+        messageId: candid.message_id,
+        messageIndex: candid.message_index,
+    };
+}
+
+export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
+    return {
+        messageId: candid.message_id,
+        eventIndex: candid.event_index,
     };
 }
 
