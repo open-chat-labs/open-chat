@@ -212,7 +212,7 @@ impl ChatEvents {
                             DeleteMessageResult::NotAuthorized
                         }
                     }
-                    _ => DeleteMessageResult::NotFound
+                    _ => DeleteMessageResult::NotFound,
                 };
             }
         }
