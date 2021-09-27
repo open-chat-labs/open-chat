@@ -8,11 +8,17 @@ fn events(args: Args) -> Response {
 }
 
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.is_caller_participant() {
-        let events = runtime_state
-            .data
-            .events
-            .from_index(args.start_index, args.ascending, args.max_messages, args.max_events);
+    let caller = runtime_state.env.caller();
+    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        let min_visible_event_index = participant.min_visible_event_index;
+
+        let events = runtime_state.data.events.from_index(
+            args.start_index,
+            args.ascending,
+            args.max_messages,
+            args.max_events,
+            min_visible_event_index,
+        );
 
         let affected_events = runtime_state.data.events.affected_events(&events);
         let latest_event_index = runtime_state.data.events.last().index;

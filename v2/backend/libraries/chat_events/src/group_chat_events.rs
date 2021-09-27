@@ -26,7 +26,6 @@ impl GroupChatEvents {
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>) -> EventWrapper<GroupChatEvent> {
         let event_data = match &event.event {
             ChatEventInternal::Message(m) => GroupChatEvent::Message(self.inner.hydrate_message(m)),
-            ChatEventInternal::DeletedMessage(d) => GroupChatEvent::DeletedMessage(*d.clone()),
             ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(**m)),
             ChatEventInternal::MessageReactionAdded(m) => {
                 GroupChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(**m))

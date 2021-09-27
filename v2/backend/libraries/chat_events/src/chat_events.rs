@@ -25,7 +25,6 @@ enum ChatType {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
-    DeletedMessage(Box<DeletedMessage>),
     MessageDeleted(Box<MessageId>),
     MessageReactionAdded(Box<MessageId>),
     MessageReactionRemoved(Box<MessageId>),
@@ -49,7 +48,6 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::DeletedMessage(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -61,7 +59,6 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::DeletedMessage(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -200,27 +197,23 @@ impl ChatEvents {
 
     pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal(event_index) {
-                let deleted_message = match &event.event {
+            if let Some(event) = self.get_internal_mut(event_index) {
+                return match &mut event.event {
                     ChatEventInternal::Message(message) => {
                         if message.sender == caller {
-                            message.clone()
+                            if matches!(message.content, MessageContent::Deleted) {
+                                DeleteMessageResult::AlreadyDeleted
+                            } else {
+                                message.content = MessageContent::Deleted;
+                                self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                                DeleteMessageResult::Success
+                            }
                         } else {
-                            return DeleteMessageResult::NotAuthorized;
+                            DeleteMessageResult::NotAuthorized
                         }
                     }
-                    ChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
-                    _ => return DeleteMessageResult::NotFound,
+                    _ => DeleteMessageResult::NotFound,
                 };
-
-                let deletion_event_index = self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
-                let event = self.get_internal_mut(event_index).unwrap();
-                event.event = ChatEventInternal::DeletedMessage(Box::new(DeletedMessage {
-                    message_index: deleted_message.message_index,
-                    message_id: deleted_message.message_id,
-                    sender: deleted_message.sender,
-                    deletion_event_index,
-                }))
             }
         }
 
@@ -385,7 +378,7 @@ impl ChatEvents {
     }
 
     pub fn get_range(&self, from_event_index: EventIndex, to_event_index: EventIndex) -> &[EventWrapper<ChatEventInternal>] {
-        if self.events.is_empty() {
+        if self.events.is_empty() || from_event_index > to_event_index {
             return &[];
         }
 
@@ -430,6 +423,7 @@ impl ChatEvents {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
+        min_visible_event_index: EventIndex,
     ) -> Vec<&EventWrapper<ChatEventInternal>> {
         if let Some(index) = self.get_index(start) {
             let iter: Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>>> = if ascending {
@@ -442,7 +436,10 @@ impl ChatEvents {
 
             let mut events = Vec::new();
             let mut messages_count: u32 = 0;
-            for event in iter.take(max_events as usize) {
+            for event in iter
+                .take_while(|e| e.index >= min_visible_event_index)
+                .take(max_events as usize)
+            {
                 let is_message = matches!(event.event, ChatEventInternal::Message(_));
 
                 events.push(event);
@@ -531,7 +528,7 @@ mod tests {
     fn from_index_message_limit() {
         let events = setup_events();
 
-        let results = events.from_index(10.into(), true, 10, 40);
+        let results = events.from_index(10.into(), true, 10, 40, EventIndex::default());
 
         assert_eq!(
             results
@@ -548,7 +545,7 @@ mod tests {
     fn from_index_message_limit_rev() {
         let events = setup_events();
 
-        let results = events.from_index(40.into(), false, 10, 40);
+        let results = events.from_index(40.into(), false, 10, 40, EventIndex::default());
 
         assert_eq!(
             results
@@ -565,7 +562,7 @@ mod tests {
     fn from_index_event_limit() {
         let events = setup_events();
 
-        let results = events.from_index(10.into(), true, 15, 25);
+        let results = events.from_index(10.into(), true, 15, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
         assert_eq!(results.first().unwrap().index, 10.into());
@@ -576,7 +573,7 @@ mod tests {
     fn from_index_event_limit_rev() {
         let events = setup_events();
 
-        let results = events.from_index(40.into(), false, 15, 25);
+        let results = events.from_index(40.into(), false, 15, 25, EventIndex::default());
 
         assert_eq!(results.len(), 25);
         assert_eq!(results.first().unwrap().index, 16.into());
