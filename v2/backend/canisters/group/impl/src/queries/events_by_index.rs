@@ -8,8 +8,12 @@ fn events_by_index(args: Args) -> Response {
 }
 
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if runtime_state.is_caller_participant() {
-        let events = runtime_state.data.events.get_by_index(args.events);
+    let caller = runtime_state.env.caller();
+    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+        let mut event_indexes = args.events;
+        event_indexes.retain(|e| *e >= participant.min_visible_event_index);
+
+        let events = runtime_state.data.events.get_by_index(event_indexes);
         let affected_events = runtime_state.data.events.affected_events(&events);
         let latest_event_index = runtime_state.data.events.last().index;
 

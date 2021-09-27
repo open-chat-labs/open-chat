@@ -26,9 +26,10 @@ macro_rules! generate_common_methods {
             ascending: bool,
             max_messages: u32,
             max_events: u32,
+            min_visible_event_index: EventIndex,
         ) -> Vec<EventWrapper<$chat_event_event>> {
             self.inner
-                .from_index(start, ascending, max_messages, max_events)
+                .from_index(start, ascending, max_messages, max_events, min_visible_event_index)
                 .into_iter()
                 .map(|e| self.hydrate_event(e))
                 .collect()
