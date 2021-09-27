@@ -33,8 +33,8 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             .events
             .toggle_reaction(their_user_id, args.message_id, args.reaction, now)
         {
-            ToggleReactionResult::Added => Added,
-            ToggleReactionResult::Removed => Removed,
+            ToggleReactionResult::Added(_) => Added,
+            ToggleReactionResult::Removed(_) => Removed,
             ToggleReactionResult::MessageNotFound => MessageNotFound,
         }
     } else {
