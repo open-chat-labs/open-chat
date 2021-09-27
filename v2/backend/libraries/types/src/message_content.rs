@@ -10,6 +10,7 @@ pub enum MessageContent {
     Audio(AudioContent),
     File(FileContent),
     Cycles(CycleContent),
+    Deleted,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
