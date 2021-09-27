@@ -2,16 +2,18 @@ const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
 const NOTIFICATIONS_CANISTER_ID = "6vuwk-zaaaa-aaaaf-aaagq-cai";
-const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 const isDevelopment = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
   : (process.env.DFX_NETWORK !== "ic");
 
 const mode = isDevelopment ? "development" : "production";
+
+let webpushServiceWorkerPath = isDevelopment ? "sw.js" : "_/raw/sw.js";
 
 function initCanisterIds() {
     let localCanisters, prodCanisters;
@@ -43,9 +45,11 @@ function initCanisterIds() {
 
 let canisterIds = initCanisterIds();
 
-let IDP_URL = isDevelopment 
-  ? "http://s55qq-oqaaa-aaaaa-aaakq-cai.localhost:8000"
-  : "https://identity.ic0.app/";
+let IDP_URL = process.env.DFX_NETWORK === "nns_dapp_testnet" 
+    ? "https://qjdve-lqaaa-aaaaa-aaaeq-cai.nnsdapp.dfinity.network/" 
+    : isDevelopment 
+      ? "http://qsgjb-riaaa-aaaaa-aaaga-cai.localhost:8000"
+      : "https://identity.ic0.app/";
 
 // List of all aliases for canisters. This creates the module alias for
 // the `import ... from "@dfinity/ic/canisters/xyz"` where xyz is the name of a
@@ -144,13 +148,18 @@ function generateWebpackConfigForCanister(name, info) {
         P2P_CANISTER_ID: canisterIds["p2p"],
         USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
         NOTIFICATIONS_CANISTER_ID,
-        WEBPUSH_SERVICE_WORKER_PATH,
+        WEBPUSH_SERVICE_WORKER_PATH: webpushServiceWorkerPath,
         IDP_URL,
       }),  
       new webpack.ProvidePlugin({
         Buffer: [require.resolve('buffer/'), 'Buffer'],
         process: require.resolve('process/browser'),
       }),
+      new CopyPlugin({
+        patterns: [
+          { from: path.join(sourceDir, "assets"), to: "" },
+        ],
+      }),      
     ],
   };
 }
@@ -165,7 +174,7 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: WEBPUSH_SERVICE_WORKER_PATH,
+      filename: webpushServiceWorkerPath,
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {

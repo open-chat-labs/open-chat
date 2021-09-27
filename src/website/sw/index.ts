@@ -12,6 +12,8 @@ self.addEventListener('notificationclick', function(event: NotificationEvent) {
     event.waitUntil(handleNotificationClick(event));
 });
 
+self.addEventListener('fetch', () => console.log("fetch"));
+
 async function handlePushNotification(event: PushEvent) : Promise<void> {
     // Try to extract the typed notification from the event
     const notification = event.data?.json() as Notification;

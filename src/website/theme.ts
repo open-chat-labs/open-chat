@@ -155,7 +155,7 @@ const defaultColours: CustomColors = {
     loginRegister: {
         textColor: "#000000",
         backgroundColor: "#ffffff",
-        buttonBackgroundColor: "#3dc5ee",
+        buttonBackgroundColor: "#269fd4",
         buttonTextColor: "#ffffff"
     }
 };
