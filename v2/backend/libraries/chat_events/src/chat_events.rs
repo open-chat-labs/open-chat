@@ -25,7 +25,6 @@ enum ChatType {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
-    DeletedMessage(Box<DeletedMessage>),
     MessageDeleted(Box<MessageId>),
     MessageReactionAdded(Box<MessageId>),
     MessageReactionRemoved(Box<MessageId>),
@@ -49,7 +48,6 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::DeletedMessage(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -61,7 +59,6 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::DeletedMessage(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -200,27 +197,23 @@ impl ChatEvents {
 
     pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
         if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal(event_index) {
-                let deleted_message = match &event.event {
+            if let Some(event) = self.get_internal_mut(event_index) {
+                return match &mut event.event {
                     ChatEventInternal::Message(message) => {
                         if message.sender == caller {
-                            message.clone()
+                            if matches!(message.content, MessageContent::Deleted) {
+                                DeleteMessageResult::AlreadyDeleted
+                            } else {
+                                message.content = MessageContent::Deleted;
+                                self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                                DeleteMessageResult::Success
+                            }
                         } else {
-                            return DeleteMessageResult::NotAuthorized;
+                            DeleteMessageResult::NotAuthorized
                         }
                     }
-                    ChatEventInternal::DeletedMessage(_) => return DeleteMessageResult::AlreadyDeleted,
-                    _ => return DeleteMessageResult::NotFound,
+                    _ => DeleteMessageResult::NotFound,
                 };
-
-                let deletion_event_index = self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
-                let event = self.get_internal_mut(event_index).unwrap();
-                event.event = ChatEventInternal::DeletedMessage(Box::new(DeletedMessage {
-                    message_index: deleted_message.message_index,
-                    message_id: deleted_message.message_id,
-                    sender: deleted_message.sender,
-                    deletion_event_index,
-                }))
             }
         }
 
