@@ -6,6 +6,7 @@
     import type { AudioContent } from "../../domain/chat/chat";
     import MusicNote from "svelte-material-icons/MusicNote.svelte";
     import Pause from "svelte-material-icons/Pause.svelte";
+    import Caption from "./Caption.svelte";
 
     export let content: AudioContent;
 
@@ -67,7 +68,7 @@
 </div>
 
 {#if content.caption !== undefined}
-    <p>{content.caption}</p>
+    <Caption caption={content.caption} />
 {/if}
 
 <style type="text/scss">
