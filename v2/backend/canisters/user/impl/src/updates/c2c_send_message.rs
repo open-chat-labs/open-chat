@@ -11,23 +11,22 @@ use utils::rand::get_random_item;
 async fn c2c_send_message(args: Args) -> Response {
     check_cycles_balance();
 
-    if let Some((user_index_canister_id, user_id_to_verify)) =
-        match RUNTIME_STATE.with(|state| get_sender_status(state.borrow().as_ref().unwrap())) {
-            SenderStatus::Ok => None,
-            SenderStatus::Blocked => return Blocked,
-            SenderStatus::UnknownUser(c, u) => Some((c, u)),
+    let sender_user_id = match RUNTIME_STATE.with(|state| get_sender_status(state.borrow().as_ref().unwrap())) {
+        SenderStatus::Ok(user_id) => user_id,
+        SenderStatus::Blocked => return Blocked,
+        SenderStatus::UnknownUser(user_index_canister_id, user_id) => {
+            if !verify_user(user_index_canister_id, user_id).await {
+                panic!("This request is not from an OpenChat user");
+            }
+            user_id
         }
-    {
-        if !verify_user(user_index_canister_id, user_id_to_verify).await {
-            panic!("This request is not from an OpenChat user");
-        }
-    }
+    };
 
-    RUNTIME_STATE.with(|state| c2c_send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
+    RUNTIME_STATE.with(|state| c2c_send_message_impl(sender_user_id, args, state.borrow_mut().as_mut().unwrap()))
 }
 
 enum SenderStatus {
-    Ok,
+    Ok(UserId),
     Blocked,
     UnknownUser(CanisterId, UserId),
 }
@@ -38,7 +37,7 @@ fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
     if runtime_state.data.blocked_users.contains(&sender_user_id) {
         SenderStatus::Blocked
     } else if runtime_state.data.direct_chats.get(&sender_user_id.into()).is_some() {
-        SenderStatus::Ok
+        SenderStatus::Ok(sender_user_id)
     } else {
         SenderStatus::UnknownUser(runtime_state.data.user_index_canister_id, sender_user_id)
     }
@@ -56,9 +55,7 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-fn c2c_send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let sender_user_id = runtime_state.env.caller().into();
-
+fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: sender_user_id,
