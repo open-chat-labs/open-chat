@@ -175,6 +175,7 @@ export interface IndexedNotification {
 }
 export interface Message {
   'content' : MessageContent,
+  'edited' : boolean,
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],

@@ -126,6 +126,10 @@
     function loadMessage(msg: MessageMatch): void {
         console.log("do something with this message: ", msg);
         // clearSearch();
+        // todo - this doesn't quite work at the moment
+        // if we already have the chat selected and we only change the event index part of the
+        // url, the Home component does not respond to it
+        // need to fix that CAREFULLY
         push(`/${msg.chatId}/${msg.eventIndex}`);
     }
 

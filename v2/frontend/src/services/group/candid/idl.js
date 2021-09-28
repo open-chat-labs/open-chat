@@ -63,36 +63,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const EventIndex = IDL.Nat32;
-  const EventsArgs = IDL.Record({
-    'max_messages' : IDL.Nat32,
-    'max_events' : IDL.Nat32,
-    'ascending' : IDL.Bool,
-    'start_index' : EventIndex,
-  });
-  const UpdatedMessage = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
-  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
-  const GroupDescriptionChanged = IDL.Record({
-    'new_description' : IDL.Text,
-    'previous_description' : IDL.Text,
-    'changed_by' : UserId,
-  });
-  const GroupChatCreated = IDL.Record({
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'created_by' : UserId,
-  });
-  const ParticipantsPromotedToAdmin = IDL.Record({
-    'user_ids' : IDL.Vec(UserId),
-    'promoted_by' : UserId,
-  });
-  const ParticipantsRemoved = IDL.Record({
-    'user_ids' : IDL.Vec(UserId),
-    'removed_by' : UserId,
-  });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
@@ -140,6 +110,45 @@ export const idlFactory = ({ IDL }) => {
     'Video' : VideoContent,
     'Deleted' : IDL.Null,
   });
+  const EditMessageArgs = IDL.Record({
+    'content' : MessageContent,
+    'message_id' : MessageId,
+  });
+  const EditMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'NotInGroup' : IDL.Null,
+  });
+  const EventIndex = IDL.Nat32;
+  const EventsArgs = IDL.Record({
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
+    'ascending' : IDL.Bool,
+    'start_index' : EventIndex,
+  });
+  const UpdatedMessage = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+  });
+  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const GroupDescriptionChanged = IDL.Record({
+    'new_description' : IDL.Text,
+    'previous_description' : IDL.Text,
+    'changed_by' : UserId,
+  });
+  const GroupChatCreated = IDL.Record({
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'created_by' : UserId,
+  });
+  const ParticipantsPromotedToAdmin = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'promoted_by' : UserId,
+  });
+  const ParticipantsRemoved = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'removed_by' : UserId,
+  });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'content' : IDL.Opt(MessageContent),
@@ -151,6 +160,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'content' : MessageContent,
+    'edited' : IDL.Bool,
     'sender' : UserId,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
@@ -436,6 +446,7 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
+    'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
