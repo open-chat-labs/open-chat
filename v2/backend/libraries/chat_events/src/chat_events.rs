@@ -25,6 +25,7 @@ enum ChatType {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
+    MessageEdited(Box<MessageId>),
     MessageDeleted(Box<MessageId>),
     MessageReactionAdded(Box<MessageId>),
     MessageReactionRemoved(Box<MessageId>),
@@ -48,6 +49,7 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
+                | ChatEventInternal::MessageEdited(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -59,6 +61,7 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
+                | ChatEventInternal::MessageEdited(_)
                 | ChatEventInternal::MessageDeleted(_)
                 | ChatEventInternal::MessageReactionAdded(_)
                 | ChatEventInternal::MessageReactionRemoved(_)
@@ -95,6 +98,19 @@ pub struct PushMessageArgs {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContextArgs>,
     pub now: TimestampMillis,
+}
+
+pub struct EditMessageArgs {
+    pub sender: UserId,
+    pub message_id: MessageId,
+    pub content: MessageContent,
+    pub now: TimestampMillis,
+}
+
+pub enum EditMessageResult {
+    Success,
+    NotAuthorized,
+    NotFound,
 }
 
 pub enum DeleteMessageResult {
@@ -197,30 +213,42 @@ impl ChatEvents {
         event_index
     }
 
-    pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
-        if let Some(&event_index) = self.message_id_map.get(&message_id) {
-            if let Some(event) = self.get_internal_mut(event_index) {
-                return match &mut event.event {
-                    ChatEventInternal::Message(message) => {
-                        if message.sender == caller {
-                            if matches!(message.content, MessageContent::Deleted) {
-                                DeleteMessageResult::AlreadyDeleted
-                            } else {
-                                message.content = MessageContent::Deleted;
-                                message.last_updated = Some(now);
-                                self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
-                                DeleteMessageResult::Success
-                            }
-                        } else {
-                            DeleteMessageResult::NotAuthorized
-                        }
-                    }
-                    _ => DeleteMessageResult::NotFound,
-                };
+    pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
+        if let Some(message) = self.get_message_internal_mut(args.message_id) {
+            if message.sender == args.sender {
+                if matches!(message.content, MessageContent::Deleted) {
+                    EditMessageResult::NotFound
+                } else {
+                    message.content = args.content;
+                    message.last_updated = Some(args.now);
+                    self.push_event(ChatEventInternal::MessageEdited(Box::new(args.message_id)), args.now);
+                    EditMessageResult::Success
+                }
+            } else {
+                EditMessageResult::NotAuthorized
             }
+        } else {
+            EditMessageResult::NotFound
         }
+    }
 
-        DeleteMessageResult::NotFound
+    pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
+        if let Some(message) = self.get_message_internal_mut(message_id) {
+            if message.sender == caller {
+                if matches!(message.content, MessageContent::Deleted) {
+                    DeleteMessageResult::AlreadyDeleted
+                } else {
+                    message.content = MessageContent::Deleted;
+                    message.last_updated = Some(now);
+                    self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
+                    DeleteMessageResult::Success
+                }
+            } else {
+                DeleteMessageResult::NotAuthorized
+            }
+        } else {
+            DeleteMessageResult::NotFound
+        }
     }
 
     pub fn toggle_reaction(
@@ -479,6 +507,17 @@ impl ChatEvents {
         let index = self.get_index(event_index)?;
 
         self.events.get_mut(index)
+    }
+
+    fn get_message_internal_mut(&mut self, message_id: MessageId) -> Option<&mut MessageInternal> {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal_mut(event_index) {
+                if let ChatEventInternal::Message(message) = &mut event.event {
+                    return Some(message);
+                };
+            }
+        }
+        None
     }
 
     fn get_index(&self, event_index: EventIndex) -> Option<usize> {

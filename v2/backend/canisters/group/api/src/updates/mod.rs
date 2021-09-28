@@ -4,6 +4,7 @@ pub mod block_user;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
 pub mod delete_messages;
+pub mod edit_message;
 pub mod make_admin;
 pub mod mark_read;
 pub mod put_chunk;
