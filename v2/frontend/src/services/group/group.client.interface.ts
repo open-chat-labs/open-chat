@@ -12,6 +12,7 @@ import type {
     IndexRange,
     EventWrapper,
     Message,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -30,4 +31,5 @@ export interface IGroupClient {
     markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
+    deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
 }

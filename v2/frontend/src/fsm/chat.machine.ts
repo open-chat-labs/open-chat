@@ -94,6 +94,14 @@ export type ChatEvents =
           type: "REPLY_PRIVATELY_TO";
           data: EnhancedReplyContext;
       }
+    | {
+          type: "DELETE_MESSAGE";
+          data: bigint;
+      }
+    | {
+          type: "UNDELETE_MESSAGE";
+          data: Message;
+      }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
@@ -129,11 +137,9 @@ function loadEvents(
             ascending
         );
     }
-    console.log("criteria: ", startIndex, ascending);
     const events = serviceContainer
         .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
         .then((resp) => {
-            console.log(resp);
             return resp;
         });
     return events;
@@ -184,7 +190,7 @@ export function highestUnloadedEventIndex(ctx: ChatContext): number {
 export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | undefined {
     const start = highestUnloadedEventIndex(ctx);
     const min = getMinVisibleEventIndex(ctx.chatSummary);
-    return start > min ? [start, false] : undefined;
+    return start >= min ? [start, false] : undefined;
 }
 
 export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
@@ -350,6 +356,45 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             return e;
                         }),
                     })),
+                },
+                UNDELETE_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (
+                                    e.event.kind === "message" &&
+                                    e.event.messageId === ev.data.messageId
+                                ) {
+                                    return {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            content: ev.data.content,
+                                        },
+                                    };
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
+                },
+                DELETE_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        return {
+                            events: ctx.events.map((e) => {
+                                if (e.event.kind === "message" && e.event.messageId === ev.data) {
+                                    return {
+                                        ...e,
+                                        event: {
+                                            ...e.event,
+                                            content: { kind: "deleted_content" },
+                                        },
+                                    };
+                                }
+                                return e;
+                            }),
+                        };
+                    }),
                 },
                 TOGGLE_REACTION: {
                     actions: assign((ctx, ev) => {

@@ -19,11 +19,13 @@ import type {
     IndexRange,
     EventWrapper,
     ToggleReactionResponse,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
+    deleteMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
     leaveGroupResponse,
@@ -259,6 +261,16 @@ export class UserClient extends CandidService implements IUserClient {
                 reaction,
             }),
             toggleReactionResponse
+        );
+    }
+
+    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+        return this.handleResponse(
+            this.userService.delete_messages({
+                user_id: Principal.fromText(otherUserId),
+                message_ids: [messageId],
+            }),
+            deleteMessageResponse
         );
     }
 }

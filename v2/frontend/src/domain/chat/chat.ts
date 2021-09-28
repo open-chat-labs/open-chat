@@ -7,6 +7,7 @@ export type MessageContent =
     | ImageContent
     | VideoContent
     | AudioContent
+    | DeletedContent
     | CyclesContent;
 
 export type IndexRange = [number, number];
@@ -42,6 +43,10 @@ export interface AudioContent extends DataContent {
     caption?: string;
     mimeType: string;
 }
+
+export type DeletedContent = {
+    kind: "deleted_content";
+};
 
 export interface TextContent {
     kind: "text_content";
@@ -92,7 +97,12 @@ export type Reaction = {
 
 export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = Message | ReactionAdded | ReactionRemoved | DirectChatCreated;
+export type DirectChatEvent =
+    | Message
+    | MessageDeleted
+    | ReactionAdded
+    | ReactionRemoved
+    | DirectChatCreated;
 
 export type GroupChatEvent =
     | Message
@@ -103,6 +113,7 @@ export type GroupChatEvent =
     | ParticipantLeft
     | GroupNameChanged
     | AvatarChanged
+    | MessageDeleted
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
@@ -138,6 +149,11 @@ export type GroupDescChanged = {
 export type AvatarChanged = {
     kind: "avatar_changed";
     changedBy: string;
+};
+
+export type MessageDeleted = {
+    kind: "message_deleted";
+    message: StaleMessage;
 };
 
 export type ReactionAdded = {
@@ -470,3 +486,5 @@ export type ToggleReactionResponse =
     | "invalid"
     | "message_not_found"
     | "chat_not_found";
+
+export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

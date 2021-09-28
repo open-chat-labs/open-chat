@@ -138,6 +138,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
+    'Deleted' : IDL.Null,
   });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
@@ -166,11 +167,6 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
-  const DeletedMessage = IDL.Record({
-    'sender' : UserId,
-    'message_id' : MessageId,
-    'message_index' : MessageIndex,
-  });
   const AvatarChanged = IDL.Record({
     'changed_by' : UserId,
     'previous_avatar' : IDL.Opt(IDL.Nat),
@@ -193,7 +189,6 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
-    'DeletedMessage' : DeletedMessage,
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });

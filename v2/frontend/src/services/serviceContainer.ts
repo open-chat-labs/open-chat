@@ -39,6 +39,7 @@ import type {
     ToggleReactionResponse,
     IndexRange,
     EventWrapper,
+    DeleteMessageResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -334,5 +335,13 @@ export class ServiceContainer {
         reaction: string
     ): Promise<ToggleReactionResponse> {
         return this.userClient.toggleReaction(otherUserId, messageId, reaction);
+    }
+
+    deleteGroupMessage(chatId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+        return this.getGroupClient(chatId).deleteMessage(messageId);
+    }
+
+    deleteDirectMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+        return this.userClient.deleteMessage(otherUserId, messageId);
     }
 }

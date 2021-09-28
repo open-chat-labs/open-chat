@@ -6,7 +6,6 @@ import type {
     DirectChatSummaryUpdates,
     GroupChatSummaryUpdates,
     MessageIndexRange,
-    Reaction,
 } from "./chat";
 import {
     compareMessageRange,
@@ -17,7 +16,6 @@ import {
     insertIndexIntoRanges,
     mergeChatUpdates,
     mergeMessageIndexRanges,
-    mergeReactions,
     newMessageId,
     setMessageRead,
     userIdsFromChatSummaries,

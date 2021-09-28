@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
-import { log } from "xstate/lib/actions";
 import type { ChatSummary, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
-import { insertIndexIntoRanges, mergeMessageIndexRanges } from "../domain/chat/chat.utils";
+import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 
 /**
