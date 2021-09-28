@@ -3,7 +3,6 @@ import makeStyles from "@material-ui/styles/makeStyles";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import React from "react";
-import ChatIcon from '@material-ui/icons/Chat';
 import { useDispatch } from "react-redux";
 import login from "../actions/signin/login";
 
@@ -33,7 +32,7 @@ export default function Login() {
 
     return (
         <Paper className={classes.paper}>
-            <ChatIcon className={classes.icon} />
+            <img src="oc-logo2.svg" className={classes.icon} />
             <h1>OpenChat</h1>
             <p>Welcome to OpenChat!</p>
             <p>Before continuing you must sign-in to the Internet Computer.</p>

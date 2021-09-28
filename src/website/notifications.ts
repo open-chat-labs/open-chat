@@ -39,24 +39,10 @@ export async function status(): Promise<Status> {
   }
 }
 
-export function supported(): boolean {
-  if (
-    !(
-      "serviceWorker" in navigator &&
-      "PushManager" in window &&
-      "Notification" in window
-    )
-  ) {
-    return false;
-  }
-
-  if (process.env.NODE_ENV !== "production") {
-    return true;
-  }
-
-  // Atm it is not possible to install a service worker on <canister_id>.ic0.app
-  // only on <canister_id>.raw.ic0.app
-  return window.location.hostname.toLowerCase().includes(".raw.ic0.app");
+export function supported() : boolean {
+    return "serviceWorker" in navigator 
+        && "PushManager" in window 
+        && "Notification" in window
 }
 
 export async function trySubscribe(userId: UserId): Promise<boolean> {
