@@ -17,6 +17,8 @@ import type {
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiJoinGroupResponse,
+    ApiSearchAllMessagesResponse,
+    ApiMessageMatch,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -40,7 +42,48 @@ import type {
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { message, updatedMessage } from "../common/chatMappers";
+import { message, messageContent, updatedMessage } from "../common/chatMappers";
+import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+
+export function searchAllMessageResponse(
+    candid: ApiSearchAllMessagesResponse
+): SearchAllMessagesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    }
+    if ("TermTooShort" in candid) {
+        return {
+            kind: "term_too_short",
+        };
+    }
+    if ("TermTooLong" in candid) {
+        return {
+            kind: "term_too_long",
+        };
+    }
+    if ("InvalidTerm" in candid) {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchAllMessagesResponse type received",
+        candid
+    );
+}
+
+function messageMatch(candid: ApiMessageMatch): MessageMatch {
+    return {
+        chatId: candid.chat_id.toString(),
+        eventIndex: candid.event_index,
+        content: messageContent(candid.content),
+        sender: candid.sender.toString(),
+        score: candid.score,
+    };
+}
 
 export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
     if ("Success" in candid) {

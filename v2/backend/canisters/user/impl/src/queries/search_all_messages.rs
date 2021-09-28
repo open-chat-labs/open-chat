@@ -25,11 +25,13 @@ async fn search_all_messages(args: Args) -> Response {
     )
     .await;
 
+    let mut matches = vec![];
+
     let mut direct_chat_matches = RUNTIME_STATE.with(|state| search_all_direct_chats(&args, state.borrow().as_ref().unwrap()));
 
     matches.append(&mut direct_chat_matches);
     matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
-    matches = matches[..args.max_results as usize].to_vec();
+    // matches = matches[..args.max_results as usize].to_vec();
 
     Success(SuccessResult { matches })
 }

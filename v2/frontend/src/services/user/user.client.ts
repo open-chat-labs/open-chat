@@ -32,6 +32,7 @@ import {
     joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
+    searchAllMessageResponse,
     sendMessageResponse,
     setAvatarResponse,
     toggleReactionResponse,
@@ -44,6 +45,7 @@ import { apiMessageContent, apiOptional } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
+import type { SearchAllMessagesResponse } from "../../domain/search/search";
 
 const MAX_RECURSION = 10;
 
@@ -282,6 +284,16 @@ export class UserClient extends CandidService implements IUserClient {
                 message_ids: [messageId],
             }),
             deleteMessageResponse
+        );
+    }
+
+    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
+        return this.handleResponse(
+            this.userService.search_all_messages({
+                search_term: searchTerm,
+                max_results: maxResults,
+            }),
+            searchAllMessageResponse
         );
     }
 }

@@ -30,6 +30,7 @@ import type { IDBPDatabase } from "idb";
 import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
+import type { SearchAllMessagesResponse } from "../../domain/search/search";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -125,5 +126,9 @@ export class CachingUserClient implements IUserClient {
 
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
         return this.client.deleteMessage(otherUserId, messageId);
+    }
+
+    searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
+        return this.client.searchAllMessages(searchTerm, maxResults);
     }
 }

@@ -55,7 +55,7 @@ export interface HomeContext {
 }
 
 export type HomeEvents =
-    | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
+    | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
@@ -360,8 +360,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                   }
                                                 : undefined,
                                             events: [],
-                                            focusIndex: ev.data.messageIndex
-                                                ? Number(ev.data.messageIndex)
+                                            focusIndex: ev.data.eventIndex
+                                                ? Number(ev.data.eventIndex)
                                                 : undefined,
                                             replyingTo: ctx.replyingTo,
                                             markMessages: spawn(

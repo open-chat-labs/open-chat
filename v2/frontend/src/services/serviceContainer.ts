@@ -50,7 +50,7 @@ import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
-import type { GroupSearchResponse } from "../domain/search/search";
+import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 
 function buildIdenticonUrl(userId: string) {
@@ -231,6 +231,10 @@ export class ServiceContainer {
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this._groupIndexClient.search(searchTerm, maxResults);
+    }
+
+    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
+        return this.userClient.searchAllMessages(searchTerm, maxResults);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {

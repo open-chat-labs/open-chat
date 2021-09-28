@@ -74,7 +74,7 @@ describe("home machine transitions", () => {
                 unconfirmed: new Set<bigint>(),
             }),
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
+            { type: "SELECT_CHAT", data: { chatId: "abcdefg", eventIndex: undefined } },
             {
                 loaded_chats: "chat_selected",
             }
@@ -85,7 +85,7 @@ describe("home machine transitions", () => {
         const ctx = testTransition(
             homeMachine,
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: { chatId: "qwxyz", messageIndex: undefined } },
+            { type: "SELECT_CHAT", data: { chatId: "qwxyz", eventIndex: undefined } },
             {
                 loaded_chats: "no_chat_selected",
             }

@@ -20,6 +20,7 @@ import type {
     JoinGroupResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
+import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
@@ -51,4 +52,5 @@ export interface IUserClient {
         reaction: string
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
+    searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
 }

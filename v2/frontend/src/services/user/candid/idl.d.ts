@@ -48,6 +48,8 @@ import {
     DeletedMessage,
     UpdatedMessage,
     JoinGroupResponse,
+    SearchAllMessagesResponse,
+    MessageMatch,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -98,6 +100,8 @@ export {
     DeletedMessage as ApiDeletedMessage,
     UpdatedMessage as ApiUpdatedMessage,
     JoinGroupResponse as ApiJoinGroupResponse,
+    SearchAllMessagesResponse as ApiSearchAllMessagesResponse,
+    MessageMatch as ApiMessageMatch,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

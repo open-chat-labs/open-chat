@@ -21,9 +21,9 @@
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
     export let machine: ActorRefFrom<HomeMachine>;
-    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+    export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
-        messageIndex: undefined,
+        eventIndex: undefined,
     };
 
     function logout() {
@@ -51,8 +51,7 @@
                         type: "SELECT_CHAT",
                         data: {
                             chatId: params.chatId,
-                            messageIndex:
-                                params.messageIndex == null ? undefined : params.messageIndex,
+                            eventIndex: params.eventIndex == null ? undefined : params.eventIndex,
                         },
                     });
                 }

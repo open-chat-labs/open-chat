@@ -1,7 +1,17 @@
+import type { MessageContent } from "../chat/chat";
+
 export type GroupMatch = {
     chatId: string;
     name: string;
     description: string;
+};
+
+export type MessageMatch = {
+    chatId: string;
+    eventIndex: number;
+    content: MessageContent;
+    sender: string;
+    score: number;
 };
 
 export type GroupSearchResponse = TermInvalid | TermTooLong | TermTooShort | GroupSearchSuccess;
@@ -21,4 +31,11 @@ export type TermInvalid = {
 export type GroupSearchSuccess = {
     kind: "success";
     matches: GroupMatch[];
+};
+
+export type SearchAllMessagesResponse = SearchAllSuccess | TermTooShort | TermTooLong | TermInvalid;
+
+export type SearchAllSuccess = {
+    kind: "success";
+    matches: MessageMatch[];
 };

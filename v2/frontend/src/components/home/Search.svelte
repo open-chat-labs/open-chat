@@ -1,11 +1,13 @@
 <script lang="ts">
     import Magnify from "svelte-material-icons/Magnify.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
     export let searchTerm = "";
+    export let searching: boolean;
 
     function performSearch() {
         dispatch("searchEntered", searchTerm);
@@ -17,7 +19,11 @@
 </script>
 
 <form on:submit|preventDefault={performSearch} class="wrapper">
-    <span class="icon"><Magnify color={"#ccc"} /></span>
+    <span class="icon" class:searching>
+        {#if !searching}
+            <Magnify color={"#ccc"} />
+        {/if}
+    </span>
     <input
         spellcheck="false"
         bind:value={searchTerm}
@@ -44,6 +50,9 @@
     }
     .close {
         cursor: pointer;
+    }
+    .searching {
+        @include loading-spinner(1em, 0.5em, false, var(--button-spinner));
     }
     input {
         background-color: var(--chatSearch-bg);
