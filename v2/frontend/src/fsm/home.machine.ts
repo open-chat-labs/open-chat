@@ -61,6 +61,7 @@ export type HomeEvents =
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
     | { type: "MESSAGE_CONFIRMED"; data: bigint }
     | { type: "BLOCK_USER"; data: string }
@@ -331,6 +332,17 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             }, []);
                         }),
                     ],
+                },
+                GO_TO_EVENT_INDEX: {
+                    actions: pure((ctx, ev) => {
+                        if (ctx.selectedChat !== undefined) {
+                            const actor = ctx.chatsIndex[ctx.selectedChat.chatId];
+                            if (actor) {
+                                actor.send(ev);
+                            }
+                        }
+                        return undefined;
+                    }),
                 },
                 SELECT_CHAT: {
                     internal: true,

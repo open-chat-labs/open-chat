@@ -20,6 +20,7 @@
     import ModalContent from "../ModalContent.svelte";
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
+    import type { MessageMatch } from "../../domain/search/search";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -142,6 +143,13 @@
         }
     }
 
+    function loadMessage(ev: CustomEvent<MessageMatch>): void {
+        push(`/${ev.detail.chatId}/${ev.detail.eventIndex}`);
+        if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
+            machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail.eventIndex });
+        }
+    }
+
     $: selectedChat = $machine.context.selectedChat;
 
     $: groupChat = selectedChat
@@ -174,6 +182,7 @@
                 on:chatWith={chatWith}
                 on:logout={logout}
                 on:joinGroup={joinGroup}
+                on:loadMessage={loadMessage}
                 on:newGroup={newGroup}
                 on:newchat={newChat} />
         {/if}

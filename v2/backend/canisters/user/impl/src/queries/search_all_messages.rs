@@ -17,13 +17,13 @@ async fn search_all_messages(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let mut matches = search_all_group_chats(
-        prepare_result.group_chats,
-        args.search_term.to_owned(),
-        args.max_results,
-        prepare_result.me,
-    )
-    .await;
+    // let mut matches = search_all_group_chats(
+    //     prepare_result.group_chats,
+    //     args.search_term.to_owned(),
+    //     args.max_results,
+    //     prepare_result.me,
+    // )
+    // .await;
 
     let mut matches = vec![];
 
