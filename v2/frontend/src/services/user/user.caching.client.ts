@@ -16,6 +16,7 @@ import type {
     IndexRange,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -100,6 +101,10 @@ export class CachingUserClient implements IUserClient {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.client.leaveGroup(chatId);
+    }
+
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        return this.client.joinGroup(chatId);
     }
 
     markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {

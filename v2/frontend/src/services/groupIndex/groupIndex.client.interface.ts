@@ -1,3 +1,5 @@
+import type { GroupSearchResponse } from "../../domain/search/search";
+
 export interface IGroupIndexClient {
-    todo(): string;
+    search(searchTerm: string, maxResults?: number): Promise<GroupSearchResponse>;
 }

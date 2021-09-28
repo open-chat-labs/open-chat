@@ -1,6 +1,6 @@
 <script lang="ts">
     import CurrentUser from "./CurrentUser.svelte";
-    import SearchChats from "./SearchChats.svelte";
+    import Search from "./Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";
@@ -13,14 +13,60 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
+    import type { ChatSummary as ChatSummaryType } from "../../domain/chat/chat";
+    import type { GroupMatch, GroupSearchResponse } from "../../domain/search/search";
+    import type { UserSummary } from "../../domain/user/user";
+    import { createEventDispatcher } from "svelte";
+    import UserSearchResult from "./UserSearchResult.svelte";
+    import GroupSearchResult from "./GroupSearchResult.svelte";
+    import { push } from "svelte-spa-router";
 
     export let machine: ActorRefFrom<HomeMachine>;
+
+    const dispatch = createEventDispatcher();
+    let searchTerm: string = "";
+    let searchResultsAvailable: boolean = false;
+    let joiningGroup: string | undefined = undefined;
+
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
 
     $: user = $machine.context.user
         ? $machine.context.userLookup[$machine.context.user?.userId]
         : undefined;
 
-    function filterChats(_event: { detail: string }) {}
+    function chatMatchesSearch(chat: ChatSummaryType): boolean {
+        if (chat.kind === "group_chat") {
+            return (
+                chat.name.toLowerCase().indexOf(searchTerm) >= 0 ||
+                chat.description.toLowerCase().indexOf(searchTerm) >= 0
+            );
+        }
+
+        if (chat.kind === "direct_chat") {
+            const username = $machine.context.userLookup[chat.them].username;
+            return username ? username.indexOf(searchTerm) >= 0 : false;
+        }
+        return false;
+    }
+
+    $: chats =
+        searchTerm !== ""
+            ? $machine.context.chatSummaries.filter(chatMatchesSearch)
+            : $machine.context.chatSummaries;
+
+    async function performSearch(ev: CustomEvent<string>) {
+        searchTerm = ev.detail.toLowerCase();
+        if (searchTerm !== "") {
+            groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
+            userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
+            await Promise.all([groupSearchResults, userSearchResults]).then(() => {
+                searchResultsAvailable = true;
+            });
+        } else {
+            clearSearch();
+        }
+    }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         // optimistic update
@@ -39,6 +85,52 @@
                 toastStore.showFailureToast("avatarUpdateFailed");
             });
     }
+
+    function clearSearch() {
+        groupSearchResults = userSearchResults = undefined;
+        searchTerm = "";
+        searchResultsAvailable = false;
+    }
+
+    function chatWith(userId: string): void {
+        clearSearch();
+        dispatch("chatWith", userId);
+    }
+
+    // this is pretty iffy, but ....
+    function selectJoinedChat(chatId: string): void {
+        if (chats.find((c) => c.chatId === chatId) !== undefined) {
+            push(`/${chatId}`);
+            joiningGroup = undefined;
+            clearSearch();
+        } else {
+            setTimeout(() => selectJoinedChat(chatId), 200);
+        }
+    }
+
+    function joinGroup(group: GroupMatch): void {
+        if (chats.find((c) => c.chatId === group.chatId) !== undefined) {
+            push(`/${group.chatId}`);
+            joiningGroup = undefined;
+            clearSearch();
+        } else {
+            joiningGroup = group.chatId;
+            $machine.context
+                .serviceContainer!.joinGroup(group.chatId)
+                .then((resp) => {
+                    if (resp === "success" || resp === "already_in_group") {
+                        selectJoinedChat(group.chatId);
+                    } else {
+                        toastStore.showFailureToast("joinGroupFailed");
+                        joiningGroup = undefined;
+                    }
+                })
+                .catch((_err) => {
+                    toastStore.showFailureToast("joinGroupFailed");
+                    joiningGroup = undefined;
+                });
+        }
+    }
 </script>
 
 {#if user}
@@ -50,12 +142,15 @@
         on:joinGroup
         on:newGroup />
     <div class="body">
-        <SearchChats on:filter={filterChats} />
+        <Search {searchTerm} on:searchEntered={performSearch} />
         {#if $machine.matches("loading_chats")}
             <Loading />
         {:else}
             <div class="chat-summaries">
-                {#each $machine.context.chatSummaries as chatSummary, _i (chatSummary.chatId)}
+                {#if searchResultsAvailable && chats.length > 0}
+                    <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                {/if}
+                {#each chats as chatSummary, _i (chatSummary.chatId)}
                     <div
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>
@@ -67,6 +162,47 @@
                     </div>
                 {/each}
             </div>
+            {#if groupSearchResults !== undefined}
+                <div class="search-matches">
+                    {#await groupSearchResults}
+                        <Loading />
+                    {:then resp}
+                        {#if resp.kind === "success" && resp.matches.length > 0}
+                            <h3 class="search-subtitle">{$_("publicGroups")}</h3>
+                            {#each resp.matches as group, i (group.chatId)}
+                                <div
+                                    animate:flip={{ duration: 600, easing: elasticOut }}
+                                    out:fade|local={{ duration: 150 }}>
+                                    <GroupSearchResult
+                                        showSpinner={joiningGroup === group.chatId}
+                                        {group}
+                                        on:click={() => joinGroup(group)} />
+                                </div>
+                            {/each}
+                        {/if}
+                    {/await}
+                </div>
+            {/if}
+            {#if userSearchResults !== undefined}
+                <div class="search-matches">
+                    {#await userSearchResults}
+                        <Loading />
+                    {:then resp}
+                        {#if resp.length > 0}
+                            <h3 class="search-subtitle">{$_("users")}</h3>
+                            {#each resp as user, i (user.userId)}
+                                <div
+                                    animate:flip={{ duration: 600, easing: elasticOut }}
+                                    out:fade|local={{ duration: 150 }}>
+                                    <UserSearchResult
+                                        {user}
+                                        on:click={() => chatWith(user.userId)} />
+                                </div>
+                            {/each}
+                        {/if}
+                    {/await}
+                </div>
+            {/if}
         {/if}
         {#if $screenWidth === ScreenWidth.ExtraSmall}
             <NewMessageFab on:newchat />
@@ -81,7 +217,13 @@
             padding: 0 $sp3;
         }
     }
-    .chat-summaries {
+    .chat-summaries,
+    .search-matches {
         overflow: auto;
+    }
+
+    .search-subtitle {
+        margin-bottom: $sp3;
+        color: var(--chatSummary-txt1);
     }
 </style>

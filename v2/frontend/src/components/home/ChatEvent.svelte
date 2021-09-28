@@ -71,7 +71,14 @@
 {:else if event.event.kind === "participant_left"}
     <ParticipantLeftEvent
         {user}
-        left={userLookup[event.event.userId]}
+        label={"userLeft"}
+        subject={userLookup[event.event.userId]}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participant_joined"}
+    <ParticipantLeftEvent
+        {user}
+        label={"userJoined"}
+        subject={userLookup[event.event.userId]}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent

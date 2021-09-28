@@ -47,6 +47,7 @@ import {
     DeleteMessagesResponse,
     DeletedMessage,
     UpdatedMessage,
+    JoinGroupResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -96,6 +97,7 @@ export {
     DeleteMessagesResponse as ApiDeleteMessageResponse,
     DeletedMessage as ApiDeletedMessage,
     UpdatedMessage as ApiUpdatedMessage,
+    JoinGroupResponse as ApiJoinGroupResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

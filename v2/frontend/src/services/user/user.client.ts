@@ -20,6 +20,7 @@ import type {
     EventWrapper,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -28,6 +29,7 @@ import {
     deleteMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
+    joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
     sendMessageResponse,
@@ -236,6 +238,15 @@ export class UserClient extends CandidService implements IUserClient {
                 chat_id: Principal.fromText(chatId),
             }),
             leaveGroupResponse
+        );
+    }
+
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        return this.handleResponse(
+            this.userService.join_group({
+                chat_id: Principal.fromText(chatId),
+            }),
+            joinGroupResponse
         );
     }
 

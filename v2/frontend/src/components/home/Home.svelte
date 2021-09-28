@@ -172,6 +172,7 @@
         {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
             <LeftPanel
                 {machine}
+                on:chatWith={chatWith}
                 on:logout={logout}
                 on:joinGroup={joinGroup}
                 on:newGroup={newGroup}

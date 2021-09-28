@@ -108,6 +108,7 @@ export type GroupChatEvent =
     | Message
     | GroupChatCreated
     | ParticipantsAdded
+    | ParticipantJoined
     | ParticipantsPromotedToAdmin
     | ParticipantsRemoved
     | ParticipantLeft
@@ -129,6 +130,11 @@ export type ParticipantsAdded = {
     kind: "participants_added";
     userIds: string[];
     addedBy: string;
+};
+
+export type ParticipantJoined = {
+    kind: "participant_joined";
+    userId: string;
 };
 
 export type ParticipantLeft = {
@@ -468,6 +474,14 @@ export type BlockUserResponse = "success";
 export type UnblockUserResponse = "success";
 
 export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
+
+export type JoinGroupResponse =
+    | "success"
+    | "blocked"
+    | "group_not_found"
+    | "group_not_public"
+    | "already_in_group"
+    | "internal_error";
 
 export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found" | "not_in_group";
 

@@ -16,6 +16,7 @@ import type {
     ApiToggleReactionResponse,
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
+    ApiJoinGroupResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -35,6 +36,7 @@ import type {
     SetAvatarResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -102,6 +104,28 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     }
     if ("NotInGroup" in candid) {
         return "not_in_group";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
+}
+
+export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("Blocked" in candid) {
+        return "blocked";
+    }
+    if ("AlreadyInGroup" in candid) {
+        return "already_in_group";
+    }
+    if ("GroupNotPublic" in candid) {
+        return "group_not_public";
     }
     if ("InternalError" in candid) {
         return "internal_error";

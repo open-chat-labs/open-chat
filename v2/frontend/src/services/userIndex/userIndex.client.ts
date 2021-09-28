@@ -48,11 +48,11 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return new UserIndexClient(identity);
     }
 
-    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this.handleResponse(
             this.userService.search({
                 search_term: searchTerm,
-                max_results: 20,
+                max_results: maxResults,
             }),
             userSearchResponse
         );

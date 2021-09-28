@@ -1,24 +1,29 @@
 <script lang="ts">
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
-    let filter = "";
+    export let searchTerm = "";
 
     function performSearch() {
-        dispatch("filter", filter);
+        dispatch("searchEntered", searchTerm);
     }
     function clearSearch() {
-        filter = "";
+        searchTerm = "";
         performSearch();
     }
 </script>
 
 <form on:submit|preventDefault={performSearch} class="wrapper">
     <span class="icon"><Magnify color={"#ccc"} /></span>
-    <input bind:value={filter} type="text" placeholder="search chats, users and messages" />
-    {#if filter !== ""}
+    <input
+        spellcheck="false"
+        bind:value={searchTerm}
+        type="text"
+        placeholder={$_("searchPlaceholder")} />
+    {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
 </form>

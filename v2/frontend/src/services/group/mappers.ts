@@ -262,6 +262,12 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
+    if ("ParticipantJoined" in candid) {
+        return {
+            kind: "participant_joined",
+            userId: candid.ParticipantJoined.user_id.toString(),
+        };
+    }
     if ("ParticipantsPromotedToAdmin" in candid) {
         return {
             kind: "participants_promoted_to_admin",

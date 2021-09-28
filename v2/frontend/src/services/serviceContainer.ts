@@ -40,16 +40,18 @@ import type {
     IndexRange,
     EventWrapper,
     DeleteMessageResponse,
+    JoinGroupResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
-import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
+import type { GroupSearchResponse } from "../domain/search/search";
+import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -69,7 +71,7 @@ export class ServiceContainer {
 
     constructor(private identity: Identity) {
         this._userIndexClient = UserIndexClient.create(identity);
-        this._groupIndexClient = new GroupIndexClientMock();
+        this._groupIndexClient = GroupIndexClient.create(identity);
         this._groupClients = {};
         this.db = db;
     }
@@ -221,10 +223,14 @@ export class ServiceContainer {
         return dataContent;
     }
 
-    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this._userIndexClient
-            .searchUsers(searchTerm)
+            .searchUsers(searchTerm, maxResults)
             .then((users) => users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)));
+    }
+
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this._groupIndexClient.search(searchTerm, maxResults);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
@@ -301,6 +307,10 @@ export class ServiceContainer {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.userClient.leaveGroup(chatId);
+    }
+
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        return this.userClient.joinGroup(chatId);
     }
 
     markDirectChatMessagesRead(

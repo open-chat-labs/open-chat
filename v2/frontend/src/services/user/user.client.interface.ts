@@ -17,6 +17,7 @@ import type {
     EventWrapper,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
@@ -41,6 +42,7 @@ export interface IUserClient {
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
+    joinGroup(chatId: string): Promise<JoinGroupResponse>;
     markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     toggleReaction(

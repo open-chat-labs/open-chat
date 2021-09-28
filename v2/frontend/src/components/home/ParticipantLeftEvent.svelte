@@ -6,12 +6,13 @@
     import { _ } from "svelte-i18n";
 
     export let user: UserSummary | undefined;
-    export let left: PartialUserSummary | undefined;
+    export let subject: PartialUserSummary | undefined;
     export let timestamp: bigint;
+    export let label: string;
 
-    $: me = left?.userId === user?.userId;
-    $: username = me ? $_("you") : left?.username ?? $_("unknownUser");
-    $: text = $_("userLeft", {
+    $: me = subject?.userId === user?.userId;
+    $: username = me ? $_("you") : subject?.username ?? $_("unknownUser");
+    $: text = $_(label, {
         values: {
             username: username,
         },

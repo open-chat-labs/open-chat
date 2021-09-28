@@ -37,6 +37,6 @@
     {:else if joiningGroup}
         <JoinGroup {machine} />
     {:else}
-        <ChatList on:newGroup on:newchat on:joinGroup on:logout {machine} />
+        <ChatList on:chatWith on:newGroup on:newchat on:joinGroup on:logout {machine} />
     {/if}
 </Panel>
