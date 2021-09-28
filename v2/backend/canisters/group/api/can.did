@@ -18,6 +18,19 @@ type SendMessageResponse =
         NotInGroup;
     };
 
+type EditMessageArgs =
+    record {
+        message_id: MessageId;
+        content: MessageContent;
+    };
+
+type EditMessageResponse =
+    record {
+        Success;
+        MessageNotFound;
+        NotInGroup;
+    };
+
 type DeleteMessagesArgs =
     record {
         message_ids: vec MessageId;
@@ -329,6 +342,7 @@ service: {
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);

@@ -24,18 +24,16 @@ type SendMessageResponse =
         RecipientBlocked;
     };
 
-type ToggleReactionArgs =
+type EditMessageArgs =
     record {
         user_id: UserId;
         message_id: MessageId;
-        reaction: text;
+        content: MessageContent;
     };
 
-type ToggleReactionResponse =
-    variant {
-        Added: EventIndex;
-        Removed: EventIndex;
-        InvalidReaction;
+type EditMessageResponse =
+    record {
+        Success;
         MessageNotFound;
         ChatNotFound;
     };
@@ -49,6 +47,22 @@ type DeleteMessagesArgs =
 type DeleteMessagesResponse =
     variant {
         Success;
+        ChatNotFound;
+    };
+
+type ToggleReactionArgs =
+    record {
+        user_id: UserId;
+        message_id: MessageId;
+        reaction: text;
+    };
+
+type ToggleReactionResponse =
+    variant {
+        Added: EventIndex;
+        Removed: EventIndex;
+        InvalidReaction;
+        MessageNotFound;
         ChatNotFound;
     };
 
@@ -318,6 +332,7 @@ type InitArgs =
 
 service: (InitArgs) -> {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
