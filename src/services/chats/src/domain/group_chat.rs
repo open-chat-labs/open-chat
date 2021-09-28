@@ -273,6 +273,9 @@ impl Chat for GroupChat {
             .find(|p| p.user_id == *me)
             .unwrap();
 
+        if participant.min_visible_message_id > 0 {
+            participant.unread_message_ids.remove_range(0..=(participant.min_visible_message_id - 1));
+        }
         participant.unread_message_ids.remove_range(from_id..=to_id);
 
         self.last_updated = now;
