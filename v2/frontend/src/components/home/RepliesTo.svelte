@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ChatSummary, ReplyContext } from "../../domain/chat/chat";
+    import type { ReplyContext } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -11,7 +11,7 @@
     import { push } from "svelte-spa-router";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
 
-    export let chatSummary: ChatSummary;
+    export let chatId: string;
     export let user: UserSummary | undefined;
     export let userLookup: UserLookup;
     export let repliesTo: ReplyContext;
@@ -21,7 +21,7 @@
     }
 
     function zoomToMessage() {
-        if (repliesTo.chatId === chatSummary.chatId) {
+        if (repliesTo.chatId === chatId) {
             dispatch("goToMessage", repliesTo.eventIndex);
         } else {
             push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);

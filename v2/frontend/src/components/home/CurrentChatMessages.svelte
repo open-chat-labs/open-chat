@@ -313,7 +313,6 @@
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
-                    console.log("reply: just loaded some messages");
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
@@ -408,7 +407,8 @@
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
-                        chatSummary={$machine.context.chatSummary}
+                        chatId={$machine.context.chatSummary.chatId}
+                        chatType={$machine.context.chatSummary.kind}
                         user={$machine.context.user}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}

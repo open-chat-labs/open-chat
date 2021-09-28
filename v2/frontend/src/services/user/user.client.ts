@@ -211,7 +211,6 @@ export class UserClient extends CandidService implements IUserClient {
                         message.repliesTo
                     ),
                 };
-                console.log("Sending message: ", req);
                 return this.handleResponse(this.userService.send_message(req), sendMessageResponse);
             });
     }

@@ -14,7 +14,8 @@
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
     // I am *sure* there must be a way to do it.
-    export let chatSummary: ChatSummary;
+    export let chatId: string;
+    export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;
     export let last: boolean;
@@ -34,7 +35,8 @@
         {confirmed}
         {readByMe}
         {readByThem}
-        {chatSummary}
+        {chatId}
+        {chatType}
         {user}
         {me}
         {userLookup}
