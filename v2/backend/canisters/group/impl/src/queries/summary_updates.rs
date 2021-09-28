@@ -68,6 +68,11 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
         users_updated: HashSet::new(),
     };
 
+    // We need to handle this separately because the message may have been sent before 'since' but
+    // then subsequently updated after 'since', in this scenario the message would not be picked up
+    // during the iteration below.
+    updates.latest_message = runtime_state.data.events.latest_message_if_updated(since);
+
     // Iterate through events starting from most recent
     for event_wrapper in runtime_state.data.events.iter().rev().take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
@@ -76,15 +81,6 @@ fn process_events(since: TimestampMillis, runtime_state: &RuntimeState) -> Updat
         }
 
         match &event_wrapper.event {
-            ChatEventInternal::Message(m) => {
-                if updates.latest_message.is_none() {
-                    updates.latest_message = Some(EventWrapper {
-                        index: event_wrapper.index,
-                        timestamp: event_wrapper.timestamp,
-                        event: runtime_state.data.events.hydrate_message(m),
-                    })
-                }
-            }
             ChatEventInternal::GroupNameChanged(n) => {
                 if updates.name.is_none() {
                     updates.name = Some(n.new_name.clone());

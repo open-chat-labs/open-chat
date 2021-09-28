@@ -10,6 +10,7 @@ import type {
     ApiSendMessageResponse,
     ApiUpdateGroupResponse,
     ApiToggleReactionResponse,
+    ApiDeleteMessageResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -23,13 +24,24 @@ import type {
     MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
-import { message } from "../common/chatMappers";
+import { message, updatedMessage } from "../common/chatMappers";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function toggleReactionResponse(candid: ApiToggleReactionResponse): ToggleReactionResponse {
@@ -299,23 +311,24 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("MessageDeleted" in candid) {
+        return {
+            kind: "message_deleted",
+            message: updatedMessage(candid.MessageDeleted),
+        };
+    }
+
     if ("MessageReactionAdded" in candid) {
         return {
             kind: "reaction_added",
-            message: {
-                eventIndex: candid.MessageReactionAdded.event_index,
-                messageId: candid.MessageReactionAdded.message_id,
-            },
+            message: updatedMessage(candid.MessageReactionAdded),
         };
     }
 
     if ("MessageReactionRemoved" in candid) {
         return {
             kind: "reaction_removed",
-            message: {
-                eventIndex: candid.MessageReactionRemoved.event_index,
-                messageId: candid.MessageReactionRemoved.message_id,
-            },
+            message: updatedMessage(candid.MessageReactionRemoved),
         };
     }
     // todo - we know there are other event types that we are not dealing with yet

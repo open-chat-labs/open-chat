@@ -49,6 +49,8 @@ export function getContentAsText(content: MessageContent): string {
     } else if (content.kind === "cycles_content") {
         // todo - format cycles
         text = "cycles_content";
+    } else if (content.kind === "deleted_content") {
+        text = "deleted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -189,7 +191,9 @@ export function getParticipantsString(
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
-    return content.kind !== "text_content" ? { ...content, caption } : content;
+    return content.kind !== "text_content" && content.kind !== "deleted_content"
+        ? { ...content, caption }
+        : content;
 }
 
 function getMessageContent(
@@ -505,7 +509,11 @@ export function toggleReaction(
 }
 
 export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
-    return ew.event.kind !== "reaction_added" && ew.event.kind !== "reaction_removed";
+    return (
+        ew.event.kind !== "reaction_added" &&
+        ew.event.kind !== "message_deleted" &&
+        ew.event.kind !== "reaction_removed"
+    );
 }
 
 export function enoughVisibleMessages(
@@ -578,15 +586,17 @@ function mergeMessageEvents(
     incoming: EventWrapper<ChatEvent>,
     localReactions: Record<string, LocalReaction[]>
 ): EventWrapper<ChatEvent> {
-    if (existing.event.kind === "message" && incoming.event.kind === "message") {
-        const key = existing.event.messageId.toString();
-        const merged = mergeReactions(
-            myUserId,
-            incoming.event.reactions,
-            localReactions[key] ?? []
-        );
-        incoming.event.reactions = merged;
-        return incoming;
+    if (existing.event.kind === "message") {
+        if (incoming.event.kind === "message") {
+            const key = existing.event.messageId.toString();
+            const merged = mergeReactions(
+                myUserId,
+                incoming.event.reactions,
+                localReactions[key] ?? []
+            );
+            incoming.event.reactions = merged;
+            return incoming;
+        }
     }
     return existing;
 }

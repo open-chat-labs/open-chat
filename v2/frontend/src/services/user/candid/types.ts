@@ -66,17 +66,11 @@ export interface DeleteMessagesArgs {
 }
 export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
-export interface DeletedMessage {
-  'sender' : UserId,
-  'message_id' : MessageId,
-  'message_index' : MessageIndex,
-}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'MessageDeleted' : UpdatedMessage } |
-  { 'DeletedMessage' : DeletedMessage } |
   { 'DirectChatCreated' : DirectChatCreated };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
@@ -156,7 +150,6 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
-  { 'DeletedMessage' : DeletedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
@@ -261,7 +254,8 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Image' : ImageContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
-  { 'Video' : VideoContent };
+  { 'Video' : VideoContent } |
+  { 'Deleted' : null };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,

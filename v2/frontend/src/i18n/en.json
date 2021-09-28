@@ -98,6 +98,8 @@
     "joinGroup": "Join group",
     "reply": "Reply",
     "replyPrivately": "Reply privately",
+    "deleteMessage": "Delete message",
+    "messageDeleted": "This message was deleted",
     "enterInviteCode": "Enter your invite code",
     "today": "Today",
     "yesterday": "Yesterday",

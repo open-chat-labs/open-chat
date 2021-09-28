@@ -220,6 +220,34 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
+    function deleteMessage(ev: CustomEvent<Message>) {
+        machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
+
+        const apiPromise =
+            $machine.context.chatSummary.kind === "group_chat"
+                ? $machine.context.serviceContainer.deleteGroupMessage(
+                      $machine.context.chatSummary.chatId,
+                      ev.detail.messageId
+                  )
+                : $machine.context.serviceContainer.deleteDirectMessage(
+                      $machine.context.chatSummary.them,
+                      ev.detail.messageId
+                  );
+
+        apiPromise
+            .then((resp) => {
+                // check it worked - undo if it didn't
+                if (resp !== "success") {
+                    console.log("Delete failed: ", resp);
+                    machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+                }
+            })
+            .catch((err) => {
+                console.log("Delete failed: ", err);
+                machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+            });
+    }
+
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
         const first = group[0] && group[0][0] && group[0][0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
@@ -255,6 +283,7 @@
             first.event.kind === "desc_changed" ||
             first.event.kind === "reaction_added" ||
             first.event.kind === "reaction_removed" ||
+            first.event.kind === "message_deleted" ||
             first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
@@ -315,6 +344,7 @@
             evt.event.kind === "name_changed" ||
             evt.event.kind === "reaction_added" ||
             evt.event.kind === "reaction_removed" ||
+            evt.event.kind === "message_deleted" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {
@@ -384,6 +414,7 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
+                        on:deleteMessage={deleteMessage}
                         on:goToMessage={goToMessage}
                         on:selectReaction={selectReaction}
                         event={evt} />

@@ -72,13 +72,6 @@ type CyclesContent =
         caption: opt text;
     };
 
-type DeletedMessage =
-    record {
-        message_index: MessageIndex;
-        message_id: MessageId;
-        sender: UserId;
-    };
-
 type DirectChatCreated =
     record {
     };
@@ -86,7 +79,6 @@ type DirectChatCreated =
 type DirectChatEvent =
     variant {
         Message: Message;
-        DeletedMessage: DeletedMessage;
         DirectChatCreated: DirectChatCreated;
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
@@ -153,7 +145,6 @@ type GroupChatCreated =
 type GroupChatEvent =
     variant {
         Message: Message;
-        DeletedMessage: DeletedMessage;
         GroupChatCreated: GroupChatCreated;
         GroupNameChanged: GroupNameChanged;
         GroupDescriptionChanged: GroupDescriptionChanged;
@@ -230,6 +221,7 @@ type Message =
         content: MessageContent;
         replies_to: opt ReplyContext;
         reactions: vec record { text; vec UserId; };
+        edited: bool;
     };
 
 type MessageEventWrapper =
@@ -289,6 +281,7 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
+        Deleted;
     };
 
 type MessageIndexRange =

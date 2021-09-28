@@ -44,6 +44,7 @@
         on:replyPrivatelyTo
         on:replyTo
         on:selectReaction
+        on:deleteMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

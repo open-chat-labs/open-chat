@@ -15,6 +15,7 @@ import type {
     Message,
     IndexRange,
     ToggleReactionResponse,
+    DeleteMessageResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -115,5 +116,9 @@ export class CachingUserClient implements IUserClient {
         reaction: string
     ): Promise<ToggleReactionResponse> {
         return this.client.toggleReaction(otherUserId, messageId, reaction);
+    }
+
+    deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
+        return this.client.deleteMessage(otherUserId, messageId);
     }
 }

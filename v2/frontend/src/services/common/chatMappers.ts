@@ -10,6 +10,7 @@ import type {
     Message,
     ReplyContext,
     Reaction,
+    StaleMessage,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
@@ -25,6 +26,7 @@ import type {
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
+    ApiUpdatedMessage,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -36,6 +38,13 @@ export function message(candid: ApiMessage): Message {
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
+    };
+}
+
+export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
+    return {
+        messageId: candid.message_id,
+        eventIndex: candid.event_index,
     };
 }
 
@@ -54,6 +63,9 @@ function messageContent(candid: ApiMessageContent): MessageContent {
     }
     if ("Audio" in candid) {
         return audioContent(candid.Audio);
+    }
+    if ("Deleted" in candid) {
+        return { kind: "deleted_content" };
     }
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
@@ -168,6 +180,9 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
 
         case "cycles_content":
             return { Cycles: apiCyclesContent(domain) };
+
+        case "deleted_content":
+            return { Deleted: null };
     }
 }
 
