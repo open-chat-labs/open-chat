@@ -17,8 +17,35 @@ import filesize from "rollup-plugin-filesize";
 // import cleaner from 'rollup-plugin-cleaner';
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
+import * as fs from "fs";
+import * as path from "path";
 
 dotenv.config();
+
+const canisterPath = path.join(
+    __dirname,
+    "..",
+    ".dfx",
+    process.env.DFX_NETWORK,
+    "canister_ids.json"
+);
+
+if (fs.existsSync(canisterPath)) {
+    const canisters = JSON.parse(fs.readFileSync(canisterPath));
+    process.env.USER_INDEX_CANISTER = canisters.user_index[process.env.DFX_NETWORK];
+    process.env.GROUP_INDEX_CANISTER = canisters.group_index[process.env.DFX_NETWORK];
+    process.env.NOTIFICATIONS_CANISTER = canisters.notifications[process.env.DFX_NETWORK];
+
+    console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
+    console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
+    console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
+} else {
+    console.log(
+        "Couldn't find canisters JSON at: ",
+        canisterPath,
+        ". Falling back to original env vars."
+    );
+}
 
 // todo - we should add some code here to validate that the env vars we are expecting are actually present
 
