@@ -125,7 +125,7 @@
 
     function loadMessage(msg: MessageMatch): void {
         console.log("do something with this message: ", msg);
-        clearSearch();
+        // clearSearch();
         push(`/${msg.chatId}/${msg.eventIndex}`);
     }
 
