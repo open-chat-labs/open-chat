@@ -1,6 +1,9 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use chat_events::DeleteMessageResult;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use types::{CanisterId, MessageId};
+use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
 
 #[update]
@@ -17,12 +20,23 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        for message_id in args.message_ids.into_iter() {
-            chat.events.delete_message(my_user_id, message_id, now);
+        let deleted: Vec<_> = args
+            .message_ids
+            .into_iter()
+            .filter(|id| matches!(chat.events.delete_message(my_user_id, *id, now), DeleteMessageResult::Success))
+            .collect();
+
+        if !deleted.is_empty() {
+            ic_cdk::block_on(delete_on_recipients_canister(args.user_id.into(), deleted));
         }
 
         Success
     } else {
         ChatNotFound
     }
+}
+
+async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>) {
+    let args = c2c_delete_messages::Args { message_ids };
+    let _ = user_canister_c2c_client::c2c_delete_messages(canister_id, &args).await;
 }
