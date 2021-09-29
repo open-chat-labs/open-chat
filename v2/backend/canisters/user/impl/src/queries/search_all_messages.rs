@@ -25,8 +25,6 @@ async fn search_all_messages(args: Args) -> Response {
     )
     .await;
 
-    let mut matches = vec![];
-
     let mut direct_chat_matches = RUNTIME_STATE.with(|state| search_all_direct_chats(&args, state.borrow().as_ref().unwrap()));
 
     matches.append(&mut direct_chat_matches);

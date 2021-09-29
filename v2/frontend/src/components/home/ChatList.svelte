@@ -63,6 +63,11 @@
             ? $machine.context.chatSummaries.filter(chatMatchesSearch)
             : $machine.context.chatSummaries;
 
+    $: chatLookup = $machine.context.chatSummaries.reduce((lookup, chat) => {
+        lookup[chat.chatId] = chat;
+        return lookup;
+    }, {} as Record<string, ChatSummaryType>);
+
     async function performSearch(ev: CustomEvent<string>) {
         searchResultsAvailable = false;
         searchTerm = ev.detail.toLowerCase();
@@ -234,6 +239,7 @@
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <MessageSearchResult
+                                            chat={chatLookup[msg.chatId]}
                                             userLookup={$machine.context.userLookup}
                                             {msg}
                                             on:click={() => loadMessage(msg)} />
