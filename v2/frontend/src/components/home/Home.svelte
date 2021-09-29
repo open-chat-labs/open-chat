@@ -20,12 +20,24 @@
     import ModalContent from "../ModalContent.svelte";
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
-    import type { MessageMatch } from "../../domain/search/search";
+    import type {
+        GroupSearchResponse,
+        MessageMatch,
+        SearchAllMessagesResponse,
+    } from "../../domain/search/search";
+    import type { UserSummary } from "../../domain/user/user";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
         eventIndex: undefined,
     };
+
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
+    let searchTerm: string = "";
+    let searching: boolean = false;
+    let searchResultsAvailable: boolean = false;
 
     function logout() {
         dispatch("logout");
@@ -63,6 +75,41 @@
                 machine.send({ type: "CLEAR_SELECTED_CHAT" });
             }
         }
+    }
+
+    async function performSearch(ev: CustomEvent<string>) {
+        searchResultsAvailable = false;
+        searchTerm = ev.detail.toLowerCase();
+        if (searchTerm !== "") {
+            searching = true;
+            groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
+            userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
+            messageSearchResults = $machine.context.serviceContainer!.searchAllMessages(
+                searchTerm,
+                10
+            );
+            try {
+                await Promise.all([
+                    groupSearchResults,
+                    userSearchResults,
+                    messageSearchResults,
+                ]).then(() => {
+                    searchResultsAvailable = true;
+                    searching = false;
+                });
+            } catch (_err) {
+                searching = false;
+            }
+        } else {
+            clearSearch();
+        }
+    }
+
+    function clearSearch() {
+        groupSearchResults = userSearchResults = messageSearchResults = undefined;
+        searchTerm = "";
+        searching = false;
+        searchResultsAvailable = false;
     }
 
     function clearSelectedChat() {
@@ -179,6 +226,13 @@
         {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
             <LeftPanel
                 {machine}
+                {groupSearchResults}
+                {userSearchResults}
+                {messageSearchResults}
+                {searchTerm}
+                {searchResultsAvailable}
+                {searching}
+                on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:logout={logout}
                 on:joinGroup={joinGroup}

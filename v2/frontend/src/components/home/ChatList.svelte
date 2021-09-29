@@ -29,16 +29,16 @@
     import type { DataContent } from "../../domain/data/data";
 
     export let machine: ActorRefFrom<HomeMachine>;
+    export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    export let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
+    export let searchTerm: string = "";
+    export let searching: boolean = false;
+    export let searchResultsAvailable: boolean = false;
 
     const dispatch = createEventDispatcher();
-    let searchTerm: string = "";
-    let searching: boolean = false;
-    let searchResultsAvailable: boolean = false;
-    let joiningGroup: string | undefined = undefined;
 
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
+    let joiningGroup: string | undefined = undefined;
 
     $: user = $machine.context.user
         ? $machine.context.userLookup[$machine.context.user?.userId]
@@ -69,34 +69,6 @@
         return lookup;
     }, {} as Record<string, ChatSummaryType>);
 
-    async function performSearch(ev: CustomEvent<string>) {
-        searchResultsAvailable = false;
-        searchTerm = ev.detail.toLowerCase();
-        if (searchTerm !== "") {
-            searching = true;
-            groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
-            userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
-            messageSearchResults = $machine.context.serviceContainer!.searchAllMessages(
-                searchTerm,
-                10
-            );
-            try {
-                await Promise.all([
-                    groupSearchResults,
-                    userSearchResults,
-                    messageSearchResults,
-                ]).then(() => {
-                    searchResultsAvailable = true;
-                    searching = false;
-                });
-            } catch (_err) {
-                searching = false;
-            }
-        } else {
-            clearSearch();
-        }
-    }
-
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         // optimistic update
         machine.send({
@@ -113,13 +85,6 @@
                 rollbar.error("Failed to update user's avatar", err);
                 toastStore.showFailureToast("avatarUpdateFailed");
             });
-    }
-
-    function clearSearch() {
-        groupSearchResults = userSearchResults = messageSearchResults = undefined;
-        searchTerm = "";
-        searching = false;
-        searchResultsAvailable = false;
     }
 
     function chatWith(userId: string): void {
@@ -191,7 +156,7 @@
         on:joinGroup
         on:newGroup />
     <div class="body">
-        <Search {searching} {searchTerm} on:searchEntered={performSearch} />
+        <Search {searching} {searchTerm} on:searchEntered />
         {#if $machine.matches("loading_chats")}
             <Loading />
         {:else}
