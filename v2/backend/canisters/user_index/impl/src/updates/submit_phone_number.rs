@@ -14,9 +14,9 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     let mut phone_number = args.phone_number;
+    phone_number.prune_whitespace();
 
     if phone_number.is_valid() {
-        phone_number.prune_whitespace();
         let mut sms_messages_sent = 0u16;
 
         if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
