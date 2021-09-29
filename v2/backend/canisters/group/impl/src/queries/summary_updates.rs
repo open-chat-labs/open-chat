@@ -18,7 +18,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let updates_from_events = process_events(args.updates_since, runtime_state);
 
         let read_by_me = if participant.read_by_me_updated > args.updates_since {
-            Some(convert_to_message_index_ranges(participant.read_by_me.clone()))
+            Some(convert_to_message_index_ranges(participant.read_by_me.clone().into()))
         } else {
             None
         };

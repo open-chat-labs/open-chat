@@ -69,6 +69,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             User::Created(user) => {
                 let mut user = user.clone();
                 user.username = username;
+                user.date_updated = now;
                 User::Created(user)
             }
         };

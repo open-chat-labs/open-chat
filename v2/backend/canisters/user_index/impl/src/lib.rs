@@ -1,5 +1,6 @@
 use crate::model::user_map::UserMap;
-use candid::Principal;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
@@ -11,16 +12,22 @@ mod model;
 mod queries;
 mod updates;
 
-pub const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
-pub const USER_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
-pub const USER_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
-pub const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
+const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
+const USER_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
+const USER_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
+const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
+const STATE_VERSION: StateVersion = StateVersion::V1;
 
-thread_local! {
-    pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+#[derive(CandidType, Deserialize)]
+enum StateVersion {
+    V1,
 }
 
-pub struct RuntimeState {
+thread_local! {
+    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+}
+
+struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
 }
@@ -47,7 +54,8 @@ impl RuntimeState {
     }
 }
 
-pub struct Data {
+#[derive(CandidType, Deserialize)]
+struct Data {
     pub users: UserMap,
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,

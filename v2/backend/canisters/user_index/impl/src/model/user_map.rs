@@ -1,12 +1,12 @@
 use crate::model::user::User;
-use candid::Principal;
-use phonenumber::PhoneNumber;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{CyclesTopUp, TimestampMillis, UserId};
+use types::{CyclesTopUp, PhoneNumber, TimestampMillis, UserId};
 
-#[derive(Default)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,

@@ -1,19 +1,21 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
+use candid::CandidType;
 use chat_events::DirectChatEvents;
-use range_set::RangeSet;
+use serde::Deserialize;
 use std::cmp::max;
-use std::ops::RangeInclusive;
 use types::webrtc::SessionDetailsEvent;
 use types::{TimestampMillis, UserId};
+use utils::range_set::RangeSet;
 
+#[derive(CandidType, Deserialize)]
 pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
     pub events: DirectChatEvents,
     pub unread_message_index_map: UnreadMessageIndexMap,
-    pub read_by_me: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_me: RangeSet,
     pub read_by_me_updated: TimestampMillis,
-    pub read_by_them: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_them: RangeSet,
     pub read_by_them_updated: TimestampMillis,
     pub webrtc_session_details: Option<SessionDetailsEvent>,
 }

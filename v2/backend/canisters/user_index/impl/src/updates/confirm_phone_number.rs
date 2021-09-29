@@ -1,8 +1,7 @@
 use crate::model::user::{ConfirmedUser, User};
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use phonenumber::PhoneNumber;
-use types::CanisterCreationStatusInternal;
+use types::{CanisterCreationStatusInternal, PhoneNumber};
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]

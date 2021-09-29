@@ -2,9 +2,7 @@ use crate::model::user::{UnconfirmedUser, User};
 use crate::model::user_map::AddUserResult;
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use phonenumber::PhoneNumber;
-use std::str::FromStr;
-use types::ConfirmationCodeSms;
+use types::{ConfirmationCodeSms};
 use user_index_canister::submit_phone_number::{Response::*, *};
 
 #[update]
@@ -16,60 +14,60 @@ fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
-    match PhoneNumber::from_str(&format!("+{} {}", args.phone_number.country_code, args.phone_number.number)) {
-        Ok(phone_number) => {
-            let mut sms_messages_sent = 0u16;
+    if args.phone_number.is_valid() {
+        let mut sms_messages_sent = 0u16;
 
-            if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
-                match user {
-                    User::Unconfirmed(u) => {
-                        sms_messages_sent = u.sms_messages_sent;
-                        runtime_state.data.users.remove_by_principal(&caller);
-                    }
-                    _ => return AlreadyRegistered,
+        if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
+            match user {
+                User::Unconfirmed(u) => {
+                    sms_messages_sent = u.sms_messages_sent;
+                    runtime_state.data.users.remove_by_principal(&caller);
                 }
-            } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&phone_number) {
-                match user {
-                    User::Unconfirmed(u) => {
-                        let code_expires_at = u.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
-                        let has_code_expired = now > code_expires_at;
-                        if !has_code_expired {
-                            return AlreadyRegisteredByOther;
-                        }
-                    }
-                    _ => {
-                        return if user.get_principal() == caller {
-                            AlreadyRegistered
-                        } else {
-                            // TODO we should support the case where a phone number is recycled
-                            AlreadyRegisteredByOther
-                        };
-                    }
-                }
+                _ => return AlreadyRegistered,
             }
-
-            let confirmation_code = format!("{:0>6}", runtime_state.env.random_u32());
-
-            let user = UnconfirmedUser {
-                principal: caller,
-                phone_number: phone_number.clone(),
-                confirmation_code: confirmation_code.clone(),
-                date_generated: now,
-                sms_messages_sent: sms_messages_sent + 1,
-            };
-
-            if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
-                let sms = ConfirmationCodeSms {
-                    phone_number: phone_number.to_string(),
-                    confirmation_code,
-                };
-                runtime_state.data.sms_messages.add(sms);
-                Success
-            } else {
-                panic!("Failed to add user");
+        } else if let Some(user) = runtime_state.data.users.get_by_phone_number(&args.phone_number) {
+            match user {
+                User::Unconfirmed(u) => {
+                    let code_expires_at = u.date_generated + CONFIRMATION_CODE_EXPIRY_MILLIS;
+                    let has_code_expired = now > code_expires_at;
+                    if !has_code_expired {
+                        return AlreadyRegisteredByOther;
+                    }
+                }
+                _ => {
+                    return if user.get_principal() == caller {
+                        AlreadyRegistered
+                    } else {
+                        // TODO we should support the case where a phone number is recycled
+                        AlreadyRegisteredByOther
+                    };
+                }
             }
         }
-        Err(_) => InvalidPhoneNumber,
+
+        let phone_number_string = args.phone_number.to_string();
+        let confirmation_code = format!("{:0>6}", runtime_state.env.random_u32());
+
+        let user = UnconfirmedUser {
+            principal: caller,
+            phone_number: args.phone_number,
+            confirmation_code: confirmation_code.clone(),
+            date_generated: now,
+            sms_messages_sent: sms_messages_sent + 1,
+        };
+
+        if matches!(runtime_state.data.users.add(User::Unconfirmed(user)), AddUserResult::Success) {
+            let sms = ConfirmationCodeSms {
+                phone_number: phone_number_string,
+                confirmation_code,
+            };
+            runtime_state.data.sms_messages.add(sms);
+            Success
+        } else {
+            panic!("Failed to add user");
+        }
+    } else {
+        InvalidPhoneNumber
     }
 }
 

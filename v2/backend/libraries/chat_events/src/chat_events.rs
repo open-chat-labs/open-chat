@@ -8,6 +8,7 @@ use types::*;
 
 type ReplyContextInternal = ReplyContextArgs;
 
+#[derive(CandidType, Deserialize)]
 pub struct ChatEvents {
     chat_type: ChatType,
     chat_id: ChatId,
@@ -17,6 +18,7 @@ pub struct ChatEvents {
     latest_message_index: Option<MessageIndex>,
 }
 
+#[derive(CandidType, Deserialize)]
 enum ChatType {
     Direct,
     Group,

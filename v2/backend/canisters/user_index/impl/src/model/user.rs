@@ -1,10 +1,12 @@
-use candid::Principal;
-use phonenumber::PhoneNumber;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 #[cfg(test)]
 use std::str::FromStr;
-use types::{CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, TimestampMillis, UserId, UserSummary, Version};
+use types::{
+    CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary, Version,
+};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum User {
     Unconfirmed(UnconfirmedUser),
     Confirmed(ConfirmedUser),
@@ -55,30 +57,6 @@ impl User {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn set_phone_number(&mut self, phone_number: PhoneNumber, now: TimestampMillis) {
-        match self {
-            User::Unconfirmed(u) => u.phone_number = phone_number,
-            User::Confirmed(u) => u.phone_number = phone_number,
-            User::Created(u) => {
-                u.phone_number = phone_number;
-                u.date_updated = now;
-            }
-        }
-    }
-
-    pub fn set_username(&mut self, username: String, now: TimestampMillis) -> bool {
-        match self {
-            User::Unconfirmed(_) => return false,
-            User::Confirmed(u) => u.username = Some(username),
-            User::Created(u) => {
-                u.username = username;
-                u.date_updated = now;
-            }
-        }
-        true
-    }
-
     pub fn set_avatar_id(&mut self, avatar_id: u128, now: TimestampMillis) -> bool {
         match self {
             User::Created(u) => {
@@ -121,7 +99,7 @@ impl User {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UnconfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
@@ -130,7 +108,7 @@ pub struct UnconfirmedUser {
     pub sms_messages_sent: u16,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ConfirmedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
@@ -139,7 +117,7 @@ pub struct ConfirmedUser {
     pub date_confirmed: TimestampMillis,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CreatedUser {
     pub principal: Principal,
     pub phone_number: PhoneNumber,
