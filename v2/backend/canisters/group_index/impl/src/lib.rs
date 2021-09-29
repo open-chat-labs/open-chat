@@ -73,6 +73,7 @@ impl Default for Data {
         Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
+            service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
         }
