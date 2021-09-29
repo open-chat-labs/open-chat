@@ -14,7 +14,7 @@ fn c2c_update_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     match runtime_state
         .data
         .public_groups
-        .update_group(&chat_id, args.name, args.description)
+        .update_group(&chat_id, args.name, args.description, args.avatar_id)
     {
         UpdateGroupResult::Success => Success,
         UpdateGroupResult::ChatNotFound => ChatNotFound,

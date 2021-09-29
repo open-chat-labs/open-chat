@@ -31,8 +31,8 @@ members = [
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
-    "backend/notification_pusher/shared",
     "backend/notification_pusher/cli",
+    "backend/notification_pusher/shared",
     "backend/sms_service"
 ]
 

@@ -1,12 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
-use range_set::RangeSet;
-use std::ops::RangeInclusive;
 use types::{ChatId, MessageIndex};
 use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
-use utils::range_set::{convert_to_message_index_ranges, insert_ranges};
+use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet};
 
 #[update]
 fn mark_read(args: Args) -> Response {
@@ -51,11 +49,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-async fn mark_read_on_recipients_canister(
-    chat_id: ChatId,
-    their_message_ranges: RangeSet<[RangeInclusive<u32>; 2]>,
-    our_message_ranges: RangeSet<[RangeInclusive<u32>; 2]>,
-) {
+async fn mark_read_on_recipients_canister(chat_id: ChatId, their_message_ranges: RangeSet, our_message_ranges: RangeSet) {
     let args = c2c_mark_read::Args {
         message_ranges: convert_to_message_index_ranges(their_message_ranges),
     };
@@ -64,11 +58,7 @@ async fn mark_read_on_recipients_canister(
     RUNTIME_STATE
         .with(|state| remove_from_message_index_map(chat_id, our_message_ranges, state.borrow_mut().as_mut().unwrap()));
 
-    fn remove_from_message_index_map(
-        chat_id: ChatId,
-        ranges: RangeSet<[RangeInclusive<u32>; 2]>,
-        runtime_state: &mut RuntimeState,
-    ) {
+    fn remove_from_message_index_map(chat_id: ChatId, ranges: RangeSet, runtime_state: &mut RuntimeState) {
         if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
             for message_index in ranges.iter() {
                 chat.unread_message_index_map.remove(&message_index.into());

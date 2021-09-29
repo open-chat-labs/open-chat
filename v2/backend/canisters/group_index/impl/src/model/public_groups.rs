@@ -1,10 +1,12 @@
 use crate::MARK_ACTIVE_DURATION;
+use candid::CandidType;
 use search::*;
+use serde::Deserialize;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, CyclesTopUp, GroupMatch, TimestampMillis, Version};
 
-#[derive(Default)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
     name_to_id_map: HashMap<String, ChatId>,
@@ -76,7 +78,13 @@ impl PublicGroups {
         all_matches.iter().take(max_results as usize).map(|m| m.1.into()).collect()
     }
 
-    pub fn update_group(&mut self, chat_id: &ChatId, name: String, description: String) -> UpdateGroupResult {
+    pub fn update_group(
+        &mut self,
+        chat_id: &ChatId,
+        name: String,
+        description: String,
+        avatar_id: Option<u128>,
+    ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(mut group) => {
@@ -86,6 +94,7 @@ impl PublicGroups {
                     self.name_to_id_map.remove(&group.name);
                     group.name = name;
                     group.description = description;
+                    group.avatar_id = avatar_id;
                     UpdateGroupResult::Success
                 }
             }
@@ -93,12 +102,12 @@ impl PublicGroups {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct PublicGroupInfo {
     id: ChatId,
     name: String,
     description: String,
+    avatar_id: Option<u128>,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
     wasm_version: Version,
@@ -117,6 +126,7 @@ impl PublicGroupInfo {
             id,
             name,
             description,
+            avatar_id: None,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
@@ -147,6 +157,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             chat_id: group.id,
             name: group.name.clone(),
             description: group.description.clone(),
+            avatar_id: group.avatar_id,
         }
     }
 }

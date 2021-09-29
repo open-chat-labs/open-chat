@@ -70,8 +70,7 @@ mod tests {
     use crate::model::user::User;
     use crate::Data;
     use candid::Principal;
-    use phonenumber::PhoneNumber;
-    use std::str::FromStr;
+    use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -187,11 +186,10 @@ mod tests {
         for index in 0..usernames.len() {
             let bytes = vec![index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
-            let phone_number = format!("+44 1111 111 11{}", index);
 
             data.users.add(User::Created(CreatedUser {
                 principal: p,
-                phone_number: PhoneNumber::from_str(&phone_number).unwrap(),
+                phone_number: PhoneNumber::new(44, format!("+44 1111 111 11{}", index)),
                 user_id: p.into(),
                 username: usernames[index].to_string(),
                 date_created: env.now,

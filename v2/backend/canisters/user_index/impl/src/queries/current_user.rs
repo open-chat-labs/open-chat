@@ -1,7 +1,6 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use phonenumber::Mode;
 use types::CanisterUpgradeStatus;
 use user_index_canister::current_user::{Response::*, *};
 
@@ -17,10 +16,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         match user {
             User::Unconfirmed(u) => Unconfirmed(UnconfirmedResult {
-                phone_number: PhoneNumber {
-                    country_code: u.phone_number.code().value(),
-                    number: u.phone_number.format().mode(Mode::National).to_string(),
-                },
+                phone_number: u.phone_number.clone(),
             }),
             User::Confirmed(u) => {
                 if u.username.is_none() {

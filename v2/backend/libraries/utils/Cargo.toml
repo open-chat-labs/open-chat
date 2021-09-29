@@ -7,12 +7,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = "0.7.5"
+candid = "0.7.7"
 getrandom = { version = "0.2.3", features = ["js"] }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
 log = "0.4.14"
 rand = "0.7.3"
-range-set = { version = "0.0.7", optional = true }
+range-set = { git = "https://github.com/hpeebles/range-set", rev = "d64d0b95c5a397273b490bd37d81ddbff9c3e4a3", features = ["serde"], optional = true }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
+serde_cbor = "0.11.2"
+smallvec = { version = "0.6.*", features = ["serde"] }
 types = { path = "../types" }
+
+[features]
+default = ["range-set"]

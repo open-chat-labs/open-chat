@@ -1,9 +1,11 @@
 use crate::model::group_chat::GroupChat;
+use candid::CandidType;
+use serde::Deserialize;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::ChatId;
 
-#[derive(Default)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct GroupChats {
     group_chats: HashMap<ChatId, GroupChat>,
 }
@@ -27,6 +29,7 @@ impl GroupChats {
         self.group_chats.values()
     }
 
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.group_chats.len()
     }

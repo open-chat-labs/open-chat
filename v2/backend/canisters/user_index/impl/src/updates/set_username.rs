@@ -69,6 +69,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             User::Created(user) => {
                 let mut user = user.clone();
                 user.username = username;
+                user.date_updated = now;
                 User::Created(user)
             }
         };
@@ -89,8 +90,7 @@ mod tests {
     use crate::model::user::{CreatedUser, UnconfirmedUser, User};
     use crate::Data;
     use candid::Principal;
-    use phonenumber::PhoneNumber;
-    use std::str::FromStr;
+    use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -126,7 +126,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -149,7 +149,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[1]),
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -159,7 +159,7 @@ mod tests {
         }));
         data.users.add(User::Created(CreatedUser {
             principal: Principal::from_slice(&[2]),
-            phone_number: PhoneNumber::from_str("+44 2222 222 222").unwrap(),
+            phone_number: PhoneNumber::new(44, "2222 222 222".to_owned()),
             user_id: Principal::from_slice(&[2]).into(),
             username: "xyz".to_string(),
             date_created: env.now,
@@ -182,7 +182,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             confirmation_code: "123456".to_string(),
             date_generated: env.now,
             sms_messages_sent: 1,
@@ -202,7 +202,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -225,7 +225,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,
@@ -248,7 +248,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Created(CreatedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             user_id: Principal::from_slice(&[1]).into(),
             username: "abc".to_string(),
             date_created: env.now,

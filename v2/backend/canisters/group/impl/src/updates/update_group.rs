@@ -25,6 +25,7 @@ async fn update_group(args: Args) -> Response {
         let c2c_update_group_args = c2c_update_group::Args {
             name: args.name.clone(),
             description: args.description.clone(),
+            avatar_id: args.avatar.as_ref().map(|a| a.id),
         };
 
         match group_index_canister_c2c_client::c2c_update_group(prepare_result.group_index_canister_id, &c2c_update_group_args)

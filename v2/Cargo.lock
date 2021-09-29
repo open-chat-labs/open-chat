@@ -359,9 +359,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d1b4202e232cfa9cb45bba366e12d8710543e55adffb2c9510c61bed147d916"
+checksum = "17c06d715bc063c90124f5bdec5029ed537c564f037fc64617c71a67fe107543"
 dependencies = [
  "anyhow",
  "binread",
@@ -980,7 +980,6 @@ dependencies = [
  "log",
  "notifications_canister",
  "notifications_canister_c2c_client",
- "range-set",
  "search",
  "serde",
  "serde_bytes",
@@ -1702,9 +1701,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76e97c412795abf6c24ba30055a8f20642ea57ca12875220b854cfa501bf1e48"
+checksum = "74e768dff5fb39a41b3bcd30bb25cf989706c90d028d1ad71971987aa309d535"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -2183,10 +2182,10 @@ dependencies = [
 [[package]]
 name = "range-set"
 version = "0.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e67dedb26f0f482ba36434d62b2b6daf478b05a340b37dbd6ef3a632a4413a9a"
+source = "git+https://github.com/hpeebles/range-set?rev=d64d0b95c5a397273b490bd37d81ddbff9c3e4a3#d64d0b95c5a397273b490bd37d81ddbff9c3e4a3"
 dependencies = [
  "num-traits",
+ "serde",
  "smallvec 0.6.14",
 ]
 
@@ -2616,6 +2615,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97fcaeba89edba30f044a10c6a3cc39df9c3f17d7cd829dd1446cab35f890e0"
 dependencies = [
  "maybe-uninit",
+ "serde",
 ]
 
 [[package]]
@@ -3320,7 +3320,6 @@ dependencies = [
  "log",
  "notifications_canister",
  "notifications_canister_c2c_client",
- "range-set",
  "search",
  "serde",
  "types",
@@ -3337,7 +3336,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "ic-cdk",
- "phonenumber",
  "serde",
  "serde_bytes",
  "types",
@@ -3402,6 +3400,8 @@ dependencies = [
  "range-set",
  "serde",
  "serde_bytes",
+ "serde_cbor",
+ "smallvec 0.6.14",
  "types",
 ]
 
