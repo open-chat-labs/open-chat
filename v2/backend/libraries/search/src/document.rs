@@ -34,9 +34,7 @@ impl Document {
     // 5. if the word matches the start of the field
     // A score of zero means no match
     pub fn calculate_score(&self, query: &Query) -> u32 {
-        let score = (self.calculate_score_internal(query) * 10000.0) as u32;
-        println!("{}: {}", self.fields[0].value, score);
-        score
+        (self.calculate_score_internal(query) * 10000.0) as u32
     }
 
     pub fn calculate_score_internal(&self, query: &Query) -> f32 {

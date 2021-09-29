@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct Args {
     pub name: String,
     pub description: String,
+    pub avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
