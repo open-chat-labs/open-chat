@@ -70,12 +70,10 @@
             searching = true;
             groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
             userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
-            messageSearchResults = $machine.context
-                .serviceContainer!.searchAllMessages(searchTerm, 10)
-                .then((res) => {
-                    console.log(res);
-                    return res;
-                });
+            messageSearchResults = $machine.context.serviceContainer!.searchAllMessages(
+                searchTerm,
+                10
+            );
             try {
                 await Promise.all([
                     groupSearchResults,
@@ -119,7 +117,6 @@
     }
 
     function chatWith(userId: string): void {
-        clearSearch();
         dispatch("chatWith", userId);
     }
 
@@ -132,7 +129,6 @@
         if (chats.find((c) => c.chatId === chatId) !== undefined) {
             push(`/${chatId}`);
             joiningGroup = undefined;
-            clearSearch();
         } else {
             setTimeout(() => selectJoinedChat(chatId), 200);
         }
@@ -142,7 +138,6 @@
         if (chats.find((c) => c.chatId === group.chatId) !== undefined) {
             push(`/${group.chatId}`);
             joiningGroup = undefined;
-            clearSearch();
         } else {
             joiningGroup = group.chatId;
             $machine.context
@@ -239,6 +234,7 @@
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <MessageSearchResult
+                                            userLookup={$machine.context.userLookup}
                                             {msg}
                                             on:click={() => loadMessage(msg)} />
                                     </div>
@@ -268,6 +264,10 @@
 
     .search-subtitle {
         margin-bottom: $sp3;
-        color: var(--chatSummary-txt1);
+        color: var(--chatSearch-section-txt);
+    }
+
+    .search-matches {
+        margin-top: $sp4;
     }
 </style>

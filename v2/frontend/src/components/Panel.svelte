@@ -38,6 +38,7 @@
         }
 
         &.left {
+            background: var(--panel-left-bg);
             display: flex;
             flex-direction: column;
             min-width: 320px;

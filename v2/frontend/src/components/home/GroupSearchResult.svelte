@@ -51,6 +51,7 @@
         margin-bottom: $sp3;
     }
     .desc {
+        color: var(--chatSummary-txt2);
         @include font(light, normal, fs-80);
         @include ellipsis();
     }
