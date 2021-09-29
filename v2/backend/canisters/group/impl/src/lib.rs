@@ -23,10 +23,10 @@ enum StateVersion {
 }
 
 thread_local! {
-    pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
 }
 
-pub struct RuntimeState {
+struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
 }
@@ -42,7 +42,7 @@ impl RuntimeState {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct Data {
+struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,
