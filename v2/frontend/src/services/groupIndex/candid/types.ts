@@ -146,6 +146,7 @@ export interface GroupDescriptionChanged {
 export interface GroupMatch {
   'name' : string,
   'description' : string,
+  'avatar_id' : [] | [bigint],
   'chat_id' : ChatId,
 }
 export interface GroupMessageNotification {
@@ -175,6 +176,7 @@ export interface IndexedNotification {
 }
 export interface Message {
   'content' : MessageContent,
+  'edited' : boolean,
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],

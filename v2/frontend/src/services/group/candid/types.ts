@@ -106,6 +106,13 @@ export interface DirectMessageNotification {
   'message' : Message,
   'sender_name' : string,
 }
+export interface EditMessageArgs {
+  'content' : MessageContent,
+  'message_id' : MessageId,
+}
+export type EditMessageResponse = { 'MessageNotFound' : null } |
+  { 'Success' : null } |
+  { 'NotInGroup' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'max_messages' : number,
@@ -228,6 +235,7 @@ export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'NotInGroup' : null };
 export interface Message {
   'content' : MessageContent,
+  'edited' : boolean,
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
@@ -540,6 +548,7 @@ export interface _SERVICE {
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
     >,
+  'edit_message' : (arg_0: EditMessageArgs) => Promise<EditMessageResponse>,
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,

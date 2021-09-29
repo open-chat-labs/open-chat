@@ -68,18 +68,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const EventIndex = IDL.Nat32;
-  const EventsArgs = IDL.Record({
-    'user_id' : UserId,
-    'max_messages' : IDL.Nat32,
-    'max_events' : IDL.Nat32,
-    'ascending' : IDL.Bool,
-    'start_index' : EventIndex,
-  });
-  const UpdatedMessage = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-  });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
     'canister_id' : CanisterId,
@@ -127,6 +115,28 @@ export const idlFactory = ({ IDL }) => {
     'Video' : VideoContent,
     'Deleted' : IDL.Null,
   });
+  const EditMessageArgs = IDL.Record({
+    'content' : MessageContent,
+    'user_id' : UserId,
+    'message_id' : MessageId,
+  });
+  const EditMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
+  const EventIndex = IDL.Nat32;
+  const EventsArgs = IDL.Record({
+    'user_id' : UserId,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
+    'ascending' : IDL.Bool,
+    'start_index' : EventIndex,
+  });
+  const UpdatedMessage = IDL.Record({
+    'message_id' : MessageId,
+    'event_index' : EventIndex,
+  });
   const ReplyContext = IDL.Record({
     'content' : IDL.Opt(MessageContent),
     'sender' : UserId,
@@ -137,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
   const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'content' : MessageContent,
+    'edited' : IDL.Bool,
     'sender' : UserId,
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(ReplyContext),
@@ -418,6 +429,7 @@ export const idlFactory = ({ IDL }) => {
         [DeleteMessagesResponse],
         [],
       ),
+    'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],

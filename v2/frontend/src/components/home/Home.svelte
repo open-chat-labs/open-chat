@@ -20,11 +20,24 @@
     import ModalContent from "../ModalContent.svelte";
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
+    import type {
+        GroupSearchResponse,
+        MessageMatch,
+        SearchAllMessagesResponse,
+    } from "../../domain/search/search";
+    import type { UserSummary } from "../../domain/user/user";
     export let machine: ActorRefFrom<HomeMachine>;
-    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
+    export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
-        messageIndex: undefined,
+        eventIndex: undefined,
     };
+
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
+    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
+    let messageSearchResults: Promise<SearchAllMessagesResponse> | undefined = undefined;
+    let searchTerm: string = "";
+    let searching: boolean = false;
+    let searchResultsAvailable: boolean = false;
 
     function logout() {
         dispatch("logout");
@@ -51,8 +64,7 @@
                         type: "SELECT_CHAT",
                         data: {
                             chatId: params.chatId,
-                            messageIndex:
-                                params.messageIndex == null ? undefined : params.messageIndex,
+                            eventIndex: params.eventIndex == null ? undefined : params.eventIndex,
                         },
                     });
                 }
@@ -63,6 +75,41 @@
                 machine.send({ type: "CLEAR_SELECTED_CHAT" });
             }
         }
+    }
+
+    async function performSearch(ev: CustomEvent<string>) {
+        searchResultsAvailable = false;
+        searchTerm = ev.detail.toLowerCase();
+        if (searchTerm !== "") {
+            searching = true;
+            groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
+            userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
+            messageSearchResults = $machine.context.serviceContainer!.searchAllMessages(
+                searchTerm,
+                10
+            );
+            try {
+                await Promise.all([
+                    groupSearchResults,
+                    userSearchResults,
+                    messageSearchResults,
+                ]).then(() => {
+                    searchResultsAvailable = true;
+                    searching = false;
+                });
+            } catch (_err) {
+                searching = false;
+            }
+        } else {
+            clearSearch();
+        }
+    }
+
+    function clearSearch() {
+        groupSearchResults = userSearchResults = messageSearchResults = undefined;
+        searchTerm = "";
+        searching = false;
+        searchResultsAvailable = false;
     }
 
     function clearSelectedChat() {
@@ -143,6 +190,13 @@
         }
     }
 
+    function loadMessage(ev: CustomEvent<MessageMatch>): void {
+        push(`/${ev.detail.chatId}/${ev.detail.eventIndex}`);
+        if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
+            machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail.eventIndex });
+        }
+    }
+
     $: selectedChat = $machine.context.selectedChat;
 
     $: groupChat = selectedChat
@@ -172,8 +226,17 @@
         {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
             <LeftPanel
                 {machine}
+                {groupSearchResults}
+                {userSearchResults}
+                {messageSearchResults}
+                {searchTerm}
+                {searchResultsAvailable}
+                {searching}
+                on:searchEntered={performSearch}
+                on:chatWith={chatWith}
                 on:logout={logout}
                 on:joinGroup={joinGroup}
+                on:loadMessage={loadMessage}
                 on:newGroup={newGroup}
                 on:newchat={newChat} />
         {/if}

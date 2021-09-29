@@ -4,6 +4,7 @@
     import { onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import type { VideoContent } from "../../domain/chat/chat";
+    import Caption from "./Caption.svelte";
 
     export let content: VideoContent;
 
@@ -34,7 +35,7 @@
 </div>
 
 {#if content.caption !== undefined}
-    <p>{content.caption}</p>
+    <Caption caption={content.caption} />
 {/if}
 
 <style type="text/scss">

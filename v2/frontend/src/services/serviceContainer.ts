@@ -40,16 +40,19 @@ import type {
     IndexRange,
     EventWrapper,
     DeleteMessageResponse,
+    JoinGroupResponse,
+    EditMessageResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
-import { GroupIndexClientMock } from "./groupIndex/groupIndex.client.mock";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
+import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
+import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -69,7 +72,7 @@ export class ServiceContainer {
 
     constructor(private identity: Identity) {
         this._userIndexClient = UserIndexClient.create(identity);
-        this._groupIndexClient = new GroupIndexClientMock();
+        this._groupIndexClient = GroupIndexClient.create(identity);
         this._groupClients = {};
         this.db = db;
     }
@@ -91,6 +94,16 @@ export class ServiceContainer {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    editMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<EditMessageResponse> {
+        if (chat.kind === "group_chat") {
+            return this.editGroupMessage(chat.chatId, msg);
+        }
+        if (chat.kind === "direct_chat") {
+            return this.editDirectMessage(chat.them, msg);
+        }
+        throw new UnsupportedValueError("Unexpect chat type", chat);
     }
 
     sendMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<SendMessageResponse> {
@@ -115,6 +128,10 @@ export class ServiceContainer {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
+    private editGroupMessage(chatId: string, message: Message): Promise<EditMessageResponse> {
+        return this.getGroupClient(chatId).editMessage(message);
+    }
+
     private sendDirectMessage(
         recipientId: string,
         sender: UserSummary,
@@ -122,6 +139,10 @@ export class ServiceContainer {
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
         return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
+    }
+
+    private editDirectMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+        return this.userClient.editMessage(recipientId, message);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -221,10 +242,28 @@ export class ServiceContainer {
         return dataContent;
     }
 
-    searchUsers(searchTerm: string): Promise<UserSummary[]> {
+    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this._userIndexClient
-            .searchUsers(searchTerm)
+            .searchUsers(searchTerm, maxResults)
             .then((users) => users.map((u) => this.rehydrateDataContent(u, "avatar", u.userId)));
+    }
+
+    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+        return this._groupIndexClient.search(searchTerm, maxResults).then((res) => {
+            if (res.kind === "success") {
+                return {
+                    ...res,
+                    matches: res.matches.map((match) =>
+                        this.rehydrateDataContent(match, "avatar", match.chatId)
+                    ),
+                };
+            }
+            return res;
+        });
+    }
+
+    searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {
+        return this.userClient.searchAllMessages(searchTerm, maxResults);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {
@@ -301,6 +340,10 @@ export class ServiceContainer {
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.userClient.leaveGroup(chatId);
+    }
+
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        return this.userClient.joinGroup(chatId);
     }
 
     markDirectChatMessagesRead(

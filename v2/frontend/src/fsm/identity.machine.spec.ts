@@ -8,6 +8,7 @@ import { identityMachine } from "./identity.machine";
 import type { CurrentUserResponse } from "../domain/user/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
 import { ServiceContainer } from "../services/serviceContainer";
+import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
@@ -24,6 +25,7 @@ const fakeIdentity: Identity = {
     transformRequest: (_req: HttpAgentRequest) => Promise.resolve({}),
 };
 
+GroupIndexClient.create = jest.fn();
 const mockServiceContainer = new ServiceContainer(fakeIdentity);
 
 // create a test version of all of our side effects

@@ -17,8 +17,11 @@ import type {
     EventWrapper,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
+import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
@@ -32,6 +35,7 @@ export interface IUserClient {
         iterations?: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
+    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse>;
     sendMessage(
         recipientId: string,
         sender: UserSummary,
@@ -41,6 +45,7 @@ export interface IUserClient {
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
+    joinGroup(chatId: string): Promise<JoinGroupResponse>;
     markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     toggleReaction(
@@ -49,4 +54,5 @@ export interface IUserClient {
         reaction: string
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
+    searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
 }

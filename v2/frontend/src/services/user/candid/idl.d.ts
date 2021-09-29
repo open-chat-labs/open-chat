@@ -38,6 +38,7 @@ import {
     PutChunkResponse,
     SendMessageArgs,
     SendMessageResponse,
+    EditMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
@@ -47,11 +48,15 @@ import {
     DeleteMessagesResponse,
     DeletedMessage,
     UpdatedMessage,
+    JoinGroupResponse,
+    SearchAllMessagesResponse,
+    MessageMatch,
 } from "./types";
 export {
     _SERVICE as UserService,
     SendMessageArgs as ApiSendMessageArgs,
     SendMessageResponse as ApiSendMessageResponse,
+    EditMessageResponse as ApiEditMessageResponse,
     Message as ApiMessage,
     ReplyContext as ApiReplyContext,
     ChatSummaryUpdates as ApiChatSummaryUpdates,
@@ -96,6 +101,9 @@ export {
     DeleteMessagesResponse as ApiDeleteMessageResponse,
     DeletedMessage as ApiDeletedMessage,
     UpdatedMessage as ApiUpdatedMessage,
+    JoinGroupResponse as ApiJoinGroupResponse,
+    SearchAllMessagesResponse as ApiSearchAllMessagesResponse,
+    MessageMatch as ApiMessageMatch,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

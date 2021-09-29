@@ -3,6 +3,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
     import type { ImageContent } from "../../domain/chat/chat";
+    import Caption from "./Caption.svelte";
 
     export let content: ImageContent;
 
@@ -23,7 +24,7 @@
 {/if}
 
 {#if content.caption !== undefined}
-    <p>{content.caption}</p>
+    <Caption caption={content.caption} />
 {/if}
 
 <style type="text/scss">

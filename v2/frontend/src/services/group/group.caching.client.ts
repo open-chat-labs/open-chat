@@ -12,6 +12,7 @@ import type {
     ToggleReactionResponse,
     IndexRange,
     DeleteMessageResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -53,6 +54,10 @@ export class CachingGroupClient implements IGroupClient {
 
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return this.client.sendMessage(senderName, message);
+    }
+
+    editMessage(message: Message): Promise<EditMessageResponse> {
+        return this.client.editMessage(message);
     }
 
     makeAdmin(userId: string): Promise<ChangeAdminResponse> {

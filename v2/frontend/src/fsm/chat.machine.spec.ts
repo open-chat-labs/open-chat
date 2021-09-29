@@ -12,6 +12,7 @@ import type {
     TextContent,
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
+import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 import { ServiceContainer } from "../services/serviceContainer";
 import {
     ChatContext,
@@ -87,6 +88,7 @@ const directContext: ChatContext = {
     localReactions: {},
 };
 
+GroupIndexClient.create = jest.fn();
 const serviceContainer = new ServiceContainer({} as Identity);
 
 const groupContext: ChatContext = {

@@ -433,12 +433,10 @@ export function identity<T>(x: T): T {
 }
 
 export function setLastMessageOnChat(chat: ChatSummary, ev: EventWrapper<Message>): ChatSummary {
-    return {
-        ...chat,
-        latestMessage: ev,
-        latestEventIndex: ev.index,
-        readByMe: insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe),
-    };
+    chat.latestEventIndex = ev.index;
+    chat.latestMessage = ev;
+    chat.readByMe = insertIndexIntoRanges(ev.event.messageIndex, chat.readByMe);
+    return chat;
 }
 
 function sameDate(a: { timestamp: bigint }, b: { timestamp: bigint }): boolean {

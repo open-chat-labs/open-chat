@@ -13,6 +13,7 @@ import type {
     EventWrapper,
     Message,
     DeleteMessageResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -25,6 +26,7 @@ export interface IGroupClient {
     ): Promise<EventsResponse<GroupChatEvent>>;
     addParticipants(userIds: string[]): Promise<AddParticipantsResponse>;
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse>;
+    editMessage(message: Message): Promise<EditMessageResponse>;
     makeAdmin(userId: string): Promise<ChangeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;

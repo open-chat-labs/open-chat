@@ -1,3 +1,5 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
     import Link from "../Link.svelte";
     import { AvatarSize } from "../../domain/user/user";
@@ -11,7 +13,7 @@
     import Loading from "../Loading.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Avatar from "../Avatar.svelte";
-    import type { ChatSummary, Message, EnhancedReplyContext } from "../../domain/chat/chat";
+    import type { Message, EnhancedReplyContext } from "../../domain/chat/chat";
     import RepliesTo from "./RepliesTo.svelte";
     import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -22,6 +24,7 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import Tick from "./Tick.svelte";
@@ -29,7 +32,8 @@
     import { fillMessage, messageMetaData } from "../../utils/media";
     const dispatch = createEventDispatcher();
 
-    export let chatSummary: ChatSummary;
+    export let chatId: string;
+    export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
@@ -46,7 +50,7 @@
     let msgElement: HTMLElement;
 
     let senderId = msg.sender;
-    let groupChat = chatSummary.kind === "group_chat";
+    let groupChat = chatType === "group_chat";
     let sender = userLookup[senderId];
     let username = sender?.username;
     let userStatus = getUserStatus(userLookup, senderId);
@@ -83,7 +87,7 @@
     function createReplyContext(): EnhancedReplyContext {
         return {
             senderId,
-            chatId: chatSummary.chatId,
+            chatId: chatId,
             eventIndex: eventIndex,
             content: msg.content,
             sender,
@@ -101,6 +105,10 @@
 
     function deleteMessage() {
         dispatch("deleteMessage", msg);
+    }
+
+    function editMessage() {
+        dispatch("editMessage", msg);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -161,12 +169,7 @@
             class:readByMe
             class:rtl={$rtlStore}>
             {#if msg.repliesTo !== undefined && !deleted}
-                <RepliesTo
-                    {chatSummary}
-                    {user}
-                    {userLookup}
-                    on:goToMessage
-                    repliesTo={msg.repliesTo} />
+                <RepliesTo {chatId} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
@@ -212,6 +215,10 @@
                                     </MenuItem>
                                 {/if}
                                 {#if me}
+                                    <MenuItem on:click={editMessage}>
+                                        <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("editMessage")}</div>
+                                    </MenuItem>
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>

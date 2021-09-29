@@ -123,7 +123,7 @@
         .name-date {
             display: flex;
             .chat-name {
-                color: var(--theme-box-text);
+                color: var(--chatSummary-txt1);
                 @include ellipsis();
                 flex: auto;
             }

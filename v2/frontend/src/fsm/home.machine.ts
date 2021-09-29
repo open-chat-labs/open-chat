@@ -55,12 +55,13 @@ export interface HomeContext {
 }
 
 export type HomeEvents =
-    | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
+    | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
+    | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
     | { type: "MESSAGE_CONFIRMED"; data: bigint }
     | { type: "BLOCK_USER"; data: string }
@@ -332,6 +333,17 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         }),
                     ],
                 },
+                GO_TO_EVENT_INDEX: {
+                    actions: pure((ctx, ev) => {
+                        if (ctx.selectedChat !== undefined) {
+                            const actor = ctx.chatsIndex[ctx.selectedChat.chatId];
+                            if (actor) {
+                                actor.send(ev);
+                            }
+                        }
+                        return undefined;
+                    }),
+                },
                 SELECT_CHAT: {
                     internal: true,
                     cond: "selectedChatIsValid",
@@ -360,8 +372,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                   }
                                                 : undefined,
                                             events: [],
-                                            focusIndex: ev.data.messageIndex
-                                                ? Number(ev.data.messageIndex)
+                                            focusIndex: ev.data.eventIndex
+                                                ? Number(ev.data.eventIndex)
                                                 : undefined,
                                             replyingTo: ctx.replyingTo,
                                             markMessages: spawn(

@@ -15,6 +15,7 @@ import type {
     EventWrapper,
     IndexRange,
     DeleteMessageResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -27,6 +28,7 @@ import {
     updateGroupResponse,
     toggleReactionResponse,
     deleteMessageResponse,
+    editMessageResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -137,6 +139,19 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    editMessage(message: Message): Promise<EditMessageResponse> {
+        return DataClient.create(this.identity, this.chatId)
+            .uploadData(message.content)
+            .then(() => {
+                return this.handleResponse(
+                    this.groupService.edit_message({
+                        content: apiMessageContent(message.content),
+                        message_id: message.messageId,
+                    }),
+                    editMessageResponse
+                );
+            });
+    }
     sendMessage(senderName: string, message: Message): Promise<SendMessageResponse> {
         return DataClient.create(this.identity, this.chatId)
             .uploadData(message.content)

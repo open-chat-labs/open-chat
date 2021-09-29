@@ -16,6 +16,10 @@ import type {
     ApiToggleReactionResponse,
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
+    ApiJoinGroupResponse,
+    ApiSearchAllMessagesResponse,
+    ApiMessageMatch,
+    ApiEditMessageResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -35,10 +39,53 @@ import type {
     SetAvatarResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
-import { message, updatedMessage } from "../common/chatMappers";
+import { message, messageContent, updatedMessage } from "../common/chatMappers";
+import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+
+export function searchAllMessageResponse(
+    candid: ApiSearchAllMessagesResponse
+): SearchAllMessagesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    }
+    if ("TermTooShort" in candid) {
+        return {
+            kind: "term_too_short",
+        };
+    }
+    if ("TermTooLong" in candid) {
+        return {
+            kind: "term_too_long",
+        };
+    }
+    if ("InvalidTerm" in candid) {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchAllMessagesResponse type received",
+        candid
+    );
+}
+
+function messageMatch(candid: ApiMessageMatch): MessageMatch {
+    return {
+        chatId: candid.chat_id.toString(),
+        eventIndex: candid.event_index,
+        content: messageContent(candid.content),
+        sender: candid.sender.toString(),
+        score: candid.score,
+    };
+}
 
 export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
     if ("Success" in candid) {
@@ -112,6 +159,28 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
 }
 
+export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("Blocked" in candid) {
+        return "blocked";
+    }
+    if ("AlreadyInGroup" in candid) {
+        return "already_in_group";
+    }
+    if ("GroupNotPublic" in candid) {
+        return "group_not_public";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
+}
+
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
     if ("Full" in candid) {
         return "put_chunk_full";
@@ -142,6 +211,19 @@ export function blockResponse(
         return "success";
     }
     throw new UnsupportedValueError("Unexpected ApiBlockResponse type received", candid);
+}
+
+export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {

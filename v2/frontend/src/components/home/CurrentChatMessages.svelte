@@ -32,6 +32,7 @@
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
+    import { toastStore } from "../../stores/toast";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -220,6 +221,10 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
+    function editMessage(_ev: CustomEvent<Message>) {
+        console.log("what now");
+    }
+
     function deleteMessage(ev: CustomEvent<Message>) {
         machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
 
@@ -238,12 +243,12 @@
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
-                    console.log("Delete failed: ", resp);
+                    toastStore.showFailureToast("deleteFailed");
                     machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
                 }
             })
-            .catch((err) => {
-                console.log("Delete failed: ", err);
+            .catch((_err) => {
+                toastStore.showFailureToast("deleteFailed");
                 machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
             });
     }
@@ -279,6 +284,7 @@
             first.event.kind === "participants_promoted_to_admin" ||
             first.event.kind === "participants_dismissed_as_admin" ||
             first.event.kind === "participants_removed" ||
+            first.event.kind === "participant_joined" ||
             first.event.kind === "avatar_changed" ||
             first.event.kind === "desc_changed" ||
             first.event.kind === "reaction_added" ||
@@ -312,7 +318,6 @@
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
-                    console.log("reply: just loaded some messages");
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
@@ -339,6 +344,7 @@
             evt.event.kind === "participants_added" ||
             evt.event.kind === "participants_removed" ||
             evt.event.kind === "participant_left" ||
+            evt.event.kind === "participant_joined" ||
             evt.event.kind === "avatar_changed" ||
             evt.event.kind === "desc_changed" ||
             evt.event.kind === "name_changed" ||
@@ -406,7 +412,8 @@
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
-                        chatSummary={$machine.context.chatSummary}
+                        chatId={$machine.context.chatSummary.chatId}
+                        chatType={$machine.context.chatSummary.kind}
                         user={$machine.context.user}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
@@ -415,6 +422,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:deleteMessage={deleteMessage}
+                        on:editMessage={editMessage}
                         on:goToMessage={goToMessage}
                         on:selectReaction={selectReaction}
                         event={evt} />

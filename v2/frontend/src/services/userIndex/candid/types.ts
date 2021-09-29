@@ -211,6 +211,7 @@ export type MarkAsOnlineResponse = { 'Success' : null } |
   { 'UserNotFound' : null };
 export interface Message {
   'content' : MessageContent,
+  'edited' : boolean,
   'sender' : UserId,
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],

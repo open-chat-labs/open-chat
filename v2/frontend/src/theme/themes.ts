@@ -81,6 +81,9 @@ export interface Theme {
 
     panel: {
         bg: string;
+        left: {
+            bg: string;
+        };
     };
 
     currentUser: {
@@ -100,6 +103,10 @@ export interface Theme {
         bg: string;
         txt: string;
         bd: string;
+
+        section: {
+            txt: string;
+        };
     };
 
     chatSummary: {
@@ -262,6 +269,9 @@ const defaultTheme = {
 
     panel: {
         bg: "linear-gradient(#22A7F2, #EF5DA8)",
+        left: {
+            bg: "rgba(255,255,255,0.05)",
+        },
     },
 
     currentUser: {
@@ -281,6 +291,10 @@ const defaultTheme = {
         bg: "#ffffff",
         txt: "#555555",
         bd: "#dddddd",
+
+        section: {
+            txt: "#ffffff",
+        },
     },
 
     chatSummary: {
@@ -443,6 +457,9 @@ export const themes: Themes = {
 
         panel: {
             bg: "#2b2b2b",
+            left: {
+                bg: "rgba(0,0,0,0.1)",
+            },
         },
 
         currentUser: {
@@ -462,6 +479,10 @@ export const themes: Themes = {
             bg: "#555555",
             txt: dark60,
             bd: dark15,
+
+            section: {
+                txt: dark60,
+            },
         },
 
         chatSummary: {

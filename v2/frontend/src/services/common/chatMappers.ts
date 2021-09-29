@@ -48,7 +48,7 @@ export function updatedMessage(candid: ApiUpdatedMessage): StaleMessage {
     };
 }
 
-function messageContent(candid: ApiMessageContent): MessageContent {
+export function messageContent(candid: ApiMessageContent): MessageContent {
     if ("File" in candid) {
         return fileContent(candid.File);
     }

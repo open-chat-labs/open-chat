@@ -29,9 +29,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <div>
-        <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
-    </div>
+    <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
 {:else if content.kind === "image_content"}
     <ImageContent {content} />
 {:else if content.kind === "video_content"}

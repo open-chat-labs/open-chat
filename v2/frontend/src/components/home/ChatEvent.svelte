@@ -7,14 +7,15 @@
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
 
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
     // I am *sure* there must be a way to do it.
-    export let chatSummary: ChatSummary;
+    export let chatId: string;
+    export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;
     export let last: boolean;
@@ -34,7 +35,8 @@
         {confirmed}
         {readByMe}
         {readByThem}
-        {chatSummary}
+        {chatId}
+        {chatType}
         {user}
         {me}
         {userLookup}
@@ -45,6 +47,7 @@
         on:replyTo
         on:selectReaction
         on:deleteMessage
+        on:editMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
@@ -71,7 +74,14 @@
 {:else if event.event.kind === "participant_left"}
     <ParticipantLeftEvent
         {user}
-        left={userLookup[event.event.userId]}
+        label={"userLeft"}
+        subject={userLookup[event.event.userId]}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "participant_joined"}
+    <ParticipantLeftEvent
+        {user}
+        label={"userJoined"}
+        subject={userLookup[event.event.userId]}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent

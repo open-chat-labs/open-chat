@@ -25,7 +25,7 @@ type EditMessageArgs =
     };
 
 type EditMessageResponse =
-    record {
+    variant {
         Success;
         MessageNotFound;
         NotInGroup;
