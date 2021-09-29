@@ -181,7 +181,7 @@
                         {#await groupSearchResults then resp}
                             {#if resp.kind === "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("publicGroups")}</h3>
-                                {#each resp.matches as group, i (group.chatId)}
+                                {#each resp.matches as group, _i (group.chatId)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
@@ -207,7 +207,7 @@
                         {#await userSearchResults then resp}
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">{$_("users")}</h3>
-                                {#each resp as user, i (user.userId)}
+                                {#each resp as user, _i (user.userId)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
@@ -229,7 +229,7 @@
                         {#await messageSearchResults then resp}
                             {#if resp.kind == "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("messages")}</h3>
-                                {#each resp.matches as msg, i (`${msg.chatId}_${msg.eventIndex}`)}
+                                {#each resp.matches as msg, _i (`${msg.chatId}_${msg.eventIndex}`)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>

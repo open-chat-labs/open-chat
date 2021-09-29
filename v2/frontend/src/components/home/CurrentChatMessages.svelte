@@ -221,7 +221,7 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
-    function editMessage(ev: CustomEvent<Message>) {
+    function editMessage(_ev: CustomEvent<Message>) {
         console.log("what now");
     }
 
@@ -247,7 +247,7 @@
                     machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
                 }
             })
-            .catch((err) => {
+            .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
                 machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
             });

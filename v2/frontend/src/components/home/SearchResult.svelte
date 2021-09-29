@@ -39,14 +39,6 @@
     .avatar {
         flex: 0 0 50px;
     }
-    .name {
-        margin-bottom: $sp3;
-    }
-    .desc {
-        color: var(--chatSummary-txt2);
-        @include font(light, normal, fs-80);
-        @include ellipsis();
-    }
     .details {
         flex: 1;
         padding: 0 5px;

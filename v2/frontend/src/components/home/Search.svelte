@@ -1,6 +1,5 @@
 <script lang="ts">
     import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";

@@ -7,7 +7,7 @@
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, ChatSummary, EventWrapper } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
 
