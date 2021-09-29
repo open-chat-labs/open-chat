@@ -1,4 +1,5 @@
 use canister_client::operations::install_service_canisters;
+use canister_client::utils::get_dfx_identity;
 use canister_client::CanisterIds;
 use clap::{AppSettings, Clap};
 use types::CanisterId;
@@ -13,7 +14,9 @@ async fn main() {
         notifications: opts.notifications,
     };
 
-    install_service_canisters(opts.url, opts.controller, canister_ids).await;
+    let identity = get_dfx_identity(&opts.controller);
+
+    install_service_canisters(identity, opts.url, canister_ids).await;
 }
 
 #[derive(Clap)]

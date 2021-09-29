@@ -439,6 +439,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_upgrader"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "clap",
+ "tokio",
+ "types",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"

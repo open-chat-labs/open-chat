@@ -1,4 +1,4 @@
-use crate::TestIdentity;
+use crate::{CanisterName, TestIdentity};
 use candid::Principal;
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
@@ -7,7 +7,7 @@ use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use types::{CanisterWasm, Version};
 
 const CONTROLLER_PEM: &str = include_str!("../keys/controller.pem");
@@ -15,12 +15,10 @@ const USER1_PEM: &str = include_str!("../keys/user1.pem");
 const USER2_PEM: &str = include_str!("../keys/user2.pem");
 const USER3_PEM: &str = include_str!("../keys/user3.pem");
 
-pub enum CanisterWasmName {
-    Group,
-    GroupIndex,
-    Notifications,
-    User,
-    UserIndex,
+pub fn get_dfx_identity(name: &str) -> BasicIdentity {
+    let home_dir = dirs::home_dir().expect("Failed to get home directory");
+    let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{}/identity.pem", name)));
+    BasicIdentity::from_pem_file(pem_file_path).expect("Failed to create identity")
 }
 
 pub fn build_identity(identity: TestIdentity) -> BasicIdentity {
@@ -59,15 +57,8 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-pub fn get_canister_wasm(canister_name: CanisterWasmName) -> CanisterWasm {
-    let file_name_prefix = match canister_name {
-        CanisterWasmName::Group => "group",
-        CanisterWasmName::GroupIndex => "group_index",
-        CanisterWasmName::Notifications => "notifications",
-        CanisterWasmName::User => "user",
-        CanisterWasmName::UserIndex => "user_index",
-    };
-    let file_name = file_name_prefix.to_string() + "_canister_impl-opt.wasm";
+pub fn get_canister_wasm(canister_name: CanisterName) -> CanisterWasm {
+    let file_name = canister_name.to_string() + "_canister_impl-opt.wasm";
     let mut file_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     file_path.push("local-bin");

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "backend/canister_installer",
+    "backend/canister_upgrader",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",

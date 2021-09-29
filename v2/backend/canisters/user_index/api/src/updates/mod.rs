@@ -7,5 +7,5 @@ pub mod remove_sms_messages;
 pub mod resend_code;
 pub mod set_username;
 pub mod submit_phone_number;
-pub mod update_wasm;
+pub mod update_user_canister_wasm;
 pub mod upgrade_canister;

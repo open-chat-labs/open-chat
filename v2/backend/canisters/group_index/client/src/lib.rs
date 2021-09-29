@@ -5,3 +5,6 @@ use ic_agent::Agent;
 
 // Queries
 generate_query_call!(search);
+
+// Updates
+generate_update_call!(update_group_canister_wasm);
