@@ -1,7 +1,5 @@
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-#[cfg(test)]
-use std::str::FromStr;
 use types::{
     CanisterCreationStatusInternal, CyclesTopUp, PartialUserSummary, PhoneNumber, TimestampMillis, UserId, UserSummary, Version,
 };
@@ -163,7 +161,7 @@ impl Default for ConfirmedUser {
     fn default() -> Self {
         ConfirmedUser {
             principal: Principal::anonymous(),
-            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            phone_number: PhoneNumber::new(44, "000".to_owned()),
             username: None,
             canister_creation_status: CanisterCreationStatusInternal::Pending(None),
             date_confirmed: 0,
@@ -176,7 +174,7 @@ impl Default for CreatedUser {
     fn default() -> Self {
         CreatedUser {
             principal: Principal::anonymous(),
-            phone_number: PhoneNumber::from_str("+44 000").unwrap(),
+            phone_number: PhoneNumber::new(44, "000".to_owned()),
             user_id: Principal::anonymous().into(),
             username: String::new(),
             date_created: 0,

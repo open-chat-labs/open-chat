@@ -29,7 +29,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             latest_message: runtime_state.data.events.latest_message(),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
-            read_by_me: convert_to_message_index_ranges(participant.read_by_me.clone().into()),
+            read_by_me: convert_to_message_index_ranges(participant.read_by_me.clone()),
         };
         Success(SuccessResult { summary })
     } else {

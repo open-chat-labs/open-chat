@@ -34,8 +34,7 @@ mod tests {
     use super::*;
     use crate::model::user::{ConfirmedUser, UnconfirmedUser};
     use crate::Data;
-    use phonenumber::PhoneNumber;
-    use std::str::FromStr;
+    use types::PhoneNumber;
     use utils::env::test::TestEnv;
 
     #[test]
@@ -44,7 +43,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Unconfirmed(UnconfirmedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             confirmation_code: "123456".to_string(),
             date_generated: env.now,
             sms_messages_sent: 1,
@@ -62,7 +61,7 @@ mod tests {
         let mut data = Data::default();
         data.users.add(User::Confirmed(ConfirmedUser {
             principal: env.caller,
-            phone_number: PhoneNumber::from_str("+44 1111 111 111").unwrap(),
+            phone_number: PhoneNumber::new(44, "1111 111 111".to_owned()),
             date_confirmed: env.now,
             ..Default::default()
         }));

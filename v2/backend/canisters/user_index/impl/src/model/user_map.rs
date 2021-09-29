@@ -193,7 +193,6 @@ mod tests {
     use super::*;
     use crate::model::user::{ConfirmedUser, CreatedUser, UnconfirmedUser};
     use itertools::Itertools;
-    use std::str::FromStr;
     use types::CanisterCreationStatusInternal;
 
     #[test]
@@ -203,9 +202,9 @@ mod tests {
         let principal2 = Principal::from_slice(&[2]);
         let principal3 = Principal::from_slice(&[3]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
-        let phone_number3 = PhoneNumber::from_str("+443333333333").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
+        let phone_number3 = PhoneNumber::new(44, "3333 333 333".to_owned());
 
         let username2 = "2".to_string();
         let username3 = "3".to_string();
@@ -289,8 +288,8 @@ mod tests {
         let mut user_map = UserMap::default();
         let principal = Principal::from_slice(&[1]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let user_id: UserId = Principal::from_slice(&[1, 1]).into();
 
@@ -320,7 +319,7 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
 
-        let phone_number = PhoneNumber::from_str("+441111111111").unwrap();
+        let phone_number = PhoneNumber::new(44, "1111 111 111".to_owned());
 
         let user_id = Principal::from_slice(&[2, 2]).into();
 
@@ -350,8 +349,8 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let user_id1 = Principal::from_slice(&[1, 1]).into();
         let user_id2 = Principal::from_slice(&[2, 2]).into();
@@ -386,15 +385,15 @@ mod tests {
         let mut user_map = UserMap::default();
         let principal = Principal::from_slice(&[1]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let username1 = "1".to_string();
         let username2 = "2".to_string();
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        let original = User::Created(CreatedUser {
+        let original = CreatedUser {
             principal,
             phone_number: phone_number1.clone(),
             user_id,
@@ -403,14 +402,14 @@ mod tests {
             date_updated: 1,
             last_online: 1,
             ..Default::default()
-        });
+        };
 
         let mut updated = original.clone();
-        updated.set_username(username2.clone(), 4);
-        updated.set_phone_number(phone_number2.clone(), 4);
+        updated.username = username2.clone();
+        updated.phone_number = phone_number2.clone();
 
-        user_map.add(original);
-        assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
+        user_map.add(User::Created(original));
+        assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
 
         assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
         assert_eq!(user_map.phone_number_to_principal.keys().collect_vec(), vec!(&phone_number2));
@@ -424,8 +423,8 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let username1 = "1".to_string();
         let username2 = "2".to_string();
@@ -433,7 +432,7 @@ mod tests {
         let user_id1 = Principal::from_slice(&[1, 1]).into();
         let user_id2 = Principal::from_slice(&[2, 2]).into();
 
-        let original = User::Created(CreatedUser {
+        let original = CreatedUser {
             principal: principal1,
             phone_number: phone_number1,
             user_id: user_id1,
@@ -442,9 +441,9 @@ mod tests {
             date_updated: 1,
             last_online: 1,
             ..Default::default()
-        });
+        };
 
-        let other = User::Created(CreatedUser {
+        let other = CreatedUser {
             principal: principal2,
             phone_number: phone_number2.clone(),
             user_id: user_id2,
@@ -453,14 +452,17 @@ mod tests {
             date_updated: 2,
             last_online: 2,
             ..Default::default()
-        });
+        };
 
         let mut updated = original.clone();
-        updated.set_phone_number(phone_number2, 4);
+        updated.phone_number = phone_number2;
 
-        user_map.add(original);
-        user_map.add(other);
-        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
+        user_map.add(User::Created(original));
+        user_map.add(User::Created(other));
+        assert!(matches!(
+            user_map.update(User::Created(updated)),
+            UpdateUserResult::PhoneNumberTaken
+        ));
     }
 
     #[test]
@@ -469,8 +471,8 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
 
         let username1 = "1".to_string();
         let username2 = "2".to_string();
@@ -478,7 +480,7 @@ mod tests {
         let user_id1 = Principal::from_slice(&[1, 1]).into();
         let user_id2 = Principal::from_slice(&[2, 2]).into();
 
-        let original = User::Created(CreatedUser {
+        let original = CreatedUser {
             principal: principal1,
             phone_number: phone_number1,
             user_id: user_id1,
@@ -487,9 +489,9 @@ mod tests {
             date_updated: 1,
             last_online: 1,
             ..Default::default()
-        });
+        };
 
-        let other = User::Created(CreatedUser {
+        let other = CreatedUser {
             principal: principal2,
             phone_number: phone_number2.clone(),
             user_id: user_id2,
@@ -498,14 +500,17 @@ mod tests {
             date_updated: 2,
             last_online: 2,
             ..Default::default()
-        });
+        };
 
         let mut updated = original.clone();
-        updated.set_phone_number(phone_number2, 4);
+        updated.phone_number = phone_number2;
 
-        user_map.add(original);
-        user_map.add(other);
-        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
+        user_map.add(User::Created(original));
+        user_map.add(User::Created(other));
+        assert!(matches!(
+            user_map.update(User::Created(updated)),
+            UpdateUserResult::PhoneNumberTaken
+        ));
     }
 
     #[test]
@@ -515,9 +520,9 @@ mod tests {
         let principal2 = Principal::from_slice(&[2]);
         let principal3 = Principal::from_slice(&[3]);
 
-        let phone_number1 = PhoneNumber::from_str("+441111111111").unwrap();
-        let phone_number2 = PhoneNumber::from_str("+442222222222").unwrap();
-        let phone_number3 = PhoneNumber::from_str("+443333333333").unwrap();
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
+        let phone_number3 = PhoneNumber::new(44, "3333 333 333".to_owned());
 
         let username2 = "2".to_string();
         let username3 = "3".to_string();
