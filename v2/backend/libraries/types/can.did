@@ -117,7 +117,6 @@ type DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
-        recipient: UserId;
         message: Message;
     };
 
@@ -239,7 +238,6 @@ type GroupMessageNotification =
         group_name: text;
         sender: UserId;
         sender_name: text;
-        recipients: vec UserId;
         message: Message;
     };
 
@@ -491,7 +489,6 @@ type V1DirectMessageNotification =
     record {
         sender: UserId;
         sender_name: text;
-        recipient: UserId;
         message: V1Message;
     };
 
@@ -501,7 +498,6 @@ type V1GroupMessageNotification =
         group_name: text;
         sender: UserId;
         sender_name: text;
-        recipients: vec UserId;
         message: V1Message;
     };
 
