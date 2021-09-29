@@ -8,7 +8,6 @@ export type UserLastOnline = {
 export type UserSummary = UserLastOnline &
     DataContent & {
         username: string;
-        kind: "user_summary";
     };
 
 // todo - remember why this exists

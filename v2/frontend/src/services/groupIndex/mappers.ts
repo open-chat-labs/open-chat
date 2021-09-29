@@ -1,4 +1,5 @@
 import type { GroupMatch, GroupSearchResponse } from "../../domain/search/search";
+import { optional } from "../../utils/mapping";
 import type { ApiGroupMatch, ApiSearchResponse } from "./candid/idl";
 
 export function groupSearchResponse(candid: ApiSearchResponse): GroupSearchResponse {
@@ -16,5 +17,9 @@ function groupMatch(candid: ApiGroupMatch): GroupMatch {
         chatId: candid.chat_id.toString(),
         name: candid.name,
         description: candid.description,
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.chat_id.toString(),
+        })),
     };
 }

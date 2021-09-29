@@ -34,6 +34,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupMatch = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'avatar_id' : IDL.Opt(IDL.Nat),
     'chat_id' : ChatId,
   });
   const SearchSuccessResult = IDL.Record({ 'matches' : IDL.Vec(GroupMatch) });

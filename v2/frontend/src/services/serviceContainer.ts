@@ -249,7 +249,17 @@ export class ServiceContainer {
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this._groupIndexClient.search(searchTerm, maxResults);
+        return this._groupIndexClient.search(searchTerm, maxResults).then((res) => {
+            if (res.kind === "success") {
+                return {
+                    ...res,
+                    matches: res.matches.map((match) =>
+                        this.rehydrateDataContent(match, "avatar", match.chatId)
+                    ),
+                };
+            }
+            return res;
+        });
     }
 
     searchAllMessages(searchTerm: string, maxResults = 10): Promise<SearchAllMessagesResponse> {

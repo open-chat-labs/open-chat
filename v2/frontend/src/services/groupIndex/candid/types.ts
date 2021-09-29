@@ -146,6 +146,7 @@ export interface GroupDescriptionChanged {
 export interface GroupMatch {
   'name' : string,
   'description' : string,
+  'avatar_id' : [] | [bigint],
   'chat_id' : ChatId,
 }
 export interface GroupMessageNotification {

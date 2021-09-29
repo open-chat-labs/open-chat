@@ -221,7 +221,7 @@
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
                                         <SearchResult
-                                            avatarUrl={avatarUrl({ blobUrl: undefined })}
+                                            avatarUrl={avatarUrl(group)}
                                             showSpinner={joiningGroup === group.chatId}
                                             on:click={() => joinGroup(group)}>
                                             <h4 class="search-item-title">

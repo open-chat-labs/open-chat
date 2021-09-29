@@ -1,14 +1,13 @@
 import type { MessageContent } from "../chat/chat";
+import type { DataContent } from "../data/data";
 
-export type GroupMatch = {
-    kind: "group_match";
+export type GroupMatch = DataContent & {
     chatId: string;
     name: string;
     description: string;
 };
 
 export type MessageMatch = {
-    kind: "message_match";
     chatId: string;
     eventIndex: number;
     content: MessageContent;
