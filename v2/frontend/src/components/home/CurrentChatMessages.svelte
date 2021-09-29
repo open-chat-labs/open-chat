@@ -220,6 +220,10 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
+    function editMessage(ev: CustomEvent<Message>) {
+        console.log("Edit message: ", ev.detail);
+    }
+
     function deleteMessage(ev: CustomEvent<Message>) {
         machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
 
@@ -417,6 +421,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:deleteMessage={deleteMessage}
+                        on:editMessage={editMessage}
                         on:goToMessage={goToMessage}
                         on:selectReaction={selectReaction}
                         event={evt} />

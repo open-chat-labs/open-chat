@@ -24,6 +24,7 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import Tick from "./Tick.svelte";
@@ -104,6 +105,10 @@
 
     function deleteMessage() {
         dispatch("deleteMessage", msg);
+    }
+
+    function editMessage() {
+        dispatch("editMessage", msg);
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -210,6 +215,10 @@
                                     </MenuItem>
                                 {/if}
                                 {#if me}
+                                    <MenuItem on:click={editMessage}>
+                                        <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("editMessage")}</div>
+                                    </MenuItem>
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>

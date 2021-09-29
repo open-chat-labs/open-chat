@@ -47,6 +47,7 @@
         on:replyTo
         on:selectReaction
         on:deleteMessage
+        on:editMessage
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
