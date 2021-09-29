@@ -22,10 +22,11 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import { createEventDispatcher } from "svelte";
-    import UserSearchResult from "./UserSearchResult.svelte";
-    import GroupSearchResult from "./GroupSearchResult.svelte";
-    import MessageSearchResult from "./MessageSearchResult.svelte";
+    import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
+    import { avatarUrl } from "../../domain/user/user.utils";
+    import { getContentAsText } from "../../domain/chat/chat.utils";
+    import type { DataContent } from "../../domain/data/data";
 
     export let machine: ActorRefFrom<HomeMachine>;
 
@@ -161,6 +162,24 @@
                 });
         }
     }
+
+    function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
+        const chat = chatLookup[chatId];
+        if (chat === undefined) {
+            return { blobUrl: undefined };
+        }
+        return chat.kind === "group_chat" ? chat : $machine.context.userLookup[sender];
+    }
+
+    function messageMatchTitle({ chatId, sender }: MessageMatch): string {
+        const chat = chatLookup[chatId];
+        if (chat === undefined) {
+            return "";
+        }
+        return chat.kind === "group_chat"
+            ? chat.name
+            : $machine.context.userLookup[sender].username ?? "";
+    }
 </script>
 
 {#if user}
@@ -201,10 +220,17 @@
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
-                                        <GroupSearchResult
+                                        <SearchResult
+                                            avatarUrl={avatarUrl({ blobUrl: undefined })}
                                             showSpinner={joiningGroup === group.chatId}
-                                            {group}
-                                            on:click={() => joinGroup(group)} />
+                                            on:click={() => joinGroup(group)}>
+                                            <h4 class="search-item-title">
+                                                {group.name}
+                                            </h4>
+                                            <p title={group.description} class="search-item-desc">
+                                                {group.description}
+                                            </p>
+                                        </SearchResult>
                                     </div>
                                 {/each}
                             {/if}
@@ -220,9 +246,13 @@
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
-                                        <UserSearchResult
-                                            {user}
-                                            on:click={() => chatWith(user.userId)} />
+                                        <SearchResult
+                                            avatarUrl={avatarUrl(user)}
+                                            on:click={() => chatWith(user.userId)}>
+                                            <h4 class="search-item-title">
+                                                @{user.username}
+                                            </h4>
+                                        </SearchResult>
                                     </div>
                                 {/each}
                             {/if}
@@ -238,11 +268,19 @@
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>
-                                        <MessageSearchResult
-                                            chat={chatLookup[msg.chatId]}
-                                            userLookup={$machine.context.userLookup}
-                                            {msg}
-                                            on:click={() => loadMessage(msg)} />
+                                        <SearchResult
+                                            avatarUrl={avatarUrl(messageMatchDataContent(msg))}
+                                            showSpinner={false}
+                                            on:click={() => loadMessage(msg)}>
+                                            <h4 class="search-item-title">
+                                                {messageMatchTitle(msg)}
+                                            </h4>
+                                            <p
+                                                title={getContentAsText(msg.content)}
+                                                class="search-item-desc">
+                                                {getContentAsText(msg.content)}
+                                            </p>
+                                        </SearchResult>
                                     </div>
                                 {/each}
                             {/if}
@@ -275,5 +313,13 @@
 
     .search-matches {
         margin-top: $sp4;
+    }
+    .search-item-title {
+        margin-bottom: $sp3;
+    }
+    .search-item-desc {
+        color: var(--chatSummary-txt2);
+        @include font(light, normal, fs-80);
+        @include ellipsis();
     }
 </style>

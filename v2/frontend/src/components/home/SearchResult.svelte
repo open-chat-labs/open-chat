@@ -1,26 +1,18 @@
 <script lang="ts">
     import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import { avatarUrl } from "../../domain/user/user.utils";
     import Avatar from "../Avatar.svelte";
     import { _ } from "svelte-i18n";
-    import type { GroupMatch } from "../../domain/search/search";
 
-    export let group: GroupMatch;
-    export let showSpinner: boolean;
+    export let showSpinner: boolean | undefined = false;
+    export let avatarUrl: string;
 </script>
 
 <div class="group" on:click>
     <span class="avatar">
-        <Avatar
-            url={avatarUrl({ blobUrl: undefined })}
-            status={UserStatus.None}
-            size={AvatarSize.Small} />
+        <Avatar url={avatarUrl} status={UserStatus.None} size={AvatarSize.Small} />
     </span>
     <div class="details">
-        <h4 class="name">
-            {group.name}
-        </h4>
-        <p title={group.description} class="desc">{group.description}</p>
+        <slot />
     </div>
 
     {#if showSpinner}
