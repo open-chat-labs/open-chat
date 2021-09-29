@@ -404,6 +404,12 @@ export type AddParticipantsFailed = {
     errors: string[];
 };
 
+export type EditMessageResponse =
+    | "success"
+    | "chat_not_found"
+    | "message_not_found"
+    | "not_in_group";
+
 export type SendMessageResponse =
     | SendMessageSuccess
     | SendMessageRecipientBlocked

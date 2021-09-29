@@ -11,6 +11,7 @@ import type {
     ApiUpdateGroupResponse,
     ApiToggleReactionResponse,
     ApiDeleteMessageResponse,
+    ApiEditMessageResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -25,6 +26,7 @@ import type {
     UpdateGroupResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
@@ -124,6 +126,22 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
         return "caller_not_in_group";
     }
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
+}
+
+export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    if ("NotInGroup" in candid) {
+        return "not_in_group";
+    }
+    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {

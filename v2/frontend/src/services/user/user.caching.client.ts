@@ -17,6 +17,7 @@ import type {
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -81,6 +82,10 @@ export class CachingUserClient implements IUserClient {
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.client.createGroup(group);
+    }
+
+    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+        return this.client.editMessage(recipientId, message);
     }
 
     sendMessage(

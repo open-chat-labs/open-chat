@@ -41,6 +41,7 @@ import type {
     EventWrapper,
     DeleteMessageResponse,
     JoinGroupResponse,
+    EditMessageResponse,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -95,6 +96,16 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
+    editMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<EditMessageResponse> {
+        if (chat.kind === "group_chat") {
+            return this.editGroupMessage(chat.chatId, msg);
+        }
+        if (chat.kind === "direct_chat") {
+            return this.editDirectMessage(chat.them, msg);
+        }
+        throw new UnsupportedValueError("Unexpect chat type", chat);
+    }
+
     sendMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<SendMessageResponse> {
         if (chat.kind === "group_chat") {
             return this.sendGroupMessage(chat.chatId, user.username, msg);
@@ -117,6 +128,10 @@ export class ServiceContainer {
         return this.getGroupClient(chatId).sendMessage(senderName, message);
     }
 
+    private editGroupMessage(chatId: string, message: Message): Promise<EditMessageResponse> {
+        return this.getGroupClient(chatId).editMessage(message);
+    }
+
     private sendDirectMessage(
         recipientId: string,
         sender: UserSummary,
@@ -124,6 +139,10 @@ export class ServiceContainer {
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
         return this.userClient.sendMessage(recipientId, sender, message, replyingToChatId);
+    }
+
+    private editDirectMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+        return this.userClient.editMessage(recipientId, message);
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {

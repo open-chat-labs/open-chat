@@ -18,6 +18,7 @@ import type {
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
@@ -34,6 +35,7 @@ export interface IUserClient {
         iterations?: number
     ): Promise<EventsResponse<DirectChatEvent>>;
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse>;
+    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse>;
     sendMessage(
         recipientId: string,
         sender: UserSummary,

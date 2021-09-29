@@ -21,12 +21,14 @@ import type {
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
     blockResponse,
     createGroupResponse,
     deleteMessageResponse,
+    editMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
     joinGroupResponse,
@@ -184,13 +186,25 @@ export class UserClient extends CandidService implements IUserClient {
         });
     }
 
+    editMessage(recipientId: string, message: Message): Promise<EditMessageResponse> {
+        return DataClient.create(this.identity, this.userId)
+            .uploadData(message.content)
+            .then(() => {
+                const req = {
+                    content: apiMessageContent(message.content),
+                    user_id: Principal.fromText(recipientId),
+                    message_id: message.messageId,
+                };
+                return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
+            });
+    }
+
     sendMessage(
         recipientId: string,
         sender: UserSummary,
         message: Message,
         replyingToChatId?: string
     ): Promise<SendMessageResponse> {
-        console.log("replying to chat: ", replyingToChatId);
         return DataClient.create(this.identity, this.userId)
             .uploadData(message.content)
             .then(() => {

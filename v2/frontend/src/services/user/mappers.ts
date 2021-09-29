@@ -19,6 +19,7 @@ import type {
     ApiJoinGroupResponse,
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
+    ApiEditMessageResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -39,6 +40,7 @@ import type {
     ToggleReactionResponse,
     DeleteMessageResponse,
     JoinGroupResponse,
+    EditMessageResponse,
 } from "../../domain/chat/chat";
 import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
@@ -209,6 +211,19 @@ export function blockResponse(
         return "success";
     }
     throw new UnsupportedValueError("Unexpected ApiBlockResponse type received", candid);
+}
+
+export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("MessageNotFound" in candid) {
+        return "message_not_found";
+    }
+    throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
