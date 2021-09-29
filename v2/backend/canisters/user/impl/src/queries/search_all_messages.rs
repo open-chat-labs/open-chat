@@ -17,13 +17,13 @@ async fn search_all_messages(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    // let mut matches = search_all_group_chats(
-    //     prepare_result.group_chats,
-    //     args.search_term.to_owned(),
-    //     args.max_results,
-    //     prepare_result.me,
-    // )
-    // .await;
+    let mut matches = search_all_group_chats(
+        prepare_result.group_chats,
+        args.search_term.to_owned(),
+        args.max_results,
+        prepare_result.me,
+    )
+    .await;
 
     let mut matches = vec![];
 
@@ -31,7 +31,7 @@ async fn search_all_messages(args: Args) -> Response {
 
     matches.append(&mut direct_chat_matches);
     matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
-    // matches = matches[..args.max_results as usize].to_vec();
+    matches = matches.into_iter().take(args.max_results as usize).collect();
 
     Success(SuccessResult { matches })
 }
