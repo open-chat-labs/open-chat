@@ -13,8 +13,8 @@ async fn send_message_test_impl(handle: IcHandle, ctx: &fondue::pot::Context) {
     let endpoint = handle.public_api_endpoints.first().unwrap();
     endpoint.assert_ready(ctx).await;
     let url = endpoint.url.to_string();
-
-    let canister_ids = create_and_install_service_canisters(url.clone()).await;
+    let identity = build_identity(TestIdentity::Controller);
+    let canister_ids = create_and_install_service_canisters(identity, url.clone()).await;
 
     let (user1_id, user2_id) = futures::future::join(
         register_user(

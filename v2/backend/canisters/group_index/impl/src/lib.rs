@@ -1,13 +1,11 @@
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
 use utils::env::Environment;
-
-#[cfg(test)]
-use candid::Principal;
 
 mod lifecycle;
 mod model;
@@ -44,15 +42,21 @@ impl RuntimeState {
 struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
+    pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
 }
 
 impl Data {
-    pub fn new(group_canister_wasm: CanisterWasm, notifications_canister_id: CanisterId) -> Data {
+    pub fn new(
+        service_principals: Vec<Principal>,
+        group_canister_wasm: CanisterWasm,
+        notifications_canister_id: CanisterId,
+    ) -> Data {
         Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
+            service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             notifications_canister_id,
         }
