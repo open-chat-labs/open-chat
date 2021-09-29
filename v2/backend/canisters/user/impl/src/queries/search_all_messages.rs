@@ -29,7 +29,7 @@ async fn search_all_messages(args: Args) -> Response {
 
     matches.append(&mut direct_chat_matches);
     matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
-    matches = matches[..args.max_results as usize].to_vec();
+    matches = matches.into_iter().take(args.max_results as usize).collect();
 
     Success(SuccessResult { matches })
 }
