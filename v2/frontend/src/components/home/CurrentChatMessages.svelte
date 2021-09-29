@@ -32,6 +32,7 @@
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
+    import { toastStore } from "../../stores/toast";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -221,7 +222,7 @@
     }
 
     function editMessage(ev: CustomEvent<Message>) {
-        console.log("Edit message: ", ev.detail);
+        console.log("what now");
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
@@ -242,12 +243,12 @@
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
-                    console.log("Delete failed: ", resp);
+                    toastStore.showFailureToast("deleteFailed");
                     machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
                 }
             })
             .catch((err) => {
-                console.log("Delete failed: ", err);
+                toastStore.showFailureToast("deleteFailed");
                 machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
             });
     }

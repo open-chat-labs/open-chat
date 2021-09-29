@@ -108,6 +108,7 @@
     "deleteMessage": "Delete message",
     "editMessage": "Edit message",
     "messageDeleted": "This message was deleted",
+    "deleteFailed": "Unable to delete your message",
     "enterInviteCode": "Enter your invite code",
     "today": "Today",
     "yesterday": "Yesterday",
