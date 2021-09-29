@@ -9,7 +9,8 @@ use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use log::error;
 use types::{
-    AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId, MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId,
+    MAX_AVATAR_SIZE,
 };
 
 #[update]
@@ -25,7 +26,7 @@ async fn update_group(args: Args) -> Response {
         let c2c_update_group_args = c2c_update_group::Args {
             name: args.name.clone(),
             description: args.description.clone(),
-            avatar_id: args.avatar.as_ref().map(|a| a.id),
+            avatar_id: Avatar::id(&args.avatar),
         };
 
         match group_index_canister_c2c_client::c2c_update_group(prepare_result.group_index_canister_id, &c2c_update_group_args)
@@ -128,7 +129,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         events.push_event(
             ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
                 new_avatar: avatar.id,
-                previous_avatar: runtime_state.data.avatar.as_ref().map(|a| a.id),
+                previous_avatar: Avatar::id(&runtime_state.data.avatar),
                 changed_by: my_user_id,
             })),
             now,

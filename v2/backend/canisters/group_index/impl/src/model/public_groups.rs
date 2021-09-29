@@ -41,11 +41,12 @@ impl PublicGroups {
         chat_id: ChatId,
         name: String,
         description: String,
+        avatar_id: Option<u128>,
         now: TimestampMillis,
         wasm_version: Version,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
-            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, now, wasm_version);
+            let group_info = PublicGroupInfo::new(chat_id, name.clone(), description, avatar_id, now, wasm_version);
 
             self.name_to_id_map.insert(name, chat_id);
             self.groups.insert(chat_id, group_info);
@@ -121,12 +122,19 @@ pub enum UpdateGroupResult {
 }
 
 impl PublicGroupInfo {
-    pub fn new(id: ChatId, name: String, description: String, now: TimestampMillis, wasm_version: Version) -> PublicGroupInfo {
+    pub fn new(
+        id: ChatId,
+        name: String,
+        description: String,
+        avatar_id: Option<u128>,
+        now: TimestampMillis,
+        wasm_version: Version,
+    ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
             name,
             description,
-            avatar_id: None,
+            avatar_id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
