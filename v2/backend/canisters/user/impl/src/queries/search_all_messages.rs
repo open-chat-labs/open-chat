@@ -4,7 +4,7 @@ use ic_cdk_macros::query;
 use log::error;
 use search::*;
 use types::UserId;
-use types::{ChatId, MessageMatch};
+use types::{ChatId, DirectMessageMatch, MessageMatch};
 use user_canister::search_all_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
@@ -28,7 +28,7 @@ async fn search_all_messages(args: Args) -> Response {
     let mut direct_chat_matches = RUNTIME_STATE.with(|state| search_all_direct_chats(&args, state.borrow().as_ref().unwrap()));
 
     matches.append(&mut direct_chat_matches);
-    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
+    matches.sort_unstable_by(|m1, m2| m2.score().cmp(&m1.score()));
     matches = matches.into_iter().take(args.max_results as usize).collect();
 
     Success(SuccessResult { matches })
@@ -74,20 +74,21 @@ fn search_all_direct_chats(args: &Args, runtime_state: &RuntimeState) -> Vec<Mes
                 document.set_age(now - e.timestamp);
                 match document.calculate_score(&query) {
                     0 => None,
-                    n => Some(MessageMatch {
-                        chat_id: their_user_id.into(),
-                        sender: m.sender,
-                        event_index: e.index,
-                        score: n,
-                        content: m.content.clone(),
-                    }),
+                    n => Some(MessageMatch::Direct(
+                        DirectMessageMatch {
+                            chat_id: their_user_id.into(),
+                            event_index: e.index,
+                            score: n,
+                            content: m.content.clone(),
+                        }
+                    ))
                 }
             }
             _ => None,
         })
         .collect();
 
-    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
+    matches.sort_unstable_by(|m1, m2| m2.score().cmp(&m1.score()));
 
     matches.into_iter().take(args.max_results as usize).collect()
 }
@@ -127,17 +128,18 @@ async fn search_all_group_chats(
     }
 
     if !failures.is_empty() {
-        error!(
+        let message = format!(
             "Error searching group messages. {} chat(s) failed out of {}. First error: {:?}",
             failures.len(),
             count,
-            failures.first().unwrap()
-        );
+            failures.first().unwrap());
+
+        error!("{}", message);
     }
 
     let mut matches: Vec<MessageMatch> = successes.into_iter().flat_map(|r| r.matches).collect();
 
-    matches.sort_unstable_by(|m1, m2| m2.score.cmp(&m1.score));
+    matches.sort_unstable_by(|m1, m2| m2.score().cmp(&m1.score()));
 
     matches.into_iter().take(max_results as usize).collect()
 }

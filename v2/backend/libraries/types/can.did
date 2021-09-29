@@ -297,12 +297,28 @@ type UpdatedMessage =
     };
 
 type MessageMatch =
+    variant {
+        Direct: DirectMessageMatch,
+        Group: GroupMessageMatch,
+    };
+
+type DirectMessageMatch =
     record {
         chat_id: ChatId;
         event_index: EventIndex;
         content: MessageContent;
-        sender: UserId;
         score: nat32;
+    };
+
+type GroupMessageMatch =
+    record {
+        chat_id: ChatId;
+        event_index: EventIndex;
+        content: MessageContent;
+        score: nat32;
+        group_name: text;
+        avatar_id: nat;
+        sender: UserId;
     };
 
 type Notification =

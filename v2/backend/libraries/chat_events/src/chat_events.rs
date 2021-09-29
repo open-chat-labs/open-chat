@@ -126,6 +126,15 @@ pub enum ToggleReactionResult {
     MessageNotFound,
 }
 
+#[derive(Clone, Debug)]
+pub struct InternalMessageMatch {
+    pub chat_id: ChatId,
+    pub event_index: EventIndex,
+    pub content: MessageContent,
+    pub score: u32,
+    pub sender: UserId,
+}
+
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
@@ -372,7 +381,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         search_term: &str,
         max_results: u8,
-    ) -> Vec<MessageMatch> {
+    ) -> Vec<InternalMessageMatch> {
         let earliest_event_index: u32 = self.events.first().unwrap().index.into();
         let latest_event_index: u32 = self.events.last().unwrap().index.into();
 
@@ -404,7 +413,7 @@ impl ChatEvents {
         matches
             .iter()
             .take(max_results as usize)
-            .map(|m| MessageMatch {
+            .map(|m| InternalMessageMatch {
                 chat_id: self.chat_id,
                 event_index: m.2,
                 sender: m.1.sender,
