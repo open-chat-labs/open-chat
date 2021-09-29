@@ -1,8 +1,10 @@
+use candid::CandidType;
+use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use types::webrtc::*;
 use types::{TimestampMillis, UserId};
 
-#[derive(Default)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct WebRtcSessionDetailsMap {
     session_details_by_user: HashMap<UserId, SessionDetailsEvent>,
 }

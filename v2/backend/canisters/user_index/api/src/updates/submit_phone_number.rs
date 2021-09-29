@@ -1,15 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
+use types::PhoneNumber;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub phone_number: UnvalidatedPhoneNumber,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct UnvalidatedPhoneNumber {
-    pub country_code: u16,
-    pub number: String,
+    pub phone_number: PhoneNumber,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

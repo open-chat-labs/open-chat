@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{CanisterCreationStatus, CanisterUpgradeStatus, UserId};
+use types::{CanisterCreationStatus, CanisterUpgradeStatus, PhoneNumber, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {}
@@ -12,12 +12,6 @@ pub enum Response {
     ConfirmedPendingUsername(ConfirmedPendingUsernameResult),
     Confirmed(ConfirmedResult),
     Created(CreatedResult),
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct PhoneNumber {
-    pub country_code: u16,
-    pub number: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

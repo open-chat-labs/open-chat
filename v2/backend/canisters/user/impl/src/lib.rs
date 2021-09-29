@@ -1,6 +1,7 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
-use candid::Principal;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{Avatar, CanisterId, UserId, Version};
@@ -14,12 +15,18 @@ mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 const LOW_CYCLES_BALANCE_THRESHOLD: u64 = 100_000_000_000; // 0.1T
+const STATE_VERSION: StateVersion = StateVersion::V1;
 
-thread_local! {
-    pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+#[derive(CandidType, Deserialize)]
+enum StateVersion {
+    V1,
 }
 
-pub struct RuntimeState {
+thread_local! {
+    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+}
+
+struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
 }
@@ -40,7 +47,8 @@ impl RuntimeState {
     }
 }
 
-pub struct Data {
+#[derive(CandidType, Deserialize)]
+struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,

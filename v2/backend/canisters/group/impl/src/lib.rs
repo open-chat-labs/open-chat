@@ -1,7 +1,8 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
-use candid::Principal;
+use candid::{CandidType, Principal};
 use chat_events::GroupChatEvents;
+use serde::Deserialize;
 use std::cell::RefCell;
 use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
@@ -14,12 +15,18 @@ mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
 const LOW_CYCLES_BALANCE_THRESHOLD: u64 = 100_000_000_000; // 0.1T
+const STATE_VERSION: StateVersion = StateVersion::V1;
 
-thread_local! {
-    pub static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+#[derive(CandidType, Deserialize)]
+enum StateVersion {
+    V1,
 }
 
-pub struct RuntimeState {
+thread_local! {
+    static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+}
+
+struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
 }
@@ -34,7 +41,8 @@ impl RuntimeState {
     }
 }
 
-pub struct Data {
+#[derive(CandidType, Deserialize)]
+struct Data {
     pub is_public: bool,
     pub name: String,
     pub description: String,

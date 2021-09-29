@@ -11,7 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.5"
+candid = "0.7.7"
 cycles_utils = { path = "../../../libraries/cycles_utils" }
 group_canister = { path = "../../group/api" }
 group_index_canister = { path = "../api" }

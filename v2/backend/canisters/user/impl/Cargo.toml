@@ -11,7 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.7.5"
+candid = "0.7.7"
 chat_events = { path = "../../../libraries/chat_events" }
 cycles_utils = { path = "../../../libraries/cycles_utils" }
 futures = "0.3.16"
@@ -26,7 +26,6 @@ itertools = "0.10.1"
 log = "0.4.14"
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-range-set = "0.0.7"
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
 types = { path = "../../../libraries/types" }

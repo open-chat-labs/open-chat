@@ -1,6 +1,6 @@
 use crate::utils::{build_ic_agent, build_identity};
 use crate::TestIdentity;
-use types::{CanisterId, UserId};
+use types::{CanisterId, PhoneNumber, UserId};
 
 pub async fn register_user(
     url: String,
@@ -19,10 +19,7 @@ pub async fn register_user(
     let agent = build_ic_agent(url, identity).await;
 
     let submit_phone_number_args = user_index_canister::submit_phone_number::Args {
-        phone_number: user_index_canister::submit_phone_number::UnvalidatedPhoneNumber {
-            country_code: 44,
-            number: format!("0711100000{}", phone_number_suffix),
-        },
+        phone_number: PhoneNumber::new(44, format!("711100000{}", phone_number_suffix)),
     };
 
     let submit_phone_number_response =

@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 async-trait = "0.1.51"
-candid = "0.7.5"
+candid = "0.7.7"
 dotenv = "0.15.0"
 env_logger = "0.9.0"
 log = "0.4.14"

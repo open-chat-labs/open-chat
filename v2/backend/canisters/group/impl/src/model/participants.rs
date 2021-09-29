@@ -1,12 +1,12 @@
 use crate::model::webrtc_session_details_map::WebRtcSessionDetailsMap;
-use candid::Principal;
-use range_set::RangeSet;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use std::ops::RangeInclusive;
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
+use utils::range_set::RangeSet;
 
-#[derive(Default)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
@@ -140,11 +140,12 @@ pub enum AddResult {
     Blocked,
 }
 
+#[derive(CandidType, Deserialize)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub read_by_me: RangeSet<[RangeInclusive<u32>; 2]>,
+    pub read_by_me: RangeSet,
     pub read_by_me_updated: TimestampMillis,
     pub mute_notifications: bool,
     pub min_visible_event_index: EventIndex,
