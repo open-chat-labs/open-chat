@@ -76,7 +76,13 @@ impl PublicGroups {
         all_matches.iter().take(max_results as usize).map(|m| m.1.into()).collect()
     }
 
-    pub fn update_group(&mut self, chat_id: &ChatId, name: String, description: String) -> UpdateGroupResult {
+    pub fn update_group(
+        &mut self,
+        chat_id: &ChatId,
+        name: String,
+        description: String,
+        avatar_id: Option<u128>,
+    ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(mut group) => {
@@ -86,6 +92,7 @@ impl PublicGroups {
                     self.name_to_id_map.remove(&group.name);
                     group.name = name;
                     group.description = description;
+                    group.avatar_id = avatar_id;
                     UpdateGroupResult::Success
                 }
             }
@@ -99,6 +106,7 @@ pub struct PublicGroupInfo {
     id: ChatId,
     name: String,
     description: String,
+    avatar_id: Option<u128>,
     created: TimestampMillis,
     marked_active_until: TimestampMillis,
     wasm_version: Version,
@@ -117,6 +125,7 @@ impl PublicGroupInfo {
             id,
             name,
             description,
+            avatar_id: None,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             wasm_version,
@@ -147,6 +156,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             chat_id: group.id,
             name: group.name.clone(),
             description: group.description.clone(),
+            avatar_id: group.avatar_id,
         }
     }
 }
