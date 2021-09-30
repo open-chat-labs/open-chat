@@ -7,9 +7,12 @@
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
     import type { UserLookup, UserSummary } from "../../domain/user/user";
-    import type { ChatEvent, EventWrapper } from "../../domain/chat/chat";
+    import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
     // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
@@ -26,6 +29,10 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
+
+    function editEvent() {
+        dispatch("editEvent", event as EventWrapper<Message>);
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -47,7 +54,7 @@
         on:replyTo
         on:selectReaction
         on:deleteMessage
-        on:editMessage
+        on:editMessage={editEvent}
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

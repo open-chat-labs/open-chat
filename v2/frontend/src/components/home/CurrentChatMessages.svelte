@@ -1,3 +1,5 @@
+<svelte:options immutable={true} />
+
 <script lang="ts">
     import { onMount, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
@@ -221,8 +223,8 @@
         machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
     }
 
-    function editMessage(_ev: CustomEvent<Message>) {
-        console.log("what now");
+    function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
+        machine.send({ type: "EDIT_EVENT", data: ev.detail });
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
@@ -422,7 +424,7 @@
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:deleteMessage={deleteMessage}
-                        on:editMessage={editMessage}
+                        on:editEvent={editEvent}
                         on:goToMessage={goToMessage}
                         on:selectReaction={selectReaction}
                         event={evt} />

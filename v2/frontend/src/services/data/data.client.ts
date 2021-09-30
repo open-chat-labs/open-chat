@@ -76,7 +76,7 @@ export class DataClient extends CandidService implements IDataClient {
             content.kind === "image_content" ||
             content.kind === "audio_content"
         ) {
-            if (content.blobData) {
+            if (content.blobData && content.blobReference === undefined) {
                 content.blobReference = await this.uploadBlobData(
                     content.mimeType,
                     content.blobData
@@ -85,7 +85,12 @@ export class DataClient extends CandidService implements IDataClient {
         }
 
         if (content.kind === "video_content") {
-            if (content.videoData.blobData && content.imageData.blobData) {
+            if (
+                content.videoData.blobData &&
+                content.imageData.blobData &&
+                content.videoData.blobReference === undefined &&
+                content.imageData.blobReference === undefined
+            ) {
                 await Promise.all([
                     this.uploadBlobData(content.mimeType, content.videoData.blobData),
                     this.uploadBlobData("image/jpg", content.imageData.blobData),

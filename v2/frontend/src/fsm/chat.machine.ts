@@ -56,6 +56,7 @@ export interface ChatContext {
     fileToAttach?: MessageContent;
     markMessages: ActorRefFrom<MarkReadMachine>;
     localReactions: Record<string, LocalReaction[]>;
+    editingEvent?: EventWrapper<Message>;
 }
 
 type LoadEventsResponse = {
@@ -72,6 +73,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
+    | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "SHOW_PARTICIPANTS" }
@@ -333,11 +335,47 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             initial: "loading_previous_messages",
             on: {
                 SEND_MESSAGE: {
+                    actions: assign((ctx, ev) => {
+                        if (ctx.editingEvent) {
+                            return {
+                                events: ctx.events.map((e) => {
+                                    if (
+                                        e.event.kind === "message" &&
+                                        e.event.messageId === ev.data.event.messageId
+                                    ) {
+                                        return ev.data;
+                                    }
+                                    return e;
+                                }),
+                                replyingTo: undefined,
+                                fileToAttach: undefined,
+                                editingMsg: undefined,
+                            };
+                        } else {
+                            return {
+                                chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
+                                events: [...ctx.events, ev.data],
+                                replyingTo: undefined,
+                                fileToAttach: undefined,
+                                editingMsg: undefined,
+                            };
+                        }
+                    }),
+                },
+                EDIT_EVENT: {
                     actions: assign((ctx, ev) => ({
-                        chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
-                        events: [...ctx.events, ev.data],
-                        replyingTo: undefined,
-                        fileToAttach: undefined,
+                        editingEvent: ev.data,
+                        fileToAttach:
+                            ev.data.event.content.kind !== "text_content"
+                                ? ev.data.event.content
+                                : undefined,
+                        replyingTo: ev.data.event.repliesTo
+                            ? {
+                                  ...ev.data.event.repliesTo,
+                                  content: ev.data.event.content,
+                                  sender: ctx.userLookup[ev.data.event.sender],
+                              }
+                            : undefined,
                     })),
                 },
                 UPDATE_MESSAGE: {

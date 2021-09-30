@@ -189,7 +189,7 @@ describe("chat machine transitions", () => {
                 data: {
                     candidate: testDirectMessage,
                     resp: {
-                        kind: "send_message_success",
+                        kind: "success",
                         timestamp: BigInt(100),
                         messageIndex: 200,
                         eventIndex: 200,

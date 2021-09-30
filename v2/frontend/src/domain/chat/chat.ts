@@ -420,34 +420,34 @@ export type SendMessageResponse =
     | SendMessageNotInGroup;
 
 export type SendMessageSuccess = {
-    kind: "send_message_success";
+    kind: "success";
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
 };
 
 export type SendMessageRecipientBlocked = {
-    kind: "send_message_recipient_blocked";
+    kind: "recipient_blocked";
 };
 
 export type SendMessageInvalidRequest = {
-    kind: "send_message_invalid_request";
+    kind: "invalid_request";
 };
 
 export type SendMessageTooLong = {
-    kind: "send_message_too_long";
+    kind: "message_too_long";
 };
 
 export type SendMessageRecipientNotFound = {
-    kind: "send_message_recipient_not_found";
+    kind: "recipient_not_found";
 };
 
 export type SendMessageBalanceExceeded = {
-    kind: "send_message_balance_exceeded";
+    kind: "balance_exceeded";
 };
 
 export type SendMessageNotInGroup = {
-    kind: "send_message_not_in_group";
+    kind: "not_in_group";
 };
 
 export type PutChunkResponse =

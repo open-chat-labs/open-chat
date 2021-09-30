@@ -196,7 +196,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         : content;
 }
 
-function getMessageContent(
+export function getMessageContent(
     content: string | undefined,
     fileToAttach: MessageContent | undefined
 ): MessageContent {

@@ -7,9 +7,10 @@
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import { chatStore } from "../../stores/chat";
-    import type { MessageContent } from "../../domain/chat/chat";
+    import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
     import {
         createMessage,
+        getMessageContent,
         latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
@@ -26,27 +27,53 @@
         machine.send({ type: "CANCEL_REPLY_TO" });
     }
 
+    function editMessageWithAttachment(
+        textContent: string | null,
+        fileToAttach: MessageContent | undefined,
+        editingEvent: EventWrapper<Message>
+    ) {
+        if (textContent || fileToAttach) {
+            const msg = {
+                ...editingEvent.event,
+                content: getMessageContent(textContent ?? undefined, fileToAttach),
+            };
+
+            $machine.context.serviceContainer
+                .editMessage($machine.context.chatSummary, msg!)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        rollbar.warn("Error response editing", resp);
+                        toastStore.showFailureToast("errorEditingMessage");
+                        // machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Exception sending message", err);
+                    toastStore.showFailureToast("errorEditingMessage");
+                    // machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                });
+
+            const event = { ...editingEvent, event: msg! };
+            machine.send({ type: "SEND_MESSAGE", data: event });
+
+            // chatStore.set({
+            //     chatId: $machine.context.chatSummary.chatId,
+            //     event: "sending_message",
+            // });
+        }
+    }
+
     function sendMessageWithAttachment(
         textContent: string | null,
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
-            // todo - this is not correct currently
-            // if we enter messages too quickly we will get the same index repeatedly
-            // we need to optimistically update the latestMessage on the chat summary
-            // no - even worse, if we enter messages quickly, we get the right index locally
-            // but - what can happen is that an update arrives from the server and sets the index
-            // back to a much lower level. This causes a duplicate key problem.
-            // one thing we can do is to key messages by message id instead
-
-            // todo - we also have a problem for group chats with hidden history - we don't know what the index
-            // should be at all in that case
-            const nextIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
-            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? -1) + 1;
+            const nextMessageIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
+            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
 
             const msg = createMessage(
                 $machine.context.user!.userId,
-                nextIndex,
+                nextMessageIndex,
                 textContent ?? undefined,
                 $machine.context.replyingTo,
                 fileToAttach
@@ -55,7 +82,7 @@
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
-                    if (resp.kind === "send_message_success") {
+                    if (resp.kind === "success") {
                         dispatch("messageConfirmed", msg!.messageId);
                         machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
                     } else {
@@ -83,12 +110,28 @@
     }
 
     function sendMessage(ev: CustomEvent<string | null>) {
-        sendMessageWithAttachment(ev.detail, $machine.context.fileToAttach);
+        if ($machine.context.editingEvent !== undefined) {
+            editMessageWithAttachment(
+                ev.detail,
+                $machine.context.fileToAttach,
+                $machine.context.editingEvent
+            );
+        } else {
+            sendMessageWithAttachment(ev.detail, $machine.context.fileToAttach);
+        }
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
         if (ev.detail.kind === "file_content") {
-            sendMessageWithAttachment(null, ev.detail);
+            if ($machine.context.editingEvent !== undefined) {
+                editMessageWithAttachment(
+                    null,
+                    $machine.context.fileToAttach,
+                    $machine.context.editingEvent
+                );
+            } else {
+                sendMessageWithAttachment(null, $machine.context.fileToAttach);
+            }
         } else {
             machine.send({ type: "ATTACH_FILE", data: ev.detail });
         }

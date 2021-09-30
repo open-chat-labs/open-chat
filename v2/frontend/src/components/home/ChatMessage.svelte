@@ -108,7 +108,7 @@
     }
 
     function editMessage() {
-        dispatch("editMessage", msg);
+        dispatch("editMessage");
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -162,7 +162,7 @@
         <div
             class="message-bubble"
             class:focused
-            class:fill
+            class:fill={fill && !deleted}
             class:me
             class:deleted
             class:last

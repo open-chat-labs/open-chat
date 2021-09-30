@@ -96,7 +96,7 @@ export class ServiceContainer {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    editMessage(chat: ChatSummary, user: UserSummary, msg: Message): Promise<EditMessageResponse> {
+    editMessage(chat: ChatSummary, msg: Message): Promise<EditMessageResponse> {
         if (chat.kind === "group_chat") {
             return this.editGroupMessage(chat.chatId, msg);
         }
