@@ -221,6 +221,7 @@ type DirectChatSummary =
         unread_by_me_message_id_ranges: vec vec nat32;
         unread_by_them_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
+        muted: bool;
     };
 
 type GroupChatSummary =
@@ -234,6 +235,7 @@ type GroupChatSummary =
         unread_by_me_message_id_ranges: vec vec nat32;
         unread_by_any_message_id_ranges: vec vec nat32;
         latest_messages: vec Message;
+        muted: bool;
     };
 
 type GetChatsResponse =
@@ -317,6 +319,7 @@ service : {
     join_group: (ChatId) -> (JoinGroupResponse);
     put_chunk: (text, nat32, vec nat8) -> (bool);
     block_user: (UserId, bool) -> ();
+    toggle_notifications: (ChatId, bool) -> ();
 
     get_chats: (GetChatsRequest) -> (GetChatsResponse) query;
     get_updates: (GetUpdatesRequest) -> (GetUpdatesResponse) query;

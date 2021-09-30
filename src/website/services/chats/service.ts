@@ -14,6 +14,7 @@ import searchAllMessages, { SearchAllMessagesResponse } from "./searchAllMessage
 import leaveGroup, { LeaveGroupResult } from "./leaveGroup";
 import joinGroup, { JoinGroupResult } from "./joinGroup";
 import blockUser from "./blockUser";
+import toggle_notifications from "./toggleNotifications";
 
 export default class service {
     public static createGroupChat(chatId: ChatId, subject: string, users: UserId[], chatHistoryVisibleToNewJoiners: boolean) : Promise<CreateGroupChatResponse> {
@@ -66,6 +67,10 @@ export default class service {
 
     public static searchAllMessages(searchTerm: string, maxResults: number) : Promise<SearchAllMessagesResponse> {
         return searchAllMessages(searchTerm, maxResults);
+    }
+
+    public static toggle_notifications(chatId: ChatId, mute: boolean) : Promise<void> {
+        return toggle_notifications(chatId, mute);
     }
 }
 

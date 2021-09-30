@@ -39,6 +39,7 @@ pub trait Chat {
         to_id: u32,
         now: Timestamp,
     ) -> MarkReadResult;
+    fn mute_notifications(&mut self, user_id: UserId, mute: bool);
     fn get_unread_message_id_ranges(&self, user: &UserId) -> Vec<[u32; 2]>;
     fn get_display_date(&self, user_id: &UserId) -> Timestamp;
     fn get_updated_date(&self) -> Timestamp;

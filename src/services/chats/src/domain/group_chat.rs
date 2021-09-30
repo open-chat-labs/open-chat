@@ -7,8 +7,8 @@ use serde::Deserialize;
 use shared::chat_id::ChatId;
 use shared::timestamp::Timestamp;
 use shared::user_id::UserId;
-use std::cmp::max;
 use std::ops::RangeInclusive;
+use std::cmp::max;
 
 pub struct GroupChat {
     id: ChatId,
@@ -26,6 +26,7 @@ pub struct Participant {
     date_added: Timestamp,
     min_visible_message_id: u32,
     unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>,
+    notifications_muted: bool,
 }
 
 #[derive(CandidType)]
@@ -40,6 +41,7 @@ pub struct GroupChatSummary {
     unread_by_me_message_id_ranges: Vec<[u32; 2]>,
     unread_by_any_message_id_ranges: Vec<[u32; 2]>,
     latest_messages: Vec<Message>,
+    muted: bool,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -60,6 +62,8 @@ pub struct ParticipantStableState {
     date_added: Timestamp,
     min_visible_message_id: u32,
     unread_message_ids: Vec<[u32; 2]>,
+    #[serde(default)]
+    notifications_muted: bool,
 }
 
 impl GroupChat {
@@ -157,8 +161,20 @@ impl GroupChat {
         &self.subject
     }
 
-    pub fn participants(&self) -> &Vec<Participant> {
-        &self.participants
+    pub fn notification_recipients(&self, sender: UserId) -> Vec<UserId> {
+        self.participants
+            .iter()
+            .filter(|p| !p.notifications_muted && p.user_id != sender)
+            .map(|p| p.user_id())
+            .collect()
+    }
+
+    pub fn notifications_muted(&self, user_id: UserId) -> bool {
+        if let Some(participant) = self.find_participant(&user_id) {
+            participant.notifications_muted
+        } else {
+            false
+        }
     }
 
     fn find_participant(&self, user_id: &UserId) -> Option<&Participant> {
@@ -285,6 +301,12 @@ impl Chat for GroupChat {
         ))
     }
 
+    fn mute_notifications(&mut self, user_id: UserId, mute: bool) {
+        if let Some(participant) = self.participants.iter_mut().find(|p| p.user_id == user_id) {
+            participant.notifications_muted = mute;
+        }
+    }
+
     fn get_unread_message_id_ranges(&self, user_id: &UserId) -> Vec<[u32; 2]> {
         let participant = self
             .participants
@@ -332,6 +354,7 @@ impl Participant {
             min_visible_message_id,
             date_added: now,
             unread_message_ids: RangeSet::new(),
+            notifications_muted: false,
         }
     }
 
@@ -367,6 +390,7 @@ impl GroupChatSummary {
             unread_by_me_message_id_ranges,
             unread_by_any_message_id_ranges,
             latest_messages,
+            muted: chat.notifications_muted(*me),
         }
     }
 }
@@ -419,6 +443,7 @@ impl From<Participant> for ParticipantStableState {
             date_added: participant.date_added,
             min_visible_message_id: participant.min_visible_message_id,
             unread_message_ids: utils::range_set_to_vec(participant.unread_message_ids),
+            notifications_muted: participant.notifications_muted,
         }
     }
 }
@@ -431,6 +456,7 @@ impl From<ParticipantStableState> for Participant {
             date_added: participant.date_added,
             min_visible_message_id: participant.min_visible_message_id,
             unread_message_ids: utils::vec_to_range_set(participant.unread_message_ids),
+            notifications_muted: participant.notifications_muted,
         }
     }
 }

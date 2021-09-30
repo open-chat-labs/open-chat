@@ -23,7 +23,8 @@ export function directChatFromCandid(value: any) : ConfirmedDirectChat {
         timestampToDate(value.last_updated),
         value.latest_messages.reverse().map(localMessageFromCandid),
         rangeSetToArray(value.unread_by_me_message_id_ranges),
-        rangeSetToArray(value.unread_by_them_message_id_ranges));
+        rangeSetToArray(value.unread_by_them_message_id_ranges),
+        value.muted);
 }
 
 export function groupChatFromCandid(value: any) : ConfirmedGroupChat {
@@ -36,5 +37,6 @@ export function groupChatFromCandid(value: any) : ConfirmedGroupChat {
         value.min_visible_message_id,
         value.latest_messages.reverse().map(localMessageFromCandid),
         rangeSetToArray(value.unread_by_me_message_id_ranges),
-        rangeSetToArray(value.unread_by_any_message_id_ranges));
+        rangeSetToArray(value.unread_by_any_message_id_ranges),
+        value.muted);
 }
