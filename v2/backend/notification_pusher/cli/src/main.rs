@@ -21,12 +21,12 @@ async fn main() -> Result<(), Error> {
     let canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?)?;
     let ic_url = dotenv::var("IC_URL")?;
     let ic_identity_pem = dotenv::var("IC_IDENTITY_PEM")?;
-    let is_development = bool::from_str(&dotenv::var("IS_DEVELOPMENT")?).unwrap();
+    let is_production = bool::from_str(&dotenv::var("IS_PRODUCTION")?).unwrap();
 
     let ic_agent_config = IcAgentConfig {
         ic_url,
         ic_identity_pem,
-        fetch_root_key: is_development,
+        fetch_root_key: !is_production,
     };
 
     match command {
