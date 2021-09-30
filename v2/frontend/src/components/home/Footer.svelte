@@ -82,6 +82,7 @@
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
+                    console.log(resp);
                     if (resp.kind === "success") {
                         dispatch("messageConfirmed", msg!.messageId);
                         machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });

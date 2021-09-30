@@ -33,6 +33,10 @@
                 initialisedEdit = true;
             }
         }
+        if ($machine.context.editingEvent === undefined) {
+            console.log("reseting edit");
+            initialisedEdit = false;
+        }
     }
 
     onMount(() => {

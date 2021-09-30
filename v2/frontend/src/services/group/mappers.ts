@@ -147,14 +147,14 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("Success" in candid) {
         return {
-            kind: "send_message_success",
+            kind: "success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
         };
     }
     if ("NotInGroup" in candid) {
-        return { kind: "send_message_not_in_group" };
+        return { kind: "not_in_group" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }

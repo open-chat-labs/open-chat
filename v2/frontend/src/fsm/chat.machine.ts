@@ -349,7 +349,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 }),
                                 replyingTo: undefined,
                                 fileToAttach: undefined,
-                                editingMsg: undefined,
+                                editingEvent: undefined,
                             };
                         } else {
                             return {
@@ -357,7 +357,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: [...ctx.events, ev.data],
                                 replyingTo: undefined,
                                 fileToAttach: undefined,
-                                editingMsg: undefined,
+                                editingEvent: undefined,
                             };
                         }
                     }),
