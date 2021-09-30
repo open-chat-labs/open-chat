@@ -80,6 +80,7 @@ type DirectChatEvent =
     variant {
         Message: Message;
         DirectChatCreated: DirectChatCreated;
+        MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
@@ -155,6 +156,7 @@ type GroupChatEvent =
         ParticipantLeft: ParticipantLeft;
         ParticipantsPromotedToAdmin: ParticipantsPromotedToAdmin;
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
+        MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;

@@ -7,13 +7,13 @@ use user_canister::c2c_edit_message;
 use user_canister::edit_message::{Response::*, *};
 
 #[update]
-fn edit_messages(args: Args) -> Response {
+fn edit_message(args: Args) -> Response {
     check_cycles_balance();
 
-    RUNTIME_STATE.with(|state| edit_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
+    RUNTIME_STATE.with(|state| edit_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn edit_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {

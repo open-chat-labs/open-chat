@@ -18,6 +18,7 @@ pub enum GroupChatEvent {
     ParticipantsDismissedAsAdmin(ParticipantsDismissedAsAdmin),
     UsersBlocked(UsersBlocked),
     UsersUnblocked(UsersUnblocked),
+    MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
@@ -26,6 +27,7 @@ pub enum GroupChatEvent {
 impl GroupChatEvent {
     pub fn affected_event(&self) -> Option<EventIndex> {
         match self {
+            GroupChatEvent::MessageEdited(m) => Some(m.event_index),
             GroupChatEvent::MessageDeleted(m) => Some(m.event_index),
             GroupChatEvent::MessageReactionAdded(r) => Some(r.event_index),
             GroupChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
@@ -119,6 +121,7 @@ pub enum DirectChatEvent {
     Message(Message),
     DeletedMessage(DeletedMessage),
     DirectChatCreated(DirectChatCreated),
+    MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
@@ -127,6 +130,7 @@ pub enum DirectChatEvent {
 impl DirectChatEvent {
     pub fn affected_event(&self) -> Option<EventIndex> {
         match self {
+            DirectChatEvent::MessageEdited(m) => Some(m.event_index),
             DirectChatEvent::MessageDeleted(m) => Some(m.event_index),
             DirectChatEvent::MessageReactionAdded(r) => Some(r.event_index),
             DirectChatEvent::MessageReactionRemoved(r) => Some(r.event_index),
