@@ -33,6 +33,7 @@ import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
+import { rtcConnectionsStore } from "../domain/webrtc/RtcConnectionsStore";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -135,6 +136,28 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
             }
             return false;
         },
+    },
+    actions: {
+        establishWebRtcConnections: pure((ctx, ev) => {
+            if (ev.type === "SELECT_CHAT") {
+                const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
+                if (chat && chat.kind === "direct_chat") {
+                    if (!rtcConnectionsStore.exists(chat.them)) {
+                        const connection = rtcConnectionsStore.create(chat.them);
+                        connection
+                            .createOffer()
+                            .then((offer) =>
+                                ctx.serviceContainer!.webRtcOffer(
+                                    ctx.user!.userId,
+                                    chat.them,
+                                    offer
+                                )
+                            );
+                    }
+                }
+            }
+            return undefined;
+        }),
     },
     services: {
         getUpdates: async (ctx, _) =>
@@ -348,51 +371,54 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
-                    actions: assign((ctx, ev) => {
-                        const key = ev.data.chatId;
-                        const chatSummary = ctx.chatSummaries.find(
-                            (c) => c.chatId === ev.data.chatId
-                        );
-                        if (chatSummary) {
-                            return {
-                                selectedChat: chatSummary,
-                                replyingTo: undefined,
-                                chatsIndex: {
-                                    ...ctx.chatsIndex,
-                                    [key]: spawn(
-                                        chatMachine.withContext({
-                                            serviceContainer: ctx.serviceContainer!,
-                                            chatSummary: { ...chatSummary }, //clone
-                                            userLookup: ctx.userLookup,
-                                            user: ctx.user
-                                                ? {
-                                                      userId: ctx.user.userId,
-                                                      username: ctx.user.username,
-                                                      secondsSinceLastOnline: 0,
-                                                  }
-                                                : undefined,
-                                            events: [],
-                                            focusIndex: ev.data.eventIndex
-                                                ? Number(ev.data.eventIndex)
-                                                : undefined,
-                                            replyingTo: ctx.replyingTo,
-                                            markMessages: spawn(
-                                                markReadMachine.withContext({
-                                                    serviceContainer: ctx.serviceContainer!,
-                                                    chatSummary,
-                                                    ranges: [],
-                                                    pending: [],
-                                                })
-                                            ),
-                                            localReactions: {},
-                                        }),
-                                        `chat-${key}`
-                                    ),
-                                },
-                            };
-                        }
-                        return { selectedChat: chatSummary };
-                    }),
+                    actions: [
+                        "establishWebRtcConnections",
+                        assign((ctx, ev) => {
+                            const key = ev.data.chatId;
+                            const chatSummary = ctx.chatSummaries.find(
+                                (c) => c.chatId === ev.data.chatId
+                            );
+                            if (chatSummary) {
+                                return {
+                                    selectedChat: chatSummary,
+                                    replyingTo: undefined,
+                                    chatsIndex: {
+                                        ...ctx.chatsIndex,
+                                        [key]: spawn(
+                                            chatMachine.withContext({
+                                                serviceContainer: ctx.serviceContainer!,
+                                                chatSummary: { ...chatSummary }, //clone
+                                                userLookup: ctx.userLookup,
+                                                user: ctx.user
+                                                    ? {
+                                                          userId: ctx.user.userId,
+                                                          username: ctx.user.username,
+                                                          secondsSinceLastOnline: 0,
+                                                      }
+                                                    : undefined,
+                                                events: [],
+                                                focusIndex: ev.data.eventIndex
+                                                    ? Number(ev.data.eventIndex)
+                                                    : undefined,
+                                                replyingTo: ctx.replyingTo,
+                                                markMessages: spawn(
+                                                    markReadMachine.withContext({
+                                                        serviceContainer: ctx.serviceContainer!,
+                                                        chatSummary,
+                                                        ranges: [],
+                                                        pending: [],
+                                                    })
+                                                ),
+                                                localReactions: {},
+                                            }),
+                                            `chat-${key}`
+                                        ),
+                                    },
+                                };
+                            }
+                            return { selectedChat: chatSummary };
+                        }),
+                    ],
                 },
                 CLEAR_SELECTED_CHAT: {
                     internal: true,

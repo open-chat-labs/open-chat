@@ -5,13 +5,13 @@ use types::webrtc::SessionDetailsEvent;
 use user_canister::add_webrtc_session_details::*;
 
 #[update]
-fn add_webrtc_endpoint(args: Args) -> Response {
+fn add_webrtc_session_details(args: Args) -> Response {
     check_cycles_balance();
 
-    RUNTIME_STATE.with(|state| add_webrtc_endpoint_impl(args, state.borrow_mut().as_mut().unwrap()))
+    RUNTIME_STATE.with(|state| add_webrtc_session_details_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn add_webrtc_endpoint_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn add_webrtc_session_details_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let from_user_id = args.session_details.user_id();
 
     if runtime_state.data.blocked_users.contains(&from_user_id) {

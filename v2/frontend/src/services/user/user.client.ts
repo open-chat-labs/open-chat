@@ -25,6 +25,7 @@ import type {
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
+    addWebRtcResponse,
     blockResponse,
     createGroupResponse,
     deleteMessageResponse,
@@ -48,6 +49,7 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type { AddWebRtcResponse, WebRtcSessionDetails } from "../../domain/webrtc/webrtc";
 
 const MAX_RECURSION = 10;
 
@@ -307,6 +309,27 @@ export class UserClient extends CandidService implements IUserClient {
                 max_results: maxResults,
             }),
             searchAllMessageResponse
+        );
+    }
+
+    addWebRtcSessionDetails(
+        userId: string,
+        details: WebRtcSessionDetails
+    ): Promise<AddWebRtcResponse> {
+        return this.handleResponse(
+            this.userService.add_webrtc_session_details({
+                session_details: {
+                    Offer: {
+                        user_id: Principal.fromText(userId),
+                        endpoint: {
+                            id: details.id,
+                            connection_string: details.connectionString,
+                            ice_candidates: details.iceCandidates,
+                        },
+                    },
+                },
+            }),
+            addWebRtcResponse
         );
     }
 }

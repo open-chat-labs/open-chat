@@ -53,6 +53,7 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import type { AddWebRtcResponse, WebRtcSessionDetails } from "../domain/webrtc/webrtc";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -390,5 +391,13 @@ export class ServiceContainer {
 
     markAsOnline(): Promise<void> {
         return this._userIndexClient.markAsOnline();
+    }
+
+    webRtcOffer(
+        me: string,
+        them: string,
+        request: WebRtcSessionDetails
+    ): Promise<AddWebRtcResponse> {
+        return UserClient.create(them, this.identity, this.db).addWebRtcSessionDetails(me, request);
     }
 }

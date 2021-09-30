@@ -20,6 +20,7 @@ import type {
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
+    ApiAddWebRtcSessionDetailsResponse,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -46,6 +47,20 @@ import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import { message, messageContent, updatedMessage } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
+import type { AddWebRtcResponse } from "../../domain/webrtc/webrtc";
+
+export function addWebRtcResponse(candid: ApiAddWebRtcSessionDetailsResponse): AddWebRtcResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("Blocked" in candid) {
+        return "blocked";
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiAddWebRtcSessionDetailsResponse type received",
+        candid
+    );
+}
 
 export function searchAllMessageResponse(
     candid: ApiSearchAllMessagesResponse
@@ -393,6 +408,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     if ("Direct" in candid) {
+        console.log("Updated direct chat: ", candid.Direct);
         return {
             kind: "direct_chat",
             chatId: candid.Direct.chat_id.toString(),

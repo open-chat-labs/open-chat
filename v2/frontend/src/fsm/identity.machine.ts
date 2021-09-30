@@ -100,7 +100,6 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         startSession: ({ identity }) => startSession(identity!),
         markOnlinePing: (ctx, _ev) => (_callback) => {
             const id = setInterval(async () => {
-                console.log("Marking user as online");
                 ctx.serviceContainer!.markAsOnline().catch((err) => {
                     rollbar.error("Error marking user as online", err as Error);
                     throw err;
