@@ -228,29 +228,27 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 
 export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
     if ("BalanceExceeded" in candid) {
-        return { kind: "send_message_balance_exceeded" };
+        return { kind: "balance_exceeded" };
     }
     if ("Success" in candid) {
         return {
-            // todo - the response type for direct messages is actually different and we need to resolve that
-            // the difference is that is contains chat_id
-            kind: "send_message_success",
+            kind: "success",
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
         };
     }
     if ("RecipientBlocked" in candid) {
-        return { kind: "send_message_recipient_blocked" };
+        return { kind: "recipient_blocked" };
     }
     if ("InvalidRequest" in candid) {
-        return { kind: "send_message_invalid_request" };
+        return { kind: "invalid_request" };
     }
     if ("MessageTooLong" in candid) {
-        return { kind: "send_message_too_long" };
+        return { kind: "message_too_long" };
     }
     if ("RecipientNotFound" in candid) {
-        return { kind: "send_message_recipient_not_found" };
+        return { kind: "recipient_not_found" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -336,6 +334,13 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         return {
             kind: "message_deleted",
             message: updatedMessage(candid.MessageDeleted),
+        };
+    }
+
+    if ("MessageEdited" in candid) {
+        return {
+            kind: "message_edited",
+            message: updatedMessage(candid.MessageEdited),
         };
     }
 

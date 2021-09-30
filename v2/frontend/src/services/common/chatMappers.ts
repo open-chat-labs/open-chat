@@ -38,6 +38,7 @@ export function message(candid: ApiMessage): Message {
         messageId: candid.message_id,
         messageIndex: candid.message_index,
         reactions: reactions(candid.reactions),
+        edited: candid.edited,
     };
 }
 

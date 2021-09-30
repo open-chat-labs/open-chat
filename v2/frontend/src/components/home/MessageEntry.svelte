@@ -22,6 +22,22 @@
     let dragging: boolean = false;
     let recording: boolean = false;
     let percentRecorded: number = 0;
+    let initialisedEdit: boolean = false;
+
+    $: {
+        if ($machine.context.editingEvent && !initialisedEdit) {
+            if ($machine.context.editingEvent.event.content.kind === "text_content") {
+                inp.textContent = $machine.context.editingEvent.event.content.text;
+                selectedRange = undefined;
+                restoreSelection();
+                initialisedEdit = true;
+            }
+        }
+        if ($machine.context.editingEvent === undefined) {
+            console.log("reseting edit");
+            initialisedEdit = false;
+        }
+    }
 
     onMount(() => {
         inp.focus();

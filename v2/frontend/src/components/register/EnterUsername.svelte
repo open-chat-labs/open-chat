@@ -10,7 +10,7 @@
 
     function submitUsername() {
         if (valid) {
-            dispatch("submitUsername", { username: username });
+            dispatch("submitUsername", { username: username.trim().toLowerCase() });
         }
     }
 

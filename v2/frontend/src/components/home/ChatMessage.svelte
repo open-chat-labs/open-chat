@@ -108,7 +108,7 @@
     }
 
     function editMessage() {
-        dispatch("editMessage", msg);
+        dispatch("editMessage");
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -162,7 +162,7 @@
         <div
             class="message-bubble"
             class:focused
-            class:fill
+            class:fill={fill && !deleted}
             class:me
             class:deleted
             class:last
@@ -182,6 +182,9 @@
                 {/await}
             {/if}
             <div class="time-and-ticks">
+                {#if msg.edited}
+                    <span class="edited">{$_("edited")}</span>
+                {/if}
                 <span class="time">
                     {toShortTimeString(new Date(Number(timestamp)))}
                 </span>
@@ -215,10 +218,10 @@
                                     </MenuItem>
                                 {/if}
                                 {#if me}
-                                    <MenuItem on:click={editMessage}>
+                                    <!-- <MenuItem on:click={editMessage}>
                                         <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
-                                    </MenuItem>
+                                    </MenuItem> -->
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
@@ -319,6 +322,10 @@
 
         .time {
             margin: 0 $sp3;
+        }
+
+        .edited {
+            @include font(light, italic, fs-60);
         }
     }
 

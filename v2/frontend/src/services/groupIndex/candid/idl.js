@@ -1,6 +1,11 @@
 export const idlFactory = ({ IDL }) => {
-  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
+  const InitArgs = IDL.Record({
+    'service_principals' : IDL.Vec(IDL.Principal),
+    'notifications_canister_id' : CanisterId,
+    'group_wasm_module' : IDL.Vec(IDL.Nat8),
+  });
+  const Milliseconds = IDL.Nat64;
   const ChatId = CanisterId;
   const ActiveGroupsArgs = IDL.Record({
     'active_in_last' : Milliseconds,
@@ -44,6 +49,24 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
+  const CanisterWasm = IDL.Record({
+    'version' : Version,
+    'module' : IDL.Vec(IDL.Nat8),
+  });
+  const UpdateGroupCanisterWasmArgs = IDL.Record({
+    'group_canister_wasm' : CanisterWasm,
+  });
+  const UpdateGroupCanisterWasmResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'VersionNotHigher' : IDL.Null,
+    'InvalidVersion' : IDL.Null,
+  });
   return IDL.Service({
     'active_groups' : IDL.Func(
         [ActiveGroupsArgs],
@@ -52,6 +75,19 @@ export const idlFactory = ({ IDL }) => {
       ),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'update_group_canister_wasm' : IDL.Func(
+        [UpdateGroupCanisterWasmArgs],
+        [UpdateGroupCanisterWasmResponse],
+        [],
+      ),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const CanisterId = IDL.Principal;
+  const InitArgs = IDL.Record({
+    'service_principals' : IDL.Vec(IDL.Principal),
+    'notifications_canister_id' : CanisterId,
+    'group_wasm_module' : IDL.Vec(IDL.Nat8),
+  });
+  return [InitArgs];
+};

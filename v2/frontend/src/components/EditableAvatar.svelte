@@ -15,7 +15,7 @@
     let avatar: string | null | undefined;
     let originalImage = new Image();
     let showModal = false;
-    let CROP_SIZE = 300;
+    let CROP_SIZE = 400;
     let SAVE_SIZE = 150;
     let cropData: CropData | undefined = undefined;
 
