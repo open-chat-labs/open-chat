@@ -82,7 +82,7 @@ enum UsernameValidationResult {
     Ok,
     TooLong(u16),
     TooShort(u16),
-    Invalid
+    Invalid,
 }
 
 fn validate_username(username: &str) -> UsernameValidationResult {
@@ -294,7 +294,10 @@ mod tests {
     fn valid_usernames() {
         assert!(matches!(validate_username("abc"), UsernameValidationResult::Ok));
         assert!(matches!(validate_username("123"), UsernameValidationResult::Ok));
-        assert!(matches!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"), UsernameValidationResult::Ok));
+        assert!(matches!(
+            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"),
+            UsernameValidationResult::Ok
+        ));
         assert!(matches!(validate_username("王"), UsernameValidationResult::Ok));
     }
 
