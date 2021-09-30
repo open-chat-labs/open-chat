@@ -2,7 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
-use types::GroupChatSummary;
+use types::{Avatar, GroupChatSummary};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
@@ -21,7 +21,7 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             last_updated,
             name: runtime_state.data.name.clone(),
             description: runtime_state.data.description.clone(),
-            avatar_id: runtime_state.data.avatar.as_ref().map(|a| a.id),
+            avatar_id: Avatar::id(&runtime_state.data.avatar),
             is_public: runtime_state.data.is_public,
             min_visible_event_index: participant.min_visible_event_index,
             min_visible_message_index: participant.min_visible_message_index,

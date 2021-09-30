@@ -1,7 +1,7 @@
 use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{CanisterWasm, ChatId, Version};
+use types::{Avatar, CanisterWasm, ChatId, Version};
 use utils::canisters;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
@@ -10,6 +10,7 @@ async fn c2c_create_group(args: Args) -> Response {
     let name = args.name.to_owned();
     let description = args.description.to_owned();
     let is_public = args.is_public;
+    let avatar_id = Avatar::id(&args.avatar);
 
     let canister_args = match RUNTIME_STATE.with(|state| prepare(args, state.borrow_mut().as_mut().unwrap())) {
         Ok(ok) => ok,
@@ -34,6 +35,7 @@ async fn c2c_create_group(args: Args) -> Response {
                     chat_id,
                     name,
                     description,
+                    avatar_id,
                     wasm_version,
                     state.borrow_mut().as_mut().unwrap(),
                 )
@@ -94,6 +96,7 @@ fn commit(
     chat_id: ChatId,
     name: String,
     description: String,
+    avatar_id: Option<u128>,
     wasm_version: Version,
     runtime_state: &mut RuntimeState,
 ) {
@@ -102,7 +105,7 @@ fn commit(
         runtime_state
             .data
             .public_groups
-            .handle_group_created(chat_id, name, description, now, wasm_version);
+            .handle_group_created(chat_id, name, description, avatar_id, now, wasm_version);
     } else {
         runtime_state
             .data

@@ -128,6 +128,7 @@ mod tests {
                 chat_id,
                 name.to_string(),
                 description.to_string(),
+                None,
                 env.now,
                 Version::new(1, 0, 0),
             );

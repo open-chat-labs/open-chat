@@ -43,6 +43,19 @@ type GroupMatch =
         avatar_id: opt nat;
     };
 
+type UpdateGroupCanisterWasmArgs =
+    record {
+        group_canister_wasm: CanisterWasm;
+    };
+
+type UpdateGroupCanisterWasmResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        InvalidVersion;
+        VersionNotHigher;
+    };
+
 type MetricsArgs =
     record {
     };
@@ -62,8 +75,18 @@ type MetricsResponse =
         wasm_memory_used: nat64;
     };
 
-service: {
+type InitArgs =
+    record {
+        service_principals: vec principal;
+        group_wasm_module: blob;
+        notifications_canister_id: CanisterId;
+    };
+
+service: (InitArgs) {
     active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
+
+    // Update the stored group canister WASM module
+    update_group_canister_wasm: (UpdateGroupCanisterWasmArgs) -> (UpdateGroupCanisterWasmResponse);
 }

@@ -1,15 +1,13 @@
-use crate::utils::{build_ic_agent, build_identity, build_management_canister, delay, get_canister_wasm, CanisterWasmName};
-use crate::{CanisterIds, TestIdentity};
+use crate::utils::{build_ic_agent, build_management_canister, delay, get_canister_wasm};
+use crate::{CanisterIds, CanisterName};
 use candid::{CandidType, Principal};
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Identity;
 use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
-use std::path::Path;
 use types::CanisterId;
 
-pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
-    let identity = build_identity(TestIdentity::Controller);
+pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String) -> CanisterIds {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
@@ -36,10 +34,7 @@ pub async fn create_and_install_service_canisters(url: String) -> CanisterIds {
     canister_ids
 }
 
-pub async fn install_service_canisters(url: String, controller: String, canister_ids: CanisterIds) {
-    let home_dir = dirs::home_dir().expect("Failed to get home directory");
-    let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{}/identity.pem", controller)));
-    let identity = BasicIdentity::from_pem_file(pem_file_path).expect("Failed to create identity");
+pub async fn install_service_canisters(identity: BasicIdentity, url: String, canister_ids: CanisterIds) {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
@@ -52,8 +47,8 @@ async fn install_service_canisters_impl(
     canister_ids: &CanisterIds,
     management_canister: &Canister<'_, ManagementCanister>,
 ) {
-    let user_index_canister_wasm = get_canister_wasm(CanisterWasmName::UserIndex);
-    let user_canister_wasm = get_canister_wasm(CanisterWasmName::User);
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex);
+    let user_canister_wasm = get_canister_wasm(CanisterName::User);
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
         sms_service_principals: Vec::new(),
@@ -63,14 +58,15 @@ async fn install_service_canisters_impl(
         test_mode: true,
     };
 
-    let group_index_canister_wasm = get_canister_wasm(CanisterWasmName::GroupIndex);
-    let group_canister_wasm = get_canister_wasm(CanisterWasmName::Group);
+    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex);
+    let group_canister_wasm = get_canister_wasm(CanisterName::Group);
     let group_index_init_args = group_index_canister::init::Args {
+        service_principals: vec![principal],
         group_canister_wasm,
         notifications_canister_id: canister_ids.notifications,
     };
 
-    let notifications_canister_wasm = get_canister_wasm(CanisterWasmName::Notifications);
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
     };
