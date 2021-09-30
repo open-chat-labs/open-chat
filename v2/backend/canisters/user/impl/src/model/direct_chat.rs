@@ -2,7 +2,6 @@ use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use candid::CandidType;
 use chat_events::DirectChatEvents;
 use serde::Deserialize;
-use std::cmp::max;
 use types::webrtc::SessionDetailsEvent;
 use types::{TimestampMillis, UserId};
 use utils::range_set::RangeSet;
@@ -36,9 +35,15 @@ impl DirectChat {
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        max(
+        let webrtc_timestamp = self.webrtc_session_details.as_ref().map(|e| e.timestamp).unwrap_or(0);
+
+        let timestamps = vec![
             self.events.last().timestamp,
-            max(self.read_by_me_updated, self.read_by_them_updated),
-        )
+            self.read_by_me_updated,
+            self.read_by_them_updated,
+            webrtc_timestamp,
+        ];
+
+        timestamps.into_iter().max().unwrap()
     }
 }
