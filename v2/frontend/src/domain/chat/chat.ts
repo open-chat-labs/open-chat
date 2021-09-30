@@ -82,6 +82,7 @@ export type Message = {
     content: MessageContent;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
+    edited: boolean;
 };
 
 export type LocalReaction = {
@@ -100,6 +101,7 @@ export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSucce
 export type DirectChatEvent =
     | Message
     | MessageDeleted
+    | MessageEdited
     | ReactionAdded
     | ReactionRemoved
     | DirectChatCreated;
@@ -115,6 +117,7 @@ export type GroupChatEvent =
     | GroupNameChanged
     | AvatarChanged
     | MessageDeleted
+    | MessageEdited
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
@@ -159,6 +162,11 @@ export type AvatarChanged = {
 
 export type MessageDeleted = {
     kind: "message_deleted";
+    message: StaleMessage;
+};
+
+export type MessageEdited = {
+    kind: "message_edited";
     message: StaleMessage;
 };
 

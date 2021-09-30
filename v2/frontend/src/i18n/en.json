@@ -92,6 +92,7 @@
     "save": "Save",
     "discard": "Discard",
     "submit": "Submit",
+    "edited": "edited",
     "copyInviteCode": "Copy invite code",
     "dismissAsAdmin": "Dismiss as admin",
     "dismissAsAdminFailed": "Unable to dismiss user as an admin",

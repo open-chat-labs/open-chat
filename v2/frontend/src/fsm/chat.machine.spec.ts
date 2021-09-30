@@ -44,6 +44,7 @@ const testDirectMessage: Message = {
     messageIndex: 100,
     content: textMessageContent,
     reactions: [],
+    edited: false,
 };
 
 const directChat: DirectChatSummary = {
@@ -331,6 +332,7 @@ function textMessage(index: number): Message {
         messageId: newMessageId(),
         messageIndex: index,
         reactions: [],
+        edited: false,
     };
 }
 

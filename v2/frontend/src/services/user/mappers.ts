@@ -337,6 +337,13 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
         };
     }
 
+    if ("MessageEdited" in candid) {
+        return {
+            kind: "message_edited",
+            message: updatedMessage(candid.MessageEdited),
+        };
+    }
+
     if ("MessageReactionRemoved" in candid) {
         return {
             kind: "reaction_removed",

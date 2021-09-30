@@ -82,7 +82,7 @@ type InitArgs =
         notifications_canister_id: CanisterId;
     };
 
-service: (InitArgs) {
+service: (InitArgs) -> {
     active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     metrics: (MetricsArgs) -> (MetricsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;

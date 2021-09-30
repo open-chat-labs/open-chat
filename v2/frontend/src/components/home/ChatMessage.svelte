@@ -182,6 +182,9 @@
                 {/await}
             {/if}
             <div class="time-and-ticks">
+                {#if msg.edited}
+                    <span class="edited">{$_("edited")}</span>
+                {/if}
                 <span class="time">
                     {toShortTimeString(new Date(Number(timestamp)))}
                 </span>
@@ -319,6 +322,10 @@
 
         .time {
             margin: 0 $sp3;
+        }
+
+        .edited {
+            @include font(light, italic, fs-60);
         }
     }
 

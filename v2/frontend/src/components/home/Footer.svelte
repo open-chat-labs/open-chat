@@ -35,6 +35,7 @@
         if (textContent || fileToAttach) {
             const msg = {
                 ...editingEvent.event,
+                edited: true,
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
@@ -44,22 +45,15 @@
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
                         toastStore.showFailureToast("errorEditingMessage");
-                        // machine.send({ type: "REMOVE_MESSAGE", data: msg! });
                     }
                 })
                 .catch((err) => {
                     rollbar.error("Exception sending message", err);
                     toastStore.showFailureToast("errorEditingMessage");
-                    // machine.send({ type: "REMOVE_MESSAGE", data: msg! });
                 });
 
             const event = { ...editingEvent, event: msg! };
             machine.send({ type: "SEND_MESSAGE", data: event });
-
-            // chatStore.set({
-            //     chatId: $machine.context.chatSummary.chatId,
-            //     event: "sending_message",
-            // });
         }
     }
 

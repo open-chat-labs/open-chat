@@ -144,11 +144,19 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
     'RecipientNotFound' : IDL.Null,
   });
-  const UpdateWasmArgs = IDL.Record({
-    'user_wasm_module' : IDL.Vec(IDL.Nat8),
-    'version' : IDL.Text,
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
   });
-  const UpdateWasmResponse = IDL.Variant({
+  const CanisterWasm = IDL.Record({
+    'version' : Version,
+    'module' : IDL.Vec(IDL.Nat8),
+  });
+  const UpdateUserCanisterWasmArgs = IDL.Record({
+    'user_canister_wasm' : CanisterWasm,
+  });
+  const UpdateUserCanisterWasmResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'VersionNotHigher' : IDL.Null,
@@ -229,7 +237,11 @@ export const idlFactory = ({ IDL }) => {
         [TransferCyclesResponse],
         [],
       ),
-    'update_wasm' : IDL.Func([UpdateWasmArgs], [UpdateWasmResponse], []),
+    'update_user_canister_wasm' : IDL.Func(
+        [UpdateUserCanisterWasmArgs],
+        [UpdateUserCanisterWasmResponse],
+        [],
+      ),
     'upgrade_canister' : IDL.Func(
         [UpgradeCanisterArgs],
         [UpgradeCanisterResponse],

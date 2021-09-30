@@ -342,6 +342,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("MessageEdited" in candid) {
+        return {
+            kind: "message_edited",
+            message: updatedMessage(candid.MessageEdited),
+        };
+    }
+
     if ("MessageReactionAdded" in candid) {
         return {
             kind: "reaction_added",

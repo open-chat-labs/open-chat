@@ -79,7 +79,8 @@ export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'MessageDeleted' : UpdatedMessage } |
-  { 'DirectChatCreated' : DirectChatCreated };
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
   'timestamp' : TimestampMillis,
@@ -136,6 +137,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
@@ -366,11 +368,10 @@ export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
   { 'Success' : { 'new_balance' : bigint } } |
   { 'UserNotFound' : null } |
   { 'RecipientNotFound' : null };
-export interface UpdateWasmArgs {
-  'user_wasm_module' : Array<number>,
-  'version' : string,
+export interface UpdateUserCanisterWasmArgs {
+  'user_canister_wasm' : CanisterWasm,
 }
-export type UpdateWasmResponse = { 'NotAuthorized' : null } |
+export type UpdateUserCanisterWasmResponse = { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'VersionNotHigher' : null } |
   { 'InvalidVersion' : null };
@@ -522,7 +523,9 @@ export interface _SERVICE {
   'transfer_cycles' : (arg_0: TransferCyclesArgs) => Promise<
       TransferCyclesResponse
     >,
-  'update_wasm' : (arg_0: UpdateWasmArgs) => Promise<UpdateWasmResponse>,
+  'update_user_canister_wasm' : (arg_0: UpdateUserCanisterWasmArgs) => Promise<
+      UpdateUserCanisterWasmResponse
+    >,
   'upgrade_canister' : (arg_0: UpgradeCanisterArgs) => Promise<
       UpgradeCanisterResponse
     >,

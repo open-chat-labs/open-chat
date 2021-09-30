@@ -230,6 +230,7 @@ export function createMessage(
         messageId: newMessageId(),
         messageIndex,
         reactions: [],
+        edited: false,
     };
 }
 
@@ -510,6 +511,7 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
     return (
         ew.event.kind !== "reaction_added" &&
         ew.event.kind !== "message_deleted" &&
+        ew.event.kind !== "message_edited" &&
         ew.event.kind !== "reaction_removed"
     );
 }

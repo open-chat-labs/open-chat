@@ -292,6 +292,7 @@
             first.event.kind === "reaction_added" ||
             first.event.kind === "reaction_removed" ||
             first.event.kind === "message_deleted" ||
+            first.event.kind === "message_edited" ||
             first.event.kind === "name_changed"
         ) {
             return `${first.timestamp}_${first.index}`;
@@ -353,6 +354,7 @@
             evt.event.kind === "reaction_added" ||
             evt.event.kind === "reaction_removed" ||
             evt.event.kind === "message_deleted" ||
+            evt.event.kind === "message_edited" ||
             evt.event.kind === "participants_dismissed_as_admin" ||
             evt.event.kind === "participants_promoted_to_admin"
         ) {
