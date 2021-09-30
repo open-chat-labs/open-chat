@@ -6,13 +6,17 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
 import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
+import { ChatId } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 import { blockUser } from "../../actions/chats/blockUser";
+import { toggleNotifications } from "../../actions/chats/toggleNotifications";
 
 export default React.memo(DirectChatMenu);
 
 type Props = {
+    chatId: ChatId,
     userId: UserId,
+    muted: boolean,
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -27,7 +31,7 @@ function DirectChatMenu(props: Props) {
     const classes = useStyles();
     const menuItems: MenuItem[] = [];
     // menuItems.push({ text: "Contact info", action: () => {} });
-    // menuItems.push({ text: "Mute notifications", action: () => {} });
+    menuItems.push({ text: props.muted ? "Unmute notifications" : "Mute notifications", action: () => dispatch(toggleNotifications(props.chatId, !props.muted)) });
     // menuItems.push({ text: "Delete chat", action: () => {} });
     menuItems.push({ text: unblock ? "Unblock user" : "Block user", action: () => dispatch(blockUser(props.userId, unblock)) });
 

@@ -68,31 +68,30 @@ pub fn update(request: Request) -> Response {
                     ChatEnum::Direct(direct) => {
                         let recipient = *direct.get_other(&me);  
 
-                        let notification = push_direct_message_notification::Notification {
-                            sender: me,
-                            sender_name,
-                            message,
-                        };
+                        if !direct.notifications_muted(recipient) {
+                            let notification = push_direct_message_notification::Notification {
+                                sender: me,
+                                sender_name,
+                                message,
+                            };
 
-                        push_direct_message_notification::fire_and_forget(recipient, notification);
+                            push_direct_message_notification::fire_and_forget(recipient, notification);
+                        }
                     },
                     ChatEnum::Group(group) => {
-                        let recipients = group
-                            .participants()
-                            .iter()
-                            .map(|p| p.user_id())
-                            .filter(|user_id| *user_id != me)
-                            .collect();
+                        let recipients = group.notification_recipients(me);
 
-                        let notification = push_group_message_notification::Notification {
-                            chat_id: group.get_id().0,
-                            group_name: group.subject().clone(),
-                            sender: me,
-                            sender_name,
-                            message,
-                        };
+                        if !recipients.is_empty() {
+                            let notification = push_group_message_notification::Notification {
+                                chat_id: group.get_id().0,
+                                group_name: group.subject().clone(),
+                                sender: me,
+                                sender_name,
+                                message,
+                            };
 
-                        push_group_message_notification::fire_and_forget(recipients, notification);
+                            push_group_message_notification::fire_and_forget(recipients, notification);
+                        }
                     }
                 };
             }
