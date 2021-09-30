@@ -12,6 +12,7 @@ import { AuthError } from "../services/httpError";
 import { homeMachine } from "./home.machine";
 
 const UPGRADE_POLL_INTERVAL = 1000;
+const MARK_ONLINE_INTERVAL = 61 * 1000;
 
 if (typeof window !== "undefined" && Boolean(process.env.SHOW_XSTATE_INSPECTOR)) {
     inspect({
@@ -97,6 +98,19 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         logout,
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
+        markOnlinePing: (ctx, _ev) => (_callback) => {
+            const id = setInterval(async () => {
+                console.log("Marking user as online");
+                ctx.serviceContainer!.markAsOnline().catch((err) => {
+                    rollbar.error("Error marking user as online", err as Error);
+                    throw err;
+                });
+            }, MARK_ONLINE_INTERVAL);
+            return () => {
+                console.log("stopping the mark online poller");
+                clearInterval(id);
+            };
+        },
         upgradeUser: ({ serviceContainer }) => serviceContainer!.upgradeUser(),
         homeMachine: homeMachine,
         registerMachine,
@@ -341,6 +355,10 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                             user: (_, _ev) => undefined,
                         }),
                     },
+                },
+                {
+                    id: "markOnlinePing",
+                    src: "markOnlinePing",
                 },
             ],
         },

@@ -387,4 +387,8 @@ export class ServiceContainer {
     deleteDirectMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
         return this.userClient.deleteMessage(otherUserId, messageId);
     }
+
+    markAsOnline(): Promise<void> {
+        return this._userIndexClient.markAsOnline();
+    }
 }

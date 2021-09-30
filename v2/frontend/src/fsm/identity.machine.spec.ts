@@ -9,6 +9,7 @@ import type { CurrentUserResponse } from "../domain/user/user";
 import { testSequence, testTransition } from "./machine.spec.utils";
 import { ServiceContainer } from "../services/serviceContainer";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
+import { UserIndexClient } from "../services/userIndex/userIndex.client";
 
 type Config = Partial<MachineOptions<IdentityContext, IdentityEvents>>;
 
@@ -26,6 +27,7 @@ const fakeIdentity: Identity = {
 };
 
 GroupIndexClient.create = jest.fn();
+UserIndexClient.create = jest.fn();
 const mockServiceContainer = new ServiceContainer(fakeIdentity);
 
 // create a test version of all of our side effects

@@ -14,6 +14,7 @@ import type {
 import { newMessageId } from "../domain/chat/chat.utils";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 import { ServiceContainer } from "../services/serviceContainer";
+import { UserIndexClient } from "../services/userIndex/userIndex.client";
 import {
     ChatContext,
     chatMachine,
@@ -89,6 +90,7 @@ const directContext: ChatContext = {
 };
 
 GroupIndexClient.create = jest.fn();
+UserIndexClient.create = jest.fn();
 const serviceContainer = new ServiceContainer({} as Identity);
 
 const groupContext: ChatContext = {

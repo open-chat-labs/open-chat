@@ -10,7 +10,11 @@
 
     function submitUsername() {
         if (valid) {
+<<<<<<< Updated upstream
             dispatch("submitUsername", { username: username });
+=======
+            dispatch("submitUsername", { username: username.trim() });
+>>>>>>> Stashed changes
         }
     }
 
