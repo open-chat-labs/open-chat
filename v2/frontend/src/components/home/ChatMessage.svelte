@@ -218,10 +218,10 @@
                                     </MenuItem>
                                 {/if}
                                 {#if me}
-                                    <MenuItem on:click={editMessage}>
+                                    <!-- <MenuItem on:click={editMessage}>
                                         <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
-                                    </MenuItem>
+                                    </MenuItem> -->
                                     <MenuItem on:click={deleteMessage}>
                                         <DeleteOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("deleteMessage")}</div>
