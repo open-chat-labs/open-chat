@@ -161,6 +161,7 @@ export const idlFactory = ({ IDL }) => {
     'Message' : Message,
     'MessageDeleted' : UpdatedMessage,
     'DirectChatCreated' : DirectChatCreated,
+    'MessageEdited' : UpdatedMessage,
   });
   const TimestampMillis = IDL.Nat64;
   const DirectChatEventWrapper = IDL.Record({

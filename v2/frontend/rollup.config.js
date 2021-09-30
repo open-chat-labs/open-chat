@@ -89,6 +89,7 @@ export default {
             }),
             compilerOptions: {
                 dev: !production,
+                // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
             },
         }),
 

@@ -45,6 +45,7 @@ const testDirectMessage: Message = {
     messageIndex: 100,
     content: textMessageContent,
     reactions: [],
+    edited: false,
 };
 
 const directChat: DirectChatSummary = {
@@ -191,7 +192,7 @@ describe("chat machine transitions", () => {
                 data: {
                     candidate: testDirectMessage,
                     resp: {
-                        kind: "send_message_success",
+                        kind: "success",
                         timestamp: BigInt(100),
                         messageIndex: 200,
                         eventIndex: 200,
@@ -333,6 +334,7 @@ function textMessage(index: number): Message {
         messageId: newMessageId(),
         messageIndex: index,
         reactions: [],
+        edited: false,
     };
 }
 

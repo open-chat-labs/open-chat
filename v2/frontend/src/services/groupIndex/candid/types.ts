@@ -47,7 +47,8 @@ export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'Message' : Message } |
   { 'MessageDeleted' : UpdatedMessage } |
-  { 'DirectChatCreated' : DirectChatCreated };
+  { 'DirectChatCreated' : DirectChatCreated } |
+  { 'MessageEdited' : UpdatedMessage };
 export interface DirectChatEventWrapper {
   'event' : DirectChatEvent,
   'timestamp' : TimestampMillis,
@@ -104,6 +105,7 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
+  { 'MessageEdited' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface GroupChatEventWrapper {
@@ -173,6 +175,11 @@ export interface ImageContent {
 export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
+}
+export interface InitArgs {
+  'service_principals' : Array<Principal>,
+  'notifications_canister_id' : CanisterId,
+  'group_wasm_module' : Array<number>,
 }
 export interface Message {
   'content' : MessageContent,
@@ -294,6 +301,13 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface UpdateGroupCanisterWasmArgs {
+  'group_canister_wasm' : CanisterWasm,
+}
+export type UpdateGroupCanisterWasmResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'VersionNotHigher' : null } |
+  { 'InvalidVersion' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -399,4 +413,7 @@ export interface _SERVICE {
   'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
+  'update_group_canister_wasm' : (
+      arg_0: UpdateGroupCanisterWasmArgs,
+    ) => Promise<UpdateGroupCanisterWasmResponse>,
 }
