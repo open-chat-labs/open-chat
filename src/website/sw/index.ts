@@ -12,7 +12,7 @@ self.addEventListener('notificationclick', function(event: NotificationEvent) {
     event.waitUntil(handleNotificationClick(event));
 });
 
-self.addEventListener('fetch', () => console.log("fetch"));
+self.addEventListener('fetch', () => {});
 
 async function handlePushNotification(event: PushEvent) : Promise<void> {
     // Try to extract the typed notification from the event
@@ -56,29 +56,32 @@ async function isClientFocused() : Promise<boolean> {
 }
 
 async function showNotification(notificationVariant: Notification) : Promise<void> {
+    let icon = "/_/raw/icon.png";
     let title = "OpenChat - ";
     let body: string;
-    let icon: undefined | string;
     let sender: UserId;
     let groupId: undefined | V1GroupId;
     let messageId: number;
+    let tag: string | undefined;
     if ("V1DirectMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1DirectMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.sender_name;
         body = content.text;
-        icon = content.image;
+        icon = content.image ?? icon;
         sender = notification.sender;
         messageId = notification.message.id;
+        tag = sender.toString();
     } else if ("V1GroupMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1GroupMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.group_name;
         body = `${notification.sender_name}: ${content.text}`;
-        icon = content.image;
+        icon = content.image ?? icon;
         sender = notification.sender;
         groupId = notification.chat_id;
         messageId = notification.message.id;
+        tag = groupId.toString();
     } else {
         console.log("Unexpected notification type");
         console.log(notificationVariant);
@@ -88,6 +91,7 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
     await self.registration.showNotification(title, {
         body, 
         icon, 
+        tag,
         data: {
             sender,
             groupId,

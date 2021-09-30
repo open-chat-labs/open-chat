@@ -58,7 +58,7 @@ type PushV1DirectMessageNotificationResponse =
 type NotificationsSuccessResult =
     record {
         notifications: vec IndexedNotification;
-        subscriptions: vec record { UserId; vec Subscription }
+        subscriptions: vec record { UserId; vec SubscriptionInfo }
     };
 
 type NotificationsArgs =

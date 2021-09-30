@@ -5,15 +5,15 @@ const TerserPlugin = require("terser-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const dfxJson = require("./dfx.json");
 
-const NOTIFICATIONS_CANISTER_ID = "6vuwk-zaaaa-aaaaf-aaagq-cai";
-
-const isDevelopment = process.env.NODE_ENV 
+const IS_DEVELOPMENT = process.env.NODE_ENV 
   ? (process.env.NODE_ENV !== "production") 
   : (process.env.DFX_NETWORK !== "ic");
 
-const mode = isDevelopment ? "development" : "production";
-
-let webpushServiceWorkerPath = isDevelopment ? "sw.js" : "_/raw/sw.js";
+const mode = IS_DEVELOPMENT ? "development" : "production";
+const SERVICE_WORKER = "sw13.js";
+const RAW_PATH = IS_DEVELOPMENT ? "" : "_/raw/";
+const WEBPUSH_SERVICE_WORKER_PATH = RAW_PATH + SERVICE_WORKER;
+const NOTIFICATIONS_CANISTER_ID = IS_DEVELOPMENT ? "wxns6-qiaaa-aaaaa-aaaqa-cai" : "6vuwk-zaaaa-aaaaf-aaagq-cai";
 
 function initCanisterIds() {
     let localCanisters, prodCanisters;
@@ -30,7 +30,7 @@ function initCanisterIds() {
         console.log("No production canister_ids.json found. Continuing with local");
     }
 
-    const network = process.env.DFX_NETWORK || (isDevelopment ? "local" : "ic");
+    const network = process.env.DFX_NETWORK || (IS_DEVELOPMENT ? "local" : "ic");
 
     let canisters = network === "local" ? localCanisters : prodCanisters;
 
@@ -47,8 +47,8 @@ let canisterIds = initCanisterIds();
 
 let IDP_URL = process.env.DFX_NETWORK === "nns_dapp_testnet" 
     ? "https://qjdve-lqaaa-aaaaa-aaaeq-cai.nnsdapp.dfinity.network/" 
-    : isDevelopment 
-      ? "http://qsgjb-riaaa-aaaaa-aaaga-cai.localhost:8000"
+    : IS_DEVELOPMENT 
+      ? "http://rwlgt-iiaaa-aaaaa-aaaaa-cai.localhost:8000"
       : "https://identity.ic0.app/";
 
 // List of all aliases for canisters. This creates the module alias for
@@ -91,7 +91,7 @@ function generateWebpackConfigForCanister(name, info) {
     },
     devtool: "source-map",
     optimization: {
-      minimize: !isDevelopment,
+      minimize: !IS_DEVELOPMENT,
       minimizer: [new TerserPlugin()],
       splitChunks: {
         chunks: "all"
@@ -148,7 +148,7 @@ function generateWebpackConfigForCanister(name, info) {
         P2P_CANISTER_ID: canisterIds["p2p"],
         USER_MGMT_CANISTER_ID: canisterIds["user_mgmt"],
         NOTIFICATIONS_CANISTER_ID,
-        WEBPUSH_SERVICE_WORKER_PATH: webpushServiceWorkerPath,
+        WEBPUSH_SERVICE_WORKER_PATH,
         IDP_URL,
       }),  
       new webpack.ProvidePlugin({
@@ -158,6 +158,7 @@ function generateWebpackConfigForCanister(name, info) {
       new CopyPlugin({
         patterns: [
           { from: path.join(sourceDir, "assets"), to: "" },
+          { from: path.join(sourceDir, "assets", "icon.png"), to: RAW_PATH },
         ],
       }),      
     ],
@@ -174,7 +175,7 @@ function generateWebpackConfigForServiceWorker() {
       extensions: [".ts"],
     },
     output: {
-      filename: webpushServiceWorkerPath,
+      filename: WEBPUSH_SERVICE_WORKER_PATH,
       path: path.resolve(__dirname, "dist/website"),
     },
     module: {

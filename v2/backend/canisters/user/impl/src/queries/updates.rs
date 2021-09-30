@@ -240,13 +240,18 @@ fn finalize(
                 None
             };
 
+            let webrtc_timestamp = direct_chat.webrtc_session_details.as_ref().map(|e| e.timestamp).unwrap_or(0);
+
+            let webrtc_session_details =
+                if webrtc_timestamp > updates_since { direct_chat.webrtc_session_details.clone() } else { None };
+
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.them.into(),
                 latest_message,
                 latest_event_index,
                 read_by_me,
                 read_by_them,
-                webrtc_session_details: direct_chat.webrtc_session_details.clone(),
+                webrtc_session_details,
             }));
         }
     }
