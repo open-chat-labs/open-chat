@@ -6,8 +6,7 @@ use types::{CanisterCreationStatusInternal, CyclesTopUp};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
-const MIN_USERNAME_LENGTH: u16 = 2;
-const INVALID_CHARS: [char; 2] = [' ', ','];
+const MIN_USERNAME_LENGTH: u16 = 3;
 
 #[update]
 fn set_username(args: Args) -> Response {
@@ -22,17 +21,12 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let username = args.username;
 
-    if username.len() > MAX_USERNAME_LENGTH as usize {
-        return UsernameTooLong(MAX_USERNAME_LENGTH);
-    }
-
-    if username.len() < MIN_USERNAME_LENGTH as usize {
-        return UsernameTooShort(MIN_USERNAME_LENGTH);
-    }
-
-    if username.chars().any(|c| INVALID_CHARS.contains(&c)) {
-        return UsernameInvalid;
-    }
+    match validate_username(&username) {
+        UsernameValidationResult::TooShort(min_length) => return UsernameTooShort(min_length),
+        UsernameValidationResult::TooLong(max_length) => return UsernameTooLong(max_length),
+        UsernameValidationResult::Invalid => return UsernameInvalid,
+        _ => {}
+    };
 
     if let Some(user) = runtime_state.data.users.get_by_principal(caller) {
         let user_to_update = match user {
@@ -81,6 +75,37 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
     } else {
         UserNotFound
+    }
+}
+
+enum UsernameValidationResult {
+    Ok,
+    TooLong(u16),
+    TooShort(u16),
+    Invalid
+}
+
+fn validate_username(username: &str) -> UsernameValidationResult {
+    if username.len() > MAX_USERNAME_LENGTH as usize {
+        return UsernameValidationResult::TooLong(MAX_USERNAME_LENGTH);
+    }
+
+    if username.len() < MIN_USERNAME_LENGTH as usize {
+        return UsernameValidationResult::TooShort(MIN_USERNAME_LENGTH);
+    }
+
+    if username != diacritics::remove_diacritics(username) {
+        return UsernameValidationResult::Invalid;
+    }
+
+    if username.starts_with('_') || username.ends_with('_') || username.contains("__") {
+        return UsernameValidationResult::Invalid;
+    }
+
+    if username.chars().all(|c| c.is_alphabetic() || c.is_digit(10) || c == '_') {
+        UsernameValidationResult::Ok
+    } else {
+        UsernameValidationResult::Invalid
     }
 }
 
@@ -263,5 +288,24 @@ mod tests {
         };
         let result = set_username_impl(args, &mut runtime_state);
         assert!(matches!(result, Response::UsernameTooLong(25)));
+    }
+
+    #[test]
+    fn valid_usernames() {
+        assert!(matches!(validate_username("abc"), UsernameValidationResult::Ok));
+        assert!(matches!(validate_username("123"), UsernameValidationResult::Ok));
+        assert!(matches!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"), UsernameValidationResult::Ok));
+        assert!(matches!(validate_username("王"), UsernameValidationResult::Ok));
+    }
+
+    #[test]
+    fn invalid_usernames() {
+        assert!(matches!(validate_username("abc "), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab c"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("_abc"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abc_"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab__c"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("ab,c"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
     }
 }
