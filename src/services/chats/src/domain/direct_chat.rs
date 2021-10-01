@@ -42,9 +42,7 @@ pub struct DirectChatStableState {
     user2_unread_message_id_ranges: Vec<[u32; 2]>,
     messages: Vec<Message>,
     last_updated: Timestamp,
-    #[serde(default)]
     user1_muted: bool,
-    #[serde(default)]
     user2_muted: bool,
 }
 

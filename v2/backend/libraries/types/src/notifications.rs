@@ -34,6 +34,7 @@ pub struct GroupMessageNotification {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct V1DirectMessageNotification {
+    pub chat_id: String,
     pub sender: UserId,
     pub sender_name: String,
     pub message: v1_message::Message,
@@ -41,7 +42,7 @@ pub struct V1DirectMessageNotification {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct V1GroupMessageNotification {
-    pub chat_id: u128,
+    pub chat_id: String,
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,

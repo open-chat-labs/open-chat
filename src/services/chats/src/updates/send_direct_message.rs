@@ -79,6 +79,7 @@ pub async fn update(request: Request) -> Response {
         if let ChatEnum::Direct(direct) = chat {
             if !direct.notifications_muted(request.recipient) {
                 let notification = Notification {
+                    chat_id: format!("{:x}", chat_id.0), 
                     sender: me,
                     sender_name,
                     message,
