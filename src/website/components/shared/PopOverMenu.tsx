@@ -21,7 +21,8 @@ type Props = {
 
 export type MenuItem = {
     text: string,
-    action: () => void
+    action: () => void,
+    disable?: boolean,
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -57,11 +58,13 @@ function PopOverMenu(props: Props) {
         setOpen(false);
     };
 
-    function buildMenuItemElement(text: string, action: () => void) : JSX.Element {
+    function buildMenuItemElement(text: string, action: () => void, disable?: boolean) : JSX.Element {
         return (
-            <MenuItem key={text} onClick={_ => {
-                    action();
-                    handleClose();
+            <MenuItem key={text} disabled={disable} onClick={_ => {
+                    if (!disable) {
+                        action();
+                        handleClose();
+                    }
                 }}>
                 <Typography variant="body2">{text}</Typography>
             </MenuItem>
@@ -79,7 +82,7 @@ function PopOverMenu(props: Props) {
                         <MenuList
                             variant="menu"
                             className={classes.menu + " pop-over-menu"}>
-                            {props.menuItems.map(m => buildMenuItemElement(m.text, m.action))}
+                            {props.menuItems.map(m => buildMenuItemElement(m.text, m.action, m.disable))}
                         </MenuList>
                     </ClickAwayListener>
                 </Paper>
