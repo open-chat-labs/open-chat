@@ -157,9 +157,7 @@ mod tests {
         let mut env = TestEnv::default();
         let mut data = Data::default();
 
-        let usernames = vec![
-            "Martin", "marcus", "matt", "julian", "hamish"
-        ];
+        let usernames = vec!["Martin", "marcus", "matt", "julian", "hamish"];
 
         for index in 0..usernames.len() {
             let bytes = vec![index as u8, 1];
