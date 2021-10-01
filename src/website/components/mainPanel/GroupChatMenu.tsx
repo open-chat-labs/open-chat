@@ -9,6 +9,7 @@ import PopOverMenu, { MenuItem } from "../shared/PopOverMenu";
 import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import leaveGroup from "../../actions/chats/leaveGroup";
 import { RightPanelType } from "../../domain/model/panels";
+import { markAllMessagesAsReadLocally } from "../../actions/chats/markMessagesAsRead";
 import { toggleNotifications } from "../../actions/chats/toggleNotifications";
 
 export default React.memo(GroupChatMenu);
@@ -16,6 +17,7 @@ export default React.memo(GroupChatMenu);
 export interface Props {
     chatId: ChatId,
     muted: boolean,
+    any_unread: boolean,
 }
 
 const useStyles = makeStyles((theme: Theme) => ({
@@ -31,6 +33,7 @@ function GroupChatMenu(props: Props) {
     const menuItems: MenuItem[] = [];
     menuItems.push({ text: "Participants", action: () => dispatch(changeRightPanel(RightPanelType.Participants)) });
     menuItems.push({ text: props.muted ? "Unmute notifications" : "Mute notifications", action: () => dispatch(toggleNotifications(props.chatId, !props.muted)) });
+    menuItems.push({ text: "Mark all as read", action: () => dispatch(markAllMessagesAsReadLocally(props.chatId)), disable: !props.any_unread });
     menuItems.push({ text: "Leave group", action: () => {
         if (confirm("Are you sure you want to leave this group?")) {
             dispatch(leaveGroup(props.chatId));

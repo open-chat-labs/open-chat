@@ -60,12 +60,14 @@ function Header() {
     let subTitle: Option<JSX.Element> = null;
     let chatMenu: Option<JSX.Element> = null;
 
+    const any_unread = chatFunctions.getUnreadMessageCount(chat) > 0;
+
     if (chatFunctions.isDirectChat(chat)) {
         let muted = false;
         if (chatFunctions.isConfirmedChat(chat)) {
             muted = chat.muted;
         }
-        chatMenu = <DirectChatMenu chatId={chat.chatId} userId={chat.them} muted={muted} />;
+        chatMenu = <DirectChatMenu chatId={chat.chatId} userId={chat.them} muted={muted} any_unread={any_unread} />;
         let imageId = null;
         let isOnline = false;
         if (userDictionary.hasOwnProperty(chat.them)) {
@@ -87,7 +89,7 @@ function Header() {
         chatName = chat.subject;
 
         if (chatFunctions.isConfirmedChat(chat) && me) {
-            chatMenu = <GroupChatMenu chatId={chat.chatId} muted={chat.muted} />;
+            chatMenu = <GroupChatMenu chatId={chat.chatId} muted={chat.muted} any_unread={any_unread} />;
             if (chat.participantsTyping.length) {
                 const usernames = stateFunctions
                     .getUsers(chat.participantsTyping, userDictionary)

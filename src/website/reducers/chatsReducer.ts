@@ -78,10 +78,12 @@ import {
 } from "../actions/chats/removeParticipant";
 
 import {
+    MARK_ALL_MESSAGES_AS_READ,
     MARK_MESSAGES_AS_READ,
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
     MARK_MESSAGES_AS_READ_REMOTELY,
+    MarkAllMessagesAsReadEvent,
     MarkMessagesAsReadByClientIdEvent,
     MarkMessagesAsReadByClientIdRemotelyEvent,
     MarkMessagesAsReadEvent,
@@ -174,6 +176,7 @@ type Event =
     GotoChatEvent |
     GotoHomeEvent |
     LeaveGroupSucceededEvent |
+    MarkAllMessagesAsReadEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
@@ -416,6 +419,13 @@ export default produce((state: ChatsState, event: Event) => {
             const { chatId, messageIds } = event.payload;
             const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
             chatFunctions.markMessagesAsReadLocally(chat, messageIds);
+            break;
+        }
+        
+        case MARK_ALL_MESSAGES_AS_READ: {
+            const { chatId } = event.payload;
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
+            chatFunctions.markMessagesAsReadLocally(chat, chat.unreadMessageIds);
             break;
         }
 

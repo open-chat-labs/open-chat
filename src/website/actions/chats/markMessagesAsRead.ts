@@ -2,9 +2,19 @@ import { ChatId } from "../../domain/model/chats";
 import { UserId } from "../../domain/model/users";
 
 export const MARK_MESSAGES_AS_READ = "MARK_MESSAGES_AS_READ";
+export const MARK_ALL_MESSAGES_AS_READ = "MARK_ALL_MESSAGES_AS_READ";
 export const MARK_MESSAGES_AS_READ_BY_CLIENT_ID = "MARK_MESSAGES_AS_READ_BY_CLIENT_ID";
 export const MARK_MESSAGES_AS_READ_REMOTELY = "MARK_MESSAGES_AS_READ_REMOTELY";
 export const MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY = "MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY";
+
+export function markAllMessagesAsReadLocally(chatId: ChatId) : MarkAllMessagesAsReadEvent {
+    return {
+        type: MARK_ALL_MESSAGES_AS_READ,
+        payload: {
+            chatId
+        }
+    };
+}
 
 export function markMessagesAsReadLocally(chatId: ChatId, messageIds: number[]) : MarkMessagesAsReadEvent {
     return {
@@ -52,6 +62,13 @@ export type MarkMessagesAsReadEvent = {
     payload: {
         chatId: ChatId,
         messageIds: number[]
+    }
+}
+
+export type MarkAllMessagesAsReadEvent = {
+    type: typeof MARK_ALL_MESSAGES_AS_READ,
+    payload: {
+        chatId: ChatId,
     }
 }
 
