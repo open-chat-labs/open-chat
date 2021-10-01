@@ -32,6 +32,10 @@ impl<V> CaseInsensitiveHashMap<V> {
         self.map.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn search(&self, term: &str) -> impl Iterator<Item = &V> {
         let term_uppercase = term.to_uppercase();
         self.map
