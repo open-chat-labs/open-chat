@@ -119,6 +119,7 @@ export class RtcConnection {
 
     public addRemoteAnswer = async (answer: WebRtcAnswer): Promise<boolean> => {
         if (this.offerId !== answer.offerId) {
+            console.log("Received an answer with an offerId that does not match our offerId");
             return false;
         }
         await this.connection.setRemoteDescription({

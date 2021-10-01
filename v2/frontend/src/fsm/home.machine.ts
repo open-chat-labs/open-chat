@@ -128,6 +128,15 @@ async function handleWebRtcConnections(
         );
 
     const sentAnswers = Object.values(offers).map((offer) => {
+        // this little trick is necesary in case both ends initiate the connection at the same time
+        if (rtcConnectionsManager.exists(offer.fromUserId) && offer.fromUserId > myUserId) {
+            console.log("we already have a connection with user: ", offer.fromUserId);
+            console.log(
+                "Since I have the lower userId, we will ignore this offer and let them progress the connection"
+            );
+            return;
+        }
+
         return rtcConnectionsManager.createAnswer(myUserId, offer).then((answer) =>
             serviceContainer
                 .webRtcAnswer(offer.fromUserId, answer)
