@@ -41,21 +41,23 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 }
 
 fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
-    let u1_starts = u1.starts_with(&search_term);
-    let u2_starts = u2.starts_with(&search_term);
+    match u1.len().cmp(&u2.len()) {
+        Ordering::Less => Ordering::Less,
+        Ordering::Greater => Ordering::Greater,
+        Ordering::Equal => {
+            let u1_starts = u1.starts_with(&search_term);
+            let u2_starts = u2.starts_with(&search_term);
 
-    if u1_starts != u2_starts {
-        if u1_starts {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
-    } else {
-        match u1.len().cmp(&u2.len()) {
-            Ordering::Less => Ordering::Less,
-            Ordering::Equal => u1.cmp(u2),
-            Ordering::Greater => Ordering::Greater,
-        }
+            if u1_starts != u2_starts {
+                if u1_starts {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            } else {
+                u1.cmp(u2)
+            }
+        },
     }
 }
 
@@ -101,20 +103,21 @@ mod tests {
     }
 
     #[test]
-    fn search_returns_shorter_matches_first() {
+    fn results_ordered_by_length_then_case_sensitive_matches() {
         let runtime_state = setup_runtime_state();
 
         let response = search_impl(
             Args {
-                max_results: 2,
-                search_term: "ma".to_string(),
+                max_results: 5,
+                search_term: "Ma".to_string(),
             },
             &runtime_state,
         );
 
         let Response::Success(results) = response;
         assert_eq!("matt", results.users[0].username);
-        assert_eq!("marcus", results.users[1].username);
+        assert_eq!("Martin", results.users[1].username);
+        assert_eq!("marcus", results.users[2].username);
     }
 
     #[test]
