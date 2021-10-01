@@ -305,7 +305,7 @@ mod tests {
         assert!(matches!(validate_username("ab__c"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("ab,c"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcṷ"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("abc王"), UsernameValidationResult::Invalid));
     }
 }
