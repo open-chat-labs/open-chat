@@ -193,6 +193,7 @@ type AddWebRtcSessionDetailsResponse =
     variant {
         Success;
         Blocked;
+        UserNotFound;
     }; 
 
 type RemoveWebRtcSessionDetailsArgs =
