@@ -94,15 +94,11 @@ fn validate_username(username: &str) -> UsernameValidationResult {
         return UsernameValidationResult::TooShort(MIN_USERNAME_LENGTH);
     }
 
-    if username != diacritics::remove_diacritics(username) {
-        return UsernameValidationResult::Invalid;
-    }
-
     if username.starts_with('_') || username.ends_with('_') || username.contains("__") {
         return UsernameValidationResult::Invalid;
     }
 
-    if username.chars().all(|c| c.is_alphabetic() || c.is_digit(10) || c == '_') {
+    if username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
         UsernameValidationResult::Ok
     } else {
         UsernameValidationResult::Invalid
@@ -261,10 +257,10 @@ mod tests {
         let mut runtime_state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
-            username: "a".to_string(),
+            username: "ab".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UsernameTooShort(2)));
+        assert!(matches!(result, Response::UsernameTooShort(3)));
     }
 
     #[test]
@@ -298,7 +294,6 @@ mod tests {
             validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"),
             UsernameValidationResult::Ok
         ));
-        assert!(matches!(validate_username("王"), UsernameValidationResult::Ok));
     }
 
     #[test]
@@ -310,5 +305,7 @@ mod tests {
         assert!(matches!(validate_username("ab__c"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("ab,c"), UsernameValidationResult::Invalid));
         assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcé"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abc王"), UsernameValidationResult::Invalid));
     }
 }
