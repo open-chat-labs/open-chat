@@ -15,10 +15,12 @@
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { pop } from "../../utils/transition";
+    import Typing from "../Typing.svelte";
 
     export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
+    export let typing: Set<string>;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -26,12 +28,14 @@
                 name: users[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
+                typing: typing.has(chatSummary.them),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            typing: false,
         };
     }
 
@@ -58,7 +62,12 @@
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
-        <div class="chat-msg">{lastMessage}</div>
+        {#if chat.typing}
+            <Typing />
+        {:else}
+            <div class="chat-msg">{lastMessage}</div>
+        {/if}
+
         {#if unreadMessages > 0}
             <div
                 in:pop={{ duration: 1500 }}

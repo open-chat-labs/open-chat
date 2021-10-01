@@ -2,21 +2,51 @@ export type WebRtcSessionDetails = WebRtcOffer | WebRtcAnswer;
 
 export type WebRtcOffer = {
     kind: "offer";
-    id: string;
-    userId: string;
-    connectionString: string;
-    iceCandidates: string[];
-    ageSeconds: number;
+    fromUserId: string;
+    endpoint: WebRtcEndpoint;
 };
 
 export type WebRtcAnswer = {
     kind: "answer";
-    id: string;
     offerId: string;
-    userId: string;
+    fromUserId: string;
+    endpoint: WebRtcEndpoint;
+};
+
+export type WebRtcEndpoint = {
+    id: string;
     connectionString: string;
     iceCandidates: string[];
-    ageSeconds: number;
+};
+
+export type WebRtcSessionDetailsEvent = {
+    sessionDetails: WebRtcSessionDetails;
+    timestamp: bigint;
+    chatId: string; //we need to add this so that we have a way to figure out where to send answers
+};
+
+export type WebRtcMessage = RemoteUserStoppedTyping | RemoteUserTyping;
+
+export type CurrentUserTyping = {
+    kind: "current_user_typing";
+    chatId: string;
+};
+
+export type CurrentUserStoppedTyping = {
+    kind: "current_user_stopped_typing";
+    chatId: string;
+};
+
+export type RemoteUserTyping = {
+    kind: "remote_user_typing";
+    chatId: string;
+    userId: string;
+};
+
+export type RemoteUserStoppedTyping = {
+    kind: "remote_user_stopped_typing";
+    chatId: string;
+    userId: string;
 };
 
 export type AddWebRtcResponse = "success" | "blocked";

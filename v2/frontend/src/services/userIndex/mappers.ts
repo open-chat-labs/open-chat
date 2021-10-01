@@ -46,6 +46,7 @@ export function usersResponse(candid: ApiUsersResponse): UsersResponse {
 }
 
 export function partialUserSummary(candid: ApiPartialUserSummary): PartialUserSummary {
+    console.log("Getusers: ", candid);
     return {
         userId: candid.user_id.toString(),
         username: optional(candid.username, identity),

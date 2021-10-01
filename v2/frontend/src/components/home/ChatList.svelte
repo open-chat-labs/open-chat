@@ -169,6 +169,7 @@
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>
                         <ChatSummary
+                            typing={$machine.context.typing}
                             users={$machine.context.userLookup}
                             {chatSummary}
                             selected={$machine.context.selectedChat?.chatId ===

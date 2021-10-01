@@ -36,7 +36,10 @@ export function userIsOnline(users: UserLookup, userId: string): boolean {
 
 export function mergeUsers(userLookup: UserLookup, users: PartialUserSummary[]): UserLookup {
     return users.reduce<UserLookup>((lookup, user) => {
-        lookup[user.userId] = user;
+        lookup[user.userId] = {
+            ...user,
+            username: user.username ?? lookup[user.userId]?.username,
+        };
         return lookup;
     }, userLookup);
 }

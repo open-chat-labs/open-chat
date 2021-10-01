@@ -1,8 +1,8 @@
 import { v1 as uuidv1 } from "uuid";
-import type { WebRtcAnswer, WebRtcOffer } from "./webrtc
+import type { WebRtcAnswer, WebRtcOffer } from "./webrtc";
 
 export class RtcConnection {
-    userId: string;
+    toUserId: string;
     connection: RTCPeerConnection;
     iceCandidates: RTCIceCandidate[] = [];
     onMessage: (message: string) => void;
@@ -16,7 +16,7 @@ export class RtcConnection {
         onMessage: (message: string) => void,
         onDisconnected: () => void
     ) {
-        this.userId = userId;
+        this.toUserId = userId;
         this.connection = new RTCPeerConnection(config);
         this.onMessage = onMessage;
         this.connection.onicecandidate = (e) => {
@@ -24,9 +24,14 @@ export class RtcConnection {
                 this.iceCandidates.push(e.candidate);
             }
         };
+
+        this.connection.onicecandidateerror = (ev: Event) => {
+            console.log("canidadate error", ev);
+        };
+
         this.connection.onconnectionstatechange = () => {
             console.log(
-                `Connection to user: ${this.userId}. Connection state: ${this.connection.connectionState}`
+                `Connection to user: ${this.toUserId}. Connection state: ${this.connection.connectionState}`
             );
             if (
                 this.connection.connectionState === "disconnected" ||
@@ -36,14 +41,16 @@ export class RtcConnection {
                 onDisconnected();
             }
         };
+
         this.connection.ondatachannel = (e) => {
             this.configureDataChannel(e.channel);
             this.dataChannel = e.channel;
         };
-        console.log(`Creating connection to ${this.userId}`);
+
+        console.log(`Creating connection to ${this.toUserId}`);
     }
 
-    public createOffer = async (): Promise<WebRtcOffer> => {
+    public createOffer = async (fromUserId: string): Promise<WebRtcOffer> => {
         if (this.offerId) {
             throw new Error("Offer already set for connection");
         }
@@ -62,16 +69,20 @@ export class RtcConnection {
 
         return {
             kind: "offer",
-            id: offerId,
-            userId: this.userId,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            connectionString: offer.sdp!,
-            iceCandidates: this.iceCandidates.map((c) => JSON.stringify(c)),
-            ageSeconds: 0,
+            endpoint: {
+                id: offerId,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                connectionString: offer.sdp!,
+                iceCandidates: this.iceCandidates.map((c) => JSON.stringify(c)),
+            },
+            fromUserId,
         };
     };
 
-    public answerRemoteOffer = async (offer: WebRtcOffer): Promise<WebRtcAnswer> => {
+    public answerRemoteOffer = async (
+        fromUserId: string,
+        offer: WebRtcOffer
+    ): Promise<WebRtcAnswer> => {
         if (this.offerId) {
             throw new Error("Offer already set for connection");
         } else if (this.answerId) {
@@ -79,29 +90,30 @@ export class RtcConnection {
         }
 
         await this.connection.setRemoteDescription({
-            sdp: offer.connectionString,
+            sdp: offer.endpoint.connectionString,
             type: "offer",
         });
 
-        offer.iceCandidates.forEach((c) => this.connection.addIceCandidate(JSON.parse(c)));
+        offer.endpoint.iceCandidates.forEach((c) => this.connection.addIceCandidate(JSON.parse(c)));
 
         const answer = await this.connection.createAnswer();
         await this.connection.setLocalDescription(answer);
 
-        this.offerId = offer.id;
+        this.offerId = offer.endpoint.id;
         const answerId = (this.answerId = uuidv1().toString());
 
         await this.waitUntilIceGatheringIsComplete();
 
         return {
             kind: "answer",
-            id: answerId,
-            offerId: offer.id,
-            userId: this.userId,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            connectionString: answer.sdp!,
-            iceCandidates: this.iceCandidates.map((c) => JSON.stringify(c)),
-            ageSeconds: 0,
+            endpoint: {
+                id: answerId,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                connectionString: answer.sdp!,
+                iceCandidates: this.iceCandidates.map((c) => JSON.stringify(c)),
+            },
+            offerId: offer.endpoint.id,
+            fromUserId,
         };
     };
 
@@ -110,13 +122,15 @@ export class RtcConnection {
             return false;
         }
         await this.connection.setRemoteDescription({
-            sdp: answer.connectionString,
+            sdp: answer.endpoint.connectionString,
             type: "answer",
         });
 
-        answer.iceCandidates.forEach((c) => this.connection.addIceCandidate(JSON.parse(c)));
+        answer.endpoint.iceCandidates.forEach((c) =>
+            this.connection.addIceCandidate(JSON.parse(c))
+        );
 
-        this.answerId = answer.id;
+        this.answerId = answer.endpoint.id;
         return true;
     };
 

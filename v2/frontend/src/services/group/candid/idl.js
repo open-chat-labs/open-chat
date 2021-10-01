@@ -368,7 +368,12 @@ export const idlFactory = ({ IDL }) => {
     'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+    'timestamp' : TimestampMillis,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),

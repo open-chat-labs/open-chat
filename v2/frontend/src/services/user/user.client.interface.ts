@@ -56,8 +56,5 @@ export interface IUserClient {
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
-    addWebRtcSessionDetails(
-        userId: string,
-        details: WebRtcSessionDetails
-    ): Promise<AddWebRtcResponse>;
+    addWebRtcSessionDetails(details: WebRtcSessionDetails): Promise<AddWebRtcResponse>;
 }

@@ -342,6 +342,10 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
   });
   const UpdatesArgs = IDL.Record({ 'updates_since' : IDL.Opt(UpdatesSince) });
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+    'timestamp' : TimestampMillis,
+  });
   const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
   const Participant = IDL.Record({
     'role' : Role,
@@ -354,6 +358,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : EventIndex,
   });
   const GroupChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
@@ -364,10 +369,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'chat_id' : ChatId,
     'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const WebRtcSessionDetailsEvent = IDL.Record({
-    'session_details' : WebRtcSessionDetails,
-    'timestamp' : TimestampMillis,
   });
   const DirectChatSummaryUpdates = IDL.Record({
     'webrtc_session_details' : IDL.Opt(WebRtcSessionDetailsEvent),

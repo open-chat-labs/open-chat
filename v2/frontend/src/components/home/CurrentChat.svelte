@@ -26,6 +26,7 @@
     <CurrentChatHeader
         users={$machine.context.userLookup}
         user={$machine.context.user}
+        typing={$machine.context.typing}
         {blocked}
         on:clearSelection
         on:blockUser

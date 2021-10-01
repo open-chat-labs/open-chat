@@ -23,7 +23,7 @@ import {
     userIdsFromChatSummaries,
 } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
-import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
+import { mergeUsers, missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
 import { chatMachine, ChatMachine } from "./chat.machine";
@@ -33,7 +33,13 @@ import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
-import { rtcConnectionsStore } from "../domain/webrtc/RtcConnectionsStore";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import type {
+    WebRtcAnswer,
+    WebRtcMessage,
+    WebRtcOffer,
+    WebRtcSessionDetailsEvent,
+} from "../domain/webrtc/webrtc";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -53,6 +59,7 @@ export interface HomeContext {
     replyingTo?: EnhancedReplyContext;
     blockedUsers: Set<string>;
     unconfirmed: Set<bigint>;
+    typing: Set<string>;
 }
 
 export type HomeEvents =
@@ -61,6 +68,9 @@ export type HomeEvents =
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
+    | { type: "REMOTE_USER_TYPING"; data: { chatId: string; userId: string } }
+    | { type: "REMOTE_USER_STOPPED_TYPING"; data: { chatId: string; userId: string } }
+    | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
@@ -91,8 +101,53 @@ type ChatsResponse = {
     userLookup: UserLookup;
     usersLastUpdate: bigint;
     blockedUsers: Set<string>;
+    webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
+
+async function handleWebRtcConnections(
+    myUserId: string,
+    serviceContainer: ServiceContainer,
+    rtcEvents: WebRtcSessionDetailsEvent[]
+): Promise<void> {
+    const sorted = rtcEvents.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+
+    // if we have two from the same user we just take the later one, that's why we are sorting and flattening
+    const [offers, remoteAnswers]: [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>] =
+        sorted.reduce(
+            ([offers, remoteAnswers], ev) => {
+                if (ev.sessionDetails.kind === "offer") {
+                    offers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
+                }
+                if (ev.sessionDetails.kind === "answer") {
+                    remoteAnswers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
+                }
+                return [offers, remoteAnswers];
+            },
+            [{}, {}] as [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>]
+        );
+
+    const sentAnswers = Object.values(offers).map((offer) => {
+        return rtcConnectionsManager.createAnswer(myUserId, offer).then((answer) =>
+            serviceContainer
+                .webRtcAnswer(offer.fromUserId, answer)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        console.log("WebRtc answer failed: ", resp);
+                    }
+                })
+                .catch((err) => {
+                    console.log("WebRtc answer failed: ", err);
+                })
+        );
+    });
+
+    const receivedAnswers = Object.values(remoteAnswers).map((r) =>
+        rtcConnectionsManager.handleRemoteAnswer(r)
+    );
+
+    await Promise.all([...sentAnswers, ...receivedAnswers]);
+}
 
 async function getUpdates(
     user: User,
@@ -121,6 +176,7 @@ async function getUpdates(
             userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
             blockedUsers: chatsResponse.blockedUsers,
+            webRtcSessionDetails: chatsResponse.webRtcSessionDetails,
         };
     } catch (err) {
         rollbar.error("Error getting chats", err as Error);
@@ -138,21 +194,18 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
     },
     actions: {
-        establishWebRtcConnections: pure((ctx, ev) => {
+        sendWebRtcOffers: pure((ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
                 const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
                 if (chat && chat.kind === "direct_chat") {
-                    if (!rtcConnectionsStore.exists(chat.them)) {
-                        const connection = rtcConnectionsStore.create(chat.them);
+                    if (
+                        !rtcConnectionsManager.exists(chat.them) &&
+                        userIsOnline(ctx.userLookup, chat.them)
+                    ) {
+                        const connection = rtcConnectionsManager.create(chat.them);
                         connection
-                            .createOffer()
-                            .then((offer) =>
-                                ctx.serviceContainer!.webRtcOffer(
-                                    ctx.user!.userId,
-                                    chat.them,
-                                    offer
-                                )
-                            );
+                            .createOffer(ctx.user!.userId)
+                            .then((offer) => ctx.serviceContainer!.webRtcOffer(chat.them, offer));
                     }
                 }
             }
@@ -168,6 +221,40 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 ctx.chatSummaries,
                 ctx.chatUpdatesSince
             ),
+
+        webRtcConnectionHandler: (ctx, _ev) => (_callback, receive) => {
+            receive((ev) => {
+                if (ev.type === "HANDLE_WEBRTC_CONNECTIONS") {
+                    handleWebRtcConnections(ctx.user!.userId, ctx.serviceContainer!, ev.data);
+                }
+            });
+            return () => {
+                console.log("stopping the webrtc connection handler");
+            };
+        },
+
+        webRtcMessageHandler: (_ctx, _ev) => (callback, _receive) => {
+            rtcConnectionsManager.subscribe((userId: string, message: string) => {
+                console.log("handle webrtc message: ", userId, message);
+                const parsedMsg: WebRtcMessage = JSON.parse(message);
+                if (parsedMsg.kind === "remote_user_typing") {
+                    callback({
+                        type: "REMOTE_USER_TYPING",
+                        data: { chatId: parsedMsg.chatId, userId: parsedMsg.userId },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_stopped_typing") {
+                    callback({
+                        type: "REMOTE_USER_STOPPED_TYPING",
+                        data: { chatId: parsedMsg.chatId, userId: parsedMsg.userId },
+                    });
+                }
+            });
+            return () => {
+                rtcConnectionsManager.unsubscribe();
+                console.log("stopping the webrtc message handler");
+            };
+        },
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
             let { userLookup, chatSummaries, chatUpdatesSince } = ctx;
@@ -251,6 +338,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         chatsIndex: {},
         blockedUsers: new Set<string>(),
         unconfirmed: new Set<bigint>(),
+        typing: new Set<string>(),
     },
     states: {
         loading_chats: {
@@ -287,8 +375,32 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     id: "updateUsersPoller",
                     src: "updateUsersPoller",
                 },
+                {
+                    id: "webRtcConnectionHandler",
+                    src: "webRtcConnectionHandler",
+                },
+                {
+                    id: "webRtcMessageHandler",
+                    src: "webRtcMessageHandler",
+                },
             ],
             on: {
+                REMOTE_USER_STOPPED_TYPING: {
+                    actions: assign((ctx, ev) => {
+                        ctx.typing.delete(ev.data.userId);
+                        return {
+                            typing: ctx.typing,
+                        };
+                    }),
+                },
+                REMOTE_USER_TYPING: {
+                    actions: assign((ctx, ev) => {
+                        ctx.typing.add(ev.data.userId);
+                        return {
+                            typing: ctx.typing,
+                        };
+                    }),
+                },
                 UPDATE_USER_AVATAR: {
                     actions: assign((ctx, ev) => {
                         if (ctx.user) {
@@ -334,6 +446,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
                             to: "updateChatsPoller",
                         }),
+                        send(
+                            (_ctx, ev) => ({
+                                type: "HANDLE_WEBRTC_CONNECTIONS",
+                                data: ev.data.webRtcSessionDetails,
+                            }),
+                            {
+                                to: "webRtcConnectionHandler",
+                            }
+                        ),
                         pure((ctx, ev) => {
                             // ping any chat actors with the latest copy of the chat
                             return ev.data.chatSummaries.reduce<
@@ -372,7 +493,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
                     actions: [
-                        "establishWebRtcConnections",
+                        "sendWebRtcOffers",
                         assign((ctx, ev) => {
                             const key = ev.data.chatId;
                             const chatSummary = ctx.chatSummaries.find(
@@ -410,6 +531,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     })
                                                 ),
                                                 localReactions: {},
+                                                typing: ctx.typing,
                                             }),
                                             `chat-${key}`
                                         ),

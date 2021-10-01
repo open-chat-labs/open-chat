@@ -41,6 +41,7 @@ import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
@@ -57,6 +58,7 @@ export interface ChatContext {
     markMessages: ActorRefFrom<MarkReadMachine>;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
+    typing: Set<string>;
 }
 
 type LoadEventsResponse = {
@@ -76,6 +78,8 @@ export type ChatEvents =
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
     | { type: "SHOW_GROUP_DETAILS" }
+    | { type: "START_TYPING" }
+    | { type: "STOP_TYPING" }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
     | { type: "TOGGLE_REACTION"; data: { message: Message; reaction: string } }
@@ -334,6 +338,30 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parent state for all states that the user cares about or the UI should reflect",
             initial: "loading_previous_messages",
             on: {
+                START_TYPING: {
+                    actions: pure((ctx, _ev) => {
+                        if (ctx.chatSummary.kind === "direct_chat") {
+                            rtcConnectionsManager.sendMessage([ctx.chatSummary.them], {
+                                kind: "remote_user_typing",
+                                chatId: ctx.chatSummary.chatId,
+                                userId: ctx.user!.userId,
+                            });
+                        }
+                        return undefined;
+                    }),
+                },
+                STOP_TYPING: {
+                    actions: pure((ctx, _ev) => {
+                        if (ctx.chatSummary.kind === "direct_chat") {
+                            rtcConnectionsManager.sendMessage([ctx.chatSummary.them], {
+                                kind: "remote_user_stopped_typing",
+                                chatId: ctx.chatSummary.chatId,
+                                userId: ctx.user!.userId,
+                            });
+                        }
+                        return undefined;
+                    }),
+                },
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => {
                         if (ctx.editingEvent) {

@@ -88,6 +88,7 @@ const directContext: ChatContext = {
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
     localReactions: {},
+    typing: new Set<string>(),
 };
 
 GroupIndexClient.create = jest.fn();
@@ -107,6 +108,7 @@ const groupContext: ChatContext = {
     replyingTo: undefined,
     markMessages: spawn(markReadMachine),
     localReactions: {},
+    typing: new Set<string>(),
 };
 
 describe("chat machine transitions", () => {

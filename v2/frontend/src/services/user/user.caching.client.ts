@@ -138,10 +138,7 @@ export class CachingUserClient implements IUserClient {
         return this.client.searchAllMessages(searchTerm, maxResults);
     }
 
-    addWebRtcSessionDetails(
-        userId: string,
-        details: WebRtcSessionDetails
-    ): Promise<AddWebRtcResponse> {
-        return this.client.addWebRtcSessionDetails(userId, details);
+    addWebRtcSessionDetails(details: WebRtcSessionDetails): Promise<AddWebRtcResponse> {
+        return this.client.addWebRtcSessionDetails(details);
     }
 }

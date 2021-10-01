@@ -15,6 +15,9 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
 
+    const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
+    const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
+
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     export let showEmojiPicker = false;
@@ -23,6 +26,8 @@
     let recording: boolean = false;
     let percentRecorded: number = 0;
     let initialisedEdit: boolean = false;
+    let lastTypingUpdate: number = 0;
+    let typingTimer: NodeJS.Timer | undefined = undefined;
 
     $: {
         if ($machine.context.editingEvent && !initialisedEdit) {
@@ -42,9 +47,27 @@
         inp.focus();
     });
 
-    function checkEnter(e: KeyboardEvent) {
+    function onInput() {
+        requestAnimationFrame(() => {
+            const now = +new Date();
+            if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
+                lastTypingUpdate = now;
+                machine.send({ type: "START_TYPING" });
+            }
+            if (typingTimer !== undefined) {
+                clearTimeout(typingTimer);
+            }
+            typingTimer = setTimeout(
+                () => machine.send({ type: "STOP_TYPING" }),
+                MARK_TYPING_STOPPED_INTERVAL_MS
+            );
+        });
+    }
+
+    function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             sendMessage();
+            machine.send({ type: "STOP_TYPING" });
             e.preventDefault();
         }
     }
@@ -149,7 +172,8 @@
         on:dragenter={() => (dragging = true)}
         on:dragleave={() => (dragging = false)}
         on:drop={onDrop}
-        on:keypress={checkEnter} />
+        on:input={onInput}
+        on:keypress={keyPress} />
     <div class="record">
         <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
     </div>

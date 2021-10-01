@@ -6,8 +6,10 @@
 
 <style type="text/scss">
     .typing {
-        @include font(bold, normal, fs-140);
-        color: #fff;
+        padding-bottom: $sp2;
+        margin-top: -$sp2;
+        @include font(bold, normal, fs-120);
+        color: var(--chatSummary-txt2);
         display: flex;
 
         > div {
@@ -24,15 +26,12 @@
             @keyframes pulse {
                 0% {
                     opacity: 1;
-                    transform: scale(1);
                 }
                 50% {
                     opacity: 0;
-                    transform: scale(1.2);
                 }
                 100% {
                     opacity: 1;
-                    transform: scale(1);
                 }
             }
         }

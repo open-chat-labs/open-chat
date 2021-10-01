@@ -95,7 +95,6 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : Message,
   'sender_name' : string,
@@ -183,6 +182,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
@@ -205,7 +205,6 @@ export interface GroupDescriptionChanged {
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : Message,
   'sender_name' : string,
   'chat_id' : ChatId,
@@ -472,7 +471,6 @@ export interface V1CyclesContent {
   'amount' : bigint,
 }
 export interface V1DirectMessageNotification {
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
@@ -489,7 +487,6 @@ export interface V1FileContent {
 export type V1GroupId = bigint;
 export interface V1GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : V1Message,
   'sender_name' : string,
   'chat_id' : bigint,
