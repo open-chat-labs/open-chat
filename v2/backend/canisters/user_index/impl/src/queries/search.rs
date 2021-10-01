@@ -57,7 +57,7 @@ fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
             } else {
                 u1.cmp(u2)
             }
-        },
+        }
     }
 }
 
