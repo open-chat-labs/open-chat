@@ -1,16 +1,16 @@
 use crate::model::user::User;
 use candid::{CandidType, Principal};
 use serde::Deserialize;
-use std::collections::hash_map;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{CyclesTopUp, PhoneNumber, TimestampMillis, UserId};
+use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct UserMap {
     users_by_principal: HashMap<Principal, User>,
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
-    username_to_principal: HashMap<String, Principal>,
+    username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
 }
 
@@ -29,7 +29,7 @@ impl UserMap {
             } else {
                 self.phone_number_to_principal.insert(phone_number.clone(), principal);
                 if let Some(username) = maybe_username {
-                    self.username_to_principal.insert(username.to_string(), principal);
+                    self.username_to_principal.insert(username, principal);
                 }
                 if let Some(user_id) = maybe_user_id {
                     self.user_id_to_principal.insert(user_id, principal);
@@ -48,38 +48,39 @@ impl UserMap {
         if let Some(previous) = self.users_by_principal.get(&principal) {
             let previous_phone_number = previous.get_phone_number();
             let phone_number = user.get_phone_number();
+            let phone_number_changed = previous_phone_number != phone_number;
 
             let previous_username = previous.get_username();
             let username = user.get_username();
+            let username_case_insensitive_changed =
+                username.is_some() && previous_username.map(|u| u.to_uppercase()) != username.map(|u| u.to_uppercase());
 
             let previous_user_id = previous.get_user_id();
             let user_id = user.get_user_id();
+            let user_id_changed = previous_user_id != user_id;
 
-            let new_phone_number_added = previous_phone_number != phone_number;
-            let new_username_added = username.is_some() && previous_username != username;
-
-            if new_phone_number_added && self.phone_number_to_principal.contains_key(phone_number) {
+            if phone_number_changed && self.phone_number_to_principal.contains_key(phone_number) {
                 return UpdateUserResult::PhoneNumberTaken;
             }
-            if new_username_added && self.username_to_principal.contains_key(username.unwrap()) {
+            if username_case_insensitive_changed && self.username_to_principal.contains_key(username.unwrap()) {
                 return UpdateUserResult::UsernameTaken;
             }
 
-            if new_phone_number_added {
+            if phone_number_changed {
                 self.phone_number_to_principal.remove(previous_phone_number);
                 self.phone_number_to_principal.insert(phone_number.clone(), principal);
             }
 
-            if previous_username != username {
+            if username_case_insensitive_changed {
                 if let Some(val) = previous_username {
                     self.username_to_principal.remove(val);
                 }
                 if let Some(val) = username {
-                    self.username_to_principal.insert(val.to_string(), principal);
+                    self.username_to_principal.insert(val, principal);
                 }
             }
 
-            if previous_user_id != user_id {
+            if user_id_changed {
                 if let Some(val) = previous_user_id {
                     self.user_id_to_principal.remove(&val);
                 }
@@ -169,7 +170,13 @@ impl UserMap {
         false
     }
 
-    pub fn values(&self) -> hash_map::Values<'_, Principal, User> {
+    pub fn search(&self, term: &str) -> impl Iterator<Item = &User> {
+        self.username_to_principal
+            .search(term)
+            .filter_map(move |p| self.users_by_principal.get(p))
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users_by_principal.values()
     }
 }
@@ -254,12 +261,6 @@ mod tests {
             .map(|(ph, p)| (ph.clone(), p.clone()))
             .sorted_by_key(|(_, p)| *p)
             .collect();
-        let username_to_principal: Vec<_> = user_map
-            .username_to_principal
-            .iter()
-            .map(|(u, p)| (u.clone(), p.clone()))
-            .sorted_by_key(|(_, p)| *p)
-            .collect();
         let user_id_to_principal: Vec<_> = user_map
             .user_id_to_principal
             .iter()
@@ -279,7 +280,9 @@ mod tests {
                 (phone_number3, principal3)
             )
         );
-        assert_eq!(username_to_principal, vec!((username2, principal2), (username3, principal3)));
+        assert_eq!(user_map.username_to_principal.len(), 2);
+        assert_eq!(user_map.username_to_principal.get(&username2), Some(&principal2));
+        assert_eq!(user_map.username_to_principal.get(&username3), Some(&principal3));
         assert_eq!(user_id_to_principal, vec!((user_id2, principal2), (user_id3, principal3)));
     }
 
@@ -381,6 +384,44 @@ mod tests {
     }
 
     #[test]
+    fn add_with_case_insensitive_clashing_username() {
+        let mut user_map = UserMap::default();
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+
+        let phone_number1 = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let phone_number2 = PhoneNumber::new(44, "2222 222 222".to_owned());
+
+        let user_id1 = Principal::from_slice(&[1, 1]).into();
+        let user_id2 = Principal::from_slice(&[2, 2]).into();
+
+        let username1 = "abc".to_string();
+        let username2 = "ABC".to_string();
+
+        let confirmed = User::Confirmed(ConfirmedUser {
+            principal: principal1,
+            phone_number: phone_number1,
+            username: Some(username1),
+            canister_creation_status: CanisterCreationStatusInternal::Pending(Some(user_id1).into()),
+            date_confirmed: 2,
+        });
+        user_map.add(confirmed);
+
+        let created = User::Created(CreatedUser {
+            principal: principal2,
+            phone_number: phone_number2,
+            user_id: user_id2,
+            username: username2,
+            date_created: 3,
+            date_updated: 3,
+            last_online: 3,
+            ..Default::default()
+        });
+        assert!(matches!(user_map.add(created), AddUserResult::UsernameTaken));
+        assert_eq!(user_map.users_by_principal.len(), 1);
+    }
+
+    #[test]
     fn update_with_no_clashes() {
         let mut user_map = UserMap::default();
         let principal = Principal::from_slice(&[1]);
@@ -413,7 +454,8 @@ mod tests {
 
         assert_eq!(user_map.users_by_principal.keys().collect_vec(), vec!(&principal));
         assert_eq!(user_map.phone_number_to_principal.keys().collect_vec(), vec!(&phone_number2));
-        assert_eq!(user_map.username_to_principal.keys().collect_vec(), vec!(&username2));
+        assert_eq!(user_map.username_to_principal.len(), 1);
+        assert!(user_map.username_to_principal.contains_key(&username2));
         assert_eq!(user_map.user_id_to_principal.keys().collect_vec(), vec!(&user_id));
     }
 
@@ -503,14 +545,41 @@ mod tests {
         };
 
         let mut updated = original.clone();
-        updated.phone_number = phone_number2;
+        updated.username = username2;
 
         user_map.add(User::Created(original));
         user_map.add(User::Created(other));
         assert!(matches!(
             user_map.update(User::Created(updated)),
-            UpdateUserResult::PhoneNumberTaken
+            UpdateUserResult::UsernameTaken
         ));
+    }
+
+    #[test]
+    fn update_username_change_casing() {
+        let mut user_map = UserMap::default();
+        let principal = Principal::from_slice(&[1]);
+        let phone_number = PhoneNumber::new(44, "1111 111 111".to_owned());
+        let username = "abc".to_string();
+        let user_id = Principal::from_slice(&[1, 1]).into();
+
+        let original = CreatedUser {
+            principal: principal,
+            phone_number: phone_number,
+            user_id: user_id,
+            username: username.clone(),
+            date_created: 1,
+            date_updated: 1,
+            last_online: 1,
+            ..Default::default()
+        };
+
+        let mut updated = original.clone();
+
+        user_map.add(User::Created(original));
+        updated.username = "ABC".to_string();
+
+        assert!(matches!(user_map.update(User::Created(updated)), UpdateUserResult::Success));
     }
 
     #[test]

@@ -29,7 +29,7 @@ fn metrics_impl(runtime_state: &RuntimeState) -> Response {
         wasm_memory_used: memory::used(),
     };
 
-    for user in runtime_state.data.users.values() {
+    for user in runtime_state.data.users.iter() {
         match user {
             User::Unconfirmed(_) => response.unconfirmed_user_count += 1,
             User::Confirmed(_) => response.confirmed_user_count += 1,
