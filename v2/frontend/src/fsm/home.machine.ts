@@ -27,7 +27,7 @@ import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/use
 import { mergeUsers, missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
-import { chatMachine, ChatMachine } from "./chat.machine";
+import { ChatContext, ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
@@ -117,6 +117,14 @@ type ChatsResponse = {
     webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
+
+function sendMessageToChatBasedOnUser(ctx: HomeContext, userId: string, chatMsg: ChatEvents): void {
+    const chat = ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId);
+    const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
+    if (actor) {
+        actor.send(chatMsg);
+    }
+}
 
 async function handleWebRtcConnections(
     myUserId: string,
@@ -427,37 +435,28 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             on: {
                 REMOTE_USER_UNDELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
-                        const chat = ctx.chatSummaries.find(
-                            (c) => c.kind === "direct_chat" && c.them === ev.data.userId
-                        );
-                        const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
-                        if (actor) {
-                            actor.send({ type: "UNDELETE_MESSAGE", data: ev.data });
-                        }
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "UNDELETE_MESSAGE",
+                            data: ev.data,
+                        });
                         return undefined;
                     }),
                 },
                 REMOTE_USER_DELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
-                        const chat = ctx.chatSummaries.find(
-                            (c) => c.kind === "direct_chat" && c.them === ev.data.userId
-                        );
-                        const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
-                        if (actor) {
-                            actor.send({ type: "DELETE_MESSAGE", data: ev.data });
-                        }
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "DELETE_MESSAGE",
+                            data: ev.data,
+                        });
                         return undefined;
                     }),
                 },
                 REMOTE_USER_TOGGLED_REACTION: {
                     actions: pure((ctx, ev) => {
-                        const chat = ctx.chatSummaries.find(
-                            (c) => c.kind === "direct_chat" && c.them === ev.data.userId
-                        );
-                        const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
-                        if (actor) {
-                            actor.send({ type: "TOGGLE_REACTION", data: ev.data });
-                        }
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "TOGGLE_REACTION",
+                            data: ev.data,
+                        });
                         return undefined;
                     }),
                 },

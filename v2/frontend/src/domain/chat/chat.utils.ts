@@ -694,3 +694,22 @@ export function pruneLocalReactions(
         return pruned;
     }, {} as Record<string, LocalReaction[]>);
 }
+
+export function replaceMessageContent(
+    events: EventWrapper<ChatEvent>[],
+    messageId: bigint,
+    content: MessageContent
+): EventWrapper<ChatEvent>[] {
+    return events.map((e) => {
+        if (e.event.kind === "message" && e.event.messageId === messageId) {
+            return {
+                ...e,
+                event: {
+                    ...e.event,
+                    content: content,
+                },
+            };
+        }
+        return e;
+    });
+}

@@ -33,6 +33,7 @@ import {
     userIdsFromChatSummaries,
     replaceLocal,
     userIdsFromChatSummary,
+    replaceMessageContent,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -436,22 +437,13 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 }
                             );
                         }
+
                         return {
-                            events: ctx.events.map((e) => {
-                                if (
-                                    e.event.kind === "message" &&
-                                    e.event.messageId === BigInt(ev.data.message.messageId)
-                                ) {
-                                    return {
-                                        ...e,
-                                        event: {
-                                            ...e.event,
-                                            content: ev.data.message.content,
-                                        },
-                                    };
-                                }
-                                return e;
-                            }),
+                            events: replaceMessageContent(
+                                ctx.events,
+                                BigInt(ev.data.message.messageId),
+                                ev.data.message.content
+                            ),
                         };
                     }),
                 },
@@ -469,20 +461,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             );
                         }
                         return {
-                            events: ctx.events.map((e) => {
-                                if (
-                                    e.event.kind === "message" &&
-                                    e.event.messageId === BigInt(ev.data.messageId)
-                                ) {
-                                    return {
-                                        ...e,
-                                        event: {
-                                            ...e.event,
-                                            content: { kind: "deleted_content" },
-                                        },
-                                    };
-                                }
-                                return e;
+                            events: replaceMessageContent(ctx.events, BigInt(ev.data.messageId), {
+                                kind: "deleted_content",
                             }),
                         };
                     }),
