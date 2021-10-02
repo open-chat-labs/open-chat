@@ -72,6 +72,7 @@ export class RtcConnectionsManager {
     }
 
     public sendMessage = (userIds: string[], message: WebRtcMessage): void => {
+        console.log("Sending message to: ", userIds, " :", message);
         userIds.forEach((userId) => {
             const conn = this.get(userId);
             if (conn && conn.isConnected()) {

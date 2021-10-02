@@ -32,6 +32,7 @@ import {
     toggleReaction,
     userIdsFromChatSummaries,
     replaceLocal,
+    userIdsFromChatSummary,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
@@ -83,7 +84,7 @@ export type ChatEvents =
     | { type: "STOP_TYPING" }
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
-    | { type: "TOGGLE_REACTION"; data: { message: Message; reaction: string } }
+    | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
     | { type: "REMOVE_MESSAGE"; data: Message }
     | {
           type: "UPDATE_MESSAGE";
@@ -464,20 +465,17 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 TOGGLE_REACTION: {
                     actions: assign((ctx, ev) => {
-                        const key = ev.data.message.messageId.toString();
+                        const messageId = BigInt(ev.data.messageId);
+                        const key = messageId.toString();
                         if (ctx.localReactions[key] === undefined) {
                             ctx.localReactions[key] = [];
                         }
                         const messageReactions = ctx.localReactions[key];
                         return {
                             events: ctx.events.map((e) => {
-                                if (
-                                    e.event.kind === "message" &&
-                                    ev.data.message.kind === "message" &&
-                                    e.event.messageId === ev.data.message.messageId
-                                ) {
+                                if (e.event.kind === "message" && e.event.messageId === messageId) {
                                     const addOrRemove = containsReaction(
-                                        ctx.user!.userId,
+                                        ev.data.userId,
                                         ev.data.reaction,
                                         e.event.reactions
                                     )
@@ -493,13 +491,25 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         event: {
                                             ...e.event,
                                             reactions: toggleReaction(
-                                                ctx.user!.userId,
+                                                ev.data.userId,
                                                 e.event.reactions,
                                                 ev.data.reaction
                                             ),
                                         },
                                     };
                                     overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
+                                    if (ev.data.userId === ctx.user?.userId) {
+                                        rtcConnectionsManager.sendMessage(
+                                            userIdsFromChatSummary(ctx.chatSummary),
+                                            {
+                                                kind: "remote_user_toggled_reaction",
+                                                chatId: ctx.chatSummary.chatId,
+                                                messageId: messageId,
+                                                userId: ev.data.userId,
+                                                reaction: ev.data.reaction,
+                                            }
+                                        );
+                                    }
                                     return updatedEvent;
                                 }
                                 return e;

@@ -70,6 +70,10 @@ export type HomeEvents =
     | { type: "CANCEL_JOIN_GROUP" }
     | { type: "REMOTE_USER_TYPING"; data: { chatId: string; userId: string } }
     | { type: "REMOTE_USER_STOPPED_TYPING"; data: { chatId: string; userId: string } }
+    | {
+          type: "REMOTE_USER_TOGGLED_REACTION";
+          data: { chatId: string; userId: string; messageId: bigint; reaction: string };
+      }
     | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
@@ -258,6 +262,12 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: { chatId: parsedMsg.chatId, userId: parsedMsg.userId },
                     });
                 }
+                if (parsedMsg.kind === "remote_user_toggled_reaction") {
+                    callback({
+                        type: "REMOTE_USER_TOGGLED_REACTION",
+                        data: parsedMsg,
+                    });
+                }
             });
             return () => {
                 rtcConnectionsManager.unsubscribe();
@@ -394,6 +404,18 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                REMOTE_USER_TOGGLED_REACTION: {
+                    actions: pure((ctx, ev) => {
+                        const chat = ctx.chatSummaries.find(
+                            (c) => c.kind === "direct_chat" && c.them === ev.data.userId
+                        );
+                        const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
+                        if (actor) {
+                            actor.send({ type: "TOGGLE_REACTION", data: ev.data });
+                        }
+                        return undefined;
+                    }),
+                },
                 REMOTE_USER_STOPPED_TYPING: {
                     actions: assign((ctx, ev) => {
                         ctx.typing.delete(ev.data.userId);

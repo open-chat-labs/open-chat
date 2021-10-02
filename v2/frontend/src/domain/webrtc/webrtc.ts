@@ -25,7 +25,7 @@ export type WebRtcSessionDetailsEvent = {
     chatId: string; //we need to add this so that we have a way to figure out where to send answers
 };
 
-export type WebRtcMessage = RemoteUserStoppedTyping | RemoteUserTyping;
+export type WebRtcMessage = RemoteUserStoppedTyping | RemoteUserTyping | RemoteUserToggledReaction;
 
 export type CurrentUserTyping = {
     kind: "current_user_typing";
@@ -47,6 +47,14 @@ export type RemoteUserStoppedTyping = {
     kind: "remote_user_stopped_typing";
     chatId: string;
     userId: string;
+};
+
+export type RemoteUserToggledReaction = {
+    kind: "remote_user_toggled_reaction";
+    chatId: string;
+    messageId: bigint;
+    userId: string;
+    reaction: string;
 };
 
 export type AddWebRtcResponse = "success" | "blocked";

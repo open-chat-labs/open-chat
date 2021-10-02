@@ -57,6 +57,16 @@ export function getContentAsText(content: MessageContent): string {
     return text.trim();
 }
 
+export function userIdsFromChatSummary(chat: ChatSummary): string[] {
+    if (chat.kind === "direct_chat") {
+        return [chat.them];
+    }
+    if (chat.kind === "group_chat") {
+        return chat.participants.map((p) => p.userId);
+    }
+    return [];
+}
+
 export function userIdsFromChatSummaries(
     chats: ChatSummary[],
     includeGroupChats = false

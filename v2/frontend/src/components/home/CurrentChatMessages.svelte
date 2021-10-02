@@ -7,6 +7,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
     import { moreMessagesAvailable } from "../../fsm/chat.machine";
+    import type { ChatEvents } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import Loading from "../Loading.svelte";
@@ -181,7 +182,16 @@
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         // optimistic update
-        machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+        const toggleArgs: ChatEvents = {
+            type: "TOGGLE_REACTION",
+            data: {
+                messageId: ev.detail.message.messageId,
+                reaction: ev.detail.reaction,
+                userId: $machine.context.user!.userId,
+            },
+        };
+
+        machine.send(toggleArgs);
 
         const apiPromise =
             $machine.context.chatSummary.kind === "group_chat"
@@ -201,13 +211,13 @@
                 if (resp !== "added" && resp !== "removed") {
                     // toggle again to undo
                     console.log("Reaction failed: ", resp);
-                    machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                    machine.send(toggleArgs);
                 }
             })
             .catch((err) => {
                 // toggle again to undo
                 console.log("Reaction failed: ", err);
-                machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                machine.send(toggleArgs);
             });
     }
 
