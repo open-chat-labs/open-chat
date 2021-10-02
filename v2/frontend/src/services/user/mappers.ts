@@ -421,7 +421,6 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
         };
     }
     if ("Direct" in candid) {
-        console.log("Updated direct chat: ", candid.Direct);
         const chatId = candid.Direct.chat_id.toString();
         return {
             kind: "direct_chat",

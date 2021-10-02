@@ -61,8 +61,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         previouslyLoadedEvents: EventWrapper<GroupChatEvent>[] = [],
         iterations = 0
     ): Promise<EventsResponse<GroupChatEvent>> {
-        console.log("index range: ", eventIndexRange);
-        console.log("loading messages from: ", startIndex, " : ", ascending);
         const resp = await this.handleResponse(
             this.groupService.events({
                 max_messages: 20,

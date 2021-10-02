@@ -21,7 +21,7 @@ import type {
     IndexRange,
     LocalReaction,
 } from "./chat";
-import { groupWhile } from "../../utils/list";
+import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -405,10 +405,6 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
     return events[0]?.index;
 }
 
-// export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
-//     return chat.latestMessage?.event.messageIndex;
-// }
-
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     let idx = undefined;
     for (let i = events.length - 1; i >= 0; i--) {
@@ -421,8 +417,27 @@ export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): num
     return idx;
 }
 
-export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-    return events[events.length - 1]?.index;
+// todo - this needs to return the last idx that we actually loaded from the server
+// at the moment it will return the latest confirmed idx which may be later than messages
+// other people have added - that's why we are missing messages
+// to solution is to only remove things from the unconfirmed set when we load them from the
+// server - easy
+export function latestLoadedEventIndex(
+    events: EventWrapper<ChatEvent>[],
+    unconfirmed?: Set<bigint>
+): number | undefined {
+    if (unconfirmed === undefined) {
+        return events[events.length - 1]?.index;
+    }
+    let idx = undefined;
+    for (let i = events.length - 1; i >= 0; i--) {
+        const e = events[i].event;
+        if (e.kind !== "message" || (e.kind === "message" && !unconfirmed.has(e.messageId))) {
+            idx = events[i].index;
+            break;
+        }
+    }
+    return idx;
 }
 
 export function latestAvailableEventIndex(chatSummary: ChatSummary): number | undefined {
@@ -599,6 +614,50 @@ function mergeMessageEvents(
         }
     }
     return existing;
+}
+
+function partitionEvents(
+    events: EventWrapper<ChatEvent>[]
+): [Record<string, EventWrapper<ChatEvent>>, EventWrapper<ChatEvent>[]] {
+    return events.reduce(
+        ([msgs, evts], e) => {
+            if (e.event.kind === "message") {
+                msgs[e.event.messageId.toString()] = e;
+            } else {
+                evts.push(e);
+            }
+            return [msgs, evts];
+        },
+        [{} as Record<string, EventWrapper<ChatEvent>>, [] as EventWrapper<ChatEvent>[]]
+    );
+}
+
+export function replaceLocal(
+    onClient: EventWrapper<ChatEvent>[],
+    fromServer: EventWrapper<ChatEvent>[],
+    unconfirmed: Set<bigint>
+): EventWrapper<ChatEvent>[] {
+    // partition client events into msgs and other events
+    const [clientMsgs, clientEvts] = partitionEvents(onClient);
+
+    // partition inbound events into msgs and other events
+    const [serverMsgs, serverEvts] = partitionEvents(fromServer);
+
+    // overwrite any local msgs with their server counterpart to correct any index errors
+    Object.entries(serverMsgs).forEach(([id, e]) => {
+        // only now do we consider this message confirmed
+        unconfirmed.delete(BigInt(id));
+        clientMsgs[id] = e;
+    });
+
+    // concat and dedupe the two lists of non-message events
+    const uniqEvts = dedupe((a, b) => a.index === b.index, [...clientEvts, ...serverEvts]);
+
+    // create a list from the merged map of messages
+    const msgEvts = Object.values(clientMsgs);
+
+    // concat it with the merged non-message event list
+    return [...uniqEvts, ...msgEvts].sort((a, b) => a.index - b.index);
 }
 
 // todo - this is not very efficient at the moment

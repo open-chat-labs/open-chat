@@ -76,20 +76,22 @@
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
-                    console.log(resp);
                     if (resp.kind === "success") {
-                        dispatch("messageConfirmed", msg!.messageId);
                         machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
                         machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                        // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
+                        dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
                     toastStore.showFailureToast("errorSendingMessage");
                     machine.send({ type: "REMOVE_MESSAGE", data: msg! });
                     rollbar.error("Exception sending message", err);
+                    // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
+                    dispatch("messageConfirmed", msg!.messageId);
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };

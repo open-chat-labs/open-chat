@@ -31,13 +31,13 @@ import {
     setLastMessageOnChat,
     toggleReaction,
     userIdsFromChatSummaries,
+    replaceLocal,
 } from "../domain/chat/chat.utils";
 import type { UserLookup, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
-import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -59,6 +59,7 @@ export interface ChatContext {
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
     typing: Set<string>;
+    unconfirmed: Set<bigint>;
 }
 
 type LoadEventsResponse = {
@@ -165,11 +166,13 @@ export function earliestIndex(ctx: ChatContext): number {
 }
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
-    const lastLoaded = latestLoadedEventIndex(ctx.events);
+    const lastLoaded = latestLoadedEventIndex(ctx.events, ctx.unconfirmed);
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
+        console.log("loading messages from: ", from);
         return [from, true];
     } else {
+        console.log("not loading any messages: ", lastLoaded, ctx.chatSummary.latestEventIndex);
         // this implies that we have not loaded any messages which should never happen
         return undefined;
     }
@@ -246,10 +249,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       events: replaceAffected(
                           ctx.user!.userId,
                           ctx.chatSummary.chatId,
-                          dedupe(
-                              (a, b) => a.index === b.index,
-                              [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
-                          ),
+                          replaceLocal(ctx.events, ev.data.events, ctx.unconfirmed),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),

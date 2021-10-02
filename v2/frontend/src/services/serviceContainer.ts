@@ -399,12 +399,10 @@ export class ServiceContainer {
     }
 
     webRtcOffer(them: string, offer: WebRtcOffer): Promise<AddWebRtcResponse> {
-        console.log("Sending webrtc offer to: ", them, " at ", +new Date());
         return UserClient.create(them, this.identity, this.db).addWebRtcSessionDetails(offer);
     }
 
     webRtcAnswer(them: string, answer: WebRtcAnswer): Promise<AddWebRtcResponse> {
-        console.log("Sending webrtc answer to: ", them, " at ", +new Date());
         return UserClient.create(them, this.identity, this.db).addWebRtcSessionDetails(answer);
     }
 }

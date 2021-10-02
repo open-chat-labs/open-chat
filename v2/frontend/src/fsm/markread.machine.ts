@@ -52,7 +52,6 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
     on: {
         MESSAGE_READ_BY_ME: {
             actions: assign((ctx, ev) => {
-                console.log("got message from chat machine", ev);
                 return {
                     ranges: insertIndexIntoRanges(ev.data, ctx.ranges),
                 };
@@ -76,12 +75,6 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
                 src: "markMessagesRead",
                 onDone: {
                     target: "idle",
-                    actions: assign((ctx, ev: DoneInvokeEvent<MarkReadResponse>) => {
-                        if (ctx.pending.length > 0) {
-                            console.log("marked read: ", ctx.pending, ev.data);
-                        }
-                        return {};
-                    }),
                 },
                 onError: "idle",
             },

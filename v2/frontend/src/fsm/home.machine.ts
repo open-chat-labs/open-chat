@@ -541,6 +541,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 ),
                                                 localReactions: {},
                                                 typing: ctx.typing,
+                                                unconfirmed: ctx.unconfirmed,
                                             }),
                                             `chat-${key}`
                                         ),
