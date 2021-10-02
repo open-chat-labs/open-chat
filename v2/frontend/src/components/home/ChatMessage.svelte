@@ -24,7 +24,7 @@
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    // import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import Tick from "./Tick.svelte";
@@ -107,9 +107,9 @@
         dispatch("deleteMessage", msg);
     }
 
-    function editMessage() {
-        dispatch("editMessage");
-    }
+    // function editMessage() {
+    //     dispatch("editMessage");
+    // }
 
     function selectReaction(ev: CustomEvent<string>) {
         toggleReaction(ev.detail);

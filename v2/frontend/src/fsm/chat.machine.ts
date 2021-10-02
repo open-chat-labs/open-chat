@@ -104,11 +104,11 @@ export type ChatEvents =
       }
     | {
           type: "DELETE_MESSAGE";
-          data: bigint;
+          data: { messageId: bigint; userId: string };
       }
     | {
           type: "UNDELETE_MESSAGE";
-          data: Message;
+          data: { message: Message; userId: string };
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
@@ -425,17 +425,28 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 UNDELETE_MESSAGE: {
                     actions: assign((ctx, ev) => {
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_undeleted_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    message: ev.data.message,
+                                    userId: ev.data.userId,
+                                }
+                            );
+                        }
                         return {
                             events: ctx.events.map((e) => {
                                 if (
                                     e.event.kind === "message" &&
-                                    e.event.messageId === ev.data.messageId
+                                    e.event.messageId === BigInt(ev.data.message.messageId)
                                 ) {
                                     return {
                                         ...e,
                                         event: {
                                             ...e.event,
-                                            content: ev.data.content,
+                                            content: ev.data.message.content,
                                         },
                                     };
                                 }
@@ -446,9 +457,23 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 DELETE_MESSAGE: {
                     actions: assign((ctx, ev) => {
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_deleted_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    messageId: ev.data.messageId,
+                                    userId: ev.data.userId,
+                                }
+                            );
+                        }
                         return {
                             events: ctx.events.map((e) => {
-                                if (e.event.kind === "message" && e.event.messageId === ev.data) {
+                                if (
+                                    e.event.kind === "message" &&
+                                    e.event.messageId === BigInt(ev.data.messageId)
+                                ) {
                                     return {
                                         ...e,
                                         event: {

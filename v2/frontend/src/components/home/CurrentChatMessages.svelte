@@ -238,7 +238,10 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
-        machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
+        machine.send({
+            type: "DELETE_MESSAGE",
+            data: { messageId: ev.detail.messageId, userId: $machine.context.user!.userId },
+        });
 
         const apiPromise =
             $machine.context.chatSummary.kind === "group_chat"
@@ -256,12 +259,18 @@
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+                    machine.send({
+                        type: "UNDELETE_MESSAGE",
+                        data: { message: ev.detail, userId: $machine.context.user!.userId },
+                    });
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+                machine.send({
+                    type: "UNDELETE_MESSAGE",
+                    data: { message: ev.detail, userId: $machine.context.user!.userId },
+                });
             });
     }
 
