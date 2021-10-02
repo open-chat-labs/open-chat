@@ -248,7 +248,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 ? {
                       userLookup: ev.data.userLookup,
                       events: replaceAffected(
-                          ctx.user!.userId,
                           ctx.chatSummary.chatId,
                           replaceLocal(ctx.events, ev.data.events, ctx.unconfirmed),
                           ev.data.affectedEvents,
@@ -485,6 +484,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         reaction: ev.data.reaction,
                                         timestamp: +new Date(),
                                         kind: addOrRemove,
+                                        userId: ev.data.userId,
                                     });
                                     const updatedEvent = {
                                         ...e,

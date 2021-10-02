@@ -90,6 +90,7 @@ export type LocalReaction = {
     reaction: string;
     timestamp: number;
     kind: "add" | "remove";
+    userId: string; // this can actually be a remote user via rtc
 };
 
 export type Reaction = {

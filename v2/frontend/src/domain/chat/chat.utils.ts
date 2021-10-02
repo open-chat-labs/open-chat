@@ -566,32 +566,25 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
-export function mergeReactions(
-    myUserId: string,
-    incoming: Reaction[],
-    localReactions: LocalReaction[]
-): Reaction[] {
+export function mergeReactions(incoming: Reaction[], localReactions: LocalReaction[]): Reaction[] {
     const merged = localReactions.reduce<Reaction[]>((result, local) => {
-        return applyLocalReaction(myUserId, local, result);
+        return applyLocalReaction(local, result);
     }, incoming);
     return merged;
 }
 
-function applyLocalReaction(
-    userId: string,
-    local: LocalReaction,
-    reactions: Reaction[]
-): Reaction[] {
+// todo - this needs tweaking because local reactions may have come via rtc and therefore not might not be mine
+function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
     const r = reactions.find((r) => r.reaction === local.reaction);
     if (r === undefined) {
         if (local.kind === "add") {
-            reactions.push({ reaction: local.reaction, userIds: new Set([userId]) });
+            reactions.push({ reaction: local.reaction, userIds: new Set([local.userId]) });
         }
     } else {
         if (local.kind === "add") {
-            r.userIds.add(userId);
+            r.userIds.add(local.userId);
         } else {
-            r.userIds.delete(userId);
+            r.userIds.delete(local.userId);
             if (r.userIds.size === 0) {
                 reactions = reactions.filter((r) => r.reaction !== local.reaction);
             }
@@ -606,7 +599,6 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 }
 
 function mergeMessageEvents(
-    myUserId: string,
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>,
     localReactions: Record<string, LocalReaction[]>
@@ -614,11 +606,7 @@ function mergeMessageEvents(
     if (existing.event.kind === "message") {
         if (incoming.event.kind === "message") {
             const key = existing.event.messageId.toString();
-            const merged = mergeReactions(
-                myUserId,
-                incoming.event.reactions,
-                localReactions[key] ?? []
-            );
+            const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
             incoming.event.reactions = merged;
             return incoming;
         }
@@ -672,7 +660,6 @@ export function replaceLocal(
 
 // todo - this is not very efficient at the moment
 export function replaceAffected(
-    myUserId: string,
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
@@ -682,7 +669,7 @@ export function replaceAffected(
     const updated = events.map((ev) => {
         const aff = affectedEvents.find((a) => a.index === ev.index);
         if (aff !== undefined) {
-            const merged = mergeMessageEvents(myUserId, ev, aff, localReactions);
+            const merged = mergeMessageEvents(ev, aff, localReactions);
             toCacheBust.push(merged);
             return merged;
         }
