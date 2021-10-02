@@ -15,6 +15,7 @@ import type {
     ChatSummary,
     DirectChatSummary,
     EnhancedReplyContext,
+    EventWrapper,
     GroupChatSummary,
     Message,
 } from "../domain/chat/chat";
@@ -27,7 +28,7 @@ import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/use
 import { mergeUsers, missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
-import { ChatContext, ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
+import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
@@ -82,6 +83,10 @@ export type HomeEvents =
     | {
           type: "REMOTE_USER_UNDELETED_MESSAGE";
           data: { chatId: string; userId: string; message: Message };
+      }
+    | {
+          type: "REMOTE_USER_SENT_MESSAGE";
+          data: { chatId: string; userId: string; messageEvent: EventWrapper<Message> };
       }
     | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
@@ -297,6 +302,18 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: parsedMsg,
                     });
                 }
+                if (parsedMsg.kind === "remote_user_sent_message") {
+                    callback({
+                        type: "REMOTE_USER_SENT_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageEvent: {
+                                ...parsedMsg.messageEvent,
+                                timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                            },
+                        },
+                    });
+                }
             });
             return () => {
                 rtcConnectionsManager.unsubscribe();
@@ -433,6 +450,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
+                REMOTE_USER_SENT_MESSAGE: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "SEND_MESSAGE",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
                 REMOTE_USER_UNDELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
                         sendMessageToChatBasedOnUser(ctx, ev.data.userId, {

@@ -53,7 +53,10 @@
                 });
 
             const event = { ...editingEvent, event: msg! };
-            machine.send({ type: "SEND_MESSAGE", data: event });
+            machine.send({
+                type: "SEND_MESSAGE",
+                data: { messageEvent: event, userId: $machine.context.user!.userId },
+            });
         }
     }
 
@@ -97,11 +100,7 @@
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
             machine.send({
                 type: "SEND_MESSAGE",
-                data: event,
-            });
-            chatStore.set({
-                chatId: $machine.context.chatSummary.chatId,
-                event: "sending_message",
+                data: { messageEvent: event, userId: $machine.context.user!.userId },
             });
         }
     }

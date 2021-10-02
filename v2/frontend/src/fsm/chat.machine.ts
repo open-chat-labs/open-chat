@@ -84,7 +84,7 @@ export type ChatEvents =
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
+    | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
     | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
     | { type: "REMOVE_MESSAGE"; data: Message }
     | {
@@ -341,25 +341,21 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             on: {
                 START_TYPING: {
                     actions: pure((ctx, _ev) => {
-                        if (ctx.chatSummary.kind === "direct_chat") {
-                            rtcConnectionsManager.sendMessage([ctx.chatSummary.them], {
-                                kind: "remote_user_typing",
-                                chatId: ctx.chatSummary.chatId,
-                                userId: ctx.user!.userId,
-                            });
-                        }
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
+                            kind: "remote_user_typing",
+                            chatId: ctx.chatSummary.chatId,
+                            userId: ctx.user!.userId,
+                        });
                         return undefined;
                     }),
                 },
                 STOP_TYPING: {
                     actions: pure((ctx, _ev) => {
-                        if (ctx.chatSummary.kind === "direct_chat") {
-                            rtcConnectionsManager.sendMessage([ctx.chatSummary.them], {
-                                kind: "remote_user_stopped_typing",
-                                chatId: ctx.chatSummary.chatId,
-                                userId: ctx.user!.userId,
-                            });
-                        }
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
+                            kind: "remote_user_stopped_typing",
+                            chatId: ctx.chatSummary.chatId,
+                            userId: ctx.user!.userId,
+                        });
                         return undefined;
                     }),
                 },
@@ -370,9 +366,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: ctx.events.map((e) => {
                                     if (
                                         e.event.kind === "message" &&
-                                        e.event.messageId === ev.data.event.messageId
+                                        e.event.messageId === ev.data.messageEvent.event.messageId
                                     ) {
-                                        return ev.data;
+                                        return ev.data.messageEvent;
                                     }
                                     return e;
                                 }),
@@ -381,9 +377,27 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 editingEvent: undefined,
                             };
                         } else {
+                            if (ev.data.userId === ctx.user?.userId) {
+                                rtcConnectionsManager.sendMessage(
+                                    userIdsFromChatSummary(ctx.chatSummary),
+                                    {
+                                        kind: "remote_user_sent_message",
+                                        chatId: ctx.chatSummary.chatId,
+                                        messageEvent: ev.data.messageEvent,
+                                        userId: ev.data.userId,
+                                    }
+                                );
+                            }
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: "sending_message",
+                            });
                             return {
-                                chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
-                                events: [...ctx.events, ev.data],
+                                chatSummary: setLastMessageOnChat(
+                                    ctx.chatSummary,
+                                    ev.data.messageEvent
+                                ),
+                                events: [...ctx.events, ev.data.messageEvent],
                                 replyingTo: undefined,
                                 fileToAttach: undefined,
                                 editingEvent: undefined,

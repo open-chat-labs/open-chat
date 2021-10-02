@@ -1,4 +1,4 @@
-import type { Message } from "../chat/chat";
+import type { EventWrapper, Message } from "../chat/chat";
 
 export type WebRtcSessionDetails = WebRtcOffer | WebRtcAnswer;
 
@@ -32,6 +32,7 @@ export type WebRtcMessage =
     | RemoteUserTyping
     | RemoteUserToggledReaction
     | RemoteUserDeletedMessage
+    | RemoteUserSentMessage
     | RemoteUserUndeletedMessage;
 
 export type CurrentUserTyping = {
@@ -75,6 +76,13 @@ export type RemoteUserUndeletedMessage = {
     kind: "remote_user_undeleted_message";
     chatId: string;
     message: Message;
+    userId: string;
+};
+
+export type RemoteUserSentMessage = {
+    kind: "remote_user_sent_message";
+    chatId: string;
+    messageEvent: EventWrapper<Message>;
     userId: string;
 };
 
