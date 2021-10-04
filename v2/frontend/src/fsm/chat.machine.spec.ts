@@ -22,7 +22,6 @@ import {
     previousMessagesCriteria,
 } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
-import { markReadMachine } from "./markread.machine";
 
 const textMessageContent: TextContent = {
     kind: "text_content",
@@ -86,10 +85,7 @@ const directContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
-    markMessages: spawn(markReadMachine),
     localReactions: {},
-    typing: new Set<string>(),
-    unconfirmed: new Set<bigint>(),
 };
 
 GroupIndexClient.create = jest.fn();
@@ -107,10 +103,7 @@ const groupContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
-    markMessages: spawn(markReadMachine),
     localReactions: {},
-    typing: new Set<string>(),
-    unconfirmed: new Set<bigint>(),
 };
 
 describe("chat machine transitions", () => {
@@ -171,7 +164,14 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "SEND_MESSAGE",
-                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+                data: {
+                    messageEvent: {
+                        event: testDirectMessage,
+                        index: 100,
+                        timestamp: BigInt(+new Date()),
+                    },
+                    userId: "abcdefg",
+                },
             },
             { user_states: "idle" }
         );
@@ -250,7 +250,14 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "SEND_MESSAGE",
-                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+                data: {
+                    messageEvent: {
+                        event: testDirectMessage,
+                        index: 100,
+                        timestamp: BigInt(+new Date()),
+                    },
+                    userId: "abcdefg",
+                },
             },
             { user_states: "idle" }
         );

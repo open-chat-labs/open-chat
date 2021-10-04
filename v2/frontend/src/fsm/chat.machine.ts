@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-    ActorRefFrom,
-    createMachine,
-    DoneInvokeEvent,
-    MachineConfig,
-    MachineOptions,
-} from "xstate";
+import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { assign, pure, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
@@ -41,7 +35,6 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
 import { chatStore } from "../stores/chat";
-import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import { unconfirmed } from "../stores/unconfirmed";
@@ -59,7 +52,6 @@ export interface ChatContext {
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
-    markMessages: ActorRefFrom<MarkReadMachine>;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
 }
@@ -583,14 +575,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     // we need to send this modified chat summary to the parent machine
                     // so that it can sync it with the chat poller - nasty
                     // we also need to seend it to the mark read machine to periodically ping off to the server
-                    actions: pure((ctx, ev) => {
-                        ctx.markMessages.send({
-                            type: "MESSAGE_READ_BY_ME",
-                            data: {
-                                messageIndex: ev.data.messageIndex,
-                                messageId: ev.data.messageId,
-                            },
-                        });
+                    actions: pure((_ctx, ev) => {
                         return sendParent<ChatContext, ChatEvents>(ev);
                     }),
                 },

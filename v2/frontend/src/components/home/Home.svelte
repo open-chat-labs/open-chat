@@ -26,6 +26,8 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
+    import { blockedUsers } from "../../stores/blockedUsers";
+    import { unconfirmed } from "../../stores/unconfirmed";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -121,11 +123,11 @@
     }
 
     function unconfirmedMessage(ev: CustomEvent<bigint>) {
-        machine.send({ type: "UNCONFIRMED_MESSAGE", data: ev.detail });
+        unconfirmed.add(ev.detail);
     }
 
     function messageConfirmed(ev: CustomEvent<bigint>) {
-        machine.send({ type: "MESSAGE_CONFIRMED", data: ev.detail });
+        unconfirmed.delete(ev.detail);
     }
 
     function newChat() {
@@ -137,7 +139,7 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
-        machine.send({ type: "BLOCK_USER", data: ev.detail.userId });
+        blockedUsers.add(ev.detail.userId);
         $machine.context
             .serviceContainer!.blockUser(ev.detail.userId)
             .then((resp) => {
@@ -151,7 +153,7 @@
     }
 
     function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        machine.send({ type: "UNBLOCK_USER", data: ev.detail.userId });
+        blockedUsers.delete(ev.detail.userId);
         $machine.context
             .serviceContainer!.unblockUser(ev.detail.userId)
             .then((resp) => {
@@ -218,7 +220,7 @@
     $: blocked =
         selectedChat !== undefined &&
         selectedChat.kind === "direct_chat" &&
-        $machine.context.blockedUsers.has(selectedChat.them);
+        $blockedUsers.has(selectedChat.them);
 </script>
 
 {#if $machine.context.user}

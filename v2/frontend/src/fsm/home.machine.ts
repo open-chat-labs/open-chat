@@ -33,7 +33,6 @@ import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
-import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import { unconfirmed, unconfirmedReadByThem, unconfirmedReadByUs } from "../stores/unconfirmed";
@@ -42,9 +41,7 @@ import type {
     RemoteUserDeletedMessage,
     RemoteUserReadMessage,
     RemoteUserSentMessage,
-    RemoteUserStoppedTyping,
     RemoteUserToggledReaction,
-    RemoteUserTyping,
     RemoteUserUndeletedMessage,
     WebRtcAnswer,
     WebRtcMessage,
@@ -52,6 +49,7 @@ import type {
     WebRtcSessionDetailsEvent,
 } from "../domain/webrtc/webrtc";
 import { typing } from "../stores/typing";
+import type { MessageReadTracker } from "../stores/markRead";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -69,7 +67,7 @@ export interface HomeContext {
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext;
-    blockedUsers: Set<string>;
+    markRead: MessageReadTracker;
 }
 
 export type HomeEvents =
@@ -101,10 +99,6 @@ export type HomeEvents =
     | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
-    | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
-    | { type: "MESSAGE_CONFIRMED"; data: bigint }
-    | { type: "BLOCK_USER"; data: string }
-    | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
@@ -428,13 +422,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
     id: "home_machine",
     initial: "loading_chats",
-    context: {
-        chatSummaries: [],
-        userLookup: {},
-        usersLastUpdate: BigInt(0),
-        chatsIndex: {},
-        blockedUsers: new Set<string>(),
-    },
     states: {
         loading_chats: {
             invoke: {
@@ -668,20 +655,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     ? Number(ev.data.eventIndex)
                                                     : undefined,
                                                 replyingTo: ctx.replyingTo,
-                                                markMessages: spawn(
-                                                    markReadMachine.withContext({
-                                                        serviceContainer: ctx.serviceContainer!,
-                                                        chatSummary,
-                                                        capturedMessages: {
-                                                            indexRanges: [],
-                                                            ids: new Set<bigint>(),
-                                                        },
-                                                        pendingMessages: {
-                                                            indexRanges: [],
-                                                            ids: new Set<bigint>(),
-                                                        },
-                                                    })
-                                                ),
                                                 localReactions: {},
                                             }),
                                             `chat-${key}`
@@ -714,21 +687,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     target: ".join_group",
                 },
-                BLOCK_USER: {
-                    actions: assign((ctx, ev) => {
-                        return {
-                            blockedUsers: ctx.blockedUsers.add(ev.data),
-                        };
-                    }),
-                },
-                UNBLOCK_USER: {
-                    actions: assign((ctx, ev) => {
-                        ctx.blockedUsers.delete(ev.data);
-                        return {
-                            blockedUsers: ctx.blockedUsers,
-                        };
-                    }),
-                },
                 MESSAGE_READ_BY_ME: {
                     /**
                      * this is fairly horrific, but it seems to be what we have to do
@@ -747,6 +705,12 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             const chatSummaries = ctx.chatSummaries.map((c) => {
                                 if (c.chatId === ev.data.chatId) {
                                     const userIds = userIdsFromChatSummary(c);
+
+                                    ctx.markRead.markMessageRead(
+                                        c,
+                                        ev.data.messageIndex,
+                                        ev.data.messageId
+                                    );
 
                                     const rtc: WebRtcMessage = {
                                         kind: "remote_user_read_message",
@@ -854,18 +818,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             to: "updateChatsPoller",
                         }),
                     ],
-                },
-                UNCONFIRMED_MESSAGE: {
-                    actions: pure((_ctx, ev) => {
-                        unconfirmed.add(ev.data);
-                        return undefined;
-                    }),
-                },
-                MESSAGE_CONFIRMED: {
-                    actions: pure((_ctx, ev) => {
-                        unconfirmed.delete(ev.data);
-                        return undefined;
-                    }),
                 },
             },
             states: {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DirectChatSummary } from "../domain/chat/chat";
+import { initMarkRead } from "../stores/markRead";
 import { homeMachine } from "./home.machine";
 import { testTransition } from "./machine.spec.utils";
 
@@ -16,28 +17,6 @@ const directChat: DirectChatSummary = {
 };
 
 describe("home machine transitions", () => {
-    test("unconfirmed message", () => {
-        const ctx = testTransition(
-            homeMachine,
-            "loaded_chats",
-            { type: "UNCONFIRMED_MESSAGE", data: BigInt(100) },
-            "loaded_chats"
-        );
-        expect(ctx.unconfirmed.has(BigInt(100))).toBe(true);
-    });
-    test("unconfirmed message", () => {
-        const ctx = testTransition(
-            homeMachine.withContext({
-                ...homeMachine.context,
-                unconfirmed: new Set([BigInt(100), BigInt(200)]),
-            }),
-            "loaded_chats",
-            { type: "MESSAGE_CONFIRMED", data: BigInt(100) },
-            "loaded_chats"
-        );
-        expect(ctx.unconfirmed.has(BigInt(100))).toBe(false);
-        expect(ctx.unconfirmed.has(BigInt(200))).toBe(true);
-    });
     test("getUpdates fails", () => {
         testTransition(
             homeMachine,
@@ -70,8 +49,6 @@ describe("home machine transitions", () => {
                 userLookup: {},
                 usersLastUpdate: BigInt(0),
                 chatsIndex: {},
-                blockedUsers: new Set<string>(),
-                unconfirmed: new Set<bigint>(),
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "SELECT_CHAT", data: { chatId: "abcdefg", eventIndex: undefined } },
