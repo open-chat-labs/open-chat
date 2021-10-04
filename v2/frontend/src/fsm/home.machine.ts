@@ -36,6 +36,8 @@ import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import { unconfirmed, unconfirmedReadByThem, unconfirmedReadByUs } from "../stores/unconfirmed";
+import { get } from "svelte/store";
 import type {
     RemoteUserDeletedMessage,
     RemoteUserReadMessage,
@@ -49,6 +51,7 @@ import type {
     WebRtcOffer,
     WebRtcSessionDetailsEvent,
 } from "../domain/webrtc/webrtc";
+import { typing } from "../stores/typing";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -67,10 +70,6 @@ export interface HomeContext {
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext;
     blockedUsers: Set<string>;
-    unconfirmed: Set<bigint>;
-    typing: Set<string>;
-    unconfirmedReadByUs: Set<bigint>;
-    unconfirmedReadByThem: Set<bigint>;
 }
 
 export type HomeEvents =
@@ -79,8 +78,6 @@ export type HomeEvents =
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
-    | { type: "REMOTE_USER_TYPING"; data: RemoteUserTyping }
-    | { type: "REMOTE_USER_STOPPED_TYPING"; data: RemoteUserStoppedTyping }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
           data: RemoteUserToggledReaction;
@@ -295,16 +292,10 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 console.log("handle webrtc message: ", userId, message);
                 const parsedMsg: WebRtcMessage = JSON.parse(message);
                 if (parsedMsg.kind === "remote_user_typing") {
-                    callback({
-                        type: "REMOTE_USER_TYPING",
-                        data: parsedMsg,
-                    });
+                    typing.add(parsedMsg.userId);
                 }
                 if (parsedMsg.kind === "remote_user_stopped_typing") {
-                    callback({
-                        type: "REMOTE_USER_STOPPED_TYPING",
-                        data: parsedMsg,
-                    });
+                    typing.delete(parsedMsg.userId);
                 }
                 if (parsedMsg.kind === "remote_user_toggled_reaction") {
                     callback({
@@ -443,10 +434,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         usersLastUpdate: BigInt(0),
         chatsIndex: {},
         blockedUsers: new Set<string>(),
-        unconfirmed: new Set<bigint>(),
-        typing: new Set<string>(),
-        unconfirmedReadByThem: new Set<bigint>(),
-        unconfirmedReadByUs: new Set<bigint>(),
     },
     states: {
         loading_chats: {
@@ -498,12 +485,14 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     actions: assign((ctx, ev) => {
                         // if the message is unconfirmed
                         if (ev.data.messageIndex === undefined) {
-                            ctx.unconfirmedReadByThem.add(BigInt(ev.data.messageId));
-                            return {
-                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
-                            };
+                            console.log(
+                                "adding message to unconfirmed by them: ",
+                                ev.data.messageId
+                            );
+                            unconfirmedReadByThem.add(BigInt(ev.data.messageId));
+                            return {};
                         } else {
-                            ctx.unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
+                            unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
                             // todo - we must also send this via CHAT_UPDATED to the chat actor
                             return {
                                 chatSummaries: ctx.chatSummaries.map((c) => {
@@ -515,19 +504,14 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     }
                                     return c;
                                 }),
-                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
                             };
                         }
                     }),
                 },
                 REMOTE_USER_SENT_MESSAGE: {
                     actions: [
-                        assign((ctx, ev) => ({
-                            unconfirmed: ctx.unconfirmed.add(
-                                BigInt(ev.data.messageEvent.event.messageId)
-                            ),
-                        })),
                         pure((ctx, ev) => {
+                            unconfirmed.add(BigInt(ev.data.messageEvent.event.messageId));
                             sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
                                 type: "SEND_MESSAGE",
                                 data: ev.data,
@@ -561,22 +545,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                             data: ev.data,
                         });
                         return undefined;
-                    }),
-                },
-                REMOTE_USER_STOPPED_TYPING: {
-                    actions: assign((ctx, ev) => {
-                        ctx.typing.delete(ev.data.userId);
-                        return {
-                            typing: ctx.typing,
-                        };
-                    }),
-                },
-                REMOTE_USER_TYPING: {
-                    actions: assign((ctx, ev) => {
-                        ctx.typing.add(ev.data.userId);
-                        return {
-                            typing: ctx.typing,
-                        };
                     }),
                 },
                 UPDATE_USER_AVATAR: {
@@ -712,14 +680,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                             indexRanges: [],
                                                             ids: new Set<bigint>(),
                                                         },
-                                                        unconfirmed: ctx.unconfirmed,
                                                     })
                                                 ),
                                                 localReactions: {},
-                                                typing: ctx.typing,
-                                                unconfirmed: ctx.unconfirmed,
-                                                unconfirmedReadByUs: ctx.unconfirmedReadByUs,
-                                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
                                             }),
                                             `chat-${key}`
                                         ),
@@ -793,14 +756,14 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     };
 
                                     // we must consider whether the message is confirmed or not
-                                    if (!ctx.unconfirmed.has(ev.data.messageId)) {
+                                    if (!get(unconfirmed).has(BigInt(ev.data.messageId))) {
                                         chat = setMessageRead(c, ev.data.messageIndex);
-                                        ctx.unconfirmedReadByUs.delete(ev.data.messageId);
+                                        unconfirmedReadByUs.delete(BigInt(ev.data.messageId));
                                         rtc.messageIndex = ev.data.messageIndex;
                                         rtcConnectionsManager.sendMessage(userIds, rtc);
                                         return chat;
                                     } else {
-                                        ctx.unconfirmedReadByUs.add(ev.data.messageId);
+                                        unconfirmedReadByUs.add(BigInt(ev.data.messageId));
                                         rtcConnectionsManager.sendMessage(userIds, rtc);
                                         chat = c;
                                         return c;
@@ -893,16 +856,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     ],
                 },
                 UNCONFIRMED_MESSAGE: {
-                    actions: assign((ctx, ev) => ({
-                        unconfirmed: ctx.unconfirmed.add(ev.data),
-                    })),
+                    actions: pure((_ctx, ev) => {
+                        unconfirmed.add(ev.data);
+                        return undefined;
+                    }),
                 },
                 MESSAGE_CONFIRMED: {
-                    actions: assign((ctx, ev) => {
-                        ctx.unconfirmed.delete(ev.data);
-                        return {
-                            unconfirmed: ctx.unconfirmed,
-                        };
+                    actions: pure((_ctx, ev) => {
+                        unconfirmed.delete(ev.data);
+                        return undefined;
                     }),
                 },
             },

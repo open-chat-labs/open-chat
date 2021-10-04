@@ -242,7 +242,6 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
-                unconfirmed={$machine.context.unconfirmed}
                 loadingChats={$machine.matches("loading_chats")}
                 {blocked}
                 on:unconfirmedMessage={unconfirmedMessage}

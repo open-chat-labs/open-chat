@@ -7,7 +7,6 @@
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
-    export let unconfirmed: Set<bigint>;
 
     function showGroupDetails() {
         machine.send({ type: "SHOW_GROUP_DETAILS" });
@@ -26,7 +25,6 @@
     <CurrentChatHeader
         users={$machine.context.userLookup}
         user={$machine.context.user}
-        typing={$machine.context.typing}
         {blocked}
         on:clearSelection
         on:blockUser
@@ -36,7 +34,7 @@
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages {unconfirmed} on:chatWith {machine} />
+    <CurrentChatMessages on:chatWith {machine} />
     <Footer {machine} on:unconfirmedMessage on:messageConfirmed />
 </div>
 

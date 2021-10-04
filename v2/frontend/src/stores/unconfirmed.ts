@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
+import { createSetStore } from "./setStore";
 
-const unconfirmed = writable(new Set<bigint>());
-const unconfirmedReadByUs = writable(new Set<bigint>());
-const unconfirmedReadByThem = writable(new Set<bigint>());
+export const unconfirmed = createSetStore(writable(new Set<bigint>()));
+export const unconfirmedReadByUs = createSetStore(writable(new Set<bigint>()));
+export const unconfirmedReadByThem = createSetStore(writable(new Set<bigint>()));

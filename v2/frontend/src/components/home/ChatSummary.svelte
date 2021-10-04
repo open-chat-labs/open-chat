@@ -16,11 +16,11 @@
     import type { ChatSummary } from "../../domain/chat/chat";
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
+    import { typing } from "../../stores/typing";
 
     export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
-    export let typing: Set<string>;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -28,7 +28,7 @@
                 name: users[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
-                typing: typing.has(chatSummary.them),
+                typing: $typing.has(chatSummary.them),
             };
         }
         return {

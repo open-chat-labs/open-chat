@@ -25,11 +25,11 @@
     import type { ChatSummary, GroupChatSummary } from "../../domain/chat/chat";
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
+    import { typing } from "../../stores/typing";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
     export let users: UserLookup;
-    export let typing: Set<string>;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
 
@@ -89,7 +89,7 @@
                 avatarUrl: getAvatarUrl(users[chatSummary.them]),
                 userStatus: getUserStatus(users, chatSummary.them),
                 subtext: "When user was last online | typing",
-                typing: typing.has(chatSummary.them),
+                typing: $typing.has(chatSummary.them),
             };
         }
         const participantIds = chatSummary.participants.map((p) => p.userId);

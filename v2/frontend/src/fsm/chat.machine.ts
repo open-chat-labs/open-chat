@@ -44,6 +44,8 @@ import { chatStore } from "../stores/chat";
 import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import { unconfirmed } from "../stores/unconfirmed";
+import { get } from "svelte/store";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
@@ -60,10 +62,6 @@ export interface ChatContext {
     markMessages: ActorRefFrom<MarkReadMachine>;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
-    typing: Set<string>;
-    unconfirmed: Set<bigint>;
-    unconfirmedReadByUs: Set<bigint>;
-    unconfirmedReadByThem: Set<bigint>;
 }
 
 type LoadEventsResponse = {
@@ -173,7 +171,7 @@ export function earliestIndex(ctx: ChatContext): number {
 }
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
-    const lastLoaded = latestLoadedEventIndex(ctx.events, ctx.unconfirmed);
+    const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
         console.log("loading messages from: ", from);
@@ -255,7 +253,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       userLookup: ev.data.userLookup,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
-                          replaceLocal(ctx.events, ev.data.events, ctx.unconfirmed),
+                          replaceLocal(ctx.events, ev.data.events),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),

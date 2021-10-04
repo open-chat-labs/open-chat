@@ -26,6 +26,7 @@ import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
+import { unconfirmed } from "../../stores/unconfirmed";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -632,8 +633,7 @@ function partitionEvents(
 
 export function replaceLocal(
     onClient: EventWrapper<ChatEvent>[],
-    fromServer: EventWrapper<ChatEvent>[],
-    unconfirmed: Set<bigint>
+    fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);

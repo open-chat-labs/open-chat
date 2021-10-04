@@ -36,13 +36,17 @@
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
     import { toastStore } from "../../stores/toast";
+    import {
+        unconfirmed,
+        unconfirmedReadByThem,
+        unconfirmedReadByUs,
+    } from "../../stores/unconfirmed";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
     export let machine: ActorRefFrom<ChatMachine>;
-    export let unconfirmed: Set<bigint>;
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
@@ -390,7 +394,7 @@
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.has(evt.event.messageId);
+            return !$unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
@@ -398,7 +402,7 @@
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return (
-                $machine.context.unconfirmedReadByThem.has(evt.event.messageId) ||
+                $unconfirmedReadByThem.has(evt.event.messageId) ||
                 messageIsReadByThem($machine.context.chatSummary, evt.event)
             );
         }
@@ -411,13 +415,16 @@
         } else {
             if (evt.event.kind === "message") {
                 return (
-                    $machine.context.unconfirmedReadByUs.has(evt.event.messageId) ||
+                    $unconfirmedReadByUs.has(evt.event.messageId) ||
                     messageIsReadByMe($machine.context.chatSummary, evt.event)
                 );
             }
         }
         return true;
     }
+
+    $: console.log("unconfirmed: Read by them: ", $unconfirmedReadByThem);
+    $: console.log("unconfirmed: ", $unconfirmed);
 
     // then we need to integrate web rtc
 </script>

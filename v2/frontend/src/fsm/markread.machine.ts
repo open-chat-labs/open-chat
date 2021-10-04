@@ -3,12 +3,14 @@ import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent }
 import type { ChatSummary, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { unconfirmed } from "../stores/unconfirmed";
+import { get } from "svelte/store";
 
 /**
  * This machine exists to periodically sync read message state to the backend
  */
 
-const MARK_READ_INTERVAL = 12000;
+const MARK_READ_INTERVAL = 2000;
 
 type Messages = {
     indexRanges: MessageIndexRange[];
@@ -20,7 +22,6 @@ export interface MarkReadContext {
     chatSummary: ChatSummary;
     capturedMessages: Messages;
     pendingMessages: Messages;
-    unconfirmed: Set<bigint>;
 }
 
 export type MarkReadEvents =
@@ -63,7 +64,7 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
     on: {
         MESSAGE_READ_BY_ME: {
             actions: assign((ctx, ev) => {
-                if (ctx.unconfirmed.has(ev.data.messageId)) {
+                if (get(unconfirmed).has(ev.data.messageId)) {
                     return {
                         capturedMessages: {
                             indexRanges: ctx.capturedMessages.indexRanges,

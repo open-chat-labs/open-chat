@@ -10,7 +10,6 @@
     export let machine: ActorRefFrom<ChatMachine> | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
-    export let unconfirmed: Set<bigint>;
 </script>
 
 <Panel middle>
@@ -26,7 +25,6 @@
         </div>
     {:else}
         <CurrentChat
-            {unconfirmed}
             {blocked}
             {machine}
             on:unconfirmedMessage
