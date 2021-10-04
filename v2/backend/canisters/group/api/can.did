@@ -59,14 +59,20 @@ type ToggleReactionResponse =
 
 type MarkReadArgs =
     record {
-        message_ranges: vec MessageIndexRange;
+        message_index_ranges: vec MessageIndexRange;
+        message_ids: vec MessageId;
     };
 
 type MarkReadResponse =
     variant {
-        Success;
-        SuccessNoChange;
+        Success: MarkReadSuccessResult;
+        SuccessNoChange: MarkReadSuccessResult;
         NotInGroup;
+    };
+
+type MarkReadSuccessResult =
+    record {
+        unrecognised_message_ids: vec MessageId;
     };
 
 type BlockUserArgs =

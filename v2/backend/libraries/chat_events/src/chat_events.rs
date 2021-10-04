@@ -499,6 +499,17 @@ impl ChatEvents {
         }
     }
 
+    pub fn get_message_index(&self, message_id: MessageId) -> Option<MessageIndex> {
+        if let Some(&event_index) = self.message_id_map.get(&message_id) {
+            if let Some(event) = self.get_internal(event_index) {
+                if let ChatEventInternal::Message(message) = &event.event {
+                    return Some(message.message_index);
+                };
+            }
+        }
+        None
+    }
+
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
         let index = self.get_index(event_index)?;
 

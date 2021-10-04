@@ -19,16 +19,29 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let chat_id = args.user_id.into();
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         let mut added = RangeSet::new();
+        let mut unrecognised_message_ids = Vec::new();
         if let Some(max_message_index) = chat.events.latest_message_index() {
             added = insert_ranges(
                 &mut chat.read_by_me,
-                &args.message_ranges,
+                &args.message_index_ranges,
                 MessageIndex::default(),
                 max_message_index,
             );
+            for message_id in args.message_ids.into_iter() {
+                if let Some(message_index) = chat.events.get_message_index(message_id) {
+                    let as_u32 = message_index.into();
+                    if chat.read_by_me.insert(as_u32) {
+                        added.insert(as_u32);
+                    }
+                } else {
+                    unrecognised_message_ids.push(message_id);
+                }
+            }
         }
         if added.is_empty() {
-            SuccessNoChange
+            SuccessNoChange(SuccessResult {
+                unrecognised_message_ids,
+            })
         } else {
             let now = runtime_state.env.now();
             chat.read_by_me_updated = now;
@@ -42,7 +55,9 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ic_cdk::block_on(mark_read_on_recipients_canister(chat_id, their_message_ranges, added));
             }
 
-            Success
+            Success(SuccessResult {
+                unrecognised_message_ids,
+            })
         }
     } else {
         ChatNotFound
