@@ -1,6 +1,10 @@
+use crate::model::canisters_requiring_upgrade::FailedUpgrade;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::heartbeat;
-use types::ChatId;
+use types::{CanisterWasm, ChatId, Version};
+use utils::canisters::upgrade;
+
+const MAX_CANISTER_UPGRADES_PER_HEARTBEAT: u32 = 3;
 
 #[heartbeat]
 fn heartbeat() {
@@ -9,13 +13,11 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
-    use crate::model::canisters_requiring_upgrade::FailedUpgrade;
-    use types::{CanisterWasm, Version};
-    use utils::canisters::upgrade;
 
     pub fn run() {
-        if let Some(chat_to_upgrade) = RUNTIME_STATE.with(|state| try_get_next(state.borrow_mut().as_mut().unwrap())) {
-            ic_cdk::block_on(perform_upgrade(chat_to_upgrade));
+        let chats_to_upgrade = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
+        if !chats_to_upgrade.is_empty() {
+            ic_cdk::block_on(perform_upgrades(chats_to_upgrade));
         }
     }
 
@@ -23,6 +25,15 @@ mod upgrade_canisters {
         chat_id: ChatId,
         current_wasm_version: Version,
         new_wasm: CanisterWasm,
+    }
+
+    fn get_next_batch(runtime_state: &mut RuntimeState) -> Vec<ChatToUpgrade> {
+        (0..MAX_CANISTER_UPGRADES_PER_HEARTBEAT)
+            // TODO replace this with 'map_while' once we have upgraded to Rust 1.57
+            .map(|_| try_get_next(runtime_state))
+            .take_while(|c| c.is_some())
+            .map(|c| c.unwrap())
+            .collect()
     }
 
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<ChatToUpgrade> {
@@ -40,6 +51,12 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm: runtime_state.data.group_canister_wasm.clone(),
         })
+    }
+
+    async fn perform_upgrades(chats_to_update: Vec<ChatToUpgrade>) {
+        let futures: Vec<_> = chats_to_update.into_iter().map(perform_upgrade).collect();
+
+        futures::future::join_all(futures).await;
     }
 
     async fn perform_upgrade(chat_to_update: ChatToUpgrade) {
