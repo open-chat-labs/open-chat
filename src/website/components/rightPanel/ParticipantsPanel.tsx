@@ -7,7 +7,6 @@ import Typography from "@material-ui/core/Typography";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import makeStyles from "@material-ui/styles/makeStyles";
 import { RootState } from "../../reducers";
-import * as sortFunctions from "../../utils/sortFunctions";
 import { getSelectedChat, getUsers } from "../../domain/stateFunctions";
 import { changeRightPanel } from "../../actions/app/changeSidePanel";
 import UserListItem from "../shared/UserListItem";

@@ -472,6 +472,7 @@ export interface V1CyclesContent {
   'amount' : bigint,
 }
 export interface V1DirectMessageNotification {
+  'chat_id' : string,
   'recipient' : UserId,
   'sender' : UserId,
   'message' : V1Message,
@@ -492,7 +493,7 @@ export interface V1GroupMessageNotification {
   'recipients' : Array<UserId>,
   'message' : V1Message,
   'sender_name' : string,
-  'chat_id' : bigint,
+  'chat_id' : string,
   'group_name' : string,
 }
 export interface V1MediaContent {

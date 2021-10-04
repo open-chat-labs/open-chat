@@ -62,7 +62,6 @@ pub struct ParticipantStableState {
     date_added: Timestamp,
     min_visible_message_id: u32,
     unread_message_ids: Vec<[u32; 2]>,
-    #[serde(default)]
     notifications_muted: bool,
 }
 

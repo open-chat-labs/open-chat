@@ -70,6 +70,7 @@ pub fn update(request: Request) -> Response {
 
                         if !direct.notifications_muted(recipient) {
                             let notification = push_direct_message_notification::Notification {
+                                chat_id: format!("{:x}", request.chat_id.0), 
                                 sender: me,
                                 sender_name,
                                 message,
@@ -83,7 +84,7 @@ pub fn update(request: Request) -> Response {
 
                         if !recipients.is_empty() {
                             let notification = push_group_message_notification::Notification {
-                                chat_id: group.get_id().0,
+                                chat_id: format!("{:x}", request.chat_id.0), 
                                 group_name: group.subject().clone(),
                                 sender: me,
                                 sender_name,
