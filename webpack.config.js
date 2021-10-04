@@ -10,7 +10,7 @@ const IS_DEVELOPMENT = process.env.NODE_ENV
   : (process.env.DFX_NETWORK !== "ic");
 
 const mode = IS_DEVELOPMENT ? "development" : "production";
-const SERVICE_WORKER = "sw13.js";
+const SERVICE_WORKER = "sw34.js";
 const RAW_PATH = IS_DEVELOPMENT ? "" : "_/raw/";
 const WEBPUSH_SERVICE_WORKER_PATH = RAW_PATH + SERVICE_WORKER;
 const NOTIFICATIONS_CANISTER_ID = IS_DEVELOPMENT ? "wxns6-qiaaa-aaaaa-aaaqa-cai" : "6vuwk-zaaaa-aaaaf-aaagq-cai";
