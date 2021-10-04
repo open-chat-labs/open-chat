@@ -377,7 +377,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 editingEvent: undefined,
                             };
                         } else {
-                            if (ev.data.userId === ctx.user?.userId) {
+                            // this message may have come in via webrtc
+                            const sentByMe = ev.data.userId === ctx.user?.userId;
+                            if (sentByMe) {
                                 rtcConnectionsManager.sendMessage(
                                     userIdsFromChatSummary(ctx.chatSummary),
                                     {
@@ -393,10 +395,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 event: "sending_message",
                             });
                             return {
-                                chatSummary: setLastMessageOnChat(
-                                    ctx.chatSummary,
-                                    ev.data.messageEvent
-                                ),
+                                chatSummary: sentByMe
+                                    ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
+                                    : ctx.chatSummary,
                                 events: [...ctx.events, ev.data.messageEvent],
                                 replyingTo: undefined,
                                 fileToAttach: undefined,

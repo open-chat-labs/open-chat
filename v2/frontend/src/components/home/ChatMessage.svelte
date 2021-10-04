@@ -30,6 +30,7 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
+    import { mapState } from "xstate";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -173,6 +174,7 @@
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
+            <pre>MsgIdx: {msg.messageIndex}</pre>
 
             {#if metaData && !deleted}
                 {#await metaData then meta}

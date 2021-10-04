@@ -68,6 +68,8 @@
             <div class="chat-msg">{lastMessage}</div>
         {/if}
 
+        <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
+
         {#if unreadMessages > 0}
             <div
                 in:pop={{ duration: 1500 }}
