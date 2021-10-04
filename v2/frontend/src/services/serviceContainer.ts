@@ -354,16 +354,18 @@ export class ServiceContainer {
 
     markDirectChatMessagesRead(
         userId: string,
-        ranges: MessageIndexRange[]
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
     ): Promise<MarkReadResponse> {
-        return this.userClient.markMessagesRead(userId, ranges);
+        return this.userClient.markMessagesRead(userId, ranges, ids);
     }
 
     markGroupChatMessagesRead(
         chatId: string,
-        ranges: MessageIndexRange[]
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
     ): Promise<MarkReadResponse> {
-        return this.getGroupClient(chatId).markMessagesRead(ranges);
+        return this.getGroupClient(chatId).markMessagesRead(ranges, ids);
     }
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {

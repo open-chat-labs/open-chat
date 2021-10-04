@@ -62,6 +62,8 @@ export interface ChatContext {
     editingEvent?: EventWrapper<Message>;
     typing: Set<string>;
     unconfirmed: Set<bigint>;
+    unconfirmedReadByUs: Set<bigint>;
+    unconfirmedReadByThem: Set<bigint>;
 }
 
 type LoadEventsResponse = {
@@ -79,7 +81,10 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
-    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
+    | {
+          type: "MESSAGE_READ_BY_ME";
+          data: { chatId: string; messageIndex: number; messageId: bigint };
+      }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
@@ -250,7 +255,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       userLookup: ev.data.userLookup,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
-                          replaceLocal(ctx.events, ev.data.events, ctx.unconfirmed),
+                          replaceLocal(
+                              ctx.events,
+                              ev.data.events,
+                              ctx.unconfirmed,
+                              ctx.unconfirmedReadByThem,
+                              ctx.unconfirmedReadByUs
+                          ),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),
@@ -394,10 +405,11 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 chatId: ctx.chatSummary.chatId,
                                 event: "sending_message",
                             });
+                            const chatSummary = sentByMe
+                                ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
+                                : ctx.chatSummary;
                             return {
-                                chatSummary: sentByMe
-                                    ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
-                                    : ctx.chatSummary,
+                                chatSummary,
                                 events: [...ctx.events, ev.data.messageEvent],
                                 replyingTo: undefined,
                                 fileToAttach: undefined,
@@ -582,7 +594,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: pure((ctx, ev) => {
                         ctx.markMessages.send({
                             type: "MESSAGE_READ_BY_ME",
-                            data: ev.data.messageIndex,
+                            data: {
+                                messageIndex: ev.data.messageIndex,
+                                messageId: ev.data.messageId,
+                            },
                         });
                         return sendParent<ChatContext, ChatEvents>(ev);
                     }),

@@ -63,9 +63,11 @@
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
-                const idAttr = entry.target.attributes.getNamedItem("data-index");
-                const idx = idAttr ? parseInt(idAttr.value, 10) : undefined;
-                if (idx !== undefined) {
+                const idxAttr = entry.target.attributes.getNamedItem("data-index");
+                const idAttr = entry.target.attributes.getNamedItem("data-id");
+                const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
+                const id = idAttr ? BigInt(idAttr.value) : undefined;
+                if (idx !== undefined && id !== undefined) {
                     if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
                         const timer = setTimeout(() => {
                             machine.send({
@@ -73,6 +75,7 @@
                                 data: {
                                     chatId: $machine.context.chatSummary.chatId,
                                     messageIndex: idx,
+                                    messageId: id,
                                 },
                             });
                             delete messageReadTimers[idx];
@@ -394,7 +397,10 @@
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return messageIsReadByThem($machine.context.chatSummary, evt.event);
+            return (
+                $machine.context.unconfirmedReadByThem.has(evt.event.messageId) ||
+                messageIsReadByThem($machine.context.chatSummary, evt.event)
+            );
         }
         return true;
     }
@@ -404,11 +410,18 @@
             return true;
         } else {
             if (evt.event.kind === "message") {
-                return messageIsReadByMe($machine.context.chatSummary, evt.event);
+                return (
+                    $machine.context.unconfirmedReadByUs.has(evt.event.messageId) ||
+                    messageIsReadByMe($machine.context.chatSummary, evt.event)
+                );
             }
         }
         return true;
     }
+
+    $: console.log("Read by them: ", $machine.context.unconfirmedReadByThem);
+    $: console.log("Read by Us: ", $machine.context.unconfirmedReadByUs);
+    $: console.log("Unconfirmed: ", $machine.context.unconfirmed);
 
     // then we need to integrate web rtc
 </script>

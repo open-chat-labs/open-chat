@@ -47,7 +47,11 @@ export interface IUserClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
     joinGroup(chatId: string): Promise<JoinGroupResponse>;
-    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
+    markMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
+    ): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     toggleReaction(
         otherUserId: string,

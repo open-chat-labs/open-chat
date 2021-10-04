@@ -114,8 +114,12 @@ export class CachingUserClient implements IUserClient {
         return this.client.joinGroup(chatId);
     }
 
-    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
-        return this.client.markMessagesRead(userId, ranges);
+    markMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
+    ): Promise<MarkReadResponse> {
+        return this.client.markMessagesRead(userId, ranges, ids);
     }
 
     setAvatar(data: Uint8Array): Promise<BlobReference> {

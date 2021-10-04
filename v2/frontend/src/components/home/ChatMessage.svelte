@@ -30,7 +30,6 @@
     import Tick from "./Tick.svelte";
     import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
-    import { mapState } from "xstate";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -149,6 +148,7 @@
         class="message"
         class:me
         data-index={msg.messageIndex}
+        data-id={msg.messageId}
         id={`event-${eventIndex}`}>
         {#if me && !deleted}
             <div class="actions">
@@ -174,7 +174,12 @@
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
+            <pre>EventIdx: {eventIndex}</pre>
             <pre>MsgIdx: {msg.messageIndex}</pre>
+            <pre>MsgId: {msg.messageId}</pre>
+            <pre>Confirmed: {confirmed}</pre>
+            <pre>ReadByThem: {readByThem}</pre>
+            <pre>ReadByUs: {readByMe}</pre>
 
             {#if metaData && !deleted}
                 {#await metaData then meta}

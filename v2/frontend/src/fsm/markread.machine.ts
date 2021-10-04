@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
+import { createMachine, MachineConfig, MachineOptions, assign } from "xstate";
 import type { ChatSummary, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
@@ -10,33 +10,44 @@ import type { ServiceContainer } from "../services/serviceContainer";
 
 const MARK_READ_INTERVAL = 2000;
 
+type Messages = {
+    indexRanges: MessageIndexRange[];
+    ids: Set<bigint>;
+};
+
 export interface MarkReadContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
-    ranges: MessageIndexRange[];
-    pending: MessageIndexRange[];
+    capturedMessages: Messages;
+    pendingMessages: Messages;
+    unconfirmed: Set<bigint>;
 }
 
 export type MarkReadEvents =
-    | { type: "MESSAGE_READ_BY_ME"; data: number }
+    | { type: "MESSAGE_READ_BY_ME"; data: { messageIndex: number; messageId: bigint } }
     | { type: "done.invoke.markMessageRead"; data: MarkReadResponse[] }
     | { type: "error.platform.markMessageRead"; data: Error };
 
 const liveConfig: Partial<MachineOptions<MarkReadContext, MarkReadEvents>> = {
     services: {
         markMessagesRead: async (ctx, _) => {
-            if (ctx.pending.length === 0) {
+            if (
+                ctx.pendingMessages.indexRanges.length === 0 &&
+                ctx.pendingMessages.ids.size === 0
+            ) {
                 return Promise.resolve("success");
             } else {
                 if (ctx.chatSummary.kind === "direct_chat") {
                     return ctx.serviceContainer.markDirectChatMessagesRead(
                         ctx.chatSummary.them,
-                        ctx.pending
+                        ctx.pendingMessages.indexRanges,
+                        ctx.pendingMessages.ids
                     );
                 } else if (ctx.chatSummary.kind === "group_chat") {
                     return ctx.serviceContainer.markGroupChatMessagesRead(
                         ctx.chatSummary.chatId,
-                        ctx.pending
+                        ctx.pendingMessages.indexRanges,
+                        ctx.pendingMessages.ids
                     );
                 }
             }
@@ -52,9 +63,24 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
     on: {
         MESSAGE_READ_BY_ME: {
             actions: assign((ctx, ev) => {
-                return {
-                    ranges: insertIndexIntoRanges(ev.data, ctx.ranges),
-                };
+                if (ctx.unconfirmed.has(ev.data.messageId)) {
+                    return {
+                        capturedMessages: {
+                            indexRanges: ctx.capturedMessages.indexRanges,
+                            ids: ctx.capturedMessages.ids.add(ev.data.messageId),
+                        },
+                    };
+                } else {
+                    return {
+                        capturedMessages: {
+                            indexRanges: insertIndexIntoRanges(
+                                ev.data.messageIndex,
+                                ctx.capturedMessages.indexRanges
+                            ),
+                            ids: ctx.capturedMessages.ids,
+                        },
+                    };
+                }
             }),
         },
     },
@@ -67,8 +93,11 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
         marking_as_read: {
             entry: assign((ctx, _) => ({
                 // capture the buffer that we are going to send
-                pending: ctx.ranges,
-                ranges: [],
+                pendingMessages: ctx.capturedMessages,
+                capturedMessages: {
+                    indexRanges: [],
+                    ids: new Set<bigint>(),
+                },
             })),
             invoke: {
                 id: "markMessagssRead",

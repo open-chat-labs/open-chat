@@ -15,14 +15,14 @@ import type {
     ChatSummary,
     DirectChatSummary,
     EnhancedReplyContext,
-    EventWrapper,
     GroupChatSummary,
-    Message,
 } from "../domain/chat/chat";
 import {
+    insertIndexIntoRanges,
     setMessageRead,
     updateArgsFromChats,
     userIdsFromChatSummaries,
+    userIdsFromChatSummary,
 } from "../domain/chat/chat.utils";
 import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
 import { mergeUsers, missingUserIds, userIsOnline } from "../domain/user/user.utils";
@@ -37,6 +37,13 @@ import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type {
+    RemoteUserDeletedMessage,
+    RemoteUserReadMessage,
+    RemoteUserSentMessage,
+    RemoteUserStoppedTyping,
+    RemoteUserToggledReaction,
+    RemoteUserTyping,
+    RemoteUserUndeletedMessage,
     WebRtcAnswer,
     WebRtcMessage,
     WebRtcOffer,
@@ -62,6 +69,8 @@ export interface HomeContext {
     blockedUsers: Set<string>;
     unconfirmed: Set<bigint>;
     typing: Set<string>;
+    unconfirmedReadByUs: Set<bigint>;
+    unconfirmedReadByThem: Set<bigint>;
 }
 
 export type HomeEvents =
@@ -70,23 +79,27 @@ export type HomeEvents =
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
-    | { type: "REMOTE_USER_TYPING"; data: { chatId: string; userId: string } }
-    | { type: "REMOTE_USER_STOPPED_TYPING"; data: { chatId: string; userId: string } }
+    | { type: "REMOTE_USER_TYPING"; data: RemoteUserTyping }
+    | { type: "REMOTE_USER_STOPPED_TYPING"; data: RemoteUserStoppedTyping }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
-          data: { chatId: string; userId: string; messageId: bigint; reaction: string };
+          data: RemoteUserToggledReaction;
       }
     | {
           type: "REMOTE_USER_DELETED_MESSAGE";
-          data: { chatId: string; userId: string; messageId: bigint };
+          data: RemoteUserDeletedMessage;
       }
     | {
           type: "REMOTE_USER_UNDELETED_MESSAGE";
-          data: { chatId: string; userId: string; message: Message };
+          data: RemoteUserUndeletedMessage;
       }
     | {
           type: "REMOTE_USER_SENT_MESSAGE";
-          data: { chatId: string; userId: string; messageEvent: EventWrapper<Message> };
+          data: RemoteUserSentMessage;
+      }
+    | {
+          type: "REMOTE_USER_READ_MESSAGE";
+          data: RemoteUserReadMessage;
       }
     | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
@@ -99,7 +112,10 @@ export type HomeEvents =
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
-    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
+    | {
+          type: "MESSAGE_READ_BY_ME";
+          data: { chatId: string; messageIndex: number; messageId: bigint };
+      }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -123,8 +139,14 @@ type ChatsResponse = {
 };
 type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
 
+function findDirectChatByUserId(ctx: HomeContext, userId: string): DirectChatSummary | undefined {
+    return ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId) as
+        | DirectChatSummary
+        | undefined;
+}
+
 function sendMessageToChatBasedOnUser(ctx: HomeContext, userId: string, chatMsg: ChatEvents): void {
-    const chat = ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId);
+    const chat = findDirectChatByUserId(ctx, userId);
     const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
     if (actor) {
         actor.send(chatMsg);
@@ -275,13 +297,13 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (parsedMsg.kind === "remote_user_typing") {
                     callback({
                         type: "REMOTE_USER_TYPING",
-                        data: { chatId: parsedMsg.chatId, userId: parsedMsg.userId },
+                        data: parsedMsg,
                     });
                 }
                 if (parsedMsg.kind === "remote_user_stopped_typing") {
                     callback({
                         type: "REMOTE_USER_STOPPED_TYPING",
-                        data: { chatId: parsedMsg.chatId, userId: parsedMsg.userId },
+                        data: parsedMsg,
                     });
                 }
                 if (parsedMsg.kind === "remote_user_toggled_reaction") {
@@ -312,6 +334,12 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                                 timestamp: BigInt(parsedMsg.messageEvent.timestamp),
                             },
                         },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_read_message") {
+                    callback({
+                        type: "REMOTE_USER_READ_MESSAGE",
+                        data: parsedMsg,
                     });
                 }
             });
@@ -404,6 +432,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
         blockedUsers: new Set<string>(),
         unconfirmed: new Set<bigint>(),
         typing: new Set<string>(),
+        unconfirmedReadByThem: new Set<bigint>(),
+        unconfirmedReadByUs: new Set<bigint>(),
     },
     states: {
         loading_chats: {
@@ -450,14 +480,52 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
             ],
             on: {
-                REMOTE_USER_SENT_MESSAGE: {
-                    actions: pure((ctx, ev) => {
-                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
-                            type: "SEND_MESSAGE",
-                            data: ev.data,
-                        });
-                        return undefined;
+                REMOTE_USER_READ_MESSAGE: {
+                    // right now the message read is either confirmed or not
+                    actions: assign((ctx, ev) => {
+                        // if the message is unconfirmed
+                        if (ev.data.messageIndex === undefined) {
+                            console.log(
+                                "Remote user read an unconfirmed message",
+                                ev.data.messageId
+                            );
+                            ctx.unconfirmedReadByThem.add(BigInt(ev.data.messageId));
+                            return {
+                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
+                            };
+                        } else {
+                            ctx.unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
+                            // todo - we must also send this via CHAT_UPDATED to the chat actor
+                            return {
+                                chatSummaries: ctx.chatSummaries.map((c) => {
+                                    if (c.chatId === ev.data.chatId && c.kind === "direct_chat") {
+                                        c.readByThem = insertIndexIntoRanges(
+                                            Number(ev.data.messageIndex)!,
+                                            c.readByThem
+                                        );
+                                    }
+                                    return c;
+                                }),
+                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
+                            };
+                        }
                     }),
+                },
+                REMOTE_USER_SENT_MESSAGE: {
+                    actions: [
+                        assign((ctx, ev) => ({
+                            unconfirmed: ctx.unconfirmed.add(
+                                BigInt(ev.data.messageEvent.event.messageId)
+                            ),
+                        })),
+                        pure((ctx, ev) => {
+                            sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                                type: "SEND_MESSAGE",
+                                data: ev.data,
+                            });
+                            return undefined;
+                        }),
+                    ],
                 },
                 REMOTE_USER_UNDELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
@@ -627,13 +695,22 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     markReadMachine.withContext({
                                                         serviceContainer: ctx.serviceContainer!,
                                                         chatSummary,
-                                                        ranges: [],
-                                                        pending: [],
+                                                        capturedMessages: {
+                                                            indexRanges: [],
+                                                            ids: new Set<bigint>(),
+                                                        },
+                                                        pendingMessages: {
+                                                            indexRanges: [],
+                                                            ids: new Set<bigint>(),
+                                                        },
+                                                        unconfirmed: ctx.unconfirmed,
                                                     })
                                                 ),
                                                 localReactions: {},
                                                 typing: ctx.typing,
                                                 unconfirmed: ctx.unconfirmed,
+                                                unconfirmedReadByUs: ctx.unconfirmedReadByUs,
+                                                unconfirmedReadByThem: ctx.unconfirmedReadByThem,
                                             }),
                                             `chat-${key}`
                                         ),
@@ -681,18 +758,44 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     }),
                 },
                 MESSAGE_READ_BY_ME: {
-                    // this is fairly horrific, but it seems to be what we have to do
-                    // need to think about what this is a symptom of .....
-                    // basically we have multiple copies of the same data that need to
-                    // be synchronised and we need to get rid of that somehow.
+                    /**
+                     * this is fairly horrific, but it seems to be what we have to do
+                     * 1) find the chat
+                     * 2) figure out if the message is confirmed or not
+                     * 3) if it is setMessageRead (by index)
+                     * 4) if it is not add it to an uncomfired read by us list
+                     * 5) send web rtc message
+                     * 6) send the updated chat to the chat actor
+                     * 7) sync with the chats poller
+                     */
                     actions: pure((ctx, ev) => {
                         const actor = ctx.chatsIndex[ev.data.chatId];
                         if (actor) {
                             let chat: ChatSummary | undefined = undefined;
                             const chatSummaries = ctx.chatSummaries.map((c) => {
                                 if (c.chatId === ev.data.chatId) {
-                                    chat = setMessageRead(c, ev.data.messageIndex);
-                                    return chat;
+                                    const userIds = userIdsFromChatSummary(c);
+
+                                    const rtc: WebRtcMessage = {
+                                        kind: "remote_user_read_message",
+                                        messageId: ev.data.messageId,
+                                        chatId: ev.data.chatId,
+                                        userId: ctx.user!.userId,
+                                    };
+
+                                    // we must consider whether the message is confirmed or not
+                                    if (!ctx.unconfirmed.has(ev.data.messageId)) {
+                                        chat = setMessageRead(c, ev.data.messageIndex);
+                                        ctx.unconfirmedReadByUs.delete(ev.data.messageId);
+                                        rtc.messageIndex = ev.data.messageIndex;
+                                        rtcConnectionsManager.sendMessage(userIds, rtc);
+                                        return chat;
+                                    } else {
+                                        ctx.unconfirmedReadByUs.add(ev.data.messageId);
+                                        rtcConnectionsManager.sendMessage(userIds, rtc);
+                                        chat = c;
+                                        return c;
+                                    }
                                 }
                                 return c;
                             });

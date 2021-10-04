@@ -33,6 +33,7 @@ export type WebRtcMessage =
     | RemoteUserToggledReaction
     | RemoteUserDeletedMessage
     | RemoteUserSentMessage
+    | RemoteUserReadMessage
     | RemoteUserUndeletedMessage;
 
 export type CurrentUserTyping = {
@@ -76,6 +77,14 @@ export type RemoteUserUndeletedMessage = {
     kind: "remote_user_undeleted_message";
     chatId: string;
     message: Message;
+    userId: string;
+};
+
+export type RemoteUserReadMessage = {
+    kind: "remote_user_read_message";
+    chatId: string;
+    messageId: bigint;
+    messageIndex?: number;
     userId: string;
 };
 

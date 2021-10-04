@@ -336,6 +336,8 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         blockedUsers: [],
                         unconfirmed: new Set<bigint>(),
                         typing: new Set<string>(),
+                        unconfirmedReadByUs: new Set<bigint>(),
+                        unconfirmedReadByThem: new Set<bigint>(),
                     }),
                     onDone: "login",
                     onError: {

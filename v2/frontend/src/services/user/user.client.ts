@@ -282,7 +282,11 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+    markMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[],
+        _ids: Set<bigint>
+    ): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read({
                 user_id: Principal.fromText(userId),
