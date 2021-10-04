@@ -101,6 +101,10 @@ impl PublicGroups {
             }
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &PublicGroupInfo> {
+        self.groups.values()
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -144,6 +148,14 @@ impl PublicGroupInfo {
 
     pub fn id(&self) -> ChatId {
         self.id
+    }
+
+    pub fn wasm_version(&self) -> Version {
+        self.wasm_version
+    }
+
+    pub fn set_wasm_version(&mut self, version: Version) {
+        self.wasm_version = version;
     }
 
     pub fn mark_active(&mut self, until: TimestampMillis) {
