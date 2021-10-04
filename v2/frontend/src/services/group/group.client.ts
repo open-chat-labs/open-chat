@@ -174,10 +174,11 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
-    markMessagesRead(ranges: MessageIndexRange[], _ids: Set<bigint>): Promise<MarkReadResponse> {
+    markMessagesRead(ranges: MessageIndexRange[], ids: Set<bigint>): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.groupService.mark_read({
-                message_ranges: ranges,
+                message_index_ranges: ranges,
+                message_ids: [...ids],
             }),
             markReadResponse
         );

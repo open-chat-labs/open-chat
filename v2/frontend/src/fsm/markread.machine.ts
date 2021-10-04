@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createMachine, MachineConfig, MachineOptions, assign } from "xstate";
+import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
 import type { ChatSummary, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
@@ -8,7 +8,7 @@ import type { ServiceContainer } from "../services/serviceContainer";
  * This machine exists to periodically sync read message state to the backend
  */
 
-const MARK_READ_INTERVAL = 2000;
+const MARK_READ_INTERVAL = 12000;
 
 type Messages = {
     indexRanges: MessageIndexRange[];
@@ -25,7 +25,7 @@ export interface MarkReadContext {
 
 export type MarkReadEvents =
     | { type: "MESSAGE_READ_BY_ME"; data: { messageIndex: number; messageId: bigint } }
-    | { type: "done.invoke.markMessageRead"; data: MarkReadResponse[] }
+    | { type: "done.invoke.markMessageRead"; data: MarkReadResponse }
     | { type: "error.platform.markMessageRead"; data: Error };
 
 const liveConfig: Partial<MachineOptions<MarkReadContext, MarkReadEvents>> = {
@@ -35,7 +35,7 @@ const liveConfig: Partial<MachineOptions<MarkReadContext, MarkReadEvents>> = {
                 ctx.pendingMessages.indexRanges.length === 0 &&
                 ctx.pendingMessages.ids.size === 0
             ) {
-                return Promise.resolve("success");
+                return Promise.resolve([]);
             } else {
                 if (ctx.chatSummary.kind === "direct_chat") {
                     return ctx.serviceContainer.markDirectChatMessagesRead(
@@ -104,6 +104,14 @@ export const schema: MachineConfig<MarkReadContext, any, MarkReadEvents> = {
                 src: "markMessagesRead",
                 onDone: {
                     target: "idle",
+                    actions: assign((ctx, ev: DoneInvokeEvent<bigint[]>) => {
+                        return {
+                            capturedMessages: {
+                                indexRanges: ctx.capturedMessages.indexRanges,
+                                ids: new Set<bigint>([...ctx.capturedMessages.ids, ...ev.data]),
+                            },
+                        };
+                    }),
                 },
                 onError: "idle",
             },

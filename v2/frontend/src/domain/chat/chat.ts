@@ -502,7 +502,7 @@ export type JoinGroupResponse =
     | "already_in_group"
     | "internal_error";
 
-export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found" | "not_in_group";
+export type MarkReadResponse = bigint[];
 
 export type UpdateGroupResponse =
     | "success"

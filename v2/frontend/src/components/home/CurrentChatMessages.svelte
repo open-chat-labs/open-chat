@@ -419,10 +419,6 @@
         return true;
     }
 
-    $: console.log("Read by them: ", $machine.context.unconfirmedReadByThem);
-    $: console.log("Read by Us: ", $machine.context.unconfirmedReadByUs);
-    $: console.log("Unconfirmed: ", $machine.context.unconfirmed);
-
     // then we need to integrate web rtc
 </script>
 

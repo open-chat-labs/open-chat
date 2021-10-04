@@ -309,13 +309,19 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (parsedMsg.kind === "remote_user_toggled_reaction") {
                     callback({
                         type: "REMOTE_USER_TOGGLED_REACTION",
-                        data: parsedMsg,
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
                     });
                 }
                 if (parsedMsg.kind === "remote_user_deleted_message") {
                     callback({
                         type: "REMOTE_USER_DELETED_MESSAGE",
-                        data: parsedMsg,
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
                     });
                 }
                 if (parsedMsg.kind === "remote_user_undeleted_message") {
@@ -331,6 +337,10 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                             ...parsedMsg,
                             messageEvent: {
                                 ...parsedMsg.messageEvent,
+                                event: {
+                                    ...parsedMsg.messageEvent.event,
+                                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                                },
                                 timestamp: BigInt(parsedMsg.messageEvent.timestamp),
                             },
                         },
@@ -339,7 +349,10 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (parsedMsg.kind === "remote_user_read_message") {
                     callback({
                         type: "REMOTE_USER_READ_MESSAGE",
-                        data: parsedMsg,
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
                     });
                 }
             });
@@ -485,10 +498,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     actions: assign((ctx, ev) => {
                         // if the message is unconfirmed
                         if (ev.data.messageIndex === undefined) {
-                            console.log(
-                                "Remote user read an unconfirmed message",
-                                ev.data.messageId
-                            );
                             ctx.unconfirmedReadByThem.add(BigInt(ev.data.messageId));
                             return {
                                 unconfirmedReadByThem: ctx.unconfirmedReadByThem,

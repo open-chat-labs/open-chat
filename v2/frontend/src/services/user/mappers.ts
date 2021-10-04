@@ -65,6 +65,9 @@ export function addWebRtcResponse(candid: ApiAddWebRtcSessionDetailsResponse): A
     if ("Blocked" in candid) {
         return "blocked";
     }
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
     throw new UnsupportedValueError(
         "Unknown UserIndex.ApiAddWebRtcSessionDetailsResponse type received",
         candid
@@ -156,13 +159,13 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
-        return "success";
+        return candid.Success.unrecognised_message_ids;
     }
     if ("SuccessNoChange" in candid) {
-        return "success_no_change";
+        return candid.SuccessNoChange.unrecognised_message_ids;
     }
     if ("ChatNotFound" in candid) {
-        return "chat_not_found";
+        return [];
     }
     throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }

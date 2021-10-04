@@ -22,13 +22,12 @@
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Reply from "svelte-material-icons/Reply.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
-    // import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
-    import Tick from "./Tick.svelte";
-    import DoubleTick from "./DoubleTick.svelte";
     import { fillMessage, messageMetaData } from "../../utils/media";
     const dispatch = createEventDispatcher();
 
@@ -195,11 +194,22 @@
                 <span class="time">
                     {toShortTimeString(new Date(Number(timestamp)))}
                 </span>
-                {#if me && confirmed}
-                    {#if readByThem}
-                        <DoubleTick />
+                {#if me}
+                    {#if confirmed}
+                        <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
                     {:else}
-                        <Tick />
+                        <CheckCircleOutline
+                            size={"0.9em"}
+                            color={"var(--currentChat-msg-me-txt)"} />
+                    {/if}
+                    {#if chatType === "direct_chat"}
+                        {#if readByThem}
+                            <CheckCircle size={"0.9em"} color={"var(--currentChat-msg-me-txt)"} />
+                        {:else}
+                            <CheckCircleOutline
+                                size={"0.9em"}
+                                color={"var(--currentChat-msg-me-txt)"} />
+                        {/if}
                     {/if}
                 {/if}
             </div>

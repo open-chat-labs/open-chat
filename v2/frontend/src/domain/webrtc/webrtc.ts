@@ -95,4 +95,4 @@ export type RemoteUserSentMessage = {
     userId: string;
 };
 
-export type AddWebRtcResponse = "success" | "blocked";
+export type AddWebRtcResponse = "success" | "blocked" | "user_not_found";

@@ -255,13 +255,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       userLookup: ev.data.userLookup,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
-                          replaceLocal(
-                              ctx.events,
-                              ev.data.events,
-                              ctx.unconfirmed,
-                              ctx.unconfirmedReadByThem,
-                              ctx.unconfirmedReadByUs
-                          ),
+                          replaceLocal(ctx.events, ev.data.events, ctx.unconfirmed),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),

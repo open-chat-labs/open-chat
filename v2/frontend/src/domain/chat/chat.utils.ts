@@ -633,9 +633,7 @@ function partitionEvents(
 export function replaceLocal(
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[],
-    unconfirmed: Set<bigint>,
-    unconfirmedReadByThem: Set<bigint>,
-    unconfirmedReadByUs: Set<bigint>
+    unconfirmed: Set<bigint>
 ): EventWrapper<ChatEvent>[] {
     // partition client events into msgs and other events
     const [clientMsgs, clientEvts] = partitionEvents(onClient);
@@ -647,8 +645,6 @@ export function replaceLocal(
     Object.entries(serverMsgs).forEach(([id, e]) => {
         // only now do we consider this message confirmed
         unconfirmed.delete(BigInt(id));
-        unconfirmedReadByThem.delete(BigInt(id));
-        unconfirmedReadByUs.delete(BigInt(id));
         clientMsgs[id] = e;
     });
 
