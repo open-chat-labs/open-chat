@@ -133,15 +133,15 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(V1ReplyContext),
     'client_message_id' : IDL.Text,
   });
-  const V1GroupId = IDL.Nat;
   const V1GroupMessageNotification = IDL.Record({
     'sender' : UserId,
     'message' : V1Message,
     'sender_name' : IDL.Text,
-    'chat_id' : V1GroupId,
+    'chat_id' : IDL.Text,
     'group_name' : IDL.Text,
   });
   const V1DirectMessageNotification = IDL.Record({
+    'chat_id' : IDL.Text,
     'sender' : UserId,
     'message' : V1Message,
     'sender_name' : IDL.Text,

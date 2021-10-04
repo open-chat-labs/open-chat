@@ -1,6 +1,6 @@
 use self::Response::*;
 use crate::domain::blocked_users::{BlockedStatus, BlockedUsers};
-use crate::domain::chat::{Chat, MessageContent, MessageContentValidationResponse, ReplyContext};
+use crate::domain::chat::{Chat, ChatEnum, MessageContent, MessageContentValidationResponse, ReplyContext};
 use crate::domain::chat_list::ChatList;
 use crate::domain::direct_chat::DirectChatSummary;
 use crate::services::notifications::push_direct_message_notification;
@@ -76,13 +76,17 @@ pub async fn update(request: Request) -> Response {
     let message_id = message.get_id();
 
     if let Some(sender_name) = request.sender_name {
-        let recipient = request.recipient;
-        let notification = Notification {
-            sender: me,
-            sender_name,
-            message,
-        };
-        push_direct_message_notification::fire_and_forget(recipient, notification);
+        if let ChatEnum::Direct(direct) = chat {
+            if !direct.notifications_muted(request.recipient) {
+                let notification = Notification {
+                    chat_id: format!("{:x}", chat_id.0), 
+                    sender: me,
+                    sender_name,
+                    message,
+                };
+                push_direct_message_notification::fire_and_forget(request.recipient, notification);        
+            }
+        }
     }
 
     Success(Result {

@@ -237,11 +237,15 @@ export const idlFactory = ({ IDL }) => {
     'from' : MessageIndex,
   });
   const MarkReadArgs = IDL.Record({
-    'message_ranges' : IDL.Vec(MessageIndexRange),
+    'message_index_ranges' : IDL.Vec(MessageIndexRange),
+    'message_ids' : IDL.Vec(MessageId),
+  });
+  const MarkReadSuccessResult = IDL.Record({
+    'unrecognised_message_ids' : IDL.Vec(MessageId),
   });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
-    'Success' : IDL.Null,
+    'SuccessNoChange' : MarkReadSuccessResult,
+    'Success' : MarkReadSuccessResult,
     'NotInGroup' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});

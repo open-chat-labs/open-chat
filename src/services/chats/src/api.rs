@@ -62,6 +62,11 @@ fn block_user(user: UserId, unblock: bool) {
     block_user::update(user, unblock);
 }
 
+#[update]
+fn toggle_notifications(chat_id: ChatId, mute: bool) {
+    toggle_notifications::update(chat_id, mute);
+}
+
 #[query]
 fn get_chats(request: get_chats::Request) -> get_chats::Response {
     get_chats::query(request)

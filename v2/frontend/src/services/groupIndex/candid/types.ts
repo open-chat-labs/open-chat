@@ -327,6 +327,7 @@ export interface V1DirectMessageNotification {
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
+  'chat_id' : string,
 }
 export interface V1FileContent {
   'blob_size' : number,
@@ -342,7 +343,7 @@ export interface V1GroupMessageNotification {
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
-  'chat_id' : bigint,
+  'chat_id' : string,
   'group_name' : string,
 }
 export interface V1MediaContent {

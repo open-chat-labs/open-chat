@@ -29,6 +29,7 @@ export const idlFactory = ({ IDL }) => {
   const AddWebRtcSessionDetailsResponse = IDL.Variant({
     'Blocked' : IDL.Null,
     'Success' : IDL.Null,
+    'UserNotFound' : IDL.Null,
   });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -207,13 +208,17 @@ export const idlFactory = ({ IDL }) => {
     'from' : MessageIndex,
   });
   const MarkReadArgs = IDL.Record({
-    'message_ranges' : IDL.Vec(MessageIndexRange),
+    'message_index_ranges' : IDL.Vec(MessageIndexRange),
     'user_id' : UserId,
+    'message_ids' : IDL.Vec(MessageId),
+  });
+  const MarkReadSuccessResult = IDL.Record({
+    'unrecognised_message_ids' : IDL.Vec(MessageId),
   });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
+    'SuccessNoChange' : MarkReadSuccessResult,
     'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
+    'Success' : MarkReadSuccessResult,
   });
   const MetricsArgs = IDL.Record({});
   const MetricsResponse = IDL.Record({

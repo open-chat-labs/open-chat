@@ -1,4 +1,4 @@
-import { Notification, UserId, V1GroupId, V1MessageContent } from "../services/notifications/candid/types";
+import { Notification, V1MessageContent } from "../services/notifications/candid/types";
 import * as cycleFunctions from "../utils/cycleFunctions";
 
 declare var self: ServiceWorkerGlobalScope;
@@ -30,6 +30,7 @@ async function handlePushNotification(event: PushEvent) : Promise<void> {
 }
 
 async function handleNotificationClick(event: NotificationEvent) : Promise<void> {
+    console.log("handleNotificationClick");
     event.notification.close();  
 
     let windowClients = await self.clients.matchAll({
@@ -39,9 +40,15 @@ async function handleNotificationClick(event: NotificationEvent) : Promise<void>
 
     if (windowClients.length > 0) {
         let window = windowClients[0];
-        await window.focus();
+        window.focus();
+
+        window.postMessage({
+            msg: "message_received",
+            chatId: event.notification.data.chatId,
+            messageId: event.notification.data.messageId,
+        });
     } else {
-        const urlToOpen = new URL(self.location.origin).href;
+        const urlToOpen = new URL(self.location.origin).href + event.notification.data.chatId;
         await self.clients.openWindow(urlToOpen);
     }
 }
@@ -59,29 +66,27 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
     let icon = "/_/raw/icon.png";
     let title = "OpenChat - ";
     let body: string;
-    let sender: UserId;
-    let groupId: undefined | V1GroupId;
+    let sender: string;
     let messageId: number;
-    let tag: string | undefined;
+    let chatId: string;
     if ("V1DirectMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1DirectMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.sender_name;
         body = content.text;
         icon = content.image ?? icon;
-        sender = notification.sender;
+        sender = notification.sender.toString();
+        chatId = notification.chat_id;
         messageId = notification.message.id;
-        tag = sender.toString();
     } else if ("V1GroupMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1GroupMessageNotification;
         let content = extractContent(notification.message.content);
         title += notification.group_name;
         body = `${notification.sender_name}: ${content.text}`;
         icon = content.image ?? icon;
-        sender = notification.sender;
-        groupId = notification.chat_id;
+        sender = notification.sender.toString();
+        chatId = notification.chat_id;
         messageId = notification.message.id;
-        tag = groupId.toString();
     } else {
         console.log("Unexpected notification type");
         console.log(notificationVariant);
@@ -91,10 +96,11 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
     await self.registration.showNotification(title, {
         body, 
         icon, 
-        tag,
+        tag: chatId,
+        //renotify: (typeof tag !== "undefined"),
         data: {
+            chatId,
             sender,
-            groupId,
             messageId,           
         }
     });

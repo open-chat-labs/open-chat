@@ -9,7 +9,7 @@ use shared::user_id::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct Notification {
-    pub chat_id: u128,
+    pub chat_id: String,
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,

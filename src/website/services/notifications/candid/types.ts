@@ -147,6 +147,7 @@ export interface V1CyclesContent {
   'amount' : bigint,
 }
 export interface V1DirectMessageNotification {
+  'chat_id' : string,
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
@@ -160,12 +161,11 @@ export interface V1FileContent {
   'chunk_size' : number,
   'blob_deleted' : boolean,
 }
-export type V1GroupId = bigint;
 export interface V1GroupMessageNotification {
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
-  'chat_id' : V1GroupId,
+  'chat_id' : string,
   'group_name' : string,
 }
 export interface V1MediaContent {

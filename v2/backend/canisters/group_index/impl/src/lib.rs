@@ -1,3 +1,4 @@
+use crate::model::canisters_requiring_upgrade::CanistersRequiringUpgrade;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
@@ -45,6 +46,7 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
+    pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
 }
 
 impl Data {
@@ -59,6 +61,7 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             group_canister_wasm,
             notifications_canister_id,
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
         }
     }
 
@@ -76,6 +79,7 @@ impl Default for Data {
             service_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
         }
     }
 }

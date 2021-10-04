@@ -21,11 +21,10 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     search_term.truncate(MAX_SEARCH_TERM_LENGTH);
 
     // Filter
-    let search_term_lower = search_term.to_lowercase();
     let mut matches: Vec<&CreatedUser> = users
-        .values()
+        .search(&search_term)
         .filter_map(|u| u.created_user())
-        .filter(|u| username_matches(&search_term_lower, &u.username) && u.principal != caller)
+        .filter(|u| u.principal != caller)
         .collect();
 
     // Sort
@@ -41,25 +40,23 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     Success(Result { users: results })
 }
 
-fn username_matches(search_term_lower: &str, username: &str) -> bool {
-    username.to_lowercase().starts_with(search_term_lower)
-}
-
 fn order_usernames(search_term: &str, u1: &str, u2: &str) -> Ordering {
-    let u1_starts = u1.starts_with(&search_term);
-    let u2_starts = u2.starts_with(&search_term);
+    match u1.len().cmp(&u2.len()) {
+        Ordering::Less => Ordering::Less,
+        Ordering::Greater => Ordering::Greater,
+        Ordering::Equal => {
+            let u1_starts = u1.starts_with(&search_term);
+            let u2_starts = u2.starts_with(&search_term);
 
-    if u1_starts != u2_starts {
-        if u1_starts {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
-    } else {
-        match u1.len().cmp(&u2.len()) {
-            Ordering::Less => Ordering::Less,
-            Ordering::Equal => u1.cmp(u2),
-            Ordering::Greater => Ordering::Greater,
+            if u1_starts != u2_starts {
+                if u1_starts {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            } else {
+                u1.cmp(u2)
+            }
         }
     }
 }
@@ -79,8 +76,24 @@ mod tests {
 
         let response = search_impl(
             Args {
-                max_results: 3,
+                max_results: 2,
                 search_term: "ma".to_string(),
+            },
+            &runtime_state,
+        );
+
+        let Response::Success(results) = response;
+        assert_eq!(2, results.users.len());
+    }
+
+    #[test]
+    fn case_insensitive_matches() {
+        let runtime_state = setup_runtime_state();
+
+        let response = search_impl(
+            Args {
+                max_results: 10,
+                search_term: "MA".to_string(),
             },
             &runtime_state,
         );
@@ -90,53 +103,21 @@ mod tests {
     }
 
     #[test]
-    fn search_matches_both_cases() {
+    fn results_ordered_by_length_then_case_sensitive_matches() {
         let runtime_state = setup_runtime_state();
 
         let response = search_impl(
             Args {
-                max_results: 10,
-                search_term: "mA".to_string(),
-            },
-            &runtime_state,
-        );
-
-        let Response::Success(results) = response;
-        assert_eq!(5, results.users.len());
-    }
-
-    #[test]
-    fn search_returns_shorter_matches_first() {
-        let runtime_state = setup_runtime_state();
-
-        let response = search_impl(
-            Args {
-                max_results: 2,
-                search_term: "ma".to_string(),
+                max_results: 5,
+                search_term: "Ma".to_string(),
             },
             &runtime_state,
         );
 
         let Response::Success(results) = response;
         assert_eq!("matt", results.users[0].username);
-        assert_eq!("marcus", results.users[1].username);
-    }
-
-    #[test]
-    fn search_returns_case_sensitive_matches_first() {
-        let runtime_state = setup_runtime_state();
-
-        let response = search_impl(
-            Args {
-                max_results: 2,
-                search_term: "jU".to_string(),
-            },
-            &runtime_state,
-        );
-
-        let Response::Success(results) = response;
-        assert_eq!("jUlian", results.users[0].username);
-        assert_eq!("julian", results.users[1].username);
+        assert_eq!("Martin", results.users[1].username);
+        assert_eq!("marcus", results.users[2].username);
     }
 
     #[test]
@@ -152,7 +133,7 @@ mod tests {
         );
 
         let Response::Success(results) = response;
-        assert_eq!(9, results.users.len());
+        assert_eq!(5, results.users.len());
     }
 
     #[test]
@@ -172,16 +153,14 @@ mod tests {
         let user = results.users.first().unwrap();
         assert_eq!(user.user_id, Principal::from_slice(&[4, 1]).into());
         assert_eq!(user.username, "hamish");
-        assert_eq!(user.seconds_since_last_online, 5);
+        assert_eq!(user.seconds_since_last_online, 1);
     }
 
     fn setup_runtime_state() -> RuntimeState {
         let mut env = TestEnv::default();
         let mut data = Data::default();
 
-        let usernames = vec![
-            "mArtin", "marcus", "matt", "julian", "hamish", "Matt", "jUlian", "hamisH", "Martin",
-        ];
+        let usernames = vec!["Martin", "marcus", "matt", "julian", "hamish"];
 
         for index in 0..usernames.len() {
             let bytes = vec![index as u8, 1];

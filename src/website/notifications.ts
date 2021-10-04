@@ -1,8 +1,12 @@
 import { PUBLIC_VAPID_KEY } from "./constants";
+import { ChatId } from "./domain/model/chats";
 import { Option } from "./domain/model/common";
 import { UserId } from "./domain/model/users";
 import notificationsService from "./services/notifications/service";
 import * as base64 from "./utils/base64Functions";
+import store from "./store";
+import { gotoChatById } from "./actions/chats/gotoChat";
+import { fromHex } from "./utils/u64Functions";
 
 // https://web-push-book.gauntface.com/common-notification-patterns/
 // - Once subscribed send the user an initial notification a la slack "Nice, notifications are enabled!"
@@ -56,6 +60,16 @@ export async function trySubscribe(userId: UserId): Promise<boolean> {
   if (registration == null) {
     return false;
   }
+
+  // WILL THIS WORK IN PROD WITH OTHER SW IN PLAY?
+  navigator.serviceWorker.addEventListener('message', event => {
+    console.log("handle message")
+    console.log(event)
+    if (event.data.msg === "message_received") {
+      let chatId: ChatId = fromHex(event.data.chatId);
+      store.dispatch(gotoChatById(chatId) as any);  
+    }
+  });  
 
   // Only proceed if the user hasn't explicitly soft-disabled notifications
   if (await softDisabled()) {
@@ -126,9 +140,7 @@ export async function setSoftDisabled(disabled: boolean): Promise<void> {
   _softDisabled = disabled;
 }
 
-async function registerServiceWorker(): Promise<
-  Option<ServiceWorkerRegistration>
-> {
+async function registerServiceWorker(): Promise<Option<ServiceWorkerRegistration>> {
   try {
     const sw_path = process.env.WEBPUSH_SERVICE_WORKER_PATH!;
     let registration = await navigator.serviceWorker.register(sw_path);
@@ -155,9 +167,7 @@ async function hardPermission(): Promise<NotificationPermission> {
   return Notification.permission;
 }
 
-async function subscribeUserToPush(
-  registration: ServiceWorkerRegistration
-): Promise<Option<PushSubscription>> {
+async function subscribeUserToPush(registration: ServiceWorkerRegistration): Promise<Option<PushSubscription>> {
   const subscribeOptions = {
     userVisibleOnly: true,
     applicationServerKey: base64.toUint8Array(PUBLIC_VAPID_KEY),

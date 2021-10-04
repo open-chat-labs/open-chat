@@ -75,7 +75,8 @@ export type ConfirmedDirectChat = ConfirmedChatCommon & {
     themTyping: boolean,
     unreadByThemMessageIds: number[],
     markAsReadByThemPendingSync: number[],
-    markAsReadByThemByClientIdPendingSync: string[]
+    markAsReadByThemByClientIdPendingSync: string[],
+    muted: boolean,
 }
 
 export type ConfirmedGroupChat = ConfirmedChatCommon & {
@@ -85,6 +86,7 @@ export type ConfirmedGroupChat = ConfirmedChatCommon & {
     participants: UserId[],
     participantsTyping: UserId[],
     unreadByAnyMessageIds: number[]
+    muted: boolean,
 }
 
 type UnconfirmedChatCommon = ChatCommon & {
@@ -132,7 +134,7 @@ export const getUnreadChatCount = (chats: Chat[]) : number => {
 
 export const newConfirmedDirectChat = (
     chatId: ChatId, them: UserId, displayDate: Date, lastUpdated: Date, messages: Message[] = [],
-    unreadMessageIds: number[] = [], unreadByThemMessageIds: number[] = []) : ConfirmedDirectChat => {
+    unreadMessageIds: number[] = [], unreadByThemMessageIds: number[] = [], muted: boolean = false) : ConfirmedDirectChat => {
 
     const earliestConfirmedMessageId = getMinMessageId(messages);
     const latestConfirmedMessageId = getMaxMessageId(messages);
@@ -161,13 +163,14 @@ export const newConfirmedDirectChat = (
         draftMessage: "",
         themTyping: false,
         replyContext: null,
-        messageToSelect: null
+        messageToSelect: null,
+        muted,
     };
 }
 
 export const newConfirmedGroupChat = (
     chatId: ChatId, subject: string, participants: UserId[], displayDate: Date, lastUpdated: Date, minMessageIdOnServer: number,
-    messages: Message[] = [], unreadMessageIds: number[] = [], unreadByAnyMessageIds: number[] = []) : ConfirmedGroupChat => {
+    messages: Message[] = [], unreadMessageIds: number[] = [], unreadByAnyMessageIds: number[] = [], muted: boolean = false) : ConfirmedGroupChat => {
 
     const earliestConfirmedMessageId = getMinMessageId(messages);
     const latestConfirmedMessageId = getMaxMessageId(messages);
@@ -196,7 +199,8 @@ export const newConfirmedGroupChat = (
         draftMessage: "",
         participantsTyping: [],
         replyContext: null,
-        messageToSelect: null
+        messageToSelect: null,
+        muted,
     };
 }
 

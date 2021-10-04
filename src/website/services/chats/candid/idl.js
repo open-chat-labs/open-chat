@@ -73,6 +73,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_messages' : IDL.Vec(Message),
     'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
     'unread_by_any_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
+    'muted': IDL.Bool,
   });
   const CreateGroupChatResponse = IDL.Variant({
     'SubjectTooLong' : IDL.Nat8,
@@ -100,6 +101,7 @@ export const idlFactory = ({ IDL }) => {
     'unread_by_them_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
     'latest_messages' : IDL.Vec(Message),
     'unread_by_me_message_id_ranges' : IDL.Vec(IDL.Vec(IDL.Nat32)),
+    'muted': IDL.Bool,
   });
   const ChatSummary = IDL.Variant({
     'Group' : GroupChatSummary,
@@ -288,6 +290,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageRequest], [SendMessageResponse], []),
     'stats' : IDL.Func([], [Stats], ['query']),
+    'toggle_notifications' : IDL.Func([ChatId, IDL.Bool], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

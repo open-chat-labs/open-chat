@@ -487,6 +487,7 @@ type V1Message =
 
 type V1DirectMessageNotification =
     record {
+        chat_id: text;
         sender: UserId;
         sender_name: text;
         message: V1Message;
@@ -494,7 +495,7 @@ type V1DirectMessageNotification =
 
 type V1GroupMessageNotification =
     record {
-        chat_id: nat;
+        chat_id: text;
         group_name: text;
         sender: UserId;
         sender_name: text;

@@ -17,6 +17,8 @@ pub struct DirectChat {
     user2_unread_message_ids: RangeSet<[RangeInclusive<u32>; 2]>,
     messages: Vec<Message>,
     last_updated: Timestamp,
+    user1_muted: bool,
+    user2_muted: bool,
 }
 
 #[derive(CandidType)]
@@ -28,6 +30,7 @@ pub struct DirectChatSummary {
     unread_by_me_message_id_ranges: Vec<[u32; 2]>,
     unread_by_them_message_id_ranges: Vec<[u32; 2]>,
     latest_messages: Vec<Message>,
+    muted: bool,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -39,6 +42,8 @@ pub struct DirectChatStableState {
     user2_unread_message_id_ranges: Vec<[u32; 2]>,
     messages: Vec<Message>,
     last_updated: Timestamp,
+    user1_muted: bool,
+    user2_muted: bool,
 }
 
 impl DirectChat {
@@ -51,6 +56,8 @@ impl DirectChat {
             user2_unread_message_ids: RangeSet::new(),
             messages: vec![],
             last_updated: now,
+            user1_muted: false,
+            user2_muted: false,
         }
     }
 
@@ -63,6 +70,16 @@ impl DirectChat {
             &self.user2
         } else {
             &self.user1
+        }
+    }
+
+    pub fn notifications_muted(&self, user_id: UserId) -> bool {
+        if user_id == self.user1 {
+            self.user1_muted
+        } else if user_id == self.user2 {
+            self.user2_muted
+        } else {
+            true
         }
     }
 }
@@ -145,6 +162,14 @@ impl Chat for DirectChat {
         MarkReadResult::new(utils::range_set_to_vec(unread_message_ids))
     }
 
+    fn mute_notifications(&mut self, user_id: UserId, mute: bool) {
+        if user_id == self.user1 {
+            self.user1_muted = mute;
+        } else if user_id == self.user2 {
+            self.user2_muted = mute;
+        }
+    }
+
     fn get_unread_message_id_ranges(&self, user_id: &UserId) -> Vec<[u32; 2]> {
         let is_user1 = *user_id == self.user1;
         let unread_message_ids = if is_user1 {
@@ -193,6 +218,7 @@ impl DirectChatSummary {
             unread_by_me_message_id_ranges,
             unread_by_them_message_id_ranges,
             latest_messages,
+            muted: chat.notifications_muted(*me),
         }
     }
 }
@@ -217,6 +243,8 @@ impl From<DirectChat> for DirectChatStableState {
             user2_unread_message_id_ranges: utils::range_set_to_vec(chat.user2_unread_message_ids),
             messages: chat.messages,
             last_updated: chat.last_updated,
+            user1_muted: chat.user1_muted,
+            user2_muted: chat.user2_muted,
         }
     }
 }
@@ -231,6 +259,8 @@ impl From<DirectChatStableState> for DirectChat {
             user2_unread_message_ids: utils::vec_to_range_set(chat.user2_unread_message_id_ranges),
             messages: chat.messages,
             last_updated: chat.last_updated,
+            user1_muted: chat.user1_muted,
+            user2_muted: chat.user2_muted,
         }
     }
 }

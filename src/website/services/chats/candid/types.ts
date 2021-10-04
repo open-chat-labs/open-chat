@@ -34,6 +34,7 @@ export interface DirectChatSummary {
   'unread_by_them_message_id_ranges' : Array<Array<number>>,
   'latest_messages' : Array<Message>,
   'unread_by_me_message_id_ranges' : Array<Array<number>>,
+  'muted': boolean,
 }
 export interface FileContent {
   'blob_size' : number,
@@ -76,6 +77,7 @@ export interface GroupChatSummary {
   'latest_messages' : Array<Message>,
   'unread_by_me_message_id_ranges' : Array<Array<number>>,
   'unread_by_any_message_id_ranges' : Array<Array<number>>,
+  'muted': boolean,
 }
 export type JoinGroupResponse = { 'AlreadyInGroup' : null } |
   { 'UserLimitReached' : null } |
@@ -227,4 +229,5 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageRequest) => Promise<SendMessageResponse>,
   'stats' : () => Promise<Stats>,
+  'toggle_notifications' : (arg_0: ChatId, arg_1: boolean) => Promise<undefined>,
 }

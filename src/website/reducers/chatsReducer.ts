@@ -8,6 +8,7 @@ import * as setFunctions from "../utils/setFunctions";
 import { ViewMode } from "../domain/model/viewMode";
 
 import {
+    CONFIRMED_DIRECT_CHAT,
     CONFIRMED_GROUP_CHAT,
     PAGE_SIZE,
     UNCONFIRMED_GROUP_CHAT
@@ -77,10 +78,12 @@ import {
 } from "../actions/chats/removeParticipant";
 
 import {
+    MARK_ALL_MESSAGES_AS_READ,
     MARK_MESSAGES_AS_READ,
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID,
     MARK_MESSAGES_AS_READ_BY_CLIENT_ID_REMOTELY,
     MARK_MESSAGES_AS_READ_REMOTELY,
+    MarkAllMessagesAsReadEvent,
     MarkMessagesAsReadByClientIdEvent,
     MarkMessagesAsReadByClientIdRemotelyEvent,
     MarkMessagesAsReadEvent,
@@ -125,6 +128,13 @@ import {
     UserUnblockedEvent
 } from "../actions/chats/blockUser";
 
+import { 
+    NOTIFICATIONS_MUTED,
+    NOTIFICATIONS_UNMUTED,
+    NotificationsMutedEvent,
+    NotificationsUnmutedEvent
+} from "../actions/chats/toggleNotifications";
+
 import { GOTO_HOME, GotoHomeEvent } from "../actions/app/gotoHome";
 import { UserId } from "../domain/model/users";
 
@@ -166,11 +176,14 @@ type Event =
     GotoChatEvent |
     GotoHomeEvent |
     LeaveGroupSucceededEvent |
+    MarkAllMessagesAsReadEvent |
     MarkMessagesAsReadEvent |
     MarkMessagesAsReadByClientIdEvent |
     MarkMessagesAsReadRemotelyEvent |
     MarkMessagesAsReadByClientIdRemotelyEvent |
     MarkMessagesAsReadServerSyncSucceededEvent |
+    NotificationsMutedEvent |
+    NotificationsUnmutedEvent |
     ReceiveP2PMessageEvent |
     RemoveParticipantFailedEvent |
     RemoveParticipantRequestedEvent |
@@ -408,6 +421,13 @@ export default produce((state: ChatsState, event: Event) => {
             chatFunctions.markMessagesAsReadLocally(chat, messageIds);
             break;
         }
+        
+        case MARK_ALL_MESSAGES_AS_READ: {
+            const { chatId } = event.payload;
+            const [chat] = chatFunctions.getConfirmedChat(state.chats, chatId);
+            chatFunctions.markMessagesAsReadLocally(chat, chat.unreadMessageIds);
+            break;
+        }
 
         case MARK_MESSAGES_AS_READ_BY_CLIENT_ID: {
             const { chatId, clientMessageIds } = event.payload;
@@ -612,6 +632,16 @@ export default produce((state: ChatsState, event: Event) => {
         case USER_UNBLOCKED: {
             const { userId } = event.payload;
             setFunctions.remove(state.blockedUsers, userId);
+            break;
+        }
+
+        case NOTIFICATIONS_MUTED:
+        case NOTIFICATIONS_UNMUTED: {
+            const { chatId } = event.payload;
+            const [chat] = chatFunctions.getChat(state.chats, chatId);
+            if (chat.kind === CONFIRMED_GROUP_CHAT || chat.kind === CONFIRMED_DIRECT_CHAT ) {
+                chat.muted = event.type === NOTIFICATIONS_MUTED;
+            }
             break;
         }
     }

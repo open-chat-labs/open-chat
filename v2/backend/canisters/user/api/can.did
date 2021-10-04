@@ -69,14 +69,20 @@ type ToggleReactionResponse =
 type MarkReadArgs =
     record {
         user_id: UserId;
-        message_ranges: vec MessageIndexRange;
+        message_index_ranges: vec MessageIndexRange;
+        message_ids: vec MessageId;
     };
 
 type MarkReadResponse =
     variant {
-        Success;
-        SuccessNoChange;
+        Success: MarkReadSuccessResult;
+        SuccessNoChange: MarkReadSuccessResult;
         ChatNotFound;
+    };
+
+type MarkReadSuccessResult =
+    record {
+        unrecognised_message_ids: vec MessageId;
     };
 
 type BlockUserArgs =
@@ -193,6 +199,7 @@ type AddWebRtcSessionDetailsResponse =
     variant {
         Success;
         Blocked;
+        UserNotFound;
     }; 
 
 type RemoveWebRtcSessionDetailsArgs =

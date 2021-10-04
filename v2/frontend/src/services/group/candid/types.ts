@@ -230,10 +230,16 @@ export type MakeAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
-export interface MarkReadArgs { 'message_ranges' : Array<MessageIndexRange> }
-export type MarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : null } |
+export interface MarkReadArgs {
+  'message_index_ranges' : Array<MessageIndexRange>,
+  'message_ids' : Array<MessageId>,
+}
+export type MarkReadResponse = { 'SuccessNoChange' : MarkReadSuccessResult } |
+  { 'Success' : MarkReadSuccessResult } |
   { 'NotInGroup' : null };
+export interface MarkReadSuccessResult {
+  'unrecognised_message_ids' : Array<MessageId>,
+}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -457,6 +463,7 @@ export interface V1DirectMessageNotification {
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
+  'chat_id' : string,
 }
 export interface V1FileContent {
   'blob_size' : number,
@@ -472,7 +479,7 @@ export interface V1GroupMessageNotification {
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
-  'chat_id' : bigint,
+  'chat_id' : string,
   'group_name' : string,
 }
 export interface V1MediaContent {

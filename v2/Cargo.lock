@@ -1038,6 +1038,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cycles_utils",
+ "futures",
  "group_canister",
  "group_index_canister",
  "ic-cdk",
