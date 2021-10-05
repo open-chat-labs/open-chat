@@ -360,13 +360,6 @@ type ParticipantsRemoved =
         removed_by: UserId;
     };
 
-type ReplyContextArgs =
-    record {
-        chat_id_if_other: opt ChatId;
-        sender: UserId;
-        message_id: MessageId;
-    };
-
 type Role =
     variant {
         Admin;
