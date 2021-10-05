@@ -86,14 +86,9 @@ type MarkReadArgs =
 
 type MarkReadResponse =
     variant {
-        Success: MarkReadSuccessResult;
-        SuccessNoChange: MarkReadSuccessResult;
+        Success;
+        SuccessNoChange;
         ChatNotFound;
-    };
-
-type MarkReadSuccessResult =
-    record {
-        unrecognised_message_ids: vec MessageId;
     };
 
 type BlockUserArgs =

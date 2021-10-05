@@ -3,6 +3,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::mark_read::*;
 use ic_cdk_macros::update;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use utils::range_set::insert_ranges;
 
 #[update]
@@ -15,6 +16,7 @@ fn mark_read(args: Args) -> Response {
 fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = &runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
+        let now = runtime_state.env.now();
         let mut has_changes = false;
         let mut unrecognised_message_ids = Vec::new();
         if let Some(max_message_index) = runtime_state.data.events.latest_message_index() {
@@ -36,19 +38,21 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     }
                 } else {
                     unrecognised_message_ids.push(message_id);
+                    match runtime_state.data.message_ids_read_but_not_confirmed.entry(message_id) {
+                        Occupied(e) => e.into_mut().0.push(participant.user_id),
+                        Vacant(e) => {
+                            e.insert((vec![participant.user_id], now));
+                        }
+                    };
                 }
             }
             has_changes = !added.is_empty();
         }
         if has_changes {
-            participant.read_by_me_updated = runtime_state.env.now();
-            Success(SuccessResult {
-                unrecognised_message_ids,
-            })
+            participant.read_by_me_updated = now;
+            Success
         } else {
-            SuccessNoChange(SuccessResult {
-                unrecognised_message_ids,
-            })
+            SuccessNoChange
         }
     } else {
         NotInGroup

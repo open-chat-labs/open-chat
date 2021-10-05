@@ -10,12 +10,7 @@ pub struct Args {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
-    SuccessNoChange(SuccessResult),
+    Success,
+    SuccessNoChange,
     NotInGroup,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub unrecognised_message_ids: Vec<MessageId>,
 }

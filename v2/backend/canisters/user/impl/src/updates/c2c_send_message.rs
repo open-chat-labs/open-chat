@@ -57,6 +57,7 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 }
 
 fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
+    let now = runtime_state.env.now();
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: sender_user_id,
@@ -65,14 +66,28 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
             ReplyContextArgs::Direct(d) => ReplyContextInternal::SameChat(d.message_id),
             ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(Box::new(p)),
         }),
-        now: runtime_state.env.now(),
+        now,
     };
 
-    let (_, _, message) =
+    let (chat_id, _, message) =
         runtime_state
             .data
             .direct_chats
             .push_message(false, sender_user_id, Some(args.sender_message_index), push_message_args);
+
+    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
+            for is_me in users_to_mark_as_read.into_iter() {
+                if is_me {
+                    chat.read_by_me.insert(message.message_index.into());
+                    chat.read_by_me_updated = now;
+                } else {
+                    chat.read_by_them.insert(message.message_index.into());
+                    chat.read_by_them_updated = now;
+                }
+            }
+        }
+    }
 
     let random = runtime_state.env.random_u32() as usize;
 

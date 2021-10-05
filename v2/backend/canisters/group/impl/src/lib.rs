@@ -4,7 +4,8 @@ use candid::{CandidType, Principal};
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
+use std::collections::HashMap;
+use types::{Avatar, CanisterId, ChatId, MessageId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -57,6 +58,13 @@ struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
+
+    // Because messages are sent P2P over WebRTC, there is a race condition where 'mark_read' can be
+    // called before the message itself has been received by the IC. When that happens we add the
+    // messageId to this hashmap so that once we receive the message we can immediately mark it as
+    // read.
+    // TODO Prune messages from here that are more than 1 minute old
+    pub message_ids_read_but_not_confirmed: HashMap<MessageId, (Vec<UserId>, TimestampMillis)>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -93,6 +101,7 @@ impl Data {
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
+            message_ids_read_but_not_confirmed: HashMap::new(),
         }
     }
 }
