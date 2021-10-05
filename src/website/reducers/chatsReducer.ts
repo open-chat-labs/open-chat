@@ -654,8 +654,10 @@ function maintainScrollOfSelectedChat(state: ChatsState) {
 }
 
 function selectChatAndPushToHistory(state: ChatsState, index: number) {
-    const replace = state.selectedChatIndex != null;
-    const id = state.chats[index].chatId;
-    historyFunctions.pushOrReplaceChat(id, replace);
-    state.selectedChatIndex = index;
+    const id = state.chats[index]?.chatId;
+    if (id) {
+        const replace = state.selectedChatIndex != null;
+        historyFunctions.pushOrReplaceChat(id, replace);
+        state.selectedChatIndex = index;
+    }
 }

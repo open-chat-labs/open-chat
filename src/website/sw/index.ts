@@ -4,6 +4,17 @@ import * as cycleFunctions from "../utils/cycleFunctions";
 declare var self: ServiceWorkerGlobalScope;
 export {};
 
+self.addEventListener('install', function(_event) {
+    self.skipWaiting();
+
+    const channel = new BroadcastChannel("OPEN_CHAT");
+    channel.onmessage = function(event) {
+        if (event.data?.type === "CLEAR_NOTIFICATIONS") {
+            clearNotification(event.data.chatId);
+        }    
+    };    
+});
+
 self.addEventListener('push', function(event: PushEvent) {
     event.waitUntil(handlePushNotification(event));
 });
@@ -30,7 +41,6 @@ async function handlePushNotification(event: PushEvent) : Promise<void> {
 }
 
 async function handleNotificationClick(event: NotificationEvent) : Promise<void> {
-    console.log("handleNotificationClick");
     event.notification.close();  
 
     let windowClients = await self.clients.matchAll({
@@ -43,12 +53,12 @@ async function handleNotificationClick(event: NotificationEvent) : Promise<void>
         window.focus();
 
         window.postMessage({
-            msg: "message_received",
+            type: "NOTIFICATION_CLICKED",
             chatId: event.notification.data.chatId,
             messageId: event.notification.data.messageId,
         });
     } else {
-        const urlToOpen = new URL(self.location.origin).href + event.notification.data.chatId;
+        const urlToOpen = new URL(self.location.origin).href + toHex(event.notification.data.chatId);
         await self.clients.openWindow(urlToOpen);
     }
 }
@@ -68,7 +78,7 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
     let body: string;
     let sender: string;
     let messageId: number;
-    let chatId: string;
+    let chatId: bigint;
     if ("V1DirectMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1DirectMessageNotification;
         let content = extractContent(notification.message.content);
@@ -76,7 +86,7 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
         body = content.text;
         icon = content.image ?? icon;
         sender = notification.sender.toString();
-        chatId = notification.chat_id;
+        chatId = fromHex(notification.chat_id);
         messageId = notification.message.id;
     } else if ("V1GroupMessageNotification" in notificationVariant) {
         let notification = notificationVariant.V1GroupMessageNotification;
@@ -85,7 +95,7 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
         body = `${notification.sender_name}: ${content.text}`;
         icon = content.image ?? icon;
         sender = notification.sender.toString();
-        chatId = notification.chat_id;
+        chatId = fromHex(notification.chat_id);
         messageId = notification.message.id;
     } else {
         console.log("Unexpected notification type");
@@ -96,7 +106,7 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
     await self.registration.showNotification(title, {
         body, 
         icon, 
-        tag: chatId,
+        tag: toHex(chatId),
         //renotify: (typeof tag !== "undefined"),
         data: {
             chatId,
@@ -104,6 +114,11 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
             messageId,           
         }
     });
+}
+
+async function clearNotification(chatId: bigint) {
+    const notifications = await self.registration.getNotifications();
+    notifications.find(n => n.data?.chatId === chatId)?.close();
 }
 
 type ContentExtract = {
@@ -138,4 +153,12 @@ function extractContent(contentVariant: V1MessageContent) : ContentExtract {
 
 function extractMediaType(mimeType: string) : string {
     return mimeType.replace(/\/.*/, "");
+}
+
+function toHex(n: bigint) : string {
+    return BigInt(n).toString(16).padStart(32, "0");
+}
+
+function fromHex(hex: string) : bigint {
+    return BigInt("0x" + hex);
 }
