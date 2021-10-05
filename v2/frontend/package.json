@@ -85,6 +85,7 @@
         "idb": "^6.1.2",
         "identicon.js": "^2.3.3",
         "md5": "^2.3.0",
+        "peerjs": "^1.3.2",
         "rollbar": "^2.23.0",
         "sirv-cli": "^1.0.0",
         "svelte-easy-crop": "^1.0.4",
@@ -112,6 +113,7 @@
             "svelte"
         ],
         "moduleNameMapper": {
+            "peerjs": "<rootDir>/src/dummyModule.js",
             "svelte-spa-router": "<rootDir>/src/dummyModule.js",
             "stores/background": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js"
