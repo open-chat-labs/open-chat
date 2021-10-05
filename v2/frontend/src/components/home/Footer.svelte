@@ -83,14 +83,26 @@
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
-                        machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                        machine.send({
+                            type: "REMOVE_MESSAGE",
+                            data: {
+                                messageId: msg!.messageId,
+                                userId: $machine.context.user!.userId,
+                            },
+                        });
                         // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                         dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
                     toastStore.showFailureToast("errorSendingMessage");
-                    machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    machine.send({
+                        type: "REMOVE_MESSAGE",
+                        data: {
+                            messageId: msg!.messageId,
+                            userId: $machine.context.user!.userId,
+                        },
+                    });
                     rollbar.error("Exception sending message", err);
                     // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                     dispatch("messageConfirmed", msg!.messageId);

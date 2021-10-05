@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { spawn } from "xstate";
 import type {
     DirectChatSummary,
     Message,
@@ -77,7 +76,6 @@ const groupChat: GroupChatSummary = {
 const directContext: ChatContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: directChat,
-    userLookup: {},
     events: [],
     user: {
         userId: "abcdef",
@@ -95,7 +93,6 @@ const serviceContainer = new ServiceContainer({} as Identity);
 const groupContext: ChatContext = {
     serviceContainer,
     chatSummary: groupChat,
-    userLookup: {},
     events: [],
     user: {
         userId: "abcdef",
@@ -225,7 +222,7 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "REMOVE_MESSAGE",
-                data: testDirectMessage,
+                data: { messageId: testDirectMessage.messageId, userId: testDirectMessage.sender },
             },
             { user_states: "idle" }
         );
