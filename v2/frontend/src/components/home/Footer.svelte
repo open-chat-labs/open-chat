@@ -74,7 +74,6 @@
                 $machine.context.replyingTo,
                 fileToAttach
             );
-            dispatch("unconfirmedMessage", msg!.messageId);
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
@@ -105,7 +104,6 @@
                     });
                     rollbar.error("Exception sending message", err);
                     // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
-                    dispatch("messageConfirmed", msg!.messageId);
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };

@@ -27,7 +27,6 @@
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
-    import { unconfirmed } from "../../stores/unconfirmed";
     import { stopMarkReadPoller } from "../../stores/markRead";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
@@ -130,14 +129,6 @@
 
     function newGroup() {
         machine.send({ type: "NEW_GROUP" });
-    }
-
-    function unconfirmedMessage(ev: CustomEvent<bigint>) {
-        unconfirmed.add(ev.detail);
-    }
-
-    function messageConfirmed(ev: CustomEvent<bigint>) {
-        unconfirmed.delete(ev.detail);
     }
 
     function newChat() {
@@ -256,8 +247,6 @@
             <MiddlePanel
                 loadingChats={$machine.matches("loading_chats")}
                 {blocked}
-                on:unconfirmedMessage={unconfirmedMessage}
-                on:messageConfirmed={messageConfirmed}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}

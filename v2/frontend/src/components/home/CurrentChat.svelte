@@ -34,7 +34,7 @@
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
     <CurrentChatMessages on:chatWith {machine} />
-    <Footer {machine} on:unconfirmedMessage on:messageConfirmed />
+    <Footer {machine} />
 </div>
 
 <style type="text/scss">

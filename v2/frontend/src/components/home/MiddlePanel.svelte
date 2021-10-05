@@ -27,8 +27,6 @@
         <CurrentChat
             {blocked}
             {machine}
-            on:unconfirmedMessage
-            on:messageConfirmed
             on:unblockUser
             on:clearSelection
             on:blockUser

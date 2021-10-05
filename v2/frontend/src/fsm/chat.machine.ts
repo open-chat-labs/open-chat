@@ -384,6 +384,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     }
                                 );
                             }
+                            unconfirmed.add(ev.data.messageEvent.event.messageId);
                             chatStore.set({
                                 chatId: ctx.chatSummary.chatId,
                                 event: "sending_message",
@@ -545,6 +546,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 }
                             );
                         }
+                        unconfirmed.delete(ev.data.messageId);
                         return {
                             events: ctx.events.filter(
                                 (e) =>
