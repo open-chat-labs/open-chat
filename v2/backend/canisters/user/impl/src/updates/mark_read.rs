@@ -1,7 +1,8 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
-use types::{ChatId, MessageIndex};
+use std::collections::hash_map::Entry::{Occupied, Vacant};
+use types::{ChatId, MessageId, MessageIndex};
 use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
 use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet};
@@ -18,6 +19,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let chat_id = args.user_id.into();
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+        let now = runtime_state.env.now();
         let mut added = RangeSet::new();
         let mut unrecognised_message_ids = Vec::new();
         if let Some(max_message_index) = chat.events.latest_message_index() {
@@ -35,38 +37,51 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     }
                 } else {
                     unrecognised_message_ids.push(message_id);
+                    match chat.message_ids_read_but_not_confirmed.entry(message_id) {
+                        Occupied(e) => e.into_mut().0.push(true),
+                        Vacant(e) => {
+                            e.insert((vec![true], now));
+                        }
+                    };
                 }
             }
         }
-        if added.is_empty() {
-            SuccessNoChange(SuccessResult {
+        let has_changes = !added.is_empty();
+
+        let mut their_message_ranges = RangeSet::new();
+        for index in added.iter().filter_map(|m| chat.unread_message_index_map.get(&m.into())) {
+            their_message_ranges.insert(index.into());
+        }
+
+        if !their_message_ranges.is_empty() || !unrecognised_message_ids.is_empty() {
+            ic_cdk::block_on(mark_read_on_recipients_canister(
+                chat_id,
+                their_message_ranges,
+                added,
                 unrecognised_message_ids,
-            })
-        } else {
-            let now = runtime_state.env.now();
+            ));
+        }
+
+        if has_changes {
             chat.read_by_me_updated = now;
-
-            let mut their_message_ranges = RangeSet::new();
-            for index in added.iter().filter_map(|m| chat.unread_message_index_map.get(&m.into())) {
-                their_message_ranges.insert(index.into());
-            }
-
-            if !their_message_ranges.is_empty() {
-                ic_cdk::block_on(mark_read_on_recipients_canister(chat_id, their_message_ranges, added));
-            }
-
-            Success(SuccessResult {
-                unrecognised_message_ids,
-            })
+            Success
+        } else {
+            SuccessNoChange
         }
     } else {
         ChatNotFound
     }
 }
 
-async fn mark_read_on_recipients_canister(chat_id: ChatId, their_message_ranges: RangeSet, our_message_ranges: RangeSet) {
+async fn mark_read_on_recipients_canister(
+    chat_id: ChatId,
+    their_message_ranges: RangeSet,
+    our_message_ranges: RangeSet,
+    message_ids: Vec<MessageId>,
+) {
     let args = c2c_mark_read::Args {
-        message_ranges: convert_to_message_index_ranges(their_message_ranges),
+        message_index_ranges: convert_to_message_index_ranges(their_message_ranges),
+        message_ids,
     };
     let _ = user_canister_c2c_client::c2c_mark_read(chat_id.into(), &args).await;
 

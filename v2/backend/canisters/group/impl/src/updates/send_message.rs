@@ -36,6 +36,17 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         participant.read_by_me.insert(message_index.into());
         participant.read_by_me_updated = now;
 
+        if let Some((users_to_mark_as_read, _)) = runtime_state.data.message_ids_read_but_not_confirmed.remove(&args.message_id)
+        {
+            for u in users_to_mark_as_read.iter() {
+                if let Some(p) = runtime_state.data.participants.get_by_user_id_mut(u) {
+                    if p.read_by_me.insert(message_index.into()) {
+                        p.read_by_me_updated = now;
+                    }
+                }
+            }
+        }
+
         handle_activity_notification(runtime_state);
 
         let random = runtime_state.env.random_u32() as usize;
