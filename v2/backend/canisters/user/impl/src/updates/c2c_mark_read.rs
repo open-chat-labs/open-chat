@@ -19,7 +19,6 @@ fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         let now = runtime_state.env.now();
         let mut has_changes = false;
-        let mut unrecognised_message_ids = Vec::new();
         if let Some(max_message_index) = chat.events.latest_message_index() {
             let mut added = insert_ranges(
                 &mut chat.read_by_them,
@@ -34,7 +33,6 @@ fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
                         added.insert(as_u32);
                     }
                 } else {
-                    unrecognised_message_ids.push(message_id);
                     match chat.message_ids_read_but_not_confirmed.entry(message_id) {
                         Occupied(e) => e.into_mut().0.push(false),
                         Vacant(e) => {

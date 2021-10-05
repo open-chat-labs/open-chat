@@ -18,7 +18,6 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
         let now = runtime_state.env.now();
         let mut has_changes = false;
-        let mut unrecognised_message_ids = Vec::new();
         if let Some(max_message_index) = runtime_state.data.events.latest_message_index() {
             let min_message_index = participant.min_visible_message_index;
             let mut added = insert_ranges(
@@ -37,7 +36,6 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         added.insert(as_u32);
                     }
                 } else {
-                    unrecognised_message_ids.push(message_id);
                     match runtime_state.data.message_ids_read_but_not_confirmed.entry(message_id) {
                         Occupied(e) => e.into_mut().0.push(participant.user_id),
                         Vacant(e) => {
