@@ -143,59 +143,6 @@ function sendMessageToChatBasedOnUser(ctx: HomeContext, userId: string, chatMsg:
     }
 }
 
-// async function handleWebRtcConnections(
-//     myUserId: string,
-//     serviceContainer: ServiceContainer,
-//     rtcEvents: WebRtcSessionDetailsEvent[]
-// ): Promise<void> {
-//     const sorted = rtcEvents.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
-
-//     // if we have two from the same user we just take the later one, that's why we are sorting and flattening
-//     const [offers, remoteAnswers]: [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>] =
-//         sorted.reduce(
-//             ([offers, remoteAnswers], ev) => {
-//                 if (ev.sessionDetails.kind === "offer") {
-//                     offers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
-//                 }
-//                 if (ev.sessionDetails.kind === "answer") {
-//                     remoteAnswers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
-//                 }
-//                 return [offers, remoteAnswers];
-//             },
-//             [{}, {}] as [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>]
-//         );
-
-//     const sentAnswers = Object.values(offers).map((offer) => {
-//         // this little trick is necesary in case both ends initiate the connection at the same time
-//         if (rtcConnectionsManager.exists(offer.fromUserId) && offer.fromUserId > myUserId) {
-//             console.log("we already have a connection with user: ", offer.fromUserId);
-//             console.log(
-//                 "Since I have the lower userId, we will ignore this offer and let them progress the connection"
-//             );
-//             return;
-//         }
-
-//         return rtcConnectionsManager.createAnswer(myUserId, offer).then((answer) =>
-//             serviceContainer
-//                 .webRtcAnswer(offer.fromUserId, answer)
-//                 .then((resp) => {
-//                     if (resp !== "success") {
-//                         console.log("WebRtc answer failed: ", resp);
-//                     }
-//                 })
-//                 .catch((err) => {
-//                     console.log("WebRtc answer failed: ", err);
-//                 })
-//         );
-//     });
-
-//     const receivedAnswers = Object.values(remoteAnswers).map((r) =>
-//         rtcConnectionsManager.handleRemoteAnswer(r)
-//     );
-
-//     await Promise.all([...sentAnswers, ...receivedAnswers]);
-// }
-
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
