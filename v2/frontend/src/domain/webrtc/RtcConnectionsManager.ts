@@ -8,11 +8,11 @@ export class RtcConnectionsManager {
 
     private onMessage?: (message: unknown) => void;
 
-    private cacheConnection(me: string, you: string, conn: DataConnection) {
-        this.connections.set(you, conn);
+    private cacheConnection(me: string, them: string, conn: DataConnection) {
+        this.connections.set(them, conn);
 
         conn.on("open", () => {
-            console.log("c: connection open: ", me, " and ", you);
+            console.log("c: connection open: ", me, " and ", them);
         });
 
         conn.on("data", (data) => {
@@ -27,11 +27,11 @@ export class RtcConnectionsManager {
         });
     }
 
-    public init(userId: string): Promise<Peer> {
+    public init(me: string): Promise<Peer> {
         if (this._peer) return Promise.resolve(this._peer);
 
         return new Promise((resolve) => {
-            this._peer = new Peer(userId, {
+            this._peer = new Peer(me, {
                 debug: 2,
             });
 
@@ -43,7 +43,7 @@ export class RtcConnectionsManager {
 
             this._peer.on("connection", (conn) => {
                 console.log("p: connection receieved on the peer: ", conn.peer);
-                this.cacheConnection(userId, conn.peer, conn);
+                this.cacheConnection(me, conn.peer, conn);
             });
 
             this._peer.on("disconnected", () => {
@@ -76,12 +76,12 @@ export class RtcConnectionsManager {
         return this.connections.has(user);
     }
 
-    public create(me: string, you: string): void {
+    public create(me: string, them: string): void {
         this.init(me).then((peer) => {
             this.cacheConnection(
                 me,
-                you,
-                peer.connect(you, {
+                them,
+                peer.connect(them, {
                     serialization: "json",
                 })
             );
