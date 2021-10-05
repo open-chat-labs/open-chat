@@ -59,7 +59,6 @@ describe("home machine transitions", () => {
                     usersLastUpdate: BigInt(0),
                     chatUpdatesSince: BigInt(0),
                     blockedUsers: new Set<string>(),
-                    webRtcSessionDetails: [],
                 },
             },
             { loaded_chats: "no_chat_selected" }
@@ -184,7 +183,6 @@ describe("home machine transitions", () => {
                     chatUpdatesSince: BigInt(200),
                     usersLastUpdate: BigInt(100),
                     blockedUsers: new Set<string>(),
-                    webRtcSessionDetails: [],
                 },
             },
             {

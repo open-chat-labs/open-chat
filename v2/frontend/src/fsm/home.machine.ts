@@ -44,10 +44,7 @@ import type {
     RemoteUserSentMessage,
     RemoteUserToggledReaction,
     RemoteUserUndeletedMessage,
-    WebRtcAnswer,
     WebRtcMessage,
-    WebRtcOffer,
-    WebRtcSessionDetailsEvent,
 } from "../domain/webrtc/webrtc";
 import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
@@ -101,7 +98,6 @@ export type HomeEvents =
           type: "REMOTE_USER_READ_MESSAGE";
           data: RemoteUserReadMessage;
       }
-    | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "CANCEL_NEW_CHAT" }
@@ -130,7 +126,6 @@ type ChatsResponse = {
     chatUpdatesSince: bigint;
     usersLastUpdate: bigint;
     blockedUsers: Set<string>;
-    webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
 type UserUpdateResponse = { usersLastUpdate: bigint };
 
@@ -227,7 +222,6 @@ async function getUpdates(
             chatUpdatesSince: chatsResponse.timestamp,
             usersLastUpdate: usersResponse.timestamp,
             blockedUsers: chatsResponse.blockedUsers,
-            webRtcSessionDetails: chatsResponse.webRtcSessionDetails,
         };
     } catch (err) {
         rollbar.error("Error getting chats", err as Error);
@@ -263,17 +257,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     services: {
         getUpdates: async (ctx, _) =>
             getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
-
-        // webRtcConnectionHandler: (ctx, _ev) => (_callback, receive) => {
-        //     receive((ev) => {
-        //         if (ev.type === "HANDLE_WEBRTC_CONNECTIONS") {
-        //             handleWebRtcConnections(ctx.user!.userId, ctx.serviceContainer!, ev.data);
-        //         }
-        //     });
-        //     return () => {
-        //         console.log("stopping the webrtc connection handler");
-        //     };
-        // },
 
         webRtcMessageHandler: (_ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
@@ -457,10 +440,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     id: "updateUsersPoller",
                     src: "updateUsersPoller",
                 },
-                // {
-                //     id: "webRtcConnectionHandler",
-                //     src: "webRtcConnectionHandler",
-                // },
                 {
                     id: "webRtcMessageHandler",
                     src: "webRtcMessageHandler",
@@ -587,15 +566,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
                             to: "updateChatsPoller",
                         }),
-                        // send(
-                        //     (_ctx, ev) => ({
-                        //         type: "HANDLE_WEBRTC_CONNECTIONS",
-                        //         data: ev.data.webRtcSessionDetails,
-                        //     }),
-                        //     {
-                        //         to: "webRtcConnectionHandler",
-                        //     }
-                        // ),
                         pure((ctx, ev) => {
                             // ping any chat actors with the latest copy of the chat
                             return ev.data.chatSummaries.reduce<

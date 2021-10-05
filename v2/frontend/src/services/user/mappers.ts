@@ -20,10 +20,6 @@ import type {
     ApiSearchAllMessagesResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
-    ApiAddWebRtcSessionDetailsResponse,
-    ApiWebRtcSessionDetailsEvent,
-    ApiWebRtcSessionDetails,
-    ApiWebRtcEndpoint,
 } from "./candid/idl";
 import type {
     ChatSummary,
@@ -50,29 +46,7 @@ import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import { message, messageContent, updatedMessage } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
-import type {
-    AddWebRtcResponse,
-    WebRtcEndpoint,
-    WebRtcSessionDetails,
-    WebRtcSessionDetailsEvent,
-} from "../../domain/webrtc/webrtc";
 import { Principal } from "@dfinity/principal";
-
-export function addWebRtcResponse(candid: ApiAddWebRtcSessionDetailsResponse): AddWebRtcResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("Blocked" in candid) {
-        return "blocked";
-    }
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-    throw new UnsupportedValueError(
-        "Unknown UserIndex.ApiAddWebRtcSessionDetailsResponse type received",
-        candid
-    );
-}
 
 export function searchAllMessageResponse(
     candid: ApiSearchAllMessagesResponse
@@ -418,9 +392,6 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 blobId,
                 canisterId: chatId,
             })),
-            webRtcSessionDetails: candid.Group.webrtc_session_details.map((e) =>
-                webRtcSessionDetailsEvent(chatId, e)
-            ),
         };
     }
     if ("Direct" in candid) {
@@ -436,50 +407,9 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 event: message(ev.event),
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
-            webRtcSessionDetails: optional(candid.Direct.webrtc_session_details, (e) =>
-                webRtcSessionDetailsEvent(chatId, e)
-            ),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
-}
-
-function webRtcSessionDetailsEvent(
-    chatId: string,
-    candid: ApiWebRtcSessionDetailsEvent
-): WebRtcSessionDetailsEvent {
-    return {
-        sessionDetails: webRtcSessionDetails(candid.session_details),
-        timestamp: candid.timestamp,
-        chatId,
-    };
-}
-
-function webRtcSessionDetails(candid: ApiWebRtcSessionDetails): WebRtcSessionDetails {
-    if ("Answer" in candid) {
-        return {
-            kind: "answer",
-            offerId: candid.Answer.offer_id,
-            fromUserId: candid.Answer.user_id.toString(),
-            endpoint: webRtcEndpoint(candid.Answer.endpoint),
-        };
-    }
-    if ("Offer" in candid) {
-        return {
-            kind: "offer",
-            fromUserId: candid.Offer.user_id.toString(),
-            endpoint: webRtcEndpoint(candid.Offer.endpoint),
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiWebRtcSessionDetails type received", candid);
-}
-
-function webRtcEndpoint(candid: ApiWebRtcEndpoint): WebRtcEndpoint {
-    return {
-        id: candid.id,
-        connectionString: candid.connection_string,
-        iceCandidates: candid.ice_candidates,
-    };
 }
 
 function chatSummary(candid: ApiChatSummary): ChatSummary {
@@ -534,36 +464,5 @@ function participant(candid: ApiParticipant): Participant {
     return {
         role: "Admin" in candid.role ? "admin" : "standard",
         userId: candid.user_id.toString(),
-    };
-}
-
-export function apiWebRtcSessionDetails(domain: WebRtcSessionDetails): ApiWebRtcSessionDetails {
-    if (domain.kind === "answer") {
-        return {
-            Answer: {
-                user_id: Principal.fromText(domain.fromUserId),
-                offer_id: domain.offerId,
-                endpoint: apiWebRtcEndpoint(domain.endpoint),
-            },
-        };
-    }
-
-    if (domain.kind === "offer") {
-        return {
-            Offer: {
-                user_id: Principal.fromText(domain.fromUserId),
-                endpoint: apiWebRtcEndpoint(domain.endpoint),
-            },
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected WebRtcSessionDetails type received", domain);
-}
-
-function apiWebRtcEndpoint(domain: WebRtcEndpoint): ApiWebRtcEndpoint {
-    return {
-        id: domain.id,
-        connection_string: domain.connectionString,
-        ice_candidates: domain.iceCandidates,
     };
 }

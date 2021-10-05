@@ -94,7 +94,6 @@ export function setCachedChats(
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
-                webRtcSessionDetails: [],
             },
             "cached_chats"
         );

@@ -25,8 +25,6 @@ import type {
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
-    addWebRtcResponse,
-    apiWebRtcSessionDetails,
     blockResponse,
     createGroupResponse,
     deleteMessageResponse,
@@ -50,11 +48,6 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
-import type {
-    AddWebRtcResponse,
-    WebRtcSessionDetails,
-    WebRtcSessionDetailsEvent,
-} from "../../domain/webrtc/webrtc";
 
 const MAX_RECURSION = 10;
 
@@ -169,15 +162,6 @@ export class UserClient extends CandidService implements IUserClient {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
-            webRtcSessionDetails: updatesResponse.chatsUpdated.reduce((rtcs, chat) => {
-                if (chat.kind === "direct_chat" && chat.webRtcSessionDetails) {
-                    rtcs.push(chat.webRtcSessionDetails);
-                }
-                if (chat.kind === "group_chat") {
-                    rtcs.push(...chat.webRtcSessionDetails);
-                }
-                return rtcs;
-            }, [] as WebRtcSessionDetailsEvent[]),
         };
     }
 
@@ -327,15 +311,6 @@ export class UserClient extends CandidService implements IUserClient {
                 max_results: maxResults,
             }),
             searchAllMessageResponse
-        );
-    }
-
-    addWebRtcSessionDetails(details: WebRtcSessionDetails): Promise<AddWebRtcResponse> {
-        return this.handleResponse(
-            this.userService.add_webrtc_session_details({
-                session_details: apiWebRtcSessionDetails(details),
-            }),
-            addWebRtcResponse
         );
     }
 }
