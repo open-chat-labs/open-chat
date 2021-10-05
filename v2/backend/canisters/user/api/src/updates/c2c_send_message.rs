@@ -1,6 +1,7 @@
+use crate::send_message::ReplyContextArgs;
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageContent, MessageId, MessageIndex, ReplyContextArgs};
+use types::{MessageContent, MessageId, MessageIndex};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {

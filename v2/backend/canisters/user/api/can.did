@@ -9,6 +9,17 @@ type SendMessageArgs =
         replies_to: opt ReplyContextArgs;
     };
 
+type ReplyContextArgs =
+    variant {
+        Direct: DirectReplyContextArgs;
+        Private: ReplyContext;
+    };
+
+type DirectReplyContextArgs =
+    record {
+        message_id: MessageId;
+    };
+
 type SendMessageResponse =
     variant {
         Success: record {

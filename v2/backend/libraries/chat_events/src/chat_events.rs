@@ -6,8 +6,6 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::*;
 
-type ReplyContextInternal = ReplyContextArgs;
-
 #[derive(CandidType, Deserialize)]
 pub struct ChatEvents {
     chat_type: ChatType,
@@ -94,11 +92,17 @@ pub struct MessageInternal {
     pub last_updated: Option<TimestampMillis>,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub enum ReplyContextInternal {
+    SameChat(MessageId),
+    OtherChat(Box<ReplyContext>),
+}
+
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextArgs>,
+    pub replies_to: Option<ReplyContextInternal>,
     pub now: TimestampMillis,
 }
 
@@ -545,31 +549,25 @@ impl ChatEvents {
     }
 
     fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
-        let event_index = *self.message_id_map.get(&reply_context.message_id)?;
+        match reply_context {
+            ReplyContextInternal::SameChat(m) => {
+                let event_index = *self.message_id_map.get(m)?;
+                let event = self.get_internal(event_index)?;
 
-        let content = if reply_context.chat_id_if_other.is_none() {
-            self.get_internal(event_index)
-                .map(
-                    |e| {
-                        if let ChatEventInternal::Message(m) = &e.event {
-                            Some(m.content.clone())
-                        } else {
-                            None
-                        }
-                    },
-                )
-                .flatten()
-        } else {
-            None
-        };
-
-        Some(ReplyContext {
-            chat_id: reply_context.chat_id_if_other.unwrap_or(self.chat_id),
-            sender: reply_context.sender,
-            event_index,
-            message_id: reply_context.message_id,
-            content,
-        })
+                if let ChatEventInternal::Message(message) = &event.event {
+                    Some(ReplyContext {
+                        chat_id: self.chat_id,
+                        sender: message.sender,
+                        event_index,
+                        message_id: *m,
+                        content: message.content.clone(),
+                    })
+                } else {
+                    None
+                }
+            }
+            ReplyContextInternal::OtherChat(r) => Some(*r.clone()),
+        }
     }
 }
 

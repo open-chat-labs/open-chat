@@ -8,6 +8,11 @@ type SendMessageArgs =
         replies_to: opt ReplyContextArgs;
     };
 
+type ReplyContextArgs =
+    record {
+        message_id: MessageId;
+    };
+
 type SendMessageResponse =
     variant {
         Success: record {

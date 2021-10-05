@@ -1,6 +1,6 @@
 use crate::updates::handle_activity_notification;
 use crate::{RuntimeState, RUNTIME_STATE};
-use chat_events::PushMessageArgs;
+use chat_events::{PushMessageArgs, ReplyContextInternal};
 use cycles_utils::check_cycles_balance;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
@@ -25,7 +25,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             sender,
             message_id: args.message_id,
             content: args.content,
-            replies_to: args.replies_to,
+            replies_to: args.replies_to.map(|r| ReplyContextInternal::SameChat(r.message_id)),
             now,
         };
 
