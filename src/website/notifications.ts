@@ -61,13 +61,11 @@ export async function trySubscribe(userId: UserId): Promise<boolean> {
     return false;
   }
 
-  // WILL THIS WORK IN PROD WITH OTHER SW IN PLAY?
-  navigator.serviceWorker.addEventListener('message', event => {
-    console.log("handle message")
-    console.log(event)
-    if (event.data.msg === "message_received") {
-      let chatId: ChatId = fromHex(event.data.chatId);
-      store.dispatch(gotoChatById(chatId) as any);  
+  // When a notifcation is clicked the service worker sends us a message
+  // with the chat to select
+  navigator.serviceWorker.addEventListener("message", event => {
+    if (event.data.type === "NOTIFICATION_CLICKED") {
+      store.dispatch(gotoChatById(event.data.chatId) as any);  
     }
   });  
 
@@ -144,6 +142,7 @@ async function registerServiceWorker(): Promise<Option<ServiceWorkerRegistration
   try {
     const sw_path = process.env.WEBPUSH_SERVICE_WORKER_PATH!;
     let registration = await navigator.serviceWorker.register(sw_path);
+    registration.update();
     return registration;
   } catch (e) {
     console.log(e);

@@ -8,29 +8,28 @@ import * as chatFunctions from "../../domain/model/chats";
 import CurrentUserTypingHandler from "../../domain/CurrentUserTypingHandler";
 import MarkAsReadHandler from "../../domain/MarkAsReadHandler";
 import { ChatId, ConfirmedChat } from "../../domain/model/chats";
+import * as notifications from "../../notifications";
 
 export const GOTO_CHAT = "GOTO_CHAT";
 
 export function gotoChatById(chatId: ChatId, messageId?: number, fromHistory?: boolean) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        const chatsState = getState().chatsState;
-        let chatIndex = chatFunctions.findChatIndex(chatsState.chats, chatId);
+        let chatIndex = chatFunctions.findChatIndex(getState().chatsState.chats, chatId);
         if (chatIndex == -1) {
             chatIndex = 0;
         }
-        return gotoChat(dispatch, chatsState, chatIndex, messageId, fromHistory);
+        return gotoChat(dispatch, getState(), chatIndex, messageId, fromHistory);
     }
 }
 
 export function gotoChatByIndex(chatIndex: number, messageId?: number) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        const chatsState = getState().chatsState;
-        return gotoChat(dispatch, chatsState, chatIndex, messageId, false);
+        return gotoChat(dispatch, getState(), chatIndex, messageId, false);
     }
 }
 
-async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatIndex: number, messageId?: number, fromHistory?: boolean) : Promise<Option<GotoChatEvent>> {
-
+async function gotoChat(dispatch: Dispatch<any>, rootState: RootState, chatIndex: number, messageId?: number, fromHistory?: boolean) : Promise<Option<GotoChatEvent>> {
+    const chatsState = rootState.chatsState;
     if (chatIndex === chatsState.selectedChatIndex && !messageId) {
         return null;
     }
@@ -43,11 +42,12 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
         }
     }
 
-    // Load missing messages if necessary
     let missingMessages: LocalMessage[] = [];
-    if (messageId) {
-        const chat = chatsState.chats[chatIndex] as ConfirmedChat;
-        if (chat) {
+    
+    const chat = chatsState.chats[chatIndex] as ConfirmedChat;
+    if (chat) {
+        // Load missing messages if necessary
+        if (messageId) {
             const messages = await loadMissingMessages(chat, messageId);
             if (messages != null) {
                 missingMessages = messages;
@@ -57,6 +57,13 @@ async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatInd
                 }
             }
         }
+
+        // Tell the service worker to close any open notifications for this chat
+        rootState.appState.broadcastChannel.postMessage({
+            type: "CLEAR_NOTIFICATIONS",
+            chatId: chat.chatId,
+            messageId,
+        });
     }
 
     const event: GotoChatEvent = {
