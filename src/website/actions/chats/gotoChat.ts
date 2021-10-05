@@ -14,22 +14,22 @@ export const GOTO_CHAT = "GOTO_CHAT";
 
 export function gotoChatById(chatId: ChatId, messageId?: number, fromHistory?: boolean) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        let chatIndex = chatFunctions.findChatIndex(getState().chatsState.chats, chatId);
+        let chatsState = getState().chatsState;
+        let chatIndex = chatFunctions.findChatIndex(chatsState.chats, chatId);
         if (chatIndex == -1) {
             chatIndex = 0;
         }
-        return gotoChat(dispatch, getState(), chatIndex, messageId, fromHistory);
+        return gotoChat(dispatch, chatsState, chatIndex, messageId, fromHistory);
     }
 }
 
 export function gotoChatByIndex(chatIndex: number, messageId?: number) {
     return async (dispatch: Dispatch<any>, getState: () => RootState) => {
-        return gotoChat(dispatch, getState(), chatIndex, messageId, false);
+        return gotoChat(dispatch, getState().chatsState, chatIndex, messageId, false);
     }
 }
 
-async function gotoChat(dispatch: Dispatch<any>, rootState: RootState, chatIndex: number, messageId?: number, fromHistory?: boolean) : Promise<Option<GotoChatEvent>> {
-    const chatsState = rootState.chatsState;
+async function gotoChat(dispatch: Dispatch<any>, chatsState: ChatsState, chatIndex: number, messageId?: number, fromHistory?: boolean) : Promise<Option<GotoChatEvent>> {
     if (chatIndex === chatsState.selectedChatIndex && !messageId) {
         return null;
     }
@@ -58,12 +58,7 @@ async function gotoChat(dispatch: Dispatch<any>, rootState: RootState, chatIndex
             }
         }
 
-        // Tell the service worker to close any open notifications for this chat
-        rootState.appState.broadcastChannel.postMessage({
-            type: "CLEAR_NOTIFICATIONS",
-            chatId: chat.chatId,
-            messageId,
-        });
+        notifications.close(chat.chatId);
     }
 
     const event: GotoChatEvent = {

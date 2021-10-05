@@ -6,13 +6,6 @@ export {};
 
 self.addEventListener('install', function(_event) {
     self.skipWaiting();
-
-    const channel = new BroadcastChannel("OPEN_CHAT");
-    channel.onmessage = function(event) {
-        if (event.data?.type === "CLEAR_NOTIFICATIONS") {
-            clearNotification(event.data.chatId);
-        }    
-    };    
 });
 
 self.addEventListener('push', function(event: PushEvent) {
@@ -114,11 +107,6 @@ async function showNotification(notificationVariant: Notification) : Promise<voi
             messageId,           
         }
     });
-}
-
-async function clearNotification(chatId: bigint) {
-    const notifications = await self.registration.getNotifications();
-    notifications.find(n => n.data?.chatId === chatId)?.close();
 }
 
 type ContentExtract = {
