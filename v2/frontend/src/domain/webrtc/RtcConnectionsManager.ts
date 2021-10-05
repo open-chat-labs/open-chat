@@ -9,9 +9,8 @@ export class RtcConnectionsManager {
     private onMessage?: (message: unknown) => void;
 
     private cacheConnection(me: string, them: string, conn: DataConnection) {
-        this.connections.set(them, conn);
-
         conn.on("open", () => {
+            this.connections.set(them, conn);
             console.log("c: connection open: ", me, " and ", them);
         });
 
