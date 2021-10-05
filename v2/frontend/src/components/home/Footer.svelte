@@ -6,7 +6,6 @@
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
-    import { chatStore } from "../../stores/chat";
     import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
     import {
         createMessage,

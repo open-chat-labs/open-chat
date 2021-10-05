@@ -456,7 +456,6 @@
                         user={$machine.context.user}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
-                        userLookup={$machine.context.userLookup}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}

@@ -23,7 +23,6 @@
 
 <div class="wrapper">
     <CurrentChatHeader
-        users={$machine.context.userLookup}
         user={$machine.context.user}
         {blocked}
         on:clearSelection

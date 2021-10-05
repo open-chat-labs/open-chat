@@ -39,13 +39,13 @@ import { overwriteCachedEvents } from "../utils/caching";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import { unconfirmed } from "../stores/unconfirmed";
 import { get } from "svelte/store";
+import { userStore } from "../stores/user";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
-    userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
     events: EventWrapper<ChatEvent>[];
@@ -81,7 +81,7 @@ export type ChatEvents =
     | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
     | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
-    | { type: "REMOVE_MESSAGE"; data: Message }
+    | { type: "REMOVE_MESSAGE"; data: { userId: string; messageId: bigint } }
     | {
           type: "UPDATE_MESSAGE";
           data: { candidate: Message; resp: SendMessageSuccess };
@@ -169,7 +169,6 @@ export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefi
         console.log("loading messages from: ", from);
         return [from, true];
     } else {
-        console.log("not loading any messages: ", lastLoaded, ctx.chatSummary.latestEventIndex);
         // this implies that we have not loaded any messages which should never happen
         return undefined;
     }
@@ -214,7 +213,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             const criteria = requiredCriteria(ctx, ev);
 
             const [userLookup, eventsResponse] = await Promise.all([
-                loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
+                loadUsersForChat(ctx.serviceContainer, get(userStore), ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
                     : { events: [], affectedEvents: [] },
@@ -413,7 +412,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             ? {
                                   ...ev.data.event.repliesTo,
                                   content: ev.data.event.content,
-                                  sender: ctx.userLookup[ev.data.event.sender],
+                                  sender: get(userStore)[ev.data.event.sender],
                               }
                             : undefined,
                     })),
@@ -534,9 +533,26 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     }),
                 },
                 REMOVE_MESSAGE: {
-                    actions: assign((ctx, ev) => ({
-                        events: ctx.events.filter((e) => e.event !== ev.data),
-                    })),
+                    actions: assign((ctx, ev) => {
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_removed_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    messageId: ev.data.messageId,
+                                    userId: ev.data.userId,
+                                }
+                            );
+                        }
+                        return {
+                            events: ctx.events.filter(
+                                (e) =>
+                                    e.event.kind === "message" &&
+                                    e.event.messageId !== ev.data.messageId
+                            ),
+                        };
+                    }),
                 },
                 SHOW_GROUP_DETAILS: ".showing_group",
                 SHOW_PARTICIPANTS: ".showing_group",
@@ -635,7 +651,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     name: ctx.chatSummary.name,
                                     desc: ctx.chatSummary.description,
                                 },
-                                userLookup: ctx.userLookup,
                                 history: [
                                     ev.type === "ADD_PARTICIPANT"
                                         ? "add_participants"

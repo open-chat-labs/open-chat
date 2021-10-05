@@ -9,10 +9,11 @@ import type {
     ParticipantRole,
     UpdateGroupResponse,
 } from "../domain/chat/chat";
-import type { UserLookup, UserSummary } from "../domain/user/user";
+import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { removeParticipant, updateParticipant } from "../domain/chat/chat.utils";
 import { toastStore } from "../stores/toast";
+import { userStore } from "../stores/user";
 
 export type Mode = "show_participants" | "add_participants" | "group_details";
 
@@ -30,7 +31,6 @@ export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;
     updatedGroup: UpdatedGroup;
-    userLookup: UserLookup;
     history: Mode[]; // this is used to control where we go "back" to
     error?: string;
     usersToAdd: UserSummary[];
@@ -336,11 +336,8 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                             target: "choosing_participants",
                             actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
                                 if (ctx.chatSummary.kind === "group_chat" && ev.data) {
+                                    userStore.add(ev.data);
                                     return {
-                                        userLookup: {
-                                            ...ctx.userLookup,
-                                            [ev.data.userId]: ev.data,
-                                        },
                                         usersToAdd: [ev.data, ...ctx.usersToAdd],
                                     };
                                 }

@@ -9,11 +9,11 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
     import { push } from "svelte-spa-router";
-    import type { UserLookup, UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
+    import { userStore } from "../../stores/user";
 
     export let chatId: string;
     export let user: UserSummary | undefined;
-    export let userLookup: UserLookup;
     export let repliesTo: ReplyContext;
 
     function sentByMe(replyContext: ReplyContext): boolean {
@@ -29,7 +29,7 @@
     }
 
     function getUsernameFromReplyContext(replyContext: ReplyContext): string {
-        return userLookup[replyContext.senderId]?.username ?? $_("unknownUser");
+        return $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
 

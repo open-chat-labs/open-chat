@@ -5,6 +5,7 @@
     import VirtualList from "../../VirtualList.svelte";
     import type { FullParticipant } from "../../../domain/chat/chat";
     import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
+    import { userStore } from "../../../stores/user";
 
     export let machine: ActorRefFrom<EditGroupMachine>;
 
@@ -19,7 +20,7 @@
     $: knownUsers =
         $machine.context.chatSummary.kind === "group_chat"
             ? $machine.context.chatSummary.participants.reduce<FullParticipant[]>((users, p) => {
-                  const user = $machine.context.userLookup[p.userId];
+                  const user = $userStore[p.userId];
                   if (user) {
                       users.push({
                           ...user,
@@ -60,19 +61,12 @@
     on:addParticipants={addParticipants} />
 
 {#if me !== undefined}
-    <Participant
-        me={true}
-        userLookup={$machine.context.userLookup}
-        participant={me}
-        myRole={me.role}
-        on:blockUser
-        on:chatWith />
+    <Participant me={true} participant={me} myRole={me.role} on:blockUser on:chatWith />
 {/if}
 
 <VirtualList keyFn={(user) => user.userId} items={others} let:item>
     <Participant
         me={false}
-        userLookup={$machine.context.userLookup}
         participant={item}
         myRole={me?.role ?? "standard"}
         on:blockUser

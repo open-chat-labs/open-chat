@@ -3,7 +3,6 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
-    import type { UserLookup } from "../../domain/user/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
@@ -17,17 +16,17 @@
     import { pop } from "../../utils/transition";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
+    import { userStore } from "../../stores/user";
 
-    export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
-                name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(users[chatSummary.them]),
-                userStatus: getUserStatus(users, chatSummary.them),
+                name: $userStore[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                userStatus: getUserStatus($userStore, chatSummary.them),
                 typing: $typing.has(chatSummary.them),
             };
         }

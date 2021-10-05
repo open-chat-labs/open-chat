@@ -3,7 +3,7 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import { AvatarSize } from "../../domain/user/user";
-    import type { UserLookup, UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -29,6 +29,7 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
+    import { userStore } from "../../stores/user";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -36,7 +37,6 @@
     export let user: UserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
-    export let userLookup: UserLookup;
     export let eventIndex: number;
     export let timestamp: bigint;
     export let last: boolean;
@@ -50,9 +50,9 @@
 
     let senderId = msg.sender;
     let groupChat = chatType === "group_chat";
-    let sender = userLookup[senderId];
+    let sender = $userStore[senderId];
     let username = sender?.username;
-    let userStatus = getUserStatus(userLookup, senderId);
+    let userStatus = getUserStatus($userStore, senderId);
     let metaData = messageMetaData(msg.content);
     let fill = fillMessage(msg);
     let showEmojiPicker = false;
@@ -169,7 +169,7 @@
             class:readByMe
             class:rtl={$rtlStore}>
             {#if msg.repliesTo !== undefined && !deleted}
-                <RepliesTo {chatId} {user} {userLookup} on:goToMessage repliesTo={msg.repliesTo} />
+                <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />

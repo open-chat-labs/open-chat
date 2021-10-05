@@ -3,7 +3,6 @@
     import type { UserSummary } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
-    import type { UserLookup } from "../../domain/user/user";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -26,10 +25,10 @@
     import { getParticipantsString } from "../../domain/chat/chat.utils";
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
+    import { userStore } from "../../stores/user";
     const dispatch = createEventDispatcher();
 
     export let selectedChatSummary: ChatSummary;
-    export let users: UserLookup;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
 
@@ -85,9 +84,9 @@
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
-                name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(users[chatSummary.them]),
-                userStatus: getUserStatus(users, chatSummary.them),
+                name: $userStore[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                userStatus: getUserStatus($userStore, chatSummary.them),
                 subtext: "When user was last online | typing",
                 typing: $typing.has(chatSummary.them),
             };
@@ -99,7 +98,7 @@
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
             subtext: getParticipantsString(
                 user!,
-                users,
+                $userStore,
                 participantIds,
                 $_("unknownUser"),
                 $_("you")

@@ -8,7 +8,6 @@
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import AccountLock from "svelte-material-icons/AccountLock.svelte";
     import { AvatarSize } from "../../../domain/user/user";
-    import type { UserLookup } from "../../../domain/user/user";
     import Avatar from "../../Avatar.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -18,10 +17,10 @@
     import { avatarUrl, getUserStatus } from "../../../domain/user/user.utils";
     import { createEventDispatcher } from "svelte";
     import type { FullParticipant, ParticipantRole } from "../../../domain/chat/chat";
+    import { userStore } from "../../../stores/user";
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
-    export let userLookup: UserLookup;
     export let participant: FullParticipant;
     export let myRole: ParticipantRole;
 
@@ -53,7 +52,7 @@
     <span class="avatar">
         <Avatar
             url={avatarUrl(participant)}
-            status={getUserStatus(userLookup, participant.userId)}
+            status={getUserStatus($userStore, participant.userId)}
             size={AvatarSize.Small} />
 
         {#if participant.role === "admin"}

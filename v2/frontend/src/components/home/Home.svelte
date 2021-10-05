@@ -9,7 +9,7 @@
     import type { ActorRefFrom } from "xstate";
     import { modalStore, ModalType } from "../../stores/modal";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
@@ -28,6 +28,7 @@
     import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { unconfirmed } from "../../stores/unconfirmed";
+    import { stopMarkReadPoller } from "../../stores/markRead";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -44,6 +45,15 @@
     function logout() {
         dispatch("logout");
     }
+
+    onMount(() => {
+        // bootstrap anything that needs a service container here
+    });
+
+    onDestroy(() => {
+        // clean up anything that needs to be stopped e.g. pollers
+        stopMarkReadPoller();
+    });
 
     $: {
         // wait until we have loaded the chats

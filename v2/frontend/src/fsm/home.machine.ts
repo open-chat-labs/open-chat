@@ -40,6 +40,7 @@ import { get } from "svelte/store";
 import type {
     RemoteUserDeletedMessage,
     RemoteUserReadMessage,
+    RemoteUserRemovedMessage,
     RemoteUserSentMessage,
     RemoteUserToggledReaction,
     RemoteUserUndeletedMessage,
@@ -50,6 +51,7 @@ import type {
 } from "../domain/webrtc/webrtc";
 import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
+import { userStore } from "../stores/user";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -62,7 +64,6 @@ export interface HomeContext {
     chatSummaries: ChatSummary[]; // the list of chatSummaries
     selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
-    userLookup: UserLookup; // a lookup of user summaries
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
@@ -83,6 +84,10 @@ export type HomeEvents =
     | {
           type: "REMOTE_USER_DELETED_MESSAGE";
           data: RemoteUserDeletedMessage;
+      }
+    | {
+          type: "REMOTE_USER_REMOVED_MESSAGE";
+          data: RemoteUserRemovedMessage;
       }
     | {
           type: "REMOTE_USER_UNDELETED_MESSAGE";
@@ -200,7 +205,6 @@ async function handleWebRtcConnections(
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
-    userLookup: UserLookup,
     chatSummaries: ChatSummary[],
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
@@ -214,14 +218,14 @@ async function getUpdates(
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         userIds.add(user.userId);
         const usersResponse = await serviceContainer.getUsers(
-            missingUserIds(userLookup, userIds),
+            missingUserIds(get(userStore), userIds),
             BigInt(0)
         );
 
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,
-            userLookup: mergeUsers(userLookup, usersResponse.users),
+            userLookup: mergeUsers(get(userStore), usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
             blockedUsers: chatsResponse.blockedUsers,
             webRtcSessionDetails: chatsResponse.webRtcSessionDetails,
@@ -248,7 +252,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (chat && chat.kind === "direct_chat") {
                     if (
                         !rtcConnectionsManager.exists(chat.them) &&
-                        userIsOnline(ctx.userLookup, chat.them)
+                        userIsOnline(get(userStore), chat.them)
                     ) {
                         const connection = rtcConnectionsManager.create(chat.them);
                         connection
@@ -262,13 +266,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     },
     services: {
         getUpdates: async (ctx, _) =>
-            getUpdates(
-                ctx.user!,
-                ctx.serviceContainer!,
-                ctx.userLookup,
-                ctx.chatSummaries,
-                ctx.chatUpdatesSince
-            ),
+            getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
 
         webRtcConnectionHandler: (ctx, _ev) => (_callback, receive) => {
             receive((ev) => {
@@ -303,6 +301,15 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (parsedMsg.kind === "remote_user_deleted_message") {
                     callback({
                         type: "REMOTE_USER_DELETED_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_removed_message") {
+                    callback({
+                        type: "REMOTE_USER_REMOVED_MESSAGE",
                         data: {
                             ...parsedMsg,
                             messageId: BigInt(parsedMsg.messageId),
@@ -348,7 +355,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         },
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
-            let { userLookup, chatSummaries, chatUpdatesSince } = ctx;
+            let { chatSummaries, chatUpdatesSince } = ctx;
             let intervalId: NodeJS.Timeout | undefined;
 
             const unsubBackground = background.subscribe((hidden) => {
@@ -359,7 +366,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 // we need to capture the latest state of the parent machine whenever it changes
                 // still feel a bit uneasy about this
                 if (ev.type === "SYNC_WITH_POLLER") {
-                    userLookup = ev.data.userLookup;
                     chatSummaries = ev.data.chatSummaries;
                     chatUpdatesSince = ev.data.chatUpdatesSince;
                 }
@@ -373,7 +379,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: await getUpdates(
                             ctx.user!,
                             ctx.serviceContainer!,
-                            userLookup,
                             chatSummaries,
                             chatUpdatesSince
                         ),
@@ -393,14 +398,14 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 let usersResp: UsersResponse;
                 try {
                     usersResp = await ctx.serviceContainer!.getUsers(
-                        Object.keys(ctx.userLookup),
+                        Object.keys(get(userStore)),
                         ctx.usersLastUpdate
                     );
                     console.log("sending updated users");
                     callback({
                         type: "USERS_UPDATED",
                         data: {
-                            userLookup: mergeUsers(ctx.userLookup, usersResp.users),
+                            userLookup: mergeUsers(get(userStore), usersResp.users),
                             usersLastUpdate: usersResp.timestamp,
                         },
                     });
@@ -525,6 +530,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         return undefined;
                     }),
                 },
+                REMOTE_USER_REMOVED_MESSAGE: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "REMOVE_MESSAGE",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
                 REMOTE_USER_TOGGLED_REACTION: {
                     actions: pure((ctx, ev) => {
                         sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
@@ -541,16 +555,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 ...ctx.user,
                                 ...ev.data,
                             };
-                            const partialUser = ctx.userLookup[ctx.user.userId];
+                            const partialUser = get(userStore)[ctx.user.userId];
                             if (partialUser) {
-                                ctx.userLookup[ctx.user.userId] = {
+                                userStore.add({
                                     ...partialUser,
                                     ...ev.data,
-                                };
+                                });
                             }
                             return {
                                 user: user,
-                                userLookup: ctx.userLookup,
                             };
                         }
                         return {};
@@ -642,7 +655,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                             chatMachine.withContext({
                                                 serviceContainer: ctx.serviceContainer!,
                                                 chatSummary: { ...chatSummary }, //clone
-                                                userLookup: ctx.userLookup,
                                                 user: ctx.user
                                                     ? {
                                                           userId: ctx.user.userId,
@@ -889,12 +901,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         dateCreated: BigInt(+new Date()),
                                     };
                                     push(`/${dummyChat.chatId}`);
+                                    userStore.add(ev.data);
                                     return {
                                         chatSummaries: [dummyChat, ...ctx.chatSummaries],
-                                        userLookup: {
-                                            ...ctx.userLookup,
-                                            [ev.data.userId]: ev.data,
-                                        },
                                     };
                                 }),
                                 send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
