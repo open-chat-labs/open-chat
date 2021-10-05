@@ -60,7 +60,6 @@ export type AppState = {
     viewMode: ViewMode,
     panelState: PanelState,
     modalSpinner: boolean,
-    broadcastChannel: BroadcastChannel,
 }
 
 const initialState: AppState = {
@@ -73,7 +72,6 @@ const initialState: AppState = {
         rightPanel: RightPanelType.None
     } ,
     modalSpinner: false,
-    broadcastChannel: new BroadcastChannel("OPEN_CHAT"),
 }
 
 type Event =

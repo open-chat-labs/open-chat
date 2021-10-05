@@ -1,12 +1,11 @@
 import { PUBLIC_VAPID_KEY } from "./constants";
-import { ChatId } from "./domain/model/chats";
 import { Option } from "./domain/model/common";
 import { UserId } from "./domain/model/users";
 import notificationsService from "./services/notifications/service";
 import * as base64 from "./utils/base64Functions";
 import store from "./store";
 import { gotoChatById } from "./actions/chats/gotoChat";
-import { fromHex } from "./utils/u64Functions";
+import { ChatId } from "./domain/model/chats";
 
 // https://web-push-book.gauntface.com/common-notification-patterns/
 // - Once subscribed send the user an initial notification a la slack "Nice, notifications are enabled!"
@@ -136,6 +135,17 @@ export async function softDisabled(): Promise<boolean> {
 
 export async function setSoftDisabled(disabled: boolean): Promise<void> {
   _softDisabled = disabled;
+}
+
+export async function close(chatId: ChatId): Promise<void> {
+  const sw_path = process.env.WEBPUSH_SERVICE_WORKER_PATH!;
+  let registration = await navigator.serviceWorker.register(sw_path);
+  let notifications = await registration.getNotifications();
+  for (let notification of notifications) {
+    if (notification.data?.chatId === chatId) {
+      notification.close();
+    }
+  }
 }
 
 async function registerServiceWorker(): Promise<Option<ServiceWorkerRegistration>> {
