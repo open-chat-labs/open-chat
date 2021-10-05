@@ -29,8 +29,8 @@ import {
     userIdsFromChatSummary,
     replaceMessageContent,
 } from "../domain/chat/chat.utils";
-import type { UserLookup, UserSummary } from "../domain/user/user";
-import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
+import type { UserSummary } from "../domain/user/user";
+import { missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
@@ -57,7 +57,6 @@ export interface ChatContext {
 }
 
 type LoadEventsResponse = {
-    userLookup: UserLookup;
     events: EventWrapper<ChatEvent>[];
     affectedEvents: EventWrapper<ChatEvent>[];
 };
@@ -113,18 +112,16 @@ export type ChatEvents =
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
-    userLookup: UserLookup,
     chatSummary: ChatSummary
-): Promise<UserLookup> {
+): Promise<void> {
     if (chatSummary.kind === "group_chat") {
         const userIds = userIdsFromChatSummaries([chatSummary], true);
         const { users } = await serviceContainer.getUsers(
-            missingUserIds(userLookup, userIds),
+            missingUserIds(get(userStore), userIds),
             BigInt(0) // timestamp irrelevant for missing users
         );
-        return mergeUsers(userLookup, users);
+        userStore.addMany(users);
     }
-    return Promise.resolve(userLookup);
 }
 
 function loadEvents(
@@ -166,7 +163,6 @@ export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefi
     const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
-        console.log("loading messages from: ", from);
         return [from, true];
     } else {
         // this implies that we have not loaded any messages which should never happen
@@ -212,14 +208,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
 
-            const [userLookup, eventsResponse] = await Promise.all([
-                loadUsersForChat(ctx.serviceContainer, get(userStore), ctx.chatSummary),
+            const [, eventsResponse] = await Promise.all([
+                loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
                     : { events: [], affectedEvents: [] },
             ]);
             return {
-                userLookup,
                 events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
                 affectedEvents:
                     eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
@@ -241,7 +236,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         assignEventsResponse: assign((ctx, ev) =>
             ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
-                      userLookup: ev.data.userLookup,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
                           replaceLocal(ctx.events, ev.data.events),

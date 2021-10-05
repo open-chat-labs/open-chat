@@ -30,7 +30,6 @@ const testContext: EditGroupContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: groupChat,
     updatedGroup: { name: groupChat.name, desc: groupChat.description },
-    userLookup: {},
     history: ["group_details"],
     user: {
         userId: "abcdef",

@@ -24,8 +24,8 @@ import {
     userIdsFromChatSummaries,
     userIdsFromChatSummary,
 } from "../domain/chat/chat.utils";
-import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
-import { mergeUsers, missingUserIds, userIsOnline } from "../domain/user/user.utils";
+import type { User, UsersResponse, UserSummary } from "../domain/user/user";
+import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
 import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
@@ -128,7 +128,6 @@ type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 type ChatsResponse = {
     chatSummaries: ChatSummary[];
     chatUpdatesSince: bigint;
-    userLookup: UserLookup;
     usersLastUpdate: bigint;
     blockedUsers: Set<string>;
     webRtcSessionDetails: WebRtcSessionDetailsEvent[];
@@ -222,10 +221,10 @@ async function getUpdates(
             BigInt(0)
         );
 
+        userStore.addMany(usersResponse.users);
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,
-            userLookup: mergeUsers(get(userStore), usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
             blockedUsers: chatsResponse.blockedUsers,
             webRtcSessionDetails: chatsResponse.webRtcSessionDetails,

@@ -101,8 +101,6 @@ export class UserClient extends CandidService implements IUserClient {
         previouslyLoadedEvents: EventWrapper<DirectChatEvent>[] = [],
         iterations = 0
     ): Promise<EventsResponse<DirectChatEvent>> {
-        console.log("index range: ", eventIndexRange);
-        console.log("loading messages from: ", startIndex, " : ", ascending);
         const resp = await this.handleResponse(
             this.userService.events({
                 user_id: Principal.fromText(userId),

@@ -1,5 +1,5 @@
 import type { UserLookup } from "./user";
-import { compareUsername, mergeUsers, missingUserIds, userIsOnline } from "./user.utils";
+import { compareUsername, missingUserIds, userIsOnline } from "./user.utils";
 
 const lookup: UserLookup = {
     a: {
@@ -25,19 +25,6 @@ describe("get user status", () => {
 
     test("unknown user is considered offline", () => {
         expect(userIsOnline(lookup, "c")).toBe(false);
-    });
-});
-
-describe("merge users", () => {
-    test("should work", () => {
-        // clone the lookup so that the test remains isolated
-        const merged = mergeUsers({ ...lookup }, [
-            { userId: "a", username: "a - updated", secondsSinceLastOnline: 20 },
-            { userId: "c", username: "c", secondsSinceLastOnline: 20 },
-        ]);
-
-        expect(merged["a"].username).toEqual("a - updated");
-        expect(merged["c"].username).toEqual("c");
     });
 });
 
