@@ -27,6 +27,7 @@
     import { avatarUrl } from "../../domain/user/user.utils";
     import { getContentAsText } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
+    import { userStore } from "../../stores/user";
 
     export let machine: ActorRefFrom<HomeMachine>;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -40,9 +41,7 @@
 
     let joiningGroup: string | undefined = undefined;
 
-    $: user = $machine.context.user
-        ? $machine.context.userLookup[$machine.context.user?.userId]
-        : undefined;
+    $: user = $machine.context.user ? $userStore[$machine.context.user?.userId] : undefined;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -53,7 +52,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const username = $machine.context.userLookup[chat.them].username;
+            const username = $userStore[chat.them].username;
             return username ? username.indexOf(searchTerm) >= 0 : false;
         }
         return false;
@@ -133,7 +132,7 @@
         if (chat === undefined) {
             return { blobUrl: undefined };
         }
-        return chat.kind === "group_chat" ? chat : $machine.context.userLookup[sender];
+        return chat.kind === "group_chat" ? chat : $userStore[sender];
     }
 
     function messageMatchTitle({ chatId, sender }: MessageMatch): string {
@@ -141,9 +140,7 @@
         if (chat === undefined) {
             return "";
         }
-        return chat.kind === "group_chat"
-            ? chat.name
-            : $machine.context.userLookup[sender].username ?? "";
+        return chat.kind === "group_chat" ? chat.name : $userStore[sender].username ?? "";
     }
 </script>
 
@@ -169,7 +166,6 @@
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>
                         <ChatSummary
-                            users={$machine.context.userLookup}
                             {chatSummary}
                             selected={$machine.context.selectedChat?.chatId ===
                                 chatSummary.chatId} />

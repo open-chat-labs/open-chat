@@ -23,6 +23,7 @@ import type {
 import type { BlobReference } from "../../domain/data/data";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { UserSummary } from "../../domain/user/user";
+import type { AddWebRtcResponse, WebRtcSessionDetails } from "../../domain/webrtc/webrtc";
 
 export interface IUserClient {
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
@@ -46,7 +47,11 @@ export interface IUserClient {
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
     joinGroup(chatId: string): Promise<JoinGroupResponse>;
-    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
+    markMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
+    ): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     toggleReaction(
         otherUserId: string,
@@ -55,4 +60,5 @@ export interface IUserClient {
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
+    addWebRtcSessionDetails(details: WebRtcSessionDetails): Promise<AddWebRtcResponse>;
 }

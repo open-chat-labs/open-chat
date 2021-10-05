@@ -18,21 +18,40 @@ import type {
     GroupChatSummary,
 } from "../domain/chat/chat";
 import {
+    insertIndexIntoRanges,
     setMessageRead,
     updateArgsFromChats,
     userIdsFromChatSummaries,
+    userIdsFromChatSummary,
 } from "../domain/chat/chat.utils";
-import type { User, UserLookup, UsersResponse, UserSummary } from "../domain/user/user";
-import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
+import type { User, UsersResponse, UserSummary } from "../domain/user/user";
+import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
-import { chatMachine, ChatMachine } from "./chat.machine";
+import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
 import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
-import { markReadMachine } from "./markread.machine";
 import type { DataContent } from "../domain/data/data";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import { unconfirmed, unconfirmedReadByThem, unconfirmedReadByUs } from "../stores/unconfirmed";
+import { get } from "svelte/store";
+import type {
+    RemoteUserDeletedMessage,
+    RemoteUserReadMessage,
+    RemoteUserRemovedMessage,
+    RemoteUserSentMessage,
+    RemoteUserToggledReaction,
+    RemoteUserUndeletedMessage,
+    WebRtcAnswer,
+    WebRtcMessage,
+    WebRtcOffer,
+    WebRtcSessionDetailsEvent,
+} from "../domain/webrtc/webrtc";
+import { typing } from "../stores/typing";
+import type { MessageReadTracker } from "../stores/markRead";
+import { userStore } from "../stores/user";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -45,13 +64,11 @@ export interface HomeContext {
     chatSummaries: ChatSummary[]; // the list of chatSummaries
     selectedChat?: ChatSummary; // the selected chat
     error?: Error; // any error that might have occurred
-    userLookup: UserLookup; // a lookup of user summaries
     usersLastUpdate: bigint;
     chatsIndex: ChatsIndex; //an index of all chat actors
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext;
-    blockedUsers: Set<string>;
-    unconfirmed: Set<bigint>;
+    markRead: MessageReadTracker;
 }
 
 export type HomeEvents =
@@ -60,17 +77,41 @@ export type HomeEvents =
     | { type: "NEW_GROUP" }
     | { type: "JOIN_GROUP" }
     | { type: "CANCEL_JOIN_GROUP" }
+    | {
+          type: "REMOTE_USER_TOGGLED_REACTION";
+          data: RemoteUserToggledReaction;
+      }
+    | {
+          type: "REMOTE_USER_DELETED_MESSAGE";
+          data: RemoteUserDeletedMessage;
+      }
+    | {
+          type: "REMOTE_USER_REMOVED_MESSAGE";
+          data: RemoteUserRemovedMessage;
+      }
+    | {
+          type: "REMOTE_USER_UNDELETED_MESSAGE";
+          data: RemoteUserUndeletedMessage;
+      }
+    | {
+          type: "REMOTE_USER_SENT_MESSAGE";
+          data: RemoteUserSentMessage;
+      }
+    | {
+          type: "REMOTE_USER_READ_MESSAGE";
+          data: RemoteUserReadMessage;
+      }
+    | { type: "HANDLE_WEBRTC_CONNECTIONS"; data: WebRtcSessionDetailsEvent[] }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
-    | { type: "UNCONFIRMED_MESSAGE"; data: bigint }
-    | { type: "MESSAGE_CONFIRMED"; data: bigint }
-    | { type: "BLOCK_USER"; data: string }
-    | { type: "UNBLOCK_USER"; data: string }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
-    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
+    | {
+          type: "MESSAGE_READ_BY_ME";
+          data: { chatId: string; messageIndex: number; messageId: bigint };
+      }
     | { type: "SYNC_WITH_POLLER"; data: HomeContext }
     | { type: "CHATS_UPDATED"; data: ChatsResponse }
     | { type: "LEAVE_GROUP"; data: string }
@@ -87,16 +128,82 @@ type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 type ChatsResponse = {
     chatSummaries: ChatSummary[];
     chatUpdatesSince: bigint;
-    userLookup: UserLookup;
     usersLastUpdate: bigint;
     blockedUsers: Set<string>;
+    webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
-type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
+type UserUpdateResponse = { usersLastUpdate: bigint };
+
+function findDirectChatByUserId(ctx: HomeContext, userId: string): DirectChatSummary | undefined {
+    return ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId) as
+        | DirectChatSummary
+        | undefined;
+}
+
+function sendMessageToChatBasedOnUser(ctx: HomeContext, userId: string, chatMsg: ChatEvents): void {
+    const chat = findDirectChatByUserId(ctx, userId);
+    const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
+    if (actor) {
+        actor.send(chatMsg);
+    }
+}
+
+async function handleWebRtcConnections(
+    myUserId: string,
+    serviceContainer: ServiceContainer,
+    rtcEvents: WebRtcSessionDetailsEvent[]
+): Promise<void> {
+    const sorted = rtcEvents.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+
+    // if we have two from the same user we just take the later one, that's why we are sorting and flattening
+    const [offers, remoteAnswers]: [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>] =
+        sorted.reduce(
+            ([offers, remoteAnswers], ev) => {
+                if (ev.sessionDetails.kind === "offer") {
+                    offers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
+                }
+                if (ev.sessionDetails.kind === "answer") {
+                    remoteAnswers[ev.sessionDetails.fromUserId] = ev.sessionDetails;
+                }
+                return [offers, remoteAnswers];
+            },
+            [{}, {}] as [Record<string, WebRtcOffer>, Record<string, WebRtcAnswer>]
+        );
+
+    const sentAnswers = Object.values(offers).map((offer) => {
+        // this little trick is necesary in case both ends initiate the connection at the same time
+        if (rtcConnectionsManager.exists(offer.fromUserId) && offer.fromUserId > myUserId) {
+            console.log("we already have a connection with user: ", offer.fromUserId);
+            console.log(
+                "Since I have the lower userId, we will ignore this offer and let them progress the connection"
+            );
+            return;
+        }
+
+        return rtcConnectionsManager.createAnswer(myUserId, offer).then((answer) =>
+            serviceContainer
+                .webRtcAnswer(offer.fromUserId, answer)
+                .then((resp) => {
+                    if (resp !== "success") {
+                        console.log("WebRtc answer failed: ", resp);
+                    }
+                })
+                .catch((err) => {
+                    console.log("WebRtc answer failed: ", err);
+                })
+        );
+    });
+
+    const receivedAnswers = Object.values(remoteAnswers).map((r) =>
+        rtcConnectionsManager.handleRemoteAnswer(r)
+    );
+
+    await Promise.all([...sentAnswers, ...receivedAnswers]);
+}
 
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
-    userLookup: UserLookup,
     chatSummaries: ChatSummary[],
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
@@ -110,16 +217,17 @@ async function getUpdates(
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         userIds.add(user.userId);
         const usersResponse = await serviceContainer.getUsers(
-            missingUserIds(userLookup, userIds),
+            missingUserIds(get(userStore), userIds),
             BigInt(0)
         );
 
+        userStore.addMany(usersResponse.users);
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,
-            userLookup: mergeUsers(userLookup, usersResponse.users),
             usersLastUpdate: usersResponse.timestamp,
             blockedUsers: chatsResponse.blockedUsers,
+            webRtcSessionDetails: chatsResponse.webRtcSessionDetails,
         };
     } catch (err) {
         rollbar.error("Error getting chats", err as Error);
@@ -136,18 +244,117 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
             return false;
         },
     },
+    actions: {
+        sendWebRtcOffers: pure((ctx, ev) => {
+            if (ev.type === "SELECT_CHAT") {
+                const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
+                if (chat && chat.kind === "direct_chat") {
+                    if (
+                        !rtcConnectionsManager.exists(chat.them) &&
+                        userIsOnline(get(userStore), chat.them)
+                    ) {
+                        const connection = rtcConnectionsManager.create(chat.them);
+                        connection
+                            .createOffer(ctx.user!.userId)
+                            .then((offer) => ctx.serviceContainer!.webRtcOffer(chat.them, offer));
+                    }
+                }
+            }
+            return undefined;
+        }),
+    },
     services: {
         getUpdates: async (ctx, _) =>
-            getUpdates(
-                ctx.user!,
-                ctx.serviceContainer!,
-                ctx.userLookup,
-                ctx.chatSummaries,
-                ctx.chatUpdatesSince
-            ),
+            getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
+
+        webRtcConnectionHandler: (ctx, _ev) => (_callback, receive) => {
+            receive((ev) => {
+                if (ev.type === "HANDLE_WEBRTC_CONNECTIONS") {
+                    handleWebRtcConnections(ctx.user!.userId, ctx.serviceContainer!, ev.data);
+                }
+            });
+            return () => {
+                console.log("stopping the webrtc connection handler");
+            };
+        },
+
+        webRtcMessageHandler: (_ctx, _ev) => (callback, _receive) => {
+            rtcConnectionsManager.subscribe((userId: string, message: string) => {
+                console.log("handle webrtc message: ", userId, message);
+                const parsedMsg: WebRtcMessage = JSON.parse(message);
+                if (parsedMsg.kind === "remote_user_typing") {
+                    typing.add(parsedMsg.userId);
+                }
+                if (parsedMsg.kind === "remote_user_stopped_typing") {
+                    typing.delete(parsedMsg.userId);
+                }
+                if (parsedMsg.kind === "remote_user_toggled_reaction") {
+                    callback({
+                        type: "REMOTE_USER_TOGGLED_REACTION",
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_deleted_message") {
+                    callback({
+                        type: "REMOTE_USER_DELETED_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_removed_message") {
+                    callback({
+                        type: "REMOTE_USER_REMOVED_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_undeleted_message") {
+                    callback({
+                        type: "REMOTE_USER_UNDELETED_MESSAGE",
+                        data: parsedMsg,
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_sent_message") {
+                    callback({
+                        type: "REMOTE_USER_SENT_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageEvent: {
+                                ...parsedMsg.messageEvent,
+                                event: {
+                                    ...parsedMsg.messageEvent.event,
+                                    messageId: BigInt(parsedMsg.messageEvent.event.messageId),
+                                },
+                                timestamp: BigInt(parsedMsg.messageEvent.timestamp),
+                            },
+                        },
+                    });
+                }
+                if (parsedMsg.kind === "remote_user_read_message") {
+                    callback({
+                        type: "REMOTE_USER_READ_MESSAGE",
+                        data: {
+                            ...parsedMsg,
+                            messageId: BigInt(parsedMsg.messageId),
+                        },
+                    });
+                }
+            });
+            return () => {
+                rtcConnectionsManager.unsubscribe();
+                console.log("stopping the webrtc message handler");
+            };
+        },
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
-            let { userLookup, chatSummaries, chatUpdatesSince } = ctx;
+            let { chatSummaries, chatUpdatesSince } = ctx;
             let intervalId: NodeJS.Timeout | undefined;
 
             const unsubBackground = background.subscribe((hidden) => {
@@ -158,7 +365,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 // we need to capture the latest state of the parent machine whenever it changes
                 // still feel a bit uneasy about this
                 if (ev.type === "SYNC_WITH_POLLER") {
-                    userLookup = ev.data.userLookup;
                     chatSummaries = ev.data.chatSummaries;
                     chatUpdatesSince = ev.data.chatUpdatesSince;
                 }
@@ -172,7 +378,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: await getUpdates(
                             ctx.user!,
                             ctx.serviceContainer!,
-                            userLookup,
                             chatSummaries,
                             chatUpdatesSince
                         ),
@@ -192,14 +397,14 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 let usersResp: UsersResponse;
                 try {
                     usersResp = await ctx.serviceContainer!.getUsers(
-                        Object.keys(ctx.userLookup),
+                        Object.keys(get(userStore)),
                         ctx.usersLastUpdate
                     );
                     console.log("sending updated users");
+                    userStore.addMany(usersResp.users);
                     callback({
                         type: "USERS_UPDATED",
                         data: {
-                            userLookup: mergeUsers(ctx.userLookup, usersResp.users),
                             usersLastUpdate: usersResp.timestamp,
                         },
                     });
@@ -221,14 +426,6 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
     id: "home_machine",
     initial: "loading_chats",
-    context: {
-        chatSummaries: [],
-        userLookup: {},
-        usersLastUpdate: BigInt(0),
-        chatsIndex: {},
-        blockedUsers: new Set<string>(),
-        unconfirmed: new Set<bigint>(),
-    },
     states: {
         loading_chats: {
             invoke: {
@@ -264,8 +461,92 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     id: "updateUsersPoller",
                     src: "updateUsersPoller",
                 },
+                {
+                    id: "webRtcConnectionHandler",
+                    src: "webRtcConnectionHandler",
+                },
+                {
+                    id: "webRtcMessageHandler",
+                    src: "webRtcMessageHandler",
+                },
             ],
             on: {
+                REMOTE_USER_READ_MESSAGE: {
+                    // right now the message read is either confirmed or not
+                    actions: assign((ctx, ev) => {
+                        // if the message is unconfirmed
+                        if (ev.data.messageIndex === undefined) {
+                            console.log(
+                                "adding message to unconfirmed by them: ",
+                                ev.data.messageId
+                            );
+                            unconfirmedReadByThem.add(BigInt(ev.data.messageId));
+                            return {};
+                        } else {
+                            unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
+                            // todo - we must also send this via CHAT_UPDATED to the chat actor
+                            return {
+                                chatSummaries: ctx.chatSummaries.map((c) => {
+                                    if (c.chatId === ev.data.chatId && c.kind === "direct_chat") {
+                                        c.readByThem = insertIndexIntoRanges(
+                                            Number(ev.data.messageIndex)!,
+                                            c.readByThem
+                                        );
+                                    }
+                                    return c;
+                                }),
+                            };
+                        }
+                    }),
+                },
+                REMOTE_USER_SENT_MESSAGE: {
+                    actions: [
+                        pure((ctx, ev) => {
+                            unconfirmed.add(BigInt(ev.data.messageEvent.event.messageId));
+                            sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                                type: "SEND_MESSAGE",
+                                data: ev.data,
+                            });
+                            return undefined;
+                        }),
+                    ],
+                },
+                REMOTE_USER_UNDELETED_MESSAGE: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "UNDELETE_MESSAGE",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
+                REMOTE_USER_DELETED_MESSAGE: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "DELETE_MESSAGE",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
+                REMOTE_USER_REMOVED_MESSAGE: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "REMOVE_MESSAGE",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
+                REMOTE_USER_TOGGLED_REACTION: {
+                    actions: pure((ctx, ev) => {
+                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            type: "TOGGLE_REACTION",
+                            data: ev.data,
+                        });
+                        return undefined;
+                    }),
+                },
                 UPDATE_USER_AVATAR: {
                     actions: assign((ctx, ev) => {
                         if (ctx.user) {
@@ -273,16 +554,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 ...ctx.user,
                                 ...ev.data,
                             };
-                            const partialUser = ctx.userLookup[ctx.user.userId];
+                            const partialUser = get(userStore)[ctx.user.userId];
                             if (partialUser) {
-                                ctx.userLookup[ctx.user.userId] = {
+                                userStore.add({
                                     ...partialUser,
                                     ...ev.data,
-                                };
+                                });
                             }
                             return {
                                 user: user,
-                                userLookup: ctx.userLookup,
                             };
                         }
                         return {};
@@ -311,6 +591,15 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
                             to: "updateChatsPoller",
                         }),
+                        send(
+                            (_ctx, ev) => ({
+                                type: "HANDLE_WEBRTC_CONNECTIONS",
+                                data: ev.data.webRtcSessionDetails,
+                            }),
+                            {
+                                to: "webRtcConnectionHandler",
+                            }
+                        ),
                         pure((ctx, ev) => {
                             // ping any chat actors with the latest copy of the chat
                             return ev.data.chatSummaries.reduce<
@@ -348,51 +637,45 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
-                    actions: assign((ctx, ev) => {
-                        const key = ev.data.chatId;
-                        const chatSummary = ctx.chatSummaries.find(
-                            (c) => c.chatId === ev.data.chatId
-                        );
-                        if (chatSummary) {
-                            return {
-                                selectedChat: chatSummary,
-                                replyingTo: undefined,
-                                chatsIndex: {
-                                    ...ctx.chatsIndex,
-                                    [key]: spawn(
-                                        chatMachine.withContext({
-                                            serviceContainer: ctx.serviceContainer!,
-                                            chatSummary: { ...chatSummary }, //clone
-                                            userLookup: ctx.userLookup,
-                                            user: ctx.user
-                                                ? {
-                                                      userId: ctx.user.userId,
-                                                      username: ctx.user.username,
-                                                      secondsSinceLastOnline: 0,
-                                                  }
-                                                : undefined,
-                                            events: [],
-                                            focusIndex: ev.data.eventIndex
-                                                ? Number(ev.data.eventIndex)
-                                                : undefined,
-                                            replyingTo: ctx.replyingTo,
-                                            markMessages: spawn(
-                                                markReadMachine.withContext({
-                                                    serviceContainer: ctx.serviceContainer!,
-                                                    chatSummary,
-                                                    ranges: [],
-                                                    pending: [],
-                                                })
-                                            ),
-                                            localReactions: {},
-                                        }),
-                                        `chat-${key}`
-                                    ),
-                                },
-                            };
-                        }
-                        return { selectedChat: chatSummary };
-                    }),
+                    actions: [
+                        "sendWebRtcOffers",
+                        assign((ctx, ev) => {
+                            const key = ev.data.chatId;
+                            const chatSummary = ctx.chatSummaries.find(
+                                (c) => c.chatId === ev.data.chatId
+                            );
+                            if (chatSummary) {
+                                return {
+                                    selectedChat: chatSummary,
+                                    replyingTo: undefined,
+                                    chatsIndex: {
+                                        ...ctx.chatsIndex,
+                                        [key]: spawn(
+                                            chatMachine.withContext({
+                                                serviceContainer: ctx.serviceContainer!,
+                                                chatSummary: { ...chatSummary }, //clone
+                                                user: ctx.user
+                                                    ? {
+                                                          userId: ctx.user.userId,
+                                                          username: ctx.user.username,
+                                                          secondsSinceLastOnline: 0,
+                                                      }
+                                                    : undefined,
+                                                events: [],
+                                                focusIndex: ev.data.eventIndex
+                                                    ? Number(ev.data.eventIndex)
+                                                    : undefined,
+                                                replyingTo: ctx.replyingTo,
+                                                localReactions: {},
+                                            }),
+                                            `chat-${key}`
+                                        ),
+                                    },
+                                };
+                            }
+                            return { selectedChat: chatSummary };
+                        }),
+                    ],
                 },
                 CLEAR_SELECTED_CHAT: {
                     internal: true,
@@ -415,34 +698,51 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     target: ".join_group",
                 },
-                BLOCK_USER: {
-                    actions: assign((ctx, ev) => {
-                        return {
-                            blockedUsers: ctx.blockedUsers.add(ev.data),
-                        };
-                    }),
-                },
-                UNBLOCK_USER: {
-                    actions: assign((ctx, ev) => {
-                        ctx.blockedUsers.delete(ev.data);
-                        return {
-                            blockedUsers: ctx.blockedUsers,
-                        };
-                    }),
-                },
                 MESSAGE_READ_BY_ME: {
-                    // this is fairly horrific, but it seems to be what we have to do
-                    // need to think about what this is a symptom of .....
-                    // basically we have multiple copies of the same data that need to
-                    // be synchronised and we need to get rid of that somehow.
+                    /**
+                     * this is fairly horrific, but it seems to be what we have to do
+                     * 1) find the chat
+                     * 2) figure out if the message is confirmed or not
+                     * 3) if it is setMessageRead (by index)
+                     * 4) if it is not add it to an uncomfired read by us list
+                     * 5) send web rtc message
+                     * 6) send the updated chat to the chat actor
+                     * 7) sync with the chats poller
+                     */
                     actions: pure((ctx, ev) => {
                         const actor = ctx.chatsIndex[ev.data.chatId];
                         if (actor) {
                             let chat: ChatSummary | undefined = undefined;
                             const chatSummaries = ctx.chatSummaries.map((c) => {
                                 if (c.chatId === ev.data.chatId) {
-                                    chat = setMessageRead(c, ev.data.messageIndex);
-                                    return chat;
+                                    const userIds = userIdsFromChatSummary(c);
+
+                                    ctx.markRead.markMessageRead(
+                                        c,
+                                        ev.data.messageIndex,
+                                        ev.data.messageId
+                                    );
+
+                                    const rtc: WebRtcMessage = {
+                                        kind: "remote_user_read_message",
+                                        messageId: ev.data.messageId,
+                                        chatId: ev.data.chatId,
+                                        userId: ctx.user!.userId,
+                                    };
+
+                                    // we must consider whether the message is confirmed or not
+                                    if (!get(unconfirmed).has(BigInt(ev.data.messageId))) {
+                                        chat = setMessageRead(c, ev.data.messageIndex);
+                                        unconfirmedReadByUs.delete(BigInt(ev.data.messageId));
+                                        rtc.messageIndex = ev.data.messageIndex;
+                                        rtcConnectionsManager.sendMessage(userIds, rtc);
+                                        return chat;
+                                    } else {
+                                        unconfirmedReadByUs.add(BigInt(ev.data.messageId));
+                                        rtcConnectionsManager.sendMessage(userIds, rtc);
+                                        chat = c;
+                                        return c;
+                                    }
                                 }
                                 return c;
                             });
@@ -530,19 +830,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         }),
                     ],
                 },
-                UNCONFIRMED_MESSAGE: {
-                    actions: assign((ctx, ev) => ({
-                        unconfirmed: ctx.unconfirmed.add(ev.data),
-                    })),
-                },
-                MESSAGE_CONFIRMED: {
-                    actions: assign((ctx, ev) => {
-                        ctx.unconfirmed.delete(ev.data);
-                        return {
-                            unconfirmed: ctx.unconfirmed,
-                        };
-                    }),
-                },
             },
             states: {
                 no_chat_selected: {},
@@ -613,12 +900,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         dateCreated: BigInt(+new Date()),
                                     };
                                     push(`/${dummyChat.chatId}`);
+                                    userStore.add(ev.data);
                                     return {
                                         chatSummaries: [dummyChat, ...ctx.chatSummaries],
-                                        userLookup: {
-                                            ...ctx.userLookup,
-                                            [ev.data.userId]: ev.data,
-                                        },
                                     };
                                 }),
                                 send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {

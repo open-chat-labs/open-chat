@@ -1,5 +1,6 @@
 import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
+import type { WebRtcSessionDetailsEvent } from "../webrtc/webrtc";
 
 export type MessageContent =
     | FileContent
@@ -89,6 +90,7 @@ export type LocalReaction = {
     reaction: string;
     timestamp: number;
     kind: "add" | "remove";
+    userId: string; // this can actually be a remote user via rtc
 };
 
 export type Reaction = {
@@ -238,6 +240,7 @@ export type UpdateArgs = {
 export type MergedUpdatesResponse = {
     chatSummaries: ChatSummary[];
     blockedUsers: Set<string>;
+    webRtcSessionDetails: WebRtcSessionDetailsEvent[];
     timestamp: bigint;
 };
 
@@ -261,6 +264,7 @@ export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     kind: "direct_chat";
     latestMessage?: EventWrapper<Message>;
     readByThem?: MessageIndexRange[];
+    webRtcSessionDetails?: WebRtcSessionDetailsEvent;
 };
 
 export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -272,6 +276,7 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     description?: string;
     latestMessage?: EventWrapper<Message>;
     avatarBlobReference?: BlobReference;
+    webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
 
 export type ParticipantRole = "admin" | "standard";
@@ -497,7 +502,7 @@ export type JoinGroupResponse =
     | "already_in_group"
     | "internal_error";
 
-export type MarkReadResponse = "success" | "success_no_change" | "chat_not_found" | "not_in_group";
+export type MarkReadResponse = bigint[];
 
 export type UpdateGroupResponse =
     | "success"

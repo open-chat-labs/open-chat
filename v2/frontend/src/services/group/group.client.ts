@@ -61,8 +61,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         previouslyLoadedEvents: EventWrapper<GroupChatEvent>[] = [],
         iterations = 0
     ): Promise<EventsResponse<GroupChatEvent>> {
-        console.log("index range: ", eventIndexRange);
-        console.log("loading messages from: ", startIndex, " : ", ascending);
         const resp = await this.handleResponse(
             this.groupService.events({
                 max_messages: 20,
@@ -176,10 +174,11 @@ export class GroupClient extends CandidService implements IGroupClient {
             });
     }
 
-    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+    markMessagesRead(ranges: MessageIndexRange[], ids: Set<bigint>): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.groupService.mark_read({
-                message_ranges: ranges,
+                message_index_ranges: ranges,
+                message_ids: [...ids],
             }),
             markReadResponse
         );

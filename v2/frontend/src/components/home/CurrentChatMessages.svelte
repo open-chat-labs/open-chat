@@ -7,6 +7,7 @@
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
     import { moreMessagesAvailable } from "../../fsm/chat.machine";
+    import type { ChatEvents } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import Loading from "../Loading.svelte";
@@ -35,13 +36,19 @@
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
     import { toastStore } from "../../stores/toast";
+    import {
+        unconfirmed,
+        unconfirmedReadByThem,
+        unconfirmedReadByUs,
+    } from "../../stores/unconfirmed";
+    import { userStore } from "../../stores/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
     export let machine: ActorRefFrom<ChatMachine>;
-    export let unconfirmed: Set<bigint>;
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
@@ -62,9 +69,11 @@
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
-                const idAttr = entry.target.attributes.getNamedItem("data-index");
-                const idx = idAttr ? parseInt(idAttr.value, 10) : undefined;
-                if (idx !== undefined) {
+                const idxAttr = entry.target.attributes.getNamedItem("data-index");
+                const idAttr = entry.target.attributes.getNamedItem("data-id");
+                const idx = idxAttr ? parseInt(idxAttr.value, 10) : undefined;
+                const id = idAttr ? BigInt(idAttr.value) : undefined;
+                if (idx !== undefined && id !== undefined) {
                     if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
                         const timer = setTimeout(() => {
                             machine.send({
@@ -72,6 +81,7 @@
                                 data: {
                                     chatId: $machine.context.chatSummary.chatId,
                                     messageIndex: idx,
+                                    messageId: id,
                                 },
                             });
                             delete messageReadTimers[idx];
@@ -181,7 +191,16 @@
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         // optimistic update
-        machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+        const toggleArgs: ChatEvents = {
+            type: "TOGGLE_REACTION",
+            data: {
+                messageId: ev.detail.message.messageId,
+                reaction: ev.detail.reaction,
+                userId: $machine.context.user!.userId,
+            },
+        };
+
+        machine.send(toggleArgs);
 
         const apiPromise =
             $machine.context.chatSummary.kind === "group_chat"
@@ -201,13 +220,13 @@
                 if (resp !== "added" && resp !== "removed") {
                     // toggle again to undo
                     console.log("Reaction failed: ", resp);
-                    machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                    machine.send(toggleArgs);
                 }
             })
             .catch((err) => {
                 // toggle again to undo
                 console.log("Reaction failed: ", err);
-                machine.send({ type: "TOGGLE_REACTION", data: ev.detail });
+                machine.send(toggleArgs);
             });
     }
 
@@ -228,7 +247,10 @@
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
-        machine.send({ type: "DELETE_MESSAGE", data: ev.detail.messageId });
+        machine.send({
+            type: "DELETE_MESSAGE",
+            data: { messageId: ev.detail.messageId, userId: $machine.context.user!.userId },
+        });
 
         const apiPromise =
             $machine.context.chatSummary.kind === "group_chat"
@@ -246,12 +268,18 @@
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+                    machine.send({
+                        type: "UNDELETE_MESSAGE",
+                        data: { message: ev.detail, userId: $machine.context.user!.userId },
+                    });
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                machine.send({ type: "UNDELETE_MESSAGE", data: ev.detail });
+                machine.send({
+                    type: "UNDELETE_MESSAGE",
+                    data: { message: ev.detail, userId: $machine.context.user!.userId },
+                });
             });
     }
 
@@ -368,14 +396,23 @@
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !unconfirmed.has(evt.event.messageId);
+            return !$unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
 
+    function messageSender(evt: EventWrapper<ChatEventType>): PartialUserSummary | undefined {
+        if (evt.event.kind === "message") {
+            return $userStore[evt.event.sender];
+        }
+    }
+
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return messageIsReadByThem($machine.context.chatSummary, evt.event);
+            return (
+                $unconfirmedReadByThem.has(evt.event.messageId) ||
+                messageIsReadByThem($machine.context.chatSummary, evt.event)
+            );
         }
         return true;
     }
@@ -385,7 +422,10 @@
             return true;
         } else {
             if (evt.event.kind === "message") {
-                return messageIsReadByMe($machine.context.chatSummary, evt.event);
+                return (
+                    $unconfirmedReadByUs.has(evt.event.messageId) ||
+                    messageIsReadByMe($machine.context.chatSummary, evt.event)
+                );
             }
         }
         return true;
@@ -419,9 +459,9 @@
                         chatId={$machine.context.chatSummary.chatId}
                         chatType={$machine.context.chatSummary.kind}
                         user={$machine.context.user}
+                        sender={messageSender(evt)}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
-                        userLookup={$machine.context.userLookup}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}

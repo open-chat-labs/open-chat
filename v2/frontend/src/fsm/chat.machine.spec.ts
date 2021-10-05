@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { Identity } from "@dfinity/agent";
-import { spawn } from "xstate";
 import type {
     DirectChatSummary,
     Message,
@@ -14,6 +13,7 @@ import type {
 import { newMessageId } from "../domain/chat/chat.utils";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 import { ServiceContainer } from "../services/serviceContainer";
+import { UserIndexClient } from "../services/userIndex/userIndex.client";
 import {
     ChatContext,
     chatMachine,
@@ -21,7 +21,6 @@ import {
     previousMessagesCriteria,
 } from "./chat.machine";
 import { testTransition } from "./machine.spec.utils";
-import { markReadMachine } from "./markread.machine";
 
 const textMessageContent: TextContent = {
     kind: "text_content",
@@ -77,7 +76,6 @@ const groupChat: GroupChatSummary = {
 const directContext: ChatContext = {
     serviceContainer: {} as ServiceContainer,
     chatSummary: directChat,
-    userLookup: {},
     events: [],
     user: {
         userId: "abcdef",
@@ -85,17 +83,16 @@ const directContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
-    markMessages: spawn(markReadMachine),
     localReactions: {},
 };
 
 GroupIndexClient.create = jest.fn();
+UserIndexClient.create = jest.fn();
 const serviceContainer = new ServiceContainer({} as Identity);
 
 const groupContext: ChatContext = {
     serviceContainer,
     chatSummary: groupChat,
-    userLookup: {},
     events: [],
     user: {
         userId: "abcdef",
@@ -103,7 +100,6 @@ const groupContext: ChatContext = {
         secondsSinceLastOnline: 10,
     },
     replyingTo: undefined,
-    markMessages: spawn(markReadMachine),
     localReactions: {},
 };
 
@@ -165,7 +161,14 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "SEND_MESSAGE",
-                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+                data: {
+                    messageEvent: {
+                        event: testDirectMessage,
+                        index: 100,
+                        timestamp: BigInt(+new Date()),
+                    },
+                    userId: "abcdefg",
+                },
             },
             { user_states: "idle" }
         );
@@ -219,7 +222,7 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "REMOVE_MESSAGE",
-                data: testDirectMessage,
+                data: { messageId: testDirectMessage.messageId, userId: testDirectMessage.sender },
             },
             { user_states: "idle" }
         );
@@ -244,7 +247,14 @@ describe("chat machine transitions", () => {
             { user_states: "idle" },
             {
                 type: "SEND_MESSAGE",
-                data: { event: testDirectMessage, index: 100, timestamp: BigInt(+new Date()) },
+                data: {
+                    messageEvent: {
+                        event: testDirectMessage,
+                        index: 100,
+                        timestamp: BigInt(+new Date()),
+                    },
+                    userId: "abcdefg",
+                },
             },
             { user_states: "idle" }
         );

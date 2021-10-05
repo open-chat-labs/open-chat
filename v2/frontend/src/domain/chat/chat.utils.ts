@@ -21,11 +21,12 @@ import type {
     IndexRange,
     LocalReaction,
 } from "./chat";
-import { groupWhile } from "../../utils/list";
+import { dedupe, groupWhile } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
+import { unconfirmed } from "../../stores/unconfirmed";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -55,6 +56,16 @@ export function getContentAsText(content: MessageContent): string {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
+}
+
+export function userIdsFromChatSummary(chat: ChatSummary): string[] {
+    if (chat.kind === "direct_chat") {
+        return [chat.them];
+    }
+    if (chat.kind === "group_chat") {
+        return chat.participants.map((p) => p.userId);
+    }
+    return [];
 }
 
 export function userIdsFromChatSummaries(
@@ -405,10 +416,6 @@ export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): num
     return events[0]?.index;
 }
 
-// export function latestLoadedMessageIndex(chat: ChatSummary): number | undefined {
-//     return chat.latestMessage?.event.messageIndex;
-// }
-
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     let idx = undefined;
     for (let i = events.length - 1; i >= 0; i--) {
@@ -421,8 +428,27 @@ export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): num
     return idx;
 }
 
-export function latestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-    return events[events.length - 1]?.index;
+// todo - this needs to return the last idx that we actually loaded from the server
+// at the moment it will return the latest confirmed idx which may be later than messages
+// other people have added - that's why we are missing messages
+// to solution is to only remove things from the unconfirmed set when we load them from the
+// server - easy
+export function latestLoadedEventIndex(
+    events: EventWrapper<ChatEvent>[],
+    unconfirmed?: Set<bigint>
+): number | undefined {
+    if (unconfirmed === undefined) {
+        return events[events.length - 1]?.index;
+    }
+    let idx = undefined;
+    for (let i = events.length - 1; i >= 0; i--) {
+        const e = events[i].event;
+        if (e.kind !== "message" || (e.kind === "message" && !unconfirmed.has(e.messageId))) {
+            idx = events[i].index;
+            break;
+        }
+    }
+    return idx;
 }
 
 export function latestAvailableEventIndex(chatSummary: ChatSummary): number | undefined {
@@ -541,32 +567,25 @@ export function indexRangeForChat(chat: ChatSummary): IndexRange {
     return [getMinVisibleEventIndex(chat), chat.latestEventIndex];
 }
 
-export function mergeReactions(
-    myUserId: string,
-    incoming: Reaction[],
-    localReactions: LocalReaction[]
-): Reaction[] {
+export function mergeReactions(incoming: Reaction[], localReactions: LocalReaction[]): Reaction[] {
     const merged = localReactions.reduce<Reaction[]>((result, local) => {
-        return applyLocalReaction(myUserId, local, result);
+        return applyLocalReaction(local, result);
     }, incoming);
     return merged;
 }
 
-function applyLocalReaction(
-    userId: string,
-    local: LocalReaction,
-    reactions: Reaction[]
-): Reaction[] {
+// todo - this needs tweaking because local reactions may have come via rtc and therefore not might not be mine
+function applyLocalReaction(local: LocalReaction, reactions: Reaction[]): Reaction[] {
     const r = reactions.find((r) => r.reaction === local.reaction);
     if (r === undefined) {
         if (local.kind === "add") {
-            reactions.push({ reaction: local.reaction, userIds: new Set([userId]) });
+            reactions.push({ reaction: local.reaction, userIds: new Set([local.userId]) });
         }
     } else {
         if (local.kind === "add") {
-            r.userIds.add(userId);
+            r.userIds.add(local.userId);
         } else {
-            r.userIds.delete(userId);
+            r.userIds.delete(local.userId);
             if (r.userIds.size === 0) {
                 reactions = reactions.filter((r) => r.reaction !== local.reaction);
             }
@@ -581,7 +600,6 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 }
 
 function mergeMessageEvents(
-    myUserId: string,
     existing: EventWrapper<ChatEvent>,
     incoming: EventWrapper<ChatEvent>,
     localReactions: Record<string, LocalReaction[]>
@@ -589,11 +607,7 @@ function mergeMessageEvents(
     if (existing.event.kind === "message") {
         if (incoming.event.kind === "message") {
             const key = existing.event.messageId.toString();
-            const merged = mergeReactions(
-                myUserId,
-                incoming.event.reactions,
-                localReactions[key] ?? []
-            );
+            const merged = mergeReactions(incoming.event.reactions, localReactions[key] ?? []);
             incoming.event.reactions = merged;
             return incoming;
         }
@@ -601,9 +615,51 @@ function mergeMessageEvents(
     return existing;
 }
 
+function partitionEvents(
+    events: EventWrapper<ChatEvent>[]
+): [Record<string, EventWrapper<ChatEvent>>, EventWrapper<ChatEvent>[]] {
+    return events.reduce(
+        ([msgs, evts], e) => {
+            if (e.event.kind === "message") {
+                msgs[e.event.messageId.toString()] = e;
+            } else {
+                evts.push(e);
+            }
+            return [msgs, evts];
+        },
+        [{} as Record<string, EventWrapper<ChatEvent>>, [] as EventWrapper<ChatEvent>[]]
+    );
+}
+
+export function replaceLocal(
+    onClient: EventWrapper<ChatEvent>[],
+    fromServer: EventWrapper<ChatEvent>[]
+): EventWrapper<ChatEvent>[] {
+    // partition client events into msgs and other events
+    const [clientMsgs, clientEvts] = partitionEvents(onClient);
+
+    // partition inbound events into msgs and other events
+    const [serverMsgs, serverEvts] = partitionEvents(fromServer);
+
+    // overwrite any local msgs with their server counterpart to correct any index errors
+    Object.entries(serverMsgs).forEach(([id, e]) => {
+        // only now do we consider this message confirmed
+        unconfirmed.delete(BigInt(id));
+        clientMsgs[id] = e;
+    });
+
+    // concat and dedupe the two lists of non-message events
+    const uniqEvts = dedupe((a, b) => a.index === b.index, [...clientEvts, ...serverEvts]);
+
+    // create a list from the merged map of messages
+    const msgEvts = Object.values(clientMsgs);
+
+    // concat it with the merged non-message event list
+    return [...uniqEvts, ...msgEvts].sort((a, b) => a.index - b.index);
+}
+
 // todo - this is not very efficient at the moment
 export function replaceAffected(
-    myUserId: string,
     chatId: string,
     events: EventWrapper<ChatEvent>[],
     affectedEvents: EventWrapper<ChatEvent>[],
@@ -613,7 +669,7 @@ export function replaceAffected(
     const updated = events.map((ev) => {
         const aff = affectedEvents.find((a) => a.index === ev.index);
         if (aff !== undefined) {
-            const merged = mergeMessageEvents(myUserId, ev, aff, localReactions);
+            const merged = mergeMessageEvents(ev, aff, localReactions);
             toCacheBust.push(merged);
             return merged;
         }
@@ -637,4 +693,23 @@ export function pruneLocalReactions(
         }
         return pruned;
     }, {} as Record<string, LocalReaction[]>);
+}
+
+export function replaceMessageContent(
+    events: EventWrapper<ChatEvent>[],
+    messageId: bigint,
+    content: MessageContent
+): EventWrapper<ChatEvent>[] {
+    return events.map((e) => {
+        if (e.event.kind === "message" && e.event.messageId === messageId) {
+            return {
+                ...e,
+                event: {
+                    ...e.event,
+                    content: content,
+                },
+            };
+        }
+        return e;
+    });
 }

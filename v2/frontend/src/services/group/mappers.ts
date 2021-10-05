@@ -92,16 +92,16 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
-        return "success";
+        return candid.Success.unrecognised_message_ids;
     }
     if ("SuccessNoChange" in candid) {
-        return "success_no_change";
+        return candid.SuccessNoChange.unrecognised_message_ids;
     }
     if ("ChatNotFound" in candid) {
-        return "chat_not_found";
+        return [];
     }
     if ("NotInGroup" in candid) {
-        return "not_in_group";
+        return [];
     }
     throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }

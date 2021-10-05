@@ -34,13 +34,6 @@ export function userIsOnline(users: UserLookup, userId: string): boolean {
     return getUserStatus(users, userId) === UserStatus.Online;
 }
 
-export function mergeUsers(userLookup: UserLookup, users: PartialUserSummary[]): UserLookup {
-    return users.reduce<UserLookup>((lookup, user) => {
-        lookup[user.userId] = user;
-        return lookup;
-    }, userLookup);
-}
-
 export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
     return Array.from(userIds).filter((userId) => userLookup[userId] === undefined);
 }

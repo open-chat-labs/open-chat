@@ -237,11 +237,15 @@ export const idlFactory = ({ IDL }) => {
     'from' : MessageIndex,
   });
   const MarkReadArgs = IDL.Record({
-    'message_ranges' : IDL.Vec(MessageIndexRange),
+    'message_index_ranges' : IDL.Vec(MessageIndexRange),
+    'message_ids' : IDL.Vec(MessageId),
+  });
+  const MarkReadSuccessResult = IDL.Record({
+    'unrecognised_message_ids' : IDL.Vec(MessageId),
   });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
-    'Success' : IDL.Null,
+    'SuccessNoChange' : MarkReadSuccessResult,
+    'Success' : MarkReadSuccessResult,
     'NotInGroup' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});
@@ -368,7 +372,12 @@ export const idlFactory = ({ IDL }) => {
     'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const WebRtcSessionDetailsEvent = IDL.Record({
+    'session_details' : WebRtcSessionDetails,
+    'timestamp' : TimestampMillis,
+  });
   const GroupChatSummaryUpdates = IDL.Record({
+    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),

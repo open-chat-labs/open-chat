@@ -3,7 +3,6 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import { avatarUrl as getAvatarUrl, getUserStatus } from "../../domain/user/user.utils";
-    import type { UserLookup } from "../../domain/user/user";
     import { rtlStore } from "../../stores/rtl";
     import Avatar from "../Avatar.svelte";
     import { formatMessageDate } from "../../utils/date";
@@ -15,23 +14,27 @@
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
     import { pop } from "../../utils/transition";
+    import Typing from "../Typing.svelte";
+    import { typing } from "../../stores/typing";
+    import { userStore } from "../../stores/user";
 
-    export let users: UserLookup;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
-                name: users[chatSummary.them]?.username,
-                avatarUrl: getAvatarUrl(users[chatSummary.them]),
-                userStatus: getUserStatus(users, chatSummary.them),
+                name: $userStore[chatSummary.them]?.username,
+                avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
+                userStatus: getUserStatus($userStore, chatSummary.them),
+                typing: $typing.has(chatSummary.them),
             };
         }
         return {
             name: chatSummary.name,
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
+            typing: false,
         };
     }
 
@@ -46,19 +49,18 @@
         <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
-        <!-- <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
-        {#if chatSummary.kind === "direct_chat"}
-            <pre>{JSON.stringify(chatSummary.readByThem)}</pre>
-        {:else}
-            <pre>{chatSummary.minVisibleMessageIndex}</pre>
-        {/if} -->
         <div class="name-date">
             <h4 class="chat-name">{chat.name}</h4>
             <!-- this date formatting is OK for now but we might want to use something like this: 
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
-        <div class="chat-msg">{lastMessage}</div>
+        {#if chat.typing}
+            <Typing />
+        {:else}
+            <div class="chat-msg">{lastMessage}</div>
+        {/if}
+
         {#if unreadMessages > 0}
             <div
                 in:pop={{ duration: 1500 }}

@@ -5,13 +5,13 @@ use std::collections::HashSet;
 use user_canister::remove_webrtc_session_details::*;
 
 #[update]
-fn remove_webrtc_endpoints(args: Args) -> Response {
+fn remove_webrtc_session_details(args: Args) -> Response {
     check_cycles_balance();
 
-    RUNTIME_STATE.with(|state| remove_webrtc_endpoints_impl(args, state.borrow_mut().as_mut().unwrap()))
+    RUNTIME_STATE.with(|state| remove_webrtc_session_details_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn remove_webrtc_endpoints_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn remove_webrtc_session_details_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let ids: HashSet<_> = args.ids.into_iter().collect();
 
     for chat in runtime_state.data.direct_chats.get_all_mut() {

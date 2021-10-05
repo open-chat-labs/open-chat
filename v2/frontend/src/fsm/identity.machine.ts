@@ -10,8 +10,10 @@ import { registerMachine } from "./register.machine";
 import { rollbar } from "../utils/logging";
 import { AuthError } from "../services/httpError";
 import { homeMachine } from "./home.machine";
+import { initMarkRead } from "../stores/markRead";
 
 const UPGRADE_POLL_INTERVAL = 1000;
+const MARK_ONLINE_INTERVAL = 61 * 1000;
 
 if (typeof window !== "undefined" && Boolean(process.env.SHOW_XSTATE_INSPECTOR)) {
     inspect({
@@ -97,6 +99,18 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         logout,
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
+        markOnlinePing: (ctx, _ev) => (_callback) => {
+            const id = setInterval(async () => {
+                ctx.serviceContainer!.markAsOnline().catch((err) => {
+                    rollbar.error("Error marking user as online", err as Error);
+                    throw err;
+                });
+            }, MARK_ONLINE_INTERVAL);
+            return () => {
+                console.log("stopping the mark online poller");
+                clearInterval(id);
+            };
+        },
         upgradeUser: ({ serviceContainer }) => serviceContainer!.upgradeUser(),
         homeMachine: homeMachine,
         registerMachine,
@@ -317,11 +331,11 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                         serviceContainer: ctx.serviceContainer,
                         user: ctx.user,
                         chatSummaries: [],
+                        selectedChat: undefined,
                         userLookup: {},
                         usersLastUpdate: BigInt(0),
                         chatsIndex: {},
-                        blockedUsers: [],
-                        unconfirmed: new Set<bigint>(),
+                        markRead: initMarkRead(ctx.serviceContainer!),
                     }),
                     onDone: "login",
                     onError: {
@@ -341,6 +355,10 @@ export const schema: MachineConfig<IdentityContext, any, IdentityEvents> = {
                             user: (_, _ev) => undefined,
                         }),
                     },
+                },
+                {
+                    id: "markOnlinePing",
+                    src: "markOnlinePing",
                 },
             ],
         },

@@ -26,7 +26,7 @@ import {
     createCanisterResponse,
 } from "./mappers";
 import type { IUserIndexClient } from "./userIndex.client.interface";
-import { UserIndexClientMock } from "./userIndex.client.mock";
+import { toVoid } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userService: UserIndexService;
@@ -42,9 +42,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     static create(identity: Identity): IUserIndexClient {
-        if (process.env.MOCK_SERVICES) {
-            return new UserIndexClientMock();
-        }
         return new UserIndexClient(identity);
     }
 
@@ -56,6 +53,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             }),
             userSearchResponse
         );
+    }
+
+    markAsOnline(): Promise<void> {
+        return this.handleResponse(this.userService.mark_as_online({}), toVoid);
     }
 
     getUsers(userIds: string[], since: bigint): Promise<UsersResponse> {

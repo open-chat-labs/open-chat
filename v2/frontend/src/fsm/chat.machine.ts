@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-    ActorRefFrom,
-    createMachine,
-    DoneInvokeEvent,
-    MachineConfig,
-    MachineOptions,
-} from "xstate";
+import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
 import { assign, pure, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
@@ -31,36 +25,38 @@ import {
     setLastMessageOnChat,
     toggleReaction,
     userIdsFromChatSummaries,
+    replaceLocal,
+    userIdsFromChatSummary,
+    replaceMessageContent,
 } from "../domain/chat/chat.utils";
-import type { UserLookup, UserSummary } from "../domain/user/user";
-import { mergeUsers, missingUserIds } from "../domain/user/user.utils";
+import type { UserSummary } from "../domain/user/user";
+import { missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
-import { dedupe } from "../utils/list";
 import { chatStore } from "../stores/chat";
-import type { MarkReadMachine } from "./markread.machine";
 import { overwriteCachedEvents } from "../utils/caching";
+import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
+import { unconfirmed } from "../stores/unconfirmed";
+import { get } from "svelte/store";
+import { userStore } from "../stores/user";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
 export interface ChatContext {
     serviceContainer: ServiceContainer;
     chatSummary: ChatSummary;
-    userLookup: UserLookup;
     user?: UserSummary;
     error?: Error;
     events: EventWrapper<ChatEvent>[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
-    markMessages: ActorRefFrom<MarkReadMachine>;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
 }
 
 type LoadEventsResponse = {
-    userLookup: UserLookup;
     events: EventWrapper<ChatEvent>[];
     affectedEvents: EventWrapper<ChatEvent>[];
 };
@@ -74,12 +70,17 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
-    | { type: "MESSAGE_READ_BY_ME"; data: { chatId: string; messageIndex: number } }
+    | {
+          type: "MESSAGE_READ_BY_ME";
+          data: { chatId: string; messageIndex: number; messageId: bigint };
+      }
     | { type: "SHOW_GROUP_DETAILS" }
+    | { type: "START_TYPING" }
+    | { type: "STOP_TYPING" }
     | { type: "SHOW_PARTICIPANTS" }
-    | { type: "SEND_MESSAGE"; data: EventWrapper<Message> }
-    | { type: "TOGGLE_REACTION"; data: { message: Message; reaction: string } }
-    | { type: "REMOVE_MESSAGE"; data: Message }
+    | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
+    | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
+    | { type: "REMOVE_MESSAGE"; data: { userId: string; messageId: bigint } }
     | {
           type: "UPDATE_MESSAGE";
           data: { candidate: Message; resp: SendMessageSuccess };
@@ -98,11 +99,11 @@ export type ChatEvents =
       }
     | {
           type: "DELETE_MESSAGE";
-          data: bigint;
+          data: { messageId: bigint; userId: string };
       }
     | {
           type: "UNDELETE_MESSAGE";
-          data: Message;
+          data: { message: Message; userId: string };
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
@@ -111,18 +112,16 @@ export type ChatEvents =
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
-    userLookup: UserLookup,
     chatSummary: ChatSummary
-): Promise<UserLookup> {
+): Promise<void> {
     if (chatSummary.kind === "group_chat") {
         const userIds = userIdsFromChatSummaries([chatSummary], true);
         const { users } = await serviceContainer.getUsers(
-            missingUserIds(userLookup, userIds),
+            missingUserIds(get(userStore), userIds),
             BigInt(0) // timestamp irrelevant for missing users
         );
-        return mergeUsers(userLookup, users);
+        userStore.addMany(users);
     }
-    return Promise.resolve(userLookup);
 }
 
 function loadEvents(
@@ -161,7 +160,7 @@ export function earliestIndex(ctx: ChatContext): number {
 }
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
-    const lastLoaded = latestLoadedEventIndex(ctx.events);
+    const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
     if (lastLoaded !== undefined && lastLoaded < ctx.chatSummary.latestEventIndex) {
         const from = lastLoaded + 1;
         return [from, true];
@@ -209,14 +208,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
 
-            const [userLookup, eventsResponse] = await Promise.all([
-                loadUsersForChat(ctx.serviceContainer, ctx.userLookup, ctx.chatSummary),
+            const [, eventsResponse] = await Promise.all([
+                loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
                     : { events: [], affectedEvents: [] },
             ]);
             return {
-                userLookup,
                 events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
                 affectedEvents:
                     eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
@@ -238,14 +236,9 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         assignEventsResponse: assign((ctx, ev) =>
             ev.type === "done.invoke.loadEventsAndUsers"
                 ? {
-                      userLookup: ev.data.userLookup,
                       events: replaceAffected(
-                          ctx.user!.userId,
                           ctx.chatSummary.chatId,
-                          dedupe(
-                              (a, b) => a.index === b.index,
-                              [...ev.data.events, ...ctx.events].sort((a, b) => a.index - b.index)
-                          ),
+                          replaceLocal(ctx.events, ev.data.events),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),
@@ -334,6 +327,26 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parent state for all states that the user cares about or the UI should reflect",
             initial: "loading_previous_messages",
             on: {
+                START_TYPING: {
+                    actions: pure((ctx, _ev) => {
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
+                            kind: "remote_user_typing",
+                            chatId: ctx.chatSummary.chatId,
+                            userId: ctx.user!.userId,
+                        });
+                        return undefined;
+                    }),
+                },
+                STOP_TYPING: {
+                    actions: pure((ctx, _ev) => {
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
+                            kind: "remote_user_stopped_typing",
+                            chatId: ctx.chatSummary.chatId,
+                            userId: ctx.user!.userId,
+                        });
+                        return undefined;
+                    }),
+                },
                 SEND_MESSAGE: {
                     actions: assign((ctx, ev) => {
                         if (ctx.editingEvent) {
@@ -341,9 +354,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 events: ctx.events.map((e) => {
                                     if (
                                         e.event.kind === "message" &&
-                                        e.event.messageId === ev.data.event.messageId
+                                        e.event.messageId === ev.data.messageEvent.event.messageId
                                     ) {
-                                        return ev.data;
+                                        return ev.data.messageEvent;
                                     }
                                     return e;
                                 }),
@@ -352,9 +365,30 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 editingEvent: undefined,
                             };
                         } else {
+                            // this message may have come in via webrtc
+                            const sentByMe = ev.data.userId === ctx.user?.userId;
+                            if (sentByMe) {
+                                rtcConnectionsManager.sendMessage(
+                                    userIdsFromChatSummary(ctx.chatSummary),
+                                    {
+                                        kind: "remote_user_sent_message",
+                                        chatId: ctx.chatSummary.chatId,
+                                        messageEvent: ev.data.messageEvent,
+                                        userId: ev.data.userId,
+                                    }
+                                );
+                            }
+                            unconfirmed.add(ev.data.messageEvent.event.messageId);
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: "sending_message",
+                            });
+                            const chatSummary = sentByMe
+                                ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
+                                : ctx.chatSummary;
                             return {
-                                chatSummary: setLastMessageOnChat(ctx.chatSummary, ev.data),
-                                events: [...ctx.events, ev.data],
+                                chatSummary,
+                                events: [...ctx.events, ev.data.messageEvent],
                                 replyingTo: undefined,
                                 fileToAttach: undefined,
                                 editingEvent: undefined,
@@ -373,7 +407,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             ? {
                                   ...ev.data.event.repliesTo,
                                   content: ev.data.event.content,
-                                  sender: ctx.userLookup[ev.data.event.sender],
+                                  sender: get(userStore)[ev.data.event.sender],
                               }
                             : undefined,
                     })),
@@ -397,59 +431,60 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 UNDELETE_MESSAGE: {
                     actions: assign((ctx, ev) => {
-                        return {
-                            events: ctx.events.map((e) => {
-                                if (
-                                    e.event.kind === "message" &&
-                                    e.event.messageId === ev.data.messageId
-                                ) {
-                                    return {
-                                        ...e,
-                                        event: {
-                                            ...e.event,
-                                            content: ev.data.content,
-                                        },
-                                    };
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_undeleted_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    message: ev.data.message,
+                                    userId: ev.data.userId,
                                 }
-                                return e;
-                            }),
+                            );
+                        }
+
+                        return {
+                            events: replaceMessageContent(
+                                ctx.events,
+                                BigInt(ev.data.message.messageId),
+                                ev.data.message.content
+                            ),
                         };
                     }),
                 },
                 DELETE_MESSAGE: {
                     actions: assign((ctx, ev) => {
-                        return {
-                            events: ctx.events.map((e) => {
-                                if (e.event.kind === "message" && e.event.messageId === ev.data) {
-                                    return {
-                                        ...e,
-                                        event: {
-                                            ...e.event,
-                                            content: { kind: "deleted_content" },
-                                        },
-                                    };
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_deleted_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    messageId: ev.data.messageId,
+                                    userId: ev.data.userId,
                                 }
-                                return e;
+                            );
+                        }
+                        return {
+                            events: replaceMessageContent(ctx.events, BigInt(ev.data.messageId), {
+                                kind: "deleted_content",
                             }),
                         };
                     }),
                 },
                 TOGGLE_REACTION: {
                     actions: assign((ctx, ev) => {
-                        const key = ev.data.message.messageId.toString();
+                        const messageId = BigInt(ev.data.messageId);
+                        const key = messageId.toString();
                         if (ctx.localReactions[key] === undefined) {
                             ctx.localReactions[key] = [];
                         }
                         const messageReactions = ctx.localReactions[key];
                         return {
                             events: ctx.events.map((e) => {
-                                if (
-                                    e.event.kind === "message" &&
-                                    ev.data.message.kind === "message" &&
-                                    e.event.messageId === ev.data.message.messageId
-                                ) {
+                                if (e.event.kind === "message" && e.event.messageId === messageId) {
                                     const addOrRemove = containsReaction(
-                                        ctx.user!.userId,
+                                        ev.data.userId,
                                         ev.data.reaction,
                                         e.event.reactions
                                     )
@@ -459,19 +494,32 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         reaction: ev.data.reaction,
                                         timestamp: +new Date(),
                                         kind: addOrRemove,
+                                        userId: ev.data.userId,
                                     });
                                     const updatedEvent = {
                                         ...e,
                                         event: {
                                             ...e.event,
                                             reactions: toggleReaction(
-                                                ctx.user!.userId,
+                                                ev.data.userId,
                                                 e.event.reactions,
                                                 ev.data.reaction
                                             ),
                                         },
                                     };
                                     overwriteCachedEvents(ctx.chatSummary.chatId, [updatedEvent]);
+                                    if (ev.data.userId === ctx.user?.userId) {
+                                        rtcConnectionsManager.sendMessage(
+                                            userIdsFromChatSummary(ctx.chatSummary),
+                                            {
+                                                kind: "remote_user_toggled_reaction",
+                                                chatId: ctx.chatSummary.chatId,
+                                                messageId: messageId,
+                                                userId: ev.data.userId,
+                                                reaction: ev.data.reaction,
+                                            }
+                                        );
+                                    }
                                     return updatedEvent;
                                 }
                                 return e;
@@ -480,9 +528,27 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     }),
                 },
                 REMOVE_MESSAGE: {
-                    actions: assign((ctx, ev) => ({
-                        events: ctx.events.filter((e) => e.event !== ev.data),
-                    })),
+                    actions: assign((ctx, ev) => {
+                        if (ev.data.userId === ctx.user?.userId) {
+                            rtcConnectionsManager.sendMessage(
+                                userIdsFromChatSummary(ctx.chatSummary),
+                                {
+                                    kind: "remote_user_removed_message",
+                                    chatId: ctx.chatSummary.chatId,
+                                    messageId: ev.data.messageId,
+                                    userId: ev.data.userId,
+                                }
+                            );
+                        }
+                        unconfirmed.delete(ev.data.messageId);
+                        return {
+                            events: ctx.events.filter(
+                                (e) =>
+                                    e.event.kind === "message" &&
+                                    e.event.messageId !== ev.data.messageId
+                            ),
+                        };
+                    }),
                 },
                 SHOW_GROUP_DETAILS: ".showing_group",
                 SHOW_PARTICIPANTS: ".showing_group",
@@ -521,11 +587,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     // we need to send this modified chat summary to the parent machine
                     // so that it can sync it with the chat poller - nasty
                     // we also need to seend it to the mark read machine to periodically ping off to the server
-                    actions: pure((ctx, ev) => {
-                        ctx.markMessages.send({
-                            type: "MESSAGE_READ_BY_ME",
-                            data: ev.data.messageIndex,
-                        });
+                    actions: pure((_ctx, ev) => {
                         return sendParent<ChatContext, ChatEvents>(ev);
                     }),
                 },
@@ -585,7 +647,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     name: ctx.chatSummary.name,
                                     desc: ctx.chatSummary.description,
                                 },
-                                userLookup: ctx.userLookup,
                                 history: [
                                     ev.type === "ADD_PARTICIPANT"
                                         ? "add_participants"

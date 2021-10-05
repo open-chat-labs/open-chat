@@ -9,7 +9,7 @@
     import type { ActorRefFrom } from "xstate";
     import { modalStore, ModalType } from "../../stores/modal";
     import Overlay from "../Overlay.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     const dispatch = createEventDispatcher();
     import { rtlStore } from "../../stores/rtl";
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
@@ -26,6 +26,8 @@
         SearchAllMessagesResponse,
     } from "../../domain/search/search";
     import type { UserSummary } from "../../domain/user/user";
+    import { blockedUsers } from "../../stores/blockedUsers";
+    import { stopMarkReadPoller } from "../../stores/markRead";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -42,6 +44,15 @@
     function logout() {
         dispatch("logout");
     }
+
+    onMount(() => {
+        // bootstrap anything that needs a service container here
+    });
+
+    onDestroy(() => {
+        // clean up anything that needs to be stopped e.g. pollers
+        stopMarkReadPoller();
+    });
 
     $: {
         // wait until we have loaded the chats
@@ -120,14 +131,6 @@
         machine.send({ type: "NEW_GROUP" });
     }
 
-    function unconfirmedMessage(ev: CustomEvent<bigint>) {
-        machine.send({ type: "UNCONFIRMED_MESSAGE", data: ev.detail });
-    }
-
-    function messageConfirmed(ev: CustomEvent<bigint>) {
-        machine.send({ type: "MESSAGE_CONFIRMED", data: ev.detail });
-    }
-
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
@@ -137,7 +140,7 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
-        machine.send({ type: "BLOCK_USER", data: ev.detail.userId });
+        blockedUsers.add(ev.detail.userId);
         $machine.context
             .serviceContainer!.blockUser(ev.detail.userId)
             .then((resp) => {
@@ -151,7 +154,7 @@
     }
 
     function unblockUser(ev: CustomEvent<{ userId: string }>) {
-        machine.send({ type: "UNBLOCK_USER", data: ev.detail.userId });
+        blockedUsers.delete(ev.detail.userId);
         $machine.context
             .serviceContainer!.unblockUser(ev.detail.userId)
             .then((resp) => {
@@ -218,7 +221,7 @@
     $: blocked =
         selectedChat !== undefined &&
         selectedChat.kind === "direct_chat" &&
-        $machine.context.blockedUsers.has(selectedChat.them);
+        $blockedUsers.has(selectedChat.them);
 </script>
 
 {#if $machine.context.user}
@@ -242,11 +245,8 @@
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
             <MiddlePanel
-                unconfirmed={$machine.context.unconfirmed}
                 loadingChats={$machine.matches("loading_chats")}
                 {blocked}
-                on:unconfirmedMessage={unconfirmedMessage}
-                on:messageConfirmed={messageConfirmed}
                 on:newchat={newChat}
                 on:clearSelection={clearSelectedChat}
                 on:blockUser={blockUser}

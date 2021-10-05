@@ -102,7 +102,6 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : Message,
   'sender_name' : string,
@@ -185,6 +184,7 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
+  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
@@ -203,7 +203,6 @@ export interface GroupDescriptionChanged {
 }
 export interface GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : Message,
   'sender_name' : string,
   'chat_id' : ChatId,
@@ -231,10 +230,16 @@ export type MakeAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
-export interface MarkReadArgs { 'message_ranges' : Array<MessageIndexRange> }
-export type MarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : null } |
+export interface MarkReadArgs {
+  'message_index_ranges' : Array<MessageIndexRange>,
+  'message_ids' : Array<MessageId>,
+}
+export type MarkReadResponse = { 'SuccessNoChange' : MarkReadSuccessResult } |
+  { 'Success' : MarkReadSuccessResult } |
   { 'NotInGroup' : null };
+export interface MarkReadSuccessResult {
+  'unrecognised_message_ids' : Array<MessageId>,
+}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -455,11 +460,10 @@ export interface V1CyclesContent {
   'amount' : bigint,
 }
 export interface V1DirectMessageNotification {
-  'chat_id' : string,
-  'recipient' : UserId,
   'sender' : UserId,
   'message' : V1Message,
   'sender_name' : string,
+  'chat_id' : string,
 }
 export interface V1FileContent {
   'blob_size' : number,
@@ -473,7 +477,6 @@ export interface V1FileContent {
 export type V1GroupId = bigint;
 export interface V1GroupMessageNotification {
   'sender' : UserId,
-  'recipients' : Array<UserId>,
   'message' : V1Message,
   'sender_name' : string,
   'chat_id' : string,

@@ -30,7 +30,7 @@ export interface IGroupClient {
     makeAdmin(userId: string): Promise<ChangeAdminResponse>;
     dismissAsAdmin(userId: string): Promise<ChangeAdminResponse>;
     removeParticipant(userId: string): Promise<RemoveParticipantResponse>;
-    markMessagesRead(ranges: MessageIndexRange[]): Promise<MarkReadResponse>;
+    markMessagesRead(ranges: MessageIndexRange[], ids: Set<bigint>): Promise<MarkReadResponse>;
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;

@@ -25,6 +25,8 @@ import type {
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
+    addWebRtcResponse,
+    apiWebRtcSessionDetails,
     blockResponse,
     createGroupResponse,
     deleteMessageResponse,
@@ -48,6 +50,11 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type {
+    AddWebRtcResponse,
+    WebRtcSessionDetails,
+    WebRtcSessionDetailsEvent,
+} from "../../domain/webrtc/webrtc";
 
 const MAX_RECURSION = 10;
 
@@ -94,8 +101,6 @@ export class UserClient extends CandidService implements IUserClient {
         previouslyLoadedEvents: EventWrapper<DirectChatEvent>[] = [],
         iterations = 0
     ): Promise<EventsResponse<DirectChatEvent>> {
-        console.log("index range: ", eventIndexRange);
-        console.log("loading messages from: ", startIndex, " : ", ascending);
         const resp = await this.handleResponse(
             this.userService.events({
                 user_id: Principal.fromText(userId),
@@ -159,10 +164,20 @@ export class UserClient extends CandidService implements IUserClient {
             (resp) => getUpdatesResponse(resp),
             args
         );
+
         return {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
             timestamp: updatesResponse.timestamp,
             blockedUsers: updatesResponse.blockedUsers,
+            webRtcSessionDetails: updatesResponse.chatsUpdated.reduce((rtcs, chat) => {
+                if (chat.kind === "direct_chat" && chat.webRtcSessionDetails) {
+                    rtcs.push(chat.webRtcSessionDetails);
+                }
+                if (chat.kind === "group_chat") {
+                    rtcs.push(...chat.webRtcSessionDetails);
+                }
+                return rtcs;
+            }, [] as WebRtcSessionDetailsEvent[]),
         };
     }
 
@@ -265,11 +280,16 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    markMessagesRead(userId: string, ranges: MessageIndexRange[]): Promise<MarkReadResponse> {
+    markMessagesRead(
+        userId: string,
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
+    ): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read({
                 user_id: Principal.fromText(userId),
-                message_ranges: ranges,
+                message_index_ranges: ranges,
+                message_ids: [...ids],
             }),
             markReadResponse
         );
@@ -307,6 +327,15 @@ export class UserClient extends CandidService implements IUserClient {
                 max_results: maxResults,
             }),
             searchAllMessageResponse
+        );
+    }
+
+    addWebRtcSessionDetails(details: WebRtcSessionDetails): Promise<AddWebRtcResponse> {
+        return this.handleResponse(
+            this.userService.add_webrtc_session_details({
+                session_details: apiWebRtcSessionDetails(details),
+            }),
+            addWebRtcResponse
         );
     }
 }

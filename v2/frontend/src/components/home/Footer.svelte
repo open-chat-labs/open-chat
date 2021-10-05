@@ -6,7 +6,6 @@
     import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
-    import { chatStore } from "../../stores/chat";
     import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
     import {
         createMessage,
@@ -53,7 +52,10 @@
                 });
 
             const event = { ...editingEvent, event: msg! };
-            machine.send({ type: "SEND_MESSAGE", data: event });
+            machine.send({
+                type: "SEND_MESSAGE",
+                data: { messageEvent: event, userId: $machine.context.user!.userId },
+            });
         }
     }
 
@@ -72,34 +74,42 @@
                 $machine.context.replyingTo,
                 fileToAttach
             );
-            dispatch("unconfirmedMessage", msg!.messageId);
             $machine.context.serviceContainer
                 .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
                 .then((resp) => {
-                    console.log(resp);
                     if (resp.kind === "success") {
-                        dispatch("messageConfirmed", msg!.messageId);
                         machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
-                        machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                        machine.send({
+                            type: "REMOVE_MESSAGE",
+                            data: {
+                                messageId: msg!.messageId,
+                                userId: $machine.context.user!.userId,
+                            },
+                        });
+                        // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
+                        dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
                     toastStore.showFailureToast("errorSendingMessage");
-                    machine.send({ type: "REMOVE_MESSAGE", data: msg! });
+                    machine.send({
+                        type: "REMOVE_MESSAGE",
+                        data: {
+                            messageId: msg!.messageId,
+                            userId: $machine.context.user!.userId,
+                        },
+                    });
                     rollbar.error("Exception sending message", err);
+                    // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
             machine.send({
                 type: "SEND_MESSAGE",
-                data: event,
-            });
-            chatStore.set({
-                chatId: $machine.context.chatSummary.chatId,
-                event: "sending_message",
+                data: { messageEvent: event, userId: $machine.context.user!.userId },
             });
         }
     }

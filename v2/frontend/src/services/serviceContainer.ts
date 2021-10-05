@@ -53,6 +53,12 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import type {
+    AddWebRtcResponse,
+    WebRtcAnswer,
+    WebRtcOffer,
+    WebRtcSessionDetails,
+} from "../domain/webrtc/webrtc";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -348,16 +354,18 @@ export class ServiceContainer {
 
     markDirectChatMessagesRead(
         userId: string,
-        ranges: MessageIndexRange[]
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
     ): Promise<MarkReadResponse> {
-        return this.userClient.markMessagesRead(userId, ranges);
+        return this.userClient.markMessagesRead(userId, ranges, ids);
     }
 
     markGroupChatMessagesRead(
         chatId: string,
-        ranges: MessageIndexRange[]
+        ranges: MessageIndexRange[],
+        ids: Set<bigint>
     ): Promise<MarkReadResponse> {
-        return this.getGroupClient(chatId).markMessagesRead(ranges);
+        return this.getGroupClient(chatId).markMessagesRead(ranges, ids);
     }
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {
@@ -386,5 +394,19 @@ export class ServiceContainer {
 
     deleteDirectMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse> {
         return this.userClient.deleteMessage(otherUserId, messageId);
+    }
+
+    markAsOnline(): Promise<void> {
+        return this._userIndexClient.markAsOnline();
+    }
+
+    webRtcOffer(them: string, offer: WebRtcOffer): Promise<AddWebRtcResponse> {
+        console.log("sending rtc offer to: ", them);
+        return UserClient.create(them, this.identity, this.db).addWebRtcSessionDetails(offer);
+    }
+
+    webRtcAnswer(them: string, answer: WebRtcAnswer): Promise<AddWebRtcResponse> {
+        console.log("sending rtc answer to: ", them);
+        return UserClient.create(them, this.identity, this.db).addWebRtcSessionDetails(answer);
     }
 }
