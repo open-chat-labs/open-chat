@@ -27,6 +27,14 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .collect();
 
         if !deleted.is_empty() {
+            for deleted_message in deleted.iter() {
+                // We can remove from 'replies_map' since the message is now deleted
+                if let Some(replies) = chat.replies_map.remove(deleted_message) {
+                    for reply_message_id in replies.iter() {
+                        chat.events.mark_reply_context_updated(*reply_message_id, now);
+                    }
+                }
+            }
             ic_cdk::block_on(delete_on_recipients_canister(args.user_id.into(), deleted));
         }
 

@@ -10,7 +10,7 @@ pub struct Args {
     pub replies_to: Option<ReplyContextArgs>,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct ReplyContextArgs {
     pub message_id: MessageId,
 }

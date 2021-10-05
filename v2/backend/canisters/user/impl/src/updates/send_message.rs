@@ -2,7 +2,8 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::{PushMessageArgs, ReplyContextInternal};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageIndex};
+use std::collections::hash_map::Entry::{Occupied, Vacant};
+use types::{CanisterId, ChatId, EventIndex, Message, MessageIndex, UserId};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -34,25 +35,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         now,
     };
 
-    let (chat_id, event_index, message) =
-        runtime_state
-            .data
-            .direct_chats
-            .push_message(true, args.recipient, None, push_message_args);
-
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
-            for is_me in users_to_mark_as_read.into_iter() {
-                if is_me {
-                    chat.read_by_me.insert(message.message_index.into());
-                    chat.read_by_me_updated = now;
-                } else {
-                    chat.read_by_them.insert(message.message_index.into());
-                    chat.read_by_them_updated = now;
-                }
-            }
-        }
-    }
+    let (chat_id, event_index, message) = handle_push_message(true, args.recipient, push_message_args, runtime_state);
 
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
     ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
@@ -63,6 +46,53 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         message_index: message.message_index,
         timestamp: now,
     })
+}
+
+pub(crate) fn handle_push_message(
+    sent_by_me: bool,
+    their_user_id: UserId,
+    args: PushMessageArgs,
+    runtime_state: &mut RuntimeState,
+) -> (ChatId, EventIndex, Message) {
+    let now = args.now;
+    let maybe_replies_to = args.replies_to.clone();
+
+    let (chat_id, event_index, message) = runtime_state
+        .data
+        .direct_chats
+        .push_message(sent_by_me, their_user_id, None, args);
+
+    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
+        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&message.message_id) {
+            for is_me in users_to_mark_as_read.into_iter() {
+                if is_me {
+                    chat.read_by_me.insert(message.message_index.into());
+                    chat.read_by_me_updated = now;
+                } else {
+                    chat.read_by_them.insert(message.message_index.into());
+                    chat.read_by_them_updated = now;
+                }
+            }
+        }
+
+        if let Some(replies_to) = maybe_replies_to {
+            match replies_to {
+                // If the new message replies to a message in this same chat, add the pair of
+                // message Ids to the 'replies_map'
+                ReplyContextInternal::SameChat(message_id) => match chat.replies_map.entry(message_id) {
+                    Occupied(e) => e.into_mut().push(message.message_id),
+                    Vacant(e) => {
+                        e.insert(vec![message.message_id]);
+                    }
+                },
+                ReplyContextInternal::OtherChat(_) => {
+                    // TODO mark the reply on the chat canister of the message being replied to
+                }
+            }
+        }
+    }
+
+    (chat_id, event_index, message)
 }
 
 fn build_c2c_args(args: Args, message_index: MessageIndex) -> (CanisterId, c2c_send_message::Args) {

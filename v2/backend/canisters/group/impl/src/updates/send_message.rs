@@ -5,6 +5,7 @@ use cycles_utils::check_cycles_balance;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, GroupMessageNotification, UserId};
 use utils::rand::get_random_item;
 
@@ -19,6 +20,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
         let now = runtime_state.env.now();
+        let replies_to = args.replies_to.clone();
         let sender = participant.user_id;
 
         let push_message_args = PushMessageArgs {
@@ -43,6 +45,15 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     if p.read_by_me.insert(message_index.into()) {
                         p.read_by_me_updated = now;
                     }
+                }
+            }
+        }
+
+        if let Some(ReplyContextArgs { message_id }) = replies_to {
+            match runtime_state.data.replies_map.entry(message_id) {
+                Occupied(e) => e.into_mut().push((None, message.message_id)),
+                Vacant(e) => {
+                    e.insert(vec![(None, message.message_id)]);
                 }
             }
         }

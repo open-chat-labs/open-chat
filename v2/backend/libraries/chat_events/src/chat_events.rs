@@ -27,6 +27,7 @@ pub enum ChatEventInternal {
     Message(Box<MessageInternal>),
     MessageEdited(Box<MessageId>),
     MessageDeleted(Box<MessageId>),
+    MessageReplyContextUpdated(Box<MessageId>),
     MessageReactionAdded(Box<MessageId>),
     MessageReactionRemoved(Box<MessageId>),
     DirectChatCreated(DirectChatCreated),
@@ -254,6 +255,12 @@ impl ChatEvents {
             }
         } else {
             DeleteMessageResult::NotFound
+        }
+    }
+
+    pub fn mark_reply_context_updated(&mut self, message_id: MessageId, now: TimestampMillis) {
+        if self.message_id_map.contains_key(&message_id) {
+            self.push_event(ChatEventInternal::MessageReplyContextUpdated(Box::new(message_id)), now);
         }
     }
 

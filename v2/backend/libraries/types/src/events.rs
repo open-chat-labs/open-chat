@@ -20,6 +20,7 @@ pub enum GroupChatEvent {
     UsersUnblocked(UsersUnblocked),
     MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
+    MessageReplyContextUpdated(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
 }
@@ -123,6 +124,7 @@ pub enum DirectChatEvent {
     DirectChatCreated(DirectChatCreated),
     MessageEdited(UpdatedMessage),
     MessageDeleted(UpdatedMessage),
+    MessageReplyContextUpdated(UpdatedMessage),
     MessageReactionAdded(UpdatedMessage),
     MessageReactionRemoved(UpdatedMessage),
 }

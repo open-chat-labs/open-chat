@@ -31,6 +31,9 @@ impl GroupChatEvents {
             ChatEventInternal::Message(m) => GroupChatEvent::Message(self.inner.hydrate_message(m)),
             ChatEventInternal::MessageEdited(m) => GroupChatEvent::MessageEdited(self.inner.hydrate_updated_message(**m)),
             ChatEventInternal::MessageDeleted(m) => GroupChatEvent::MessageDeleted(self.inner.hydrate_updated_message(**m)),
+            ChatEventInternal::MessageReplyContextUpdated(m) => {
+                GroupChatEvent::MessageReplyContextUpdated(self.inner.hydrate_updated_message(**m))
+            }
             ChatEventInternal::MessageReactionAdded(m) => {
                 GroupChatEvent::MessageReactionAdded(self.inner.hydrate_updated_message(**m))
             }

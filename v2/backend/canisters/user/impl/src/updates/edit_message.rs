@@ -29,6 +29,11 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         match chat.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
+                if let Some(replies) = chat.replies_map.get(&args.message_id) {
+                    for reply_message_id in replies.iter() {
+                        chat.events.mark_reply_context_updated(*reply_message_id, now);
+                    }
+                }
                 ic_cdk::block_on(edit_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,

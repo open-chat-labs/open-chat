@@ -82,6 +82,7 @@ type DirectChatEvent =
         DirectChatCreated: DirectChatCreated;
         MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
+        MessageReplyContextUpdated: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
     };
@@ -157,6 +158,7 @@ type GroupChatEvent =
         ParticipantsDismissedAsAdmin: ParticipantsDismissedAsAdmin;
         MessageEdited: UpdatedMessage;
         MessageDeleted: UpdatedMessage;
+        MessageReplyContextUpdated: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
     };

@@ -27,6 +27,12 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         match runtime_state.data.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
+                if let Some(replies) = runtime_state.data.replies_map.get(&args.message_id) {
+                    // TODO Handle replies in other chats
+                    for (_, reply_message_id) in replies.iter().filter(|(chat_id, _)| chat_id.is_none()) {
+                        runtime_state.data.events.mark_reply_context_updated(*reply_message_id, now);
+                    }
+                }
                 handle_activity_notification(runtime_state);
                 Success
             }

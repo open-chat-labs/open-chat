@@ -1,3 +1,4 @@
+use crate::updates::send_message::handle_push_message;
 use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::{PushMessageArgs, ReplyContextInternal};
 use cycles_utils::check_cycles_balance;
@@ -69,25 +70,7 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
         now,
     };
 
-    let (chat_id, _, message) =
-        runtime_state
-            .data
-            .direct_chats
-            .push_message(false, sender_user_id, Some(args.sender_message_index), push_message_args);
-
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
-            for is_me in users_to_mark_as_read.into_iter() {
-                if is_me {
-                    chat.read_by_me.insert(message.message_index.into());
-                    chat.read_by_me_updated = now;
-                } else {
-                    chat.read_by_them.insert(message.message_index.into());
-                    chat.read_by_them_updated = now;
-                }
-            }
-        }
-    }
+    let (.., message) = handle_push_message(false, sender_user_id, push_message_args, runtime_state);
 
     let random = runtime_state.env.random_u32() as usize;
 

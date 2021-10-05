@@ -65,6 +65,10 @@ struct Data {
     // read.
     // TODO Prune messages from here that are more than 1 minute old
     pub message_ids_read_but_not_confirmed: HashMap<MessageId, (Vec<UserId>, TimestampMillis)>,
+
+    // An entry exists in this map for each message that has been replied to, and the value holds
+    // each of those messages which have replied to it (which may have been in different chats).
+    pub replies_map: HashMap<MessageId, Vec<(Option<ChatId>, MessageId)>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -102,6 +106,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
             message_ids_read_but_not_confirmed: HashMap::new(),
+            replies_map: HashMap::new(),
         }
     }
 }

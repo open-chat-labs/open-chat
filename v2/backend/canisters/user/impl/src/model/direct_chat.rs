@@ -25,6 +25,10 @@ pub struct DirectChat {
     // read. The 'bool' in the value determines if the message is read by us (true) or them (false).
     // TODO Prune messages from here that are more than 1 minute old
     pub message_ids_read_but_not_confirmed: HashMap<MessageId, (Vec<bool>, TimestampMillis)>,
+
+    // An entry exists in this map for each message that has been replied to, and the value holds
+    // each of those messages which have replied to it.
+    pub replies_map: HashMap<MessageId, Vec<MessageId>>,
 }
 
 impl DirectChat {
@@ -40,6 +44,7 @@ impl DirectChat {
             read_by_them_updated: now,
             webrtc_session_details: None,
             message_ids_read_but_not_confirmed: HashMap::new(),
+            replies_map: HashMap::new(),
         }
     }
 
