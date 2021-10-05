@@ -63,7 +63,7 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
         content: args.content,
         replies_to: args.replies_to.map(|r| match r {
             ReplyContextArgs::Direct(d) => ReplyContextInternal::SameChat(d.message_id),
-            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(p),
+            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(Box::new(p)),
         }),
         now: runtime_state.env.now(),
     };

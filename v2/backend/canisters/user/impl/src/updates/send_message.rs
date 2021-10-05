@@ -29,7 +29,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         content: args.content.clone(),
         replies_to: args.replies_to.as_ref().map(|r| match r {
             ReplyContextArgs::Direct(d) => ReplyContextInternal::SameChat(d.message_id),
-            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(p.clone()),
+            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(Box::new(p.clone())),
         }),
         now,
     };

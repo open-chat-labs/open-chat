@@ -95,7 +95,7 @@ pub struct MessageInternal {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum ReplyContextInternal {
     SameChat(MessageId),
-    OtherChat(ReplyContext),
+    OtherChat(Box<ReplyContext>),
 }
 
 pub struct PushMessageArgs {
@@ -566,7 +566,7 @@ impl ChatEvents {
                     None
                 }
             }
-            ReplyContextInternal::OtherChat(r) => Some(r.clone()),
+            ReplyContextInternal::OtherChat(r) => Some(*r.clone()),
         }
     }
 }

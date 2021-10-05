@@ -11,6 +11,7 @@ pub struct Args {
     pub replies_to: Option<ReplyContextArgs>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize, Debug)]
 pub enum ReplyContextArgs {
     Direct(DirectReplyContextArgs),
