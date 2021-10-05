@@ -81,13 +81,43 @@
         }
     }
 
+    function formatLastOnlineDate(secondsSinceLastOnline: number): string {
+        if (isNaN(secondsSinceLastOnline)) {
+            return "";
+        }
+        const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
+
+        if (minutesSinceLastOnline < 2) {
+            return $_("onlineNow");
+        }
+
+        let durationText: string;
+        if (minutesSinceLastOnline < 60) {
+            durationText = $_("durationMins", { values: { duration: minutesSinceLastOnline } });
+        } else {
+            const hoursSinceLastOnline = Math.floor(minutesSinceLastOnline / 60);
+            if (hoursSinceLastOnline === 1) {
+                durationText = $_("oneHour");
+            } else if (hoursSinceLastOnline < 24) {
+                durationText = $_("durationHours", { values: { duration: hoursSinceLastOnline } });
+            } else {
+                const daysSinceLastOnline = Math.floor(hoursSinceLastOnline / 24);
+                durationText =
+                    daysSinceLastOnline === 1
+                        ? $_("oneDay")
+                        : $_("durationDays", { values: { duration: daysSinceLastOnline } });
+            }
+        }
+        return $_("lastOnline", { values: { duration: durationText } });
+    }
+
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
             return {
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
-                subtext: "When user was last online | typing",
+                subtext: formatLastOnlineDate($userStore[chatSummary.them].secondsSinceLastOnline),
                 typing: $typing.has(chatSummary.them),
             };
         }
