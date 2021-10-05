@@ -46,7 +46,6 @@ import { identity, optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "../../utils/error";
 import { message, messageContent, updatedMessage } from "../common/chatMappers";
 import type { MessageMatch, SearchAllMessagesResponse } from "../../domain/search/search";
-import { Principal } from "@dfinity/principal";
 
 export function searchAllMessageResponse(
     candid: ApiSearchAllMessagesResponse
