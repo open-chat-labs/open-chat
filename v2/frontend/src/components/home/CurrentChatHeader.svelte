@@ -138,7 +138,10 @@
     }
 
     function canAdminister(chat: GroupChatSummary): boolean {
-        return chat.participants.find((p) => p.userId === user!.userId)?.role === "admin";
+        return (
+            chat.public ||
+            chat.participants.find((p) => p.userId === user!.userId)?.role === "admin"
+        );
     }
 
     $: chat = normaliseChatSummary(selectedChatSummary);
