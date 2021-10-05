@@ -41,6 +41,8 @@
         unconfirmedReadByThem,
         unconfirmedReadByUs,
     } from "../../stores/unconfirmed";
+    import { userStore } from "../../stores/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -399,6 +401,12 @@
         return true;
     }
 
+    function messageSender(evt: EventWrapper<ChatEventType>): PartialUserSummary | undefined {
+        if (evt.event.kind === "message") {
+            return $userStore[evt.event.sender];
+        }
+    }
+
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return (
@@ -422,9 +430,6 @@
         }
         return true;
     }
-
-    $: console.log("unconfirmed: Read by them: ", $unconfirmedReadByThem);
-    $: console.log("unconfirmed: ", $unconfirmed);
 
     // then we need to integrate web rtc
 </script>
@@ -454,6 +459,7 @@
                         chatId={$machine.context.chatSummary.chatId}
                         chatType={$machine.context.chatSummary.kind}
                         user={$machine.context.user}
+                        sender={messageSender(evt)}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
                         on:chatWith

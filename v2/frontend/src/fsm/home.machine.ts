@@ -133,7 +133,7 @@ type ChatsResponse = {
     blockedUsers: Set<string>;
     webRtcSessionDetails: WebRtcSessionDetailsEvent[];
 };
-type UserUpdateResponse = { userLookup: UserLookup; usersLastUpdate: bigint };
+type UserUpdateResponse = { usersLastUpdate: bigint };
 
 function findDirectChatByUserId(ctx: HomeContext, userId: string): DirectChatSummary | undefined {
     return ctx.chatSummaries.find((c) => c.kind === "direct_chat" && c.them === userId) as
@@ -402,10 +402,10 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         ctx.usersLastUpdate
                     );
                     console.log("sending updated users");
+                    userStore.addMany(usersResp.users);
                     callback({
                         type: "USERS_UPDATED",
                         data: {
-                            userLookup: mergeUsers(get(userStore), usersResp.users),
                             usersLastUpdate: usersResp.timestamp,
                         },
                     });

@@ -29,7 +29,9 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+    <div class="text-content">
+        <SvelteMarkdown source={truncate ? truncateTo(SIZE_LIMIT, textContent) : textContent} />
+    </div>
 {:else if content.kind === "image_content"}
     <ImageContent {content} />
 {:else if content.kind === "video_content"}
@@ -43,3 +45,9 @@
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
 {/if}
+
+<style type="text/scss">
+    .text-content {
+        margin-bottom: $sp3;
+    }
+</style>

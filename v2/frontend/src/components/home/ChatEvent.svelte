@@ -6,7 +6,7 @@
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { PartialUserSummary, UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
@@ -21,6 +21,7 @@
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
+    export let sender: PartialUserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;
     export let last: boolean;
     export let me: boolean;
@@ -37,6 +38,7 @@
 
 {#if event.event.kind === "message"}
     <ChatMessage
+        {sender}
         {focused}
         {observer}
         {confirmed}

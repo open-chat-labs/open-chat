@@ -1,22 +1,26 @@
-import { writable, get } from "svelte/store";
+import { writable } from "svelte/store";
 import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 
-const userLookup = writable<UserLookup>({});
+const { subscribe, update } = writable<UserLookup>({});
 
 export const userStore = {
-    subscribe: userLookup.subscribe,
+    subscribe,
     add: (user: PartialUserSummary): void => {
-        userLookup.update((users) => {
-            users[user.userId] = user;
-            return users;
+        update((users) => {
+            return {
+                ...users,
+                [user.userId]: user,
+            };
         });
     },
-    addMany: (addUsers: PartialUserSummary[]): void => {
-        userLookup.update((users) => {
-            addUsers.forEach((user) => {
-                users[user.userId] = user;
-            });
-            return users;
+    addMany: (newUsers: PartialUserSummary[]): void => {
+        update((users) => {
+            return newUsers.reduce((lookup, user) => {
+                return {
+                    ...lookup,
+                    [user.userId]: user,
+                };
+            }, users);
         });
     },
 };

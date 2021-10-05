@@ -16,9 +16,9 @@
     export let user: UserSummary | undefined;
     export let repliesTo: ReplyContext;
 
-    function sentByMe(replyContext: ReplyContext): boolean {
-        return replyContext.senderId === user?.userId;
-    }
+    let debug = false;
+
+    $: me = repliesTo.senderId === user?.userId;
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
@@ -34,12 +34,17 @@
 </script>
 
 <Link on:click={zoomToMessage}>
-    <div class="reply-wrapper" class:me={sentByMe(repliesTo)} class:rtl={$rtlStore}>
+    <div class="reply-wrapper" class:me class:rtl={$rtlStore}>
         <h4 class="username">
             {getUsernameFromReplyContext(repliesTo)}
         </h4>
         {#if repliesTo.content !== undefined}
             <ChatMessageContent content={repliesTo.content} />
+            {#if debug}
+                <pre>EventIdx: {repliesTo.eventIndex}</pre>
+                <pre>MsgId: {repliesTo.messageId}</pre>
+                <pre>SenderId: {repliesTo.senderId}</pre>
+            {/if}
         {:else}
             {"TODO - we don't have the message content for this"}
         {/if}

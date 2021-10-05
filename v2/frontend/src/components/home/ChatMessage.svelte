@@ -3,6 +3,7 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import { AvatarSize } from "../../domain/user/user";
+    import type { PartialUserSummary } from "../../domain/user/user";
     import type { UserSummary } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
@@ -35,6 +36,7 @@
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
+    export let sender: PartialUserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
     export let eventIndex: number;
@@ -50,12 +52,12 @@
 
     let senderId = msg.sender;
     let groupChat = chatType === "group_chat";
-    let sender = $userStore[senderId];
     let username = sender?.username;
     let userStatus = getUserStatus($userStore, senderId);
     let metaData = messageMetaData(msg.content);
     let fill = fillMessage(msg);
     let showEmojiPicker = false;
+    let debug = false;
 
     $: deleted = msg.content.kind === "deleted_content";
 
@@ -173,12 +175,15 @@
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
-            <pre>EventIdx: {eventIndex}</pre>
-            <pre>MsgIdx: {msg.messageIndex}</pre>
-            <pre>MsgId: {msg.messageId}</pre>
-            <pre>Confirmed: {confirmed}</pre>
-            <pre>ReadByThem: {readByThem}</pre>
-            <pre>ReadByUs: {readByMe}</pre>
+
+            {#if debug}
+                <pre>EventIdx: {eventIndex}</pre>
+                <pre>MsgIdx: {msg.messageIndex}</pre>
+                <pre>MsgId: {msg.messageId}</pre>
+                <pre>Confirmed: {confirmed}</pre>
+                <pre>ReadByThem: {readByThem}</pre>
+                <pre>ReadByUs: {readByMe}</pre>
+            {/if}
 
             {#if metaData && !deleted}
                 {#await metaData then meta}
