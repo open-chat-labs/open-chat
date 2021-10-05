@@ -1,5 +1,6 @@
 import getAuthClient from "../../utils/authClient";
 import { Dispatch } from "react";
+import * as notifications from "../../notifications";
 
 export const USER_LOGGED_OUT = "USER_LOGGED_OUT";
 
@@ -12,6 +13,9 @@ export default function logout() {
         };
 
         dispatch(userLoggedOutEvent);
+
+        let success = await notifications.unregister();
+        console.log(`unregister service worker: ${success}`);
     };
 }
 

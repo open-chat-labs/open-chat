@@ -49,16 +49,14 @@ export function supported() : boolean {
 }
 
 export async function trySubscribe(userId: UserId): Promise<boolean> {
-  // Does the browser have all the support needed for web push
-  if (!supported()) {
-    return false;
-  }
-
   // Register a service worker if it hasn't already been done
   let registration = await registerServiceWorker();
   if (registration == null) {
     return false;
   }
+
+  // Ensure the service worker is updated to the latest version
+  registration.update();
 
   // When a notifcation is clicked the service worker sends us a message
   // with the chat to select
@@ -137,23 +135,35 @@ export async function setSoftDisabled(disabled: boolean): Promise<void> {
   _softDisabled = disabled;
 }
 
-export async function close(chatId: ChatId): Promise<void> {
-  const sw_path = process.env.WEBPUSH_SERVICE_WORKER_PATH!;
-  let registration = await navigator.serviceWorker.register(sw_path);
-  let notifications = await registration.getNotifications();
-  for (let notification of notifications) {
-    if (notification.data?.chatId === chatId) {
-      notification.close();
+export async function close(chatId: ChatId) : Promise<void> {
+  let registration = await registerServiceWorker();
+  if (registration != null) {
+    let notifications = await registration.getNotifications();
+    for (let notification of notifications) {
+      if (notification.data?.chatId === chatId) {
+        notification.close();
+      }
     }
   }
 }
 
+export async function unregister() : Promise<boolean> {
+  let registration = await registerServiceWorker();
+  if (registration == null) {
+    return false;
+  } 
+  return registration.unregister();
+}
+
 async function registerServiceWorker(): Promise<Option<ServiceWorkerRegistration>> {
+  // Does the browser have all the support needed for web push
+  if (!supported()) {
+    return null;
+  }
+
   try {
     const sw_path = process.env.WEBPUSH_SERVICE_WORKER_PATH!;
-    let registration = await navigator.serviceWorker.register(sw_path);
-    registration.update();
-    return registration;
+    return await navigator.serviceWorker.register(sw_path);
   } catch (e) {
     console.log(e);
     return null;
