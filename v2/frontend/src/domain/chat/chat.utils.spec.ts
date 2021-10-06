@@ -663,7 +663,6 @@ describe("merging updates", () => {
             participantsRemoved: new Set(["2"]),
             name: "stuff",
             description: "stuff",
-            webRtcSessionDetails: [],
         };
 
         test("attempting to update with a mismatched kind throws error", () => {

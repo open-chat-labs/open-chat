@@ -39,8 +39,8 @@ export type MessageReadTracker = {
 let interval: NodeJS.Timer | undefined = undefined;
 
 export function stopMarkReadPoller(): void {
-    console.log("stopping the mark read poller");
     if (interval !== undefined) {
+        console.log("stopping the mark read poller");
         clearInterval(interval);
     }
 }
@@ -92,9 +92,11 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
         clearInterval(interval);
     }
 
-    interval = setInterval(() => {
-        Object.values(state).forEach(sendToServer);
-    }, MARK_READ_INTERVAL);
+    if (process.env.NODE_ENV !== "test") {
+        interval = setInterval(() => {
+            Object.values(state).forEach(sendToServer);
+        }, MARK_READ_INTERVAL);
+    }
 
     return {
         markMessageRead: (chat: ChatSummary, messageIndex: number, messageId: bigint): void => {

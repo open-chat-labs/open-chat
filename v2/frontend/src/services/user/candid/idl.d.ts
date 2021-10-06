@@ -51,12 +51,6 @@ import {
     JoinGroupResponse,
     SearchAllMessagesResponse,
     MessageMatch,
-    AddWebRtcSessionDetailsResponse,
-    WebRtcSessionDetailsEvent,
-    WebRtcSessionDetails,
-    WebRtcOffer,
-    WebRtcAnswer,
-    WebRtcEndpoint,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -110,12 +104,6 @@ export {
     JoinGroupResponse as ApiJoinGroupResponse,
     SearchAllMessagesResponse as ApiSearchAllMessagesResponse,
     MessageMatch as ApiMessageMatch,
-    AddWebRtcSessionDetailsResponse as ApiAddWebRtcSessionDetailsResponse,
-    WebRtcSessionDetailsEvent as ApiWebRtcSessionDetailsEvent,
-    WebRtcSessionDetails as ApiWebRtcSessionDetails,
-    WebRtcOffer as ApiWebRtcOffer,
-    WebRtcAnswer as ApiWebRtcAnswer,
-    WebRtcEndpoint as ApiWebRtcEndpoint,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

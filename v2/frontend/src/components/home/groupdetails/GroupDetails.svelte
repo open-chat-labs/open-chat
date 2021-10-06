@@ -10,6 +10,7 @@
     import type { EditGroupMachine, UpdatedAvatar } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
+    import type { GroupChatSummary } from "../../../domain/chat/chat";
 
     export let machine: ActorRefFrom<EditGroupMachine>;
 
@@ -43,6 +44,11 @@
         desc: descDirty ? groupDesc : $machine.context.chatSummary.description,
         avatar: avatarDirty ? groupAvatar : undefined,
     };
+
+    $: canEdit =
+        $machine.context.chatSummary.participants.find(
+            (p) => p.userId === $machine.context.user?.userId
+        )?.role === "admin";
 
     function close() {
         if (dirty && !confirmed) {
@@ -85,7 +91,7 @@
 
         <Input
             invalid={false}
-            disabled={saving}
+            disabled={saving || !canEdit}
             autofocus={false}
             bind:value={groupName}
             minlength={MIN_LENGTH}
@@ -94,7 +100,7 @@
             placeholder={$_("newGroupName")} />
 
         <TextArea
-            disabled={saving}
+            disabled={saving || !canEdit}
             bind:value={groupDesc}
             invalid={false}
             maxlength={MAX_DESC_LENGTH}
@@ -124,7 +130,8 @@
         </div>
     </div>
     <div class="cta">
-        <Button loading={saving} disabled={!dirty || saving} fill={true}>{$_("update")}</Button>
+        <Button loading={saving} disabled={!dirty || saving || !canEdit} fill={true}
+            >{$_("update")}</Button>
     </div>
 </form>
 

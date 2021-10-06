@@ -1,32 +1,5 @@
 import type { EventWrapper, Message } from "../chat/chat";
 
-export type WebRtcSessionDetails = WebRtcOffer | WebRtcAnswer;
-
-export type WebRtcOffer = {
-    kind: "offer";
-    fromUserId: string;
-    endpoint: WebRtcEndpoint;
-};
-
-export type WebRtcAnswer = {
-    kind: "answer";
-    offerId: string;
-    fromUserId: string;
-    endpoint: WebRtcEndpoint;
-};
-
-export type WebRtcEndpoint = {
-    id: string;
-    connectionString: string;
-    iceCandidates: string[];
-};
-
-export type WebRtcSessionDetailsEvent = {
-    sessionDetails: WebRtcSessionDetails;
-    timestamp: bigint;
-    chatId: string; //we need to add this so that we have a way to figure out where to send answers
-};
-
 export type WebRtcMessage =
     | RemoteUserStoppedTyping
     | RemoteUserTyping
@@ -102,5 +75,3 @@ export type RemoteUserSentMessage = {
     messageEvent: EventWrapper<Message>;
     userId: string;
 };
-
-export type AddWebRtcResponse = "success" | "blocked" | "user_not_found";

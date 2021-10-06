@@ -39,6 +39,9 @@ export function createCacheKey(chatId: string, index: number): string {
 }
 
 export function openMessageCache(): Database | undefined {
+    if (process.env.NODE_ENV === "test") {
+        return undefined;
+    }
     try {
         return openDB<ChatSchema>("openchat_db", 7, {
             upgrade(db, _oldVersion, _newVersion) {
@@ -94,7 +97,6 @@ export function setCachedChats(
                 chatSummaries: serialisable,
                 timestamp: data.timestamp,
                 blockedUsers: data.blockedUsers,
-                webRtcSessionDetails: [],
             },
             "cached_chats"
         );

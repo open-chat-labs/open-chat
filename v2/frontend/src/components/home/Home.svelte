@@ -28,6 +28,7 @@
     import type { UserSummary } from "../../domain/user/user";
     import { blockedUsers } from "../../stores/blockedUsers";
     import { stopMarkReadPoller } from "../../stores/markRead";
+    import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -47,6 +48,7 @@
 
     onMount(() => {
         // bootstrap anything that needs a service container here
+        rtcConnectionsManager.init($machine.context.user!.userId);
     });
 
     onDestroy(() => {
