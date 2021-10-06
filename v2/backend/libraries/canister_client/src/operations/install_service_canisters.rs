@@ -47,8 +47,8 @@ async fn install_service_canisters_impl(
     canister_ids: &CanisterIds,
     management_canister: &Canister<'_, ManagementCanister>,
 ) {
-    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex);
-    let user_canister_wasm = get_canister_wasm(CanisterName::User);
+    let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, false);
+    let user_canister_wasm = get_canister_wasm(CanisterName::User, true);
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
         sms_service_principals: Vec::new(),
@@ -58,15 +58,15 @@ async fn install_service_canisters_impl(
         test_mode: true,
     };
 
-    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex);
-    let group_canister_wasm = get_canister_wasm(CanisterName::Group);
+    let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, false);
+    let group_canister_wasm = get_canister_wasm(CanisterName::Group, true);
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm,
         notifications_canister_id: canister_ids.notifications,
     };
 
-    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications);
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, false);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
     };
