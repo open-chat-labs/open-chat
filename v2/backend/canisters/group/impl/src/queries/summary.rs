@@ -33,6 +33,6 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
         };
         Success(SuccessResult { summary })
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }

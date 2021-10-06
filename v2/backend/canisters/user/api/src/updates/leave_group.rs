@@ -13,5 +13,5 @@ pub enum Response {
     GroupNotFound,
     GroupNotPublic,
     InternalError(String),
-    NotInGroup,
+    CallerNotInGroup,
 }

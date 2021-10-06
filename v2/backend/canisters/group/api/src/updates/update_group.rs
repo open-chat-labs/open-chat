@@ -13,6 +13,7 @@ pub struct Args {
 pub enum Response {
     Success,
     NotAuthorized,
+    CallerNotInGroup,
     NameTooLong(FieldTooLongResult),
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),

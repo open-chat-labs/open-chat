@@ -113,7 +113,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             Err(NotAuthorized)
         }
     } else {
-        Err(NotInGroup)
+        Err(CallerNotInGroup)
     }
 }
 

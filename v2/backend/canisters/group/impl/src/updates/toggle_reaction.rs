@@ -37,6 +37,6 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             ToggleReactionResult::MessageNotFound => MessageNotFound,
         }
     } else {
-        ChatNotFound
+        CallerNotInGroup
     }
 }

@@ -27,7 +27,7 @@ impl From<GroupReplyContext> for ReplyContext {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotInGroup,
+    CallerNotInGroup,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

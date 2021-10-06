@@ -70,7 +70,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             timestamp: now,
         })
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }
 

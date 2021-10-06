@@ -20,7 +20,7 @@ type SendMessageResponse =
             event_index: EventIndex;
             timestamp: TimestampMillis;
         };
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type EditMessageArgs =
@@ -33,7 +33,7 @@ type EditMessageResponse =
     variant {
         Success;
         MessageNotFound;
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type DeleteMessagesArgs =
@@ -44,7 +44,7 @@ type DeleteMessagesArgs =
 type DeleteMessagesResponse =
     variant {
         Success;
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type ToggleReactionArgs =
@@ -59,7 +59,7 @@ type ToggleReactionResponse =
         Removed: EventIndex;
         InvalidReaction;
         MessageNotFound;
-        ChatNotFound;
+        CallerNotInGroup;
     };
 
 type MarkReadArgs =
@@ -72,7 +72,7 @@ type MarkReadResponse =
     variant {
         Success: MarkReadSuccessResult;
         SuccessNoChange: MarkReadSuccessResult;
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type MarkReadSuccessResult =
@@ -120,7 +120,7 @@ type AddParticipantsResponse =
         Success;
         PartialSuccess: AddParticipantsPartialSuccessResult;
         Failed: AddParticipantsFailedResult;
-        NotInGroup;
+        CallerNotInGroup;
         NotAuthorized;
     };
 
@@ -212,6 +212,7 @@ type UpdateGroupResponse =
     variant {
         Success;
         NotAuthorized;
+        CallerNotInGroup;
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         Unchanged;
@@ -227,7 +228,7 @@ type SummaryResponse =
     variant {
         Success: GroupChatSummary;
         SuccessNoUpdates;
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type SummaryUpdatesArgs =
@@ -244,7 +245,7 @@ type SummaryUpdatesResponse =
     variant {
         Success: SummaryUpdatesSuccess;
         SuccessNoUpdates;
-        NotInGroup;
+        CallerNotInGroup;
     };
 
 type EventsArgs =
@@ -276,7 +277,7 @@ type EventsSuccessResult =
 type EventsResponse =
     variant {
         Success: EventsSuccessResult;
-        ChatNotFound;
+        CallerNotInGroup;
     }; 
 
 type SearchMessagesArgs =
@@ -291,7 +292,7 @@ type SearchMessagesResponse =
         TermTooShort: nat8;
         TermTooLong: nat8;
         InvalidTerm;
-        NotInGroup;
+        CallerNotInGroup;
     }; 
 
 type SearchMessagesSuccessResult =

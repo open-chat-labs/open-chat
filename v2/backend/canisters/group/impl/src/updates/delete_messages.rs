@@ -24,6 +24,6 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         Success
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }

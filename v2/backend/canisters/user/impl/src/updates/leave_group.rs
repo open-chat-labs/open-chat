@@ -21,7 +21,7 @@ async fn leave_group(args: Args) -> Response {
                 RUNTIME_STATE.with(|state| commit(&args.chat_id, state.borrow_mut().as_mut().unwrap()));
                 Success
             }
-            c2c_leave_group::Response::NotInGroup => NotInGroup,
+            c2c_leave_group::Response::CallerNotInGroup => CallerNotInGroup,
         },
         Err(error) => InternalError(format!("{:?}", error)),
     }

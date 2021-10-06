@@ -14,7 +14,7 @@ pub enum Response {
     InvalidTerm,
     TermTooLong(u8),
     TermTooShort(u8),
-    NotInGroup,
+    CallerNotInGroup,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
