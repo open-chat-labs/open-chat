@@ -3,7 +3,6 @@ use candid::CandidType;
 use chat_events::DirectChatEvents;
 use serde::Deserialize;
 use std::collections::HashMap;
-use types::webrtc::SessionDetailsEvent;
 use types::{MessageId, TimestampMillis, UserId};
 use utils::range_set::RangeSet;
 
@@ -17,7 +16,6 @@ pub struct DirectChat {
     pub read_by_me_updated: TimestampMillis,
     pub read_by_them: RangeSet,
     pub read_by_them_updated: TimestampMillis,
-    pub webrtc_session_details: Option<SessionDetailsEvent>,
 
     // Because messages are sent P2P over WebRTC, there is a race condition where 'mark_read' can be
     // called before the message itself has been received by the IC. When that happens we add the
@@ -38,19 +36,15 @@ impl DirectChat {
             read_by_me_updated: now,
             read_by_them: RangeSet::new(),
             read_by_them_updated: now,
-            webrtc_session_details: None,
             message_ids_read_but_not_confirmed: HashMap::new(),
         }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        let webrtc_timestamp = self.webrtc_session_details.as_ref().map(|e| e.timestamp).unwrap_or(0);
-
         let timestamps = vec![
             self.events.last().timestamp,
             self.read_by_me_updated,
             self.read_by_them_updated,
-            webrtc_timestamp,
         ];
 
         timestamps.into_iter().max().unwrap()

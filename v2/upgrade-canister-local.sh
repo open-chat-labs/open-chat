@@ -12,6 +12,9 @@ VERSION=${3:-0.0.0}
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
+./compress-wasm.sh group_index_canister_impl
+./compress-wasm.sh user_canister_impl
+
 USER_INDEX_CANISTER_ID=$(dfx canister --no-wallet id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --no-wallet id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --no-wallet id notifications)

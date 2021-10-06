@@ -1,4 +1,5 @@
-use crate::{Data, RuntimeState, RUNTIME_STATE};
+use crate::lifecycle::init_state;
+use crate::Data;
 use ic_cdk_macros::init;
 use user_index_canister::init::Args;
 use utils::env::canister::CanisterEnv;
@@ -7,17 +8,16 @@ use utils::env::canister::CanisterEnv;
 fn init(args: Args) {
     ic_cdk::setup();
 
-    RUNTIME_STATE.with(|state| {
-        let env = Box::new(CanisterEnv::new(args.test_mode));
-        let data = Data::new(
-            args.service_principals,
-            args.sms_service_principals,
-            args.user_canister_wasm,
-            args.group_index_canister_id,
-            args.notifications_canister_id,
-        );
-        let runtime_state = RuntimeState::new(env, data);
+    let user_canister_wasm = args.user_canister_wasm.decompress();
 
-        *state.borrow_mut() = Some(runtime_state);
-    });
+    let env = Box::new(CanisterEnv::new(args.test_mode));
+    let data = Data::new(
+        args.service_principals,
+        args.sms_service_principals,
+        user_canister_wasm,
+        args.group_index_canister_id,
+        args.notifications_canister_id,
+    );
+
+    init_state(env, data);
 }

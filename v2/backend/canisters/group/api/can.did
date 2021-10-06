@@ -201,27 +201,6 @@ type PutChunkResponse =
         Full;
     };
 
-type AddWebRtcSessionDetailsArgs =
-    record {
-        session_details: vec WebRtcSessionDetails;
-    };
-
-type AddWebRtcSessionDetailsResponse =
-    variant {
-        Success;
-        Blocked;
-    }; 
-
-type RemoveWebRtcSessionDetailsArgs =
-    record {
-        ids: vec text;
-    };
-
-type RemoveWebRtcSessionDetailsResponse =
-    variant {
-        Success;
-    }; 
-
 type UpdateGroupArgs =
     record {
         name: text;
@@ -358,8 +337,6 @@ service: {
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     mark_read: (MarkReadArgs) -> (MarkReadResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
-    add_webrtc_session_details: (AddWebRtcSessionDetailsArgs) -> (AddWebRtcSessionDetailsResponse);
-    remove_webrtc_session_details: (RemoveWebRtcSessionDetailsArgs) -> (RemoveWebRtcSessionDetailsResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
