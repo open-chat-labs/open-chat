@@ -5,6 +5,7 @@
     "yourChats": "Your chats",
     "users": "Users",
     "lastOnline": "Last online {duration} ago",
+    "unresolvedReply": "Message content unavailable",
     "durationMins": "{duration} minutes",
     "durationHours": "{duration} hours",
     "durationDays": "{duration} days",

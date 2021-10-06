@@ -403,13 +403,15 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             ev.data.event.content.kind !== "text_content"
                                 ? ev.data.event.content
                                 : undefined,
-                        replyingTo: ev.data.event.repliesTo
-                            ? {
-                                  ...ev.data.event.repliesTo,
-                                  content: ev.data.event.content,
-                                  sender: get(userStore)[ev.data.event.sender],
-                              }
-                            : undefined,
+                        replyingTo:
+                            ev.data.event.repliesTo &&
+                            ev.data.event.repliesTo.kind === "rehydrated_reply_context"
+                                ? {
+                                      ...ev.data.event.repliesTo,
+                                      content: ev.data.event.content,
+                                      sender: get(userStore)[ev.data.event.sender],
+                                  }
+                                : undefined,
                     })),
                 },
                 UPDATE_MESSAGE: {

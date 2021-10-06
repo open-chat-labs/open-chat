@@ -31,6 +31,7 @@
     import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import { userStore } from "../../stores/user";
+    import UnresolvedReply from "./UnresolvedReply.svelte";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -172,7 +173,11 @@
             class:readByMe
             class:rtl={$rtlStore}>
             {#if msg.repliesTo !== undefined && !deleted}
-                <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
+                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                    <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
+                {:else}
+                    <UnresolvedReply on:goToMessage repliesTo={msg.repliesTo} />
+                {/if}
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />

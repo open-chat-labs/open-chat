@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { ReplyContext } from "../../domain/chat/chat";
+    import type { RehydratedReplyContext } from "../../domain/chat/chat";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import { _ } from "svelte-i18n";
@@ -14,7 +14,7 @@
 
     export let chatId: string;
     export let user: UserSummary | undefined;
-    export let repliesTo: ReplyContext;
+    export let repliesTo: RehydratedReplyContext;
 
     let debug = false;
 
@@ -28,7 +28,7 @@
         }
     }
 
-    function getUsernameFromReplyContext(replyContext: ReplyContext): string {
+    function getUsernameFromReplyContext(replyContext: RehydratedReplyContext): string {
         return $userStore[replyContext.senderId]?.username ?? $_("unknownUser");
     }
 </script>
