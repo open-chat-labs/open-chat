@@ -15,12 +15,12 @@ fn c2c_leave_group(_args: Args) -> Response {
 }
 
 fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller().into();
+    let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    match runtime_state.data.participants.remove(user_id) {
+    match runtime_state.data.participants.remove(caller) {
         true => {
-            let event = ParticipantLeft { user_id };
+            let event = ParticipantLeft { user_id: caller };
             runtime_state
                 .data
                 .events
@@ -30,6 +30,6 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
 
             Success(SuccessResult {})
         }
-        false => NotInGroup,
+        false => CallerNotInGroup,
     }
 }

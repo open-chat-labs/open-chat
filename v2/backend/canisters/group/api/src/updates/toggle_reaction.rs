@@ -14,5 +14,5 @@ pub enum Response {
     Removed(EventIndex),
     InvalidReaction,
     MessageNotFound,
-    ChatNotFound,
+    CallerNotInGroup,
 }

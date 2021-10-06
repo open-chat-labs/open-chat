@@ -23,7 +23,7 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     let caller = runtime_state.env.caller();
     let participant = match runtime_state.data.participants.get(caller) {
-        None => return NotInGroup,
+        None => return CallerNotInGroup,
         Some(p) => p,
     };
 

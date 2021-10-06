@@ -12,7 +12,7 @@ pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
     Failed(FailedResult),
-    NotInGroup,
+    CallerNotInGroup,
     NotAuthorized,
 }
 

@@ -169,7 +169,7 @@ type LeaveGroupResponse =
         Success;
         GroupNotFound;
         InternalError: text;
-        NotInGroup;
+        CallerNotInGroup;
     }; 
 
 type SetAvatarArgs =

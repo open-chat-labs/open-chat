@@ -53,6 +53,6 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             SuccessNoChange
         }
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }

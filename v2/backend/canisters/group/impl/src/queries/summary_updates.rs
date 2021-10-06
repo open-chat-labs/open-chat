@@ -41,7 +41,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             SuccessNoUpdates
         }
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }
 
