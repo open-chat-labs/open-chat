@@ -230,11 +230,13 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                <MenuItem on:click={reply}>
-                                    <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("reply")}</div>
-                                </MenuItem>
-                                {#if groupChat && !me}
+                                {#if confirmed}
+                                    <MenuItem on:click={reply}>
+                                        <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("reply")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if confirmed && groupChat && !me}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>
