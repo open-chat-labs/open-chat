@@ -302,10 +302,7 @@ export interface RemoveSmsMessagesArgs { 'up_to_sms_index' : bigint }
 export type RemoveSmsMessagesResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
+  'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
 export type ResendCodeArgs = {};

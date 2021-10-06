@@ -25,7 +25,12 @@ import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { UserSummary } from "../../domain/user/user";
 
 export interface IUserClient {
+    userId: string;
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
+    chatEventsByIndex(
+        eventIndexes: number[],
+        userId: string
+    ): Promise<EventsResponse<DirectChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         userId: string,

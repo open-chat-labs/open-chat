@@ -24,6 +24,7 @@ import {
     ChatSchema,
     getCachedChats,
     getCachedMessages,
+    getCachedMessagesByIndex,
     setCachedChats,
     setCachedMessages,
 } from "../../utils/caching";
@@ -38,7 +39,28 @@ import type { SearchAllMessagesResponse } from "../../domain/search/search";
  * indexDB for holding chat messages
  */
 export class CachingUserClient implements IUserClient {
+    public get userId(): string {
+        return this.client.userId;
+    }
+
     constructor(private db: Promise<IDBPDatabase<ChatSchema>>, private client: IUserClient) {}
+
+    async chatEventsByIndex(
+        eventIndexes: number[],
+        userId: string
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        const cachedMsgs = await getCachedMessagesByIndex<DirectChatEvent>(
+            this.db,
+            eventIndexes,
+            userId
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEventsByIndex(eventIndexes, userId)
+                .then(setCachedMessages(this.db, userId))
+        );
+    }
 
     async chatEvents(
         eventIndexRange: IndexRange,

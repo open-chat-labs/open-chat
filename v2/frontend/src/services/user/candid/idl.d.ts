@@ -2,7 +2,6 @@ import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
     ReplyContext,
-    ReplyContextArgs,
     DirectReplyContextArgs,
     ChatSummaryUpdates,
     GroupChatSummaryUpdates,
@@ -61,7 +60,6 @@ export {
     EditMessageResponse as ApiEditMessageResponse,
     Message as ApiMessage,
     ReplyContext as ApiReplyContext,
-    ReplyContextArgs as ApiReplyContextArgs,
     DirectReplyContextArgs as ApiDirectReplyContextArgs,
     ChatSummaryUpdates as ApiChatSummaryUpdates,
     GroupChatSummaryUpdates as ApiGroupChatSummaryUpdates,

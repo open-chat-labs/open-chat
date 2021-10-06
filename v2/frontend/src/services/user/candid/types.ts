@@ -93,7 +93,6 @@ export interface DirectMessageNotification {
   'message' : Message,
   'sender_name' : string,
 }
-export interface DirectReplyContextArgs { 'message_id' : MessageId }
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
@@ -350,14 +349,9 @@ export type PutChunkResponse = { 'ChunkAlreadyExists' : null } |
   { 'Success' : null } |
   { 'ChunkTooBig' : null };
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
+  'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export type ReplyContextArgs = { 'Private' : ReplyContext } |
-  { 'Direct' : DirectReplyContextArgs };
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
 export interface SearchAllMessagesArgs {
@@ -384,7 +378,7 @@ export interface SendMessageArgs {
   'recipient' : UserId,
   'sender_name' : string,
   'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContextArgs],
+  'replies_to' : [] | [ReplyContext],
 }
 export type SendMessageResponse = { 'BalanceExceeded' : null } |
   {

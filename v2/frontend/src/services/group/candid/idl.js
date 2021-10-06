@@ -126,10 +126,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
-    'content' : IDL.Opt(MessageContent),
-    'sender' : UserId,
-    'chat_id' : ChatId,
-    'message_id' : MessageId,
+    'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
   const MessageIndex = IDL.Nat32;
@@ -193,9 +190,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
-  const EventsByIndexArgs = IDL.Record({
-    'events' : IDL.Vec(GroupChatEventWrapper),
-  });
+  const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventIndex) });
   const EventsRangeArgs = IDL.Record({
     'to_index' : EventIndex,
     'from_index' : EventIndex,
@@ -215,12 +210,9 @@ export const idlFactory = ({ IDL }) => {
     'message_index_ranges' : IDL.Vec(MessageIndexRange),
     'message_ids' : IDL.Vec(MessageId),
   });
-  const MarkReadSuccessResult = IDL.Record({
-    'unrecognised_message_ids' : IDL.Vec(MessageId),
-  });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : MarkReadSuccessResult,
-    'Success' : MarkReadSuccessResult,
+    'SuccessNoChange' : IDL.Null,
+    'Success' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});
@@ -289,12 +281,12 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const ReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
+  const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContextArgs),
+    'replies_to' : IDL.Opt(GroupReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
     'Success' : IDL.Record({

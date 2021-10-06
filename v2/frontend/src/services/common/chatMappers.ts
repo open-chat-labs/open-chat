@@ -27,7 +27,6 @@ import type {
     ApiTextContent,
     ApiReplyContext,
     ApiUpdatedMessage,
-    ApiReplyContextArgs,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -148,11 +147,9 @@ function blobReference(candid: ApiBlobReference): BlobReference {
 
 function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
-        content: optional(candid.content, messageContent),
-        chatId: candid.chat_id.toString(),
-        senderId: candid.sender.toString(),
+        kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        messageId: candid.message_id,
+        chatIdIfOther: optional(candid.chat_id_if_other, (id) => id.toString()),
     };
 }
 
@@ -164,26 +161,13 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
 }
 
 export function apiReplyContextArgs(
-    privateReply: boolean,
-    domain: ReplyContext
-): ApiReplyContextArgs {
-    if (privateReply !== undefined) {
-        return {
-            Private: {
-                content: apiOptional((content) => apiMessageContent(content), domain.content),
-                sender: Principal.fromText(domain.senderId),
-                chat_id: Principal.fromText(domain.chatId),
-                message_id: domain.messageId,
-                event_index: domain.eventIndex,
-            },
-        };
-    } else {
-        return {
-            Direct: {
-                message_id: domain.messageId,
-            },
-        };
-    }
+    domain: ReplyContext,
+    replyingToChatId?: string
+): ApiReplyContext {
+    return {
+        chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
+        event_index: domain.eventIndex,
+    };
 }
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {

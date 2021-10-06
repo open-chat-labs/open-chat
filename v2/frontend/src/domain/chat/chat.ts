@@ -61,15 +61,24 @@ export interface FileContent extends DataContent {
     fileSize: number;
 }
 
-export type ReplyContext = {
-    content?: MessageContent;
+export type ReplyContext = RawReplyContext | RehydratedReplyContext;
+
+export type RawReplyContext = {
+    kind: "raw_reply_context";
+    eventIndex: number;
+    chatIdIfOther?: string;
+};
+
+export type RehydratedReplyContext = {
+    kind: "rehydrated_reply_context";
+    content: MessageContent;
     senderId: string;
     messageId: bigint;
     eventIndex: number;
     chatId: string;
 };
 
-export type EnhancedReplyContext = ReplyContext & {
+export type EnhancedReplyContext = RehydratedReplyContext & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };

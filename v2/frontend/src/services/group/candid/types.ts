@@ -114,7 +114,7 @@ export interface EventsArgs {
   'ascending' : boolean,
   'start_index' : EventIndex,
 }
-export interface EventsByIndexArgs { 'events' : Array<GroupChatEventWrapper> }
+export interface EventsByIndexArgs { 'events' : Array<EventIndex> }
 export interface EventsRangeArgs {
   'to_index' : EventIndex,
   'from_index' : EventIndex,
@@ -206,6 +206,7 @@ export interface GroupNameChanged {
   'new_name' : string,
   'previous_name' : string,
 }
+export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -227,8 +228,8 @@ export interface MarkReadArgs {
   'message_index_ranges' : Array<MessageIndexRange>,
   'message_ids' : Array<MessageId>,
 }
-export type MarkReadResponse = { 'SuccessNoChange' : MarkReadSuccessResult } |
-  { 'Success' : MarkReadSuccessResult } |
+export type MarkReadResponse = { 'SuccessNoChange' : null } |
+  { 'Success' : null } |
   { 'NotInGroup' : null };
 export interface MarkReadSuccessResult {
   'unrecognised_message_ids' : Array<MessageId>,
@@ -347,13 +348,9 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'CannotRemoveSelf' : null } |
   { 'InternalError' : string };
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
+  'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export interface ReplyContextArgs { 'message_id' : MessageId }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
 export interface SearchMessagesArgs {
@@ -370,7 +367,7 @@ export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,
   'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContextArgs],
+  'replies_to' : [] | [GroupReplyContext],
 }
 export type SendMessageResponse = {
     'Success' : {

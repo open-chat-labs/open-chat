@@ -87,6 +87,7 @@
 
     function createReplyContext(): EnhancedReplyContext {
         return {
+            kind: "rehydrated_reply_context",
             senderId,
             chatId: chatId,
             eventIndex: eventIndex,

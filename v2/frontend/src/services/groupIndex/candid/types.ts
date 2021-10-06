@@ -267,10 +267,7 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
+  'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |

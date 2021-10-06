@@ -70,8 +70,8 @@ type MarkReadArgs =
 
 type MarkReadResponse =
     variant {
-        Success: MarkReadSuccessResult;
-        SuccessNoChange: MarkReadSuccessResult;
+        Success;
+        SuccessNoChange;
         NotInGroup;
     };
 
@@ -263,7 +263,7 @@ type EventsRangeArgs =
 
 type EventsByIndexArgs =
     record {
-        events: vec GroupChatEventWrapper;
+        events: vec EventIndex;
     };
 
 type EventsSuccessResult =

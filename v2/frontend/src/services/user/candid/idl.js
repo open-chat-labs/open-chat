@@ -113,10 +113,7 @@ export const idlFactory = ({ IDL }) => {
     'event_index' : EventIndex,
   });
   const ReplyContext = IDL.Record({
-    'content' : IDL.Opt(MessageContent),
-    'sender' : UserId,
-    'chat_id' : ChatId,
-    'message_id' : MessageId,
+    'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
   const MessageIndex = IDL.Nat32;
@@ -255,17 +252,12 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const DirectReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
-  const ReplyContextArgs = IDL.Variant({
-    'Private' : ReplyContext,
-    'Direct' : DirectReplyContextArgs,
-  });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'recipient' : UserId,
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContextArgs),
+    'replies_to' : IDL.Opt(ReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
     'BalanceExceeded' : IDL.Null,

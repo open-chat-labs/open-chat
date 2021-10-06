@@ -16,7 +16,12 @@ import type {
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
-import { ChatSchema, getCachedMessages, setCachedMessages } from "../../utils/caching";
+import {
+    ChatSchema,
+    getCachedMessages,
+    getCachedMessagesByIndex,
+    setCachedMessages,
+} from "../../utils/caching";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -28,6 +33,21 @@ export class CachingGroupClient implements IGroupClient {
         private chatId: string,
         private client: IGroupClient
     ) {}
+
+    async chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
+        const cachedMsgs = await getCachedMessagesByIndex<GroupChatEvent>(
+            this.db,
+            eventIndexes,
+            this.chatId
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEventsByIndex(eventIndexes)
+                .then(setCachedMessages(this.db, this.chatId))
+        );
+    }
+
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,

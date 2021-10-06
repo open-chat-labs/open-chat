@@ -53,7 +53,7 @@ const MAX_RECURSION = 10;
 
 export class UserClient extends CandidService implements IUserClient {
     private userService: UserService;
-    private userId: string;
+    userId: string;
 
     constructor(identity: Identity, userId: string) {
         super(identity);
@@ -83,6 +83,19 @@ export class UserClient extends CandidService implements IUserClient {
                 }, group.avatar?.blobData),
             }),
             createGroupResponse
+        );
+    }
+
+    chatEventsByIndex(
+        eventIndexes: number[],
+        userId: string
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return this.handleResponse(
+            this.userService.events_by_index({
+                user_id: Principal.fromText(userId),
+                events: eventIndexes,
+            }),
+            getEventsResponse
         );
     }
 
@@ -213,8 +226,7 @@ export class UserClient extends CandidService implements IUserClient {
                     sender_name: sender.username,
                     message_id: message.messageId,
                     replies_to: apiOptional(
-                        (replyContext) =>
-                            apiReplyContextArgs(replyingToChatId !== undefined, replyContext),
+                        (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
                         message.repliesTo
                     ),
                 };
