@@ -70,15 +70,9 @@ type MarkReadArgs =
 
 type MarkReadResponse =
     variant {
-<<<<<<< HEAD
         Success;
         SuccessNoChange;
         NotInGroup;
-=======
-        Success: MarkReadSuccessResult;
-        SuccessNoChange: MarkReadSuccessResult;
-        CallerNotInGroup;
->>>>>>> master
     };
 
 type MarkReadSuccessResult =
