@@ -57,8 +57,11 @@ pub fn build_management_canister(agent: &Agent) -> Canister<ManagementCanister> 
         .unwrap()
 }
 
-pub fn get_canister_wasm(canister_name: CanisterName) -> CanisterWasm {
-    let file_name = canister_name.to_string() + "_canister_impl-opt.wasm";
+pub fn get_canister_wasm(canister_name: CanisterName, compressed: bool) -> CanisterWasm {
+    let mut file_name = canister_name.to_string() + "_canister_impl-opt.wasm";
+    if compressed {
+        file_name += ".xz";
+    }
     let mut file_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     file_path.push("local-bin");
@@ -70,6 +73,7 @@ pub fn get_canister_wasm(canister_name: CanisterName) -> CanisterWasm {
 
     CanisterWasm {
         module: bytes,
+        compressed,
         version: Version::new(0, 0, 0),
     }
 }

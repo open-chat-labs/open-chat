@@ -10,6 +10,9 @@ IDENTITY=$1
 ./generate-wasm.sh user_canister_impl
 ./generate-wasm.sh user_index_canister_impl
 
+./compress-wasm.sh group_index_canister_impl
+./compress-wasm.sh user_canister_impl
+
 dfx --identity $IDENTITY canister --no-wallet create user_index
 dfx --identity $IDENTITY canister --no-wallet create group_index
 dfx --identity $IDENTITY canister --no-wallet create notifications
