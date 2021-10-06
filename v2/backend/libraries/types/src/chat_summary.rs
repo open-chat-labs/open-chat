@@ -1,4 +1,3 @@
-use crate::webrtc::SessionDetailsEvent;
 use crate::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, MessageIndexRange, Participant, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::Deserialize;
@@ -70,7 +69,6 @@ pub struct DirectChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub read_by_them: Option<Vec<MessageIndexRange>>,
-    pub webrtc_session_details: Option<SessionDetailsEvent>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -85,5 +83,4 @@ pub struct GroupChatSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
-    pub webrtc_session_details: Vec<SessionDetailsEvent>,
 }

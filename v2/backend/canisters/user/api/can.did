@@ -196,28 +196,6 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
-type AddWebRtcSessionDetailsArgs =
-    record {
-        session_details: WebRtcSessionDetails;
-    };
-
-type AddWebRtcSessionDetailsResponse =
-    variant {
-        Success;
-        Blocked;
-        UserNotFound;
-    }; 
-
-type RemoveWebRtcSessionDetailsArgs =
-    record {
-        ids: vec text;
-    };
-
-type RemoveWebRtcSessionDetailsResponse =
-    variant {
-        Success;
-    }; 
-
 type GroupChatUpdatesSince =
     record {
         chat_id: ChatId;
@@ -356,8 +334,6 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    add_webrtc_session_details: (AddWebRtcSessionDetailsArgs) -> (AddWebRtcSessionDetailsResponse);
-    remove_webrtc_session_details: (RemoveWebRtcSessionDetailsArgs) -> (RemoveWebRtcSessionDetailsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;

@@ -1,4 +1,3 @@
-pub mod add_webrtc_session_details;
 pub mod block_user;
 pub mod c2c_delete_messages;
 pub mod c2c_edit_message;
@@ -14,7 +13,6 @@ pub mod join_group;
 pub mod leave_group;
 pub mod mark_read;
 pub mod put_chunk;
-pub mod remove_webrtc_session_details;
 pub mod send_message;
 pub mod set_avatar;
 pub mod toggle_reaction;
