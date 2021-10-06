@@ -5,12 +5,12 @@ type SendMessageArgs =
         message_id: MessageId;
         content: MessageContent;
         sender_name: text;
-        replies_to: opt ReplyContextArgs;
+        replies_to: opt GroupReplyContext;
     };
 
-type ReplyContextArgs =
+type GroupReplyContext =
     record {
-        message_id: MessageId;
+        event_index: EventIndex;
     };
 
 type SendMessageResponse =

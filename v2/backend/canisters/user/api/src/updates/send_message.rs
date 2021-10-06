@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::*;
+use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -8,19 +8,7 @@ pub struct Args {
     pub recipient: UserId,
     pub sender_name: String,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextArgs>,
-}
-
-#[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Deserialize, Debug)]
-pub enum ReplyContextArgs {
-    Direct(DirectReplyContextArgs),
-    Private(ReplyContext),
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct DirectReplyContextArgs {
-    pub message_id: MessageId,
+    pub replies_to: Option<ReplyContext>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

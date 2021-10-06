@@ -1,18 +1,27 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{EventIndex, MessageContent, MessageId, MessageIndex, TimestampMillis};
+use types::{EventIndex, MessageContent, MessageId, MessageIndex, ReplyContext, TimestampMillis};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContent,
     pub sender_name: String,
-    pub replies_to: Option<ReplyContextArgs>,
+    pub replies_to: Option<GroupReplyContext>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-pub struct ReplyContextArgs {
-    pub message_id: MessageId,
+pub struct GroupReplyContext {
+    pub event_index: EventIndex,
+}
+
+impl From<GroupReplyContext> for ReplyContext {
+    fn from(r: GroupReplyContext) -> Self {
+        ReplyContext {
+            chat_id_if_other: None,
+            event_index: r.event_index,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug)]
