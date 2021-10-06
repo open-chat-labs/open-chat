@@ -18,9 +18,9 @@ export const idlFactory = ({ IDL }) => {
   const AddParticipantsResponse = IDL.Variant({
     'Failed' : AddParticipantsFailedResult,
     'PartialSuccess' : AddParticipantsPartialSuccessResult,
+    'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
@@ -35,8 +35,8 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({ 'message_ids' : IDL.Vec(MessageId) });
   const DeleteMessagesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
@@ -91,8 +91,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
@@ -187,7 +187,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
   const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventIndex) });
@@ -276,10 +276,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : SearchMessagesSuccessResult,
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
@@ -289,12 +289,12 @@ export const idlFactory = ({ IDL }) => {
     'replies_to' : IDL.Opt(GroupReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
-    'NotInGroup' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
   const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
@@ -324,9 +324,9 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const SummaryResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : GroupChatSummary,
     'SuccessNoUpdates' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
   const GroupChatSummaryUpdates = IDL.Record({
@@ -345,9 +345,9 @@ export const idlFactory = ({ IDL }) => {
     'updates' : GroupChatSummaryUpdates,
   });
   const SummaryUpdatesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : SummaryUpdatesSuccess,
     'SuccessNoUpdates' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
@@ -355,7 +355,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ToggleReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
-    'ChatNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'Added' : EventIndex,
     'Removed' : EventIndex,
@@ -385,6 +385,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdateGroupResponse = IDL.Variant({
     'DescriptionTooLong' : FieldTooLongResult,
     'Unchanged' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,

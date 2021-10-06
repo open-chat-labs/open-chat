@@ -17,9 +17,9 @@ export type AddParticipantsResponse = {
     'Failed' : AddParticipantsFailedResult
   } |
   { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
+  { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'NotInGroup' : null };
+  { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -66,8 +66,8 @@ export interface ConfirmationCodeSms {
 }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
-export type DeleteMessagesResponse = { 'Success' : null } |
-  { 'NotInGroup' : null };
+export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : null };
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -105,8 +105,8 @@ export interface EditMessageArgs {
   'message_id' : MessageId,
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
-  { 'Success' : null } |
-  { 'NotInGroup' : null };
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'max_messages' : number,
@@ -119,7 +119,7 @@ export interface EventsRangeArgs {
   'to_index' : EventIndex,
   'from_index' : EventIndex,
 }
-export type EventsResponse = { 'ChatNotFound' : null } |
+export type EventsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'affected_events' : Array<GroupChatEventWrapper>,
@@ -358,10 +358,10 @@ export interface SearchMessagesArgs {
   'search_term' : string,
 }
 export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : SearchMessagesSuccessResult } |
   { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null } |
-  { 'NotInGroup' : null };
+  { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
   'content' : MessageContent,
@@ -369,14 +369,14 @@ export interface SendMessageArgs {
   'message_id' : MessageId,
   'replies_to' : [] | [GroupReplyContext],
 }
-export type SendMessageResponse = {
+export type SendMessageResponse = { 'CallerNotInGroup' : null } |
+  {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
-  } |
-  { 'NotInGroup' : null };
+  };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -387,13 +387,13 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export type SummaryArgs = {};
-export type SummaryResponse = { 'Success' : GroupChatSummary } |
-  { 'SuccessNoUpdates' : null } |
-  { 'NotInGroup' : null };
+export type SummaryResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : GroupChatSummary } |
+  { 'SuccessNoUpdates' : null };
 export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
-export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null } |
-  { 'NotInGroup' : null };
+export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : SummaryUpdatesSuccess } |
+  { 'SuccessNoUpdates' : null };
 export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
@@ -403,7 +403,7 @@ export interface ToggleReactionArgs {
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
@@ -422,6 +422,7 @@ export type UpdateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult
   } |
   { 'Unchanged' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'NameTooLong' : FieldTooLongResult } |

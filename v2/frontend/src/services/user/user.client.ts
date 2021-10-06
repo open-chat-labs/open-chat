@@ -117,7 +117,7 @@ export class UserClient extends CandidService implements IUserClient {
             }),
             getEventsResponse
         );
-        if (resp === "chat_not_found") {
+        if (resp === "events_failed") {
             return resp;
         }
 

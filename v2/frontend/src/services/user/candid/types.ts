@@ -233,9 +233,9 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
 export type LeaveGroupResponse = { 'GroupNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'NotInGroup' : null };
+  { 'InternalError' : string };
 export interface MarkReadArgs {
   'message_index_ranges' : Array<MessageIndexRange>,
   'user_id' : UserId,

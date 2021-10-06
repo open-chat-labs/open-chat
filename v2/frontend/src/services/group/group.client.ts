@@ -79,7 +79,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             getEventsResponse
         );
-        if (resp === "chat_not_found") {
+        if (resp === "events_failed") {
             return resp;
         }
 

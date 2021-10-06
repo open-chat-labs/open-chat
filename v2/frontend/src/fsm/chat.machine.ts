@@ -215,9 +215,9 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                     : { events: [], affectedEvents: [] },
             ]);
             return {
-                events: eventsResponse === "chat_not_found" ? [] : eventsResponse.events,
+                events: eventsResponse === "events_failed" ? [] : eventsResponse.events,
                 affectedEvents:
-                    eventsResponse === "chat_not_found" ? [] : eventsResponse.affectedEvents,
+                    eventsResponse === "events_failed" ? [] : eventsResponse.affectedEvents,
             };
         },
         pruneLocalReactions: (_ctx, _ev) => (callback) => {

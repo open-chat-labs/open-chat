@@ -209,7 +209,7 @@ export function setCachedMessages<T extends ChatEvent>(
     chatId: string
 ): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
     return async (resp: EventsResponse<T>) => {
-        if (resp === "chat_not_found") return Promise.resolve(resp);
+        if (resp === "events_failed") return Promise.resolve(resp);
         const tx = (await db).transaction("chat_messages", "readwrite");
         const store = tx.objectStore("chat_messages");
         resp.events.forEach(async (event) => {

@@ -170,9 +170,9 @@ export const idlFactory = ({ IDL }) => {
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const LeaveGroupResponse = IDL.Variant({
     'GroupNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
-    'NotInGroup' : IDL.Null,
   });
   const MessageIndexRange = IDL.Record({
     'to' : MessageIndex,

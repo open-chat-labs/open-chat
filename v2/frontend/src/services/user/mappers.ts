@@ -147,7 +147,7 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     if ("Success" in candid) {
         return "success";
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
     if ("InternalError" in candid) {
@@ -298,7 +298,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
         };
     }
     if ("ChatNotFound" in candid) {
-        return "chat_not_found";
+        return "events_failed";
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

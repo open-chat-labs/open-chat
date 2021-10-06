@@ -106,7 +106,7 @@ export type Reaction = {
     userIds: Set<string>;
 };
 
-export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
 export type DirectChatEvent =
     | Message
@@ -516,6 +516,7 @@ export type UpdateGroupResponse =
     | "desc_too_long"
     | "unchanged"
     | "name_taken"
+    | "not_in_group"
     | "internal_error";
 
 export type ToggleReactionResponse =
@@ -523,6 +524,7 @@ export type ToggleReactionResponse =
     | "removed"
     | "invalid"
     | "message_not_found"
+    | "not_in_group"
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

@@ -53,7 +53,6 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import { message } from "./common/chatMappers";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -241,7 +240,7 @@ export class ServiceContainer {
         chatId: string,
         resp: EventsResponse<T>
     ): [string, EventWrapper<Message>[]] {
-        if (resp !== "chat_not_found") {
+        if (resp !== "events_failed") {
             return [
                 chatId,
                 resp.events.reduce((msgs, ev) => {
@@ -331,7 +330,7 @@ export class ServiceContainer {
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (resp === "chat_not_found") {
+        if (resp === "events_failed") {
             return resp;
         }
 
