@@ -212,13 +212,10 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'message_ids' : IDL.Vec(MessageId),
   });
-  const MarkReadSuccessResult = IDL.Record({
-    'unrecognised_message_ids' : IDL.Vec(MessageId),
-  });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : MarkReadSuccessResult,
+    'SuccessNoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
-    'Success' : MarkReadSuccessResult,
+    'Success' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});
   const MetricsResponse = IDL.Record({
@@ -290,10 +287,10 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const ReplyContextArgs = IDL.Record({
-    'sender' : UserId,
-    'chat_id_if_other' : IDL.Opt(ChatId),
-    'message_id' : MessageId,
+  const DirectReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
+  const ReplyContextArgs = IDL.Variant({
+    'Private' : ReplyContext,
+    'Direct' : DirectReplyContextArgs,
   });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,

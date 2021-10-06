@@ -27,6 +27,7 @@ import type {
     ApiTextContent,
     ApiReplyContext,
     ApiUpdatedMessage,
+    ApiReplyContextArgs,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -160,6 +161,29 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
         reaction,
         userIds: new Set(userIds.map((u) => u.toString())),
     }));
+}
+
+export function apiReplyContextArgs(
+    privateReply: boolean,
+    domain: ReplyContext
+): ApiReplyContextArgs {
+    if (privateReply !== undefined) {
+        return {
+            Private: {
+                content: apiOptional((content) => apiMessageContent(content), domain.content),
+                sender: Principal.fromText(domain.senderId),
+                chat_id: Principal.fromText(domain.chatId),
+                message_id: domain.messageId,
+                event_index: domain.eventIndex,
+            },
+        };
+    } else {
+        return {
+            Direct: {
+                message_id: domain.messageId,
+            },
+        };
+    }
 }
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {

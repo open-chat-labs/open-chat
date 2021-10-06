@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, UserService } from "./candid/idl";
+import { ApiSendMessageArgs, idlFactory, UserService } from "./candid/idl";
 import type {
     EventsResponse,
     UpdateArgs,
@@ -43,7 +43,7 @@ import type { IUserClient } from "./user.client.interface";
 import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
-import { apiMessageContent, apiOptional } from "../common/chatMappers";
+import { apiMessageContent, apiOptional, apiReplyContextArgs } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
@@ -207,20 +207,14 @@ export class UserClient extends CandidService implements IUserClient {
         return DataClient.create(this.identity, this.userId)
             .uploadData(message.content)
             .then(() => {
-                const req = {
+                const req: ApiSendMessageArgs = {
                     content: apiMessageContent(message.content),
                     recipient: Principal.fromText(recipientId),
                     sender_name: sender.username,
                     message_id: message.messageId,
                     replies_to: apiOptional(
-                        (replyContext) => ({
-                            sender: Principal.fromText(sender.userId),
-                            chat_id_if_other: apiOptional(
-                                (id) => Principal.fromText(id),
-                                replyingToChatId
-                            ),
-                            message_id: replyContext.messageId,
-                        }),
+                        (replyContext) =>
+                            apiReplyContextArgs(replyingToChatId !== undefined, replyContext),
                         message.repliesTo
                     ),
                 };

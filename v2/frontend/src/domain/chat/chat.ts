@@ -498,7 +498,7 @@ export type JoinGroupResponse =
     | "already_in_group"
     | "internal_error";
 
-export type MarkReadResponse = bigint[];
+export type MarkReadResponse = "success" | "failure";
 
 export type UpdateGroupResponse =
     | "success"

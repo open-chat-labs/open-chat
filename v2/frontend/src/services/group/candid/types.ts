@@ -362,11 +362,7 @@ export interface ReplyContext {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface ReplyContextArgs {
-  'sender' : UserId,
-  'chat_id_if_other' : [] | [ChatId],
-  'message_id' : MessageId,
-}
+export interface ReplyContextArgs { 'message_id' : MessageId }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
 export interface SearchMessagesArgs {

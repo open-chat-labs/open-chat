@@ -310,11 +310,6 @@ export interface ReplyContext {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface ReplyContextArgs {
-  'sender' : UserId,
-  'chat_id_if_other' : [] | [ChatId],
-  'message_id' : MessageId,
-}
 export type ResendCodeArgs = {};
 export type ResendCodeResponse = { 'AlreadyClaimed' : null } |
   { 'Success' : null } |

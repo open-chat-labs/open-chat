@@ -160,11 +160,8 @@ export class GroupClient extends CandidService implements IGroupClient {
                         message_id: message.messageId,
                         sender_name: senderName,
                         replies_to: apiOptional(
-                            // todo - this needs sorting out
                             (replyContext) => ({
                                 message_id: replyContext.messageId,
-                                chat_id_if_other: [],
-                                sender: Principal.fromText(replyContext.senderId),
                             }),
                             message.repliesTo
                         ),

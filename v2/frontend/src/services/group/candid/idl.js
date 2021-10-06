@@ -320,11 +320,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidTerm' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
-  const ReplyContextArgs = IDL.Record({
-    'sender' : UserId,
-    'chat_id_if_other' : IDL.Opt(ChatId),
-    'message_id' : MessageId,
-  });
+  const ReplyContextArgs = IDL.Record({ 'message_id' : MessageId });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender_name' : IDL.Text,

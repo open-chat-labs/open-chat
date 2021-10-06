@@ -100,6 +100,7 @@ export interface DirectMessageNotification {
   'message' : Message,
   'sender_name' : string,
 }
+export interface DirectReplyContextArgs { 'message_id' : MessageId }
 export interface EditMessageArgs {
   'content' : MessageContent,
   'user_id' : UserId,
@@ -249,12 +250,9 @@ export interface MarkReadArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
 }
-export type MarkReadResponse = { 'SuccessNoChange' : MarkReadSuccessResult } |
+export type MarkReadResponse = { 'SuccessNoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : MarkReadSuccessResult };
-export interface MarkReadSuccessResult {
-  'unrecognised_message_ids' : Array<MessageId>,
-}
+  { 'Success' : null };
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -368,11 +366,8 @@ export interface ReplyContext {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface ReplyContextArgs {
-  'sender' : UserId,
-  'chat_id_if_other' : [] | [ChatId],
-  'message_id' : MessageId,
-}
+export type ReplyContextArgs = { 'Private' : ReplyContext } |
+  { 'Direct' : DirectReplyContextArgs };
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
 export interface SearchAllMessagesArgs {
