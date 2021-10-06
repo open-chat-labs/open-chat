@@ -87,22 +87,16 @@ pub struct MessageInternal {
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     pub last_updated: Option<TimestampMillis>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum ReplyContextInternal {
-    SameChat(MessageId),
-    OtherChat(Box<ReplyContext>),
 }
 
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub message_id: MessageId,
     pub content: MessageContent,
-    pub replies_to: Option<ReplyContextInternal>,
+    pub replies_to: Option<ReplyContext>,
     pub now: TimestampMillis,
 }
 
@@ -355,7 +349,7 @@ impl ChatEvents {
             message_id: message.message_id,
             sender: message.sender,
             content: message.content.clone(),
-            replies_to: message.replies_to.as_ref().map(|i| self.hydrate_reply_context(i)).flatten(),
+            replies_to: message.replies_to.clone(),
             reactions: message
                 .reactions
                 .iter()
@@ -545,28 +539,6 @@ impl ChatEvents {
             Some(index)
         } else {
             None
-        }
-    }
-
-    fn hydrate_reply_context(&self, reply_context: &ReplyContextInternal) -> Option<ReplyContext> {
-        match reply_context {
-            ReplyContextInternal::SameChat(m) => {
-                let event_index = *self.message_id_map.get(m)?;
-                let event = self.get_internal(event_index)?;
-
-                if let ChatEventInternal::Message(message) = &event.event {
-                    Some(ReplyContext {
-                        chat_id: self.chat_id,
-                        sender: message.sender,
-                        event_index,
-                        message_id: *m,
-                        content: message.content.clone(),
-                    })
-                } else {
-                    None
-                }
-            }
-            ReplyContextInternal::OtherChat(r) => Some(*r.clone()),
         }
     }
 }

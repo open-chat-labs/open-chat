@@ -1,5 +1,5 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use chat_events::{PushMessageArgs, ReplyContextInternal};
+use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageIndex};
@@ -27,10 +27,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         message_id: args.message_id,
         sender: my_user_id,
         content: args.content.clone(),
-        replies_to: args.replies_to.as_ref().map(|r| match r {
-            ReplyContextArgs::Direct(d) => ReplyContextInternal::SameChat(d.message_id),
-            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(Box::new(p.clone())),
-        }),
+        replies_to: args.replies_to.clone(),
         now,
     };
 

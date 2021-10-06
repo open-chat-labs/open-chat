@@ -1,11 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
-use chat_events::{PushMessageArgs, ReplyContextInternal};
+use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use types::{CanisterId, DirectMessageNotification, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
-use user_canister::send_message::ReplyContextArgs;
 use utils::rand::get_random_item;
 
 #[update]
@@ -62,10 +61,7 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
         message_id: args.message_id,
         sender: sender_user_id,
         content: args.content,
-        replies_to: args.replies_to.map(|r| match r {
-            ReplyContextArgs::Direct(d) => ReplyContextInternal::SameChat(d.message_id),
-            ReplyContextArgs::Private(p) => ReplyContextInternal::OtherChat(Box::new(p)),
-        }),
+        replies_to: args.replies_to,
         now,
     };
 

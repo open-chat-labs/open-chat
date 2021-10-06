@@ -248,11 +248,8 @@ type GroupNameChanged =
 
 type ReplyContext =
     record {
-        chat_id: ChatId;
+        chat_id_if_other: opt ChatId;
         event_index: EventIndex;
-        message_id: MessageId;
-        sender: UserId;
-        content: opt MessageContent;
     };
 
 type ImageContent =

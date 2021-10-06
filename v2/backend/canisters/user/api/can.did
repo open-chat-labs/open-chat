@@ -6,18 +6,7 @@ type SendMessageArgs =
         sender_name: text;
         message_id: MessageId;
         content: MessageContent;
-        replies_to: opt ReplyContextArgs;
-    };
-
-type ReplyContextArgs =
-    variant {
-        Direct: DirectReplyContextArgs;
-        Private: ReplyContext;
-    };
-
-type DirectReplyContextArgs =
-    record {
-        message_id: MessageId;
+        replies_to: opt ReplyContext;
     };
 
 type SendMessageResponse =
