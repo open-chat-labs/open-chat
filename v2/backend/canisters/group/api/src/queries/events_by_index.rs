@@ -10,7 +10,7 @@ pub struct Args {
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotInGroup,
+    CallerNotInGroup,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

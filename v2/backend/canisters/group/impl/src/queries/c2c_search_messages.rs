@@ -9,7 +9,7 @@ fn c2c_search_messages(args: Args) -> Response {
 
 fn c2c_search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let participant = match runtime_state.data.participants.get(args.user_id.into()) {
-        None => return NotInGroup,
+        None => return UserNotInGroup,
         Some(p) => p,
     };
 

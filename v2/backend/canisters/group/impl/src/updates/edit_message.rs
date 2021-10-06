@@ -34,6 +34,6 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             EditMessageResult::NotFound => MessageNotFound,
         }
     } else {
-        NotInGroup
+        CallerNotInGroup
     }
 }
