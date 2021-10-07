@@ -18,7 +18,7 @@ fn update_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState)
     if args.group_canister_wasm.version <= runtime_state.data.group_canister_wasm.version {
         VersionNotHigher
     } else {
-        runtime_state.data.group_canister_wasm = args.group_canister_wasm;
+        runtime_state.data.group_canister_wasm = args.group_canister_wasm.decompress();
 
         for chat_id in runtime_state
             .data
