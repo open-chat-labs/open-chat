@@ -56,11 +56,11 @@
     let username = sender?.username;
     let userStatus = getUserStatus($userStore, senderId);
     let metaData = messageMetaData(msg.content);
-    let fill = fillMessage(msg);
     let showEmojiPicker = false;
     let debug = false;
 
     $: deleted = msg.content.kind === "deleted_content";
+    $: fill = fillMessage(msg);
 
     afterUpdate(() => {
         // todo - keep an eye on this

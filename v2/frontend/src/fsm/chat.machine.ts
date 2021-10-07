@@ -28,6 +28,7 @@ import {
     replaceLocal,
     userIdsFromChatSummary,
     replaceMessageContent,
+    serialiseMessageForRtc,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -376,7 +377,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         kind: "remote_user_sent_message",
                                         chatType: ctx.chatSummary.kind,
                                         chatId: ctx.chatSummary.chatId,
-                                        messageEvent: ev.data.messageEvent,
+                                        messageEvent: serialiseMessageForRtc(ev.data.messageEvent),
                                         userId: ev.data.userId,
                                     }
                                 );

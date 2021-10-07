@@ -6,6 +6,7 @@
     "users": "Users",
     "lastOnline": "Last online {duration} ago",
     "unresolvedReply": "Message content unavailable",
+    "placeholderContent": "Please wait, you message will load shortly",
     "durationMins": "{duration} minutes",
     "durationHours": "{duration} hours",
     "durationDays": "{duration} days",

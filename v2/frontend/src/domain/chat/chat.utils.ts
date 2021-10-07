@@ -52,6 +52,8 @@ export function getContentAsText(content: MessageContent): string {
         text = "cycles_content";
     } else if (content.kind === "deleted_content") {
         text = "deleted message";
+    } else if (content.kind === "placeholder_content") {
+        text = "placeholder content";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -202,7 +204,9 @@ export function getParticipantsString(
 }
 
 function addCaption(caption: string | undefined, content: MessageContent): MessageContent {
-    return content.kind !== "text_content" && content.kind !== "deleted_content"
+    return content.kind !== "text_content" &&
+        content.kind !== "deleted_content" &&
+        content.kind !== "placeholder_content"
         ? { ...content, caption }
         : content;
 }
@@ -712,4 +716,19 @@ export function replaceMessageContent(
         }
         return e;
     });
+}
+
+export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
+    if (blobbyContentTypes.includes(messageEvent.event.content.kind)) {
+        return {
+            ...messageEvent,
+            event: {
+                ...messageEvent.event,
+                content: {
+                    kind: "placeholder_content",
+                },
+            },
+        };
+    }
+    return messageEvent;
 }

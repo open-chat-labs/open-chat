@@ -8,9 +8,14 @@ export type MessageContent =
     | VideoContent
     | AudioContent
     | DeletedContent
+    | PlaceholderContent
     | CyclesContent;
 
 export type IndexRange = [number, number];
+
+export interface PlaceholderContent {
+    kind: "placeholder_content";
+}
 
 export interface CyclesContent {
     kind: "cycles_content";

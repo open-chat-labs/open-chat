@@ -8,6 +8,7 @@
 
     import FileContent from "./FileContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
+    import PlaceholderContent from "./PlaceholderContent.svelte";
     import type { MessageContent } from "../../domain/chat/chat";
     import { getContentAsText } from "../../domain/chat/chat.utils";
 
@@ -44,6 +45,8 @@
     <DeletedContent />
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
+{:else if content.kind === "placeholder_content"}
+    <PlaceholderContent />
 {/if}
 
 <style type="text/scss">

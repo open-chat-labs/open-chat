@@ -192,6 +192,9 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
 
         case "deleted_content":
             return { Deleted: null };
+
+        case "placeholder_content":
+            return { Deleted: null };
     }
 }
 
