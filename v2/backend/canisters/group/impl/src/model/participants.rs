@@ -2,8 +2,7 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, Timestamped, UserId};
-use utils::range_set::RangeSet;
+use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
@@ -18,7 +17,6 @@ impl Participants {
             user_id: creator_user_id,
             date_added: now,
             role: Role::Admin,
-            read_by_me: Timestamped::new(RangeSet::new(), now),
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: false,
@@ -48,7 +46,6 @@ impl Participants {
                         user_id,
                         date_added: now,
                         role: Role::Participant,
-                        read_by_me: Timestamped::new(RangeSet::new(), now),
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: false,
@@ -140,7 +137,6 @@ pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub read_by_me: Timestamped<RangeSet>,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
     pub notifications_muted: bool,

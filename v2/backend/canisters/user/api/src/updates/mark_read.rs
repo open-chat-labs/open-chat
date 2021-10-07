@@ -1,17 +1,19 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageId, MessageIndexRange, UserId};
+use types::{ChatId, MessageIndexRange};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: UserId,
-    pub message_index_ranges: Vec<MessageIndexRange>,
-    pub message_ids: Vec<MessageId>,
+    pub messages_read: Vec<ChatMessagesRead>,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct ChatMessagesRead {
+    pub chat_id: ChatId,
+    pub message_ranges: Vec<MessageIndexRange>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    SuccessNoChange,
-    ChatNotFound,
 }

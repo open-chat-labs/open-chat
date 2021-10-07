@@ -6,7 +6,6 @@ pub mod c2c_toggle_mute_notifications;
 pub mod delete_messages;
 pub mod edit_message;
 pub mod make_admin;
-pub mod mark_read;
 pub mod put_chunk;
 pub mod remove_admin;
 pub mod remove_participant;

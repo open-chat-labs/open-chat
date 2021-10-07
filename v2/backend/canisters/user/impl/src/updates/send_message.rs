@@ -37,20 +37,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             .direct_chats
             .push_message(true, args.recipient, None, push_message_args);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
-            for is_me in users_to_mark_as_read.into_iter() {
-                if is_me {
-                    if chat.read_by_me.value.insert(message.message_index.into()) {
-                        chat.read_by_me.timestamp = now;
-                    }
-                } else if chat.read_by_them.value.insert(message.message_index.into()) {
-                    chat.read_by_them.timestamp = now;
-                }
-            }
-        }
-    }
-
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
     ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args));
 

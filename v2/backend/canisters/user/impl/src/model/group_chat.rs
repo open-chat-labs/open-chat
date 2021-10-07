@@ -1,11 +1,14 @@
 use candid::CandidType;
 use serde::Deserialize;
+use std::cmp::max;
 use types::{ChatId, GroupChatSummaryUpdates, TimestampMillis, Timestamped};
+use utils::range_set::{convert_to_message_index_ranges, RangeSet};
 
 #[derive(CandidType, Deserialize)]
 pub struct GroupChat {
     pub chat_id: ChatId,
     pub date_joined: TimestampMillis,
+    pub read_by_me: Timestamped<RangeSet>,
     pub notifications_muted: Timestamped<bool>,
 }
 
@@ -14,12 +17,13 @@ impl GroupChat {
         GroupChat {
             chat_id,
             date_joined: now,
+            read_by_me: Timestamped::new(RangeSet::new(), now),
             notifications_muted: Timestamped::new(false, now),
         }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        self.notifications_muted.timestamp
+        max(self.read_by_me.timestamp, self.notifications_muted.timestamp)
     }
 }
 
@@ -35,7 +39,7 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             participants_removed: vec![],
             latest_message: None,
             latest_event_index: None,
-            read_by_me: None,
+            read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),
             notifications_muted: Some(s.notifications_muted.value),
         }
     }

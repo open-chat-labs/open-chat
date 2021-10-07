@@ -71,36 +71,22 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
             .direct_chats
             .push_message(false, sender_user_id, Some(args.sender_message_index), push_message_args);
 
-    let mut notifications_muted = false;
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
-            for is_me in users_to_mark_as_read.into_iter() {
-                if is_me {
-                    if chat.read_by_me.value.insert(message.message_index.into()) {
-                        chat.read_by_me.timestamp = now;
-                    }
-                } else if chat.read_by_them.value.insert(message.message_index.into()) {
-                    chat.read_by_them.timestamp = now;
-                }
+        if !chat.notifications_muted.value {
+            let random = runtime_state.env.random_u32() as usize;
+
+            if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
+                let notification = DirectMessageNotification {
+                    sender: sender_user_id,
+                    sender_name: args.sender_name,
+                    message,
+                };
+
+                let recipient = runtime_state.env.canister_id().into();
+
+                let push_notification_future = push_notification(*canister_id, recipient, notification);
+                ic_cdk::block_on(push_notification_future);
             }
-        }
-        notifications_muted = chat.notifications_muted.value;
-    }
-
-    if !notifications_muted {
-        let random = runtime_state.env.random_u32() as usize;
-
-        if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
-            let notification = DirectMessageNotification {
-                sender: sender_user_id,
-                sender_name: args.sender_name,
-                message,
-            };
-
-            let recipient = runtime_state.env.canister_id().into();
-
-            let push_notification_future = push_notification(*canister_id, recipient, notification);
-            ic_cdk::block_on(push_notification_future);
         }
     }
 

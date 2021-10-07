@@ -3,7 +3,7 @@ use candid::CandidType;
 use range_set::RangeSet as _RangeSet;
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut, RangeInclusive};
-use types::{MessageIndex, MessageIndexRange};
+use types::MessageIndexRange;
 
 type RangeSetInner = _RangeSet<[RangeInclusive<u32>; 2]>;
 
@@ -42,18 +42,9 @@ impl DerefMut for RangeSet {
     }
 }
 
-pub fn insert_ranges(
-    range_set: &mut RangeSet,
-    message_ranges: &[MessageIndexRange],
-    min_message_index: MessageIndex,
-    max_message_index: MessageIndex,
-) -> RangeSet {
+pub fn insert_ranges(range_set: &mut RangeSet, message_ranges: &[MessageIndexRange]) -> RangeSet {
     let mut added: RangeSet = RangeSet::new();
-    for range in message_ranges
-        .iter()
-        .filter(|r| min_message_index <= r.from && r.from <= r.to && r.to <= max_message_index)
-        .map(|r| r.from.into()..=r.to.into())
-    {
+    for range in message_ranges.iter().map(|r| r.from.into()..=r.to.into()) {
         added.insert_range(range.clone());
         if let Some(intersection) = range_set.insert_range(range) {
             for r in intersection.into_smallvec().into_iter() {

@@ -30,7 +30,6 @@ pub struct SummaryUpdates {
     pub participants_removed: Vec<UserId>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
-    pub read_by_me: Option<Vec<MessageIndexRange>>,
 }
 
 impl From<SummaryUpdates> for GroupChatSummaryUpdates {
@@ -45,7 +44,7 @@ impl From<SummaryUpdates> for GroupChatSummaryUpdates {
             participants_removed: s.participants_removed,
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
-            read_by_me: s.read_by_me,
+            read_by_me: None,
             notifications_muted: None,
         }
     }

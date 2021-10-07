@@ -30,7 +30,6 @@ pub struct Summary {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
-    pub read_by_me: Vec<MessageIndexRange>,
 }
 
 impl From<Summary> for GroupChatSummary {
@@ -48,7 +47,7 @@ impl From<Summary> for GroupChatSummary {
             latest_message: s.latest_message,
             latest_event_index: s.latest_event_index,
             joined: s.joined,
-            read_by_me: s.read_by_me,
+            read_by_me: vec![],
             notifications_muted: false,
         }
     }

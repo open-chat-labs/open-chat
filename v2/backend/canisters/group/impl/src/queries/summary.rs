@@ -1,9 +1,7 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use group_canister::summary::{Response::*, *};
 use ic_cdk_macros::query;
-use std::cmp::max;
 use types::Avatar;
-use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
 fn summary(_: Args) -> Response {
@@ -14,11 +12,10 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let latest_event = runtime_state.data.events.last();
-        let last_updated = max(latest_event.timestamp, participant.read_by_me.timestamp);
 
         let summary = Summary {
             chat_id: runtime_state.env.canister_id().into(),
-            last_updated,
+            last_updated: latest_event.timestamp,
             name: runtime_state.data.name.clone(),
             description: runtime_state.data.description.clone(),
             avatar_id: Avatar::id(&runtime_state.data.avatar),
@@ -29,7 +26,6 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
             latest_message: runtime_state.data.events.latest_message(),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
-            read_by_me: convert_to_message_index_ranges(participant.read_by_me.value.clone()),
         };
         Success(SuccessResult { summary })
     } else {

@@ -62,24 +62,6 @@ type ToggleReactionResponse =
         CallerNotInGroup;
     };
 
-type MarkReadArgs =
-    record {
-        message_index_ranges: vec MessageIndexRange;
-        message_ids: vec MessageId;
-    };
-
-type MarkReadResponse =
-    variant {
-        Success;
-        SuccessNoChange;
-        NotInGroup;
-    };
-
-type MarkReadSuccessResult =
-    record {
-        unrecognised_message_ids: vec MessageId;
-    };
-
 type BlockUserArgs =
     record {
         user_id: UserId;
@@ -336,7 +318,6 @@ service: {
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
-    mark_read: (MarkReadArgs) -> (MarkReadResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
