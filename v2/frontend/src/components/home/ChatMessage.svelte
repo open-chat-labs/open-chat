@@ -31,6 +31,7 @@
     import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import { userStore } from "../../stores/user";
+    import UnresolvedReply from "./UnresolvedReply.svelte";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -87,6 +88,7 @@
 
     function createReplyContext(): EnhancedReplyContext {
         return {
+            kind: "rehydrated_reply_context",
             senderId,
             chatId: chatId,
             eventIndex: eventIndex,
@@ -171,7 +173,11 @@
             class:readByMe
             class:rtl={$rtlStore}>
             {#if msg.repliesTo !== undefined && !deleted}
-                <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
+                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                    <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
+                {:else}
+                    <UnresolvedReply on:goToMessage repliesTo={msg.repliesTo} />
+                {/if}
             {/if}
 
             <ChatMessageContent {me} content={msg.content} />
@@ -229,11 +235,13 @@
                         </div>
                         <div slot="menu">
                             <Menu>
-                                <MenuItem on:click={reply}>
-                                    <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("reply")}</div>
-                                </MenuItem>
-                                {#if groupChat && !me}
+                                {#if confirmed}
+                                    <MenuItem on:click={reply}>
+                                        <Reply size={"1.2em"} color={"#aaa"} slot="icon" />
+                                        <div slot="text">{$_("reply")}</div>
+                                    </MenuItem>
+                                {/if}
+                                {#if confirmed && groupChat && !me}
                                     <MenuItem on:click={replyPrivately}>
                                         <ReplyOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("replyPrivately")}</div>

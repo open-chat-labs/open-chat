@@ -144,6 +144,22 @@ async function aggregateEvents<T extends ChatEvent>(
     return [numMessages >= MAX_MSGS, ascending ? events : events.reverse()];
 }
 
+export async function getCachedMessagesByIndex<T extends ChatEvent>(
+    db: Database,
+    eventIndexes: number[],
+    chatId: string
+): Promise<EventsResponse<T> | undefined> {
+    const events: EventWrapper<T>[] = [];
+    eventIndexes.forEach(async (idx) => {
+        const key = createCacheKey(chatId, idx);
+        const evt = await (await db).get("chat_messages", key);
+        if (evt !== undefined) {
+            events.push(evt as EventWrapper<T>);
+        }
+    });
+    return events.length === eventIndexes.length ? { events, affectedEvents: [] } : undefined;
+}
+
 export async function getCachedMessages<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
@@ -193,7 +209,7 @@ export function setCachedMessages<T extends ChatEvent>(
     chatId: string
 ): (resp: EventsResponse<T>) => Promise<EventsResponse<T>> {
     return async (resp: EventsResponse<T>) => {
-        if (resp === "chat_not_found") return Promise.resolve(resp);
+        if (resp === "events_failed") return Promise.resolve(resp);
         const tx = (await db).transaction("chat_messages", "readwrite");
         const store = tx.objectStore("chat_messages");
         resp.events.forEach(async (event) => {

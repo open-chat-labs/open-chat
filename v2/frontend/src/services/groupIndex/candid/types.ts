@@ -63,7 +63,6 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'webrtc_session_details' : [] | [WebRtcSessionDetailsEvent],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -128,7 +127,6 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
@@ -269,16 +267,8 @@ export interface ParticipantsRemoved {
   'removed_by' : UserId,
 }
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
-export interface ReplyContextArgs {
-  'sender' : UserId,
   'chat_id_if_other' : [] | [ChatId],
-  'message_id' : MessageId,
+  'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
@@ -389,23 +379,6 @@ export interface VideoContent {
   'thumbnail_data' : string,
   'caption' : [] | [string],
   'width' : number,
-}
-export interface WebRtcAnswer {
-  'endpoint' : WebRtcEndpoint,
-  'user_id' : UserId,
-  'offer_id' : string,
-}
-export interface WebRtcEndpoint {
-  'id' : string,
-  'connection_string' : string,
-  'ice_candidates' : Array<string>,
-}
-export interface WebRtcOffer { 'endpoint' : WebRtcEndpoint, 'user_id' : UserId }
-export type WebRtcSessionDetails = { 'Answer' : WebRtcAnswer } |
-  { 'Offer' : WebRtcOffer };
-export interface WebRtcSessionDetailsEvent {
-  'session_details' : WebRtcSessionDetails,
-  'timestamp' : TimestampMillis,
 }
 export interface _SERVICE {
   'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,

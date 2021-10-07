@@ -18,33 +18,8 @@ export const idlFactory = ({ IDL }) => {
   const AddParticipantsResponse = IDL.Variant({
     'Failed' : AddParticipantsFailedResult,
     'PartialSuccess' : AddParticipantsPartialSuccessResult,
+    'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
-  });
-  const WebRtcEndpoint = IDL.Record({
-    'id' : IDL.Text,
-    'connection_string' : IDL.Text,
-    'ice_candidates' : IDL.Vec(IDL.Text),
-  });
-  const WebRtcAnswer = IDL.Record({
-    'endpoint' : WebRtcEndpoint,
-    'user_id' : UserId,
-    'offer_id' : IDL.Text,
-  });
-  const WebRtcOffer = IDL.Record({
-    'endpoint' : WebRtcEndpoint,
-    'user_id' : UserId,
-  });
-  const WebRtcSessionDetails = IDL.Variant({
-    'Answer' : WebRtcAnswer,
-    'Offer' : WebRtcOffer,
-  });
-  const AddWebRtcSessionDetailsArgs = IDL.Record({
-    'session_details' : IDL.Vec(WebRtcSessionDetails),
-  });
-  const AddWebRtcSessionDetailsResponse = IDL.Variant({
-    'Blocked' : IDL.Null,
     'Success' : IDL.Null,
   });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -60,8 +35,8 @@ export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const DeleteMessagesArgs = IDL.Record({ 'message_ids' : IDL.Vec(MessageId) });
   const DeleteMessagesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const BlobReference = IDL.Record({
     'blob_id' : IDL.Nat,
@@ -116,8 +91,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
@@ -151,10 +126,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
-    'content' : IDL.Opt(MessageContent),
-    'sender' : UserId,
-    'chat_id' : ChatId,
-    'message_id' : MessageId,
+    'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
   const MessageIndex = IDL.Nat32;
@@ -215,12 +187,10 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
   });
-  const EventsByIndexArgs = IDL.Record({
-    'events' : IDL.Vec(GroupChatEventWrapper),
-  });
+  const EventsByIndexArgs = IDL.Record({ 'events' : IDL.Vec(EventIndex) });
   const EventsRangeArgs = IDL.Record({
     'to_index' : EventIndex,
     'from_index' : EventIndex,
@@ -240,12 +210,9 @@ export const idlFactory = ({ IDL }) => {
     'message_index_ranges' : IDL.Vec(MessageIndexRange),
     'message_ids' : IDL.Vec(MessageId),
   });
-  const MarkReadSuccessResult = IDL.Record({
-    'unrecognised_message_ids' : IDL.Vec(MessageId),
-  });
   const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : MarkReadSuccessResult,
-    'Success' : MarkReadSuccessResult,
+    'SuccessNoChange' : IDL.Null,
+    'Success' : IDL.Null,
     'NotInGroup' : IDL.Null,
   });
   const MetricsArgs = IDL.Record({});
@@ -293,12 +260,6 @@ export const idlFactory = ({ IDL }) => {
     'CannotRemoveSelf' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const RemoveWebRtcSessionDetailsArgs = IDL.Record({
-    'ids' : IDL.Vec(IDL.Text),
-  });
-  const RemoveWebRtcSessionDetailsResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -315,29 +276,25 @@ export const idlFactory = ({ IDL }) => {
   });
   const SearchMessagesResponse = IDL.Variant({
     'TermTooShort' : IDL.Nat8,
+    'CallerNotInGroup' : IDL.Null,
     'Success' : SearchMessagesSuccessResult,
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
-  const ReplyContextArgs = IDL.Record({
-    'sender' : UserId,
-    'chat_id_if_other' : IDL.Opt(ChatId),
-    'message_id' : MessageId,
-  });
+  const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageArgs = IDL.Record({
     'content' : MessageContent,
     'sender_name' : IDL.Text,
     'message_id' : MessageId,
-    'replies_to' : IDL.Opt(ReplyContextArgs),
+    'replies_to' : IDL.Opt(GroupReplyContext),
   });
   const SendMessageResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }),
-    'NotInGroup' : IDL.Null,
   });
   const SummaryArgs = IDL.Record({});
   const Role = IDL.Variant({ 'Participant' : IDL.Null, 'Admin' : IDL.Null });
@@ -367,17 +324,12 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const SummaryResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : GroupChatSummary,
     'SuccessNoUpdates' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
-  const WebRtcSessionDetailsEvent = IDL.Record({
-    'session_details' : WebRtcSessionDetails,
-    'timestamp' : TimestampMillis,
-  });
   const GroupChatSummaryUpdates = IDL.Record({
-    'webrtc_session_details' : IDL.Vec(WebRtcSessionDetailsEvent),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'participants_removed' : IDL.Vec(UserId),
     'name' : IDL.Opt(IDL.Text),
@@ -393,9 +345,9 @@ export const idlFactory = ({ IDL }) => {
     'updates' : GroupChatSummaryUpdates,
   });
   const SummaryUpdatesResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
     'Success' : SummaryUpdatesSuccess,
     'SuccessNoUpdates' : IDL.Null,
-    'NotInGroup' : IDL.Null,
   });
   const ToggleReactionArgs = IDL.Record({
     'message_id' : MessageId,
@@ -403,7 +355,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ToggleReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
-    'ChatNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'Added' : EventIndex,
     'Removed' : EventIndex,
@@ -433,6 +385,7 @@ export const idlFactory = ({ IDL }) => {
   const UpdateGroupResponse = IDL.Variant({
     'DescriptionTooLong' : FieldTooLongResult,
     'Unchanged' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,
@@ -443,11 +396,6 @@ export const idlFactory = ({ IDL }) => {
     'add_participants' : IDL.Func(
         [AddParticipantsArgs],
         [AddParticipantsResponse],
-        [],
-      ),
-    'add_webrtc_session_details' : IDL.Func(
-        [AddWebRtcSessionDetailsArgs],
-        [AddWebRtcSessionDetailsResponse],
         [],
       ),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
@@ -472,11 +420,6 @@ export const idlFactory = ({ IDL }) => {
     'remove_participant' : IDL.Func(
         [RemoveParticipantArgs],
         [RemoveParticipantResponse],
-        [],
-      ),
-    'remove_webrtc_session_details' : IDL.Func(
-        [RemoveWebRtcSessionDetailsArgs],
-        [RemoveWebRtcSessionDetailsResponse],
         [],
       ),
     'search_messages' : IDL.Func(

@@ -61,15 +61,24 @@ export interface FileContent extends DataContent {
     fileSize: number;
 }
 
-export type ReplyContext = {
-    content?: MessageContent;
+export type ReplyContext = RawReplyContext | RehydratedReplyContext;
+
+export type RawReplyContext = {
+    kind: "raw_reply_context";
+    eventIndex: number;
+    chatIdIfOther?: string;
+};
+
+export type RehydratedReplyContext = {
+    kind: "rehydrated_reply_context";
+    content: MessageContent;
     senderId: string;
     messageId: bigint;
     eventIndex: number;
     chatId: string;
 };
 
-export type EnhancedReplyContext = ReplyContext & {
+export type EnhancedReplyContext = RehydratedReplyContext & {
     sender?: PartialUserSummary;
     content: MessageContent;
 };
@@ -97,7 +106,7 @@ export type Reaction = {
     userIds: Set<string>;
 };
 
-export type EventsResponse<T extends ChatEvent> = "chat_not_found" | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
 export type DirectChatEvent =
     | Message
@@ -498,7 +507,7 @@ export type JoinGroupResponse =
     | "already_in_group"
     | "internal_error";
 
-export type MarkReadResponse = bigint[];
+export type MarkReadResponse = "success" | "failure";
 
 export type UpdateGroupResponse =
     | "success"
@@ -507,6 +516,7 @@ export type UpdateGroupResponse =
     | "desc_too_long"
     | "unchanged"
     | "name_taken"
+    | "not_in_group"
     | "internal_error";
 
 export type ToggleReactionResponse =
@@ -514,6 +524,7 @@ export type ToggleReactionResponse =
     | "removed"
     | "invalid"
     | "message_not_found"
+    | "not_in_group"
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";

@@ -112,7 +112,9 @@ export class ServiceContainer {
         }
         if (chat.kind === "direct_chat") {
             const replyingToChatId =
-                msg.repliesTo && chat.chatId !== msg.repliesTo.chatId
+                msg.repliesTo &&
+                msg.repliesTo.kind === "rehydrated_reply_context" &&
+                chat.chatId !== msg.repliesTo.chatId
                     ? msg.repliesTo.chatId
                     : undefined;
             return this.sendDirectMessage(chat.them, user, msg, replyingToChatId);
@@ -168,7 +170,9 @@ export class ServiceContainer {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.rehydrateMediaData(
+        return this.rehydrateEventResponse(
+            "direct",
+            theirUserId,
             this.userClient.chatEvents(eventIndexRange, theirUserId, startIndex, ascending)
         );
     }
@@ -179,7 +183,9 @@ export class ServiceContainer {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.rehydrateMediaData(
+        return this.rehydrateEventResponse(
+            "group",
+            chatId,
             this.getGroupClient(chatId).chatEvents(eventIndexRange, startIndex, ascending)
         );
     }
@@ -210,15 +216,126 @@ export class ServiceContainer {
         });
     }
 
-    private async rehydrateMediaData<T extends ChatEvent>(
+    private findMissingEventIndexesByChat<T extends ChatEvent>(
+        defaultChatId: string,
+        events: EventWrapper<T>[]
+    ): Record<string, number[]> {
+        return events.reduce<Record<string, number[]>>((result, ev) => {
+            if (
+                ev.event.kind === "message" &&
+                ev.event.repliesTo &&
+                ev.event.repliesTo.kind === "raw_reply_context"
+            ) {
+                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
+                if (result[chatId] === undefined) {
+                    result[chatId] = [];
+                }
+                result[chatId].push(ev.event.repliesTo.eventIndex);
+            }
+            return result;
+        }, {});
+    }
+
+    private messagesFromEventsResponse<T extends ChatEvent>(
+        chatId: string,
+        resp: EventsResponse<T>
+    ): [string, EventWrapper<Message>[]] {
+        if (resp !== "events_failed") {
+            return [
+                chatId,
+                resp.events.reduce((msgs, ev) => {
+                    if (ev.event.kind === "message") {
+                        msgs.push(ev as EventWrapper<Message>);
+                    }
+                    return msgs;
+                }, [] as EventWrapper<Message>[]),
+            ];
+        } else {
+            return [chatId, []];
+        }
+    }
+
+    private async resolveMissingIndexes<T extends ChatEvent>(
+        chatType: "direct" | "group",
+        currentChatId: string,
+        events: EventWrapper<T>[]
+    ): Promise<Record<string, EventWrapper<Message>[]>> {
+        const missing = this.findMissingEventIndexesByChat(currentChatId, events);
+        const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
+
+        // this looks horrendous but remember these things will *usually* come straight from the cache
+        Object.entries(missing).forEach(([chatId, idxs]) => {
+            if (chatId === currentChatId && chatType === "direct") {
+                missingMessages.push(
+                    this.userClient
+                        .chatEventsByIndex(idxs, currentChatId)
+                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
+                );
+            } else {
+                // it must be a group chat
+                const client = GroupClient.create(chatId, this.identity, this.db);
+                missingMessages.push(
+                    client
+                        .chatEventsByIndex(idxs)
+                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
+                );
+            }
+        });
+
+        const result = await Promise.all(missingMessages);
+        return result.reduce<Record<string, EventWrapper<Message>[]>>((res, [chatId, messages]) => {
+            if (!res[chatId]) {
+                res[chatId] = [];
+            }
+            res[chatId] = res[chatId].concat(messages);
+            return res;
+        }, {});
+    }
+
+    private rehydrateMissingReplies<T extends ChatEvent>(
+        defaultChatId: string,
+        events: EventWrapper<T>[],
+        missing: Record<string, EventWrapper<Message>[]>
+    ): EventWrapper<T>[] {
+        return events.map((ev) => {
+            if (
+                ev.event.kind === "message" &&
+                ev.event.repliesTo &&
+                ev.event.repliesTo.kind === "raw_reply_context"
+            ) {
+                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
+                const messageEvents = missing[chatId];
+                const idx = ev.event.repliesTo.eventIndex;
+                const msg = messageEvents.find((me) => me.index === idx)?.event;
+                if (msg) {
+                    ev.event.repliesTo = {
+                        kind: "rehydrated_reply_context",
+                        content: msg.content,
+                        senderId: msg.sender,
+                        messageId: msg.messageId,
+                        eventIndex: idx,
+                        chatId,
+                    };
+                }
+                return ev;
+            }
+            return ev;
+        });
+    }
+
+    private async rehydrateEventResponse<T extends ChatEvent>(
+        chatType: "direct" | "group",
+        currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
 
-        if (resp === "chat_not_found") {
+        if (resp === "events_failed") {
             return resp;
         }
 
+        const missing = await this.resolveMissingIndexes(chatType, currentChatId, resp.events);
+        resp.events = this.rehydrateMissingReplies(currentChatId, resp.events, missing);
         resp.events = this.reydrateEventList(resp.events);
         resp.affectedEvents = this.reydrateEventList(resp.affectedEvents);
         return resp;

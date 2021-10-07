@@ -147,11 +147,9 @@ function blobReference(candid: ApiBlobReference): BlobReference {
 
 function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
-        content: optional(candid.content, messageContent),
-        chatId: candid.chat_id.toString(),
-        senderId: candid.sender.toString(),
+        kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        messageId: candid.message_id,
+        chatIdIfOther: optional(candid.chat_id_if_other, (id) => id.toString()),
     };
 }
 
@@ -160,6 +158,16 @@ function reactions(candid: [string, Principal[]][]): Reaction[] {
         reaction,
         userIds: new Set(userIds.map((u) => u.toString())),
     }));
+}
+
+export function apiReplyContextArgs(
+    domain: ReplyContext,
+    replyingToChatId?: string
+): ApiReplyContext {
+    return {
+        chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
+        event_index: domain.eventIndex,
+    };
 }
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {

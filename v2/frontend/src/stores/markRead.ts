@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import type { ChatSummary, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { rollbar } from "../utils/logging";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 2000;
@@ -62,14 +63,10 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
                         chatMessages.pendingMessages.indexRanges,
                         chatMessages.pendingMessages.ids
                     )
-                    .then((ids) => {
-                        if (ids.length > 0) {
-                            console.log("marking: reprocessing messageIds: ", ids);
+                    .then((resp) => {
+                        if (resp === "failure") {
+                            rollbar.warn("marking direct chat messages as read failed");
                         }
-                        chatMessages.capturedMessages = {
-                            indexRanges: chatMessages.capturedMessages.indexRanges,
-                            ids: new Set<bigint>([...chatMessages.capturedMessages.ids, ...ids]),
-                        };
                     });
             } else if (chatMessages.chat.kind === "group_chat") {
                 return api
@@ -78,11 +75,10 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
                         chatMessages.pendingMessages.indexRanges,
                         chatMessages.pendingMessages.ids
                     )
-                    .then((ids) => {
-                        chatMessages.capturedMessages = {
-                            indexRanges: chatMessages.capturedMessages.indexRanges,
-                            ids: new Set<bigint>([...chatMessages.capturedMessages.ids, ...ids]),
-                        };
+                    .then((resp) => {
+                        if (resp === "failure") {
+                            rollbar.warn("marking group chat messages as read failed");
+                        }
                     });
             }
         }

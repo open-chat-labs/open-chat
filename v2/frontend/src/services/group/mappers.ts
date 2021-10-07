@@ -40,7 +40,7 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     if ("Success" in candid) {
         return "success";
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -61,6 +61,9 @@ export function toggleReactionResponse(candid: ApiToggleReactionResponse): Toggl
     }
     if ("MessageNotFound" in candid) {
         return "message_not_found";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "not_in_group";
     }
     throw new UnsupportedValueError("Unexpected ApiToggleReactionResponse type received", candid);
 }
@@ -87,21 +90,24 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
     if ("InternalError" in candid) {
         return "internal_error";
     }
+    if ("CallerNotInGroup" in candid) {
+        return "not_in_group";
+    }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
 }
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
-        return candid.Success.unrecognised_message_ids;
+        return "success";
     }
     if ("SuccessNoChange" in candid) {
-        return candid.SuccessNoChange.unrecognised_message_ids;
+        return "success";
     }
     if ("ChatNotFound" in candid) {
-        return [];
+        return "failure";
     }
     if ("NotInGroup" in candid) {
-        return [];
+        return "failure";
     }
     throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }
@@ -138,7 +144,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     if ("MessageNotFound" in candid) {
         return "message_not_found";
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
@@ -153,7 +159,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             eventIndex: candid.Success.event_index,
         };
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return { kind: "not_in_group" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
@@ -239,7 +245,7 @@ export function addParticipantsResponse(
             kind: "add_participants_success",
         };
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return {
             kind: "add_participants_not_in_group",
         };
@@ -256,7 +262,10 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Gro
         };
     }
     if ("ChatNotFound" in candid) {
-        return "chat_not_found";
+        return "events_failed";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }

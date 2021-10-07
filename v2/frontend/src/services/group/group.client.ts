@@ -54,6 +54,15 @@ export class GroupClient extends CandidService implements IGroupClient {
             : new GroupClient(identity, chatId);
     }
 
+    chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>> {
+        return this.handleResponse(
+            this.groupService.events_by_index({
+                events: eventIndexes,
+            }),
+            getEventsResponse
+        );
+    }
+
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
@@ -70,7 +79,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             getEventsResponse
         );
-        if (resp === "chat_not_found") {
+        if (resp === "events_failed") {
             return resp;
         }
 
@@ -160,11 +169,8 @@ export class GroupClient extends CandidService implements IGroupClient {
                         message_id: message.messageId,
                         sender_name: senderName,
                         replies_to: apiOptional(
-                            // todo - this needs sorting out
                             (replyContext) => ({
-                                message_id: replyContext.messageId,
-                                chat_id_if_other: [],
-                                sender: Principal.fromText(replyContext.senderId),
+                                event_index: replyContext.eventIndex,
                             }),
                             message.repliesTo
                         ),

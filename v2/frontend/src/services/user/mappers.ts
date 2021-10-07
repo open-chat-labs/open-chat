@@ -132,13 +132,13 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
 
 export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
     if ("Success" in candid) {
-        return candid.Success.unrecognised_message_ids;
+        return "success";
     }
     if ("SuccessNoChange" in candid) {
-        return candid.SuccessNoChange.unrecognised_message_ids;
+        return "success";
     }
     if ("ChatNotFound" in candid) {
-        return [];
+        return "failure";
     }
     throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }
@@ -147,7 +147,7 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
     if ("Success" in candid) {
         return "success";
     }
-    if ("NotInGroup" in candid) {
+    if ("CallerNotInGroup" in candid) {
         return "not_in_group";
     }
     if ("InternalError" in candid) {
@@ -298,7 +298,7 @@ export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<Dir
         };
     }
     if ("ChatNotFound" in candid) {
-        return "chat_not_found";
+        return "events_failed";
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

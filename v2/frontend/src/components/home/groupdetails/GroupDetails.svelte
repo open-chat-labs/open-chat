@@ -10,7 +10,6 @@
     import type { EditGroupMachine, UpdatedAvatar } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-    import type { GroupChatSummary } from "../../../domain/chat/chat";
 
     export let machine: ActorRefFrom<EditGroupMachine>;
 

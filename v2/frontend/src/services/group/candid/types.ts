@@ -17,13 +17,8 @@ export type AddParticipantsResponse = {
     'Failed' : AddParticipantsFailedResult
   } |
   { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
+  { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'NotInGroup' : null };
-export interface AddWebRtcSessionDetailsArgs {
-  'session_details' : Array<WebRtcSessionDetails>,
-}
-export type AddWebRtcSessionDetailsResponse = { 'Blocked' : null } |
   { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
@@ -71,8 +66,8 @@ export interface ConfirmationCodeSms {
 }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
-export type DeleteMessagesResponse = { 'Success' : null } |
-  { 'NotInGroup' : null };
+export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : null };
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -94,7 +89,6 @@ export interface DirectChatSummary {
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
-  'webrtc_session_details' : [] | [WebRtcSessionDetailsEvent],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -111,8 +105,8 @@ export interface EditMessageArgs {
   'message_id' : MessageId,
 }
 export type EditMessageResponse = { 'MessageNotFound' : null } |
-  { 'Success' : null } |
-  { 'NotInGroup' : null };
+  { 'CallerNotInGroup' : null } |
+  { 'Success' : null };
 export type EventIndex = number;
 export interface EventsArgs {
   'max_messages' : number,
@@ -120,12 +114,12 @@ export interface EventsArgs {
   'ascending' : boolean,
   'start_index' : EventIndex,
 }
-export interface EventsByIndexArgs { 'events' : Array<GroupChatEventWrapper> }
+export interface EventsByIndexArgs { 'events' : Array<EventIndex> }
 export interface EventsRangeArgs {
   'to_index' : EventIndex,
   'from_index' : EventIndex,
 }
-export type EventsResponse = { 'ChatNotFound' : null } |
+export type EventsResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'affected_events' : Array<GroupChatEventWrapper>,
@@ -184,7 +178,6 @@ export interface GroupChatSummary {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupChatSummaryUpdates {
-  'webrtc_session_details' : Array<WebRtcSessionDetailsEvent>,
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
@@ -213,6 +206,7 @@ export interface GroupNameChanged {
   'new_name' : string,
   'previous_name' : string,
 }
+export interface GroupReplyContext { 'event_index' : EventIndex }
 export interface ImageContent {
   'height' : number,
   'mime_type' : string,
@@ -234,8 +228,8 @@ export interface MarkReadArgs {
   'message_index_ranges' : Array<MessageIndexRange>,
   'message_ids' : Array<MessageId>,
 }
-export type MarkReadResponse = { 'SuccessNoChange' : MarkReadSuccessResult } |
-  { 'Success' : MarkReadSuccessResult } |
+export type MarkReadResponse = { 'SuccessNoChange' : null } |
+  { 'Success' : null } |
   { 'NotInGroup' : null };
 export interface MarkReadSuccessResult {
   'unrecognised_message_ids' : Array<MessageId>,
@@ -353,19 +347,9 @@ export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
   { 'Success' : null } |
   { 'CannotRemoveSelf' : null } |
   { 'InternalError' : string };
-export interface RemoveWebRtcSessionDetailsArgs { 'ids' : Array<string> }
-export type RemoveWebRtcSessionDetailsResponse = { 'Success' : null };
 export interface ReplyContext {
-  'content' : [] | [MessageContent],
-  'sender' : UserId,
-  'chat_id' : ChatId,
-  'message_id' : MessageId,
-  'event_index' : EventIndex,
-}
-export interface ReplyContextArgs {
-  'sender' : UserId,
   'chat_id_if_other' : [] | [ChatId],
-  'message_id' : MessageId,
+  'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
@@ -374,25 +358,25 @@ export interface SearchMessagesArgs {
   'search_term' : string,
 }
 export type SearchMessagesResponse = { 'TermTooShort' : number } |
+  { 'CallerNotInGroup' : null } |
   { 'Success' : SearchMessagesSuccessResult } |
   { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null } |
-  { 'NotInGroup' : null };
+  { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SendMessageArgs {
   'content' : MessageContent,
   'sender_name' : string,
   'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContextArgs],
+  'replies_to' : [] | [GroupReplyContext],
 }
-export type SendMessageResponse = {
+export type SendMessageResponse = { 'CallerNotInGroup' : null } |
+  {
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'message_index' : MessageIndex,
     }
-  } |
-  { 'NotInGroup' : null };
+  };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -403,13 +387,13 @@ export interface SubscriptionInfo {
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export type SummaryArgs = {};
-export type SummaryResponse = { 'Success' : GroupChatSummary } |
-  { 'SuccessNoUpdates' : null } |
-  { 'NotInGroup' : null };
+export type SummaryResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : GroupChatSummary } |
+  { 'SuccessNoUpdates' : null };
 export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
-export type SummaryUpdatesResponse = { 'Success' : SummaryUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null } |
-  { 'NotInGroup' : null };
+export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : SummaryUpdatesSuccess } |
+  { 'SuccessNoUpdates' : null };
 export interface SummaryUpdatesSuccess { 'updates' : GroupChatSummaryUpdates }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
@@ -419,7 +403,7 @@ export interface ToggleReactionArgs {
   'reaction' : string,
 }
 export type ToggleReactionResponse = { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
@@ -438,6 +422,7 @@ export type UpdateGroupResponse = {
     'DescriptionTooLong' : FieldTooLongResult
   } |
   { 'Unchanged' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
@@ -526,30 +511,10 @@ export interface VideoContent {
   'caption' : [] | [string],
   'width' : number,
 }
-export interface WebRtcAnswer {
-  'endpoint' : WebRtcEndpoint,
-  'user_id' : UserId,
-  'offer_id' : string,
-}
-export interface WebRtcEndpoint {
-  'id' : string,
-  'connection_string' : string,
-  'ice_candidates' : Array<string>,
-}
-export interface WebRtcOffer { 'endpoint' : WebRtcEndpoint, 'user_id' : UserId }
-export type WebRtcSessionDetails = { 'Answer' : WebRtcAnswer } |
-  { 'Offer' : WebRtcOffer };
-export interface WebRtcSessionDetailsEvent {
-  'session_details' : WebRtcSessionDetails,
-  'timestamp' : TimestampMillis,
-}
 export interface _SERVICE {
   'add_participants' : (arg_0: AddParticipantsArgs) => Promise<
       AddParticipantsResponse
     >,
-  'add_webrtc_session_details' : (
-      arg_0: AddWebRtcSessionDetailsArgs,
-    ) => Promise<AddWebRtcSessionDetailsResponse>,
   'block_user' : (arg_0: BlockUserArgs) => Promise<BlockUserResponse>,
   'delete_messages' : (arg_0: DeleteMessagesArgs) => Promise<
       DeleteMessagesResponse
@@ -566,9 +531,6 @@ export interface _SERVICE {
   'remove_participant' : (arg_0: RemoveParticipantArgs) => Promise<
       RemoveParticipantResponse
     >,
-  'remove_webrtc_session_details' : (
-      arg_0: RemoveWebRtcSessionDetailsArgs,
-    ) => Promise<RemoveWebRtcSessionDetailsResponse>,
   'search_messages' : (arg_0: SearchMessagesArgs) => Promise<
       SearchMessagesResponse
     >,

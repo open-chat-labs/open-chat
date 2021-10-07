@@ -306,6 +306,7 @@ function eventMessage(index: number): EventWrapper<Message> {
 
 function repliesTo(): EnhancedReplyContext {
     return {
+        kind: "rehydrated_reply_context",
         content: {
             kind: "text_content",
             text: "some text",
@@ -319,6 +320,7 @@ function repliesTo(): EnhancedReplyContext {
 
 function repliesToGroup(): EnhancedReplyContext {
     return {
+        kind: "rehydrated_reply_context",
         content: {
             kind: "text_content",
             text: "some text",
