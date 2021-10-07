@@ -205,7 +205,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 if (chat) {
                     const userIds = userIdsFromChatSummary(chat)
                         .map((u) => lookup[u])
-                        .filter((user) => userIsOnline(lookup, user.userId))
+                        .filter((user) => user && userIsOnline(lookup, user.userId))
                         .sort((a, b) => a.secondsSinceLastOnline - b.secondsSinceLastOnline)
                         .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
                         .filter((user) => !rtcConnectionsManager.exists(user.userId))
