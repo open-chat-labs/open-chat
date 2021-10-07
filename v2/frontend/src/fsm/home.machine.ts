@@ -54,6 +54,7 @@ const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
+const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
@@ -199,11 +200,20 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     actions: {
         sendWebRtcOffers: pure((ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
+                const lookup = get(userStore);
                 const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
                 if (chat) {
-                    const userIds = userIdsFromChatSummary(chat).filter(
-                        (u) => userIsOnline(get(userStore), u) && !rtcConnectionsManager.exists(u)
-                    );
+                    const userIds = userIdsFromChatSummary(chat)
+                        .map((u) => lookup[u])
+                        .filter(
+                            (user) =>
+                                userIsOnline(lookup, user.userId) &&
+                                !rtcConnectionsManager.exists(user.userId)
+                        )
+                        .sort((a, b) => a.secondsSinceLastOnline - b.secondsSinceLastOnline)
+                        .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
+                        .map((user) => user.userId);
+
                     userIds.forEach((u) => rtcConnectionsManager.create(ctx.user!.userId, u));
                 }
             }
