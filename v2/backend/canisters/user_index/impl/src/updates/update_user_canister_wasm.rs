@@ -18,7 +18,7 @@ fn update_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) 
     if args.user_canister_wasm.version <= runtime_state.data.user_canister_wasm.version {
         VersionNotHigher
     } else {
-        runtime_state.data.user_canister_wasm = args.user_canister_wasm;
+        runtime_state.data.user_canister_wasm = args.user_canister_wasm.decompress();
         Success
     }
 }
