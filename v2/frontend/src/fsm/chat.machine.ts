@@ -28,6 +28,7 @@ import {
     replaceLocal,
     userIdsFromChatSummary,
     replaceMessageContent,
+    serialiseMessageForRtc,
 } from "../domain/chat/chat.utils";
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
@@ -331,6 +332,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: pure((ctx, _ev) => {
                         rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
                             kind: "remote_user_typing",
+                            chatType: ctx.chatSummary.kind,
                             chatId: ctx.chatSummary.chatId,
                             userId: ctx.user!.userId,
                         });
@@ -341,6 +343,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: pure((ctx, _ev) => {
                         rtcConnectionsManager.sendMessage(userIdsFromChatSummary(ctx.chatSummary), {
                             kind: "remote_user_stopped_typing",
+                            chatType: ctx.chatSummary.kind,
                             chatId: ctx.chatSummary.chatId,
                             userId: ctx.user!.userId,
                         });
@@ -372,8 +375,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     userIdsFromChatSummary(ctx.chatSummary),
                                     {
                                         kind: "remote_user_sent_message",
+                                        chatType: ctx.chatSummary.kind,
                                         chatId: ctx.chatSummary.chatId,
-                                        messageEvent: ev.data.messageEvent,
+                                        messageEvent: serialiseMessageForRtc(ev.data.messageEvent),
                                         userId: ev.data.userId,
                                     }
                                 );
@@ -438,6 +442,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 userIdsFromChatSummary(ctx.chatSummary),
                                 {
                                     kind: "remote_user_undeleted_message",
+                                    chatType: ctx.chatSummary.kind,
                                     chatId: ctx.chatSummary.chatId,
                                     message: ev.data.message,
                                     userId: ev.data.userId,
@@ -461,6 +466,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 userIdsFromChatSummary(ctx.chatSummary),
                                 {
                                     kind: "remote_user_deleted_message",
+                                    chatType: ctx.chatSummary.kind,
                                     chatId: ctx.chatSummary.chatId,
                                     messageId: ev.data.messageId,
                                     userId: ev.data.userId,
@@ -515,6 +521,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                             userIdsFromChatSummary(ctx.chatSummary),
                                             {
                                                 kind: "remote_user_toggled_reaction",
+                                                chatType: ctx.chatSummary.kind,
                                                 chatId: ctx.chatSummary.chatId,
                                                 messageId: messageId,
                                                 userId: ev.data.userId,
@@ -536,6 +543,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 userIdsFromChatSummary(ctx.chatSummary),
                                 {
                                     kind: "remote_user_removed_message",
+                                    chatType: ctx.chatSummary.kind,
                                     chatId: ctx.chatSummary.chatId,
                                     messageId: ev.data.messageId,
                                     userId: ev.data.userId,

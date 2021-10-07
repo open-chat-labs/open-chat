@@ -10,68 +10,56 @@ export type WebRtcMessage =
     | RemoteUserRemovedMessage
     | RemoteUserUndeletedMessage;
 
-export type CurrentUserTyping = {
+type WebRtcMessageCommon = {
+    chatType: "direct_chat" | "group_chat";
+    chatId: string;
+    userId: string;
+};
+
+export type CurrentUserTyping = WebRtcMessageCommon & {
     kind: "current_user_typing";
-    chatId: string;
 };
 
-export type CurrentUserStoppedTyping = {
+export type CurrentUserStoppedTyping = WebRtcMessageCommon & {
     kind: "current_user_stopped_typing";
-    chatId: string;
 };
 
-export type RemoteUserTyping = {
+export type RemoteUserTyping = WebRtcMessageCommon & {
     kind: "remote_user_typing";
-    chatId: string;
-    userId: string;
 };
 
-export type RemoteUserStoppedTyping = {
+export type RemoteUserStoppedTyping = WebRtcMessageCommon & {
     kind: "remote_user_stopped_typing";
-    chatId: string;
-    userId: string;
 };
 
-export type RemoteUserToggledReaction = {
+export type RemoteUserToggledReaction = WebRtcMessageCommon & {
     kind: "remote_user_toggled_reaction";
-    chatId: string;
     messageId: bigint;
-    userId: string;
     reaction: string;
 };
 
-export type RemoteUserRemovedMessage = {
+export type RemoteUserRemovedMessage = WebRtcMessageCommon & {
     kind: "remote_user_removed_message";
-    chatId: string;
     messageId: bigint;
-    userId: string;
 };
 
-export type RemoteUserDeletedMessage = {
+export type RemoteUserDeletedMessage = WebRtcMessageCommon & {
     kind: "remote_user_deleted_message";
-    chatId: string;
     messageId: bigint;
-    userId: string;
 };
 
-export type RemoteUserUndeletedMessage = {
+export type RemoteUserUndeletedMessage = WebRtcMessageCommon & {
     kind: "remote_user_undeleted_message";
-    chatId: string;
     message: Message;
-    userId: string;
 };
 
-export type RemoteUserReadMessage = {
+export type RemoteUserReadMessage = WebRtcMessageCommon & {
     kind: "remote_user_read_message";
-    chatId: string;
     messageId: bigint;
     messageIndex?: number;
-    userId: string;
 };
 
-export type RemoteUserSentMessage = {
+export type RemoteUserSentMessage = WebRtcMessageCommon & {
     kind: "remote_user_sent_message";
-    chatId: string;
     messageEvent: EventWrapper<Message>;
-    userId: string;
 };

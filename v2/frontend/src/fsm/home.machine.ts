@@ -54,6 +54,7 @@ const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;
+const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 
 export interface HomeContext {
     serviceContainer?: ServiceContainer;
@@ -135,8 +136,19 @@ function findDirectChatByUserId(ctx: HomeContext, userId: string): DirectChatSum
         | undefined;
 }
 
-function sendMessageToChatBasedOnUser(ctx: HomeContext, userId: string, chatMsg: ChatEvents): void {
-    const chat = findDirectChatByUserId(ctx, userId);
+function findChatById(ctx: HomeContext, chatId: string): ChatSummary | undefined {
+    return ctx.chatSummaries.find((c) => c.chatId === chatId);
+}
+
+function sendMessageToChatBasedOnUser(
+    ctx: HomeContext,
+    msg: WebRtcMessage,
+    chatMsg: ChatEvents
+): void {
+    const chat =
+        msg.chatType === "group_chat"
+            ? findChatById(ctx, msg.chatId)
+            : findDirectChatByUserId(ctx, msg.userId);
     const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
     if (actor) {
         actor.send(chatMsg);
@@ -188,14 +200,18 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     actions: {
         sendWebRtcOffers: pure((ctx, ev) => {
             if (ev.type === "SELECT_CHAT") {
+                const lookup = get(userStore);
                 const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
-                if (chat && chat.kind === "direct_chat") {
-                    if (
-                        !rtcConnectionsManager.exists(chat.them) &&
-                        userIsOnline(get(userStore), chat.them)
-                    ) {
-                        rtcConnectionsManager.create(ctx.user!.userId, chat.them);
-                    }
+                if (chat) {
+                    const userIds = userIdsFromChatSummary(chat)
+                        .map((u) => lookup[u])
+                        .filter((user) => user && userIsOnline(lookup, user.userId))
+                        .sort((a, b) => a.secondsSinceLastOnline - b.secondsSinceLastOnline)
+                        .slice(0, MAX_RTC_CONNECTIONS_PER_CHAT)
+                        .filter((user) => !rtcConnectionsManager.exists(user.userId))
+                        .map((user) => user.userId);
+
+                    userIds.forEach((u) => rtcConnectionsManager.create(ctx.user!.userId, u));
                 }
             }
             return undefined;
@@ -425,7 +441,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     actions: [
                         pure((ctx, ev) => {
                             unconfirmed.add(BigInt(ev.data.messageEvent.event.messageId));
-                            sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                            sendMessageToChatBasedOnUser(ctx, ev.data, {
                                 type: "SEND_MESSAGE",
                                 data: ev.data,
                             });
@@ -435,7 +451,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 REMOTE_USER_UNDELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
-                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                        sendMessageToChatBasedOnUser(ctx, ev.data, {
                             type: "UNDELETE_MESSAGE",
                             data: ev.data,
                         });
@@ -444,7 +460,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 REMOTE_USER_DELETED_MESSAGE: {
                     actions: pure((ctx, ev) => {
-                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                        sendMessageToChatBasedOnUser(ctx, ev.data, {
                             type: "DELETE_MESSAGE",
                             data: ev.data,
                         });
@@ -453,7 +469,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 REMOTE_USER_REMOVED_MESSAGE: {
                     actions: pure((ctx, ev) => {
-                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                        sendMessageToChatBasedOnUser(ctx, ev.data, {
                             type: "REMOVE_MESSAGE",
                             data: ev.data,
                         });
@@ -462,7 +478,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 REMOTE_USER_TOGGLED_REACTION: {
                     actions: pure((ctx, ev) => {
-                        sendMessageToChatBasedOnUser(ctx, ev.data.userId, {
+                        sendMessageToChatBasedOnUser(ctx, ev.data, {
                             type: "TOGGLE_REACTION",
                             data: ev.data,
                         });
@@ -638,6 +654,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
 
                                     const rtc: WebRtcMessage = {
                                         kind: "remote_user_read_message",
+                                        chatType: c.kind,
                                         messageId: ev.data.messageId,
                                         chatId: ev.data.chatId,
                                         userId: ctx.user!.userId,
