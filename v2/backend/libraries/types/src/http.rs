@@ -75,7 +75,7 @@ impl HttpResponse {
         HttpResponse::moved(301, location, None)
     }
 
-    pub fn moved_temporariliy(location: &str, max_age: Option<u32>) -> HttpResponse {
+    pub fn moved_temporarily(location: &str, max_age: Option<u32>) -> HttpResponse {
         HttpResponse::moved(302, location, max_age)
     }
 

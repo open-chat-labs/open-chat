@@ -27,6 +27,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28ae2b3dec75a406790005a200b1bd89785afc02517a00ca99ecfe093ee9e6cf"
 
 [[package]]
+name = "arc-swap"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6df5aef5c5830360ce5218cecb8f018af3438af5686ae945094affc86fdec63"
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -618,8 +624,9 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-cdk",
- "log",
  "serde",
+ "slog",
+ "slog-scope",
  "types",
  "utils",
 ]
@@ -742,19 +749,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80df024fbc5ac80f87dfef0d9f5209a252f2a497f7f42944cff24d8253cac065"
 dependencies = [
  "cfg-if 1.0.0",
-]
-
-[[package]]
-name = "env_logger"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
-dependencies = [
- "atty",
- "humantime",
- "log",
- "regex",
- "termcolor",
 ]
 
 [[package]]
@@ -971,7 +965,8 @@ dependencies = [
  "canister_client_macros",
  "group_canister",
  "ic-cdk",
- "log",
+ "slog",
+ "slog-scope",
  "types",
 ]
 
@@ -983,7 +978,6 @@ dependencies = [
  "canister_client_macros",
  "group_canister",
  "ic-agent 0.7.0",
- "log",
  "types",
 ]
 
@@ -1002,12 +996,13 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",
- "log",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "search",
  "serde",
  "serde_bytes",
+ "slog",
+ "slog-scope",
  "types",
  "user_canister",
  "user_canister_c2c_client",
@@ -1031,7 +1026,8 @@ dependencies = [
  "canister_client_macros",
  "group_index_canister",
  "ic-cdk",
- "log",
+ "slog",
+ "slog-scope",
  "types",
 ]
 
@@ -1043,7 +1039,6 @@ dependencies = [
  "canister_client_macros",
  "group_index_canister",
  "ic-agent 0.7.0",
- "log",
  "types",
 ]
 
@@ -1056,10 +1051,13 @@ dependencies = [
  "futures",
  "group_canister",
  "group_index_canister",
+ "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "search",
  "serde",
+ "slog",
+ "slog-scope",
  "types",
  "utils",
 ]
@@ -1163,12 +1161,6 @@ name = "httpdate"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
-
-[[package]]
-name = "humantime"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
@@ -1660,10 +1652,10 @@ dependencies = [
  "aws-sdk-dynamodb",
  "candid",
  "dotenv",
- "env_logger",
- "log",
  "serde",
  "shared",
+ "slog",
+ "slog-term",
  "tokio",
 ]
 
@@ -1674,9 +1666,9 @@ dependencies = [
  "async-trait",
  "candid",
  "dotenv",
- "env_logger",
- "log",
  "shared",
+ "slog",
+ "slog-term",
  "tokio",
 ]
 
@@ -1696,8 +1688,9 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "ic-cdk",
- "log",
  "notifications_canister",
+ "slog",
+ "slog-scope",
  "types",
 ]
 
@@ -1708,7 +1701,6 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent 0.7.0",
- "log",
  "notifications_canister",
  "types",
 ]
@@ -1718,10 +1710,13 @@ name = "notifications_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "notifications_canister",
  "serde",
+ "slog",
+ "slog-scope",
  "types",
  "utils",
 ]
@@ -2600,11 +2595,11 @@ dependencies = [
  "garcon",
  "ic-agent 0.6.0",
  "ic-cdk",
- "log",
  "notifications_canister",
  "openssl",
  "serde",
  "serde_json",
+ "slog",
  "tokio",
  "types",
  "utils",
@@ -2643,6 +2638,48 @@ name = "slab"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c307a32c1c5c437f38c7fd45d753050587732ba8628319fbdf12a7e289ccc590"
+
+[[package]]
+name = "slog"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
+
+[[package]]
+name = "slog-json"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52e9b96fb6b5e80e371423b4aca6656eb537661ce8f82c2697e619f8ca85d043"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "slog",
+]
+
+[[package]]
+name = "slog-scope"
+version = "4.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f95a4b4c3274cd2869549da82b57ccc930859bdbf5bcea0424bc5f140b3c786"
+dependencies = [
+ "arc-swap",
+ "lazy_static",
+ "slog",
+]
+
+[[package]]
+name = "slog-term"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95c1e7e5aab61ced6006149ea772770b84a0d16ce0f7885def313e4829946d76"
+dependencies = [
+ "atty",
+ "chrono",
+ "slog",
+ "term",
+ "thread_local",
+]
 
 [[package]]
 name = "smallvec"
@@ -3321,7 +3358,8 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "ic-cdk",
- "log",
+ "slog",
+ "slog-scope",
  "types",
  "user_canister",
 ]
@@ -3333,7 +3371,6 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent 0.7.0",
- "log",
  "types",
  "user_canister",
 ]
@@ -3354,11 +3391,12 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",
- "log",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "search",
  "serde",
+ "slog",
+ "slog-scope",
  "types",
  "user_canister",
  "user_canister_c2c_client",
@@ -3384,7 +3422,8 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "ic-cdk",
- "log",
+ "slog",
+ "slog-scope",
  "types",
  "user_index_canister",
 ]
@@ -3396,7 +3435,6 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent 0.7.0",
- "log",
  "types",
  "user_index_canister",
 ]
@@ -3407,12 +3445,15 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cycles_utils",
+ "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "itertools 0.10.1",
  "phonenumber",
  "serde",
  "serde_bytes",
+ "slog",
+ "slog-scope",
  "types",
  "user_canister",
  "user_index_canister",
@@ -3432,12 +3473,14 @@ dependencies = [
  "candid",
  "getrandom 0.2.3",
  "ic-cdk",
- "log",
  "rand 0.7.3",
  "range-set",
  "serde",
  "serde_bytes",
  "serde_cbor",
+ "slog",
+ "slog-json",
+ "slog-scope",
  "smallvec 0.6.14",
  "types",
 ]

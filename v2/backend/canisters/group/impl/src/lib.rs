@@ -7,6 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use types::{Avatar, CanisterId, ChatId, MessageId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
+use utils::canister_logger::LoggerWrapper;
 use utils::env::Environment;
 
 mod lifecycle;
@@ -25,6 +26,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+    static LOGGER: RefCell<LoggerWrapper> = RefCell::default();
 }
 
 struct RuntimeState {

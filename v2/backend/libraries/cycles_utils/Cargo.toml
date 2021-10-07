@@ -10,7 +10,8 @@ edition = "2018"
 candid = "0.7.7"
 canister_client_macros = { path = "../canister_client_macros" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-log = "0.4.14"
 serde = "1.0.126"
+slog = "2.7.0"
+slog-scope = "4.4.0"
 types = { path = "../types" }
 utils = { path = "../utils" }

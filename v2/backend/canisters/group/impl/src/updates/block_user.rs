@@ -4,7 +4,6 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
-use log::error;
 use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
@@ -19,7 +18,6 @@ async fn block_user(args: Args) -> Response {
 
     let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group::Args {}).await;
     if let Err(error) = response {
-        error!("{:?}", error);
         return InternalError(format!("{:?}", error));
     }
 

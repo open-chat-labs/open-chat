@@ -1,8 +1,9 @@
 use crate::canisters::error::Error;
 use candid::{CandidType, Principal};
 use ic_cdk::api;
-use log::error;
 use serde::Deserialize;
+use slog::error;
+use slog_scope::with_logger;
 use types::CanisterId;
 
 pub async fn call(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), Error> {
@@ -37,7 +38,7 @@ pub async fn call(canister_id: CanisterId, wasm_module: Vec<u8>) -> Result<(), E
         Ok(x) => x,
         Err((code, msg)) => {
             let code = code as u8;
-            error!("Error calling install_code: {}: {}", code, msg);
+            with_logger(|l| error!(l, "Error calling install_code: {code}", code = code; "message" => &msg));
             return Err(Error { code, msg });
         }
     };

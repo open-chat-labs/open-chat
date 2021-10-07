@@ -5,7 +5,6 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
-use log::error;
 use types::{EventIndex, MessageIndex, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
 
@@ -41,8 +40,7 @@ async fn add_participants(args: Args) -> Response {
                     c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
                     c2c_try_add_to_group::Response::Blocked => users_who_blocked_request.push(user_id),
                 },
-                Err(error) => {
-                    error!("{:?}", error);
+                Err(_) => {
                     errors.push(user_id);
                 }
             }
