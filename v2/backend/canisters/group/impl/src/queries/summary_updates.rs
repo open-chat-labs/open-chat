@@ -4,7 +4,7 @@ use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
 use std::collections::HashSet;
-use types::{Avatar, EventIndex, EventWrapper, GroupChatSummaryUpdates, Message, Participant, TimestampMillis, UserId};
+use types::{Avatar, EventIndex, EventWrapper, Message, Participant, TimestampMillis, UserId};
 use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
@@ -17,16 +17,19 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get(caller) {
         let updates_from_events = process_events(args.updates_since, runtime_state);
 
-        let read_by_me = if participant.read_by_me_updated > args.updates_since {
-            Some(convert_to_message_index_ranges(participant.read_by_me.clone()))
+        let read_by_me = if participant.read_by_me.timestamp > args.updates_since {
+            Some(convert_to_message_index_ranges(participant.read_by_me.value.clone()))
         } else {
             None
         };
 
         if updates_from_events.latest_update.is_some() || read_by_me.is_some() {
-            let updates = GroupChatSummaryUpdates {
+            let updates = SummaryUpdates {
                 chat_id: runtime_state.env.canister_id().into(),
-                last_updated: max(updates_from_events.latest_update.unwrap_or(0), participant.read_by_me_updated),
+                last_updated: max(
+                    updates_from_events.latest_update.unwrap_or(0),
+                    participant.read_by_me.timestamp,
+                ),
                 name: updates_from_events.name,
                 description: updates_from_events.description,
                 avatar_id: Avatar::id(&runtime_state.data.avatar),

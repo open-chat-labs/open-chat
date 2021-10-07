@@ -46,5 +46,6 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.group_chats.add(chat_id);
+    let now = runtime_state.env.now();
+    runtime_state.data.group_chats.add(chat_id, now);
 }

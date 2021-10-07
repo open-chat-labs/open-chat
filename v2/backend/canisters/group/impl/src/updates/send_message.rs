@@ -33,15 +33,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let message_index = message.message_index;
 
-        participant.read_by_me.insert(message_index.into());
-        participant.read_by_me_updated = now;
+        if participant.read_by_me.value.insert(message_index.into()) {
+            participant.read_by_me.timestamp = now;
+        }
 
         if let Some((users_to_mark_as_read, _)) = runtime_state.data.message_ids_read_but_not_confirmed.remove(&args.message_id)
         {
             for u in users_to_mark_as_read.iter() {
                 if let Some(p) = runtime_state.data.participants.get_by_user_id_mut(u) {
-                    if p.read_by_me.insert(message_index.into()) {
-                        p.read_by_me_updated = now;
+                    if p.read_by_me.value.insert(message_index.into()) {
+                        p.read_by_me.timestamp = now;
                     }
                 }
             }
@@ -59,7 +60,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 sender_name: args.sender_name,
                 message,
             };
-            let recipients = runtime_state.data.participants.get_other_user_ids(sender);
+            let recipients = runtime_state.data.participants.users_to_notify(sender);
 
             ic_cdk::block_on(push_notification(*canister_id, recipients, notification));
         }

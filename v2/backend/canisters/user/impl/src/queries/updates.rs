@@ -1,4 +1,6 @@
 use crate::{RuntimeState, RUNTIME_STATE};
+use group_canister::summary::Summary;
+use group_canister::summary_updates::SummaryUpdates;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use log::error;
@@ -80,7 +82,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<GroupChatSummary> {
+async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
     if chat_ids.is_empty() {
         return Vec::new();
     }
@@ -123,7 +125,7 @@ async fn get_group_chat_summary_updates(
     group_index_canister_id: CanisterId,
     duration_since_last_sync: Milliseconds,
     mut group_chats: Vec<(ChatId, TimestampMillis)>,
-) -> Vec<GroupChatSummaryUpdates> {
+) -> Vec<SummaryUpdates> {
     if group_chats.len() >= 5 {
         if group_chats.is_empty() {
             return Vec::new();
@@ -195,8 +197,8 @@ async fn get_group_chat_summary_updates(
 
 fn finalize(
     args: Args,
-    group_chats_added: Vec<GroupChatSummary>,
-    group_chats_updated: Vec<GroupChatSummaryUpdates>,
+    group_chats_added: Vec<Summary>,
+    group_chats_updated: Vec<SummaryUpdates>,
     runtime_state: &RuntimeState,
 ) -> SuccessResult {
     let now = runtime_state.env.now();
@@ -205,14 +207,40 @@ fn finalize(
         .as_ref()
         .map_or(TimestampMillis::default(), |s| s.timestamp);
 
-    let mut chats_added: Vec<_> = group_chats_added.into_iter().map(ChatSummary::Group).collect();
+    let mut group_chats_added: HashMap<ChatId, GroupChatSummary> =
+        group_chats_added.into_iter().map(|s| (s.chat_id, s.into())).collect();
 
-    let mut chats_updated: Vec<_> = group_chats_updated.into_iter().map(ChatSummaryUpdates::Group).collect();
+    let mut group_chats_updated: HashMap<ChatId, GroupChatSummaryUpdates> =
+        group_chats_updated.into_iter().map(|s| (s.chat_id, s.into())).collect();
+
+    for group_chat in runtime_state
+        .data
+        .group_chats
+        .get_all(args.updates_since.as_ref().map(|s| s.timestamp))
+    {
+        group_chats_added.entry(group_chat.chat_id).and_modify(|s| {
+            s.notifications_muted = group_chat.notifications_muted.value;
+        });
+
+        group_chats_updated
+            .entry(group_chat.chat_id)
+            .and_modify(|su| {
+                su.notifications_muted = if group_chat.notifications_muted.timestamp > updates_since {
+                    Some(group_chat.notifications_muted.value)
+                } else {
+                    None
+                }
+            })
+            .or_insert_with(|| group_chat.into());
+    }
+
+    let mut chats_added: Vec<_> = group_chats_added.into_values().map(ChatSummary::Group).collect();
+    let mut chats_updated: Vec<_> = group_chats_updated.into_values().map(ChatSummaryUpdates::Group).collect();
 
     for direct_chat in runtime_state
         .data
         .direct_chats
-        .get_all(args.updates_since.map(|s| s.timestamp))
+        .get_all(args.updates_since.as_ref().map(|s| s.timestamp))
     {
         if direct_chat.date_created > updates_since {
             chats_added.push(ChatSummary::Direct(DirectChatSummary {
@@ -220,22 +248,29 @@ fn finalize(
                 latest_message: direct_chat.events.latest_message().unwrap(),
                 latest_event_index: direct_chat.events.last().index,
                 date_created: direct_chat.date_created,
-                read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.clone()),
-                read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.clone()),
+                read_by_me: convert_to_message_index_ranges(direct_chat.read_by_me.value.clone()),
+                read_by_them: convert_to_message_index_ranges(direct_chat.read_by_them.value.clone()),
+                notifications_muted: direct_chat.notifications_muted.value,
             }));
         } else {
             let latest_message = direct_chat.events.latest_message_if_updated(updates_since);
             let latest_event = direct_chat.events.last();
             let latest_event_index = if latest_event.timestamp > updates_since { Some(latest_event.index) } else { None };
 
-            let read_by_me = if direct_chat.read_by_me_updated > updates_since {
-                Some(convert_to_message_index_ranges(direct_chat.read_by_me.clone()))
+            let read_by_me = if direct_chat.read_by_me.timestamp > updates_since {
+                Some(convert_to_message_index_ranges(direct_chat.read_by_me.value.clone()))
             } else {
                 None
             };
 
-            let read_by_them = if direct_chat.read_by_them_updated > updates_since {
-                Some(convert_to_message_index_ranges(direct_chat.read_by_them.clone()))
+            let read_by_them = if direct_chat.read_by_them.timestamp > updates_since {
+                Some(convert_to_message_index_ranges(direct_chat.read_by_them.value.clone()))
+            } else {
+                None
+            };
+
+            let notifications_muted = if direct_chat.notifications_muted.timestamp > updates_since {
+                Some(direct_chat.notifications_muted.value)
             } else {
                 None
             };
@@ -246,6 +281,7 @@ fn finalize(
                 latest_event_index,
                 read_by_me,
                 read_by_them,
+                notifications_muted,
             }));
         }
     }

@@ -15,7 +15,8 @@ fn c2c_try_add_to_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         Blocked
     } else {
         let chat_id = runtime_state.env.caller().into();
-        runtime_state.data.group_chats.add(chat_id);
+        let now = runtime_state.env.now();
+        runtime_state.data.group_chats.add(chat_id, now);
         Success(SuccessResult {
             principal: runtime_state.data.owner,
         })

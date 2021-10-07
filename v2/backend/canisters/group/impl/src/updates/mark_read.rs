@@ -18,21 +18,17 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(caller) {
         let now = runtime_state.env.now();
         let mut has_changes = false;
+        let read_by_me = &mut participant.read_by_me.value;
         if let Some(max_message_index) = runtime_state.data.events.latest_message_index() {
             let min_message_index = participant.min_visible_message_index;
-            let mut added = insert_ranges(
-                &mut participant.read_by_me,
-                &args.message_index_ranges,
-                min_message_index,
-                max_message_index,
-            );
+            let mut added = insert_ranges(read_by_me, &args.message_index_ranges, min_message_index, max_message_index);
             for message_id in args.message_ids.into_iter() {
                 if let Some(message_index) = runtime_state.data.events.get_message_index(message_id) {
                     if message_index < min_message_index {
                         continue;
                     }
                     let as_u32 = message_index.into();
-                    if participant.read_by_me.insert(as_u32) {
+                    if read_by_me.insert(as_u32) {
                         added.insert(as_u32);
                     }
                 } else {
@@ -47,7 +43,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             has_changes = !added.is_empty();
         }
         if has_changes {
-            participant.read_by_me_updated = now;
+            participant.read_by_me.timestamp = now;
             Success
         } else {
             SuccessNoChange

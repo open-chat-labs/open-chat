@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::Deserialize;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
+use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, Timestamped, UserId};
 use utils::range_set::RangeSet;
 
 #[derive(CandidType, Deserialize, Default)]
@@ -18,11 +18,10 @@ impl Participants {
             user_id: creator_user_id,
             date_added: now,
             role: Role::Admin,
-            read_by_me: RangeSet::new(),
-            read_by_me_updated: now,
-            mute_notifications: false,
+            read_by_me: Timestamped::new(RangeSet::new(), now),
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
+            notifications_muted: false,
         };
 
         Participants {
@@ -49,11 +48,10 @@ impl Participants {
                         user_id,
                         date_added: now,
                         role: Role::Participant,
-                        read_by_me: RangeSet::new(),
-                        read_by_me_updated: now,
-                        mute_notifications: false,
+                        read_by_me: Timestamped::new(RangeSet::new(), now),
                         min_visible_event_index,
                         min_visible_message_index,
+                        notifications_muted: false,
                     });
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success
@@ -122,10 +120,10 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn get_other_user_ids(&self, my_user_id: UserId) -> Vec<UserId> {
+    pub fn users_to_notify(&self, my_user_id: UserId) -> Vec<UserId> {
         self.by_principal
             .values()
-            .filter(|p| p.user_id != my_user_id)
+            .filter(|p| p.user_id != my_user_id && !p.notifications_muted)
             .map(|p| p.user_id)
             .collect()
     }
@@ -142,11 +140,10 @@ pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
     pub role: Role,
-    pub read_by_me: RangeSet,
-    pub read_by_me_updated: TimestampMillis,
-    pub mute_notifications: bool,
+    pub read_by_me: Timestamped<RangeSet>,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
+    pub notifications_muted: bool,
 }
 
 impl From<ParticipantInternal> for Participant {
