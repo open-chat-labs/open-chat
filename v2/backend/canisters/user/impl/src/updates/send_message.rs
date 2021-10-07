@@ -41,11 +41,11 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         if let Some((users_to_mark_as_read, _)) = chat.message_ids_read_but_not_confirmed.remove(&args.message_id) {
             for is_me in users_to_mark_as_read.into_iter() {
                 if is_me {
-                    chat.read_by_me.insert(message.message_index.into());
-                    chat.read_by_me_updated = now;
-                } else {
-                    chat.read_by_them.insert(message.message_index.into());
-                    chat.read_by_them_updated = now;
+                    if chat.read_by_me.value.insert(message.message_index.into()) {
+                        chat.read_by_me.timestamp = now;
+                    }
+                } else if chat.read_by_them.value.insert(message.message_index.into()) {
+                    chat.read_by_them.timestamp = now;
                 }
             }
         }

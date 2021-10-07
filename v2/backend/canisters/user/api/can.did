@@ -185,6 +185,18 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
+type ToggleMuteNotificationsArgs =
+    record {
+        chat_id: ChatId;
+        mute: bool;
+    };
+
+type ToggleMuteNotificationsResponse =
+    variant {
+        Success;
+        ChatNotFound;
+    }; 
+
 type GroupChatUpdatesSince =
     record {
         chat_id: ChatId;
@@ -323,6 +335,7 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_range: (EventsRangeArgs) -> (EventsResponse) query;

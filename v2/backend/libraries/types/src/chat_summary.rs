@@ -25,6 +25,7 @@ pub struct DirectChatSummary {
     pub date_created: TimestampMillis,
     pub read_by_me: Vec<MessageIndexRange>,
     pub read_by_them: Vec<MessageIndexRange>,
+    pub notifications_muted: bool,
 }
 
 impl DirectChatSummary {
@@ -48,6 +49,7 @@ pub struct GroupChatSummary {
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub read_by_me: Vec<MessageIndexRange>,
+    pub notifications_muted: bool,
 }
 
 impl GroupChatSummary {
@@ -69,6 +71,7 @@ pub struct DirectChatSummaryUpdates {
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
     pub read_by_them: Option<Vec<MessageIndexRange>>,
+    pub notifications_muted: Option<bool>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -83,4 +86,5 @@ pub struct GroupChatSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
+    pub notifications_muted: Option<bool>,
 }

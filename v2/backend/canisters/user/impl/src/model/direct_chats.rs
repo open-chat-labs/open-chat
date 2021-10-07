@@ -48,11 +48,13 @@ impl DirectChats {
         let (event_index, message) = chat.events.push_message(args);
 
         if sent_by_me {
-            chat.read_by_me.insert(message.message_index.into());
-            chat.read_by_me_updated = now;
+            if chat.read_by_me.value.insert(message.message_index.into()) {
+                chat.read_by_me.timestamp = now;
+            }
         } else {
-            chat.read_by_them.insert(message.message_index.into());
-            chat.read_by_them_updated = now;
+            if chat.read_by_them.value.insert(message.message_index.into()) {
+                chat.read_by_them.timestamp = now;
+            }
             if let Some(their_message_index) = their_message_index {
                 chat.unread_message_index_map.add(message.message_index, their_message_index);
             }
