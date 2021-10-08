@@ -17,6 +17,7 @@ pub enum Response {
     NameTooLong(FieldTooLongResult),
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    MaxGroupsCreated(u16),
     NameTaken,
     Throttled,
     InternalError,
