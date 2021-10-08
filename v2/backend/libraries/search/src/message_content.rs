@@ -31,7 +31,7 @@ impl From<&MessageContent> for Document {
             MessageContent::Video(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContent::Audio(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContent::File(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
-            MessageContent::Deleted => {}
+            MessageContent::Deleted(_) => {}
         }
 
         document

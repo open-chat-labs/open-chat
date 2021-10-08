@@ -18,7 +18,7 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         let now = runtime_state.env.now();
 
         for message_id in args.message_ids.into_iter() {
-            chat.events.delete_message(caller_user_id, message_id, now);
+            chat.events.delete_message(caller_user_id, false, message_id, now);
         }
 
         Success

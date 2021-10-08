@@ -1,4 +1,4 @@
-use crate::CanisterId;
+use crate::{CanisterId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ pub enum MessageContent {
     Audio(AudioContent),
     File(FileContent),
     Cycles(CycleContent),
-    Deleted,
+    Deleted(DeletedContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -59,6 +59,12 @@ pub struct FileContent {
 pub struct CycleContent {
     pub amount: u128,
     pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DeletedContent {
+    pub deleted_by: UserId,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
