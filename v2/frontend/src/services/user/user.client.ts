@@ -14,7 +14,6 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
-    MessageIndexRange,
     MarkReadResponse,
     IndexRange,
     EventWrapper,
@@ -22,6 +21,7 @@ import type {
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
+    MarkReadRequest,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -270,16 +270,13 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    markMessagesRead(
-        userId: string,
-        ranges: MessageIndexRange[],
-        ids: Set<bigint>
-    ): Promise<MarkReadResponse> {
+    markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read({
-                user_id: Principal.fromText(userId),
-                message_index_ranges: ranges,
-                message_ids: [...ids],
+                messages_read: request.map(({ chatId, ranges }) => ({
+                    chat_id: Principal.fromText(chatId),
+                    message_ranges: ranges,
+                })),
             }),
             markReadResponse
         );

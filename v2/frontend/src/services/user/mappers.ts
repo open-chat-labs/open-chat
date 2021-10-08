@@ -130,17 +130,10 @@ export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarRespon
     throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", candid);
 }
 
-export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("SuccessNoChange" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "failure";
-    }
-    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
+export function markReadResponse(_candid: ApiMarkReadResponse): MarkReadResponse {
+    // currently only one success type which makes mapping this a bit redundant but I'll
+    // leave the pattern in place in case we have other return types in the future.
+    return "success";
 }
 
 export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
@@ -174,6 +167,10 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     }
     if ("InternalError" in candid) {
         return "internal_error";
+    }
+    if ("ParticipantLimitReached" in candid) {
+        // todo - check if we need to deal with this in the UI
+        return "participant_limit_reached";
     }
     if ("GroupNotFound" in candid) {
         return "group_not_found";
@@ -284,6 +281,11 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 
     if ("AvatarTooBig" in candid) {
         return { kind: "avatar_too_big" };
+    }
+
+    if ("MaxGroupsCreated" in candid) {
+        // todo - make sure we handle this in the UI
+        return { kind: "max_groups_created" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);

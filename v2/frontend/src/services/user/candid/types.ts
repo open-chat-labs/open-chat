@@ -29,6 +29,10 @@ export type CanisterUpgradeStatus = { 'Required' : null } |
   { 'InProgress' : null };
 export interface CanisterWasm { 'version' : Version, 'module' : Array<number> }
 export type ChatId = CanisterId;
+export interface ChatMessagesRead {
+  'message_ranges' : Array<MessageIndexRange>,
+  'chat_id' : ChatId,
+}
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
@@ -52,6 +56,7 @@ export type CreateGroupResponse = {
   { 'Success' : CreateGroupSuccessResult } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
+  { 'MaxGroupsCreated' : number } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
@@ -230,20 +235,15 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
   { 'Success' : null } |
+  { 'ParticipantLimitReached' : number } |
   { 'InternalError' : string };
 export interface LeaveGroupArgs { 'chat_id' : ChatId }
 export type LeaveGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
-export interface MarkReadArgs {
-  'message_index_ranges' : Array<MessageIndexRange>,
-  'user_id' : UserId,
-  'message_ids' : Array<MessageId>,
-}
-export type MarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : null };
+export interface MarkReadArgs { 'messages_read' : Array<ChatMessagesRead> }
+export type MarkReadResponse = { 'Success' : null };
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -412,6 +412,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export interface ToggleMuteNotificationsArgs {
+  'mute' : boolean,
+  'chat_id' : ChatId,
+}
+export type ToggleMuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface ToggleReactionArgs {
   'user_id' : UserId,
   'message_id' : MessageId,
@@ -544,6 +550,9 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
+  'toggle_mute_notifications' : (arg_0: ToggleMuteNotificationsArgs) => Promise<
+      ToggleMuteNotificationsResponse
+    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,

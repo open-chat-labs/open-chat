@@ -1,8 +1,7 @@
 import { get } from "svelte/store";
-import type { ChatSummary, MessageIndexRange } from "../domain/chat/chat";
+import type { ChatSummary, MarkReadRequest, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { rollbar } from "../utils/logging";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 2000;
@@ -17,15 +16,13 @@ function initMessages(): Messages {
 function initChat(chat: ChatSummary): ChatReadMessages {
     return {
         chat,
-        capturedMessages: initMessages(),
-        pendingMessages: initMessages(),
+        messages: initMessages(),
     };
 }
 
 type ChatReadMessages = {
     chat: ChatSummary;
-    capturedMessages: Messages;
-    pendingMessages: Messages;
+    messages: Messages;
 };
 
 type Messages = {
@@ -47,41 +44,29 @@ export function stopMarkReadPoller(): void {
 }
 
 export function initMarkRead(api: ServiceContainer): MessageReadTracker {
-    const state: Record<string, ChatReadMessages> = {};
+    let state: Record<string, ChatReadMessages> = {};
+    let pendingState: Record<string, ChatReadMessages> = {};
 
-    function sendToServer(chatMessages: ChatReadMessages) {
-        chatMessages.pendingMessages = chatMessages.capturedMessages;
-        chatMessages.capturedMessages = initMessages();
-        if (
-            chatMessages.pendingMessages.indexRanges.length > 0 ||
-            chatMessages.pendingMessages.ids.size > 0
-        ) {
-            if (chatMessages.chat.kind === "direct_chat") {
-                return api
-                    .markDirectChatMessagesRead(
-                        chatMessages.chat.them,
-                        chatMessages.pendingMessages.indexRanges,
-                        chatMessages.pendingMessages.ids
-                    )
-                    .then((resp) => {
-                        if (resp === "failure") {
-                            rollbar.warn("marking direct chat messages as read failed");
-                        }
+    function sendToServer() {
+        pendingState = {
+            ...state,
+        };
+        state = {};
+
+        const req = Object.entries(pendingState).reduce<MarkReadRequest>(
+            (req, [chatId, messages]) => {
+                if (messages.messages.indexRanges.length > 0) {
+                    req.push({
+                        chatId,
+                        ranges: messages.messages.indexRanges,
                     });
-            } else if (chatMessages.chat.kind === "group_chat") {
-                return api
-                    .markGroupChatMessagesRead(
-                        chatMessages.chat.chatId,
-                        chatMessages.pendingMessages.indexRanges,
-                        chatMessages.pendingMessages.ids
-                    )
-                    .then((resp) => {
-                        if (resp === "failure") {
-                            rollbar.warn("marking group chat messages as read failed");
-                        }
-                    });
-            }
-        }
+                }
+                return req;
+            },
+            [] as MarkReadRequest
+        );
+
+        api.markMessagesRead(req);
     }
 
     if (interval !== undefined) {
@@ -89,9 +74,7 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
     }
 
     if (process.env.NODE_ENV !== "test") {
-        interval = setInterval(() => {
-            Object.values(state).forEach(sendToServer);
-        }, MARK_READ_INTERVAL);
+        interval = setInterval(sendToServer, MARK_READ_INTERVAL);
     }
 
     return {
@@ -101,11 +84,11 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
             }
             const chatMessage = state[chat.chatId];
             if (get(unconfirmed).has(messageId)) {
-                chatMessage.capturedMessages.ids.add(messageId);
+                chatMessage.messages.ids.add(messageId);
             } else {
-                chatMessage.capturedMessages.indexRanges = insertIndexIntoRanges(
+                chatMessage.messages.indexRanges = insertIndexIntoRanges(
                     messageIndex,
-                    chatMessage.capturedMessages.indexRanges
+                    chatMessage.messages.indexRanges
                 );
             }
         },

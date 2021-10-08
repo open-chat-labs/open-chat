@@ -19,7 +19,8 @@ export type AddParticipantsResponse = {
   { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'ParticipantLimitReached' : number };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -224,16 +225,6 @@ export type MakeAdminResponse = { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null };
-export interface MarkReadArgs {
-  'message_index_ranges' : Array<MessageIndexRange>,
-  'message_ids' : Array<MessageId>,
-}
-export type MarkReadResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : null } |
-  { 'NotInGroup' : null };
-export interface MarkReadSuccessResult {
-  'unrecognised_message_ids' : Array<MessageId>,
-}
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -524,7 +515,6 @@ export interface _SERVICE {
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
-  'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'remove_admin' : (arg_0: RemoveAdminArgs) => Promise<RemoveAdminResponse>,

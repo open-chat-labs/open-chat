@@ -32,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
+    'MaxGroupsCreated' : IDL.Nat16,
     'InternalError' : IDL.Null,
   });
   const MessageId = IDL.Nat;
@@ -165,6 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
     'Success' : IDL.Null,
+    'ParticipantLimitReached' : IDL.Nat32,
     'InternalError' : IDL.Text,
   });
   const LeaveGroupArgs = IDL.Record({ 'chat_id' : ChatId });
@@ -178,16 +180,14 @@ export const idlFactory = ({ IDL }) => {
     'to' : MessageIndex,
     'from' : MessageIndex,
   });
+  const ChatMessagesRead = IDL.Record({
+    'message_ranges' : IDL.Vec(MessageIndexRange),
+    'chat_id' : ChatId,
+  });
   const MarkReadArgs = IDL.Record({
-    'message_index_ranges' : IDL.Vec(MessageIndexRange),
-    'user_id' : UserId,
-    'message_ids' : IDL.Vec(MessageId),
+    'messages_read' : IDL.Vec(ChatMessagesRead),
   });
-  const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
-    'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-  });
+  const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MetricsArgs = IDL.Record({});
   const MetricsResponse = IDL.Record({
     'blob_bytes_used' : IDL.Nat64,
@@ -280,6 +280,14 @@ export const idlFactory = ({ IDL }) => {
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
+  });
+  const ToggleMuteNotificationsArgs = IDL.Record({
+    'mute' : IDL.Bool,
+    'chat_id' : ChatId,
+  });
+  const ToggleMuteNotificationsResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
@@ -407,6 +415,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
+    'toggle_mute_notifications' : IDL.Func(
+        [ToggleMuteNotificationsArgs],
+        [ToggleMuteNotificationsResponse],
+        [],
+      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
