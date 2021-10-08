@@ -72,6 +72,12 @@ type CyclesContent =
         caption: opt text;
     };
 
+type DeletedContent =
+    record {
+        user_id: UserId;
+        timestamp: TimestampMillis;
+    };
+
 type DirectChatCreated =
     record {
     };
@@ -276,7 +282,7 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
-        Deleted;
+        Deleted: DeletedContent;
     };
 
 type MessageIndexRange =

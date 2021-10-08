@@ -216,7 +216,7 @@ impl ChatEvents {
     pub fn edit_message(&mut self, args: EditMessageArgs) -> EditMessageResult {
         if let Some(message) = self.get_message_internal_mut(args.message_id) {
             if message.sender == args.sender {
-                if matches!(message.content, MessageContent::Deleted) {
+                if matches!(message.content, MessageContent::Deleted(_)) {
                     EditMessageResult::NotFound
                 } else {
                     message.content = args.content;
@@ -241,10 +241,13 @@ impl ChatEvents {
     ) -> DeleteMessageResult {
         if let Some(message) = self.get_message_internal_mut(message_id) {
             if message.sender == caller || is_admin {
-                if matches!(message.content, MessageContent::Deleted) {
+                if matches!(message.content, MessageContent::Deleted(_)) {
                     DeleteMessageResult::AlreadyDeleted
                 } else {
-                    message.content = MessageContent::Deleted;
+                    message.content = MessageContent::Deleted(DeletedContent {
+                        deleted_by: caller,
+                        timestamp: now,
+                    });
                     message.last_updated = Some(now);
                     self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                     DeleteMessageResult::Success
