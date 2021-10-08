@@ -1,3 +1,4 @@
+use crate::model::group_chats::MAX_GROUPS_PER_USER;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
@@ -52,7 +53,9 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         false
     }
 
-    if is_throttled() {
+    if runtime_state.data.group_chats.max_groups_created() {
+        Err(MaxGroupsCreated(MAX_GROUPS_PER_USER))
+    } else if is_throttled() {
         Err(Throttled)
     } else if args.name.len() > MAX_GROUP_NAME_LENGTH as usize {
         Err(NameTooLong(FieldTooLongResult {
@@ -91,5 +94,5 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    runtime_state.data.group_chats.add(chat_id, now);
+    runtime_state.data.group_chats.create(chat_id, now);
 }

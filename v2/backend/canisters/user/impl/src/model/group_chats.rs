@@ -5,8 +5,11 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, TimestampMillis};
 
+pub const MAX_GROUPS_PER_USER: u16 = 10;
+
 #[derive(CandidType, Deserialize, Default)]
 pub struct GroupChats {
+    groups_created: u16,
     group_chats: HashMap<ChatId, GroupChat>,
 }
 
@@ -25,7 +28,17 @@ impl GroupChats {
         self.group_chats.get_mut(chat_id)
     }
 
-    pub fn add(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
+    pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
+        if self.groups_created >= MAX_GROUPS_PER_USER {
+            false
+        } else {
+            self.join(chat_id, now);
+            self.groups_created += 1;
+            true
+        }
+    }
+
+    pub fn join(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
                 e.insert(GroupChat::new(chat_id, now));
@@ -41,6 +54,10 @@ impl GroupChats {
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
+    }
+
+    pub fn max_groups_created(&self) -> bool {
+        self.groups_created >= MAX_GROUPS_PER_USER
     }
 
     #[allow(dead_code)]
