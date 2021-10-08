@@ -118,7 +118,7 @@
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
                 subtext: formatLastOnlineDate($userStore[chatSummary.them].secondsSinceLastOnline),
-                typing: $typing.has(chatSummary.them),
+                typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
         const participantIds = chatSummary.participants.map((p) => p.userId);

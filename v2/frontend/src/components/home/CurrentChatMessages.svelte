@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onMount, tick } from "svelte";
+    import { onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -42,13 +42,15 @@
         unconfirmedReadByUs,
     } from "../../stores/unconfirmed";
     import { userStore } from "../../stores/user";
-    import type { PartialUserSummary } from "../../domain/user/user";
+    import type { UserLookup } from "../../domain/user/user";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
     export let machine: ActorRefFrom<ChatMachine>;
+
+    setContext<UserLookup>("userLookup", $userStore);
 
     // sucks that we can lie to the compiler like this so easily
     let messagesDiv: HTMLDivElement;
@@ -401,12 +403,6 @@
         return true;
     }
 
-    function messageSender(evt: EventWrapper<ChatEventType>): PartialUserSummary | undefined {
-        if (evt.event.kind === "message") {
-            return $userStore[evt.event.sender];
-        }
-    }
-
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return (
@@ -459,7 +455,6 @@
                         chatId={$machine.context.chatSummary.chatId}
                         chatType={$machine.context.chatSummary.kind}
                         user={$machine.context.user}
-                        sender={messageSender(evt)}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
                         on:chatWith
