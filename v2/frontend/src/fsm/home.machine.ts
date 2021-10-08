@@ -140,15 +140,18 @@ function findChatById(ctx: HomeContext, chatId: string): ChatSummary | undefined
     return ctx.chatSummaries.find((c) => c.chatId === chatId);
 }
 
+function findChatByChatType(ctx: HomeContext, msg: WebRtcMessage): ChatSummary | undefined {
+    return msg.chatType === "group_chat"
+        ? findChatById(ctx, msg.chatId)
+        : findDirectChatByUserId(ctx, msg.userId);
+}
+
 function sendMessageToChatBasedOnUser(
     ctx: HomeContext,
     msg: WebRtcMessage,
     chatMsg: ChatEvents
 ): void {
-    const chat =
-        msg.chatType === "group_chat"
-            ? findChatById(ctx, msg.chatId)
-            : findDirectChatByUserId(ctx, msg.userId);
+    const chat = findChatByChatType(ctx, msg);
     const actor = chat ? ctx.chatsIndex[chat.chatId] : undefined;
     if (actor) {
         actor.send(chatMsg);
@@ -221,14 +224,20 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         getUpdates: async (ctx, _) =>
             getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
 
-        webRtcMessageHandler: (_ctx, _ev) => (callback, _receive) => {
+        webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
                 const parsedMsg = message as WebRtcMessage;
+                const fromChat = findChatByChatType(ctx, parsedMsg);
+
                 if (parsedMsg.kind === "remote_user_typing") {
-                    typing.add(parsedMsg.userId);
+                    if (fromChat) {
+                        typing.add(fromChat.chatId, parsedMsg.userId);
+                    }
                 }
                 if (parsedMsg.kind === "remote_user_stopped_typing") {
-                    typing.delete(parsedMsg.userId);
+                    if (fromChat) {
+                        typing.delete(fromChat.chatId, parsedMsg.userId);
+                    }
                 }
                 if (parsedMsg.kind === "remote_user_toggled_reaction") {
                     callback({

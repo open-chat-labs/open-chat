@@ -27,7 +27,7 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
-                typing: $typing.has(chatSummary.them),
+                typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }
         return {
