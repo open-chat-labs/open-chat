@@ -1,11 +1,10 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{MessageId, MessageIndexRange};
+use types::MessageIndexRange;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub message_index_ranges: Vec<MessageIndexRange>,
-    pub message_ids: Vec<MessageId>,
+    pub message_ranges: Vec<MessageIndexRange>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

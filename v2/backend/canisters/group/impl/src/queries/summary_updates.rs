@@ -2,10 +2,8 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::cmp::max;
 use std::collections::HashSet;
 use types::{Avatar, EventIndex, EventWrapper, Message, Participant, TimestampMillis, UserId};
-use utils::range_set::convert_to_message_index_ranges;
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -13,38 +11,27 @@ fn summary_updates(args: Args) -> Response {
 }
 
 fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get(caller) {
-        let updates_from_events = process_events(args.updates_since, runtime_state);
+    if !runtime_state.is_caller_participant() {
+        return CallerNotInGroup;
+    }
 
-        let read_by_me = if participant.read_by_me.timestamp > args.updates_since {
-            Some(convert_to_message_index_ranges(participant.read_by_me.value.clone()))
-        } else {
-            None
+    let updates_from_events = process_events(args.updates_since, runtime_state);
+
+    if let Some(last_updated) = updates_from_events.latest_update {
+        let updates = SummaryUpdates {
+            chat_id: runtime_state.env.canister_id().into(),
+            last_updated,
+            name: updates_from_events.name,
+            description: updates_from_events.description,
+            avatar_id: Avatar::id(&runtime_state.data.avatar),
+            participants_added_or_updated: updates_from_events.participants_added_or_updated,
+            participants_removed: updates_from_events.participants_removed,
+            latest_message: updates_from_events.latest_message,
+            latest_event_index: updates_from_events.latest_event_index,
         };
-
-        if updates_from_events.latest_update.is_some() || read_by_me.is_some() {
-            let updates = SummaryUpdates {
-                chat_id: runtime_state.env.canister_id().into(),
-                last_updated: max(
-                    updates_from_events.latest_update.unwrap_or(0),
-                    participant.read_by_me.timestamp,
-                ),
-                name: updates_from_events.name,
-                description: updates_from_events.description,
-                avatar_id: Avatar::id(&runtime_state.data.avatar),
-                participants_added_or_updated: updates_from_events.participants_added_or_updated,
-                participants_removed: updates_from_events.participants_removed,
-                latest_message: updates_from_events.latest_message,
-                latest_event_index: updates_from_events.latest_event_index,
-                read_by_me,
-            };
-            Success(SuccessResult { updates })
-        } else {
-            SuccessNoUpdates
-        }
+        Success(SuccessResult { updates })
     } else {
-        CallerNotInGroup
+        SuccessNoUpdates
     }
 }
 

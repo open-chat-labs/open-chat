@@ -10,7 +10,6 @@ mod c2c_toggle_mute_notifications;
 mod delete_messages;
 mod edit_message;
 mod make_admin;
-mod mark_read;
 mod put_chunk;
 mod remove_admin;
 mod remove_participant;

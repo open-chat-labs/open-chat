@@ -220,6 +220,7 @@ fn finalize(
     {
         group_chats_added.entry(group_chat.chat_id).and_modify(|s| {
             s.notifications_muted = group_chat.notifications_muted.value;
+            s.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
         });
 
         group_chats_updated
@@ -229,7 +230,12 @@ fn finalize(
                     Some(group_chat.notifications_muted.value)
                 } else {
                     None
-                }
+                };
+                su.read_by_me = if group_chat.read_by_me.timestamp > updates_since {
+                    Some(convert_to_message_index_ranges(group_chat.read_by_me.value.clone()))
+                } else {
+                    None
+                };
             })
             .or_insert_with(|| group_chat.into());
     }

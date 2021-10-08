@@ -68,16 +68,18 @@ type ToggleReactionResponse =
 
 type MarkReadArgs =
     record {
-        user_id: UserId;
-        message_index_ranges: vec MessageIndexRange;
-        message_ids: vec MessageId;
+        messages_read: vec ChatMessagesRead;
+    };
+
+type ChatMessagesRead = 
+    record {
+        chat_id: ChatId;
+        message_ranges: vec MessageIndexRange,
     };
 
 type MarkReadResponse =
     variant {
         Success;
-        SuccessNoChange;
-        ChatNotFound;
     };
 
 type BlockUserArgs =
