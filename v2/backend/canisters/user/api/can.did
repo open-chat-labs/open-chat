@@ -141,7 +141,7 @@ type CreateGroupResponse =
         NameTooLong: FieldTooLongResult;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
-        MaxGroupsCreated: nat16;
+        MaxGroupsCreated: nat32;
         NameTaken;
         Throttled;
         InternalError;
