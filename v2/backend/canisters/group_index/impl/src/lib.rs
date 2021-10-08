@@ -6,6 +6,7 @@ use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
+use utils::canister_logger::LoggerWrapper;
 use utils::env::Environment;
 
 mod lifecycle;
@@ -26,6 +27,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+    static LOGGER: RefCell<LoggerWrapper> = RefCell::default();
 }
 
 struct RuntimeState {

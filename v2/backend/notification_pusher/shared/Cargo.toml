@@ -11,11 +11,11 @@ futures = "0.3.16"
 garcon = "0.2.3"
 ic-agent = "0.6.0"
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-log = "0.4.14"
 notifications_canister = { path = "../../canisters/notifications/api" }
 openssl = { version = "0.10.35", features = ["vendored"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
+slog = "2.7.0"
 tokio = { version = "1.10.0", features = ["macros", "time"] }
 types = { path = "../../libraries/types" }
 utils = { path = "../../libraries/utils" }

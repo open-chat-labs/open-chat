@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
+use utils::canister_logger::LoggerWrapper;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 
@@ -25,6 +26,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
+    static LOGGER: RefCell<LoggerWrapper> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -37,7 +39,7 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    /// Traps if the caller is an OpenChat user or an OpenChat user's canister
+    /// Traps if the caller is not an OpenChat user or an OpenChat user's canister
     pub fn trap_if_caller_not_open_chat_user(&self) {
         let caller = self.env.caller();
 

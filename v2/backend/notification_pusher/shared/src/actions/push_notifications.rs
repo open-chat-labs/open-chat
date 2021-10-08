@@ -3,7 +3,7 @@ use crate::ic_agent::IcAgent;
 use crate::ic_agent::IcAgentConfig;
 use crate::store::Store;
 use futures::future;
-use log::error;
+use slog::{error, Logger};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{CanisterId, IndexedEvent, Notification, NotificationEnvelope, UserId};
@@ -14,6 +14,7 @@ pub async fn run<'a>(
     canister_id: CanisterId,
     store: &'a mut Box<dyn Store + Send + Sync>,
     vapid_private_pem: &'a str,
+    logger: &Logger,
 ) -> Result<(), Error> {
     let ic_agent = IcAgent::build(config).await?;
     let from_notification_index = store
@@ -31,7 +32,7 @@ pub async fn run<'a>(
             .collect();
 
         let subscriptions_to_remove =
-            handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_pem).await;
+            handle_notifications(ic_response.notifications, subscriptions_map, vapid_private_pem, logger).await;
 
         let future1 = store.set_notification_index_processed_up_to(canister_id, latest_notification_index);
 
@@ -54,6 +55,7 @@ async fn handle_notifications(
     envelopes: Vec<IndexedEvent<NotificationEnvelope>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
     vapid_private_pem: &str,
+    logger: &Logger,
 ) -> HashMap<UserId, Vec<String>> {
     let grouped_by_user = group_notifications_by_user(envelopes);
 
@@ -68,6 +70,7 @@ async fn handle_notifications(
                 vapid_private_pem,
                 notifications,
                 s,
+                logger,
             ));
         }
     }
@@ -78,8 +81,8 @@ async fn handle_notifications(
 
     for result in results {
         match result {
-            Err(e) => {
-                error!("{:?}", e);
+            Err(err) => {
+                error!(logger, "Failed to push notifications"; "error" => ?err);
             }
             Ok((user_id, subscriptions_to_remove)) => {
                 if !subscriptions_to_remove.is_empty() {
@@ -123,6 +126,7 @@ async fn push_notifications_to_user(
     vapid_private_pem: &str,
     notifications: Vec<Notification>,
     subscriptions: Vec<SubscriptionInfo>,
+    logger: &Logger,
 ) -> Result<(UserId, Vec<String>), Error> {
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
@@ -145,13 +149,13 @@ async fn push_notifications_to_user(
         let result = &results[index];
         match result {
             Ok(_) => (),
-            Err(e) => match e {
+            Err(err) => match err {
                 WebPushError::EndpointNotValid | WebPushError::InvalidUri | WebPushError::EndpointNotFound => {
                     let subscription_key = subscriptions[index].keys.p256dh.clone();
                     subscriptions_to_remove.push(subscription_key);
                 }
                 _ => {
-                    error!("{:?}", e);
+                    error!(logger, "Failed to push notification"; "error" => ?err);
                 }
             },
         }

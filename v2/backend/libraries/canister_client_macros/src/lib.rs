@@ -42,7 +42,7 @@ macro_rules! generate_c2c_call {
             let result: CallResult<($method_name::Response,)> = ic_cdk::call(canister_id, method_name, (args,)).await;
 
             if let Err(error) = &result {
-                error!("Error calling '{}': {:?}: {}", method_name, error.0, error.1);
+                with_logger(|l| error!(l, "Error calling '{method_name}' c2c", method_name = &method_name; "code" => ?error.0, "message" => &error.1));
             }
 
             result.map(|r| r.0)

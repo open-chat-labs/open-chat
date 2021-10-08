@@ -1,12 +1,15 @@
-use crate::lifecycle::init_state;
+use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use group_canister::init::Args;
 use ic_cdk_macros::init;
+use slog::info;
+use slog_scope::with_logger;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
 #[init]
 fn init(args: Args) {
+    init_logger();
     ic_cdk::setup();
 
     let env = Box::new(CanisterEnv::new(false));
@@ -28,4 +31,6 @@ fn init(args: Args) {
     );
 
     init_state(env, data);
+
+    with_logger(|l| info!(l, "Initialization complete"));
 }
