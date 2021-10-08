@@ -12,6 +12,7 @@ pub enum Response {
     AlreadyInGroup,
     GroupNotPublic,
     Blocked,
+    ParticipantLimitReached(u32),
 }
 
 #[derive(CandidType, Deserialize, Debug)]

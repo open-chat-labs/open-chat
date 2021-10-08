@@ -159,6 +159,7 @@ type JoinGroupResponse =
         Blocked;
         GroupNotFound;
         GroupNotPublic;
+        ParticipantLimitReached: nat32;
         InternalError: text;
     };
 

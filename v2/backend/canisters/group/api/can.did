@@ -103,6 +103,7 @@ type AddParticipantsResponse =
         PartialSuccess: AddParticipantsPartialSuccessResult;
         Failed: AddParticipantsFailedResult;
         CallerNotInGroup;
+        ParticipantLimitReached: nat32;
         NotAuthorized;
     };
 

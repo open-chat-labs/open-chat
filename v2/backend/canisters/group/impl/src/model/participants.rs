@@ -4,6 +4,9 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
+const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
+const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
+
 #[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
@@ -123,6 +126,16 @@ impl Participants {
             .filter(|p| p.user_id != my_user_id && !p.notifications_muted)
             .map(|p| p.user_id)
             .collect()
+    }
+
+    pub fn user_limit_reached(&self, is_public: bool) -> Option<u32> {
+        let user_limit = if is_public { MAX_PARTICIPANTS_PER_PUBLIC_GROUP } else { MAX_PARTICIPANTS_PER_PRIVATE_GROUP };
+
+        if self.by_principal.len() >= user_limit as usize {
+            Some(user_limit)
+        } else {
+            None
+        }
     }
 }
 

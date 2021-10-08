@@ -5,7 +5,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{ChatId, TimestampMillis};
 
-pub const MAX_GROUPS_PER_USER: u16 = 10;
+const MAX_GROUPS_PER_USER: u16 = 10;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct GroupChats {
@@ -56,8 +56,12 @@ impl GroupChats {
         self.group_chats.values()
     }
 
-    pub fn max_groups_created(&self) -> bool {
-        self.groups_created >= MAX_GROUPS_PER_USER
+    pub fn max_groups_created(&self) -> Option<u16> {
+        if self.groups_created >= MAX_GROUPS_PER_USER {
+            Some(MAX_GROUPS_PER_USER)
+        } else {
+            None
+        }
     }
 
     #[allow(dead_code)]

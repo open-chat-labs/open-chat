@@ -13,6 +13,7 @@ pub enum Response {
     AlreadyInGroup,
     GroupNotFound,
     GroupNotPublic,
+    ParticipantLimitReached(u32),
     Blocked,
     InternalError(String),
 }
