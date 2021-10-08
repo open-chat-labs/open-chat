@@ -108,30 +108,3 @@ fn build_token(blob_id: u128, index: u32) -> Token {
         sha256: None,
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn extract_avatar_from_url() {
-        const BLOB_ID: u128 = 367253521351235123;
-        match extract_request_type(&format!("/avatar/{}", BLOB_ID)) {
-            RequestType::Avatar(Some(id)) => assert_eq!(BLOB_ID, id),
-            _ => assert!(false),
-        }
-    }
-
-    #[test]
-    fn extract_blob_from_url() {
-        assert!(matches!(
-            extract_request_type("/blobs/78278371289379212398"),
-            RequestType::Blob(_)
-        ));
-    }
-
-    #[test]
-    fn extract_other_from_url() {
-        assert!(matches!(extract_request_type("blah"), RequestType::Other));
-    }
-}
