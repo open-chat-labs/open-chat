@@ -17,6 +17,10 @@ fn c2c_join_group(args: Args) -> Response {
 
 fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_public {
+        if let Some(limit) = runtime_state.data.participants.user_limit_reached(true) {
+            return ParticipantLimitReached(limit);
+        }
+
         let user_id = runtime_state.env.caller().into();
         let now = runtime_state.env.now();
         let min_visible_event_index;

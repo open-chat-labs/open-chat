@@ -28,6 +28,7 @@ async fn join_group(args: Args) -> Response {
             c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
             c2c_join_group::Response::GroupNotPublic => GroupNotPublic,
             c2c_join_group::Response::Blocked => Blocked,
+            c2c_join_group::Response::ParticipantLimitReached(limit) => ParticipantLimitReached(limit),
         },
         Err(error) => InternalError(format!("{:?}", error)),
     }

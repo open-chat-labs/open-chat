@@ -86,7 +86,13 @@ struct PrepareResult {
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(limit) = runtime_state
+        .data
+        .participants
+        .user_limit_reached(runtime_state.data.is_public)
+    {
+        Err(ParticipantLimitReached(limit))
+    } else if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         let can_add_participants = participant.role.can_add_participants(runtime_state.data.is_public);
         if can_add_participants {
             let mut users_to_add = Vec::new();

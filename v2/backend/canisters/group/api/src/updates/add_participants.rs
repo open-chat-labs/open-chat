@@ -13,6 +13,7 @@ pub enum Response {
     PartialSuccess(PartialSuccessResult),
     Failed(FailedResult),
     CallerNotInGroup,
+    ParticipantLimitReached(u32),
     NotAuthorized,
 }
 
