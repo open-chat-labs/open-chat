@@ -50,7 +50,7 @@ import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
 
-const ONE_MINUTE = 60 * 1000;
+const ONE_MINUTE = 10 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE;
 const USER_UPDATE_INTERVAL = ONE_MINUTE;

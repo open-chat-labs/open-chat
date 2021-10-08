@@ -3,8 +3,7 @@
 <script lang="ts">
     import Link from "../Link.svelte";
     import { AvatarSize } from "../../domain/user/user";
-    import type { PartialUserSummary } from "../../domain/user/user";
-    import type { UserSummary } from "../../domain/user/user";
+    import type { UserSummary, UserLookup } from "../../domain/user/user";
     import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -19,7 +18,7 @@
     import { pop } from "../../utils/transition";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { avatarUrl, getUserStatus } from "../../domain/user/user.utils";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
@@ -30,14 +29,13 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
-    import { userStore } from "../../stores/user";
     import UnresolvedReply from "./UnresolvedReply.svelte";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
-    export let sender: PartialUserSummary | undefined;
+    export let senderId: string;
     export let msg: Message;
     export let me: boolean;
     export let eventIndex: number;
@@ -50,11 +48,12 @@
     export let focused: boolean;
 
     let msgElement: HTMLElement;
+    let userLookup = getContext<UserLookup>("userLookup");
+    let sender = userLookup[senderId];
 
-    let senderId = msg.sender;
     let groupChat = chatType === "group_chat";
     let username = sender?.username;
-    let userStatus = getUserStatus($userStore, senderId);
+    let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
     let debug = false;
@@ -63,7 +62,6 @@
     $: fill = fillMessage(msg);
 
     afterUpdate(() => {
-        // todo - keep an eye on this
         console.log("updating ChatMessage component");
 
         if (readByMe) {

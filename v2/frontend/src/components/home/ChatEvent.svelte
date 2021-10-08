@@ -6,22 +6,17 @@
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import ParticipantsChangedEvent from "./ParticipantsChangedEvent.svelte";
     import ParticipantLeftEvent from "./ParticipantLeftEvent.svelte";
-    import type { PartialUserSummary, UserSummary } from "../../domain/user/user";
+    import type { UserSummary } from "../../domain/user/user";
     import type { ChatEvent, EventWrapper, Message } from "../../domain/chat/chat";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { userStore } from "../../stores/user";
+    import { afterUpdate, createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher();
 
-    // todo - I hate the way that I cannot enforce the relationship between the chatSummary and the event
-    // i.e. I cannot prevent a group chat with a direct chat event *at the type level*
-    // I am *sure* there must be a way to do it.
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: UserSummary | undefined;
-    export let sender: PartialUserSummary | undefined;
     export let event: EventWrapper<ChatEvent>;
     export let last: boolean;
     export let me: boolean;
@@ -34,11 +29,15 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
+
+    afterUpdate(() => {
+        console.log("updating ChatEvent component");
+    });
 </script>
 
 {#if event.event.kind === "message"}
     <ChatMessage
-        {sender}
+        senderId={event.event.sender}
         {focused}
         {observer}
         {confirmed}
@@ -81,13 +80,13 @@
     <ParticipantLeftEvent
         {user}
         label={"userLeft"}
-        subject={$userStore[event.event.userId]}
+        subjectId={event.event.userId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "participant_joined"}
     <ParticipantLeftEvent
         {user}
         label={"userJoined"}
-        subject={$userStore[event.event.userId]}
+        subjectId={event.event.userId}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "participants_promoted_to_admin"}
     <ParticipantsChangedEvent

@@ -4,14 +4,12 @@ import type { PartialUserSummary, UserLookup } from "../domain/user/user";
 const { subscribe, update } = writable<UserLookup>({});
 
 export function overwriteUser(lookup: UserLookup, user: PartialUserSummary): UserLookup {
-    return {
-        ...lookup,
-        [user.userId]: {
-            ...lookup[user.userId],
-            ...user,
-            username: user.username ?? lookup[user.userId]?.username,
-        },
+    lookup[user.userId] = {
+        ...lookup[user.userId],
+        ...user,
+        username: user.username ?? lookup[user.userId]?.username,
     };
+    return lookup;
 }
 
 export const userStore = {
