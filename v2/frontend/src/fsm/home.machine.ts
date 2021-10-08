@@ -605,6 +605,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                     : undefined,
                                                 replyingTo: ctx.replyingTo,
                                                 localReactions: {},
+                                                markRead: ctx.markRead,
                                             }),
                                             `chat-${key}`
                                         ),
@@ -656,7 +657,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     const userIds = userIdsFromChatSummary(c);
 
                                     ctx.markRead.markMessageRead(
-                                        c,
+                                        c.chatId,
                                         ev.data.messageIndex,
                                         ev.data.messageId
                                     );

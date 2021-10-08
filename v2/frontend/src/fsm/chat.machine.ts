@@ -41,6 +41,7 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import { unconfirmed } from "../stores/unconfirmed";
 import { get } from "svelte/store";
 import { userStore } from "../stores/user";
+import type { MessageReadTracker } from "../stores/markRead";
 
 const PRUNE_LOCAL_REACTIONS_INTERVAL = 30 * 1000;
 
@@ -55,6 +56,7 @@ export interface ChatContext {
     fileToAttach?: MessageContent;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
+    markRead: MessageReadTracker;
 }
 
 type LoadEventsResponse = {
@@ -239,7 +241,12 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 ? {
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
-                          replaceLocal(ctx.events, ev.data.events),
+                          replaceLocal(
+                              ctx.chatSummary.chatId,
+                              ctx.markRead,
+                              ctx.events,
+                              ev.data.events
+                          ),
                           ev.data.affectedEvents,
                           ctx.localReactions
                       ),

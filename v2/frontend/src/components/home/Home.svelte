@@ -29,6 +29,7 @@
     import { blockedUsers } from "../../stores/blockedUsers";
     import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
+    import { userStore } from "../../stores/user";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -96,7 +97,12 @@
         if (searchTerm !== "") {
             searching = true;
             groupSearchResults = $machine.context.serviceContainer!.searchGroups(searchTerm, 10);
-            userSearchResults = $machine.context.serviceContainer!.searchUsers(searchTerm, 10);
+            userSearchResults = $machine.context
+                .serviceContainer!.searchUsers(searchTerm, 10)
+                .then((resp) => {
+                    userStore.addMany(resp);
+                    return resp;
+                });
             messageSearchResults = $machine.context.serviceContainer!.searchAllMessages(
                 searchTerm,
                 10

@@ -26,7 +26,8 @@ import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
-import { unconfirmed } from "../../stores/unconfirmed";
+import { unconfirmed, unconfirmedReadByUs } from "../../stores/unconfirmed";
+import type { MessageReadTracker } from "../../stores/markRead";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -636,6 +637,8 @@ function partitionEvents(
 }
 
 export function replaceLocal(
+    chatId: string,
+    messageReadTracker: MessageReadTracker,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
@@ -648,7 +651,11 @@ export function replaceLocal(
     // overwrite any local msgs with their server counterpart to correct any index errors
     Object.entries(serverMsgs).forEach(([id, e]) => {
         // only now do we consider this message confirmed
-        unconfirmed.delete(BigInt(id));
+        const idNum = BigInt(id);
+        unconfirmed.delete(idNum);
+        if (e.event.kind === "message") {
+            messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+        }
         clientMsgs[id] = e;
     });
 

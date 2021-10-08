@@ -117,7 +117,7 @@
                 name: $userStore[chatSummary.them]?.username,
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
-                subtext: formatLastOnlineDate($userStore[chatSummary.them].secondsSinceLastOnline),
+                subtext: formatLastOnlineDate($userStore[chatSummary.them]?.secondsSinceLastOnline),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
             };
         }

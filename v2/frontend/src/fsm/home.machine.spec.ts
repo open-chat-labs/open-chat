@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { ChatSummary, DirectChatSummary } from "../domain/chat/chat";
+import type { DirectChatSummary } from "../domain/chat/chat";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type { MessageReadTracker } from "../stores/markRead";
+import { fakeMessageReadTracker } from "../stores/markRead";
 import { HomeContext, homeMachine } from "./home.machine";
 import { testTransition } from "./machine.spec.utils";
 
-const fakeMarkRead: MessageReadTracker = {
-    markMessageRead: (_chat: ChatSummary, _messageIndex: number, _messageId: bigint) => {
-        return undefined;
-    },
-};
 const directChat: DirectChatSummary = {
     kind: "direct_chat",
     them: "abcdefg",
@@ -36,7 +31,7 @@ const homeContext: HomeContext = {
     chatsIndex: {},
     chatUpdatesSince: undefined,
     replyingTo: undefined,
-    markRead: fakeMarkRead,
+    markRead: fakeMessageReadTracker,
 };
 
 describe("home machine transitions", () => {
@@ -70,7 +65,7 @@ describe("home machine transitions", () => {
                 chatSummaries: [directChat],
                 usersLastUpdate: BigInt(0),
                 chatsIndex: {},
-                markRead: fakeMarkRead,
+                markRead: fakeMessageReadTracker,
             }),
             { loaded_chats: "no_chat_selected" },
             { type: "SELECT_CHAT", data: { chatId: "abcdefg", eventIndex: undefined } },
@@ -98,7 +93,7 @@ describe("home machine transitions", () => {
                 usersLastUpdate: BigInt(0),
                 selectedChat: directChat,
                 chatsIndex: {},
-                markRead: fakeMarkRead,
+                markRead: fakeMessageReadTracker,
             }),
             { loaded_chats: "no_chat_selected" },
             "CLEAR_SELECTED_CHAT",

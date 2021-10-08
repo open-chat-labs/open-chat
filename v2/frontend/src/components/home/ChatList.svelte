@@ -52,7 +52,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const username = $userStore[chat.them].username;
+            const username = $userStore[chat.them]?.username;
             return username ? username.indexOf(searchTerm) >= 0 : false;
         }
         return false;
