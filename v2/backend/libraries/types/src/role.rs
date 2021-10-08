@@ -39,4 +39,8 @@ impl Role {
     pub fn can_update_group(&self) -> bool {
         matches!(self, Role::Admin)
     }
+
+    pub fn can_delete_messages(&self) -> bool {
+        matches!(self, Role::Admin)
+    }
 }

@@ -232,9 +232,15 @@ impl ChatEvents {
         }
     }
 
-    pub fn delete_message(&mut self, caller: UserId, message_id: MessageId, now: TimestampMillis) -> DeleteMessageResult {
+    pub fn delete_message(
+        &mut self,
+        caller: UserId,
+        is_admin: bool,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> DeleteMessageResult {
         if let Some(message) = self.get_message_internal_mut(message_id) {
-            if message.sender == caller {
+            if message.sender == caller || is_admin {
                 if matches!(message.content, MessageContent::Deleted) {
                     DeleteMessageResult::AlreadyDeleted
                 } else {

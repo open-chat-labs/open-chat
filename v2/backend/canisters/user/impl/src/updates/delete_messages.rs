@@ -23,7 +23,12 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let deleted: Vec<_> = args
             .message_ids
             .into_iter()
-            .filter(|id| matches!(chat.events.delete_message(my_user_id, *id, now), DeleteMessageResult::Success))
+            .filter(|id| {
+                matches!(
+                    chat.events.delete_message(my_user_id, false, *id, now),
+                    DeleteMessageResult::Success
+                )
+            })
             .collect();
 
         if !deleted.is_empty() {
