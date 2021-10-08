@@ -4,8 +4,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId};
 
-pub const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
-pub const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
+const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
+const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
