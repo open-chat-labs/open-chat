@@ -239,15 +239,22 @@ type EventsArgs =
         max_events: nat32;
     };
 
+type EventsByIndexArgs =
+    record {
+        events: vec EventIndex;
+    };
+
 type EventsRangeArgs =
     record {
         from_index: EventIndex;
         to_index: EventIndex;
     };
 
-type EventsByIndexArgs =
+type EventsWindowArgs =
     record {
-        events: vec EventIndex;
+        mid_point: MessageIndex;
+        max_messages: nat32;
+        max_events: nat32;
     };
 
 type EventsSuccessResult =
@@ -323,9 +330,12 @@ service: {
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
+
     events: (EventsArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
+    events_range: (EventsRangeArgs) -> (EventsResponse) query;
+    events_window: (EventsWindowArgs) -> (EventsResponse) query;
+
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
     metrics: (MetricsArgs) -> (MetricsResponse) query;
 }
