@@ -4,8 +4,8 @@ use serde::Deserialize;
 use std::cmp::{max, min};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet, VecDeque};
-use types::*;
 use std::iter::FromIterator;
+use types::*;
 
 #[derive(CandidType, Deserialize)]
 pub struct ChatEvents {
@@ -487,10 +487,7 @@ impl ChatEvents {
 
             let mut events = Vec::new();
             let mut message_count = 0;
-            for event in iter
-                .take_while(|e| e.index >= min_visible_event_index)
-                .take(max_events)
-            {
+            for event in iter.take_while(|e| e.index >= min_visible_event_index).take(max_events) {
                 let is_message = matches!(event.event, ChatEventInternal::Message(_));
 
                 events.push(event);
@@ -538,10 +535,7 @@ impl ChatEvents {
                     // reached) adding one event each time until the message limit is reached, the
                     // event limit is reached, or there are no more events available.
                     loop {
-                        if message_count == max_messages ||
-                            events.len() == max_events ||
-                            (min_reached && max_reached)
-                        {
+                        if message_count == max_messages || events.len() == max_events || (min_reached && max_reached) {
                             break;
                         }
 
