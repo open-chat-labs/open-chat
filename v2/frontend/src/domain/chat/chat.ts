@@ -356,6 +356,7 @@ export type CreateGroupResponse =
     | CreateGroupDescriptionTooLong
     | GroupNameTaken
     | AvatarTooBig
+    | MaxGroupsCreated
     | CreateGroupThrottled;
 
 export type CreateGroupSuccess = {
@@ -387,6 +388,10 @@ export type AvatarTooBig = {
     kind: "avatar_too_big";
 };
 
+export type MaxGroupsCreated = {
+    kind: "max_groups_created";
+};
+
 export type CreateGroupThrottled = {
     kind: "throttled";
 };
@@ -394,6 +399,7 @@ export type CreateGroupThrottled = {
 export type AddParticipantsResponse =
     | AddParticipantsSuccess
     | AddParticipantsNotAuthorised
+    | ParticipantLimitReached
     | AddParticipantsPartialSuccess
     | AddParticipantsFailed
     | AddParticipantsNotInGroup;
@@ -408,6 +414,10 @@ export type AddParticipantsNotInGroup = {
 
 export type AddParticipantsNotAuthorised = {
     kind: "add_participants_not_authorised";
+};
+
+export type ParticipantLimitReached = {
+    kind: "participant_limit_reached";
 };
 
 export type AddParticipantsPartialSuccess = {
@@ -510,9 +520,15 @@ export type JoinGroupResponse =
     | "group_not_found"
     | "group_not_public"
     | "already_in_group"
+    | "participant_limit_reached"
     | "internal_error";
 
-export type MarkReadResponse = "success" | "failure";
+export type MarkReadRequest = {
+    ranges: MessageIndexRange[];
+    chatId: string;
+}[];
+
+export type MarkReadResponse = "success";
 
 export type UpdateGroupResponse =
     | "success"

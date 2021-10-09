@@ -92,10 +92,6 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.removeParticipant(userId);
     }
 
-    markMessagesRead(ranges: MessageIndexRange[], ids: Set<bigint>): Promise<MarkReadResponse> {
-        return this.client.markMessagesRead(ranges, ids);
-    }
-
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {
         return this.client.updateGroup(name, desc, avatar);
     }

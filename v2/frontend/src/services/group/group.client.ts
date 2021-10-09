@@ -24,7 +24,6 @@ import {
     changeAdminResponse,
     sendMessageResponse,
     removeParticipantResponse,
-    markReadResponse,
     updateGroupResponse,
     toggleReactionResponse,
     deleteMessageResponse,
@@ -178,16 +177,6 @@ export class GroupClient extends CandidService implements IGroupClient {
                     sendMessageResponse
                 );
             });
-    }
-
-    markMessagesRead(ranges: MessageIndexRange[], ids: Set<bigint>): Promise<MarkReadResponse> {
-        return this.handleResponse(
-            this.groupService.mark_read({
-                message_index_ranges: ranges,
-                message_ids: [...ids],
-            }),
-            markReadResponse
-        );
     }
 
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse> {

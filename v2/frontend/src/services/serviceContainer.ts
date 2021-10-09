@@ -33,7 +33,6 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
-    MessageIndexRange,
     MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
@@ -42,6 +41,7 @@ import type {
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
+    MarkReadRequest,
 } from "../domain/chat/chat";
 import type { IGroupClient } from "./group/group.client.interface";
 import { Database, db } from "../utils/caching";
@@ -58,7 +58,6 @@ function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
         margin: 0,
         format: "svg",
-        // background: [230, 230, 230, 230],
     });
     return `data:image/svg+xml;base64,${identicon}`;
 }
@@ -463,20 +462,8 @@ export class ServiceContainer {
         return this.userClient.joinGroup(chatId);
     }
 
-    markDirectChatMessagesRead(
-        userId: string,
-        ranges: MessageIndexRange[],
-        ids: Set<bigint>
-    ): Promise<MarkReadResponse> {
-        return this.userClient.markMessagesRead(userId, ranges, ids);
-    }
-
-    markGroupChatMessagesRead(
-        chatId: string,
-        ranges: MessageIndexRange[],
-        ids: Set<bigint>
-    ): Promise<MarkReadResponse> {
-        return this.getGroupClient(chatId).markMessagesRead(ranges, ids);
+    markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
+        return this.userClient.markMessagesRead(request);
     }
 
     setUserAvatar(data: Uint8Array): Promise<BlobReference> {

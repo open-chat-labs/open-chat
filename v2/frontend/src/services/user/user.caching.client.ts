@@ -18,6 +18,7 @@ import type {
     DeleteMessageResponse,
     JoinGroupResponse,
     EditMessageResponse,
+    MarkReadRequest,
 } from "../../domain/chat/chat";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -135,12 +136,8 @@ export class CachingUserClient implements IUserClient {
         return this.client.joinGroup(chatId);
     }
 
-    markMessagesRead(
-        userId: string,
-        ranges: MessageIndexRange[],
-        ids: Set<bigint>
-    ): Promise<MarkReadResponse> {
-        return this.client.markMessagesRead(userId, ranges, ids);
+    markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
+        return this.client.markMessagesRead(request);
     }
 
     setAvatar(data: Uint8Array): Promise<BlobReference> {

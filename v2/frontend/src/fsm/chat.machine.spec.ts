@@ -14,6 +14,7 @@ import { newMessageId } from "../domain/chat/chat.utils";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
 import { ServiceContainer } from "../services/serviceContainer";
 import { UserIndexClient } from "../services/userIndex/userIndex.client";
+import { fakeMessageReadTracker } from "../stores/markRead";
 import {
     ChatContext,
     chatMachine,
@@ -84,6 +85,7 @@ const directContext: ChatContext = {
     },
     replyingTo: undefined,
     localReactions: {},
+    markRead: fakeMessageReadTracker,
 };
 
 GroupIndexClient.create = jest.fn();
@@ -101,6 +103,7 @@ const groupContext: ChatContext = {
     },
     replyingTo: undefined,
     localReactions: {},
+    markRead: fakeMessageReadTracker,
 };
 
 describe("chat machine transitions", () => {

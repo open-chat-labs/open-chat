@@ -21,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
+    'ParticipantLimitReached' : IDL.Nat32,
   });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
   const BlockUserResponse = IDL.Variant({
@@ -202,19 +203,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const MessageIndexRange = IDL.Record({
-    'to' : MessageIndex,
-    'from' : MessageIndex,
-  });
-  const MarkReadArgs = IDL.Record({
-    'message_index_ranges' : IDL.Vec(MessageIndexRange),
-    'message_ids' : IDL.Vec(MessageId),
-  });
-  const MarkReadResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotInGroup' : IDL.Null,
-  });
   const MetricsArgs = IDL.Record({});
   const MetricsResponse = IDL.Record({
     'blob_bytes_used' : IDL.Nat64,
@@ -302,6 +290,10 @@ export const idlFactory = ({ IDL }) => {
     'role' : Role,
     'user_id' : UserId,
     'date_added' : TimestampMillis,
+  });
+  const MessageIndexRange = IDL.Record({
+    'to' : MessageIndex,
+    'from' : MessageIndex,
   });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
@@ -413,7 +405,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
-    'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'remove_admin' : IDL.Func([RemoveAdminArgs], [RemoveAdminResponse], []),

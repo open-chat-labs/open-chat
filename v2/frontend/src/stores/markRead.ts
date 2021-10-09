@@ -1,40 +1,14 @@
 import { get } from "svelte/store";
-import type { ChatSummary, MessageIndexRange } from "../domain/chat/chat";
+import type { MarkReadRequest, MessageIndexRange } from "../domain/chat/chat";
 import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { rollbar } from "../utils/logging";
 import { unconfirmed } from "./unconfirmed";
 
-const MARK_READ_INTERVAL = 2000;
-
-function initMessages(): Messages {
-    return {
-        indexRanges: [],
-        ids: new Set<bigint>(),
-    };
-}
-
-function initChat(chat: ChatSummary): ChatReadMessages {
-    return {
-        chat,
-        capturedMessages: initMessages(),
-        pendingMessages: initMessages(),
-    };
-}
-
-type ChatReadMessages = {
-    chat: ChatSummary;
-    capturedMessages: Messages;
-    pendingMessages: Messages;
-};
-
-type Messages = {
-    indexRanges: MessageIndexRange[];
-    ids: Set<bigint>;
-};
+const MARK_READ_INTERVAL = 10 * 1000;
 
 export type MessageReadTracker = {
-    markMessageRead: (chat: ChatSummary, messageIndex: number, messageId: bigint) => void;
+    markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
+    confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => void;
 };
 
 let interval: NodeJS.Timer | undefined = undefined;
@@ -47,40 +21,31 @@ export function stopMarkReadPoller(): void {
 }
 
 export function initMarkRead(api: ServiceContainer): MessageReadTracker {
-    const state: Record<string, ChatReadMessages> = {};
+    const waiting: Set<bigint> = new Set<bigint>();
+    let state: Record<string, MessageIndexRange[]> = {};
+    let pendingState: Record<string, MessageIndexRange[]> = {};
 
-    function sendToServer(chatMessages: ChatReadMessages) {
-        chatMessages.pendingMessages = chatMessages.capturedMessages;
-        chatMessages.capturedMessages = initMessages();
-        if (
-            chatMessages.pendingMessages.indexRanges.length > 0 ||
-            chatMessages.pendingMessages.ids.size > 0
-        ) {
-            if (chatMessages.chat.kind === "direct_chat") {
-                return api
-                    .markDirectChatMessagesRead(
-                        chatMessages.chat.them,
-                        chatMessages.pendingMessages.indexRanges,
-                        chatMessages.pendingMessages.ids
-                    )
-                    .then((resp) => {
-                        if (resp === "failure") {
-                            rollbar.warn("marking direct chat messages as read failed");
-                        }
+    function sendToServer() {
+        pendingState = {
+            ...state,
+        };
+        state = {};
+
+        const req = Object.entries(pendingState).reduce<MarkReadRequest>(
+            (req, [chatId, ranges]) => {
+                if (ranges.length > 0) {
+                    req.push({
+                        chatId,
+                        ranges,
                     });
-            } else if (chatMessages.chat.kind === "group_chat") {
-                return api
-                    .markGroupChatMessagesRead(
-                        chatMessages.chat.chatId,
-                        chatMessages.pendingMessages.indexRanges,
-                        chatMessages.pendingMessages.ids
-                    )
-                    .then((resp) => {
-                        if (resp === "failure") {
-                            rollbar.warn("marking group chat messages as read failed");
-                        }
-                    });
-            }
+                }
+                return req;
+            },
+            [] as MarkReadRequest
+        );
+
+        if (req.length > 0) {
+            api.markMessagesRead(req);
         }
     }
 
@@ -89,25 +54,47 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
     }
 
     if (process.env.NODE_ENV !== "test") {
-        interval = setInterval(() => {
-            Object.values(state).forEach(sendToServer);
-        }, MARK_READ_INTERVAL);
+        interval = setInterval(sendToServer, MARK_READ_INTERVAL);
+    }
+
+    // if the user closes the window, try to flush any unsynced changes to the server
+    if (process.env.NODE_ENV !== "test") {
+        window.onbeforeunload = sendToServer;
+    }
+
+    function markMessageRead(chatId: string, messageIndex: number, messageId: bigint) {
+        if (!state[chatId]) {
+            state[chatId] = [];
+        }
+        if (get(unconfirmed).has(messageId)) {
+            // if a message is unconfirmed we will just tuck it away until we are told it has been confirmed
+            waiting.add(messageId);
+        } else {
+            state[chatId] = insertIndexIntoRanges(messageIndex, state[chatId] ?? []);
+        }
+    }
+
+    function confirmMessage(chatId: string, messageIndex: number, messageId: bigint) {
+        // this is called when a message is confirmed so that we can move it from
+        // the unconfirmed read to the confirmed read. This means that it will get
+        // marked as read on the back end
+        if (waiting.has(messageId)) {
+            waiting.delete(messageId);
+            markMessageRead(chatId, messageIndex, messageId);
+        }
     }
 
     return {
-        markMessageRead: (chat: ChatSummary, messageIndex: number, messageId: bigint): void => {
-            if (!state[chat.chatId]) {
-                state[chat.chatId] = initChat(chat);
-            }
-            const chatMessage = state[chat.chatId];
-            if (get(unconfirmed).has(messageId)) {
-                chatMessage.capturedMessages.ids.add(messageId);
-            } else {
-                chatMessage.capturedMessages.indexRanges = insertIndexIntoRanges(
-                    messageIndex,
-                    chatMessage.capturedMessages.indexRanges
-                );
-            }
-        },
+        markMessageRead,
+        confirmMessage,
     };
 }
+
+export const fakeMessageReadTracker: MessageReadTracker = {
+    markMessageRead: (_chat: string, _messageIndex: number, _messageId: bigint) => {
+        return undefined;
+    },
+    confirmMessage: (_chatId: string, _messageIndex: number, _messageId: bigint) => {
+        return undefined;
+    },
+};

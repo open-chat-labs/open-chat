@@ -4,7 +4,6 @@ import type {
     ApiEventWrapper,
     ApiGroupChatEvent,
     ApiMakeAdminResponse,
-    ApiMarkReadResponse,
     ApiPutChunkResponse,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
@@ -22,7 +21,6 @@ import type {
     PutChunkResponse,
     ChangeAdminResponse,
     RemoveParticipantResponse,
-    MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     DeleteMessageResponse,
@@ -94,22 +92,6 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "not_in_group";
     }
     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-}
-
-export function markReadResponse(candid: ApiMarkReadResponse): MarkReadResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("SuccessNoChange" in candid) {
-        return "success";
-    }
-    if ("ChatNotFound" in candid) {
-        return "failure";
-    }
-    if ("NotInGroup" in candid) {
-        return "failure";
-    }
-    throw new UnsupportedValueError("Unexpected ApiMarkReadResponse type received", candid);
 }
 
 export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse {
@@ -238,6 +220,12 @@ export function addParticipantsResponse(
     if ("NotAuthorized" in candid) {
         return {
             kind: "add_participants_not_authorised",
+        };
+    }
+    if ("ParticipantLimitReached" in candid) {
+        return {
+            // todo - need some UI changes to deal with this properly
+            kind: "participant_limit_reached",
         };
     }
     if ("Success" in candid) {
