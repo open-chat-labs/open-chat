@@ -70,8 +70,8 @@ export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
-  'user_id' : UserId,
   'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
@@ -130,6 +130,11 @@ export interface EventsSuccessResult {
   'affected_events' : Array<GroupChatEventWrapper>,
   'events' : Array<GroupChatEventWrapper>,
   'latest_event_index' : EventIndex,
+}
+export interface EventsWindowArgs {
+  'mid_point' : MessageIndex,
+  'max_messages' : number,
+  'max_events' : number,
 }
 export interface FieldTooLongResult {
   'length_provided' : number,
@@ -518,6 +523,7 @@ export interface _SERVICE {
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
+  'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'make_admin' : (arg_0: MakeAdminArgs) => Promise<MakeAdminResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,

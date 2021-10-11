@@ -84,8 +84,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const TimestampMillis = IDL.Nat64;
   const DeletedContent = IDL.Record({
-    'user_id' : UserId,
     'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
@@ -162,6 +162,12 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'to_index' : EventIndex,
     'from_index' : EventIndex,
+  });
+  const EventsWindowArgs = IDL.Record({
+    'mid_point' : MessageIndex,
+    'user_id' : UserId,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
   });
   const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const JoinGroupResponse = IDL.Variant({
@@ -402,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
+    'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),

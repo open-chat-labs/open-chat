@@ -88,12 +88,15 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
         // marked as read on the back end
         if (waiting.has(messageId)) {
             waiting.delete(messageId);
+            console.log("read: confirming message at index ", messageIndex);
             markMessageRead(chatId, messageIndex, messageId);
+            console.log("read: after confirm: ", state[chatId]);
         }
     }
 
     function syncWithServer(chatId: string, ranges: MessageIndexRange[]) {
         state[chatId] = mergeMessageIndexRanges(state[chatId] ?? [], ranges);
+        console.log("read: after sync: ", state[chatId]);
     }
 
     function unreadMessageCount(
@@ -117,7 +120,7 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
             [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
         );
 
-        return lastMessageIndex - lastRead + unread + waiting.size;
+        return lastMessageIndex - lastRead + unread - waiting.size;
     }
 
     return {

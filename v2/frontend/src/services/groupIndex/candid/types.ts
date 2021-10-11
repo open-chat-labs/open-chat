@@ -43,8 +43,8 @@ export interface ConfirmationCodeSms {
 }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
 export interface DeletedContent {
-  'user_id' : UserId,
   'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |

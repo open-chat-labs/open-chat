@@ -79,8 +79,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const TimestampMillis = IDL.Nat64;
   const DeletedContent = IDL.Record({
-    'user_id' : UserId,
     'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
@@ -199,6 +199,11 @@ export const idlFactory = ({ IDL }) => {
   const EventsRangeArgs = IDL.Record({
     'to_index' : EventIndex,
     'from_index' : EventIndex,
+  });
+  const EventsWindowArgs = IDL.Record({
+    'mid_point' : MessageIndex,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
   });
   const MakeAdminArgs = IDL.Record({ 'user_id' : UserId });
   const MakeAdminResponse = IDL.Variant({
@@ -408,6 +413,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
+    'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),

@@ -211,6 +211,8 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
 
+            console.log("criteria: ", criteria);
+
             const [, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
