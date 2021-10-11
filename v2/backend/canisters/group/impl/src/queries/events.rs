@@ -15,8 +15,8 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let events = runtime_state.data.events.from_index(
             args.start_index,
             args.ascending,
-            args.max_messages,
-            args.max_events,
+            args.max_messages as usize,
+            args.max_events as usize,
             min_visible_event_index,
         );
 
