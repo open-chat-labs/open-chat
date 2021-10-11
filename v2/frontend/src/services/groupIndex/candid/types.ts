@@ -42,6 +42,10 @@ export interface ConfirmationCodeSms {
   'phone_number' : string,
 }
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export interface DeletedContent {
+  'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
+}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -193,7 +197,7 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : null };
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
