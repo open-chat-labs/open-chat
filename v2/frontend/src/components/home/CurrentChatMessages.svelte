@@ -28,7 +28,7 @@
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
-        getUnreadMessages,
+        getMinVisibleMessageIndex,
         groupEvents,
         messageIsReadByMe,
         messageIsReadByThem,
@@ -333,7 +333,11 @@
 
     $: groupedEvents = groupEvents($machine.context.events);
 
-    $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
+    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
+        $machine.context.chatSummary.chatId,
+        getMinVisibleMessageIndex($machine.context.chatSummary),
+        $machine.context.chatSummary.latestMessage?.event.messageIndex
+    );
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
 

@@ -1,14 +1,22 @@
 import { get } from "svelte/store";
 import type { MarkReadRequest, MessageIndexRange } from "../domain/chat/chat";
-import { insertIndexIntoRanges } from "../domain/chat/chat.utils";
+import { insertIndexIntoRanges, mergeMessageIndexRanges } from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
+type MessageRangesByChat = Record<string, MessageIndexRange[]>;
+
 export type MessageReadTracker = {
     markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
     confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => void;
+    syncWithServer: (chatId: string, ranges: MessageIndexRange[]) => void;
+    unreadMessageCount: (
+        chatId: string,
+        firstMessageIndex: number,
+        lastMessageIndex: number | undefined
+    ) => number;
 };
 
 let interval: NodeJS.Timer | undefined = undefined;
@@ -22,8 +30,8 @@ export function stopMarkReadPoller(): void {
 
 export function initMarkRead(api: ServiceContainer): MessageReadTracker {
     const waiting: Set<bigint> = new Set<bigint>();
-    let state: Record<string, MessageIndexRange[]> = {};
-    let pendingState: Record<string, MessageIndexRange[]> = {};
+    let state: MessageRangesByChat = {};
+    let pendingState: MessageRangesByChat = {};
 
     function sendToServer() {
         pendingState = {
@@ -84,9 +92,39 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
         }
     }
 
+    function syncWithServer(chatId: string, ranges: MessageIndexRange[]) {
+        state[chatId] = mergeMessageIndexRanges(state[chatId] ?? [], ranges);
+    }
+
+    function unreadMessageCount(
+        chatId: string,
+        firstMessageIndex: number,
+        lastMessageIndex: number | undefined
+    ) {
+        if (lastMessageIndex === undefined) {
+            // if we have no latestMessage then we cannot have any unread messages
+            return 0;
+        }
+
+        if (state[chatId] === undefined || state[chatId].length === 0) {
+            return lastMessageIndex - firstMessageIndex + 1;
+        }
+
+        const [, unread, lastRead] = state[chatId].reduce(
+            ([first, unread], { from, to }) => {
+                return [to + 1, unread + Math.max(from, first) - first, to];
+            },
+            [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
+        );
+
+        return lastMessageIndex - lastRead + unread + waiting.size;
+    }
+
     return {
         markMessageRead,
         confirmMessage,
+        syncWithServer,
+        unreadMessageCount,
     };
 }
 
@@ -96,5 +134,15 @@ export const fakeMessageReadTracker: MessageReadTracker = {
     },
     confirmMessage: (_chatId: string, _messageIndex: number, _messageId: bigint) => {
         return undefined;
+    },
+    syncWithServer: (_chatId: string, _ranges: MessageIndexRange[]) => {
+        return undefined;
+    },
+    unreadMessageCount: (
+        _chatId: string,
+        _firstMessageIndex: number,
+        _lastMessageIndex: number | undefined
+    ) => {
+        return 0;
     },
 };

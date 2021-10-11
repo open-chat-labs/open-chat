@@ -77,6 +77,11 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const TimestampMillis = IDL.Nat64;
+  const DeletedContent = IDL.Record({
+    'user_id' : UserId,
+    'timestamp' : TimestampMillis,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
@@ -84,7 +89,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
-    'Deleted' : IDL.Null,
+    'Deleted' : DeletedContent,
   });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -176,7 +181,6 @@ export const idlFactory = ({ IDL }) => {
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
-  const TimestampMillis = IDL.Nat64;
   const GroupChatEventWrapper = IDL.Record({
     'event' : GroupChatEvent,
     'timestamp' : TimestampMillis,

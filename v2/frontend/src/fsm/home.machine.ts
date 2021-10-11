@@ -161,6 +161,7 @@ function sendMessageToChatBasedOnUser(
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
+    messagesRead: MessageReadTracker,
     chatSummaries: ChatSummary[],
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
@@ -169,7 +170,8 @@ async function getUpdates(
             chatSummaries,
             chatUpdatesSince
                 ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
-                : { updatesSince: undefined }
+                : { updatesSince: undefined },
+            messagesRead
         );
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         userIds.add(user.userId);
@@ -222,7 +224,13 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     },
     services: {
         getUpdates: async (ctx, _) =>
-            getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
+            getUpdates(
+                ctx.user!,
+                ctx.serviceContainer!,
+                ctx.markRead,
+                ctx.chatSummaries,
+                ctx.chatUpdatesSince
+            ),
 
         webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
@@ -329,6 +337,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: await getUpdates(
                             ctx.user!,
                             ctx.serviceContainer!,
+                            ctx.markRead,
                             chatSummaries,
                             chatUpdatesSince
                         ),

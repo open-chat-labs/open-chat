@@ -53,6 +53,7 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import type { MessageReadTracker } from "../stores/markRead";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -389,11 +390,16 @@ export class ServiceContainer {
         }));
     }
 
-    getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse> {
+    getUpdates(
+        chatSummaries: ChatSummary[],
+        args: UpdateArgs,
+        messagesRead: MessageReadTracker
+    ): Promise<MergedUpdatesResponse> {
         return this.userClient.getUpdates(chatSummaries, args).then((resp) => {
             return {
                 ...resp,
                 chatSummaries: resp.chatSummaries.map((chat) => {
+                    messagesRead.syncWithServer(chat.chatId, chat.readByMe);
                     return chat.kind === "direct_chat"
                         ? chat
                         : this.rehydrateDataContent(chat, "avatar", chat.chatId);

@@ -9,7 +9,7 @@
     import { _ } from "svelte-i18n";
     import {
         getDisplayDate,
-        getUnreadMessages,
+        getMinVisibleMessageIndex,
         latestMessageText,
     } from "../../domain/chat/chat.utils";
     import type { ChatSummary } from "../../domain/chat/chat";
@@ -17,9 +17,11 @@
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
+    import type { MessageReadTracker } from "../../stores/markRead";
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
+    export let messagesRead: MessageReadTracker;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {
@@ -40,7 +42,11 @@
 
     $: chat = normaliseChatSummary(chatSummary);
     $: lastMessage = latestMessageText(chatSummary);
-    $: unreadMessages = getUnreadMessages(chatSummary);
+    $: unreadMessages = messagesRead.unreadMessageCount(
+        chatSummary.chatId,
+        getMinVisibleMessageIndex(chatSummary),
+        chatSummary.latestMessage?.event.messageIndex
+    );
     $: displayDate = getDisplayDate(chatSummary);
 </script>
 

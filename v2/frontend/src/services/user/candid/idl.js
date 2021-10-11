@@ -32,7 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
-    'MaxGroupsCreated' : IDL.Nat16,
+    'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
   });
   const MessageId = IDL.Nat;
@@ -82,6 +82,11 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const TimestampMillis = IDL.Nat64;
+  const DeletedContent = IDL.Record({
+    'user_id' : UserId,
+    'timestamp' : TimestampMillis,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
@@ -89,7 +94,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
-    'Deleted' : IDL.Null,
+    'Deleted' : DeletedContent,
   });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -136,7 +141,6 @@ export const idlFactory = ({ IDL }) => {
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
   });
-  const TimestampMillis = IDL.Nat64;
   const DirectChatEventWrapper = IDL.Record({
     'event' : DirectChatEvent,
     'timestamp' : TimestampMillis,
