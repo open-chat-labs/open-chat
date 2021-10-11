@@ -7,8 +7,7 @@ use group_canister::update_group::*;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
-use slog::error;
-use slog_scope::with_logger;
+use tracing::error;
 use types::{
     Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId,
     MAX_AVATAR_SIZE,
@@ -36,13 +35,13 @@ async fn update_group(args: Args) -> Response {
             Ok(response) => match response {
                 c2c_update_group::Response::NameTaken => return NameTaken,
                 c2c_update_group::Response::ChatNotFound => {
-                    with_logger(|l| error!(l, "Group not found in index"; "chat_id" => %prepare_result.chat_id));
+                    error!(chat_id = %prepare_result.chat_id, "Group not found in index");
                     return InternalError;
                 }
                 c2c_update_group::Response::Success => (),
             },
             Err(error) => {
-                with_logger(|l| error!(l, "Error calling update group"; "error" => ?error));
+                error!(?error, "Error calling update group");
                 return InternalError;
             }
         };

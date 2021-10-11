@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::NotificationEnvelope;
-use utils::canister_logger::LoggerWrapper;
+use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 
@@ -24,7 +24,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOGGER: RefCell<LoggerWrapper> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
 }
 
 struct RuntimeState {

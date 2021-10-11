@@ -2,8 +2,7 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use ic_cdk_macros::query;
 use search::*;
-use slog::error;
-use slog_scope::with_logger;
+use tracing::error;
 use types::UserId;
 use types::{ChatId, MessageMatch};
 use user_canister::search_all_messages::{Response::*, *};
@@ -128,15 +127,12 @@ async fn search_all_group_chats(
     }
 
     if !failures.is_empty() {
-        with_logger(|l| {
-            error!(
-                l,
-                "Error searching group messages. {failed_chat_count} chat(s) failed out of {total_chat_count}",
-                failed_chat_count = failures.len(),
-                total_chat_count = count;
-                "first_error" => ?failures.first().unwrap()
-            )
-        });
+        error!(
+            failed_chat_count = failures.len(),
+            total_chat_count = count,
+            first_error = ?failures.first().unwrap(),
+            "Error searching group messages",
+        );
     }
 
     let mut matches: Vec<MessageMatch> = successes.into_iter().flat_map(|r| r.matches).collect();

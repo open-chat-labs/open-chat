@@ -1,4 +1,4 @@
-use crate::{Data, RuntimeState, LOGGER, LOW_CYCLES_BALANCE_THRESHOLD, RUNTIME_STATE};
+use crate::{Data, RuntimeState, LOG_MESSAGES, LOW_CYCLES_BALANCE_THRESHOLD, RUNTIME_STATE};
 use cycles_utils::{check_cycles_balance, init_cycles_balance_checker};
 use utils::env::Environment;
 
@@ -7,9 +7,9 @@ mod post_upgrade;
 mod pre_upgrade;
 
 fn init_logger() {
-    let logger = utils::canister_logger::init_logger(None);
+    let log_messages = utils::canister_logger::init_logger(None, ic_cdk::api::time);
 
-    LOGGER.with(|c| *c.borrow_mut() = logger);
+    LOG_MESSAGES.with(|c| *c.borrow_mut() = log_messages);
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data) {

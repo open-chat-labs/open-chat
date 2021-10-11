@@ -27,8 +27,7 @@ notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 search = { path = "../../../libraries/search" }
 serde = "1.0.126"
-slog = "2.7.0"
-slog-scope = "4.4.0"
+tracing = "0.1.29"
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils", features = ["range-set"] }
 user_canister = { path = "../api" }

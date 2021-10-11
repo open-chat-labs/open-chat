@@ -5,7 +5,6 @@ use shared::error::Error;
 use shared::ic_agent::IcAgentConfig;
 use shared::runner;
 use shared::store::Store;
-use slog::{o, Drain, Logger};
 use std::str::FromStr;
 
 mod dummy_store;
@@ -13,8 +12,6 @@ mod dummy_store;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv::dotenv()?;
-    let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
-    let logger = Logger::root(slog_term::FullFormat::new(plain).build().fuse(), o!());
 
     let args: Vec<String> = std::env::args().collect();
     let command: &str = &args[1];
@@ -33,9 +30,9 @@ async fn main() -> Result<(), Error> {
     };
 
     match command {
-        "push" => push_notifications::run(&ic_agent_config, canister_id, &mut store, &vapid_private_pem, &logger).await,
+        "push" => push_notifications::run(&ic_agent_config, canister_id, &mut store, &vapid_private_pem).await,
         "prune" => prune_notifications::run(&ic_agent_config, canister_id, &mut store).await,
-        "auto" => runner::run(ic_agent_config, canister_id, &mut store, &vapid_private_pem, &logger).await,
+        "auto" => runner::run(ic_agent_config, canister_id, &mut store, &vapid_private_pem).await,
         _ => Err(format!("Unsupported command: {}", command).into()),
     }
 }

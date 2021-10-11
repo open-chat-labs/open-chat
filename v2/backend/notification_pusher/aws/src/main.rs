@@ -4,22 +4,20 @@ use shared::error::Error;
 use shared::ic_agent::IcAgentConfig;
 use shared::runner;
 use shared::store::Store;
-use slog::{info, o, Drain, Logger};
 use std::str::FromStr;
+use tracing::info;
 
 mod dynamodb;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     dotenv::dotenv()?;
-    let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
-    let logger = Logger::root(slog_term::FullFormat::new(plain).build().fuse(), o!());
 
-    info!(logger, "Starting...");
+    info!("Starting...");
 
     let mut dynamodb_client: Box<dyn Store + Send + Sync> = Box::new(DynamoDbClient::build());
 
-    info!(logger, "DynamoDbClient created");
+    info!("DynamoDbClient created");
 
     let vapid_private_pem = dotenv::var("VAPID_PRIVATE_PEM")?;
     let canister_id = Principal::from_text(dotenv::var("NOTIFICATIONS_CANISTER_ID")?).unwrap();
@@ -33,14 +31,7 @@ async fn main() -> Result<(), Error> {
         fetch_root_key: !is_production,
     };
 
-    info!(logger, "Configuration complete");
+    info!("Configuration complete");
 
-    runner::run(
-        ic_agent_config,
-        canister_id,
-        &mut dynamodb_client,
-        &vapid_private_pem,
-        &logger,
-    )
-    .await
+    runner::run(ic_agent_config, canister_id, &mut dynamodb_client, &vapid_private_pem).await
 }

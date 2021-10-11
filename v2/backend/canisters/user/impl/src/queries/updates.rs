@@ -3,10 +3,9 @@ use group_canister::summary::Summary;
 use group_canister::summary_updates::SummaryUpdates;
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
-use slog::error;
-use slog_scope::with_logger;
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
+use tracing::error;
 use types::{
     CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
     GroupChatSummaryUpdates, Milliseconds, TimestampMillis,
@@ -112,15 +111,14 @@ async fn get_group_chat_summaries(chat_ids: Vec<ChatId>) -> Vec<Summary> {
     }
 
     if !failures.is_empty() {
-        with_logger(|l| {
-            error!(
-                l,
-                "Error getting group chat summaries. {failed_chat_count} chat(s) failed out of {total_chat_count}",
-                failed_chat_count = failures.len(),
-                total_chat_count = count;
-                "first_error" => ?failures.first().unwrap()
-            )
-        });
+        let failed_chat_count = failures.len();
+        let total_chat_count = count;
+        error!(
+            failed_chat_count,
+            total_chat_count,
+            first_error = ?failures.first().unwrap(),
+            "Error getting group chat summaries",
+        );
     }
 
     summaries
@@ -143,7 +141,7 @@ async fn get_group_chat_summary_updates(
         let active_groups = match group_index_canister_c2c_client::active_groups(group_index_canister_id, &args).await {
             Ok(group_index_canister::active_groups::Response::Success(r)) => r.active_groups,
             Err(error) => {
-                with_logger(|l| error!(l, "Failed to get active groups"; "error" => ?error));
+                error!(?error, "Failed to get active groups");
                 Vec::new()
             }
         };
@@ -189,15 +187,12 @@ async fn get_group_chat_summary_updates(
     }
 
     if !failures.is_empty() {
-        with_logger(|l| {
-            error!(
-                l,
-                "Error getting group chat summary updates. {failed_chat_count} chat(s) failed out of {total_chat_count}",
-                failed_chat_count = failures.len(),
-                total_chat_count = count;
-                "first_error" => ?failures.first().unwrap()
-            )
-        });
+        error!(
+            failed_chat_count = failures.len(),
+            total_chat_count = count,
+            first_error = ?failures.first().unwrap(),
+            "Error getting group chat summary updates",
+        );
     }
 
     summary_updates
