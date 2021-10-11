@@ -1,8 +1,7 @@
 use crate::lifecycle::{init_logger, init_state};
-use crate::{Data, StateVersion, LOGGER};
+use crate::{Data, StateVersion, LOG_MESSAGES};
 use ic_cdk_macros::post_upgrade;
-use slog::info;
-use slog_scope::with_logger;
+use tracing::info;
 use utils::canister_logger::{LogMessage, LogMessagesContainer};
 use utils::env::canister::CanisterEnv;
 
@@ -24,12 +23,12 @@ fn post_upgrade() {
             init_state(env, data);
 
             if !log_messages.is_empty() {
-                LOGGER.with(|l| rehydrate_log_messages(log_messages, l.borrow().messages_container()))
+                LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, &l.borrow()))
             }
         }
     };
 
-    with_logger(|l| info!(l, "Post-upgrade complete"));
+    info!("Post-upgrade complete");
 }
 
 fn rehydrate_log_messages(log_messages: Vec<LogMessage>, messages_container: &LogMessagesContainer) {

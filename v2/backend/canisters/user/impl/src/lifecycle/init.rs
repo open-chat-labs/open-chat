@@ -1,8 +1,7 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use ic_cdk_macros::init;
-use slog::info;
-use slog_scope::with_logger;
+use tracing::info;
 use user_canister::init::Args;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
@@ -25,5 +24,5 @@ fn init(args: Args) {
 
     init_state(env, data);
 
-    with_logger(|l| info!(l, "Initialization complete"));
+    info!("Initialization complete");
 }

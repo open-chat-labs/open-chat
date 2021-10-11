@@ -11,6 +11,5 @@ candid = "0.7.7"
 dotenv = "0.15.0"
 serde = "1.0.126"
 shared = { path = "../shared" }
-slog = "2.7.0"
-slog-term = "2.8.0"
 tokio = { version = "1.10.0", features = ["macros", "time"] }
+tracing = "0.1.29"

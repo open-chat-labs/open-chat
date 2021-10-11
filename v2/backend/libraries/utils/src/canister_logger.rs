@@ -1,77 +1,37 @@
 use candid::CandidType;
 use serde::Deserialize;
-use slog::{o, Drain, FnValue, Logger, PushFnValue, Record};
-use slog_scope::set_global_logger;
 use std::collections::VecDeque;
+use std::fmt::Write;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
+use tracing_subscriber;
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::fmt::time::FormatTime;
 use types::TimestampMillis;
 
 const DEFAULT_MAX_MESSAGES: usize = 1000;
 
-pub fn init_logger(max_messages: Option<usize>) -> LoggerWrapper {
+pub fn init_logger(max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesContainer {
     let messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
+    let messages_container_clone = messages_container.clone();
 
-    let time_fn = || ic_cdk::api::time();
-    let writer = LogWriter {
+    let make_writer = move || LogWriter {
         messages_container: messages_container.clone(),
         time_fn,
         buffer: Vec::new(),
     };
 
-    let drain = slog_json::Json::new(writer).set_pretty(false).set_flush(true).build();
+    let timer = Timer { time_fn };
 
-    let logger = slog::Logger::root(
-        Mutex::new(drain).fuse(),
-        o!(
-        "ts" => PushFnValue(move |_ : &Record, ser| {
-            ser.emit(ic_cdk::api::time())
-        }),
-        "level" => FnValue(move |rinfo : &Record| {
-            rinfo.level().as_short_str()
-        }),
-        "msg" => PushFnValue(move |record : &Record, ser| {
-            ser.emit(record.msg())
-        })),
-    );
+    tracing_subscriber::fmt()
+        .with_writer(make_writer)
+        .with_timer(timer)
+        .with_max_level(LevelFilter::INFO)
+        .json()
+        .init();
 
-    set_global_logger(logger.clone()).cancel_reset();
-
-    LoggerWrapper {
-        logger,
-        messages_container,
-    }
-}
-
-pub struct LoggerWrapper {
-    logger: Logger,
-    messages_container: LogMessagesContainer,
-}
-
-impl LoggerWrapper {
-    pub fn messages_container(&self) -> &LogMessagesContainer {
-        &self.messages_container
-    }
-}
-
-impl Deref for LoggerWrapper {
-    type Target = Logger;
-
-    fn deref(&self) -> &Self::Target {
-        &self.logger
-    }
-}
-
-impl Default for LoggerWrapper {
-    fn default() -> Self {
-        let logger = slog::Logger::root(slog::Discard, o!());
-
-        LoggerWrapper {
-            logger,
-            messages_container: LogMessagesContainer::default(),
-        }
-    }
+    messages_container_clone
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -100,6 +60,10 @@ impl std::io::Write for LogWriter {
             json: String::from_utf8(buffer).unwrap(),
         });
         Ok(())
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+        self.write(buf).and_then(|_| self.flush())
     }
 }
 
@@ -153,5 +117,32 @@ impl LogMessages {
             self.messages.pop_front();
         }
         self.messages.push_back(message);
+    }
+}
+
+struct Timer {
+    time_fn: fn() -> TimestampMillis,
+}
+
+impl FormatTime for Timer {
+    fn format_time(&self, w: &mut dyn Write) -> std::fmt::Result {
+        let now = (self.time_fn)();
+
+        w.write_str(&format!("{}", now))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tracing::info;
+
+    #[test]
+    fn log_messages_can_be_accessed_outside_of_logger() {
+        let messages_container = init_logger(None, || 1);
+
+        info!("test!");
+
+        assert_eq!(1, messages_container.drain_messages().len());
     }
 }
