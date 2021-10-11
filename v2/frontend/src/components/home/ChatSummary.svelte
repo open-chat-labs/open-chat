@@ -67,6 +67,7 @@
             <div class="chat-msg">{lastMessage}</div>
         {/if} -->
         <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
+        <pre>{chatSummary.latestMessage?.event.messageIndex}</pre>
 
         {#if unreadMessages > 0}
             <div

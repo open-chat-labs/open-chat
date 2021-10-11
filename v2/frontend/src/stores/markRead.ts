@@ -1,6 +1,10 @@
 import { get } from "svelte/store";
 import type { MarkReadRequest, MessageIndexRange } from "../domain/chat/chat";
-import { insertIndexIntoRanges, mergeMessageIndexRanges } from "../domain/chat/chat.utils";
+import {
+    indexIsInRanges,
+    insertIndexIntoRanges,
+    mergeMessageIndexRanges,
+} from "../domain/chat/chat.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { unconfirmed } from "./unconfirmed";
 
@@ -15,8 +19,9 @@ export type MessageReadTracker = {
     unreadMessageCount: (
         chatId: string,
         firstMessageIndex: number,
-        lastMessageIndex: number | undefined
+        latestMessageIndex: number | undefined
     ) => number;
+    isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
 };
 
 let interval: NodeJS.Timer | undefined = undefined;
@@ -32,6 +37,7 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
     const waiting: Set<bigint> = new Set<bigint>();
     let state: MessageRangesByChat = {};
     let pendingState: MessageRangesByChat = {};
+    const serverState: MessageRangesByChat = {};
 
     function sendToServer() {
         pendingState = {
@@ -53,6 +59,7 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
         );
 
         if (req.length > 0) {
+            console.log("read: sending to server: ", req);
             api.markMessagesRead(req);
         }
     }
@@ -95,32 +102,42 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
     }
 
     function syncWithServer(chatId: string, ranges: MessageIndexRange[]) {
-        state[chatId] = mergeMessageIndexRanges(state[chatId] ?? [], ranges);
-        console.log("read: after sync: ", state[chatId]);
+        serverState[chatId] = ranges;
     }
 
     function unreadMessageCount(
         chatId: string,
         firstMessageIndex: number,
-        lastMessageIndex: number | undefined
+        latestMessageIndex: number | undefined
     ) {
-        if (lastMessageIndex === undefined) {
-            // if we have no latestMessage then we cannot have any unread messages
-            return 0;
+        if (latestMessageIndex === undefined) {
+            // if we have no latestMessage then we can only have unconfirmed unread messages
+            return waiting.size;
         }
 
-        if (state[chatId] === undefined || state[chatId].length === 0) {
-            return lastMessageIndex - firstMessageIndex + 1;
+        const merged = mergeMessageIndexRanges(serverState[chatId] ?? [], state[chatId] ?? []);
+        if (merged.length === 0) {
+            // all messages are unread
+            return latestMessageIndex - firstMessageIndex + 1;
         }
 
-        const [, unread, lastRead] = state[chatId].reduce(
+        const [, unread, lastRead] = merged.reduce(
             ([first, unread], { from, to }) => {
                 return [to + 1, unread + Math.max(from, first) - first, to];
             },
             [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
         );
 
-        return lastMessageIndex - lastRead + unread - waiting.size;
+        return latestMessageIndex - lastRead + unread - waiting.size;
+    }
+
+    function isRead(chatId: string, messageIndex: number, messageId: bigint) {
+        if (get(unconfirmed).has(messageId)) {
+            return waiting.has(messageId);
+        } else {
+            const merged = mergeMessageIndexRanges(serverState[chatId] ?? [], state[chatId] ?? []);
+            return indexIsInRanges(messageIndex, merged);
+        }
     }
 
     return {
@@ -128,6 +145,7 @@ export function initMarkRead(api: ServiceContainer): MessageReadTracker {
         confirmMessage,
         syncWithServer,
         unreadMessageCount,
+        isRead,
     };
 }
 
@@ -144,8 +162,11 @@ export const fakeMessageReadTracker: MessageReadTracker = {
     unreadMessageCount: (
         _chatId: string,
         _firstMessageIndex: number,
-        _lastMessageIndex: number | undefined
+        _latestMessageIndex: number | undefined
     ) => {
         return 0;
+    },
+    isRead: (_chat: string, _messageIndex: number, _messageId: bigint) => {
+        return false;
     },
 };

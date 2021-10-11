@@ -171,6 +171,9 @@ export class UserClient extends CandidService implements IUserClient {
             args
         );
 
+        if (updatesResponse.chatsUpdated.length > 0)
+            console.log("UpdatesResponse: ", updatesResponse);
+
         return {
             chatSummaries: mergeChatUpdates(chatSummaries, updatesResponse),
             timestamp: updatesResponse.timestamp,

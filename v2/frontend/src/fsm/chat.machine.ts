@@ -73,10 +73,6 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
-    | {
-          type: "MESSAGE_READ_BY_ME";
-          data: { chatId: string; messageIndex: number; messageId: bigint };
-      }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
@@ -378,6 +374,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             };
                         } else {
                             // this message may have come in via webrtc
+                            unconfirmed.add(ev.data.messageEvent.event.messageId);
                             const sentByMe = ev.data.userId === ctx.user?.userId;
                             if (sentByMe) {
                                 rtcConnectionsManager.sendMessage(
@@ -390,8 +387,13 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         userId: ev.data.userId,
                                     }
                                 );
+                                // mark our own messages as read manually since we will not be observing them
+                                ctx.markRead.markMessageRead(
+                                    ctx.chatSummary.chatId,
+                                    ev.data.messageEvent.event.messageIndex,
+                                    ev.data.messageEvent.event.messageId
+                                );
                             }
-                            unconfirmed.add(ev.data.messageEvent.event.messageId);
                             chatStore.set({
                                 chatId: ctx.chatSummary.chatId,
                                 event: "sending_message",
@@ -601,14 +603,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: assign((_, _ev) => ({
                         fileToAttach: undefined,
                     })),
-                },
-                MESSAGE_READ_BY_ME: {
-                    // we need to send this modified chat summary to the parent machine
-                    // so that it can sync it with the chat poller - nasty
-                    // we also need to seend it to the mark read machine to periodically ping off to the server
-                    actions: pure((_ctx, ev) => {
-                        return sendParent<ChatContext, ChatEvents>(ev);
-                    }),
                 },
             },
             states: {

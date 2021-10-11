@@ -33,7 +33,7 @@
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:chatWith {machine} />
+    <CurrentChatMessages on:messageRead on:chatWith {machine} />
     <Footer {machine} />
 </div>
 

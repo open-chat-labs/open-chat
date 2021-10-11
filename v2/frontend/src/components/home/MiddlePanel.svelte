@@ -29,6 +29,7 @@
             {machine}
             on:unblockUser
             on:clearSelection
+            on:messageRead
             on:blockUser
             on:leaveGroup
             on:chatWith />

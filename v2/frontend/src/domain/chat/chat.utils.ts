@@ -26,7 +26,7 @@ import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
-import { unconfirmed, unconfirmedReadByUs } from "../../stores/unconfirmed";
+import { unconfirmed } from "../../stores/unconfirmed";
 import type { MessageReadTracker } from "../../stores/markRead";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -134,11 +134,6 @@ export function insertIndexIntoRanges(
     // extending an existing one, so we could just iterate through all the ranges and
     // see if we find one to extend. If not, add a new one.
     return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
-}
-
-export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSummary {
-    chat.readByMe = insertIndexIntoRanges(messageIndex, chat.readByMe);
-    return chat;
 }
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
