@@ -5,6 +5,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::query;
 use slog::error;
 use slog_scope::with_logger;
+use std::collections::hash_map::Entry::Occupied;
 use std::collections::{HashMap, HashSet};
 use types::{
     CanisterId, ChatId, ChatSummary, ChatSummaryUpdates, DirectChatSummary, DirectChatSummaryUpdates, GroupChatSummary,
@@ -225,10 +226,12 @@ fn finalize(
         .group_chats
         .get_all(args.updates_since.as_ref().map(|s| s.timestamp))
     {
-        group_chats_added.entry(group_chat.chat_id).and_modify(|s| {
-            s.notifications_muted = group_chat.notifications_muted.value;
-            s.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
-        });
+        if let Occupied(e) = group_chats_added.entry(group_chat.chat_id) {
+            let summary = e.into_mut();
+            summary.notifications_muted = group_chat.notifications_muted.value;
+            summary.read_by_me = convert_to_message_index_ranges(group_chat.read_by_me.value.clone());
+            continue;
+        }
 
         group_chats_updated
             .entry(group_chat.chat_id)
