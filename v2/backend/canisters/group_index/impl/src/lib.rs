@@ -19,7 +19,6 @@ const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
 const GROUP_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
-const CANISTER_POOL_TARGET_SIZE: u16 = 100;
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Deserialize)]
@@ -55,10 +54,11 @@ struct Data {
 }
 
 impl Data {
-    pub fn new(
+    fn new(
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         notifications_canister_id: CanisterId,
+        canister_pool_target_size: u16,
     ) -> Data {
         Data {
             public_groups: PublicGroups::default(),
@@ -67,7 +67,7 @@ impl Data {
             group_canister_wasm,
             notifications_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(CANISTER_POOL_TARGET_SIZE),
+            canister_pool: canister::Pool::new(canister_pool_target_size),
         }
     }
 
@@ -86,7 +86,7 @@ impl Default for Data {
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(CANISTER_POOL_TARGET_SIZE),
+            canister_pool: canister::Pool::new(5),
         }
     }
 }
