@@ -70,8 +70,8 @@ export interface DeleteMessagesArgs { 'message_ids' : Array<MessageId> }
 export type DeleteMessagesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : null };
 export interface DeletedContent {
-  'user_id' : UserId,
   'timestamp' : TimestampMillis,
+  'deleted_by' : UserId,
 }
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |

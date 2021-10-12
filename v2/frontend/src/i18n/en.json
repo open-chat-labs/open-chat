@@ -117,7 +117,7 @@
     "replyPrivately": "Reply privately",
     "deleteMessage": "Delete message",
     "editMessage": "Edit message",
-    "messageDeleted": "This message was deleted",
+    "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
     "enterInviteCode": "Enter your invite code",
     "today": "Today",

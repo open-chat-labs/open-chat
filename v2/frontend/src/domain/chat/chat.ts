@@ -51,6 +51,8 @@ export interface AudioContent extends DataContent {
 
 export type DeletedContent = {
     kind: "deleted_content";
+    deletedBy: string;
+    timestamp: bigint;
 };
 
 export interface TextContent {

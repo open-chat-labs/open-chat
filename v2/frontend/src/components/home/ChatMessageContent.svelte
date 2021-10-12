@@ -42,7 +42,7 @@
 {:else if content.kind === "file_content"}
     <FileContent {me} {content} />
 {:else if content.kind === "deleted_content"}
-    <DeletedContent />
+    <DeletedContent {content} />
 {:else if content.kind === "cycles_content"}
     <div>Cycles content</div>
 {:else if content.kind === "placeholder_content"}

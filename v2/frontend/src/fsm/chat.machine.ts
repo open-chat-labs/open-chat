@@ -483,6 +483,8 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         return {
                             events: replaceMessageContent(ctx.events, BigInt(ev.data.messageId), {
                                 kind: "deleted_content",
+                                deletedBy: ev.data.userId,
+                                timestamp: BigInt(+new Date()),
                             }),
                         };
                     }),

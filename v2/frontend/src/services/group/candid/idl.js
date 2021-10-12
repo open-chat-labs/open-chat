@@ -79,8 +79,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const TimestampMillis = IDL.Nat64;
   const DeletedContent = IDL.Record({
-    'user_id' : UserId,
     'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
   });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
