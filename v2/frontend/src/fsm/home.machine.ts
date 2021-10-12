@@ -19,7 +19,6 @@ import type {
 } from "../domain/chat/chat";
 import {
     insertIndexIntoRanges,
-    setMessageRead,
     updateArgsFromChats,
     userIdsFromChatSummaries,
     userIdsFromChatSummary,
@@ -34,7 +33,7 @@ import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import type { DataContent } from "../domain/data/data";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
-import { unconfirmed, unconfirmedReadByThem, unconfirmedReadByUs } from "../stores/unconfirmed";
+import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
 import { get } from "svelte/store";
 import type {
     RemoteUserDeletedMessage,
@@ -159,6 +158,7 @@ function sendMessageToChatBasedOnUser(
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
+    messagesRead: MessageReadTracker,
     chatSummaries: ChatSummary[],
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
@@ -167,7 +167,8 @@ async function getUpdates(
             chatSummaries,
             chatUpdatesSince
                 ? updateArgsFromChats(chatUpdatesSince, chatSummaries)
-                : { updatesSince: undefined }
+                : { updatesSince: undefined },
+            messagesRead
         );
         const userIds = userIdsFromChatSummaries(chatsResponse.chatSummaries, false);
         userIds.add(user.userId);
@@ -220,7 +221,13 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
     },
     services: {
         getUpdates: async (ctx, _) =>
-            getUpdates(ctx.user!, ctx.serviceContainer!, ctx.chatSummaries, ctx.chatUpdatesSince),
+            getUpdates(
+                ctx.user!,
+                ctx.serviceContainer!,
+                ctx.markRead,
+                ctx.chatSummaries,
+                ctx.chatUpdatesSince
+            ),
 
         webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
@@ -327,6 +334,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                         data: await getUpdates(
                             ctx.user!,
                             ctx.serviceContainer!,
+                            ctx.markRead,
                             chatSummaries,
                             chatUpdatesSince
                         ),
@@ -417,31 +425,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             ],
             on: {
                 REMOTE_USER_READ_MESSAGE: {
-                    // right now the message read is either confirmed or not
-                    actions: assign((ctx, ev) => {
-                        // if the message is unconfirmed
-                        if (ev.data.messageIndex === undefined) {
-                            console.log(
-                                "adding message to unconfirmed by them: ",
-                                ev.data.messageId
-                            );
-                            unconfirmedReadByThem.add(BigInt(ev.data.messageId));
-                            return {};
-                        } else {
-                            unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
-                            // todo - we must also send this via CHAT_UPDATED to the chat actor
-                            return {
-                                chatSummaries: ctx.chatSummaries.map((c) => {
-                                    if (c.chatId === ev.data.chatId && c.kind === "direct_chat") {
-                                        c.readByThem = insertIndexIntoRanges(
-                                            Number(ev.data.messageIndex)!,
-                                            c.readByThem
-                                        );
-                                    }
-                                    return c;
-                                }),
-                            };
-                        }
+                    actions: pure((_ctx, ev) => {
+                        unconfirmedReadByThem.add(BigInt(ev.data.messageId));
+                        return undefined;
                     }),
                 },
                 REMOTE_USER_SENT_MESSAGE: {
@@ -637,59 +623,37 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 },
                 MESSAGE_READ_BY_ME: {
                     /**
-                     * this is fairly horrific, but it seems to be what we have to do
-                     * 1) find the chat
-                     * 2) figure out if the message is confirmed or not
-                     * 3) if it is setMessageRead (by index)
-                     * 4) if it is not add it to an uncomfired read by us list
-                     * 5) send web rtc message
-                     * 6) send the updated chat to the chat actor
-                     * 7) sync with the chats poller
+                     * 1) mark the message as read
+                     * 2) send a web rtc message
+                     * 3) send the updated chat to the chat actor
+                     * 4) sync with the chats poller
                      */
                     actions: pure((ctx, ev) => {
                         const actor = ctx.chatsIndex[ev.data.chatId];
                         if (actor) {
-                            let chat: ChatSummary | undefined = undefined;
-                            const chatSummaries = ctx.chatSummaries.map((c) => {
-                                if (c.chatId === ev.data.chatId) {
-                                    const userIds = userIdsFromChatSummary(c);
+                            const chat = ctx.chatSummaries.find((c) => c.chatId === ev.data.chatId);
+                            if (chat !== undefined) {
+                                ctx.markRead.markMessageRead(
+                                    chat.chatId,
+                                    ev.data.messageIndex,
+                                    ev.data.messageId
+                                );
 
-                                    ctx.markRead.markMessageRead(
-                                        c.chatId,
-                                        ev.data.messageIndex,
-                                        ev.data.messageId
-                                    );
+                                const rtc: WebRtcMessage = {
+                                    kind: "remote_user_read_message",
+                                    chatType: chat.kind,
+                                    messageId: ev.data.messageId,
+                                    chatId: ev.data.chatId,
+                                    userId: ctx.user!.userId,
+                                };
 
-                                    const rtc: WebRtcMessage = {
-                                        kind: "remote_user_read_message",
-                                        chatType: c.kind,
-                                        messageId: ev.data.messageId,
-                                        chatId: ev.data.chatId,
-                                        userId: ctx.user!.userId,
-                                    };
-
-                                    // we must consider whether the message is confirmed or not
-                                    if (!get(unconfirmed).has(BigInt(ev.data.messageId))) {
-                                        chat = setMessageRead(c, ev.data.messageIndex);
-                                        unconfirmedReadByUs.delete(BigInt(ev.data.messageId));
-                                        rtc.messageIndex = ev.data.messageIndex;
-                                        rtcConnectionsManager.sendMessage(userIds, rtc);
-                                        return chat;
-                                    } else {
-                                        unconfirmedReadByUs.add(BigInt(ev.data.messageId));
-                                        rtcConnectionsManager.sendMessage(userIds, rtc);
-                                        chat = c;
-                                        return c;
-                                    }
-                                }
-                                return c;
-                            });
+                                rtcConnectionsManager.sendMessage(
+                                    userIdsFromChatSummary(chat),
+                                    rtc
+                                );
+                            }
 
                             const actions = [
-                                // update the chat summaries
-                                assign<HomeContext, HomeEvents>({
-                                    chatSummaries,
-                                }),
                                 // ping the update back to the relavant chat machine
                                 send(
                                     {

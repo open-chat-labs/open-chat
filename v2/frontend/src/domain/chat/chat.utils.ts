@@ -96,29 +96,6 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
     return chat.minVisibleEventIndex;
 }
 
-export function getUnreadMessages(chat: ChatSummary): number {
-    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-    if (latestMessageIndex === undefined) {
-        // if we have no latestMessage then we cannot have any unread messages
-        return 0;
-    }
-
-    const firstMessageIndex = getMinVisibleMessageIndex(chat);
-
-    if (chat.readByMe.length === 0) {
-        return latestMessageIndex - firstMessageIndex + 1;
-    }
-
-    const [, unread, lastRead] = chat.readByMe.reduce(
-        ([first, unread], { from, to }) => {
-            return [to + 1, unread + Math.max(from, first) - first, to];
-        },
-        [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
-    );
-
-    return latestMessageIndex - lastRead + unread;
-}
-
 export function indexIsInRanges(index: number, ranges: MessageIndexRange[]): boolean {
     return ranges.reduce<boolean>((agg, { from, to }) => {
         if (!agg && index >= from && index <= to) return true;
@@ -134,11 +111,6 @@ export function insertIndexIntoRanges(
     // extending an existing one, so we could just iterate through all the ranges and
     // see if we find one to extend. If not, add a new one.
     return mergeMessageIndexRanges(ranges, [{ from: index, to: index }]);
-}
-
-export function setMessageRead(chat: ChatSummary, messageIndex: number): ChatSummary {
-    chat.readByMe = insertIndexIntoRanges(messageIndex, chat.readByMe);
-    return chat;
 }
 
 export function messageIsReadByThem(chat: ChatSummary, { messageIndex }: Message): boolean {
