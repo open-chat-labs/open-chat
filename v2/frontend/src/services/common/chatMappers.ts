@@ -190,11 +190,14 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "cycles_content":
             return { Cycles: apiCyclesContent(domain) };
 
-        case "deleted_content":
-            return { Deleted: null };
+        default:
+            throw new Error("Unexpected message content being sent to the server");
 
-        case "placeholder_content":
-            return { Deleted: null };
+        // case "deleted_content":
+        //     return { Deleted: null };
+
+        // case "placeholder_content":
+        //     return { Deleted: null };
     }
 }
 
