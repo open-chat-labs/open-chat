@@ -62,7 +62,6 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
         );
 
         if (req.length > 0) {
-            console.log("read: sending to server: ", req);
             api.markMessagesRead(req);
         }
     }
@@ -98,9 +97,7 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
         // marked as read on the back end
         if (waiting.has(messageId)) {
             waiting.delete(messageId);
-            console.log("read: confirming message at index ", messageIndex);
             markMessageRead(chatId, messageIndex, messageId);
-            console.log("read: after confirm: ", state[chatId]);
         }
     }
 
