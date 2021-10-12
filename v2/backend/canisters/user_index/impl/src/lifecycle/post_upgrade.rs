@@ -1,8 +1,8 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::{Data, StateVersion, LOG_MESSAGES};
+use canister_logger::{LogMessage, LogMessagesContainer};
 use ic_cdk_macros::post_upgrade;
 use tracing::info;
-use utils::canister_logger::{LogMessage, LogMessagesContainer};
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]

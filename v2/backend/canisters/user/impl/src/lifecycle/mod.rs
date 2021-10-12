@@ -8,7 +8,7 @@ mod post_upgrade;
 mod pre_upgrade;
 
 fn init_logger() {
-    let log_messages = utils::canister_logger::init_logger(None, ic_cdk::api::time);
+    let log_messages = canister_logger::init_logger(None, ic_cdk::api::time);
 
     LOG_MESSAGES.with(|c| *c.borrow_mut() = log_messages);
 }

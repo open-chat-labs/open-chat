@@ -1,8 +1,8 @@
 use crate::LOG_MESSAGES;
+use canister_logger::LogMessagesContainer;
 use http_request::{encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
-use utils::canister_logger::LogMessagesContainer;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {

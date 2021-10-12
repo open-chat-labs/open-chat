@@ -5,7 +5,6 @@ use std::fmt::Write;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
-use tracing_subscriber;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::fmt::time::FormatTime;
 use types::TimestampMillis;

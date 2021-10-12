@@ -1,23 +1,16 @@
 [package]
-name = "notifications_canister_impl"
+name = "canister_logger"
 version = "0.1.0"
 authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-path = "src/lib.rs"
-crate-type = ["cdylib"]
-
 [dependencies]
 candid = "0.7.7"
-canister_logger = { path = "../../../libraries/canister_logger" }
-http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-notifications_canister = { path = "../api" }
 serde = "1.0.126"
 tracing = "0.1.29"
-types = { path = "../../../libraries/types" }
-utils = { path = "../../../libraries/utils" }
+tracing-subscriber = "0.2.25"
+types = { path = "../types" }

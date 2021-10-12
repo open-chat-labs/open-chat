@@ -17,7 +17,6 @@ serde_bytes = "0.11.5"
 serde_cbor = "0.11.2"
 smallvec = { version = "0.6.*", features = ["serde"] }
 tracing = "0.1.29"
-tracing-subscriber = "0.2.25"
 types = { path = "../types" }
 
 [features]

@@ -1,7 +1,7 @@
 use crate::{RuntimeState, LOG_MESSAGES, RUNTIME_STATE, STATE_VERSION};
+use canister_logger::LogMessagesContainer;
 use ic_cdk_macros::pre_upgrade;
 use tracing::info;
-use utils::canister_logger::LogMessagesContainer;
 
 #[pre_upgrade]
 fn pre_upgrade() {

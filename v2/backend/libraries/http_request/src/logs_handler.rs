@@ -1,8 +1,8 @@
+use canister_logger::LogMessage;
 use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::io::Write;
 use types::{HeaderField, HttpResponse};
-use utils::canister_logger::LogMessage;
 
 pub fn encode_logs(messages: Vec<LogMessage>) -> HttpResponse {
     let mut body = Vec::new();
