@@ -109,21 +109,5 @@ describe("group machine transitions", () => {
                 { data_collection: "adding_participants" }
             );
         });
-        test("received a user from the user search machine", () => {
-            const ctx = testTransition(
-                addGroupMachine.withContext(testContext),
-                { data_collection: "choosing_participants" },
-                { type: "done.invoke.userSearchMachine", data: testUser },
-                { data_collection: "choosing_participants" }
-            );
-            expect(ctx.candidateGroup.participants.length).toBe(1);
-            expect(ctx.candidateGroup.participants[0]).toMatchObject({
-                role: "standard",
-                user: {
-                    userId: "123456",
-                    username: "test user",
-                },
-            });
-        });
     });
 });

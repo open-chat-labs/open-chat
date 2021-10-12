@@ -29,7 +29,6 @@ import { missingUserIds, userIsOnline } from "../domain/user/user.utils";
 import { rollbar } from "../utils/logging";
 import { log, pure, send } from "xstate/lib/actions";
 import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
-import { userSearchMachine } from "./userSearch.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
 import { addGroupMachine, nullGroup } from "./addgroup.machine";
@@ -102,6 +101,7 @@ export type HomeEvents =
     | { type: "CREATE_DIRECT_CHAT"; data: string }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "CANCEL_NEW_CHAT" }
+    | { type: "CREATE_CHAT_WITH_USER"; data: UserSummary }
     | { type: "CLEAR_SELECTED_CHAT" }
     | { type: "UPDATE_USER_AVATAR"; data: DataContent }
     | { type: "REPLY_PRIVATELY_TO"; data: EnhancedReplyContext }
@@ -116,9 +116,7 @@ export type HomeEvents =
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
     | { type: "error.platform.getUpdates"; data: Error }
     | { type: "done.invoke.addGroupMachine"; data: GroupChatSummary }
-    | { type: "error.platform.addGroupMachine"; data: Error }
-    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
-    | { type: "error.platform.userSearchMachine"; data: Error };
+    | { type: "error.platform.addGroupMachine"; data: Error };
 
 type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 
@@ -812,23 +810,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     on: {
                         // todo - actually we would like to go back to where we were
                         CANCEL_NEW_CHAT: "no_chat_selected",
-                        "error.platform.userSearchMachine": "..unexpected_error",
-                    },
-                    invoke: {
-                        id: "userSearchMachine",
-                        src: userSearchMachine,
-                        data: (ctx, _) => {
-                            return {
-                                serviceContainer: ctx.serviceContainer,
-                                searchTerm: "",
-                                users: [],
-                                error: undefined,
-                            };
-                        },
-                        onDone: {
-                            target: "chat_selected",
+                        CREATE_CHAT_WITH_USER: {
                             actions: [
-                                assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                                assign((ctx, ev) => {
                                     const dummyChat: DirectChatSummary = {
                                         kind: "direct_chat",
                                         them: ev.data.userId,
@@ -840,23 +824,12 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         dateCreated: BigInt(+new Date()),
                                     };
                                     push(`/${dummyChat.chatId}`);
-                                    userStore.add(ev.data);
                                     return {
                                         chatSummaries: [dummyChat, ...ctx.chatSummaries],
                                     };
                                 }),
                                 send((ctx, _) => ({ type: "SYNC_WITH_POLLER", data: ctx }), {
                                     to: "updateChatsPoller",
-                                }),
-                            ],
-                        },
-                        onError: {
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                log("an error occurred"),
-                                assign({
-                                    error: (_, { data }) => data,
                                 }),
                             ],
                         },

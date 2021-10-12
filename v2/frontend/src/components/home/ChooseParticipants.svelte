@@ -9,13 +9,10 @@
     import Avatar from "../Avatar.svelte";
     import { AvatarSize, UserStatus } from "../../domain/user/user";
     import type { UserSummary } from "../../domain/user/user";
-    import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { AddGroupMachine } from "../../fsm/addgroup.machine";
     import SelectUsers from "./SelectUsers.svelte";
 
     export let machine: ActorRefFrom<AddGroupMachine>;
-
-    $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
     $: numParticipants = $machine.context.candidateGroup.participants.length;
 
@@ -37,6 +34,10 @@
     function deleteParticipant(ev: CustomEvent<UserSummary>): void {
         machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail.userId });
     }
+
+    function addParticipant(ev: CustomEvent<UserSummary>): void {
+        machine.send({ type: "ADD_PARTICIPANT", data: ev.detail });
+    }
 </script>
 
 <SectionHeader>
@@ -51,12 +52,12 @@
 
 <div class="participants">
     <div class="form-fields">
-        {#if userSearchMachine !== undefined}
+        {#if $machine.matches({ data_collection: "choosing_participants" })}
             <SelectUsers
+                api={$machine.context.serviceContainer}
                 on:deleteUser={deleteParticipant}
-                error={undefined}
-                {selectedUsers}
-                {userSearchMachine} />
+                on:selectUser={addParticipant}
+                {selectedUsers} />
         {:else}
             <Loading />
         {/if}

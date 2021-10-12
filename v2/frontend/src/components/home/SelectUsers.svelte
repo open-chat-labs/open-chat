@@ -1,17 +1,17 @@
 <script lang="ts">
-    import type { ActorRefFrom } from "xstate";
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
     import { fade } from "svelte/transition";
     import { _ } from "svelte-i18n";
     import type { UserSummary } from "../../domain/user/user";
-    import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import { pop } from "../../utils/transition";
+    import type { ServiceContainer } from "../../services/serviceContainer";
 
-    export let userSearchMachine: ActorRefFrom<UserSearchMachine>;
+    export let api: ServiceContainer;
     export let selectedUsers: UserSummary[];
-    export let error: string | undefined;
+
+    let error: string | undefined = undefined;
 </script>
 
 <div class="selected">
@@ -30,7 +30,7 @@
 {/if}
 
 <div class="find-user">
-    <FindUser machine={userSearchMachine} />
+    <FindUser on:selectUser {api} />
 </div>
 
 <style type="text/scss">

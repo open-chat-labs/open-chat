@@ -77,6 +77,11 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const TimestampMillis = IDL.Nat64;
+  const DeletedContent = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
@@ -84,7 +89,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
-    'Deleted' : IDL.Null,
+    'Deleted' : DeletedContent,
   });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -176,7 +181,6 @@ export const idlFactory = ({ IDL }) => {
     'AvatarChanged' : AvatarChanged,
     'ParticipantsAdded' : ParticipantsAdded,
   });
-  const TimestampMillis = IDL.Nat64;
   const GroupChatEventWrapper = IDL.Record({
     'event' : GroupChatEvent,
     'timestamp' : TimestampMillis,
@@ -195,6 +199,11 @@ export const idlFactory = ({ IDL }) => {
   const EventsRangeArgs = IDL.Record({
     'to_index' : EventIndex,
     'from_index' : EventIndex,
+  });
+  const EventsWindowArgs = IDL.Record({
+    'mid_point' : MessageIndex,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
   });
   const MakeAdminArgs = IDL.Record({ 'user_id' : UserId });
   const MakeAdminResponse = IDL.Variant({
@@ -404,6 +413,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
+    'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'make_admin' : IDL.Func([MakeAdminArgs], [MakeAdminResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),

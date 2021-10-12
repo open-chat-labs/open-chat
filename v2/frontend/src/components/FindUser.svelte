@@ -7,13 +7,20 @@
     import Avatar from "./Avatar.svelte";
     import Loading from "./Loading.svelte";
     import { _ } from "svelte-i18n";
-    import { onMount } from "svelte";
-    import type { ActorRefFrom } from "xstate";
-    import type { UserSearchMachine } from "../fsm/userSearch.machine";
-    export let machine: ActorRefFrom<UserSearchMachine>;
+    import { createEventDispatcher, onMount } from "svelte";
+    import type { ServiceContainer } from "../services/serviceContainer";
+    import { userStore } from "../stores/user";
+    import { toastStore } from "../stores/toast";
 
+    export let api: ServiceContainer;
+
+    const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
     let timer: NodeJS.Timeout | undefined = undefined;
+    let searchTerm: string = "";
+    let users: UserSummary[] = [];
+    let searching: boolean = false;
+
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
@@ -25,13 +32,21 @@
      */
 
     function onSelect(user: UserSummary) {
-        machine.send({ type: "SELECT_USER", data: user });
+        dispatch("selectUser", user);
+        userStore.add(user);
+        searchTerm = "";
+        users = [];
+        inp.focus();
     }
 
     function debounce(value: string) {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => {
-            machine.send({ type: "ON_INPUT", data: value });
+            searching = true;
+            api.searchUsers(value)
+                .then((u) => (users = u))
+                .catch((_err) => toastStore.showFailureToast("userSearchFailed"))
+                .finally(() => (searching = false));
         }, 350);
     }
 
@@ -40,7 +55,8 @@
     }
 
     function clearFilter() {
-        machine.send({ type: "CLEAR" });
+        users = [];
+        searchTerm = "";
     }
 </script>
 
@@ -48,21 +64,21 @@
     <span class="icon"><Magnify color={"#ccc"} /></span>
     <input
         bind:this={inp}
-        value={$machine.context.searchTerm}
+        bind:value={searchTerm}
         type="text"
         on:input={onInput}
         placeholder={$_("searchForUsername")} />
-    {#if $machine.matches("searching_users")}
+    {#if searching}
         <span class="loading" />
-    {:else if $machine.context.searchTerm !== ""}
+    {:else if searchTerm !== ""}
         <span on:click={clearFilter} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
 </div>
 <div class="results">
-    {#if $machine.matches("searching_users")}
+    {#if searching}
         <Loading />
     {:else}
-        {#each $machine.context.users as user, _i (user.userId)}
+        {#each users as user, _i (user.userId)}
             <div class="user" on:click={() => onSelect(user)}>
                 <span class="avatar">
                     <Avatar
