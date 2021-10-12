@@ -6,8 +6,8 @@ use ic_cdk_macros::update;
 use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, CanisterWasm, Cycles, CyclesTopUp, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
-use utils::canisters;
-use utils::canisters::create::CreateCanisterError;
+use utils::canister;
+use utils::canister::CreateCanisterError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
@@ -26,7 +26,7 @@ async fn create_canister(_args: Args) -> Response {
     let caller = init_ok.caller;
     let wasm_arg = candid::encode_one(init_ok.init_canister_args).unwrap();
     let cycles = CREATE_CANISTER_CYCLES_FEE + USER_CANISTER_INITIAL_CYCLES_BALANCE;
-    match canisters::create::call(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles).await {
+    match canister::create_and_install(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created

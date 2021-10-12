@@ -6,6 +6,7 @@ use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
+use utils::canister;
 use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 
@@ -49,6 +50,7 @@ struct Data {
     pub group_canister_wasm: CanisterWasm,
     pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
+    pub canister_pool: canister::Pool,
 }
 
 impl Data {
@@ -64,6 +66,7 @@ impl Data {
             group_canister_wasm,
             notifications_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
+            canister_pool: canister::Pool::new(100),
         }
     }
 
@@ -82,6 +85,7 @@ impl Default for Data {
             group_canister_wasm: CanisterWasm::default(),
             notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
+            canister_pool: canister::Pool::default(),
         }
     }
 }

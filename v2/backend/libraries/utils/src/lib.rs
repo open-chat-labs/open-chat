@@ -1,6 +1,6 @@
 pub mod blob_storage;
+pub mod canister;
 pub mod canister_logger;
-pub mod canisters;
 pub mod case_insensitive_hash_map;
 pub mod consts;
 pub mod env;
