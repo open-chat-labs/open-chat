@@ -40,7 +40,7 @@ impl RuntimeState {
     }
 
     pub fn is_caller_participant(&self) -> bool {
-        self.data.participants.get_by_principal(&self.env.caller()).is_some()
+        self.data.participants.get(self.env.caller()).is_some()
     }
 }
 
