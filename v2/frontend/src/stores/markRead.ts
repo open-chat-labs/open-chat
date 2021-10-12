@@ -1,14 +1,17 @@
 import { get } from "svelte/store";
-import type { MarkReadRequest, MessageIndexRange } from "../domain/chat/chat";
+import type { MarkReadRequest, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import {
     indexIsInRanges,
     insertIndexIntoRanges,
     mergeMessageIndexRanges,
 } from "../domain/chat/chat.utils";
-import type { ServiceContainer } from "../services/serviceContainer";
 import { unconfirmed } from "./unconfirmed";
 
 const MARK_READ_INTERVAL = 10 * 1000;
+
+export interface MarkMessagesRead {
+    markMessagesRead: (request: MarkReadRequest) => Promise<MarkReadResponse>;
+}
 
 type MessageRangesByChat = Record<string, MessageIndexRange[]>;
 
@@ -33,12 +36,12 @@ export function stopMarkReadPoller(): void {
     }
 }
 
-export function initMarkRead(api: ServiceContainer): MessageReadTracker {
-    const waiting: Set<bigint> = new Set<bigint>();
-    let state: MessageRangesByChat = {};
-    let pendingState: MessageRangesByChat = {};
-    const serverState: MessageRangesByChat = {};
+export const serverState: MessageRangesByChat = {};
+export const waiting: Set<bigint> = new Set<bigint>();
+export let state: MessageRangesByChat = {};
+export let pendingState: MessageRangesByChat = {};
 
+export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
     function sendToServer() {
         pendingState = {
             ...state,

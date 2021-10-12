@@ -61,13 +61,11 @@
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
-        <!-- {#if chat.typing}
+        {#if chat.typing}
             <Typing />
         {:else}
             <div class="chat-msg">{lastMessage}</div>
-        {/if} -->
-        <pre>{JSON.stringify(chatSummary.readByMe)}</pre>
-        <pre>{chatSummary.latestMessage?.event.messageIndex}</pre>
+        {/if}
 
         {#if unreadMessages > 0}
             <div

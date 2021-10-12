@@ -53,7 +53,7 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import type { MessageReadTracker } from "../stores/markRead";
+import type { MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -63,7 +63,7 @@ function buildIdenticonUrl(userId: string) {
     return `data:image/svg+xml;base64,${identicon}`;
 }
 
-export class ServiceContainer {
+export class ServiceContainer implements MarkMessagesRead {
     private _userIndexClient: IUserIndexClient;
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
