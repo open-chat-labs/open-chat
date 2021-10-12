@@ -46,6 +46,7 @@
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
     export let focused: boolean;
+    export let admin: boolean;
 
     let msgElement: HTMLElement;
     let userLookup = getContext<UserLookup>("userLookup");
@@ -197,9 +198,9 @@
                 {/await}
             {/if}
             <div class="time-and-ticks">
-                {#if msg.edited}
+                <!-- {#if msg.edited}
                     <span class="edited">{$_("edited")}</span>
-                {/if}
+                {/if} -->
                 <span class="time">
                     {toShortTimeString(new Date(Number(timestamp)))}
                 </span>
@@ -245,7 +246,7 @@
                                         <div slot="text">{$_("replyPrivately")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if me}
+                                {#if me || admin}
                                     <!-- <MenuItem on:click={editMessage}>
                                         <PencilOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                         <div slot="text">{$_("editMessage")}</div>
@@ -352,9 +353,9 @@
             margin: 0 $sp3;
         }
 
-        .edited {
-            @include font(light, italic, fs-60);
-        }
+        // .edited {
+        //     @include font(light, italic, fs-60);
+        // }
     }
 
     .menu {

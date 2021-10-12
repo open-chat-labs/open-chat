@@ -5,7 +5,7 @@ use candid::Principal;
 use ic_cdk_macros::update;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::upgrade_canister::{Response::*, *};
-use utils::canisters;
+use utils::canister;
 
 #[update]
 async fn upgrade_canister(_args: Args) -> Response {
@@ -21,7 +21,7 @@ async fn upgrade_canister(_args: Args) -> Response {
     let wasm_module = init_ok.user_canister_wasm.module;
     let wasm_version = init_ok.user_canister_wasm.version;
     let principal = init_ok.principal;
-    match canisters::upgrade::call(init_ok.canister_id, wasm_module).await {
+    match canister::upgrade(init_ok.canister_id, wasm_module).await {
         Ok(_) => {
             // The canister upgrade succeeded.
             // Update the user with the new wasm version and reset the upgrade_in_progress flag to false.

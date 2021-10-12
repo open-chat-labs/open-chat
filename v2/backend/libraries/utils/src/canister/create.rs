@@ -1,4 +1,4 @@
-use crate::canisters::error::Error;
+use crate::canister;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
 use serde::Deserialize;
@@ -6,46 +6,34 @@ use tracing::error;
 use types::CanisterId;
 
 #[derive(Debug)]
-pub enum CreateCanisterError {
-    CreateFailed(Error),
-    InstallFailed((Error, CanisterId)),
+pub enum CreateAndInstallError {
+    CreateFailed(canister::Error),
+    InstallFailed((canister::Error, CanisterId)),
 }
 
-pub async fn call(
+pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
     wasm_module: Vec<u8>,
     wasm_arg: Vec<u8>,
     cycles_to_use: u64,
-) -> Result<CanisterId, CreateCanisterError> {
+) -> Result<CanisterId, CreateAndInstallError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create(cycles_to_use).await {
             Err(error) => {
-                error!(
-                    error_code = error.code,
-                    error_message = error.msg.as_str(),
-                    "Error calling create_canister"
-                );
-                return Err(CreateCanisterError::CreateFailed(error));
+                return Err(CreateAndInstallError::CreateFailed(error));
             }
             Ok(id) => id,
         },
     };
 
     match install(canister_id, wasm_module, wasm_arg).await {
-        Err(error) => {
-            error!(
-                error_code = error.code,
-                error_message = error.msg.as_str(),
-                "Error calling install_code"
-            );
-            Err(CreateCanisterError::InstallFailed((error, canister_id)))
-        }
+        Err(error) => Err(CreateAndInstallError::InstallFailed((error, canister_id))),
         Ok(_) => Ok(canister_id),
     }
 }
 
-async fn create(cycles_to_use: u64) -> Result<Principal, Error> {
+pub async fn create(cycles_to_use: u64) -> Result<Principal, canister::Error> {
     #[derive(CandidType, Clone, Deserialize)]
     struct CanisterSettings {
         controller: Option<Principal>,
@@ -78,14 +66,21 @@ async fn create(cycles_to_use: u64) -> Result<Principal, Error> {
         {
             Ok(x) => x,
             Err((code, msg)) => {
-                return Err(Error { code: code as u8, msg });
+                let code = code as u8;
+                error!(
+                    error_code = code,
+                    error_message = msg.as_str(),
+                    "Error calling create_canister"
+                );
+
+                return Err(canister::Error { code, msg });
             }
         };
 
     Ok(create_result.canister_id)
 }
 
-async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), Error> {
+pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> Result<(), canister::Error> {
     #[derive(CandidType, Deserialize)]
     enum InstallMode {
         #[serde(rename = "install")]
@@ -116,7 +111,9 @@ async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8
     let (_,): ((),) = match api::call::call(Principal::management_canister(), "install_code", (install_config,)).await {
         Ok(x) => x,
         Err((code, msg)) => {
-            return Err(Error { code: code as u8, msg });
+            let code = code as u8;
+            error!(error_code = code, error_message = msg.as_str(), "Error calling install_code");
+            return Err(canister::Error { code, msg });
         }
     };
 
