@@ -138,6 +138,7 @@
     }
 
     function canAdminister(chat: GroupChatSummary): boolean {
+        // todo - this might cause a performance issue on a large group
         return (
             chat.public ||
             chat.participants.find((p) => p.userId === user!.userId)?.role === "admin"

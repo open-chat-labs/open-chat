@@ -32,7 +32,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CreateGroupSuccessResult,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
-    'MaxGroupsCreated' : IDL.Nat16,
+    'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
   });
   const MessageId = IDL.Nat;
@@ -82,6 +82,11 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const TimestampMillis = IDL.Nat64;
+  const DeletedContent = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'deleted_by' : UserId,
+  });
   const MessageContent = IDL.Variant({
     'File' : FileContent,
     'Text' : TextContent,
@@ -89,7 +94,7 @@ export const idlFactory = ({ IDL }) => {
     'Cycles' : CyclesContent,
     'Audio' : AudioContent,
     'Video' : VideoContent,
-    'Deleted' : IDL.Null,
+    'Deleted' : DeletedContent,
   });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
@@ -136,7 +141,6 @@ export const idlFactory = ({ IDL }) => {
     'DirectChatCreated' : DirectChatCreated,
     'MessageEdited' : UpdatedMessage,
   });
-  const TimestampMillis = IDL.Nat64;
   const DirectChatEventWrapper = IDL.Record({
     'event' : DirectChatEvent,
     'timestamp' : TimestampMillis,
@@ -158,6 +162,12 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'to_index' : EventIndex,
     'from_index' : EventIndex,
+  });
+  const EventsWindowArgs = IDL.Record({
+    'mid_point' : MessageIndex,
+    'user_id' : UserId,
+    'max_messages' : IDL.Nat32,
+    'max_events' : IDL.Nat32,
   });
   const JoinGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const JoinGroupResponse = IDL.Variant({
@@ -398,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
+    'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),

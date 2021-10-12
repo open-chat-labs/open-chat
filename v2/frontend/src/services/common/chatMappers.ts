@@ -6,6 +6,7 @@ import type {
     AudioContent,
     VideoContent,
     MessageContent,
+    DeletedContent,
     TextContent,
     Message,
     ReplyContext,
@@ -27,6 +28,7 @@ import type {
     ApiTextContent,
     ApiReplyContext,
     ApiUpdatedMessage,
+    ApiDeletedContent,
 } from "../user/candid/idl";
 
 export function message(candid: ApiMessage): Message {
@@ -66,12 +68,20 @@ export function messageContent(candid: ApiMessageContent): MessageContent {
         return audioContent(candid.Audio);
     }
     if ("Deleted" in candid) {
-        return { kind: "deleted_content" };
+        return deletedContent(candid.Deleted);
     }
     if ("Cycles" in candid) {
         return cyclesContent(candid.Cycles);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function deletedContent(candid: ApiDeletedContent): DeletedContent {
+    return {
+        kind: "deleted_content",
+        deletedBy: candid.deleted_by.toString(),
+        timestamp: candid.timestamp,
+    };
 }
 
 function cyclesContent(candid: ApiCyclesContent): CyclesContent {
@@ -191,10 +201,10 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
             return { Cycles: apiCyclesContent(domain) };
 
         case "deleted_content":
-            return { Deleted: null };
+            return { Deleted: apiDeletedContent(domain) };
 
         case "placeholder_content":
-            return { Deleted: null };
+            throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
 }
 
@@ -243,6 +253,12 @@ function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
     );
 }
 
+function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
+    return {
+        deleted_by: Principal.fromText(domain.deletedBy),
+        timestamp: domain.timestamp,
+    };
+}
 function apiCyclesContent(domain: CyclesContent): ApiCyclesContent {
     return {
         caption: apiOptional(identity, domain.caption),
