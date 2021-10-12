@@ -5,10 +5,12 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{EventIndex, MessageIndex, ParticipantJoined};
 
 // Called via the user's user canister
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn c2c_join_group(args: Args) -> Response {
     check_cycles_balance();
 

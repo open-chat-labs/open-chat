@@ -1,5 +1,6 @@
 use crate::{Data, RuntimeState, LOG_MESSAGES, LOW_CYCLES_BALANCE_THRESHOLD, RUNTIME_STATE};
 use cycles_utils::{check_cycles_balance, init_cycles_balance_checker};
+use tracing::Level;
 use utils::env::Environment;
 
 mod init;
@@ -7,8 +8,8 @@ mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
-fn init_logger() {
-    let log_messages = canister_logger::init_logger(None, ic_cdk::api::time);
+fn init_logger(max_level: Level) {
+    let log_messages = canister_logger::init_logger(max_level.into(), None, ic_cdk::api::time);
 
     LOG_MESSAGES.with(|c| *c.borrow_mut() = log_messages);
 }

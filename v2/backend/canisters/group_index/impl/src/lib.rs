@@ -52,6 +52,7 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -59,6 +60,7 @@ impl Data {
         service_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         notifications_canister_id: CanisterId,
+        test_mode: bool,
     ) -> Data {
         Data {
             public_groups: PublicGroups::default(),
@@ -68,6 +70,7 @@ impl Data {
             notifications_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(CANISTER_POOL_TARGET_SIZE),
+            test_mode,
         }
     }
 

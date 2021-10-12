@@ -5,9 +5,11 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::unblock_user::*;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::UsersUnblocked;
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn unblock_user(args: Args) -> Response {
     check_cycles_balance();
 

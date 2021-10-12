@@ -1,12 +1,14 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::ChatId;
 use user_canister::c2c_mark_read;
 use user_canister::mark_read::{Response::*, *};
 use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn mark_read(args: Args) -> Response {
     check_cycles_balance();
 

@@ -8,4 +8,5 @@ pub struct Args {
     pub group_index_canister_id: CanisterId,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
+    pub test_mode: bool,
 }

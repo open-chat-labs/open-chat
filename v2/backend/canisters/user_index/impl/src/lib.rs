@@ -65,6 +65,7 @@ struct Data {
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -74,6 +75,7 @@ impl Data {
         user_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        test_mode: bool,
     ) -> Self {
         Data {
             users: UserMap::default(),
@@ -83,6 +85,7 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_canister_id,
+            test_mode,
         }
     }
 }

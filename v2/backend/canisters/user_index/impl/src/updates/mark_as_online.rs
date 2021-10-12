@@ -1,8 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_index_canister::mark_as_online::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn mark_as_online(_args: Args) -> Response {
     RUNTIME_STATE.with(|state| mark_as_online_impl(state.borrow_mut().as_mut().unwrap()))
 }

@@ -13,4 +13,5 @@ pub struct Args {
     pub created_by_user_id: UserId,
     pub mark_active_duration: Milliseconds,
     pub wasm_version: Version,
+    pub test_mode: bool,
 }

@@ -3,11 +3,13 @@ use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
+use tracing::instrument;
 use types::{CanisterId, DirectMessageNotification, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 async fn c2c_send_message(args: Args) -> Response {
     check_cycles_balance();
 

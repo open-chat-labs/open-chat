@@ -60,6 +60,7 @@ struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
+    pub test_mode: bool,
 
     // Because messages are sent P2P over WebRTC, there is a race condition where 'mark_read' can be
     // called before the message itself has been received by the IC. When that happens we add the
@@ -84,6 +85,7 @@ impl Data {
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
         wasm_version: Version,
+        test_mode: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
@@ -104,6 +106,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
             message_ids_read_but_not_confirmed: HashMap::new(),
+            test_mode,
         }
     }
 }

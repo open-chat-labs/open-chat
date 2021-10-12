@@ -1,9 +1,11 @@
 use crate::{RuntimeState, GROUP_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use cycles_utils::top_up_canister;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{ChatId, CyclesTopUp, NotifyLowBalanceResponse};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 async fn c2c_notify_low_balance() -> NotifyLowBalanceResponse {
     let prepare_ok = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

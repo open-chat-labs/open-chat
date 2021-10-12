@@ -4,8 +4,10 @@ use chat_events::{EditMessageArgs, EditMessageResult};
 use cycles_utils::check_cycles_balance;
 use group_canister::edit_message::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::instrument;
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn edit_message(args: Args) -> Response {
     check_cycles_balance();
 

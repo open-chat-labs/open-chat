@@ -2,11 +2,13 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::DeleteMessageResult;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{CanisterId, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn delete_messages(args: Args) -> Response {
     check_cycles_balance();
 

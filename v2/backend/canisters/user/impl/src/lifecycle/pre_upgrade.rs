@@ -1,9 +1,10 @@
 use crate::{RuntimeState, LOG_MESSAGES, RUNTIME_STATE, STATE_VERSION};
 use canister_logger::LogMessagesContainer;
 use ic_cdk_macros::pre_upgrade;
-use tracing::info;
+use tracing::{info, instrument};
 
 #[pre_upgrade]
+#[instrument(level = "trace", skip_all)]
 fn pre_upgrade() {
     info!("Pre-upgrade starting");
 

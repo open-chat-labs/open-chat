@@ -6,12 +6,17 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::FormatTime;
 use types::TimestampMillis;
 
 const DEFAULT_MAX_MESSAGES: usize = 1000;
 
-pub fn init_logger(max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesContainer {
+pub fn init_logger(
+    max_level: LevelFilter,
+    max_messages: Option<usize>,
+    time_fn: fn() -> TimestampMillis,
+) -> LogMessagesContainer {
     let messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
     let messages_container_clone = messages_container.clone();
 
@@ -26,7 +31,8 @@ pub fn init_logger(max_messages: Option<usize>, time_fn: fn() -> TimestampMillis
     tracing_subscriber::fmt()
         .with_writer(make_writer)
         .with_timer(timer)
-        .with_max_level(LevelFilter::INFO)
+        .with_max_level(max_level)
+        .with_span_events(FmtSpan::ENTER)
         .json()
         .init();
 
@@ -134,14 +140,28 @@ impl FormatTime for Timer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tracing::info;
+    use tracing::{info, instrument};
 
     #[test]
     fn log_messages_can_be_accessed_outside_of_logger() {
-        let messages_container = init_logger(None, || 1);
+        let messages_container = init_logger(LevelFilter::TRACE, None, || 1);
 
         info!("test!");
 
         assert_eq!(1, messages_container.drain_messages().len());
+    }
+
+    #[test]
+    fn instrument() {
+        let messages_container = init_logger(LevelFilter::TRACE, None, || 1);
+
+        add_one(1);
+
+        assert_eq!(1, messages_container.drain_messages().len());
+    }
+
+    #[instrument(level = "trace", skip_all)]
+    fn add_one(value: u32) -> u32 {
+        value + 1
     }
 }

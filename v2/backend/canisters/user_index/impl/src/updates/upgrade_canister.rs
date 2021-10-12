@@ -3,11 +3,13 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::upgrade_canister::{Response::*, *};
 use utils::canister;
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 async fn upgrade_canister(_args: Args) -> Response {
     // Confirm the user has a canister that needs upgrading.
     // Extract the user canister_id from the runtime state.

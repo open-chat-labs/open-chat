@@ -61,6 +61,7 @@ struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -70,6 +71,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
+        test_mode: bool,
     ) -> Data {
         Data {
             owner,
@@ -82,6 +84,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
+            test_mode,
         }
     }
 }

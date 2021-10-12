@@ -2,10 +2,12 @@ use crate::updates::put_chunk::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_canister::put_chunk::*;
 use utils::blob_storage::PutChunkResult;
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn put_chunk(args: Args) -> Response {
     check_cycles_balance();
 

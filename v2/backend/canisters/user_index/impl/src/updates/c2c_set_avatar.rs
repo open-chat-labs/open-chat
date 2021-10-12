@@ -1,8 +1,10 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_index_canister::c2c_set_avatar::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn c2c_set_avatar(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_set_avatar_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

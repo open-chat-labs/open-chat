@@ -3,11 +3,12 @@ use cycles_utils::check_cycles_balance;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
-use tracing::error;
+use tracing::{error, instrument};
 use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 async fn create_group(args: Args) -> Response {
     check_cycles_balance();
 

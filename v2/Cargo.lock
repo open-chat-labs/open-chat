@@ -453,6 +453,7 @@ dependencies = [
  "ic-cdk-macros",
  "serde",
  "tracing",
+ "tracing-attributes",
  "tracing-subscriber",
  "types",
 ]

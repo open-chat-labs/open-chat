@@ -2,9 +2,11 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::ToggleReactionResult;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_canister::c2c_toggle_reaction::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace", skip_all)]
 fn c2c_toggle_reaction(args: Args) -> Response {
     check_cycles_balance();
 
