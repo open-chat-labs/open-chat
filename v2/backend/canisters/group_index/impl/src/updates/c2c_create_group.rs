@@ -3,6 +3,7 @@ use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{Avatar, CanisterId, CanisterWasm, ChatId, Version};
 use utils::canister;
+use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
@@ -42,9 +43,13 @@ async fn c2c_create_group(args: Args) -> Response {
             });
             Success(SuccessResult { chat_id })
         }
-        Err(_) => {
-            // TODO handle case where canister was created but installation failed
-            RUNTIME_STATE.with(|state| rollback(is_public, &name, state.borrow_mut().as_mut().unwrap()));
+        Err(error) => {
+            let mut canister_id = None;
+            if let CreateAndInstallError::InstallFailed((_, id)) = error {
+                canister_id = Some(id);
+            }
+
+            RUNTIME_STATE.with(|state| rollback(is_public, &name, canister_id, state.borrow_mut().as_mut().unwrap()));
             InternalError
         }
     }
@@ -117,8 +122,12 @@ fn commit(
     }
 }
 
-fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
+fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
     if is_public {
         runtime_state.data.public_groups.handle_group_creation_failed(name);
+    }
+
+    if let Some(canister_id) = canister_id {
+        runtime_state.data.canister_pool.push(canister_id);
     }
 }

@@ -7,7 +7,7 @@ use types::{CanisterCreationStatus, CanisterCreationStatusInternal, CanisterId, 
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::create_canister::{Response::*, *};
 use utils::canister;
-use utils::canister::CreateCanisterError;
+use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
@@ -45,7 +45,7 @@ async fn create_canister(_args: Args) -> Response {
         }
         Err(error) => {
             let mut canister_id = None;
-            if let CreateCanisterError::InstallFailed((_, id)) = error {
+            if let CreateAndInstallError::InstallFailed((_, id)) = error {
                 canister_id = Some(id);
             }
             // The canister create/install failed so set the user's CanisterCreationStatus back to Pending.

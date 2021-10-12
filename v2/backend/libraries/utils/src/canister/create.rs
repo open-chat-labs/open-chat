@@ -6,7 +6,7 @@ use tracing::error;
 use types::CanisterId;
 
 #[derive(Debug)]
-pub enum CreateCanisterError {
+pub enum CreateAndInstallError {
     CreateFailed(canister::Error),
     InstallFailed((canister::Error, CanisterId)),
 }
@@ -16,19 +16,19 @@ pub async fn create_and_install(
     wasm_module: Vec<u8>,
     wasm_arg: Vec<u8>,
     cycles_to_use: u64,
-) -> Result<CanisterId, CreateCanisterError> {
+) -> Result<CanisterId, CreateAndInstallError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create(cycles_to_use).await {
             Err(error) => {
-                return Err(CreateCanisterError::CreateFailed(error));
+                return Err(CreateAndInstallError::CreateFailed(error));
             }
             Ok(id) => id,
         },
     };
 
     match install(canister_id, wasm_module, wasm_arg).await {
-        Err(error) => Err(CreateCanisterError::InstallFailed((error, canister_id))),
+        Err(error) => Err(CreateAndInstallError::InstallFailed((error, canister_id))),
         Ok(_) => Ok(canister_id),
     }
 }
