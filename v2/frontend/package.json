@@ -7,8 +7,8 @@
         "dev": "rollup -c -w",
         "start": "sirv public --no-clear",
         "validate": "svelte-check",
-        "test": "MOCK_SERVICES=true jest --detectOpenHandles --runInBand",
-        "test:watch": "MOCK_SERVICES=true jest --watch --detectOpenHandles --runInBand",
+        "test": "jest --detectOpenHandles --runInBand",
+        "test:watch": "jest --watch --detectOpenHandles --runInBand",
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "codegen": "sh ./codegen.sh"
