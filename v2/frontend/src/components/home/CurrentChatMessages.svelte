@@ -410,10 +410,11 @@
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return (
-                $unconfirmedReadByThem.has(evt.event.messageId) ||
-                messageIsReadByThem($machine.context.chatSummary, evt.event)
-            );
+            const confirmedRead = messageIsReadByThem($machine.context.chatSummary, evt.event);
+            if (confirmedRead) {
+                unconfirmedReadByThem.delete(evt.event.messageId);
+            }
+            return confirmedRead || $unconfirmedReadByThem.has(evt.event.messageId);
         }
         return true;
     }

@@ -427,31 +427,9 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             ],
             on: {
                 REMOTE_USER_READ_MESSAGE: {
-                    // right now the message read is either confirmed or not
-                    actions: assign((ctx, ev) => {
-                        // if the message is unconfirmed
-                        if (ev.data.messageIndex === undefined) {
-                            console.log(
-                                "adding message to unconfirmed by them: ",
-                                ev.data.messageId
-                            );
-                            unconfirmedReadByThem.add(BigInt(ev.data.messageId));
-                            return {};
-                        } else {
-                            unconfirmedReadByThem.delete(BigInt(ev.data.messageId));
-                            // todo - we must also send this via CHAT_UPDATED to the chat actor
-                            return {
-                                chatSummaries: ctx.chatSummaries.map((c) => {
-                                    if (c.chatId === ev.data.chatId && c.kind === "direct_chat") {
-                                        c.readByThem = insertIndexIntoRanges(
-                                            Number(ev.data.messageIndex)!,
-                                            c.readByThem
-                                        );
-                                    }
-                                    return c;
-                                }),
-                            };
-                        }
+                    actions: pure((_ctx, ev) => {
+                        unconfirmedReadByThem.add(BigInt(ev.data.messageId));
+                        return undefined;
                     }),
                 },
                 REMOTE_USER_SENT_MESSAGE: {
@@ -671,10 +649,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     userId: ctx.user!.userId,
                                 };
 
-                                // we must consider whether the message is confirmed or not
-                                if (!get(unconfirmed).has(BigInt(ev.data.messageId))) {
-                                    rtc.messageIndex = ev.data.messageIndex;
-                                }
                                 rtcConnectionsManager.sendMessage(
                                     userIdsFromChatSummary(chat),
                                     rtc
