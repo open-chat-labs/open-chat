@@ -80,6 +80,7 @@ type InitArgs =
         service_principals: vec principal;
         group_wasm_module: blob;
         notifications_canister_id: CanisterId;
+        test_mode: bool;
     };
 
 service: (InitArgs) -> {
