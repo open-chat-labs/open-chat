@@ -8,8 +8,6 @@ import type {
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
-    MarkReadResponse,
-    MessageIndexRange,
     UpdateGroupResponse,
     ToggleReactionResponse,
     EventWrapper,

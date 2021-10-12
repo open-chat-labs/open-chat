@@ -6,8 +6,6 @@ import type {
     ChangeAdminResponse,
     SendMessageResponse,
     RemoveParticipantResponse,
-    MessageIndexRange,
-    MarkReadResponse,
     UpdateGroupResponse,
     ToggleReactionResponse,
     IndexRange,

@@ -11,7 +11,6 @@ import type {
     UnblockUserResponse,
     LeaveGroupResponse,
     MarkReadResponse,
-    MessageIndexRange,
     Message,
     IndexRange,
     EventWrapper,

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
 import { escalate, pure } from "xstate/lib/actions";
-import { userSearchMachine } from "./userSearch.machine";
 import type {
     GroupChatSummary,
     ChangeAdminResponse,
@@ -64,6 +63,7 @@ export type EditGroupEvents =
     | { type: "SAVE_GROUP_DETAILS"; data: UpdatedGroup }
     | { type: "CLOSE_GROUP_DETAILS" }
     | { type: "UNSELECT_PARTICIPANT"; data: UserSummary }
+    | { type: "SELECT_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.removeParticipant" }
     | { type: "error.platform.removeParticipant"; data: Error }
     | { type: "done.invoke.dismissAsAdmin" }
@@ -71,9 +71,7 @@ export type EditGroupEvents =
     | { type: "done.invoke.saveGroup"; data: UpdateGroupResponse }
     | { type: "error.platform.saveGroup"; data: Error }
     | { type: "done.invoke.makeAdmin" }
-    | { type: "error.platform.makeAdmin"; data: Error }
-    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
-    | { type: "error.platform.userSearchMachine"; data: Error };
+    | { type: "error.platform.makeAdmin"; data: Error };
 
 const liveConfig: Partial<MachineOptions<EditGroupContext, EditGroupEvents>> = {
     guards: {
@@ -307,7 +305,6 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                     actions: assign(({ history }) => pop(history)),
                     target: "#navigate",
                 },
-                "error.platform.userSearchMachine": "..unexpected_error",
             },
             states: {
                 choosing_participants: {
@@ -320,38 +317,13 @@ export const schema: MachineConfig<EditGroupContext, any, EditGroupEvents> = {
                                 ),
                             })),
                         },
-                    },
-                    invoke: {
-                        id: "userSearchMachine",
-                        src: userSearchMachine,
-                        data: (ctx, _) => {
-                            return {
-                                serviceContainer: ctx.serviceContainer,
-                                searchTerm: "",
-                                users: [],
-                                error: undefined,
-                            };
-                        },
-                        onDone: {
-                            target: "choosing_participants",
-                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
-                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
-                                    userStore.add(ev.data);
-                                    return {
-                                        usersToAdd: [ev.data, ...ctx.usersToAdd],
-                                    };
-                                }
-                                return {};
+                        SELECT_PARTICIPANT: {
+                            actions: assign((ctx, ev) => {
+                                userStore.add(ev.data);
+                                return {
+                                    usersToAdd: [ev.data, ...ctx.usersToAdd],
+                                };
                             }),
-                        },
-                        onError: {
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
-                            ],
                         },
                     },
                 },

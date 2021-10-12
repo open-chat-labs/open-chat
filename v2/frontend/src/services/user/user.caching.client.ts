@@ -10,7 +10,6 @@ import type {
     BlockUserResponse,
     UnblockUserResponse,
     LeaveGroupResponse,
-    MessageIndexRange,
     MarkReadResponse,
     Message,
     IndexRange,

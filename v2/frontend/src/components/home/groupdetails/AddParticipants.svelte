@@ -8,12 +8,9 @@
     import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
     export let machine: ActorRefFrom<EditGroupMachine>;
     import { _ } from "svelte-i18n";
-    import type { UserSearchMachine } from "../../../fsm/userSearch.machine";
     import SelectUsers from "../SelectUsers.svelte";
     import type { UserSummary } from "../../../domain/user/user";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-
-    $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
 
     $: busy = $machine.matches({ add_participants: "saving_participants" });
 
@@ -30,6 +27,10 @@
     function deleteUser(ev: CustomEvent<UserSummary>) {
         machine.send({ type: "UNSELECT_PARTICIPANT", data: ev.detail });
     }
+
+    function selectUser(ev: CustomEvent<UserSummary>) {
+        machine.send({ type: "SELECT_PARTICIPANT", data: ev.detail });
+    }
 </script>
 
 <SectionHeader>
@@ -45,13 +46,13 @@
     </span>
 </SectionHeader>
 
-{#if userSearchMachine !== undefined}
+{#if $machine.matches({ add_participants: "choosing_participants" })}
     <div class="find-user">
         <SelectUsers
-            error={$machine.context.error}
+            api={$machine.context.serviceContainer}
+            on:selectUser={selectUser}
             on:deleteUser={deleteUser}
-            selectedUsers={$machine.context.usersToAdd}
-            {userSearchMachine} />
+            selectedUsers={$machine.context.usersToAdd} />
     </div>
 {/if}
 

@@ -7,13 +7,17 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     export let machine: ActorRefFrom<HomeMachine>;
     import { _ } from "svelte-i18n";
-    import type { UserSearchMachine } from "../../fsm/userSearch.machine";
     import type { HomeMachine } from "../../fsm/home.machine";
+    import type { UserSummary } from "../../domain/user/user";
 
-    $: userSearchMachine = $machine.children.userSearchMachine as ActorRefFrom<UserSearchMachine>;
+    $: api = $machine.context.serviceContainer!;
 
     function cancelNewChat() {
         machine.send({ type: "CANCEL_NEW_CHAT" });
+    }
+
+    function selectUser(ev: CustomEvent<UserSummary>) {
+        machine.send({ type: "CREATE_CHAT_WITH_USER", data: ev.detail });
     }
 </script>
 
@@ -31,8 +35,8 @@
         <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
     {/if}
 
-    {#if userSearchMachine !== undefined && !$userSearchMachine.matches("unexpected_error")}
-        <FindUser machine={userSearchMachine} />
+    {#if $machine.matches({ loaded_chats: "new_chat" })}
+        <FindUser on:selectUser={selectUser} {api} />
     {/if}
 </div>
 
