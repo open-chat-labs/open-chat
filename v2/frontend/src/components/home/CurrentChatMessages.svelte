@@ -337,6 +337,13 @@
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
 
+    // todo - this might cause a performance problem
+    $: admin =
+        $machine.context.chatSummary.kind === "group_chat" &&
+        $machine.context.chatSummary.participants.find(
+            (p) => p.userId === $machine.context.user?.userId
+        )?.role === "admin";
+
     $: {
         if ($machine.context.chatSummary.chatId !== currentChatId) {
             currentChatId = $machine.context.chatSummary.chatId;
@@ -426,8 +433,6 @@
         }
         return true;
     }
-
-    // then we need to integrate web rtc
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
@@ -457,6 +462,7 @@
                         user={$machine.context.user}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
+                        {admin}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo={replyPrivatelyTo}
