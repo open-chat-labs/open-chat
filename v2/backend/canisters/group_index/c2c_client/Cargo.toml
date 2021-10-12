@@ -10,6 +10,5 @@ edition = "2018"
 canister_client_macros = { path = "../../../libraries/canister_client_macros" }
 group_index_canister = { path = "../api" }
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "6f1539aac70aae9ee7f1d2c326c633b6b863721f" }
-slog = "2.7.0"
-slog-scope = "4.4.0"
+tracing = "0.1.29"
 types = { path = "../../../libraries/types" }

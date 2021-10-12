@@ -2,8 +2,7 @@ use crate::canisters::error::Error;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
 use serde::Deserialize;
-use slog::error;
-use slog_scope::with_logger;
+use tracing::error;
 use types::CanisterId;
 
 #[derive(Debug)]
@@ -22,7 +21,11 @@ pub async fn call(
         Some(id) => id,
         None => match create(cycles_to_use).await {
             Err(error) => {
-                with_logger(|l| error!(l, "Error calling create_canister: {code}", code = error.code; "message" => &error.msg));
+                error!(
+                    error_code = error.code,
+                    error_message = error.msg.as_str(),
+                    "Error calling create_canister"
+                );
                 return Err(CreateCanisterError::CreateFailed(error));
             }
             Ok(id) => id,
@@ -31,7 +34,11 @@ pub async fn call(
 
     match install(canister_id, wasm_module, wasm_arg).await {
         Err(error) => {
-            with_logger(|l| error!(l, "Error calling install_code: {code}", code = error.code; "message" => &error.msg));
+            error!(
+                error_code = error.code,
+                error_message = error.msg.as_str(),
+                "Error calling install_code"
+            );
             Err(CreateCanisterError::InstallFailed((error, canister_id)))
         }
         Ok(_) => Ok(canister_id),

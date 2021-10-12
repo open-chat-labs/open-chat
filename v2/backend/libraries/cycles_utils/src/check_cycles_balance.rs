@@ -1,8 +1,7 @@
 use crate::{State, STATE};
 use canister_client_macros::generate_c2c_call;
 use ic_cdk::api::call::CallResult;
-use slog::error;
-use slog_scope::with_logger;
+use tracing::error;
 use types::{CanisterId, Milliseconds};
 
 const MIN_NOTIFICATION_INTERVAL: Milliseconds = 60 * 1000; // 1 minute
@@ -41,7 +40,7 @@ async fn send_notification(canister_id: CanisterId) {
     let args = c2c_notify_low_balance::Args {};
     if let Ok(response) = c2c_notify_low_balance(canister_id, &args).await {
         if !matches!(response, c2c_notify_low_balance::Response::Success(_)) {
-            with_logger(|l| error!(l, "Failed to notify low balance"; "response" => ?response));
+            error!(?response, "Failed to notify low balance");
         }
     }
 

@@ -1,15 +1,13 @@
-use crate::{RuntimeState, LOGGER, RUNTIME_STATE, STATE_VERSION};
+use crate::{RuntimeState, LOG_MESSAGES, RUNTIME_STATE, STATE_VERSION};
 use ic_cdk_macros::pre_upgrade;
-use slog::info;
-use slog_scope::with_logger;
+use tracing::info;
 use utils::canister_logger::LogMessagesContainer;
 
 #[pre_upgrade]
 fn pre_upgrade() {
-    with_logger(|l| info!(l, "Pre-upgrade starting"));
+    info!("Pre-upgrade starting");
 
-    RUNTIME_STATE
-        .with(|state| LOGGER.with(|c| pre_upgrade_impl(state.borrow().as_ref().unwrap(), c.borrow().messages_container())));
+    RUNTIME_STATE.with(|state| LOG_MESSAGES.with(|l| pre_upgrade_impl(state.borrow().as_ref().unwrap(), &l.borrow())));
 }
 
 fn pre_upgrade_impl(runtime_state: &RuntimeState, messages_container: &LogMessagesContainer) {

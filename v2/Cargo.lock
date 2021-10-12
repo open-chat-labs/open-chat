@@ -27,12 +27,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28ae2b3dec75a406790005a200b1bd89785afc02517a00ca99ecfe093ee9e6cf"
 
 [[package]]
-name = "arc-swap"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6df5aef5c5830360ce5218cecb8f018af3438af5686ae945094affc86fdec63"
-
-[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -625,8 +619,7 @@ dependencies = [
  "canister_client_macros",
  "ic-cdk",
  "serde",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "utils",
 ]
@@ -965,8 +958,7 @@ dependencies = [
  "canister_client_macros",
  "group_canister",
  "ic-cdk",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
 ]
 
@@ -1001,8 +993,7 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "user_canister",
  "user_canister_c2c_client",
@@ -1026,8 +1017,7 @@ dependencies = [
  "canister_client_macros",
  "group_index_canister",
  "ic-cdk",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
 ]
 
@@ -1056,8 +1046,7 @@ dependencies = [
  "ic-cdk-macros",
  "search",
  "serde",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "utils",
 ]
@@ -1564,6 +1553,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "matchers"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f099785f7595cc4b4553a174ce30dd7589ef93391ff414dbb67f62392b9e0ce1"
+dependencies = [
+ "regex-automata",
+]
+
+[[package]]
 name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,9 +1652,8 @@ dependencies = [
  "dotenv",
  "serde",
  "shared",
- "slog",
- "slog-term",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1667,9 +1664,8 @@ dependencies = [
  "candid",
  "dotenv",
  "shared",
- "slog",
- "slog-term",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1689,8 +1685,7 @@ dependencies = [
  "canister_client_macros",
  "ic-cdk",
  "notifications_canister",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
 ]
 
@@ -1715,8 +1710,7 @@ dependencies = [
  "ic-cdk-macros",
  "notifications_canister",
  "serde",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "utils",
 ]
@@ -2251,6 +2245,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex-automata"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c230d73fb8d8c1b9c0b3135c5142a8acee3a0558fb8db5cf1cb65f8d7862132"
+dependencies = [
+ "regex-syntax",
+]
+
+[[package]]
 name = "regex-cache"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2599,8 +2602,8 @@ dependencies = [
  "openssl",
  "serde",
  "serde_json",
- "slog",
  "tokio",
+ "tracing",
  "types",
  "utils",
  "web-push",
@@ -2638,48 +2641,6 @@ name = "slab"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c307a32c1c5c437f38c7fd45d753050587732ba8628319fbdf12a7e289ccc590"
-
-[[package]]
-name = "slog"
-version = "2.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
-
-[[package]]
-name = "slog-json"
-version = "2.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52e9b96fb6b5e80e371423b4aca6656eb537661ce8f82c2697e619f8ca85d043"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "slog",
-]
-
-[[package]]
-name = "slog-scope"
-version = "4.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f95a4b4c3274cd2869549da82b57ccc930859bdbf5bcea0424bc5f140b3c786"
-dependencies = [
- "arc-swap",
- "lazy_static",
- "slog",
-]
-
-[[package]]
-name = "slog-term"
-version = "2.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95c1e7e5aab61ced6006149ea772770b84a0d16ce0f7885def313e4829946d76"
-dependencies = [
- "atty",
- "chrono",
- "slog",
- "term",
- "thread_local",
-]
 
 [[package]]
 name = "smallvec"
@@ -3196,9 +3157,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.26"
+version = "0.1.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09adeb8c97449311ccd28a427f96fb563e7fd31aabf994189879d9da2394b89d"
+checksum = "375a639232caf30edfc78e8d89b2d4c375515393e7af7e16f01cd96917fb2105"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
@@ -3209,9 +3170,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.15"
+version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c42e6fa53307c8a17e4ccd4dc81cf5ec38db9209f59b222210375b54ee40d1e2"
+checksum = "f4f480b8f81512e825f337ad51e94c1eb5d3bbdf2b363dcd01e2b19a9ffe3f8e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3220,9 +3181,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.19"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ca517f43f0fb96e0c3072ed5c275fe5eece87e8cb52f4a77b69226d3b1c9df8"
+checksum = "1f4ed65637b8390770814083d20756f87bfa2c21bf2f110babdc5438351746e4"
 dependencies = [
  "lazy_static",
 ]
@@ -3238,14 +3199,46 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracing-subscriber"
-version = "0.2.20"
+name = "tracing-log"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9cbe87a2fa7e35900ce5de20220a582a9483a7063811defce79d7cbd59d4cfe"
+checksum = "a6923477a48e41c1951f1999ef8bb5a3023eb723ceadafe78ffb65dc366761e3"
 dependencies = [
- "sharded-slab",
- "thread_local",
+ "lazy_static",
+ "log",
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-serde"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb65ea441fbb84f9f6748fd496cf7f63ec9af5bca94dd86456978d055e8eb28b"
+dependencies = [
+ "serde",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
+dependencies = [
+ "ansi_term",
+ "chrono",
+ "lazy_static",
+ "matchers",
+ "regex",
+ "serde",
+ "serde_json",
+ "sharded-slab",
+ "smallvec 1.6.1",
+ "thread_local",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-serde",
 ]
 
 [[package]]
@@ -3358,8 +3351,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "ic-cdk",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "user_canister",
 ]
@@ -3395,8 +3387,7 @@ dependencies = [
  "notifications_canister_c2c_client",
  "search",
  "serde",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "user_canister",
  "user_canister_c2c_client",
@@ -3422,8 +3413,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client_macros",
  "ic-cdk",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "user_index_canister",
 ]
@@ -3452,8 +3442,7 @@ dependencies = [
  "phonenumber",
  "serde",
  "serde_bytes",
- "slog",
- "slog-scope",
+ "tracing",
  "types",
  "user_canister",
  "user_index_canister",
@@ -3478,10 +3467,9 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor",
- "slog",
- "slog-json",
- "slog-scope",
  "smallvec 0.6.14",
+ "tracing",
+ "tracing-subscriber",
  "types",
 ]
 

@@ -1,4 +1,4 @@
-use crate::LOGGER;
+use crate::LOG_MESSAGES;
 use http_request::{encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
@@ -11,7 +11,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     match extract_route(&request.url) {
-        Route::Logs(since) => LOGGER.with(|c| get_logs_impl(since, c.borrow().messages_container())),
+        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow())),
         _ => HttpResponse::not_found(),
     }
 }

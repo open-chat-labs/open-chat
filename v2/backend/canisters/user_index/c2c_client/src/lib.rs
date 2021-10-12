@@ -1,7 +1,6 @@
 use canister_client_macros::*;
 use ic_cdk::api::call::CallResult;
-use slog::error;
-use slog_scope::with_logger;
+use tracing::error;
 use types::CanisterId;
 use user_index_canister::*;
 

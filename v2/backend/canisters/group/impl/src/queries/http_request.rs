@@ -1,4 +1,4 @@
-use crate::{RuntimeState, LOGGER, RUNTIME_STATE};
+use crate::{RuntimeState, LOG_MESSAGES, RUNTIME_STATE};
 use http_request::{continue_streaming_blob, encode_logs, extract_route, get_avatar, get_blob, Route};
 use ic_cdk_macros::query;
 use types::{HttpRequest, HttpResponse, StreamingCallbackHttpResponse, TimestampMillis, Token};
@@ -25,7 +25,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             RUNTIME_STATE.with(|state| get_avatar_impl(requested_avatar_id, state.borrow().as_ref().unwrap()))
         }
         Route::Blob(blob_id) => RUNTIME_STATE.with(|state| get_blob_impl(blob_id, state.borrow().as_ref().unwrap())),
-        Route::Logs(since) => LOGGER.with(|c| get_logs_impl(since, c.borrow().messages_container())),
+        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow())),
         _ => HttpResponse::not_found(),
     }
 }
