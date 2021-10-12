@@ -1,11 +1,11 @@
 use crate::model::subscriptions::Subscriptions;
 use candid::{CandidType, Principal};
+use canister_logger::LogMessagesContainer;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::NotificationEnvelope;
-use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 

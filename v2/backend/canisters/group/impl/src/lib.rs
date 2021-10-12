@@ -1,13 +1,13 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
+use canister_logger::LogMessagesContainer;
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use types::{Avatar, CanisterId, ChatId, MessageId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
-use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 
 mod lifecycle;

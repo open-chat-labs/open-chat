@@ -324,21 +324,18 @@ impl ChatEvents {
 
     pub fn latest_message_if_updated(&self, since: TimestampMillis) -> Option<EventWrapper<Message>> {
         let event_index = self.latest_message_event_index?;
+        let event = self.get_internal(event_index)?;
 
-        self.get_internal(event_index)
-            .map(|e| {
-                if let ChatEventInternal::Message(m) = &e.event {
-                    if e.timestamp > since || m.last_updated.unwrap_or(0) > since {
-                        return Some(EventWrapper {
-                            index: e.index,
-                            timestamp: e.timestamp,
-                            event: self.hydrate_message(m),
-                        });
-                    }
-                }
-                None
-            })
-            .flatten()
+        if let ChatEventInternal::Message(m) = &event.event {
+            if event.timestamp > since || m.last_updated.unwrap_or(0) > since {
+                return Some(EventWrapper {
+                    index: event.index,
+                    timestamp: event.timestamp,
+                    event: self.hydrate_message(m),
+                });
+            }
+        }
+        None
     }
 
     pub fn last(&self) -> &EventWrapper<ChatEventInternal> {

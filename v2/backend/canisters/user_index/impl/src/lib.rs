@@ -1,10 +1,10 @@
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
+use canister_logger::LogMessagesContainer;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
-use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 

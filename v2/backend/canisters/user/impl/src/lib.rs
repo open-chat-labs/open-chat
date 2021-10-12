@@ -1,12 +1,12 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use candid::{CandidType, Principal};
+use canister_logger::LogMessagesContainer;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{Avatar, CanisterId, UserId, Version};
 use utils::blob_storage::BlobStorage;
-use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 
 mod lifecycle;

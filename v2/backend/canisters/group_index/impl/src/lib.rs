@@ -2,12 +2,12 @@ use crate::model::canisters_requiring_upgrade::CanistersRequiringUpgrade;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
+use canister_logger::LogMessagesContainer;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
 use utils::canister;
-use utils::canister_logger::LogMessagesContainer;
 use utils::env::Environment;
 
 mod lifecycle;

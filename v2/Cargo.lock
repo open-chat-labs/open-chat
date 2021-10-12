@@ -445,6 +445,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_logger"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "serde",
+ "tracing",
+ "tracing-subscriber",
+ "types",
+]
+
+[[package]]
 name = "canister_upgrader"
 version = "0.1.0"
 dependencies = [
@@ -978,6 +991,7 @@ name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "chat_events",
  "cycles_utils",
  "futures",
@@ -1037,6 +1051,7 @@ name = "group_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "cycles_utils",
  "futures",
  "group_canister",
@@ -1133,6 +1148,7 @@ name = "http_request"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "num-traits",
  "serde_bytes",
  "types",
@@ -1705,6 +1721,7 @@ name = "notifications_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
@@ -3372,6 +3389,7 @@ name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "chat_events",
  "cycles_utils",
  "futures",
@@ -3434,6 +3452,7 @@ name = "user_index_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_logger",
  "cycles_utils",
  "http_request",
  "ic-cdk",
@@ -3469,7 +3488,6 @@ dependencies = [
  "serde_cbor",
  "smallvec 0.6.14",
  "tracing",
- "tracing-subscriber",
  "types",
 ]
 
