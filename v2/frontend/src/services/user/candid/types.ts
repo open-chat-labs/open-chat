@@ -66,6 +66,10 @@ export interface DeleteMessagesArgs {
 }
 export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
+export interface DeletedContent {
+  'user_id' : UserId,
+  'timestamp' : TimestampMillis,
+}
 export type DirectChatCreated = {};
 export type DirectChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -128,6 +132,12 @@ export type EventsResponse = { 'ChatNotFound' : null } |
 export interface EventsSuccessResult {
   'affected_events' : Array<DirectChatEventWrapper>,
   'events' : Array<DirectChatEventWrapper>,
+}
+export interface EventsWindowArgs {
+  'mid_point' : MessageIndex,
+  'user_id' : UserId,
+  'max_messages' : number,
+  'max_events' : number,
 }
 export interface FieldTooLongResult {
   'length_provided' : number,
@@ -259,7 +269,7 @@ export type MessageContent = { 'File' : FileContent } |
   { 'Cycles' : CyclesContent } |
   { 'Audio' : AudioContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : null };
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -537,6 +547,7 @@ export interface _SERVICE {
   'events' : (arg_0: EventsArgs) => Promise<EventsResponse>,
   'events_by_index' : (arg_0: EventsByIndexArgs) => Promise<EventsResponse>,
   'events_range' : (arg_0: EventsRangeArgs) => Promise<EventsResponse>,
+  'events_window' : (arg_0: EventsWindowArgs) => Promise<EventsResponse>,
   'join_group' : (arg_0: JoinGroupArgs) => Promise<JoinGroupResponse>,
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
