@@ -11,7 +11,7 @@ fn post_upgrade() {
     ic_cdk::setup();
 
     let (version, bytes): (StateVersion, Vec<u8>) = ic_cdk::storage::stable_restore().unwrap();
-    let env = Box::new(CanisterEnv::new(false));
+    let env = Box::new(CanisterEnv::new());
 
     match version {
         StateVersion::V1 => {

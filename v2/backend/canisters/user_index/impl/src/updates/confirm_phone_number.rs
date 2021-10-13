@@ -14,7 +14,7 @@ fn confirm_phone_number(args: Args) -> Response {
 fn confirm_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-    let test_mode = runtime_state.env.test_mode();
+    let test_mode = runtime_state.data.test_mode;
 
     let phone_number: PhoneNumber;
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {

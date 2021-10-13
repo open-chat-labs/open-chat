@@ -13,7 +13,7 @@ fn init(args: Args) {
     init_logger(args.test_mode);
     ic_cdk::setup();
 
-    let env = Box::new(CanisterEnv::new(args.test_mode));
+    let env = Box::new(CanisterEnv::new());
     let user_canister_wasm = args.user_canister_wasm.decompress();
     let canister_pool_target_size = if args.test_mode { 5_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
