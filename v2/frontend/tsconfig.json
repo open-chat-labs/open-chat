@@ -8,6 +8,6 @@
         "strict": true,
         "types": ["jest", "node", "@types/dom-mediacapture-record"],
         "paths": {},
-        "lib": ["es2020", "webworker", "DOM"]
+        "lib": ["es2020", "webworker", "DOM", "DOM.Iterable"]
     }
 }

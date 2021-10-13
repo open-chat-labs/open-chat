@@ -308,7 +308,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
             let { chatSummaries, chatUpdatesSince } = ctx;
-            let intervalId: NodeJS.Timeout | undefined;
+            let intervalId: number | undefined;
 
             const unsubBackground = background.subscribe((hidden) => {
                 intervalId = poll(hidden ? CHAT_UPDATE_IDLE_INTERVAL : CHAT_UPDATE_INTERVAL);
@@ -323,9 +323,9 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 }
             });
 
-            function poll(interval: number): NodeJS.Timeout {
-                intervalId && clearInterval(intervalId);
-                return setInterval(async () => {
+            function poll(interval: number): number {
+                intervalId && window.clearInterval(intervalId);
+                return window.setInterval(async () => {
                     callback({
                         type: "CHATS_UPDATED",
                         data: await getUpdates(

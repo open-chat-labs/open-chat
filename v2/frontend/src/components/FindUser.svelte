@@ -16,7 +16,7 @@
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
-    let timer: NodeJS.Timeout | undefined = undefined;
+    let timer: number | undefined = undefined;
     let searchTerm: string = "";
     let users: UserSummary[] = [];
     let searching: boolean = false;

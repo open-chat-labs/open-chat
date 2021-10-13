@@ -12,6 +12,7 @@ import type {
 } from "../domain/chat/chat";
 import { newMessageId } from "../domain/chat/chat.utils";
 import { GroupIndexClient } from "../services/groupIndex/groupIndex.client";
+import { NotificationsClient } from "../services/notifications/notifications.client";
 import { ServiceContainer } from "../services/serviceContainer";
 import { UserIndexClient } from "../services/userIndex/userIndex.client";
 import { fakeMessageReadTracker } from "../stores/markRead";
@@ -90,6 +91,7 @@ const directContext: ChatContext = {
 
 GroupIndexClient.create = jest.fn();
 UserIndexClient.create = jest.fn();
+NotificationsClient.create = jest.fn();
 const serviceContainer = new ServiceContainer({} as Identity);
 
 const groupContext: ChatContext = {

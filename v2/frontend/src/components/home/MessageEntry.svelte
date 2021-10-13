@@ -27,7 +27,7 @@
     let percentRecorded: number = 0;
     let initialisedEdit: boolean = false;
     let lastTypingUpdate: number = 0;
-    let typingTimer: NodeJS.Timer | undefined = undefined;
+    let typingTimer: number | undefined = undefined;
 
     $: {
         if ($machine.context.editingEvent && !initialisedEdit) {
@@ -57,6 +57,7 @@
             if (typingTimer !== undefined) {
                 clearTimeout(typingTimer);
             }
+
             typingTimer = setTimeout(
                 () => machine.send({ type: "STOP_TYPING" }),
                 MARK_TYPING_STOPPED_INTERVAL_MS
