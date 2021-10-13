@@ -23,9 +23,12 @@ pub fn init_logger(
     time_fn: fn() -> TimestampMillis,
 ) -> LogMessagesWrapper {
     let log_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
-    let log_messages_container_clone = log_messages_container.clone();
     let trace_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
-    let trace_messages_container_clone = trace_messages_container.clone();
+
+    let log_messages_wrapper = LogMessagesWrapper {
+        logs: log_messages_container.clone(),
+        traces: trace_messages_container.clone(),
+    };
 
     let make_log_writer = move || LogWriter {
         messages_container: log_messages_container.clone(),
@@ -52,17 +55,15 @@ pub fn init_logger(
         .with_writer(make_trace_writer.with_filter(move |_| enable_trace))
         .with_timer(timer)
         .with_span_events(FmtSpan::ENTER)
-        .json();
+        .json()
+        .with_current_span(false);
 
     Registry::default()
         .with(log_layer)
         .with(trace_layer)
         .init();
 
-    LogMessagesWrapper {
-        logs: log_messages_container_clone,
-        traces: trace_messages_container_clone,
-    }
+    log_messages_wrapper
 }
 
 #[derive(Default)]
@@ -177,22 +178,17 @@ mod tests {
 
     #[test]
     fn log_messages_can_be_accessed_outside_of_logger() {
-        let (log_messages, trace_messages) = init_logger_inner(Level::TRACE, None, || 1);
+        let log_messages = init_logger(true, None, || 1);
 
         info!("test!");
 
-        assert_eq!(1, log_messages.drain_messages().len());
-        assert_eq!(1, trace_messages.drain_messages().len());
-    }
-
-    #[test]
-    fn instrument() {
-        let (log_messages, trace_messages) = init_logger_inner(Level::INFO, None, || 1);
+        assert_eq!(1, log_messages.logs.drain_messages().len());
+        assert_eq!(1, log_messages.traces.drain_messages().len());
 
         add_one(1);
 
-        assert_eq!(1, log_messages.drain_messages().len());
-        assert_eq!(1, trace_messages.drain_messages().len());
+        assert_eq!(1, log_messages.logs.drain_messages().len());
+        assert_eq!(2, log_messages.traces.drain_messages().len());
     }
 
     #[instrument(level = "trace")]
