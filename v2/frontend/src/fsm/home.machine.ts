@@ -590,6 +590,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                 replyingTo: ctx.replyingTo,
                                                 localReactions: {},
                                                 markRead: ctx.markRead,
+                                                initialised: false,
                                             }),
                                             `chat-${key}`
                                         ),

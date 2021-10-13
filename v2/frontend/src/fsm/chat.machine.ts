@@ -57,6 +57,7 @@ export interface ChatContext {
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
     markRead: MessageReadTracker;
+    initialised: boolean;
 }
 
 type LoadEventsResponse = {
@@ -67,7 +68,7 @@ type LoadEventsResponse = {
 export type ChatEvents =
     | {
           type: "done.invoke.loadEventsAndUsers";
-          data: LoadEventsResponse;
+          data: LoadEventsResponse | undefined;
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
@@ -207,18 +208,20 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
 
-            console.log("criteria: ", criteria);
-
             const [, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
-                    : { events: [], affectedEvents: [] },
+                    : undefined,
             ]);
+
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
             return {
-                events: eventsResponse === "events_failed" ? [] : eventsResponse.events,
-                affectedEvents:
-                    eventsResponse === "events_failed" ? [] : eventsResponse.affectedEvents,
+                events: eventsResponse.events,
+                affectedEvents: eventsResponse.affectedEvents,
             };
         },
         pruneLocalReactions: (_ctx, _ev) => (callback) => {
@@ -234,9 +237,10 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         },
     },
     actions: {
-        assignEventsResponse: assign((ctx, ev) =>
-            ev.type === "done.invoke.loadEventsAndUsers"
+        assignEventsResponse: assign((ctx, ev) => {
+            return ev.type === "done.invoke.loadEventsAndUsers" && ev.data !== undefined
                 ? {
+                      initialised: true,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
                           replaceLocal(
@@ -249,8 +253,8 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                           ctx.localReactions
                       ),
                   }
-                : {}
-        ),
+                : {};
+        }),
     },
 };
 
@@ -282,6 +286,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             initial: "idle",
             on: {
                 CHAT_UPDATED: {
+                    cond: (ctx, _ev) => ctx.initialised,
                     target: ".loading",
                     internal: true,
                     actions: assign((_, ev) => {
@@ -306,7 +311,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             actions: [
                                 "assignEventsResponse",
                                 pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                    if (ev.data.events.some(eventIsVisible)) {
+                                    if (
+                                        ev.data !== undefined &&
+                                        ev.data.events.some(eventIsVisible)
+                                    ) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
                                             event: "loaded_new_messages",
