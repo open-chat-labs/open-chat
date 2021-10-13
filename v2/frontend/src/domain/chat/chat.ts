@@ -551,3 +551,21 @@ export type ToggleReactionResponse =
     | "chat_not_found";
 
 export type DeleteMessageResponse = "not_in_group" | "chat_not_found" | "success";
+
+export type Notification = DirectNotification | GroupNotification;
+
+export type DirectNotification = {
+    kind: "direct_notification";
+    sender: string;
+    message: Message;
+    senderName: string;
+};
+
+export type GroupNotification = {
+    kind: "group_notification";
+    sender: string;
+    message: Message;
+    senderName: string;
+    chatId: string;
+    groupName: string;
+};

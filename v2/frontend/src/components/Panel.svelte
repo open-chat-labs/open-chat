@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { rtlStore } from "../stores/rtl";
     export let left: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
 </script>
 
-<section class:left class:right class:middle class:rtl={$rtlStore}>
+<section class:left class:right class:middle>
     <slot />
 </section>
 
@@ -23,37 +22,27 @@
         @include fullHeight();
 
         &.middle {
+            flex: auto;
             width: 100%;
-            padding-left: calc(#{$left-width + $sp3});
-            &.rtl {
-                padding-right: calc(#{$left-width});
-                padding-left: $sp3;
-            }
+            padding-left: $sp3;
+            padding-right: $sp3;
             @include size-below(xs) {
                 padding: 0;
-                &.rtl {
-                    padding: 0;
-                }
             }
         }
 
         &.left {
+            flex: 0 0 $left-width;
             background: var(--panel-left-bg);
             display: flex;
             flex-direction: column;
             min-width: 320px;
-            position: absolute;
-            left: 0;
-            top: 0;
             width: $left-width;
-            &.rtl {
-                right: 0;
-            }
             @include fullHeight();
-            @include z-index("left-panel");
             @include size-below(xs) {
                 width: 100%;
                 padding: 0;
+                flex: auto;
             }
         }
 

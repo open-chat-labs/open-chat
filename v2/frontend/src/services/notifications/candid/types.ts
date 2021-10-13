@@ -1,10 +1,4 @@
 import type { Principal } from '@dfinity/principal';
-export interface ActiveGroupsArgs {
-  'active_in_last' : Milliseconds,
-  'chat_ids' : Array<ChatId>,
-}
-export type ActiveGroupsResponse = { 'Success' : ActiveGroupsSuccessResult };
-export interface ActiveGroupsSuccessResult { 'active_groups' : Array<ChatId> }
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -147,12 +141,6 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
-export interface GroupMatch {
-  'name' : string,
-  'description' : string,
-  'avatar_id' : [] | [bigint],
-  'chat_id' : ChatId,
-}
 export interface GroupMessageNotification {
   'sender' : UserId,
   'message' : Message,
@@ -177,12 +165,7 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitArgs {
-  'test_mode' : boolean,
-  'service_principals' : Array<Principal>,
-  'notifications_canister_id' : CanisterId,
-  'group_wasm_module' : Array<number>,
-}
+export interface InitArgs { 'push_service_principals' : Array<Principal> }
 export interface Message {
   'content' : MessageContent,
   'edited' : boolean,
@@ -217,20 +200,6 @@ export interface MessageMatch {
   'chat_id' : ChatId,
   'event_index' : EventIndex,
 }
-export type MetricsArgs = {};
-export interface MetricsResponse {
-  'cycles_balance' : bigint,
-  'private_group_count' : bigint,
-  'active_public_group_count' : bigint,
-  'active_private_group_count' : bigint,
-  'caller_id' : Principal,
-  'deleted_public_group_count' : bigint,
-  'bytes_used' : bigint,
-  'timestamp' : TimestampMillis,
-  'deleted_private_group_count' : bigint,
-  'public_group_count' : bigint,
-  'wasm_memory_used' : bigint,
-}
 export type Milliseconds = bigint;
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
@@ -241,6 +210,13 @@ export type Notification = {
 export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
+}
+export interface NotificationsArgs { 'from_notification_index' : bigint }
+export type NotificationsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : NotificationsSuccessResult };
+export interface NotificationsSuccessResult {
+  'subscriptions' : Array<[UserId, Array<SubscriptionInfo>]>,
+  'notifications' : Array<IndexedNotification>,
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
@@ -271,22 +247,57 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PushDirectMessageNotificationArgs {
+  'recipient' : UserId,
+  'notification' : DirectMessageNotification,
+}
+export type PushDirectMessageNotificationResponse = { 'Success' : null };
+export interface PushGroupMessageNotificationArgs {
+  'notification' : GroupMessageNotification,
+  'recipients' : Array<UserId>,
+}
+export type PushGroupMessageNotificationResponse = { 'Success' : null };
+export interface PushSubscriptionArgs {
+  'subscription' : Subscription,
+  'user_id' : UserId,
+}
+export type PushSubscriptionResponse = { 'Success' : null };
+export interface PushV1DirectMessageNotificationArgs {
+  'recipient' : UserId,
+  'notification' : V1DirectMessageNotification,
+}
+export type PushV1DirectMessageNotificationResponse = { 'Success' : null };
+export interface PushV1GroupMessageNotificationArgs {
+  'notification' : V1GroupMessageNotification,
+  'recipients' : Array<UserId>,
+}
+export type PushV1GroupMessageNotificationResponse = { 'Success' : null };
+export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
+export type RemoveNotificationsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
+export interface RemoveSubscriptionsArgs {
+  'subscriptions_by_user' : Array<
+    { 'user_id' : UserId, 'p256dh_keys' : Array<string> }
+  >,
+}
+export type RemoveSubscriptionsResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null };
-export interface SearchArgs { 'max_results' : number, 'search_term' : string }
-export type SearchResponse = { 'TermTooShort' : number } |
-  { 'Success' : SearchSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null };
-export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
 }
+export interface SubscriptionExistsArgs {
+  'p256dh_key' : string,
+  'user_id' : UserId,
+}
+export type SubscriptionExistsResponse = { 'No' : null } |
+  { 'Yes' : null };
 export interface SubscriptionInfo {
   'endpoint' : string,
   'keys' : SubscriptionKeys,
@@ -295,13 +306,6 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface UpdateGroupCanisterWasmArgs {
-  'group_canister_wasm' : CanisterWasm,
-}
-export type UpdateGroupCanisterWasmResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'VersionNotHigher' : null } |
-  { 'InvalidVersion' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -386,10 +390,31 @@ export interface VideoContent {
   'width' : number,
 }
 export interface _SERVICE {
-  'active_groups' : (arg_0: ActiveGroupsArgs) => Promise<ActiveGroupsResponse>,
-  'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
-  'search' : (arg_0: SearchArgs) => Promise<SearchResponse>,
-  'update_group_canister_wasm' : (
-      arg_0: UpdateGroupCanisterWasmArgs,
-    ) => Promise<UpdateGroupCanisterWasmResponse>,
+  'notifications' : (arg_0: NotificationsArgs) => Promise<
+      NotificationsResponse
+    >,
+  'push_direct_message_notification' : (
+      arg_0: PushDirectMessageNotificationArgs,
+    ) => Promise<PushDirectMessageNotificationResponse>,
+  'push_group_message_notification' : (
+      arg_0: PushGroupMessageNotificationArgs,
+    ) => Promise<PushGroupMessageNotificationResponse>,
+  'push_subscription' : (arg_0: PushSubscriptionArgs) => Promise<
+      PushSubscriptionResponse
+    >,
+  'push_v1direct_message_notification' : (
+      arg_0: PushV1DirectMessageNotificationArgs,
+    ) => Promise<PushV1DirectMessageNotificationResponse>,
+  'push_v1group_message_notification' : (
+      arg_0: PushV1GroupMessageNotificationArgs,
+    ) => Promise<PushV1GroupMessageNotificationResponse>,
+  'remove_notifications' : (arg_0: RemoveNotificationsArgs) => Promise<
+      RemoveNotificationsResponse
+    >,
+  'remove_subscriptions' : (arg_0: RemoveSubscriptionsArgs) => Promise<
+      RemoveSubscriptionsResponse
+    >,
+  'subscription_exists' : (arg_0: SubscriptionExistsArgs) => Promise<
+      SubscriptionExistsResponse
+    >,
 }

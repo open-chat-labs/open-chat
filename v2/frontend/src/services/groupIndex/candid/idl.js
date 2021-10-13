@@ -1,6 +1,7 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const InitArgs = IDL.Record({
+    'test_mode' : IDL.Bool,
     'service_principals' : IDL.Vec(IDL.Principal),
     'notifications_canister_id' : CanisterId,
     'group_wasm_module' : IDL.Vec(IDL.Nat8),
@@ -85,6 +86,7 @@ export const idlFactory = ({ IDL }) => {
 export const init = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const InitArgs = IDL.Record({
+    'test_mode' : IDL.Bool,
     'service_principals' : IDL.Vec(IDL.Principal),
     'notifications_canister_id' : CanisterId,
     'group_wasm_module' : IDL.Vec(IDL.Nat8),
