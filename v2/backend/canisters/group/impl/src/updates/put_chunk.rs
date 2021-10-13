@@ -7,7 +7,7 @@ use tracing::instrument;
 use utils::blob_storage::PutChunkResult;
 
 #[update]
-#[instrument(level = "trace", skip_all, fields(blob_id = %args.blob_id, index = args.index, byte_length = args.bytes.len()))]
+#[instrument(level = "trace")]
 fn put_chunk(args: Args) -> Response {
     check_cycles_balance();
 
