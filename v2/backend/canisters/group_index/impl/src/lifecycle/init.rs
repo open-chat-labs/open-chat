@@ -14,9 +14,8 @@ fn init(args: Args) {
     ic_cdk::setup();
 
     let env = Box::new(CanisterEnv::new(args.test_mode));
-
     let group_canister_wasm = args.group_canister_wasm.decompress();
-    let canister_pool_target_size = if args.test_mode { 10_u16 } else { CANISTER_POOL_TARGET_SIZE };
+    let canister_pool_target_size = if args.test_mode { 5_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
     let data = Data::new(
         args.service_principals,

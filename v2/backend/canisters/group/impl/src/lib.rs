@@ -5,8 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
-use std::collections::HashMap;
-use types::{Avatar, CanisterId, ChatId, MessageId, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -61,13 +60,6 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
-
-    // Because messages are sent P2P over WebRTC, there is a race condition where 'mark_read' can be
-    // called before the message itself has been received by the IC. When that happens we add the
-    // messageId to this hashmap so that once we receive the message we can immediately mark it as
-    // read.
-    // TODO Prune messages from here that are more than 1 minute old
-    pub message_ids_read_but_not_confirmed: HashMap<MessageId, (Vec<UserId>, TimestampMillis)>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -84,6 +76,7 @@ impl Data {
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
+        notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
         test_mode: bool,
     ) -> Data {
@@ -101,11 +94,10 @@ impl Data {
             date_created: now,
             mark_active_duration,
             group_index_canister_id,
-            notification_canister_ids: Vec::new(),
+            notification_canister_ids,
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            message_ids_read_but_not_confirmed: HashMap::new(),
             test_mode,
         }
     }

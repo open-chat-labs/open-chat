@@ -1,6 +1,7 @@
 use crate::{Data, RuntimeState, LOG_MESSAGES, RUNTIME_STATE};
 use utils::env::Environment;
 
+mod heartbeat;
 mod init;
 mod post_upgrade;
 mod pre_upgrade;

@@ -89,6 +89,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
             created_by_user_id: user_id,
             mark_active_duration: MARK_ACTIVE_DURATION,
             wasm_version: canister_wasm.version,
+            notification_canister_ids: Vec::new(),
             avatar: args.avatar,
             test_mode: runtime_state.data.test_mode,
         };
