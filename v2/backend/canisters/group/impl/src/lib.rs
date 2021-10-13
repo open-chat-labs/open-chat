@@ -1,7 +1,7 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesContainer;
+use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -26,7 +26,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
 }
 
 struct RuntimeState {

@@ -10,7 +10,7 @@ const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 3;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn set_username(args: Args) -> Response {
     RUNTIME_STATE.with(|state| set_username_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

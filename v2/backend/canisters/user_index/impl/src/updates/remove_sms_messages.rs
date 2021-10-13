@@ -4,7 +4,7 @@ use tracing::instrument;
 use user_index_canister::remove_sms_messages::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn remove_sms_messages(args: Args) -> Response {
     RUNTIME_STATE.with(|state| remove_sms_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

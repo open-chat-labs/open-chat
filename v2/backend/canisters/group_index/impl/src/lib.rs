@@ -2,7 +2,7 @@ use crate::model::canisters_requiring_upgrade::CanistersRequiringUpgrade;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesContainer;
+use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -29,7 +29,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -90,6 +90,7 @@ impl Default for Data {
             notifications_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(CANISTER_POOL_TARGET_SIZE),
+            test_mode: true,
         }
     }
 }

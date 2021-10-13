@@ -6,7 +6,7 @@ use types::ConfirmationCodeSms;
 use user_index_canister::resend_code::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn resend_code(_: Args) -> Response {
     RUNTIME_STATE.with(|state| resend_code_impl(state.borrow_mut().as_mut().unwrap()))
 }

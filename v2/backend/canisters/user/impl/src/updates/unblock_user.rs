@@ -5,7 +5,7 @@ use tracing::instrument;
 use user_canister::block_user::*;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn unblock_user(args: Args) -> Response {
     check_cycles_balance();
 

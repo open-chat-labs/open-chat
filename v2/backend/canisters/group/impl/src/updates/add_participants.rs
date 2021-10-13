@@ -10,7 +10,7 @@ use types::{EventIndex, MessageIndex, ParticipantsAdded, UserId};
 use user_canister::c2c_try_add_to_group;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn add_participants(args: Args) -> Response {
     check_cycles_balance();
 

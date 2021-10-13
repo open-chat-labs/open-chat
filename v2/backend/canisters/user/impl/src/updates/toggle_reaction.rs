@@ -8,7 +8,7 @@ use user_canister::c2c_toggle_reaction;
 use user_canister::toggle_reaction::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn toggle_reaction(args: Args) -> Response {
     check_cycles_balance();
 

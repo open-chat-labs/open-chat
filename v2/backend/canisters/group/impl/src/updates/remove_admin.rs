@@ -9,7 +9,7 @@ use tracing::instrument;
 use types::{ParticipantsDismissedAsAdmin, Role};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn remove_admin(args: Args) -> Response {
     check_cycles_balance();
 

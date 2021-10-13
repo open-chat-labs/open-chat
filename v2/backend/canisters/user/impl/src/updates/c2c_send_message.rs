@@ -9,7 +9,7 @@ use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn c2c_send_message(args: Args) -> Response {
     check_cycles_balance();
 

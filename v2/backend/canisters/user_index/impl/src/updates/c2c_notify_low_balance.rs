@@ -5,7 +5,7 @@ use tracing::instrument;
 use types::{CyclesTopUp, NotifyLowBalanceResponse, UserId};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn c2c_notify_low_balance() -> NotifyLowBalanceResponse {
     let prepare_ok = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

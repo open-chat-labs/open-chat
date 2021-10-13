@@ -14,7 +14,7 @@ use types::{
 };
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn update_group(args: Args) -> Response {
     check_cycles_balance();
 

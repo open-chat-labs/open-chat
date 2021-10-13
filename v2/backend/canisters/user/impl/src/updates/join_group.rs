@@ -8,7 +8,7 @@ use types::ChatId;
 use user_canister::join_group::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn join_group(args: Args) -> Response {
     check_cycles_balance();
 

@@ -1,13 +1,12 @@
 use crate::{Data, RuntimeState, LOG_MESSAGES, RUNTIME_STATE};
-use tracing::Level;
 use utils::env::Environment;
 
 mod init;
 mod post_upgrade;
 mod pre_upgrade;
 
-fn init_logger(max_level: Level) {
-    let log_messages = canister_logger::init_logger(max_level.into(), None, ic_cdk::api::time);
+fn init_logger(enable_trace: bool) {
+    let log_messages = canister_logger::init_logger(enable_trace, None, ic_cdk::api::time);
 
     LOG_MESSAGES.with(|c| *c.borrow_mut() = log_messages);
 }

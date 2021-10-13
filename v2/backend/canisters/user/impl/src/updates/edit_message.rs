@@ -8,7 +8,7 @@ use user_canister::c2c_edit_message;
 use user_canister::edit_message::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn edit_message(args: Args) -> Response {
     check_cycles_balance();
 

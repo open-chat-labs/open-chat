@@ -9,7 +9,7 @@ use tracing::instrument;
 use types::{ParticipantsPromotedToAdmin, Role};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn make_admin(args: Args) -> Response {
     check_cycles_balance();
 

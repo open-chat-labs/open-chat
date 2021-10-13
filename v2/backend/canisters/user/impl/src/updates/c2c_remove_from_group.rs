@@ -5,7 +5,7 @@ use tracing::instrument;
 use user_canister::c2c_remove_from_group::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_remove_from_group(_args: Args) -> Response {
     check_cycles_balance();
 

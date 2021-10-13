@@ -4,7 +4,7 @@ use tracing::instrument;
 use user_index_canister::update_user_canister_wasm::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn update_user_canister_wasm(args: Args) -> Response {
     RUNTIME_STATE.with(|state| update_user_canister_wasm_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

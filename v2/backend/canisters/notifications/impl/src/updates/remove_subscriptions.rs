@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 use tracing::instrument;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn remove_subscriptions(args: Args) -> Response {
     RUNTIME_STATE.with(|state| remove_subscriptions_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

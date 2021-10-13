@@ -6,7 +6,7 @@ use tracing::instrument;
 use types::ChatId;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_update_group(args: Args) -> Response {
     RUNTIME_STATE.with(|state| c2c_update_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

@@ -8,7 +8,7 @@ use types::{CanisterId, ChatId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::create_group::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn create_group(args: Args) -> Response {
     check_cycles_balance();
 

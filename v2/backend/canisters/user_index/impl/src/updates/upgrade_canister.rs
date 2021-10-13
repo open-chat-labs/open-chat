@@ -9,7 +9,7 @@ use user_index_canister::upgrade_canister::{Response::*, *};
 use utils::canister;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn upgrade_canister(_args: Args) -> Response {
     // Confirm the user has a canister that needs upgrading.
     // Extract the user canister_id from the runtime state.

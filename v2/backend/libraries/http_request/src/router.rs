@@ -5,6 +5,7 @@ pub enum Route {
     Avatar(Option<u128>),
     Blob(u128),
     Logs(Option<TimestampMillis>),
+    Traces(Option<TimestampMillis>),
     Other,
 }
 
@@ -31,6 +32,10 @@ pub fn extract_route(path: &str) -> Route {
         "logs" => {
             let since = parts.get(1).map(|p| u64::from_str(p).ok()).flatten();
             Route::Logs(since)
+        }
+        "trace" => {
+            let since = parts.get(1).map(|p| u64::from_str(p).ok()).flatten();
+            Route::Traces(since)
         }
         _ => Route::Other,
     }

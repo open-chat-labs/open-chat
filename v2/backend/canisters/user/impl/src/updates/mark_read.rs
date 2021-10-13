@@ -8,7 +8,7 @@ use user_canister::mark_read::{Response::*, *};
 use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn mark_read(args: Args) -> Response {
     check_cycles_balance();
 

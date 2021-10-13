@@ -7,7 +7,7 @@ use types::{CanisterId, Timestamped};
 use user_canister::toggle_mute_notifications::*;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn toggle_mute_notifications(args: Args) -> Response {
     check_cycles_balance();
 

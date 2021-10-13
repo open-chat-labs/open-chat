@@ -1,15 +1,15 @@
 use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use ic_cdk_macros::init;
-use tracing::{info, instrument, Level};
+use tracing::{info, instrument};
 use user_canister::init::Args;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
 #[init]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn init(args: Args) {
-    init_logger(if args.test_mode { Level::TRACE } else { Level::INFO });
+    init_logger(args.test_mode);
     ic_cdk::setup();
 
     let env = Box::new(CanisterEnv::new(false));

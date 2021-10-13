@@ -8,7 +8,7 @@ use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn c2c_create_group(args: Args) -> Response {
     let name = args.name.to_owned();
     let description = args.description.to_owned();

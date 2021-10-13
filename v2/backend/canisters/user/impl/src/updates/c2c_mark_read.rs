@@ -7,7 +7,7 @@ use user_canister::c2c_mark_read::{Response::*, *};
 use utils::range_set::insert_ranges;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_mark_read(args: Args) -> Response {
     check_cycles_balance();
 

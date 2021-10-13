@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use tracing::instrument;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn delete_messages(args: Args) -> Response {
     check_cycles_balance();
 

@@ -8,7 +8,7 @@ use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn send_message(args: Args) -> Response {
     check_cycles_balance();
 

@@ -9,7 +9,7 @@ use types::ParticipantLeft;
 
 // Called via the user's user canister
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_leave_group(_args: Args) -> Response {
     check_cycles_balance();
 

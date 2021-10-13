@@ -7,7 +7,7 @@ use types::{Avatar, CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::set_avatar::*;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn set_avatar(args: Args) -> Response {
     check_cycles_balance();
 

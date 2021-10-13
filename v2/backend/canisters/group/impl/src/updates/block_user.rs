@@ -9,7 +9,7 @@ use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn block_user(args: Args) -> Response {
     check_cycles_balance();
 

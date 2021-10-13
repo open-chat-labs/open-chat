@@ -7,7 +7,7 @@ use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn submit_phone_number(args: Args) -> Response {
     RUNTIME_STATE.with(|state| submit_phone_number_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

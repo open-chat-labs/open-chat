@@ -10,7 +10,7 @@ use types::{EventIndex, MessageIndex, ParticipantJoined};
 
 // Called via the user's user canister
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_join_group(args: Args) -> Response {
     check_cycles_balance();
 

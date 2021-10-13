@@ -7,7 +7,7 @@ use user_canister::put_chunk::*;
 use utils::blob_storage::PutChunkResult;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn put_chunk(args: Args) -> Response {
     check_cycles_balance();
 

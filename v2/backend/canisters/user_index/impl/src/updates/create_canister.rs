@@ -12,7 +12,7 @@ use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 async fn create_canister(_args: Args) -> Response {
     // Confirm the user needs a canister to be created.
     // Extract the user canister_id and wasm module from the runtime state.

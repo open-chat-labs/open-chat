@@ -5,7 +5,7 @@ use tracing::instrument;
 use user_canister::c2c_delete_messages::{Response::*, *};
 
 #[update]
-#[instrument(level = "trace", skip_all)]
+#[instrument(level = "trace")]
 fn c2c_delete_messages(args: Args) -> Response {
     check_cycles_balance();
 
