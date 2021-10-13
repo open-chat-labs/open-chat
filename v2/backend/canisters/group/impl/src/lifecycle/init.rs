@@ -12,7 +12,7 @@ fn init(args: Args) {
     init_logger(args.test_mode);
     ic_cdk::setup();
 
-    let env = Box::new(CanisterEnv::new(false));
+    let env = Box::new(CanisterEnv::new());
     let group_index_canister_id = env.caller();
 
     let data = Data::new(

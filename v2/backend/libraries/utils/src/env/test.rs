@@ -30,10 +30,6 @@ impl Environment for TestEnv {
     fn cycles_balance(&self) -> u64 {
         self.cycles_balance
     }
-
-    fn test_mode(&self) -> bool {
-        true
-    }
 }
 
 impl Default for TestEnv {

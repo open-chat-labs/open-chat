@@ -7,11 +7,10 @@ use types::{CanisterId, TimestampMillis};
 
 pub struct CanisterEnv {
     rng: StdRng,
-    test_mode: bool,
 }
 
 impl CanisterEnv {
-    pub fn new(test_mode: bool) -> Self {
+    pub fn new() -> Self {
         CanisterEnv {
             // Seed the PRNG with the current time.
             //
@@ -26,7 +25,6 @@ impl CanisterEnv {
                 seed[24..32].copy_from_slice(&now_millis.to_be_bytes());
                 StdRng::from_seed(seed)
             },
-            test_mode,
         }
     }
 }
@@ -50,9 +48,5 @@ impl Environment for CanisterEnv {
 
     fn cycles_balance(&self) -> u64 {
         ic_cdk::api::canister_balance()
-    }
-
-    fn test_mode(&self) -> bool {
-        self.test_mode
     }
 }
