@@ -7,21 +7,17 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use tracing::Level;
 use tracing_subscriber::fmt::format::FmtSpan;
-use tracing_subscriber::fmt::Layer;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::fmt::Layer;
 use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::Registry;
 use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::Registry;
 use types::TimestampMillis;
 
 const DEFAULT_MAX_MESSAGES: usize = 1000;
 
-pub fn init_logger(
-    enable_trace: bool,
-    max_messages: Option<usize>,
-    time_fn: fn() -> TimestampMillis,
-) -> LogMessagesWrapper {
+pub fn init_logger(enable_trace: bool, max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesWrapper {
     let log_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
     let trace_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
 
@@ -58,10 +54,7 @@ pub fn init_logger(
         .json()
         .with_current_span(false);
 
-    Registry::default()
-        .with(log_layer)
-        .with(trace_layer)
-        .init();
+    Registry::default().with(log_layer).with(trace_layer).init();
 
     log_messages_wrapper
 }
