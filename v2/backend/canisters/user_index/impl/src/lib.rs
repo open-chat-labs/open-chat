@@ -5,6 +5,7 @@ use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
+use utils::canister;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 
@@ -65,6 +66,7 @@ struct Data {
     pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    pub canister_pool: canister::Pool,
 }
 
 impl Data {
@@ -74,6 +76,7 @@ impl Data {
         user_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        canister_pool_target_size: u16,
     ) -> Self {
         Data {
             users: UserMap::default(),
@@ -83,6 +86,7 @@ impl Data {
             sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_canister_id,
+            canister_pool: canister::Pool::new(canister_pool_target_size),
         }
     }
 }
@@ -98,6 +102,7 @@ impl Default for Data {
             sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
+            canister_pool: canister::Pool::new(5),
         }
     }
 }

@@ -91,6 +91,8 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                                 notification_canister_ids: Vec::new(),
                                 wasm_version: canister_wasm.version,
                             };
+                            let canister_id = canister_id.or_else(|| runtime_state.data.canister_pool.pop());
+
                             return Ok(InitOk {
                                 caller,
                                 canister_id,
@@ -163,7 +165,12 @@ fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &
                 let mut user = user.clone();
                 user.set_canister_creation_status(CanisterCreationStatusInternal::Pending(canister_id));
                 runtime_state.data.users.update(user);
+                return;
             }
         }
+    }
+
+    if let Some(canister_id) = canister_id {
+        runtime_state.data.canister_pool.push(canister_id);
     }
 }
