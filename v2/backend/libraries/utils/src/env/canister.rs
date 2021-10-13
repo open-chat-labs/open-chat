@@ -50,3 +50,9 @@ impl Environment for CanisterEnv {
         ic_cdk::api::canister_balance()
     }
 }
+
+impl Default for CanisterEnv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
