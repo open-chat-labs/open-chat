@@ -26,6 +26,11 @@ export interface Theme {
     error: string;
     accent: string;
 
+    notificationBar: {
+        bg: string;
+        txt: string;
+    };
+
     reaction: {
         bg: string;
         txt: string;
@@ -214,6 +219,11 @@ const defaultTheme = {
     error: "#CF6679",
     accent: "hotpink",
 
+    notificationBar: {
+        bg: "#f79031",
+        txt: "#ffffff",
+    },
+
     reaction: {
         bg: "#efefef",
         txt: "#191919",
@@ -401,6 +411,11 @@ export const themes: Themes = {
         // error: "#800000",
         error: "#CF6679",
         accent: "hotpink",
+
+        notificationBar: {
+            bg: "#f3722b",
+            txt: "#ffffff",
+        },
 
         reaction: {
             bg: dark25,

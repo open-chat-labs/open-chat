@@ -38,6 +38,7 @@
             flex-direction: column;
             min-width: 320px;
             width: $left-width;
+            position: relative;
             @include fullHeight();
             @include size-below(xs) {
                 width: 100%;

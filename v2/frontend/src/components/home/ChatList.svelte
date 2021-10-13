@@ -28,6 +28,7 @@
     import { getContentAsText } from "../../domain/chat/chat.utils";
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
+    import NotificationsBar from "./NotificationsBar.svelte";
 
     export let machine: ActorRefFrom<HomeMachine>;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -255,6 +256,7 @@
             <NewMessageFab on:newchat />
         {/if}
     </div>
+    <NotificationsBar />
 {/if}
 
 <style type="text/scss">

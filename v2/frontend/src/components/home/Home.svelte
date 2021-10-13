@@ -30,7 +30,6 @@
     import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
-    import NotificationsBar from "./NotificationsBar.svelte";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -241,7 +240,6 @@
 
 {#if $machine.context.user}
     <main>
-        <!-- <NotificationsBar /> -->
         {#if params.chatId == null || $screenWidth !== ScreenWidth.ExtraSmall}
             <LeftPanel
                 {machine}
