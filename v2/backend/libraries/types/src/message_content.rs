@@ -1,6 +1,7 @@
 use crate::{CanisterId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
@@ -22,7 +23,7 @@ pub struct TextContent {
 pub struct ImageContent {
     pub width: u32,
     pub height: u32,
-    pub thumbnail_data: String,
+    pub thumbnail_data: ThumbnailData,
     pub caption: Option<String>,
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
@@ -32,7 +33,7 @@ pub struct ImageContent {
 pub struct VideoContent {
     pub width: u32,
     pub height: u32,
-    pub thumbnail_data: String,
+    pub thumbnail_data: ThumbnailData,
     pub caption: Option<String>,
     pub mime_type: String,
     pub image_blob_reference: Option<BlobReference>,
@@ -80,4 +81,13 @@ pub enum MessageContentType {
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone)]
+pub struct ThumbnailData(String);
+
+impl Debug for ThumbnailData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ThumbnailData").field("byte_length", &self.0.len()).finish()
+    }
 }

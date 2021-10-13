@@ -1,8 +1,9 @@
 use candid::CandidType;
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
+use std::fmt::{Debug, Formatter};
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct Args {
     pub blob_id: u128,
     pub mime_type: String,
@@ -19,4 +20,16 @@ pub enum Response {
     ChunkTooBig,
     BlobTooBig,
     Full,
+}
+
+impl Debug for Args {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Args")
+            .field("blob_id", &self.blob_id)
+            .field("mime_type", &self.mime_type)
+            .field("total_chunks", &self.total_chunks)
+            .field("index", &self.index)
+            .field("byte_length", &self.bytes.len())
+            .finish()
+    }
 }
