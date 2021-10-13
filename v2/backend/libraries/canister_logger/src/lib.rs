@@ -5,32 +5,64 @@ use std::fmt::Write;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
-use tracing_subscriber::filter::LevelFilter;
+use tracing::Level;
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::FormatTime;
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::fmt::Layer;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::Registry;
 use types::TimestampMillis;
 
 const DEFAULT_MAX_MESSAGES: usize = 1000;
 
-pub fn init_logger(max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesContainer {
-    let messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
-    let messages_container_clone = messages_container.clone();
+pub fn init_logger(enable_trace: bool, max_messages: Option<usize>, time_fn: fn() -> TimestampMillis) -> LogMessagesWrapper {
+    let log_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
+    let trace_messages_container = LogMessagesContainer::new(max_messages.unwrap_or(DEFAULT_MAX_MESSAGES));
 
-    let make_writer = move || LogWriter {
-        messages_container: messages_container.clone(),
+    let log_messages_wrapper = LogMessagesWrapper {
+        logs: log_messages_container.clone(),
+        traces: trace_messages_container.clone(),
+    };
+
+    let make_log_writer = move || LogWriter {
+        messages_container: log_messages_container.clone(),
+        time_fn,
+        buffer: Vec::new(),
+    };
+
+    let make_trace_writer = move || LogWriter {
+        messages_container: trace_messages_container.clone(),
         time_fn,
         buffer: Vec::new(),
     };
 
     let timer = Timer { time_fn };
 
-    tracing_subscriber::fmt()
-        .with_writer(make_writer)
-        .with_timer(timer)
-        .with_max_level(LevelFilter::INFO)
+    let log_layer = Layer::default()
+        .with_writer(make_log_writer.with_max_level(Level::INFO))
+        .with_timer(timer.clone())
         .json()
-        .init();
+        .with_current_span(false)
+        .with_span_list(false);
 
-    messages_container_clone
+    let trace_layer = Layer::default()
+        .with_writer(make_trace_writer.with_filter(move |_| enable_trace))
+        .with_timer(timer)
+        .with_span_events(FmtSpan::ENTER)
+        .json()
+        .with_current_span(false);
+
+    Registry::default().with(log_layer).with(trace_layer).init();
+
+    log_messages_wrapper
+}
+
+#[derive(Default)]
+pub struct LogMessagesWrapper {
+    pub logs: LogMessagesContainer,
+    pub traces: LogMessagesContainer,
 }
 
 #[derive(CandidType, Deserialize, Clone)]
@@ -119,6 +151,7 @@ impl LogMessages {
     }
 }
 
+#[derive(Clone)]
 struct Timer {
     time_fn: fn() -> TimestampMillis,
 }
@@ -134,14 +167,26 @@ impl FormatTime for Timer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tracing::info;
+    use tracing::{info, instrument};
 
     #[test]
     fn log_messages_can_be_accessed_outside_of_logger() {
-        let messages_container = init_logger(None, || 1);
+        let log_messages = init_logger(true, None, || 1);
 
         info!("test!");
 
-        assert_eq!(1, messages_container.drain_messages().len());
+        assert_eq!(1, log_messages.logs.drain_messages().len());
+        assert_eq!(1, log_messages.traces.drain_messages().len());
+
+        add_one(1);
+
+        assert_eq!(1, log_messages.logs.drain_messages().len());
+        assert_eq!(2, log_messages.traces.drain_messages().len());
+    }
+
+    #[instrument(level = "trace")]
+    fn add_one(value: u32) -> u32 {
+        info!("abc");
+        value + 1
     }
 }

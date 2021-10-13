@@ -1,6 +1,6 @@
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesContainer;
+use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -27,7 +27,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -67,6 +67,7 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -77,6 +78,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         canister_pool_target_size: u16,
+        test_mode: bool,
     ) -> Self {
         Data {
             users: UserMap::default(),
@@ -87,6 +89,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             canister_pool: canister::Pool::new(canister_pool_target_size),
+            test_mode,
         }
     }
 }
@@ -103,6 +106,7 @@ impl Default for Data {
             group_index_canister_id: Principal::anonymous(),
             notifications_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
+            test_mode: true,
         }
     }
 }

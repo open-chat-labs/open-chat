@@ -70,6 +70,7 @@ async fn install_service_canisters_impl(
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, false);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
+        test_mode: true,
     };
 
     futures::future::join3(

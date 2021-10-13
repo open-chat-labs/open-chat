@@ -2,14 +2,15 @@ use crate::lifecycle::{init_logger, init_state};
 use crate::Data;
 use group_index_canister::init::Args;
 use ic_cdk_macros::init;
-use tracing::info;
+use tracing::{info, instrument};
 use utils::env::canister::CanisterEnv;
 
 const CANISTER_POOL_TARGET_SIZE: u16 = 100;
 
 #[init]
+#[instrument(level = "trace")]
 fn init(args: Args) {
-    init_logger();
+    init_logger(args.test_mode);
     ic_cdk::setup();
 
     let env = Box::new(CanisterEnv::new(args.test_mode));
@@ -21,6 +22,7 @@ fn init(args: Args) {
         group_canister_wasm,
         args.notifications_canister_id,
         canister_pool_target_size,
+        args.test_mode,
     );
 
     init_state(env, data);

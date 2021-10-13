@@ -4,10 +4,12 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_leave_group::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::ParticipantLeft;
 
 // Called via the user's user canister
 #[update]
+#[instrument(level = "trace")]
 fn c2c_leave_group(_args: Args) -> Response {
     check_cycles_balance();
 

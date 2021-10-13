@@ -14,4 +14,5 @@ pub struct Args {
     pub mark_active_duration: Milliseconds,
     pub notification_canister_ids: Vec<CanisterId>,
     pub wasm_version: Version,
+    pub test_mode: bool,
 }

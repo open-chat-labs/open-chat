@@ -2,10 +2,12 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::c2c_toggle_mute_notifications;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{CanisterId, Timestamped};
 use user_canister::toggle_mute_notifications::*;
 
 #[update]
+#[instrument(level = "trace")]
 fn toggle_mute_notifications(args: Args) -> Response {
     check_cycles_balance();
 

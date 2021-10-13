@@ -2,10 +2,12 @@ use crate::updates::set_avatar::Response::*;
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{Avatar, CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
 use user_canister::set_avatar::*;
 
 #[update]
+#[instrument(level = "trace")]
 fn set_avatar(args: Args) -> Response {
     check_cycles_balance();
 

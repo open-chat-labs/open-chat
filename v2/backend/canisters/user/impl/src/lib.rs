@@ -1,7 +1,7 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesContainer;
+use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -25,7 +25,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -61,6 +61,7 @@ struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
+    pub test_mode: bool,
 }
 
 impl Data {
@@ -70,6 +71,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
+        test_mode: bool,
     ) -> Data {
         Data {
             owner,
@@ -82,6 +84,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
+            test_mode,
         }
     }
 }

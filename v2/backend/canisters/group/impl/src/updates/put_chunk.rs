@@ -3,9 +3,11 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use group_canister::put_chunk::*;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use utils::blob_storage::PutChunkResult;
 
 #[update]
+#[instrument(level = "trace", skip_all, fields(blob_id = %args.blob_id, index = args.index, byte_length = args.bytes.len()))]
 fn put_chunk(args: Args) -> Response {
     check_cycles_balance();
 

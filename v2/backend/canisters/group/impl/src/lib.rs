@@ -1,7 +1,7 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesContainer;
+use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -25,7 +25,7 @@ enum StateVersion {
 
 thread_local! {
     static RUNTIME_STATE: RefCell<Option<RuntimeState>> = RefCell::default();
-    static LOG_MESSAGES: RefCell<LogMessagesContainer> = RefCell::default();
+    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
 }
 
 struct RuntimeState {
@@ -59,6 +59,7 @@ struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
+    pub test_mode: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -77,6 +78,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
+        test_mode: bool,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let events = GroupChatEvents::new(chat_id, name.clone(), description.clone(), creator_user_id, now);
@@ -96,6 +98,7 @@ impl Data {
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
+            test_mode,
         }
     }
 }

@@ -7,13 +7,14 @@ use group_canister::update_group::*;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
-use tracing::error;
+use tracing::{error, instrument};
 use types::{
     Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, GroupDescriptionChanged, GroupNameChanged, UserId,
     MAX_AVATAR_SIZE,
 };
 
 #[update]
+#[instrument(level = "trace")]
 async fn update_group(args: Args) -> Response {
     check_cycles_balance();
 

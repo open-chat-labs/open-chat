@@ -11,7 +11,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     match extract_route(&request.url) {
-        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow())),
+        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow().logs)),
+        Route::Traces(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow().traces)),
         _ => HttpResponse::not_found(),
     }
 }

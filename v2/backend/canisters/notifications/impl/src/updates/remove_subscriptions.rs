@@ -3,8 +3,10 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use notifications_canister::remove_subscriptions::{Response::*, *};
 use std::iter::FromIterator;
+use tracing::instrument;
 
 #[update]
+#[instrument(level = "trace")]
 fn remove_subscriptions(args: Args) -> Response {
     RUNTIME_STATE.with(|state| remove_subscriptions_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

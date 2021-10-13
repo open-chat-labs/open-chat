@@ -5,9 +5,11 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::make_admin::*;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{ParticipantsPromotedToAdmin, Role};
 
 #[update]
+#[instrument(level = "trace")]
 fn make_admin(args: Args) -> Response {
     check_cycles_balance();
 

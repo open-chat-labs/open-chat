@@ -4,8 +4,10 @@ use chat_events::ToggleReactionResult;
 use cycles_utils::check_cycles_balance;
 use group_canister::toggle_reaction::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::instrument;
 
 #[update]
+#[instrument(level = "trace")]
 fn toggle_reaction(args: Args) -> Response {
     check_cycles_balance();
 

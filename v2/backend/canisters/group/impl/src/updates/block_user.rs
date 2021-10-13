@@ -4,10 +4,12 @@ use chat_events::ChatEventInternal;
 use cycles_utils::check_cycles_balance;
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
+#[instrument(level = "trace")]
 async fn block_user(args: Args) -> Response {
     check_cycles_balance();
 

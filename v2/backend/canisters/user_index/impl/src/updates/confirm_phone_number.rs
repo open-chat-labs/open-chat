@@ -1,10 +1,12 @@
 use crate::model::user::{ConfirmedUser, User};
 use crate::{RuntimeState, CONFIRMATION_CODE_EXPIRY_MILLIS, RUNTIME_STATE};
 use ic_cdk_macros::update;
+use tracing::instrument;
 use types::{CanisterCreationStatusInternal, PhoneNumber};
 use user_index_canister::confirm_phone_number::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace")]
 fn confirm_phone_number(args: Args) -> Response {
     RUNTIME_STATE.with(|state| confirm_phone_number_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

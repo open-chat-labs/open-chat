@@ -25,7 +25,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             RUNTIME_STATE.with(|state| get_avatar_impl(requested_avatar_id, state.borrow().as_ref().unwrap()))
         }
         Route::Blob(blob_id) => RUNTIME_STATE.with(|state| get_blob_impl(blob_id, state.borrow().as_ref().unwrap())),
-        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow())),
+        Route::Logs(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow().logs)),
+        Route::Traces(since) => LOG_MESSAGES.with(|l| get_logs_impl(since, &l.borrow().traces)),
         _ => HttpResponse::not_found(),
     }
 }

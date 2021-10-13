@@ -2,9 +2,11 @@ use crate::{RuntimeState, RUNTIME_STATE};
 use chat_events::{EditMessageArgs, EditMessageResult};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_canister::edit_message::{Response::*, *};
 
 #[update]
+#[instrument(level = "trace")]
 fn c2c_edit_messages(args: Args) -> Response {
     check_cycles_balance();
 

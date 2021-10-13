@@ -1,9 +1,11 @@
 use crate::{RuntimeState, RUNTIME_STATE};
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
+use tracing::instrument;
 use user_canister::block_user::*;
 
 #[update]
+#[instrument(level = "trace")]
 fn block_user(args: Args) -> Response {
     check_cycles_balance();
 

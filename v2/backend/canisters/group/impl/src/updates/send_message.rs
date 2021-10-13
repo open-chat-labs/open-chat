@@ -5,10 +5,12 @@ use cycles_utils::check_cycles_balance;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
+use tracing::instrument;
 use types::{CanisterId, GroupMessageNotification, UserId};
 use utils::rand::get_random_item;
 
 #[update]
+#[instrument(level = "trace")]
 fn send_message(args: Args) -> Response {
     check_cycles_balance();
 
