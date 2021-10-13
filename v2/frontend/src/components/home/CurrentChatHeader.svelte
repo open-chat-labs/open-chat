@@ -6,7 +6,6 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -15,7 +14,6 @@
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import { toastStore } from "../../stores/toast";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { createEventDispatcher } from "svelte";
@@ -65,13 +63,6 @@
     function addParticipants() {
         if (selectedChatSummary.kind === "group_chat") {
             dispatch("addParticipants");
-        }
-    }
-
-    function copyCode() {
-        if (selectedChatSummary.kind === "group_chat") {
-            console.log("copy the group chat invite code to the clipboard");
-            toastStore.showSuccessToast("inviteCodeCopied");
         }
     }
 
@@ -219,10 +210,6 @@
                         <MenuItem on:click={leaveGroup}>
                             <LocationExit size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
-                        </MenuItem>
-                        <MenuItem on:click={copyCode}>
-                            <ContentCopy size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("copyInviteCode")}</div>
                         </MenuItem>
                         <MenuItem on:click={showParticipants}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />

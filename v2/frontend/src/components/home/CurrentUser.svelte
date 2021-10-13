@@ -2,7 +2,6 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import MessagePlus from "svelte-material-icons/MessagePlus.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Palette from "svelte-material-icons/Palette.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
@@ -26,10 +25,6 @@
 
     function newGroup() {
         dispatch("newGroup");
-    }
-
-    function joinGroup() {
-        dispatch("joinGroup");
     }
 
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
@@ -65,10 +60,6 @@
                     <MenuItem on:click={newGroup}>
                         <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                         <span slot="text">{$_("newGroup")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={joinGroup}>
-                        <AccountMultiplePlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <span slot="text">{$_("joinGroup")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => modalStore.showModal(ModalType.ThemeSelection)}>
                         <Palette size={"1.2em"} color={"#aaa"} slot="icon" />

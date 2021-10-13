@@ -151,7 +151,6 @@
         on:logout
         {user}
         on:newchat
-        on:joinGroup
         on:newGroup />
     <div class="body">
         <Search {searching} {searchTerm} on:searchEntered />

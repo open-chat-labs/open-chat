@@ -16,8 +16,6 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
-    import JoinGroup from "./JoinGroup.svelte";
-    import ModalContent from "../ModalContent.svelte";
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
     import type {
@@ -143,10 +141,6 @@
         machine.send({ type: "NEW_CHAT" });
     }
 
-    function joinGroup() {
-        machine.send({ type: "JOIN_GROUP" });
-    }
-
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.add(ev.detail.userId);
         $machine.context
@@ -252,7 +246,6 @@
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:logout={logout}
-                on:joinGroup={joinGroup}
                 on:loadMessage={loadMessage}
                 on:newGroup={newGroup}
                 on:newchat={newChat} />
@@ -294,12 +287,6 @@
         <TestModeModal />
     {:else if $modalStore === ModalType.ThemeSelection}
         <ThemePicker />
-    {:else if $modalStore === ModalType.JoinGroup}
-        <ModalContent>
-            <span slot="body">
-                <JoinGroup {machine} />
-            </span>
-        </ModalContent>
     {/if}
 </Overlay>
 

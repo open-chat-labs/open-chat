@@ -18,7 +18,6 @@ import type {
     GroupChatSummary,
 } from "../domain/chat/chat";
 import {
-    insertIndexIntoRanges,
     updateArgsFromChats,
     userIdsFromChatSummaries,
     userIdsFromChatSummary,
@@ -71,8 +70,6 @@ export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "NEW_GROUP" }
-    | { type: "JOIN_GROUP" }
-    | { type: "CANCEL_JOIN_GROUP" }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
           data: RemoteUserToggledReaction;
@@ -617,10 +614,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_group",
                     actions: log("received new group"),
                 },
-                JOIN_GROUP: {
-                    internal: true,
-                    target: ".join_group",
-                },
                 MESSAGE_READ_BY_ME: {
                     /**
                      * 1) mark the message as read
@@ -737,12 +730,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
-                },
-                join_group: {
-                    entry: log("entering join group"),
-                    on: {
-                        CANCEL_JOIN_GROUP: "no_chat_selected",
-                    },
                 },
                 new_group: {
                     invoke: {
