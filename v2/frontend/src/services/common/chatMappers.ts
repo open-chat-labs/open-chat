@@ -12,9 +12,6 @@ import type {
     ReplyContext,
     Reaction,
     StaleMessage,
-    Notification,
-    DirectNotification,
-    GroupNotification,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
@@ -38,36 +35,6 @@ import type {
     ApiUpdatedMessage,
     ApiDeletedContent,
 } from "../user/candid/idl";
-
-export function notification(candid: ApiNotification): Notification {
-    if ("GroupMessageNotification" in candid) {
-        return groupNotification(candid.GroupMessageNotification);
-    }
-    if ("DirectMessageNotification" in candid) {
-        return directNotification(candid.DirectMessageNotification);
-    }
-    throw new Error(`Unexpected ApiNotification type received, ${candid}`);
-}
-
-export function groupNotification(candid: ApiGroupMessageNotification): GroupNotification {
-    return {
-        kind: "group_notification",
-        sender: candid.sender.toString(),
-        message: message(candid.message),
-        senderName: candid.sender_name,
-        chatId: candid.chat_id.toString(),
-        groupName: candid.group_name,
-    };
-}
-
-export function directNotification(candid: ApiDirectMessageNotification): DirectNotification {
-    return {
-        kind: "direct_notification",
-        sender: candid.sender.toString(),
-        message: message(candid.message),
-        senderName: candid.sender_name,
-    };
-}
 
 export function message(candid: ApiMessage): Message {
     return {

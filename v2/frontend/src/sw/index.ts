@@ -1,7 +1,8 @@
 import type { ApiNotification } from "../services/notifications/candid/idl";
-import { notification } from "../services/common/chatMappers";
-import type { MessageContent, Notification } from "../domain/chat/chat";
+import type { MessageContent } from "../domain/chat/chat";
+import type { Notification } from "../domain/notifications";
 import { UnsupportedValueError } from "../utils/error";
+import { notification } from "../services/notifications/mappers";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;

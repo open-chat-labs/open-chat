@@ -57,6 +57,10 @@ if (process.env.DFX_NETWORK) {
 
 const production = !process.env.ROLLUP_WATCH;
 
+const SERVICE_WORKER = "build/sw.js";
+const RAW_PATH = production ? "_/raw/" : "";
+const WEBPUSH_SERVICE_WORKER_PATH = RAW_PATH + SERVICE_WORKER;
+
 console.log("PROD", production);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
 
@@ -71,78 +75,99 @@ function serve() {
     });
 }
 
-export default {
-    input: "./src/main.ts",
-    output: {
-        sourcemap: true,
-        format: "es",
-        name: "app",
-        dir: "public/build",
-    },
-    plugins: [
-        svelte({
-            preprocess: sveltePreprocess({
+export default [
+    {
+        input: "./src/sw/index.ts",
+        output: {
+            file: "public/build/sw.js",
+            sourcemap: true,
+            format: "iife",
+        },
+        plugins: [
+            commonjs(),
+            typescript({
                 sourceMap: !production,
-                scss: {
-                    prependData: `@import 'src/styles/mixins.scss';`,
+                inlineSources: !production,
+            }),
+            production && terser(),
+        ],
+    },
+    {
+        input: `./src/main.ts`,
+        output: {
+            sourcemap: true,
+            format: "es",
+            name: "app",
+            dir: "public/build",
+        },
+        plugins: [
+            svelte({
+                preprocess: sveltePreprocess({
+                    sourceMap: !production,
+                    scss: {
+                        prependData: `@import 'src/styles/mixins.scss';`,
+                    },
+                }),
+                compilerOptions: {
+                    dev: !production,
+                    // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
                 },
             }),
-            compilerOptions: {
-                dev: !production,
-                // immutable: true, // this could be a great optimisation, but we need to plan for it a bit
-            },
-        }),
 
-        css({ output: "main.css" }),
+            css({ output: "main.css" }),
 
-        resolve({
-            preferBuiltins: false,
-            browser: true,
-            dedupe: ["svelte"],
-        }),
-        commonjs(),
-        typescript({
-            sourceMap: !production,
-            inlineSources: !production,
-        }),
-        inject({
-            Buffer: ["buffer", "Buffer"],
-            process: "process/browser",
-        }),
-        json(),
+            resolve({
+                preferBuiltins: false,
+                browser: true,
+                dedupe: ["svelte"],
+            }),
+            commonjs(),
+            typescript({
+                sourceMap: !production,
+                inlineSources: !production,
+            }),
+            inject({
+                Buffer: ["buffer", "Buffer"],
+                process: "process/browser",
+            }),
+            json(),
 
-        replace({
-            preventAssignment: true,
-            "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
-            "process.env.NODE_ENV": process.env.NODE_ENV,
-            "process.env.ROLLBAR_ENV": production ? "production" : "development",
-            "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
-            "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
-            "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
-            "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
-            "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
-            "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
-            "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
-            "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
-        }),
+            replace({
+                preventAssignment: true,
+                "process.env.INTERNET_IDENTITY_URL": JSON.stringify(
+                    process.env.INTERNET_IDENTITY_URL
+                ),
+                "process.env.NODE_ENV": process.env.NODE_ENV,
+                "process.env.ROLLBAR_ENV": production ? "production" : "development",
+                "process.env.ROLLBAR_ACCESS_TOKEN": process.env.ROLLBAR_ACCESS_TOKEN,
+                "process.env.SHOW_XSTATE_INSPECTOR": process.env.SHOW_XSTATE_INSPECTOR,
+                "process.env.CLIENT_CACHING": process.env.CLIENT_CACHING,
+                "process.env.MOCK_SERVICES": !production && process.env.MOCK_SERVICES, // make double sure we don't release with mock data
+                "process.env.USER_INDEX_CANISTER": process.env.USER_INDEX_CANISTER,
+                "process.env.GROUP_INDEX_CANISTER": process.env.GROUP_INDEX_CANISTER,
+                "process.env.NOTIFICATIONS_CANISTER": process.env.NOTIFICATIONS_CANISTER,
+                "process.env.BLOB_URL_PATTERN": process.env.BLOB_URL_PATTERN,
+                "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
+            }),
 
-        // In dev mode, call `npm run start` once
-        // the bundle has been generated
-        !production && serve(),
+            // In dev mode, call `npm run start` once
+            // the bundle has been generated
+            !production && serve(),
 
-        // Watch the `public` directory and refresh the
-        // browser on changes when not in production
-        !production && livereload("public"),
+            // Watch the `public` directory and refresh the
+            // browser on changes when not in production
+            !production && livereload("public"),
 
-        // If we're building for production (npm run build
-        // instead of npm run dev), minify
-        production && terser(),
+            // If we're building for production (npm run build
+            // instead of npm run dev), minify
+            production && terser(),
 
-        production && analyze({ summaryOnly: true }),
+            production && analyze({ summaryOnly: true }),
 
-        production && filesize(),
-    ],
-    watch: {
-        clearScreen: false,
+            production && filesize(),
+        ],
+        watch: {
+            clearScreen: false,
+        },
     },
-};
+];

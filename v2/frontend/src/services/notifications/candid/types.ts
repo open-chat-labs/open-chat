@@ -258,7 +258,7 @@ export interface PushGroupMessageNotificationArgs {
 }
 export type PushGroupMessageNotificationResponse = { 'Success' : null };
 export interface PushSubscriptionArgs {
-  'subscription' : Subscription,
+  'subscription' : SubscriptionInfo,
   'user_id' : UserId,
 }
 export type PushSubscriptionResponse = { 'Success' : null };

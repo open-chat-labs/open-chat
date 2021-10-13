@@ -1,3 +1,4 @@
 export interface INotificationsClient {
-    test: () => void;
+    subscriptionExists(userId: string, p256dh_key: string): Promise<boolean>;
+    pushSubscription(userId: string, subscription: PushSubscription): Promise<void>;
 }

@@ -191,12 +191,8 @@ export const idlFactory = ({ IDL }) => {
   const PushGroupMessageNotificationResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
-  const Subscription = IDL.Record({
-    'value' : SubscriptionInfo,
-    'last_active' : TimestampMillis,
-  });
   const PushSubscriptionArgs = IDL.Record({
-    'subscription' : Subscription,
+    'subscription' : SubscriptionInfo,
     'user_id' : UserId,
   });
   const PushSubscriptionResponse = IDL.Variant({ 'Success' : IDL.Null });
