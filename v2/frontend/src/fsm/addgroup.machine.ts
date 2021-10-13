@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, MachineConfig, MachineOptions, assign, DoneInvokeEvent } from "xstate";
-import { userSearchMachine } from "./userSearch.machine";
 import type { UserSummary } from "../domain/user/user";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { toastStore } from "../stores/toast";
@@ -31,8 +30,7 @@ export type AddGroupEvents =
     | { type: "CANCEL_CHOOSE_PARTICIPANTS" }
     | { type: "SKIP_CHOOSE_PARTICIPANTS" }
     | { type: "REMOVE_PARTICIPANT"; data: string }
-    | { type: "done.invoke.userSearchMachine"; data: UserSummary }
-    | { type: "error.platform.userSearchMachine"; data: Error }
+    | { type: "ADD_PARTICIPANT"; data: UserSummary }
     | { type: "done.invoke.createGroup"; data: CreateGroupResponse }
     | { type: "error.platform.createGroup"; data: Error }
     | { type: "done.invoke.addParticipants"; data: ApiAddParticipantsResponse }
@@ -165,24 +163,8 @@ export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
                                 },
                             })),
                         },
-                        COMPLETE: {
-                            target: "adding_participants",
-                        },
-                    },
-                    invoke: {
-                        id: "userSearchMachine",
-                        src: userSearchMachine,
-                        data: (ctx, _) => {
-                            return {
-                                serviceContainer: ctx.serviceContainer,
-                                searchTerm: "",
-                                users: [],
-                                error: undefined,
-                            };
-                        },
-                        onDone: {
-                            target: "choosing_participants",
-                            actions: assign((ctx, ev: DoneInvokeEvent<UserSummary>) => {
+                        ADD_PARTICIPANT: {
+                            actions: assign((ctx, ev) => {
                                 return {
                                     candidateGroup: {
                                         ...ctx.candidateGroup,
@@ -197,11 +179,8 @@ export const schema: MachineConfig<AddGroupContext, any, AddGroupEvents> = {
                                 };
                             }),
                         },
-                        onError: {
-                            actions: pure((_ctx, _ev) => {
-                                toastStore.showFailureToast("userSearchFailed");
-                                return [];
-                            }),
+                        COMPLETE: {
+                            target: "adding_participants",
                         },
                     },
                 },

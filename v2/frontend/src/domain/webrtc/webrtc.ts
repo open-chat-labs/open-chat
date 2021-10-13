@@ -56,7 +56,6 @@ export type RemoteUserUndeletedMessage = WebRtcMessageCommon & {
 export type RemoteUserReadMessage = WebRtcMessageCommon & {
     kind: "remote_user_read_message";
     messageId: bigint;
-    messageIndex?: number;
 };
 
 export type RemoteUserSentMessage = WebRtcMessageCommon & {

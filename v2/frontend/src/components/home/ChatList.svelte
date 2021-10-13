@@ -166,6 +166,7 @@
                         animate:flip={{ duration: 600, easing: elasticOut }}
                         out:fade|local={{ duration: 150 }}>
                         <ChatSummary
+                            messagesRead={$machine.context.markRead}
                             {chatSummary}
                             selected={$machine.context.selectedChat?.chatId ===
                                 chatSummary.chatId} />

@@ -201,6 +201,12 @@
         }
     }
 
+    function messageRead(
+        ev: CustomEvent<{ chatId: string; messageIndex: number; messageId: bigint }>
+    ) {
+        machine.send({ type: "MESSAGE_READ_BY_ME", data: ev.detail });
+    }
+
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
         push(`/${ev.detail.chatId}/${ev.detail.eventIndex}`);
         if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
@@ -261,6 +267,7 @@
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
+                on:messageRead={messageRead}
                 machine={selectedChatActor} />
         {/if}
     </main>

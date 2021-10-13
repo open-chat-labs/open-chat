@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onMount, setContext, tick } from "svelte";
+    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -28,25 +28,22 @@
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
-        getUnreadMessages,
+        getMinVisibleMessageIndex,
         groupEvents,
-        messageIsReadByMe,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
     import { UnsupportedValueError } from "../../utils/error";
     import { toastStore } from "../../stores/toast";
-    import {
-        unconfirmed,
-        unconfirmedReadByThem,
-        unconfirmedReadByUs,
-    } from "../../stores/unconfirmed";
+    import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import { userStore } from "../../stores/user";
     import type { UserLookup } from "../../domain/user/user";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
+
+    const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
 
@@ -78,13 +75,10 @@
                 if (idx !== undefined && id !== undefined) {
                     if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
                         const timer = setTimeout(() => {
-                            machine.send({
-                                type: "MESSAGE_READ_BY_ME",
-                                data: {
-                                    chatId: $machine.context.chatSummary.chatId,
-                                    messageIndex: idx,
-                                    messageId: id,
-                                },
+                            dispatch("messageRead", {
+                                chatId: $machine.context.chatSummary.chatId,
+                                messageIndex: idx,
+                                messageId: id,
                             });
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -333,7 +327,11 @@
 
     $: groupedEvents = groupEvents($machine.context.events);
 
-    $: unreadMessages = getUnreadMessages($machine.context.chatSummary);
+    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
+        $machine.context.chatSummary.chatId,
+        getMinVisibleMessageIndex($machine.context.chatSummary),
+        $machine.context.chatSummary.latestMessage?.event.messageIndex
+    );
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
 
@@ -412,24 +410,22 @@
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return (
-                $unconfirmedReadByThem.has(evt.event.messageId) ||
-                messageIsReadByThem($machine.context.chatSummary, evt.event)
-            );
+            const confirmedRead = messageIsReadByThem($machine.context.chatSummary, evt.event);
+            if (confirmedRead) {
+                unconfirmedReadByThem.delete(evt.event.messageId);
+            }
+            return confirmedRead || $unconfirmedReadByThem.has(evt.event.messageId);
         }
         return true;
     }
 
     function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
-        if (isMe(evt)) {
-            return true;
-        } else {
-            if (evt.event.kind === "message") {
-                return (
-                    $unconfirmedReadByUs.has(evt.event.messageId) ||
-                    messageIsReadByMe($machine.context.chatSummary, evt.event)
-                );
-            }
+        if (evt.event.kind === "message") {
+            return $machine.context.markRead.isRead(
+                $machine.context.chatSummary.chatId,
+                evt.event.messageIndex,
+                evt.event.messageId
+            );
         }
         return true;
     }

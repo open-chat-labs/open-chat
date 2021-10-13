@@ -57,6 +57,7 @@ export interface ChatContext {
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
     markRead: MessageReadTracker;
+    initialised: boolean;
 }
 
 type LoadEventsResponse = {
@@ -67,16 +68,12 @@ type LoadEventsResponse = {
 export type ChatEvents =
     | {
           type: "done.invoke.loadEventsAndUsers";
-          data: LoadEventsResponse;
+          data: LoadEventsResponse | undefined;
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
-    | {
-          type: "MESSAGE_READ_BY_ME";
-          data: { chatId: string; messageIndex: number; messageId: bigint };
-      }
     | { type: "SHOW_GROUP_DETAILS" }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
@@ -215,12 +212,16 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                 loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
                     ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
-                    : { events: [], affectedEvents: [] },
+                    : undefined,
             ]);
+
+            if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                return undefined;
+            }
+
             return {
-                events: eventsResponse === "events_failed" ? [] : eventsResponse.events,
-                affectedEvents:
-                    eventsResponse === "events_failed" ? [] : eventsResponse.affectedEvents,
+                events: eventsResponse.events,
+                affectedEvents: eventsResponse.affectedEvents,
             };
         },
         pruneLocalReactions: (_ctx, _ev) => (callback) => {
@@ -236,9 +237,10 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
         },
     },
     actions: {
-        assignEventsResponse: assign((ctx, ev) =>
-            ev.type === "done.invoke.loadEventsAndUsers"
+        assignEventsResponse: assign((ctx, ev) => {
+            return ev.type === "done.invoke.loadEventsAndUsers" && ev.data !== undefined
                 ? {
+                      initialised: true,
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
                           replaceLocal(
@@ -251,8 +253,8 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                           ctx.localReactions
                       ),
                   }
-                : {}
-        ),
+                : {};
+        }),
     },
 };
 
@@ -284,6 +286,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             initial: "idle",
             on: {
                 CHAT_UPDATED: {
+                    cond: (ctx, _ev) => ctx.initialised,
                     target: ".loading",
                     internal: true,
                     actions: assign((_, ev) => {
@@ -308,7 +311,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             actions: [
                                 "assignEventsResponse",
                                 pure((ctx, ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                    if (ev.data.events.some(eventIsVisible)) {
+                                    if (
+                                        ev.data !== undefined &&
+                                        ev.data.events.some(eventIsVisible)
+                                    ) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
                                             event: "loaded_new_messages",
@@ -376,6 +382,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                             };
                         } else {
                             // this message may have come in via webrtc
+                            unconfirmed.add(ev.data.messageEvent.event.messageId);
                             const sentByMe = ev.data.userId === ctx.user?.userId;
                             if (sentByMe) {
                                 rtcConnectionsManager.sendMessage(
@@ -388,8 +395,13 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                         userId: ev.data.userId,
                                     }
                                 );
+                                // mark our own messages as read manually since we will not be observing them
+                                ctx.markRead.markMessageRead(
+                                    ctx.chatSummary.chatId,
+                                    ev.data.messageEvent.event.messageIndex,
+                                    ev.data.messageEvent.event.messageId
+                                );
                             }
-                            unconfirmed.add(ev.data.messageEvent.event.messageId);
                             chatStore.set({
                                 chatId: ctx.chatSummary.chatId,
                                 event: "sending_message",
@@ -601,14 +613,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     actions: assign((_, _ev) => ({
                         fileToAttach: undefined,
                     })),
-                },
-                MESSAGE_READ_BY_ME: {
-                    // we need to send this modified chat summary to the parent machine
-                    // so that it can sync it with the chat poller - nasty
-                    // we also need to seend it to the mark read machine to periodically ping off to the server
-                    actions: pure((_ctx, ev) => {
-                        return sendParent<ChatContext, ChatEvents>(ev);
-                    }),
                 },
             },
             states: {

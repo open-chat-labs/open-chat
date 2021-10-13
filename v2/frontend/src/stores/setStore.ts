@@ -14,5 +14,10 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
                 ids.delete(id);
                 return new Set(ids);
             }),
+        clear: (): void =>
+            store.update((ids) => {
+                ids.clear();
+                return ids;
+            }),
     };
 }
