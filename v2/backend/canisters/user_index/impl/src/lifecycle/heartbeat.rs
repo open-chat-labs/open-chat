@@ -3,6 +3,7 @@ use ic_cdk_macros::heartbeat;
 #[heartbeat]
 fn heartbeat() {
     topup_canister_pool::run();
+    calculate_user_metrics::run();
 }
 
 mod topup_canister_pool {
@@ -31,5 +32,18 @@ mod topup_canister_pool {
 
     fn add_canister_to_pool(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
         runtime_state.data.canister_pool.push(canister_id);
+    }
+}
+
+mod calculate_user_metrics {
+    use crate::{RuntimeState, RUNTIME_STATE};
+
+    pub fn run() {
+        RUNTIME_STATE.with(|state| calculate_metrics(state.borrow_mut().as_mut().unwrap()));
+    }
+
+    fn calculate_metrics(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.data.users.calculate_metrics(now);
     }
 }

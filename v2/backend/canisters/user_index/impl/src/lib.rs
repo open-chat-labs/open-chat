@@ -5,10 +5,9 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Version};
-use utils::canister;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
-use utils::memory;
+use utils::{canister, memory};
 
 mod lifecycle;
 mod model;
@@ -58,11 +57,10 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let now = self.env.now();
-        let user_metrics = self.data.users.metrics(now);
+        let user_metrics = self.data.users.metrics();
         Metrics {
             memory_used: memory::used(),
-            now,
+            now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             total_cycles_topped_up: self.data.total_cycles_topped_up,
             canisters_in_pool: self.data.canister_pool.len() as u16,
@@ -141,8 +139,8 @@ impl Default for Data {
 pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
-    pub cycles_balance: u64,
-    pub total_cycles_topped_up: u128,
+    pub cycles_balance: Cycles,
+    pub total_cycles_topped_up: Cycles,
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,
     pub users_created: u64,

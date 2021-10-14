@@ -18,7 +18,7 @@ pub struct UserMap {
     cached_metrics: Metrics,
 }
 
-#[derive(Default)]
+#[derive(CandidType, Clone, Deserialize, Default)]
 pub struct Metrics {
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,
@@ -196,7 +196,11 @@ impl UserMap {
         self.users_by_principal.values()
     }
 
-    pub fn metrics(&self, now: TimestampMillis) -> Metrics {
+    pub fn metrics(&self) -> Metrics {
+        self.cached_metrics.clone()
+    }
+
+    pub fn calculate_metrics(&mut self, now: TimestampMillis) {
         let mut metrics = Metrics {
             users_unconfirmed: 0,
             users_confirmed: 0,
@@ -237,7 +241,7 @@ impl UserMap {
             }
         }
 
-        metrics
+        self.cached_metrics = metrics;
     }
 }
 
