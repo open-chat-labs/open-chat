@@ -2,7 +2,7 @@ use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DUR
 use group_index_canister::c2c_create_group::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{Avatar, CanisterId, CanisterWasm, ChatId, Version};
+use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, Version};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;
@@ -60,13 +60,13 @@ async fn c2c_create_group(args: Args) -> Response {
 struct CreateCanisterArgs {
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
-    cycles_to_use: u64,
+    cycles_to_use: Cycles,
     init_canister_args: group_canister::init::Args,
 }
 
 fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
     let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-    let current_cycles_balance = ic_cdk::api::canister_balance();
+    let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
     if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
         return Err(CyclesBalanceTooLow);
     }

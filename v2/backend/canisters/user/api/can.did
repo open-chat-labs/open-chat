@@ -226,6 +226,7 @@ type UpdatesResponse =
             chats_updated: vec ChatSummaryUpdates;
             chats_removed: vec ChatId;
             blocked_users: vec UserId;
+            cycles_balance: opt Cycles;
         }
     };
 

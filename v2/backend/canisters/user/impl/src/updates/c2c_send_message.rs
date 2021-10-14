@@ -4,7 +4,7 @@ use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
-use types::{CanisterId, DirectMessageNotification, UserId};
+use types::{CanisterId, Cycles, DirectMessageNotification, MessageContent, Timestamped, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
@@ -59,6 +59,22 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 
 fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
+
+    if let MessageContent::Cycles(c) = &args.content {
+        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
+        if cycles_available < c.amount {
+            return InsufficientCycles;
+        }
+        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
+        if cycles_accepted != c.amount {
+            // This can only happen if accepting the cycles results in the canister exceeding the
+            // max cycles limit which in reality should never happen.
+            panic!("Unable to accept cycles")
+        }
+        let new_cycles_balance = runtime_state.data.user_cycles_balance.value + c.amount;
+        runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+    }
+
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: sender_user_id,

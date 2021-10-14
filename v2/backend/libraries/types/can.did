@@ -1,6 +1,7 @@
 type CanisterId = principal;
-type EventIndex = nat32;
 type ChatId = CanisterId;
+type Cycles = nat;
+type EventIndex = nat32;
 type MessageId = nat;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
@@ -68,7 +69,7 @@ type ConfirmationCodeSms =
 
 type CyclesContent =
     record {
-        amount: nat;
+        amount: Cycles;
         caption: opt text;
     };
 
@@ -449,7 +450,7 @@ type V1FileContent =
 
 type V1CyclesContent =
     record {
-        amount: nat;
+        amount: Cycles;
         caption: opt text;
     };
 

@@ -15,4 +15,5 @@ pub struct Args {
 pub enum Response {
     Success,
     Blocked,
+    InsufficientCycles,
 }

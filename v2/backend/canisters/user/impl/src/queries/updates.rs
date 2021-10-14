@@ -280,11 +280,7 @@ fn finalize(
                 None
             };
 
-            let notifications_muted = if direct_chat.notifications_muted.timestamp > updates_since {
-                Some(direct_chat.notifications_muted.value)
-            } else {
-                None
-            };
+            let notifications_muted = direct_chat.notifications_muted.if_set_after(updates_since).copied();
 
             chats_updated.push(ChatSummaryUpdates::Direct(DirectChatSummaryUpdates {
                 chat_id: direct_chat.them.into(),
@@ -298,6 +294,7 @@ fn finalize(
     }
 
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
+    let cycles_balance = runtime_state.data.user_cycles_balance.if_set_after(updates_since).copied();
 
     SuccessResult {
         chats_added,
@@ -305,5 +302,6 @@ fn finalize(
         chats_removed: Vec::new(), // TODO
         timestamp: now,
         blocked_users,
+        cycles_balance,
     }
 }

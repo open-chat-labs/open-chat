@@ -2,8 +2,9 @@ use crate::canister;
 use candid::{CandidType, Nat, Principal};
 use ic_cdk::api;
 use serde::Deserialize;
+use std::convert::TryInto;
 use tracing::error;
-use types::CanisterId;
+use types::{CanisterId, Cycles};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
@@ -15,7 +16,7 @@ pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
     wasm_module: Vec<u8>,
     wasm_arg: Vec<u8>,
-    cycles_to_use: u64,
+    cycles_to_use: Cycles,
 ) -> Result<CanisterId, CreateAndInstallError> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
@@ -33,7 +34,7 @@ pub async fn create_and_install(
     }
 }
 
-pub async fn create(cycles_to_use: u64) -> Result<Principal, canister::Error> {
+pub async fn create(cycles_to_use: Cycles) -> Result<Principal, canister::Error> {
     #[derive(CandidType, Clone, Deserialize)]
     struct CanisterSettings {
         controller: Option<Principal>,
@@ -61,21 +62,26 @@ pub async fn create(cycles_to_use: u64) -> Result<Principal, canister::Error> {
         }),
     };
 
-    let (create_result,): (CreateResult,) =
-        match api::call::call_with_payment(Principal::management_canister(), "create_canister", (in_arg,), cycles_to_use).await
-        {
-            Ok(x) => x,
-            Err((code, msg)) => {
-                let code = code as u8;
-                error!(
-                    error_code = code,
-                    error_message = msg.as_str(),
-                    "Error calling create_canister"
-                );
+    let (create_result,): (CreateResult,) = match api::call::call_with_payment(
+        Principal::management_canister(),
+        "create_canister",
+        (in_arg,),
+        cycles_to_use.try_into().unwrap(),
+    )
+    .await
+    {
+        Ok(x) => x,
+        Err((code, msg)) => {
+            let code = code as u8;
+            error!(
+                error_code = code,
+                error_message = msg.as_str(),
+                "Error calling create_canister"
+            );
 
-                return Err(canister::Error { code, msg });
-            }
-        };
+            return Err(canister::Error { code, msg });
+        }
+    };
 
     Ok(create_result.canister_id)
 }

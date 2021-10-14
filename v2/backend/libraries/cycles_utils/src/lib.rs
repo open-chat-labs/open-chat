@@ -1,6 +1,6 @@
 use candid::Principal;
 use std::cell::RefCell;
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, Cycles, TimestampMillis};
 
 mod check_cycles_balance;
 mod top_up_canister;
@@ -14,14 +14,14 @@ thread_local! {
 
 struct State {
     initialized: bool,
-    low_balance_threshold: u64,
+    low_balance_threshold: Cycles,
     top_up_canister_id: CanisterId,
     in_progress: bool,
     last_notified: TimestampMillis,
 }
 
 impl State {
-    pub fn new(low_balance_threshold: u64, top_up_canister_id: CanisterId) -> State {
+    pub fn new(low_balance_threshold: Cycles, top_up_canister_id: CanisterId) -> State {
         State {
             initialized: true,
             low_balance_threshold,
@@ -44,7 +44,7 @@ impl Default for State {
     }
 }
 
-pub fn init_cycles_balance_checker(low_balance_threshold: u64, top_up_canister_id: CanisterId) {
+pub fn init_cycles_balance_checker(low_balance_threshold: Cycles, top_up_canister_id: CanisterId) {
     STATE.with(|state| {
         if state.borrow().initialized {
             panic!("State already initialized");

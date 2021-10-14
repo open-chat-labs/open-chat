@@ -3,7 +3,7 @@ use crate::time;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, Cycles, TimestampMillis};
 
 pub struct CanisterEnv {
     rng: StdRng,
@@ -46,8 +46,8 @@ impl Environment for CanisterEnv {
         self.rng.next_u32()
     }
 
-    fn cycles_balance(&self) -> u64 {
-        ic_cdk::api::canister_balance()
+    fn cycles_balance(&self) -> Cycles {
+        ic_cdk::api::canister_balance().into()
     }
 }
 

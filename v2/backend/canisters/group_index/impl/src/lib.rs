@@ -6,7 +6,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ChatId, Milliseconds, TimestampMillis, Version};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Version};
 use utils::canister;
 use utils::env::Environment;
 use utils::memory;
@@ -16,9 +16,9 @@ mod model;
 mod queries;
 mod updates;
 
-const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
-const GROUP_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
+const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
+const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 150_000_000_000; // 0.15T cycles
+const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
@@ -120,8 +120,8 @@ impl Default for Data {
 pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
-    pub cycles_balance: u64,
-    pub total_cycles_topped_up: u128,
+    pub cycles_balance: Cycles,
+    pub total_cycles_topped_up: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
     pub canisters_in_pool: u16,
