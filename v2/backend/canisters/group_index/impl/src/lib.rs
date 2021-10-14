@@ -70,7 +70,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
-    pub total_cycles_spent_on_canisters: u128,
+    pub total_cycles_spent_on_canisters: Cycles,
 }
 
 impl Data {

@@ -156,6 +156,8 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cyc
             }
         }
     }
+
+    runtime_state.data.total_cycles_spent_on_canisters += cycles;
 }
 
 fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

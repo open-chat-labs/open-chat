@@ -5,9 +5,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{CyclesTopUp, PhoneNumber, TimestampMillis, Timestamped, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::{HOUR_IN_MS, MINUTE_IN_MS, THIRTY_DAYS_IN_MS, WEEK_IN_MS};
-
-const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
+use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, WEEK_IN_MS};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct UserMap {
@@ -201,6 +199,9 @@ impl UserMap {
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
+        const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
+        const THIRTY_DAYS_IN_MS: u64 = DAY_IN_MS * 30;
+
         // Throttle to once every 5 minutes
         if now < self.cached_metrics.timestamp + FIVE_MINUTES_IN_MS {
             return;
