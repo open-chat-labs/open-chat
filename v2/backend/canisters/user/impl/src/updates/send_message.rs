@@ -3,7 +3,7 @@ use chat_events::PushMessageArgs;
 use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{CanisterId, Cycles, MessageContent, MessageIndex};
+use types::{CanisterId, Cycles, MessageContent, MessageIndex, Timestamped};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -22,18 +22,20 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         return RecipientBlocked;
     }
 
+    let now = runtime_state.env.now();
+
     let cycles_amount_to_send = if let MessageContent::Cycles(c) = &args.content {
         if runtime_state.data.cycles_balance.value < c.amount {
             return InsufficientCycles;
         }
+        let new_cycles_balance = runtime_state.data.cycles_balance.value - c.amount;
+        runtime_state.data.cycles_balance = Timestamped::new(new_cycles_balance, now);
         c.amount
     } else {
         0
     };
 
     let my_user_id = runtime_state.env.canister_id().into();
-
-    let now = runtime_state.env.now();
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
         sender: my_user_id,
