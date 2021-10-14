@@ -5,6 +5,9 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{CyclesTopUp, PhoneNumber, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::time::{HOUR_IN_MS, MINUTE_IN_MS, MONTH_IN_MS, WEEK_IN_MS};
+
+const FIVE_MINUTES_IN_MS: u64 = MINUTE_IN_MS * 5;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct UserMap {
@@ -12,6 +15,19 @@ pub struct UserMap {
     phone_number_to_principal: HashMap<PhoneNumber, Principal>,
     username_to_principal: CaseInsensitiveHashMap<Principal>,
     user_id_to_principal: HashMap<UserId, Principal>,
+    cached_metrics: Metrics,
+}
+
+#[derive(Default)]
+pub struct Metrics {
+    pub users_unconfirmed: u32,
+    pub users_confirmed: u32,
+    pub users_created: u64,
+    pub users_online_5_minutes: u32,
+    pub users_online_1_hour: u32,
+    pub users_online_1_week: u32,
+    pub users_online_1_month: u32,
+    pub canister_upgrades_in_progress: u32,
 }
 
 impl UserMap {
@@ -178,6 +194,50 @@ impl UserMap {
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users_by_principal.values()
+    }
+
+    pub fn metrics(&self, now: TimestampMillis) -> Metrics {
+        let mut metrics = Metrics {
+            users_unconfirmed: 0,
+            users_confirmed: 0,
+            users_created: 0,
+            users_online_5_minutes: 0,
+            users_online_1_hour: 0,
+            users_online_1_week: 0,
+            users_online_1_month: 0,
+            canister_upgrades_in_progress: 0,
+        };
+
+        for user in self.users_by_principal.values() {
+            match user {
+                User::Unconfirmed(_) => {
+                    metrics.users_unconfirmed += 1;
+                }
+                User::Confirmed(_) => {
+                    metrics.users_confirmed += 1;
+                }
+                User::Created(u) => {
+                    metrics.users_created += 1;
+                    if u.last_online > now - FIVE_MINUTES_IN_MS {
+                        metrics.users_online_5_minutes += 1;
+                    }
+                    if u.last_online > now - HOUR_IN_MS {
+                        metrics.users_online_1_hour += 1;
+                    }
+                    if u.last_online > now - WEEK_IN_MS {
+                        metrics.users_online_1_week += 1;
+                    }
+                    if u.last_online > now - MONTH_IN_MS {
+                        metrics.users_online_1_month += 1;
+                    }
+                    if u.upgrade_in_progress {
+                        metrics.canister_upgrades_in_progress += 1;
+                    }
+                }
+            }
+        }
+
+        metrics
     }
 }
 

@@ -1,13 +1,14 @@
 use crate::model::user_map::UserMap;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles};
+use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles, TimestampMillis, Version};
 use utils::canister;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::memory;
 
 mod lifecycle;
 mod model;
@@ -55,6 +56,28 @@ impl RuntimeState {
 
         self.data.sms_service_principals.contains(&caller)
     }
+
+    pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
+        let user_metrics = self.data.users.metrics(now);
+        Metrics {
+            memory_used: memory::used(),
+            now,
+            cycles_balance: self.env.cycles_balance(),
+            total_cycles_topped_up: self.data.total_cycles_topped_up,
+            canisters_in_pool: self.data.canister_pool.len() as u16,
+            user_wasm_version: self.data.user_canister_wasm.version,
+            users_unconfirmed: user_metrics.users_unconfirmed,
+            users_confirmed: user_metrics.users_confirmed,
+            users_created: user_metrics.users_created,
+            users_online_5_minutes: user_metrics.users_online_5_minutes,
+            users_online_1_hour: user_metrics.users_online_1_hour,
+            users_online_1_week: user_metrics.users_online_1_week,
+            users_online_1_month: user_metrics.users_online_1_month,
+            canister_upgrades_in_progress: user_metrics.canister_upgrades_in_progress,
+            sms_messages_in_queue: self.data.sms_messages.len() as u32,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -68,6 +91,7 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
+    pub total_cycles_topped_up: u128,
 }
 
 impl Data {
@@ -90,6 +114,7 @@ impl Data {
             notifications_canister_id,
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
+            total_cycles_topped_up: 0,
         }
     }
 }
@@ -107,6 +132,26 @@ impl Default for Data {
             notifications_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,
+            total_cycles_topped_up: 0,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct Metrics {
+    pub memory_used: u64,
+    pub now: TimestampMillis,
+    pub cycles_balance: u64,
+    pub total_cycles_topped_up: u128,
+    pub users_unconfirmed: u32,
+    pub users_confirmed: u32,
+    pub users_created: u64,
+    pub users_online_5_minutes: u32,
+    pub users_online_1_hour: u32,
+    pub users_online_1_week: u32,
+    pub users_online_1_month: u32,
+    pub canisters_in_pool: u16,
+    pub canister_upgrades_in_progress: u32,
+    pub user_wasm_version: Version,
+    pub sms_messages_in_queue: u32,
 }
