@@ -27,7 +27,7 @@ export type MessageReadTracker = {
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
 };
 
-let interval: NodeJS.Timer | undefined = undefined;
+let interval: number | undefined = undefined;
 
 export function stopMarkReadPoller(): void {
     if (interval !== undefined) {
@@ -71,7 +71,7 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
     }
 
     if (process.env.NODE_ENV !== "test") {
-        interval = setInterval(sendToServer, MARK_READ_INTERVAL);
+        interval = window.setInterval(sendToServer, MARK_READ_INTERVAL);
     }
 
     // if the user closes the window, try to flush any unsynced changes to the server
@@ -128,6 +128,7 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
             [firstMessageIndex, 0, 0] // [firstIndex, unreadCount, lastReadIndex]
         );
 
+        // todo - this is wrong at the moment. Waiting needs to be partitioned by chatId OBVIOUSLY
         return latestMessageIndex - lastRead + unread - waiting.size;
     }
 

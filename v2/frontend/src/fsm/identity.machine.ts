@@ -100,7 +100,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
         getIdentity,
         startSession: ({ identity }) => startSession(identity!),
         markOnlinePing: (ctx, _ev) => (_callback) => {
-            let id: NodeJS.Timer;
+            let id: number;
             function mark() {
                 ctx.serviceContainer!.markAsOnline().catch((err) => {
                     rollbar.error("Error marking user as online", err as Error);
@@ -108,7 +108,7 @@ const liveConfig: Partial<MachineOptions<IdentityContext, IdentityEvents>> = {
                 });
             }
             if (process.env.NODE_ENV !== "test") {
-                id = setInterval(mark, MARK_ONLINE_INTERVAL);
+                id = window.setInterval(mark, MARK_ONLINE_INTERVAL);
                 mark();
             }
             return () => {

@@ -17,3 +17,8 @@ rm ./src/services/groupIndex/candid/types.ts
 rm ./src/services/groupIndex/candid/idl.js
 didc bind ../backend/canisters/group_index/api/can.did -t ts >> ./src/services/groupIndex/candid/types.ts
 didc bind ../backend/canisters/group_index/api/can.did -t js >> ./src/services/groupIndex/candid/idl.js
+
+rm ./src/services/notifications/candid/types.ts
+rm ./src/services/notifications/candid/idl.js
+didc bind ../backend/canisters/notifications/api/can.did -t ts >> ./src/services/notifications/candid/types.ts
+didc bind ../backend/canisters/notifications/api/can.did -t js >> ./src/services/notifications/candid/idl.js

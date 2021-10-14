@@ -4,7 +4,6 @@
     import NewChat from "./NewChat.svelte";
     import NewGroup from "./NewGroup.svelte";
     import ChooseParticipants from "./ChooseParticipants.svelte";
-    import JoinGroup from "./JoinGroup.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
     import type { AddGroupMachine } from "../../fsm/addgroup.machine";
@@ -23,8 +22,6 @@
     export let searchResultsAvailable: boolean = false;
 
     $: addGroupMachine = $machine.children.addGroupMachine as ActorRefFrom<AddGroupMachine>;
-
-    $: joiningGroup = $machine.matches({ loaded_chats: "join_group" });
 
     $: newChat = $machine.matches({ loaded_chats: "new_chat" });
 
@@ -45,15 +42,12 @@
         <NewGroup machine={addGroupMachine} />
     {:else if choosingParticipants}
         <ChooseParticipants machine={addGroupMachine} />
-    {:else if joiningGroup}
-        <JoinGroup {machine} />
     {:else}
         <ChatList
             on:loadMessage
             on:chatWith
             on:newGroup
             on:newchat
-            on:joinGroup
             on:logout
             on:searchEntered
             {searchResultsAvailable}

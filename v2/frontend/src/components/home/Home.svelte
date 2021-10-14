@@ -16,8 +16,6 @@
     import type { HomeMachine } from "../../fsm/home.machine";
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
-    import JoinGroup from "./JoinGroup.svelte";
-    import ModalContent from "../ModalContent.svelte";
     import { toastStore } from "../../stores/toast";
     import type { EditGroupMachine } from "../../fsm/editgroup.machine";
     import type {
@@ -30,6 +28,7 @@
     import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
+    import { initNotificationStores } from "../../stores/notifications";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -50,6 +49,7 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init($machine.context.user!.userId);
+        initNotificationStores($machine.context.serviceContainer!, $machine.context.user!.userId);
     });
 
     onDestroy(() => {
@@ -141,10 +141,6 @@
 
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
-    }
-
-    function joinGroup() {
-        machine.send({ type: "JOIN_GROUP" });
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
@@ -252,7 +248,6 @@
                 on:searchEntered={performSearch}
                 on:chatWith={chatWith}
                 on:logout={logout}
-                on:joinGroup={joinGroup}
                 on:loadMessage={loadMessage}
                 on:newGroup={newGroup}
                 on:newchat={newChat} />
@@ -294,12 +289,6 @@
         <TestModeModal />
     {:else if $modalStore === ModalType.ThemeSelection}
         <ThemePicker />
-    {:else if $modalStore === ModalType.JoinGroup}
-        <ModalContent>
-            <span slot="body">
-                <JoinGroup {machine} />
-            </span>
-        </ModalContent>
     {/if}
 </Overlay>
 
@@ -312,6 +301,7 @@
         width: 100%;
         max-width: 1000px;
         margin: auto;
+        display: flex;
     }
     :global(body) {
         transition: color ease-in-out 300ms;

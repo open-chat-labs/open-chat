@@ -57,7 +57,7 @@
     let currentChatId = "";
     let fromBottom = 0;
     let observer: IntersectionObserver;
-    let messageReadTimers: Record<number, NodeJS.Timer> = {};
+    let messageReadTimers: Record<number, number> = {};
 
     onMount(() => {
         const options = {

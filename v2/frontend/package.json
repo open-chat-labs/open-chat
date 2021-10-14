@@ -48,13 +48,13 @@
         "rollup-plugin-cleaner": "^1.0.0",
         "rollup-plugin-copy": "^3.4.0",
         "rollup-plugin-css-only": "^3.1.0",
-        "rollup-plugin-dev": "^1.1.3",
         "rollup-plugin-filesize": "^9.1.1",
         "rollup-plugin-inject": "^3.0.2",
         "rollup-plugin-inject-process-env": "^1.3.1",
         "rollup-plugin-livereload": "^2.0.0",
         "rollup-plugin-svelte": "^7.0.0",
         "rollup-plugin-terser": "^7.0.0",
+        "rollup-plugin-dev": "^2.0.0",
         "sass": "^1.34.1",
         "stream-browserify": "3.0.0",
         "svelte": "^3.0.0",
@@ -116,7 +116,8 @@
             "peerjs": "<rootDir>/src/dummyModule.js",
             "svelte-spa-router": "<rootDir>/src/dummyModule.js",
             "stores/background": "<rootDir>/src/dummyModule.js",
-            "idb": "<rootDir>/src/dummyModule.js"
+            "idb": "<rootDir>/src/dummyModule.js",
+            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
         }
     }
 }

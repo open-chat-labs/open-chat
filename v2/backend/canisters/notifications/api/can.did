@@ -3,7 +3,7 @@ import "../../../libraries/types/can.did";
 type PushSubscriptionArgs =
     record {
         user_id: UserId;
-        subscription: Subscription;
+        subscription: SubscriptionInfo;
     };
 
 type PushSubscriptionResponse =

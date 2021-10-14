@@ -17,6 +17,11 @@ import type { BlobReference } from "../../domain/data/data";
 import { UnsupportedValueError } from "../../utils/error";
 import { identity, optional } from "../../utils/mapping";
 import type {
+    ApiNotification,
+    ApiDirectMessageNotification,
+    ApiGroupMessageNotification,
+} from "../notifications/candid/idl";
+import type {
     ApiBlobReference,
     ApiCyclesContent,
     ApiFileContent,

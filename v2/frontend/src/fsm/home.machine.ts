@@ -18,7 +18,6 @@ import type {
     GroupChatSummary,
 } from "../domain/chat/chat";
 import {
-    insertIndexIntoRanges,
     updateArgsFromChats,
     userIdsFromChatSummaries,
     userIdsFromChatSummary,
@@ -47,6 +46,7 @@ import type {
 import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
+import { closeNotificationsForChat } from "../utils/notifications";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -71,8 +71,6 @@ export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "NEW_GROUP" }
-    | { type: "JOIN_GROUP" }
-    | { type: "CANCEL_JOIN_GROUP" }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
           data: RemoteUserToggledReaction;
@@ -311,7 +309,7 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
 
         updateChatsPoller: (ctx, _ev) => (callback, receive) => {
             let { chatSummaries, chatUpdatesSince } = ctx;
-            let intervalId: NodeJS.Timeout | undefined;
+            let intervalId: number | undefined;
 
             const unsubBackground = background.subscribe((hidden) => {
                 intervalId = poll(hidden ? CHAT_UPDATE_IDLE_INTERVAL : CHAT_UPDATE_INTERVAL);
@@ -326,9 +324,9 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
                 }
             });
 
-            function poll(interval: number): NodeJS.Timeout {
-                intervalId && clearInterval(intervalId);
-                return setInterval(async () => {
+            function poll(interval: number): number {
+                intervalId && window.clearInterval(intervalId);
+                return window.setInterval(async () => {
                     callback({
                         type: "CHATS_UPDATED",
                         data: await getUpdates(
@@ -560,6 +558,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
                     actions: [
+                        pure((_ctx, ev) => {
+                            closeNotificationsForChat(ev.data.chatId);
+                            return undefined;
+                        }),
                         "sendWebRtcOffers",
                         assign((ctx, ev) => {
                             const key = ev.data.chatId;
@@ -617,10 +619,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     internal: true,
                     target: ".new_group",
                     actions: log("received new group"),
-                },
-                JOIN_GROUP: {
-                    internal: true,
-                    target: ".join_group",
                 },
                 MESSAGE_READ_BY_ME: {
                     /**
@@ -738,12 +736,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
-                },
-                join_group: {
-                    entry: log("entering join group"),
-                    on: {
-                        CANCEL_JOIN_GROUP: "no_chat_selected",
-                    },
                 },
                 new_group: {
                     invoke: {

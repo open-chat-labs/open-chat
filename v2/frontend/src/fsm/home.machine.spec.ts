@@ -145,28 +145,6 @@ describe("home machine transitions", () => {
         );
     });
 
-    test("join group clicked", () => {
-        testTransition(
-            homeMachine.withContext(homeContext),
-            { loaded_chats: "no_chat_selected" },
-            "JOIN_GROUP",
-            {
-                loaded_chats: "join_group",
-            }
-        );
-    });
-
-    test("cancel join group", () => {
-        testTransition(
-            homeMachine.withContext(homeContext),
-            { loaded_chats: "join_group" },
-            "CANCEL_JOIN_GROUP",
-            {
-                loaded_chats: "no_chat_selected",
-            }
-        );
-    });
-
     test("chats updated - updates context", () => {
         const ctx = testTransition(
             homeMachine.withContext(homeContext),

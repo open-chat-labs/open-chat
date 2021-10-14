@@ -28,6 +28,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: Uint8Array;
     };
+
+    soft_disabled: {
+        key: string;
+        value: boolean;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -43,7 +48,7 @@ export function openMessageCache(): Database | undefined {
         return undefined;
     }
     try {
-        return openDB<ChatSchema>("openchat_db", 7, {
+        return openDB<ChatSchema>("openchat_db", 8, {
             upgrade(db, _oldVersion, _newVersion) {
                 try {
                     if (db.objectStoreNames.contains("chat_messages")) {
@@ -57,6 +62,9 @@ export function openMessageCache(): Database | undefined {
                     }
                     db.createObjectStore("chat_messages");
                     db.createObjectStore("chats");
+                    if (!db.objectStoreNames.contains("soft_disabled")) {
+                        db.createObjectStore("soft_disabled");
+                    }
                 } catch (err) {
                     rollbar.error("Unable to upgrade indexDB", err as Error);
                 }
@@ -235,6 +243,23 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
         await store.put(makeSerialisable<T>(event), createCacheKey(chatId, event.index));
     });
     await tx.done;
+}
+
+export async function storeSoftDisabled(value: boolean): Promise<void> {
+    if (db !== undefined) {
+        const tx = (await db).transaction("soft_disabled", "readwrite");
+        const store = tx.objectStore("soft_disabled");
+        await store.put(value, "soft_disabled");
+        await tx.done;
+    }
+}
+
+export async function getSoftDisabled(): Promise<boolean> {
+    if (db !== undefined) {
+        const res = await (await db).get("soft_disabled", "soft_disabled");
+        return res ?? false;
+    }
+    return false;
 }
 
 export const db = openMessageCache();

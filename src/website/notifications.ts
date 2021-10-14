@@ -42,10 +42,12 @@ export async function status(): Promise<Status> {
   }
 }
 
-export function supported() : boolean {
-    return "serviceWorker" in navigator 
-        && "PushManager" in window 
-        && "Notification" in window
+export function supported(): boolean {
+  return (
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
 }
 
 export async function trySubscribe(userId: UserId): Promise<boolean> {
@@ -60,11 +62,11 @@ export async function trySubscribe(userId: UserId): Promise<boolean> {
 
   // When a notifcation is clicked the service worker sends us a message
   // with the chat to select
-  navigator.serviceWorker.addEventListener("message", event => {
+  navigator.serviceWorker.addEventListener("message", (event) => {
     if (event.data.type === "NOTIFICATION_CLICKED") {
-      store.dispatch(gotoChatById(event.data.chatId) as any);  
+      store.dispatch(gotoChatById(event.data.chatId) as any);
     }
-  });  
+  });
 
   // Only proceed if the user hasn't explicitly soft-disabled notifications
   if (await softDisabled()) {
@@ -135,7 +137,7 @@ export async function setSoftDisabled(disabled: boolean): Promise<void> {
   _softDisabled = disabled;
 }
 
-export async function close(chatId: ChatId) : Promise<void> {
+export async function close(chatId: ChatId): Promise<void> {
   let registration = await registerServiceWorker();
   if (registration != null) {
     let notifications = await registration.getNotifications();
@@ -147,15 +149,17 @@ export async function close(chatId: ChatId) : Promise<void> {
   }
 }
 
-export async function unregister() : Promise<boolean> {
+export async function unregister(): Promise<boolean> {
   let registration = await registerServiceWorker();
   if (registration == null) {
     return false;
-  } 
+  }
   return registration.unregister();
 }
 
-async function registerServiceWorker(): Promise<Option<ServiceWorkerRegistration>> {
+async function registerServiceWorker(): Promise<
+  Option<ServiceWorkerRegistration>
+> {
   // Does the browser have all the support needed for web push
   if (!supported()) {
     return null;
@@ -186,7 +190,9 @@ async function hardPermission(): Promise<NotificationPermission> {
   return Notification.permission;
 }
 
-async function subscribeUserToPush(registration: ServiceWorkerRegistration): Promise<Option<PushSubscription>> {
+async function subscribeUserToPush(
+  registration: ServiceWorkerRegistration
+): Promise<Option<PushSubscription>> {
   const subscribeOptions = {
     userVisibleOnly: true,
     applicationServerKey: base64.toUint8Array(PUBLIC_VAPID_KEY),

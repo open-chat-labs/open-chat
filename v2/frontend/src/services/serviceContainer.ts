@@ -54,6 +54,8 @@ import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
+import type { INotificationsClient } from "./notifications/notifications.client.interface";
+import { NotificationsClient } from "./notifications/notifications.client";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -67,12 +69,14 @@ export class ServiceContainer implements MarkMessagesRead {
     private _userIndexClient: IUserIndexClient;
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
+    private _notificationClient: INotificationsClient;
     private _groupClients: Record<string, IGroupClient>;
     private db?: Database;
 
     constructor(private identity: Identity) {
         this._userIndexClient = UserIndexClient.create(identity);
         this._groupIndexClient = GroupIndexClient.create(identity);
+        this._notificationClient = NotificationsClient.create(identity);
         this._groupClients = {};
         this.db = db;
     }
@@ -502,5 +506,17 @@ export class ServiceContainer implements MarkMessagesRead {
 
     markAsOnline(): Promise<void> {
         return this._userIndexClient.markAsOnline();
+    }
+
+    subscriptionExists(userId: string, p256dh_key: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(userId, p256dh_key);
+    }
+
+    pushSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+        return this._notificationClient.pushSubscription(userId, subscription);
+    }
+
+    removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+        return this._notificationClient.removeSubscription(userId, subscription);
     }
 }
