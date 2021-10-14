@@ -4,7 +4,7 @@ use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
-use types::{CanisterId, Cycles, DirectMessageNotification, MessageContent, UserId};
+use types::{CanisterId, Cycles, DirectMessageNotification, MessageContent, Timestamped, UserId};
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
@@ -71,6 +71,8 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
             // max cycles limit which in reality should never happen.
             panic!("Unable to accept cycles")
         }
+        let new_cycles_balance = runtime_state.data.user_cycles_balance.value + c.amount;
+        runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
     }
 
     let push_message_args = PushMessageArgs {

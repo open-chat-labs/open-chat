@@ -294,7 +294,7 @@ fn finalize(
     }
 
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
-    let cycles_balance = runtime_state.data.cycles_balance.if_set_after(updates_since).copied();
+    let cycles_balance = runtime_state.data.user_cycles_balance.if_set_after(updates_since).copied();
 
     SuccessResult {
         chats_added,

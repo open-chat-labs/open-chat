@@ -61,7 +61,7 @@ struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
-    pub cycles_balance: Timestamped<Cycles>,
+    pub user_cycles_balance: Timestamped<Cycles>,
     pub test_mode: bool,
 }
 
@@ -86,7 +86,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
-            cycles_balance: Timestamped::new(0, now),
+            user_cycles_balance: Timestamped::new(0, now),
             test_mode,
         }
     }

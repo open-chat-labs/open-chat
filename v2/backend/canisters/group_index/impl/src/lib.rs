@@ -120,8 +120,8 @@ impl Default for Data {
 pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
-    pub cycles_balance: u64,
-    pub total_cycles_topped_up: u128,
+    pub cycles_balance: Cycles,
+    pub total_cycles_topped_up: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
     pub canisters_in_pool: u16,
