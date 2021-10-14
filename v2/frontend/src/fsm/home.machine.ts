@@ -46,6 +46,7 @@ import type {
 import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
+import { closeNotificationsForChat } from "../utils/notifications";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -557,6 +558,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     cond: "selectedChatIsValid",
                     target: ".chat_selected",
                     actions: [
+                        pure((_ctx, ev) => {
+                            closeNotificationsForChat(ev.data.chatId);
+                            return undefined;
+                        }),
                         "sendWebRtcOffers",
                         assign((ctx, ev) => {
                             const key = ev.data.chatId;

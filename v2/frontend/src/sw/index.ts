@@ -34,7 +34,6 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     if (await isClientFocused()) {
         return;
     }
-
     await showNotification(notification(candid));
 }
 
@@ -82,8 +81,8 @@ async function showNotification(notification: Notification): Promise<void> {
         title += notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
-        sender = notification.sender.toString();
-        // chatId = fromHex(notification.chat_id);
+        sender = notification.sender;
+        chatId = notification.sender;
         messageId = notification.message.messageId;
     } else if (notification.kind === "group_notification") {
         const content = extractMessageContent(notification.message.content);
@@ -95,7 +94,6 @@ async function showNotification(notification: Notification): Promise<void> {
         messageId = notification.message.messageId;
     } else {
         console.log("Unexpected notification type");
-        console.log(notification);
         return;
     }
 

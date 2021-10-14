@@ -1,4 +1,7 @@
+import { push } from "svelte-spa-router";
+import type { NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { setSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
 
 console.log("SWPATH", "process.env.WEBPUSH_SERVICE_WORKER_PATH");
@@ -7,28 +10,10 @@ console.log("SWPATH", "process.env.WEBPUSH_SERVICE_WORKER_PATH");
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5-mYptojI6qqqqiit68KSt17-vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv-iV3A=";
 
-// TODO: need to store in local storage
-let _softDisabled = false;
-
-export type NotificationStatus = "unsupported" | "prompt" | "denied" | "granted";
-
-export async function notificationStatus(): Promise<NotificationStatus> {
-    // Does the browser and environment have all the support needed for web push
-    if (!supported()) {
-        return "unsupported";
-    }
-
-    // If the user has explicitly soft-disabled notifications, then don't show bar
-    if (softDisabled()) {
-        return "denied";
-    }
-
-    // If the user has already either hard enabled or hard disabled notifications then don't show the bar
-    const permission = await hardPermission();
-
+export function permissionToStatus(permission: NotificationPermission): NotificationStatus {
     switch (permission) {
         case "denied":
-            return "denied";
+            return "hard-denied";
         case "granted":
             return "granted";
         default:
@@ -40,31 +25,20 @@ export function supported(): boolean {
     return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
-export function softDisabled(): boolean {
-    return _softDisabled;
-}
-
-export async function setSoftDisabled(disabled: boolean): Promise<void> {
-    _softDisabled = disabled;
-}
-
-async function hardPermission(): Promise<NotificationPermission> {
-    if (navigator.permissions) {
-        const result = await navigator.permissions.query({ name: "notifications" });
-        switch (result.state) {
-            case "prompt":
-                return "default";
-            case "denied":
-                return "denied";
-            case "granted":
-                return "granted";
-        }
+export function permissionStateToNotificationPermission(
+    perm: PermissionState
+): NotificationPermission {
+    switch (perm) {
+        case "prompt":
+            return "default";
+        case "denied":
+            return "denied";
+        case "granted":
+            return "granted";
     }
-
-    return Notification.permission;
 }
 
-export async function close(chatId: string): Promise<void> {
+export async function closeNotificationsForChat(chatId: string): Promise<void> {
     const registration = await registerServiceWorker();
     if (registration != null) {
         const notifications = await registration.getNotifications();
@@ -112,21 +86,10 @@ export async function trySubscribe(api: ServiceContainer, userId: string): Promi
     // with the chat to select
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_CLICKED") {
-            // todo - this is where we actually act on the notification click
-            console.log("Notification clicked: ", event.data);
+            closeNotificationsForChat(event.data.chatId);
+            push(`/${event.data.chatId}`);
         }
     });
-
-    // Only proceed if the user hasn't explicitly soft-disabled notifications
-    if (softDisabled()) {
-        return false;
-    }
-
-    // Only proceed if the user has granted hard permission to send notifications
-    const permission = await hardPermission();
-    if (permission !== "granted") {
-        return false;
-    }
 
     // Check if the user has subscribed already
     let pushSubscription = await registration.pushManager.getSubscription();
@@ -177,10 +140,11 @@ function extract_p256dh_key(subscription: PushSubscription): string {
     return key;
 }
 
-export async function askForPermission(): Promise<NotificationPermission> {
+export async function askForNotificationPermission(): Promise<NotificationPermission> {
     const result: NotificationPermission = await new Promise(function (resolve, reject) {
         const permissionResult = Notification.requestPermission(function (res) {
             resolve(res);
+            setSoftDisabled(false);
         });
 
         if (permissionResult) {

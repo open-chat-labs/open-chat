@@ -28,6 +28,7 @@
     import { stopMarkReadPoller } from "../../stores/markRead";
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
+    import { initNotificationStores } from "../../stores/notifications";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -48,6 +49,7 @@
     onMount(() => {
         // bootstrap anything that needs a service container here
         rtcConnectionsManager.init($machine.context.user!.userId);
+        initNotificationStores($machine.context.serviceContainer!, $machine.context.user!.userId);
     });
 
     onDestroy(() => {

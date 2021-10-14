@@ -65,6 +65,8 @@
     "userSearchFailed": "There was an error searching for users",
     "addParticipantsFailed": "There was an error adding participants",
     "enableNotifications": "Would you like to enable notifications?",
+    "enableNotificationsMenu": "Enable notifications",
+    "notificationsDisabled": "Notifications disabled",
     "yesPlease": "Yes please",
     "noThanks": "No thanks",
     "new": "new",

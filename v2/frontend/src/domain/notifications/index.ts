@@ -19,3 +19,10 @@ export type GroupNotification = {
 };
 
 export type SubscriptionExistsResponse = boolean;
+
+export type NotificationStatus =
+    | "unsupported"
+    | "prompt"
+    | "soft-denied"
+    | "hard-denied"
+    | "granted";

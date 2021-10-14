@@ -44,10 +44,6 @@
 
     $: user = $machine.context.user ? $userStore[$machine.context.user?.userId] : undefined;
 
-    $: userId = $machine.context.user!.userId;
-
-    $: api = $machine.context.serviceContainer!;
-
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
             return (
@@ -259,7 +255,7 @@
             <NewMessageFab on:newchat />
         {/if}
     </div>
-    <NotificationsBar {api} {userId} />
+    <NotificationsBar />
 {/if}
 
 <style type="text/scss">
