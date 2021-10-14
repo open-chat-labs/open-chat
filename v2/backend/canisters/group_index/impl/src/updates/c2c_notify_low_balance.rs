@@ -45,6 +45,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
 }
 
 fn commit(chat_id: ChatId, top_up: CyclesTopUp, runtime_state: &mut RuntimeState) {
+    runtime_state.data.total_cycles_topped_up += top_up.amount as u128;
     if let Some(group_chat) = runtime_state.data.public_groups.get_mut(&chat_id) {
         group_chat.mark_cycles_top_up(top_up);
     } else if let Some(group_chat) = runtime_state.data.private_groups.get_mut(&chat_id) {

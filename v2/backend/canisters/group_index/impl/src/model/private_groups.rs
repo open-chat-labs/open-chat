@@ -11,6 +11,10 @@ pub struct PrivateGroups {
 }
 
 impl PrivateGroups {
+    pub fn len(&self) -> usize {
+        self.groups.len()
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&PrivateGroupInfo> {
         self.groups.get(chat_id)
     }
