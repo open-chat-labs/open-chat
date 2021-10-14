@@ -3,12 +3,13 @@ use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ChatId, Milliseconds};
+use types::{CanisterId, CanisterWasm, ChatId, Milliseconds, TimestampMillis, Version};
 use utils::canister;
 use utils::env::Environment;
+use utils::memory;
 
 mod lifecycle;
 mod model;
@@ -40,6 +41,23 @@ impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
     }
+
+    pub fn metrics(&self) -> Metrics {
+        let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
+        Metrics {
+            memory_used: memory::used(),
+            now: self.env.now(),
+            cycles_balance: self.env.cycles_balance(),
+            total_cycles_topped_up: self.data.total_cycles_topped_up,
+            public_groups: self.data.public_groups.len() as u32,
+            private_groups: self.data.private_groups.len() as u64,
+            canisters_in_pool: self.data.canister_pool.len() as u16,
+            canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
+            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            canister_upgrades_failed: canister_upgrades_metrics.failed as u64,
+            group_wasm_version: self.data.group_canister_wasm.version,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -52,6 +70,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
+    pub total_cycles_topped_up: u128,
 }
 
 impl Data {
@@ -71,6 +90,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
+            total_cycles_topped_up: 0,
         }
     }
 
@@ -91,6 +111,22 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,
+            total_cycles_topped_up: 0,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct Metrics {
+    pub memory_used: u64,
+    pub now: TimestampMillis,
+    pub cycles_balance: u64,
+    pub total_cycles_topped_up: u128,
+    pub public_groups: u32,
+    pub private_groups: u64,
+    pub canisters_in_pool: u16,
+    pub canister_upgrades_pending: u64,
+    pub canister_upgrades_in_progress: u64,
+    pub canister_upgrades_failed: u64,
+    pub group_wasm_version: Version,
 }

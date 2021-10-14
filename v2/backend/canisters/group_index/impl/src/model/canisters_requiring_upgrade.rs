@@ -36,4 +36,18 @@ impl CanistersRequiringUpgrade {
         self.in_progress.remove(&failed_upgrade.chat_id);
         self.failed.push_back(failed_upgrade);
     }
+
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            pending: self.pending.len(),
+            in_progress: self.in_progress.len(),
+            failed: self.failed.len(),
+        }
+    }
+}
+
+pub struct Metrics {
+    pub pending: usize,
+    pub in_progress: usize,
+    pub failed: usize,
 }
