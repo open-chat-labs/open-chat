@@ -515,4 +515,8 @@ export class ServiceContainer implements MarkMessagesRead {
     pushSubscription(userId: string, subscription: PushSubscription): Promise<void> {
         return this._notificationClient.pushSubscription(userId, subscription);
     }
+
+    removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+        return this._notificationClient.removeSubscription(userId, subscription);
+    }
 }

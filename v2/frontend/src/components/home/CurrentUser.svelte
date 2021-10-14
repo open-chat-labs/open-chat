@@ -31,6 +31,10 @@
         dispatch("newGroup");
     }
 
+    function unsubscribeNotifications() {
+        dispatch("unsubscribeNotifications");
+    }
+
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         dispatch("userAvatarSelected", ev.detail);
     }
@@ -81,6 +85,11 @@
                                 <span slot="text">{$_("enableNotificationsMenu")}</span>
                             </MenuItem>
                         {/if}
+                    {:else}
+                        <MenuItem on:click={unsubscribeNotifications}>
+                            <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <span slot="text">{$_("disableNotificationsMenu")}</span>
+                        </MenuItem>
                     {/if}
                 </Menu>
             </span>

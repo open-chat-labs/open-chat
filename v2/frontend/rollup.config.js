@@ -67,9 +67,16 @@ console.log("URL", process.env.INTERNET_IDENTITY_URL);
 function serve() {
     return dev({
         dirs: ["./public"],
-        proxy: {
-            "/api/*": `http://${dfxJson.networks.local.bind}`,
-        },
+        proxy: [
+            {
+                from: "/_/raw",
+                to: "http://localhost:5001",
+            },
+            {
+                from: "/api/*",
+                to: `http://${dfxJson.networks.local.bind}`,
+            },
+        ],
         spa: "./public/index.html",
         port: process.env.DEV_PORT || 5000,
     });
@@ -89,6 +96,16 @@ export default [
                 sourceMap: !production,
                 inlineSources: !production,
             }),
+            resolve({
+                preferBuiltins: false,
+                browser: true,
+                dedupe: ["svelte"],
+            }),
+            replace({
+                preventAssignment: true,
+                "process.env.NODE_ENV": process.env.NODE_ENV,
+            }),
+
             production && terser(),
         ],
     },

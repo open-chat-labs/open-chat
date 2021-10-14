@@ -1,8 +1,10 @@
 import { push } from "svelte-spa-router";
 import type { NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { setSoftDisabled } from "../stores/notifications";
+import { notificationsSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
+
+export const SOFT_DISABLE_KEY = "openchat_notifications_soft_disabled";
 
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
@@ -67,7 +69,6 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
         return undefined;
     }
 
-    console.log(process.env.NODE_ENV);
     try {
         return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH");
     } catch (e) {
@@ -161,4 +162,26 @@ export async function askForNotificationPermission(): Promise<NotificationPermis
     });
 
     return result;
+}
+
+export async function unsubscribeNotifications(
+    api: ServiceContainer,
+    userId: string
+): Promise<void> {
+    await setSoftDisabled(true);
+    const registration = await registerServiceWorker();
+    if (registration != null) {
+        const pushSubscription = await registration.pushManager.getSubscription();
+        if (pushSubscription) {
+            await api.removeSubscription(userId, pushSubscription);
+        }
+    }
+}
+
+export async function setSoftDisabled(softDisabled: boolean): Promise<void> {
+    const registration = await registerServiceWorker();
+    if (registration) {
+        registration.active?.postMessage({ type: "SOFT_DISABLED", value: softDisabled });
+    }
+    notificationsSoftDisabled.set(softDisabled);
 }

@@ -1,13 +1,13 @@
 import { derived, readable, writable } from "svelte/store";
 import type { ServiceContainer } from "../services/serviceContainer";
+import { getSoftDisabled } from "../utils/caching";
 import {
     permissionStateToNotificationPermission,
     permissionToStatus,
+    SOFT_DISABLE_KEY,
     supported,
     trySubscribe,
 } from "../utils/notifications";
-
-const SOFT_DISABLE_KEY = "openchat_notifications_soft_disabled";
 
 export const notificationsSupported = readable<boolean>(supported());
 
@@ -27,13 +27,9 @@ function convertAndSubscribe(
     return notifPerm;
 }
 
-export function setSoftDisabled(softDisabled: boolean): void {
-    localStorage.setItem(SOFT_DISABLE_KEY, softDisabled.toString());
+export async function initNotificationStores(api: ServiceContainer, userId: string): Promise<void> {
+    const softDisabled = await getSoftDisabled();
     notificationsSoftDisabled.set(softDisabled);
-}
-
-export function initNotificationStores(api: ServiceContainer, userId: string): void {
-    notificationsSoftDisabled.set(localStorage.getItem(SOFT_DISABLE_KEY) === "true");
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
             notificationPermission.set(convertAndSubscribe(api, userId, perm.state));

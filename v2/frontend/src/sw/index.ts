@@ -3,6 +3,7 @@ import type { MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
 import { UnsupportedValueError } from "../utils/error";
 import { notification } from "../services/notifications/mappers";
+import { getSoftDisabled, setSoftDisabled } from "../utils/caching";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;
@@ -23,7 +24,15 @@ self.addEventListener("fetch", () => {
     console.log("dummy fetch interceptor");
 });
 
+self.addEventListener("message", async (event) => {
+    if (event.data.type === "SOFT_DISABLED") {
+        await setSoftDisabled(event.data.value);
+    }
+});
+
 async function handlePushNotification(event: PushEvent): Promise<void> {
+    if (await getSoftDisabled()) return;
+
     // Try to extract the typed notification from the event
     const candid = event.data?.json() as ApiNotification;
     if (!candid) {

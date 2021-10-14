@@ -29,6 +29,7 @@
     import type { DataContent } from "../../domain/data/data";
     import { userStore } from "../../stores/user";
     import NotificationsBar from "./NotificationsBar.svelte";
+    import { unsubscribeNotifications } from "../../utils/notifications";
 
     export let machine: ActorRefFrom<HomeMachine>;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -43,6 +44,10 @@
     let joiningGroup: string | undefined = undefined;
 
     $: user = $machine.context.user ? $userStore[$machine.context.user?.userId] : undefined;
+
+    $: api = $machine.context.serviceContainer!;
+
+    $: userId = $machine.context.user!.userId;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -151,6 +156,7 @@
         on:logout
         {user}
         on:newchat
+        on:unsubscribeNotifications={() => unsubscribeNotifications(api, userId)}
         on:newGroup />
     <div class="body">
         <Search {searching} {searchTerm} on:searchEntered />

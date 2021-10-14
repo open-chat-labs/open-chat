@@ -45,7 +45,21 @@ export class NotificationsClient extends CandidService implements INotifications
                 },
             },
         };
-        console.log("Pushing sub: ", request);
         return this.handleResponse(this.service.push_subscription(request), toVoid);
+    }
+
+    removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
+        const json = subscription.toJSON();
+        return this.handleResponse(
+            this.service.remove_subscriptions({
+                subscriptions_by_user: [
+                    {
+                        user_id: Principal.fromText(userId),
+                        p256dh_keys: [json.keys!["p256dh"]],
+                    },
+                ],
+            }),
+            toVoid
+        );
     }
 }
