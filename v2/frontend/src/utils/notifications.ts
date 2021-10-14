@@ -96,7 +96,6 @@ export async function trySubscribe(api: ServiceContainer, userId: string): Promi
     // with the chat to select
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_CLICKED") {
-            closeNotificationsForChat(event.data.chatId);
             push(`/${event.data.chatId}`);
         }
     });
