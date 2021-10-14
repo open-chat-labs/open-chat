@@ -3,13 +3,13 @@ use candid::CandidType;
 use serde::Deserialize;
 use std::fmt::Debug;
 
-#[derive(CandidType, Deserialize, Debug, Clone, Default)]
-pub struct Timestamped<T: CandidType + Debug + Clone + Default> {
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct Timestamped<T: CandidType + Debug + Clone> {
     pub value: T,
     pub timestamp: TimestampMillis,
 }
 
-impl<T: CandidType + Debug + Clone + Default> Timestamped<T> {
+impl<T: CandidType + Debug + Clone> Timestamped<T> {
     pub fn new(value: T, now: TimestampMillis) -> Timestamped<T> {
         Timestamped { value, timestamp: now }
     }
@@ -19,6 +19,15 @@ impl<T: CandidType + Debug + Clone + Default> Timestamped<T> {
             Some(&self.value)
         } else {
             None
+        }
+    }
+}
+
+impl<T: CandidType + Debug + Clone + Default> Default for Timestamped<T> {
+    fn default() -> Self {
+        Timestamped {
+            value: T::default(),
+            timestamp: TimestampMillis::default(),
         }
     }
 }
