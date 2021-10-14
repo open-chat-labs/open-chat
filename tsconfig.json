@@ -13,6 +13,6 @@
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
-  "include": ["src/website/**/*", "v2/frontend/src/utils/notifications.ts"],
+  "include": ["src/website/**/*"],
   "exclude": ["src/website/sw/index.ts"]
 }
