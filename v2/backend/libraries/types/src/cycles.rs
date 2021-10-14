@@ -2,7 +2,7 @@ use crate::TimestampMillis;
 use candid::CandidType;
 use serde::Deserialize;
 
-pub type Cycles = u64;
+pub type Cycles = u128;
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CyclesTopUp {

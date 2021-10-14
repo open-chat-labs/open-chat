@@ -5,7 +5,7 @@ use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
 use serde::Deserialize;
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 
@@ -15,7 +15,7 @@ mod queries;
 mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
-const LOW_CYCLES_BALANCE_THRESHOLD: u64 = 100_000_000_000; // 0.1T
+const LOW_CYCLES_BALANCE_THRESHOLD: Cycles = 100_000_000_000; // 0.1T
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Deserialize)]

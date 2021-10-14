@@ -76,7 +76,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
                 CanisterCreationStatusInternal::Pending(canister_id) => {
                     let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-                    let current_cycles_balance = ic_cdk::api::canister_balance();
+                    let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
                     if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
                         return Err(CyclesBalanceTooLow);
                     }

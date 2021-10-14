@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{ChatId, ChatSummary, ChatSummaryUpdates, TimestampMillis, UserId};
+use types::{ChatId, ChatSummary, ChatSummaryUpdates, Cycles, TimestampMillis, UserId};
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -31,4 +31,5 @@ pub struct SuccessResult {
     pub chats_updated: Vec<ChatSummaryUpdates>,
     pub chats_removed: Vec<ChatId>,
     pub blocked_users: Vec<UserId>,
+    pub cycles_balance: Option<Cycles>,
 }

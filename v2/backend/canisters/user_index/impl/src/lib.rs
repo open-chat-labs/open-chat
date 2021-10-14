@@ -4,7 +4,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ConfirmationCodeSms};
+use types::{CanisterId, CanisterWasm, ConfirmationCodeSms, Cycles};
 use utils::canister;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -14,9 +14,9 @@ mod model;
 mod queries;
 mod updates;
 
-const MIN_CYCLES_BALANCE: u64 = 5_000_000_000_000; // 5T
-const USER_CANISTER_INITIAL_CYCLES_BALANCE: u64 = 150_000_000_000; // 0.15T cycles
-const USER_CANISTER_TOP_UP_AMOUNT: u64 = 100_000_000_000; // 0.1T cycles
+const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
+const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 150_000_000_000; // 0.15T cycles
+const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 60 * 60 * 1000; // 1 hour
 const STATE_VERSION: StateVersion = StateVersion::V1;
 

@@ -2,7 +2,7 @@ use crate::{State, STATE};
 use canister_client_macros::generate_c2c_call;
 use ic_cdk::api::call::CallResult;
 use tracing::error;
-use types::{CanisterId, Milliseconds};
+use types::{CanisterId, Cycles, Milliseconds};
 
 const MIN_NOTIFICATION_INTERVAL: Milliseconds = 60 * 1000; // 1 minute
 
@@ -22,7 +22,7 @@ fn should_notify(state: &mut State) -> ShouldNotifyResult {
         return ShouldNotifyResult::No;
     }
 
-    let cycles_balance = ic_cdk::api::canister_balance();
+    let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
     if cycles_balance > state.low_balance_threshold {
         return ShouldNotifyResult::No;
     }

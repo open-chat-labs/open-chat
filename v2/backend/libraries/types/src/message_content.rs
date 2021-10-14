@@ -1,4 +1,4 @@
-use crate::{CanisterId, TimestampMillis, UserId};
+use crate::{CanisterId, Cycles, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
@@ -58,7 +58,7 @@ pub struct FileContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CycleContent {
-    pub amount: u128,
+    pub amount: Cycles,
     pub caption: Option<String>,
 }
 

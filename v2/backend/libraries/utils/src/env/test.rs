@@ -1,13 +1,13 @@
 use crate::env::Environment;
 use candid::Principal;
-use types::CanisterId;
+use types::{CanisterId, Cycles};
 
 pub struct TestEnv {
     pub now: u64,
     pub caller: Principal,
     pub canister_id: Principal,
     pub random_u32: u32,
-    pub cycles_balance: u64,
+    pub cycles_balance: Cycles,
 }
 
 impl Environment for TestEnv {
@@ -27,7 +27,7 @@ impl Environment for TestEnv {
         self.random_u32
     }
 
-    fn cycles_balance(&self) -> u64 {
+    fn cycles_balance(&self) -> Cycles {
         self.cycles_balance
     }
 }
