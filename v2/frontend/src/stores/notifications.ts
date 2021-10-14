@@ -4,7 +4,6 @@ import { getSoftDisabled } from "../utils/caching";
 import {
     permissionStateToNotificationPermission,
     permissionToStatus,
-    SOFT_DISABLE_KEY,
     supported,
     trySubscribe,
 } from "../utils/notifications";
