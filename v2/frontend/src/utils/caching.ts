@@ -245,7 +245,7 @@ export async function overwriteCachedEvents<T extends ChatEvent>(
     await tx.done;
 }
 
-export async function setSoftDisabled(value: boolean): Promise<void> {
+export async function storeSoftDisabled(value: boolean): Promise<void> {
     if (db !== undefined) {
         const tx = (await db).transaction("soft_disabled", "readwrite");
         const store = tx.objectStore("soft_disabled");

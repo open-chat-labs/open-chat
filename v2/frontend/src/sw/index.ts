@@ -3,7 +3,7 @@ import type { MessageContent } from "../domain/chat/chat";
 import type { Notification } from "../domain/notifications";
 import { UnsupportedValueError } from "../utils/error";
 import { notification } from "../services/notifications/mappers";
-import { getSoftDisabled, setSoftDisabled } from "../utils/caching";
+import { getSoftDisabled } from "../utils/caching";
 
 export {};
 declare const self: ServiceWorkerGlobalScope;
@@ -22,12 +22,6 @@ self.addEventListener("notificationclick", function (event: NotificationEvent) {
 
 self.addEventListener("fetch", () => {
     console.log("dummy fetch interceptor");
-});
-
-self.addEventListener("message", async (event) => {
-    if (event.data.type === "SOFT_DISABLED") {
-        await setSoftDisabled(event.data.value);
-    }
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {

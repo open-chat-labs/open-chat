@@ -3,6 +3,7 @@ import type { NotificationStatus } from "../domain/notifications";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { notificationsSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
+import { storeSoftDisabled } from "./caching";
 
 export const SOFT_DISABLE_KEY = "openchat_notifications_soft_disabled";
 
@@ -179,9 +180,9 @@ export async function unsubscribeNotifications(
 }
 
 export async function setSoftDisabled(softDisabled: boolean): Promise<void> {
-    const registration = await registerServiceWorker();
-    if (registration) {
-        registration.active?.postMessage({ type: "SOFT_DISABLED", value: softDisabled });
-    }
+    // add to indexdb so service worker has access
+    await storeSoftDisabled(softDisabled);
+
+    // add to svelte store
     notificationsSoftDisabled.set(softDisabled);
 }
