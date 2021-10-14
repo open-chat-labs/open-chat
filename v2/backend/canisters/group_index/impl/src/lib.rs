@@ -48,7 +48,7 @@ impl RuntimeState {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            total_cycles_topped_up: self.data.total_cycles_topped_up,
+            total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             public_groups: self.data.public_groups.len() as u32,
             private_groups: self.data.private_groups.len() as u64,
             canisters_in_pool: self.data.canister_pool.len() as u16,
@@ -70,7 +70,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
-    pub total_cycles_topped_up: u128,
+    pub total_cycles_spent_on_canisters: u128,
 }
 
 impl Data {
@@ -90,7 +90,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
-            total_cycles_topped_up: 0,
+            total_cycles_spent_on_canisters: 0,
         }
     }
 
@@ -111,7 +111,7 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,
-            total_cycles_topped_up: 0,
+            total_cycles_spent_on_canisters: 0,
         }
     }
 }
@@ -121,7 +121,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub total_cycles_topped_up: Cycles,
+    pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
     pub canisters_in_pool: u16,

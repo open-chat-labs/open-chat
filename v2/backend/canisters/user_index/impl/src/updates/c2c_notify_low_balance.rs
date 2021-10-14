@@ -45,7 +45,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
 }
 
 fn commit(user_id: UserId, top_up: CyclesTopUp, runtime_state: &mut RuntimeState) {
-    runtime_state.data.total_cycles_topped_up += top_up.amount as u128;
+    runtime_state.data.total_cycles_spent_on_canisters += top_up.amount;
     if !runtime_state.data.users.mark_cycles_top_up(&user_id, top_up) {
         panic!("User not found. {:?}", user_id);
     }

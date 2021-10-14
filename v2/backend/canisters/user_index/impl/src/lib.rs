@@ -62,7 +62,7 @@ impl RuntimeState {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            total_cycles_topped_up: self.data.total_cycles_topped_up,
+            total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             user_wasm_version: self.data.user_canister_wasm.version,
             users_unconfirmed: user_metrics.users_unconfirmed,
@@ -89,7 +89,7 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub test_mode: bool,
-    pub total_cycles_topped_up: u128,
+    pub total_cycles_spent_on_canisters: Cycles,
 }
 
 impl Data {
@@ -112,7 +112,7 @@ impl Data {
             notifications_canister_id,
             canister_pool: canister::Pool::new(canister_pool_target_size),
             test_mode,
-            total_cycles_topped_up: 0,
+            total_cycles_spent_on_canisters: 0,
         }
     }
 }
@@ -130,7 +130,7 @@ impl Default for Data {
             notifications_canister_id: Principal::anonymous(),
             canister_pool: canister::Pool::new(5),
             test_mode: true,
-            total_cycles_topped_up: 0,
+            total_cycles_spent_on_canisters: 0,
         }
     }
 }
@@ -140,7 +140,7 @@ pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
-    pub total_cycles_topped_up: Cycles,
+    pub total_cycles_spent_on_canisters: Cycles,
     pub users_unconfirmed: u32,
     pub users_confirmed: u32,
     pub users_created: u64,
