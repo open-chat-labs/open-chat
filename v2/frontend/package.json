@@ -116,7 +116,8 @@
             "peerjs": "<rootDir>/src/dummyModule.js",
             "svelte-spa-router": "<rootDir>/src/dummyModule.js",
             "stores/background": "<rootDir>/src/dummyModule.js",
-            "idb": "<rootDir>/src/dummyModule.js"
+            "idb": "<rootDir>/src/dummyModule.js",
+            "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
         }
     }
 }

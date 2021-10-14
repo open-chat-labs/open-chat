@@ -1,6 +1,7 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { DelegationIdentity } from "@dfinity/identity";
+import { unregister } from "../utils/notifications";
 
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const ONE_MINUTE_MILLIS = 60 * 1000;
@@ -33,7 +34,8 @@ export function login(): Promise<Identity> {
     });
 }
 
-export function logout(): Promise<void> {
+export async function logout(): Promise<void> {
+    await unregister();
     return authClient.then((c) => c.logout());
 }
 
@@ -41,10 +43,13 @@ export function startSession(identity: Identity): Promise<void> {
     return new Promise((resolve) => {
         const durationUntilSessionExpireMS = getTimeUntilSessionExpiryMs(identity);
         const durationUntilLogoutMs = durationUntilSessionExpireMS - ONE_MINUTE_MILLIS;
+        function timeout() {
+            logout().then(resolve);
+        }
         if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
-            resolve();
+            timeout();
         } else {
-            setTimeout(resolve, durationUntilLogoutMs);
+            setTimeout(timeout, durationUntilLogoutMs);
         }
     });
 }

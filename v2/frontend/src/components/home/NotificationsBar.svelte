@@ -4,8 +4,6 @@
     import { askForNotificationPermission } from "../../utils/notifications";
     import Link from "../Link.svelte";
     import { notificationStatus, setSoftDisabled } from "../../stores/notifications";
-
-    $: console.log("NotStatus: ", $notificationStatus);
 </script>
 
 {#if $notificationStatus === "prompt"}

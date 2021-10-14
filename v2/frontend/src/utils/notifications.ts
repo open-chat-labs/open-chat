@@ -4,8 +4,6 @@ import type { ServiceContainer } from "../services/serviceContainer";
 import { setSoftDisabled } from "../stores/notifications";
 import { toUint8Array } from "./base64";
 
-console.log("SWPATH", "process.env.WEBPUSH_SERVICE_WORKER_PATH");
-
 // https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
 export const PUBLIC_VAPID_KEY =
     "BD8RU5tDBbFTDFybDoWhFzlL5-mYptojI6qqqqiit68KSt17-vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv-iV3A=";
@@ -39,23 +37,28 @@ export function permissionStateToNotificationPermission(
 }
 
 export async function closeNotificationsForChat(chatId: string): Promise<void> {
-    const registration = await registerServiceWorker();
-    if (registration != null) {
-        const notifications = await registration.getNotifications();
-        for (const notification of notifications) {
-            if (notification.data?.chatId === chatId) {
-                notification.close();
+    if (process.env.NODE_ENV !== "test") {
+        const registration = await registerServiceWorker();
+        if (registration != null) {
+            const notifications = await registration.getNotifications();
+            for (const notification of notifications) {
+                if (notification.data?.chatId === chatId) {
+                    notification.close();
+                }
             }
         }
     }
 }
 
 export async function unregister(): Promise<boolean> {
-    const registration = await registerServiceWorker();
-    if (registration == null) {
-        return false;
+    if (process.env.NODE_ENV !== "test") {
+        const registration = await registerServiceWorker();
+        if (registration == null) {
+            return false;
+        }
+        return registration.unregister();
     }
-    return registration.unregister();
+    return Promise.resolve(false);
 }
 
 async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
@@ -64,6 +67,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
         return undefined;
     }
 
+    console.log(process.env.NODE_ENV);
     try {
         return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH");
     } catch (e) {
@@ -73,6 +77,10 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
 }
 
 export async function trySubscribe(api: ServiceContainer, userId: string): Promise<boolean> {
+    if (process.env.NODE_ENV === "test") {
+        return Promise.resolve(false);
+    }
+
     // Register a service worker if it hasn't already been done
     const registration = await registerServiceWorker();
     if (registration == null) {
