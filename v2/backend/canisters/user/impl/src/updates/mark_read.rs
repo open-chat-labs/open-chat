@@ -1,5 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
-use cycles_utils::check_cycles_balance;
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use types::ChatId;
@@ -10,7 +9,7 @@ use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet}
 #[update]
 #[instrument(level = "trace")]
 fn mark_read(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

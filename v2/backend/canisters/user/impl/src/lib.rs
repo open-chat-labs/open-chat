@@ -1,5 +1,6 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
+use crate::regular_jobs::RegularJobStatuses;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
@@ -12,10 +13,10 @@ use utils::env::Environment;
 mod lifecycle;
 mod model;
 mod queries;
+mod regular_jobs;
 mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
-const LOW_CYCLES_BALANCE_THRESHOLD: Cycles = 100_000_000_000; // 0.1T
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Deserialize)]
@@ -62,6 +63,7 @@ struct Data {
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
     pub user_cycles_balance: Timestamped<Cycles>,
+    pub regular_job_statuses: RegularJobStatuses,
     pub test_mode: bool,
 }
 
@@ -87,6 +89,7 @@ impl Data {
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
             user_cycles_balance: Timestamped::new(0, now),
+            regular_job_statuses: RegularJobStatuses::default(),
             test_mode,
         }
     }

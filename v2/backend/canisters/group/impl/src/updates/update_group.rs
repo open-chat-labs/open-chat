@@ -1,8 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
-use cycles_utils::check_cycles_balance;
 use group_canister::update_group::*;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_update_group;
@@ -16,7 +15,7 @@ use types::{
 #[update]
 #[instrument(level = "trace")]
 async fn update_group(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

@@ -1,6 +1,5 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use candid::Principal;
-use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -10,7 +9,7 @@ use user_canister::join_group::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 async fn join_group(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     let prepare_ok = match RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

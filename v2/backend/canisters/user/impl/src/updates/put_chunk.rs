@@ -1,6 +1,5 @@
 use crate::updates::put_chunk::Response::*;
-use crate::{RuntimeState, RUNTIME_STATE};
-use cycles_utils::check_cycles_balance;
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use user_canister::put_chunk::*;
@@ -9,7 +8,7 @@ use utils::blob_storage::PutChunkResult;
 #[update]
 #[instrument(level = "trace")]
 fn put_chunk(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     RUNTIME_STATE.with(|state| put_chunk_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

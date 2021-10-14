@@ -1,7 +1,6 @@
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
-use cycles_utils::check_cycles_balance;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
@@ -12,7 +11,7 @@ use utils::rand::get_random_item;
 #[update]
 #[instrument(level = "trace")]
 fn send_message(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

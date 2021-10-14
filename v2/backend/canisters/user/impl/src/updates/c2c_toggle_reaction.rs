@@ -1,6 +1,5 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ToggleReactionResult;
-use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use tracing::instrument;
 use user_canister::c2c_toggle_reaction::{Response::*, *};
@@ -8,7 +7,7 @@ use user_canister::c2c_toggle_reaction::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn c2c_toggle_reaction(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     if args.reaction.is_valid() {
         RUNTIME_STATE.with(|state| c2c_toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))

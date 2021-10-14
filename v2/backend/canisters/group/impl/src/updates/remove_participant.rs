@@ -1,7 +1,6 @@
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
-use cycles_utils::check_cycles_balance;
 use group_canister::remove_participant::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -11,7 +10,7 @@ use user_canister::c2c_remove_from_group;
 #[update]
 #[instrument(level = "trace")]
 async fn remove_participant(args: Args) -> Response {
-    check_cycles_balance();
+    regular_jobs::run();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

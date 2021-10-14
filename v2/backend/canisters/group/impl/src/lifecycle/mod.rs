@@ -1,5 +1,4 @@
-use crate::{Data, RuntimeState, LOG_MESSAGES, LOW_CYCLES_BALANCE_THRESHOLD, RUNTIME_STATE};
-use cycles_utils::{check_cycles_balance, init_cycles_balance_checker};
+use crate::{regular_jobs, Data, RuntimeState, LOG_MESSAGES, RUNTIME_STATE};
 use utils::env::Environment;
 
 mod init;
@@ -13,14 +12,9 @@ fn init_logger(enable_trace: bool) {
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data) {
-    let group_index_canister_id = data.group_index_canister_id;
     let runtime_state = RuntimeState::new(env, data);
 
-    RUNTIME_STATE.with(|state| {
-        *state.borrow_mut() = Some(runtime_state);
+    RUNTIME_STATE.with(|state| *state.borrow_mut() = Some(runtime_state));
 
-        init_cycles_balance_checker(LOW_CYCLES_BALANCE_THRESHOLD, group_index_canister_id);
-    });
-
-    check_cycles_balance();
+    regular_jobs::run();
 }
