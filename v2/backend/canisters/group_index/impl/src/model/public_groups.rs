@@ -14,6 +14,10 @@ pub struct PublicGroups {
 }
 
 impl PublicGroups {
+    pub fn len(&self) -> usize {
+        self.groups.len()
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&PublicGroupInfo> {
         self.groups.get(chat_id)
     }

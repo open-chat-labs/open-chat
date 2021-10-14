@@ -1151,7 +1151,9 @@ dependencies = [
  "candid",
  "canister_logger",
  "num-traits",
+ "serde",
  "serde_bytes",
+ "serde_json",
  "types",
  "utils",
 ]

@@ -17,6 +17,14 @@ impl Pool {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.canister_ids.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.canister_ids.is_empty()
+    }
+
     pub fn is_full(&self) -> bool {
         self.canister_ids.len() >= self.target_size as usize
     }
