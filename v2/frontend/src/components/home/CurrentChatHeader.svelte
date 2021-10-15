@@ -247,7 +247,7 @@
                             <div slot="text">{$_("markAllRead")}</div>
                         </MenuItem>
                     {:else}
-                        <MenuItem disabled={true} on:click={markAllRead}>
+                        <MenuItem disabled={true}>
                             <CheckboxMultipleMarked size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("markAllRead")}</div>
                         </MenuItem>
