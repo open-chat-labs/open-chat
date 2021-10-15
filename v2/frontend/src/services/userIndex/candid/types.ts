@@ -69,11 +69,11 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'account_balance' : bigint,
     }
   } |
   { 'UserNotFound' : null };
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type Cycles = bigint;
+export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -405,7 +405,7 @@ export type UsersResponse = {
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],
-  'amount' : bigint,
+  'amount' : Cycles,
 }
 export interface V1DirectMessageNotification {
   'sender' : UserId,
