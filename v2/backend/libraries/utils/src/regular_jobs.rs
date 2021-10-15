@@ -24,16 +24,16 @@ impl<Data> RegularJobs<Data> {
 pub struct RegularJob<Data> {
     name: String,
     action: fn(&mut Data),
-    interval: Milliseconds,
+    min_interval: Milliseconds,
     last_run: TimestampMillis,
 }
 
 impl<Data> RegularJob<Data> {
-    pub fn new(name: String, action: fn(&mut Data), interval: Milliseconds) -> RegularJob<Data> {
+    pub fn new(name: String, action: fn(&mut Data), min_interval: Milliseconds) -> RegularJob<Data> {
         RegularJob {
             name,
             action,
-            interval,
+            min_interval,
             last_run: 0,
         }
     }
@@ -49,6 +49,6 @@ impl<Data> RegularJob<Data> {
     }
 
     fn next_due(&self) -> TimestampMillis {
-        self.last_run + self.interval
+        self.last_run + self.min_interval
     }
 }
