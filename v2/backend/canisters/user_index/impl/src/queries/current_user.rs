@@ -42,7 +42,6 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                 Created(CreatedResult {
                     user_id: u.user_id,
                     username: u.username.clone(),
-                    account_balance: 0,
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
                 })
