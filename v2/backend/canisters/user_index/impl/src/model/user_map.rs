@@ -249,6 +249,10 @@ impl UserMap {
 
         self.cached_metrics = Timestamped::new(metrics, now);
     }
+
+    pub fn len(&self) -> usize {
+        self.users_by_principal.len()
+    }
 }
 
 pub enum AddUserResult {

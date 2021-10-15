@@ -6,6 +6,9 @@ use tracing::instrument;
 use types::ConfirmationCodeSms;
 use user_index_canister::submit_phone_number::{Response::*, *};
 
+const USER_LIMIT: usize = 100;
+const TEST_USER_LIMIT: usize = 3;
+
 #[update]
 #[instrument(level = "trace")]
 fn submit_phone_number(args: Args) -> Response {
@@ -13,6 +16,11 @@ fn submit_phone_number(args: Args) -> Response {
 }
 
 fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+    let test_mode = runtime_state.data.test_mode;
+    if runtime_state.data.users.len() > if test_mode { TEST_USER_LIMIT } else { USER_LIMIT } {
+        return UserLimitReached;
+    }
+
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
     let mut phone_number = args.phone_number;
