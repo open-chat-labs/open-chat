@@ -107,6 +107,7 @@ export type ChatEvents =
       }
     | { type: "CANCEL_REPLY_TO" }
     | { type: "ADD_PARTICIPANT" }
+    | { type: "TOGGLE_MUTE_NOTIFICATIONS" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
     | { type: "LOAD_PREVIOUS_MESSAGES" };
 
@@ -584,6 +585,14 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 SHOW_GROUP_DETAILS: ".showing_group",
                 SHOW_PARTICIPANTS: ".showing_group",
                 ADD_PARTICIPANT: ".showing_group",
+                TOGGLE_MUTE_NOTIFICATIONS: {
+                    actions: assign((ctx, _ev) => ({
+                        chatSummary: {
+                            ...ctx.chatSummary,
+                            notificationsMuted: !ctx.chatSummary.notificationsMuted,
+                        },
+                    })),
+                },
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({ focusIndex: undefined })),

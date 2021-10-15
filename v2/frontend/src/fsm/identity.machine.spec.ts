@@ -18,7 +18,6 @@ const fakeUser: CurrentUserResponse = {
     kind: "created_user",
     userId: "abcdefg",
     username: "julian_jelfs",
-    accountBalance: BigInt(10000),
     canisterUpgradeStatus: "not_required",
 };
 
@@ -293,7 +292,6 @@ describe("identity machine transitions", () => {
                     kind: "created_user",
                     userId: "abcdefg",
                     username: "julian_jelfs",
-                    accountBalance: BigInt(10000),
                     canisterUpgradeStatus: "required",
                 },
             },
@@ -314,7 +312,6 @@ describe("identity machine transitions", () => {
                     kind: "created_user",
                     userId: "abcdefg",
                     username: "julian_jelfs",
-                    accountBalance: BigInt(10000),
                     canisterUpgradeStatus: "in_progress",
                 },
             },

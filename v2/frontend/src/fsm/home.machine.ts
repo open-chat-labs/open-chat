@@ -697,6 +697,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
                                 dateCreated: BigInt(+new Date()),
+                                notificationsMuted: false,
                             };
                             const chatSummaries: ChatSummary[] = [newChat, ...ctx.chatSummaries];
                             push(`/${newChat.chatId}`);
@@ -720,6 +721,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                 latestMessage: undefined,
                                 latestEventIndex: 0,
                                 dateCreated: BigInt(+new Date()),
+                                notificationsMuted: false,
                             };
                             push(`/${dummyChat.chatId}`);
                             return {
@@ -779,6 +781,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                         latestMessage: undefined,
                                         latestEventIndex: 0,
                                         dateCreated: BigInt(+new Date()),
+                                        notificationsMuted: false,
                                     };
                                     push(`/${dummyChat.chatId}`);
                                     return {

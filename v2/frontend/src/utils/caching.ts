@@ -6,12 +6,13 @@ import type {
     IndexRange,
     MergedUpdatesResponse,
 } from "../domain/chat/chat";
-import { blobbyContentTypes } from "../domain/chat/chat.utils";
 import { rollbar } from "./logging";
 
 export const MAX_MSGS = 20;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
+
+const blobbyContentTypes = ["file_content", "image_content", "video_content", "audio_content"];
 
 export interface ChatSchema extends DBSchema {
     chats: {

@@ -264,6 +264,7 @@ export type UpdatesResponse = {
     chatsAdded: ChatSummary[];
     chatsRemoved: Set<string>;
     timestamp: bigint;
+    cyclesBalance?: bigint;
 };
 
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
@@ -272,6 +273,7 @@ type ChatSummaryUpdatesCommon = {
     chatId: string;
     readByMe?: MessageIndexRange[];
     latestEventIndex?: number;
+    notificationsMuted?: boolean;
 };
 
 export type DirectChatSummaryUpdates = ChatSummaryUpdatesCommon & {
@@ -311,6 +313,7 @@ type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
     readByMe: MessageIndexRange[];
     latestEventIndex: number;
+    notificationsMuted: boolean;
 };
 
 export type DirectChatSummary = ChatSummaryCommon & {

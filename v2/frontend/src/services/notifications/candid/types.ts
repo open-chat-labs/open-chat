@@ -35,7 +35,8 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type Cycles = bigint;
+export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -55,12 +56,14 @@ export interface DirectChatEventWrapper {
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
+  'notifications_muted' : boolean,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -114,6 +117,7 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
@@ -128,6 +132,7 @@ export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
+  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
@@ -275,11 +280,15 @@ export type PushV1GroupMessageNotificationResponse = { 'Success' : null };
 export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
 export type RemoveNotificationsResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface RemoveSubscriptionArgs { 'p256dh_key' : string }
+export type RemoveSubscriptionResponse = { 'Success' : null };
 export interface RemoveSubscriptionsArgs {
   'subscriptions_by_user' : Array<
     { 'user_id' : UserId, 'p256dh_keys' : Array<string> }
   >,
 }
+export type RemoveSubscriptionsForUserArgs = {};
+export type RemoveSubscriptionsForUserResponse = { 'Success' : null };
 export type RemoveSubscriptionsResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface ReplyContext {
@@ -320,7 +329,7 @@ export interface UserSummary {
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],
-  'amount' : bigint,
+  'amount' : Cycles,
 }
 export interface V1DirectMessageNotification {
   'sender' : UserId,
@@ -411,9 +420,15 @@ export interface _SERVICE {
   'remove_notifications' : (arg_0: RemoveNotificationsArgs) => Promise<
       RemoveNotificationsResponse
     >,
+  'remove_subscription' : (arg_0: RemoveSubscriptionArgs) => Promise<
+      RemoveSubscriptionResponse
+    >,
   'remove_subscriptions' : (arg_0: RemoveSubscriptionsArgs) => Promise<
       RemoveSubscriptionsResponse
     >,
+  'remove_subscriptions_for_user' : (
+      arg_0: RemoveSubscriptionsForUserArgs,
+    ) => Promise<RemoveSubscriptionsForUserResponse>,
   'subscription_exists' : (arg_0: SubscriptionExistsArgs) => Promise<
       SubscriptionExistsResponse
     >,

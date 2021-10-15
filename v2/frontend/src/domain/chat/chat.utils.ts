@@ -196,12 +196,7 @@ export function getMessageContent(
           } as TextContent);
 }
 
-export const blobbyContentTypes = [
-    "file_content",
-    "image_content",
-    "video_content",
-    "audio_content",
-];
+const blobbyContentTypes = ["file_content", "image_content", "video_content", "audio_content"];
 
 export function createMessage(
     userId: string,
@@ -239,6 +234,7 @@ function mergeUpdatedDirectChat(
     chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     return chat;
 }
 
@@ -340,6 +336,7 @@ function mergeUpdatedGroupChat(
         removed: updatedChat.participantsRemoved,
     });
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
+    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     return chat;
 }
 

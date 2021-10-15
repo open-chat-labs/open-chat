@@ -33,6 +33,7 @@ import { updateArgsFromChats } from "../../domain/chat/chat.utils";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -157,5 +158,12 @@ export class CachingUserClient implements IUserClient {
 
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse> {
         return this.client.searchAllMessages(searchTerm, maxResults);
+    }
+
+    toggleMuteNotifications(
+        chatId: string,
+        muted: boolean
+    ): Promise<ToggleMuteNotificationResponse> {
+        return this.client.toggleMuteNotifications(chatId, muted);
     }
 }

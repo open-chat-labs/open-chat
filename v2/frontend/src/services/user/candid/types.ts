@@ -59,7 +59,8 @@ export type CreateGroupResponse = {
   { 'MaxGroupsCreated' : number } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type Cycles = bigint;
+export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeleteMessagesArgs {
   'user_id' : UserId,
   'message_ids' : Array<MessageId>,
@@ -85,12 +86,14 @@ export interface DirectChatEventWrapper {
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
+  'notifications_muted' : boolean,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -180,6 +183,7 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
@@ -194,6 +198,7 @@ export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
+  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
@@ -306,6 +311,9 @@ export interface MetricsResponse {
   'video_message_count' : bigint,
 }
 export type Milliseconds = bigint;
+export interface MuteNotificationsArgs { 'chat_id' : ChatId }
+export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -422,12 +430,6 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface ToggleMuteNotificationsArgs {
-  'mute' : boolean,
-  'chat_id' : ChatId,
-}
-export type ToggleMuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export interface ToggleReactionArgs {
   'user_id' : UserId,
   'message_id' : MessageId,
@@ -440,6 +442,9 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'Removed' : EventIndex };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
+export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
+export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -447,6 +452,7 @@ export interface UpdatedMessage {
 export interface UpdatesArgs { 'updates_since' : [] | [UpdatesSince] }
 export type UpdatesResponse = {
     'Success' : {
+      'cycles_balance' : [] | [Cycles],
       'chats_updated' : Array<ChatSummaryUpdates>,
       'blocked_users' : Array<UserId>,
       'chats_added' : Array<ChatSummary>,
@@ -468,7 +474,7 @@ export interface UserSummary {
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],
-  'amount' : bigint,
+  'amount' : Cycles,
 }
 export interface V1DirectMessageNotification {
   'sender' : UserId,
@@ -552,6 +558,9 @@ export interface _SERVICE {
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
+      MuteNotificationsResponse
+    >,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
@@ -561,12 +570,12 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
-  'toggle_mute_notifications' : (arg_0: ToggleMuteNotificationsArgs) => Promise<
-      ToggleMuteNotificationsResponse
-    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
+  'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
+      UnmuteNotificationsResponse
+    >,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

@@ -15,6 +15,7 @@ const directChat: DirectChatSummary = {
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),
+    notificationsMuted: false,
 };
 
 const homeContext: HomeContext = {
@@ -22,7 +23,6 @@ const homeContext: HomeContext = {
     user: {
         userId: "abcdef",
         username: "julian_jelfs",
-        accountBalance: BigInt(0),
     },
     chatSummaries: [],
     selectedChat: undefined,

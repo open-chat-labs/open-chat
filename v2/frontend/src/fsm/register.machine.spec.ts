@@ -12,7 +12,6 @@ const userCreated: CurrentUserResponse = {
     kind: "created_user",
     userId: "abcdefg",
     username: "julian_jelfs",
-    accountBalance: BigInt(10000),
     canisterUpgradeStatus: "not_required",
 };
 

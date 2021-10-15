@@ -173,7 +173,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             kind: "created_user",
             userId: candid.Created.user_id.toString(),
             username: candid.Created.username,
-            accountBalance: candid.Created.account_balance,
             canisterUpgradeStatus:
                 "Required" in candid.Created.canister_upgrade_status
                     ? "required"

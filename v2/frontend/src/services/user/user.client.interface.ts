@@ -21,6 +21,7 @@ import type {
     MarkReadRequest,
 } from "../../domain/chat/chat";
 import type { BlobReference } from "../../domain/data/data";
+import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
 import type { UserSummary } from "../../domain/user/user";
 
@@ -60,4 +61,8 @@ export interface IUserClient {
     ): Promise<ToggleReactionResponse>;
     deleteMessage(otherUserId: string, messageId: bigint): Promise<DeleteMessageResponse>;
     searchAllMessages(searchTerm: string, maxResults: number): Promise<SearchAllMessagesResponse>;
+    toggleMuteNotifications(
+        chatId: string,
+        muted: boolean
+    ): Promise<ToggleMuteNotificationResponse>;
 }
