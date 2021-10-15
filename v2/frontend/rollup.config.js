@@ -14,11 +14,11 @@ import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
 // import copy from 'rollup-plugin-copy';
-// import cleaner from 'rollup-plugin-cleaner';
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
 import * as fs from "fs";
 import * as path from "path";
+import * as rimraf from "rimraf";
 
 dotenv.config();
 
@@ -80,6 +80,10 @@ function serve() {
         spa: "./public/index.html",
         port: process.env.DEV_PORT || 5000,
     });
+}
+
+if (production) {
+    rimraf.sync(path.join(__dirname, "public", "build"));
 }
 
 export default [

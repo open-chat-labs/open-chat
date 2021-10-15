@@ -30,6 +30,7 @@
     import { toShortTimeString } from "../../utils/date";
     import { fillMessage, messageMetaData } from "../../utils/media";
     import UnresolvedReply from "./UnresolvedReply.svelte";
+    import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     const dispatch = createEventDispatcher();
 
     export let chatId: string;
@@ -124,6 +125,8 @@
         });
         showEmojiPicker = false;
     }
+
+    $: mobile = $screenWidth === ScreenWidth.ExtraSmall;
 </script>
 
 {#if showEmojiPicker}
@@ -153,7 +156,7 @@
         data-id={msg.messageId}
         id={`event-${eventIndex}`}>
         {#if me && !deleted}
-            <div class="actions">
+            <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
@@ -263,7 +266,7 @@
             {/if}
         </div>
         {#if !me && !deleted}
-            <div class="actions">
+            <div class="actions" class:mobile>
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
                         <EmoticonLolOutline size={"1.2em"} color={"#fff"} />
@@ -436,6 +439,10 @@
             padding: $sp3;
             justify-content: center;
             align-items: center;
+
+            &.mobile {
+                opacity: 0.3;
+            }
         }
 
         &:hover .actions {
