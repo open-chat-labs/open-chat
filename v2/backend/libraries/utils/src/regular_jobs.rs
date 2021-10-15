@@ -10,13 +10,14 @@ impl<Data> RegularJobs<Data> {
         RegularJobs { jobs }
     }
 
-    pub fn try_run_next(&mut self, now: TimestampMillis, data: &mut Data) -> Option<String> {
+    pub fn run(&mut self, now: TimestampMillis, data: &mut Data) -> Vec<String> {
+        let mut jobs_run = Vec::new();
         for job in self.jobs.iter_mut() {
             if job.try_run(now, data) {
-                return Some(job.name.clone());
+                jobs_run.push(job.name.clone());
             }
         }
-        None
+        jobs_run
     }
 }
 
