@@ -4,9 +4,16 @@
     import Footer from "./Footer.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
+    import { getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
+
+    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
+        $machine.context.chatSummary.chatId,
+        getMinVisibleMessageIndex($machine.context.chatSummary),
+        $machine.context.chatSummary.latestMessage?.event.messageIndex
+    );
 
     function showGroupDetails() {
         machine.send({ type: "SHOW_GROUP_DETAILS" });
@@ -25,6 +32,7 @@
     <CurrentChatHeader
         user={$machine.context.user}
         {blocked}
+        {unreadMessages}
         on:clearSelection
         on:blockUser
         on:unblockUser
@@ -33,7 +41,7 @@
         on:showParticipants={showParticipants}
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:messageRead on:chatWith {machine} />
+    <CurrentChatMessages on:messageRead on:chatWith {machine} {unreadMessages} />
     <Footer {machine} />
 </div>
 

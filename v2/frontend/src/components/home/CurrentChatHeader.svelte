@@ -6,6 +6,7 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -29,6 +30,7 @@
     export let selectedChatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
+    export let unreadMessages: number;
 
     $: isGroup = selectedChatSummary.kind === "group_chat";
 
