@@ -189,13 +189,23 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     }; 
 
-type ToggleMuteNotificationsArgs =
+type MuteNotificationsArgs =
     record {
         chat_id: ChatId;
-        mute: bool;
     };
 
-type ToggleMuteNotificationsResponse =
+type MuteNotificationsResponse =
+    variant {
+        Success;
+        ChatNotFound;
+    }; 
+
+type UnmuteNotificationsArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type UnmuteNotificationsResponse =
     variant {
         Success;
         ChatNotFound;
@@ -348,7 +358,8 @@ service: (InitArgs) -> {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
+    mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
+    unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
