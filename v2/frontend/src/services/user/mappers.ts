@@ -117,7 +117,6 @@ export function toggleReactionResponse(candid: ApiToggleReactionResponse): Toggl
 }
 
 export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
-    console.log(candid);
     if ("Success" in candid) {
         return "success";
     }
@@ -203,7 +202,6 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
 export function blockResponse(
     candid: ApiBlockUserResponse | ApiUnblockUserResponse
 ): BlockUserResponse | UnblockUserResponse {
-    console.log(candid);
     if ("Success" in candid) {
         return "success";
     }
@@ -293,7 +291,6 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 
 export function getEventsResponse(candid: ApiEventsResponse): EventsResponse<DirectChatEvent> {
     if ("Success" in candid) {
-        console.log("Events: ", candid.Success.events);
         return {
             events: candid.Success.events.map(event),
             affectedEvents: candid.Success.affected_events.map(event),

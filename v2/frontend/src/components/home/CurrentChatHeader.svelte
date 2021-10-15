@@ -191,24 +191,20 @@
                 </HoverIcon>
             </div>
             <div slot="menu">
-                {#if selectedChatSummary.kind === "direct_chat"}
-                    {#if blocked}
-                        <Menu>
+                <Menu>
+                    {#if selectedChatSummary.kind === "direct_chat"}
+                        {#if blocked}
                             <MenuItem on:click={unblockUser}>
                                 <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("unblockUser")}</div>
                             </MenuItem>
-                        </Menu>
-                    {:else}
-                        <Menu>
+                        {:else}
                             <MenuItem on:click={blockUser}>
                                 <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("blockUser")}</div>
                             </MenuItem>
-                        </Menu>
-                    {/if}
-                {:else if selectedChatSummary.kind === "group_chat"}
-                    <Menu>
+                        {/if}
+                    {:else if selectedChatSummary.kind === "group_chat"}
                         <MenuItem on:click={showGroupDetails}>
                             <AccountMultiplePlus size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>
@@ -227,19 +223,19 @@
                                 <div slot="text">{$_("addParticipants")}</div>
                             </MenuItem>
                         {/if}
-                    </Menu>
-                {/if}
-                {#if selectedChatSummary.notificationsMuted}
-                    <MenuItem on:click={toggleMuteNotifications}>
-                        <Bell size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <div slot="text">{$_("unmuteNotifications")}</div>
-                    </MenuItem>
-                {:else}
-                    <MenuItem on:click={toggleMuteNotifications}>
-                        <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
-                        <div slot="text">{$_("muteNotifications")}</div>
-                    </MenuItem>
-                {/if}
+                    {/if}
+                    {#if selectedChatSummary.notificationsMuted === true}
+                        <MenuItem on:click={toggleMuteNotifications}>
+                            <Bell size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("unmuteNotifications")}</div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem on:click={toggleMuteNotifications}>
+                            <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("muteNotifications")}</div>
+                        </MenuItem>
+                    {/if}
+                </Menu>
             </div>
         </MenuIcon>
     </div>

@@ -3,7 +3,7 @@ export function optional<A, B>(candid: [] | [A], mapper: (a: A) => B): B | undef
     if (candid === []) {
         return undefined;
     }
-    return candid[0] ? mapper(candid[0]) : undefined;
+    return candid[0] !== undefined ? mapper(candid[0]) : undefined;
 }
 
 export function identity<T>(x: T): T {

@@ -5,6 +5,8 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { rollbar } from "../../utils/logging";
+    import { toastStore } from "../../stores/toast";
+    import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
@@ -22,20 +24,28 @@
     }
 
     function toggleMuteNotifications() {
-        machine.send({ type: "TOGGLE_MUTE_NOTIFICATIONS" });
+        const op = $machine.context.chatSummary.notificationsMuted ? "unmuted" : "muted";
         $machine.context.serviceContainer
             .toggleMuteNotifications(
                 $machine.context.chatSummary.chatId,
-                $machine.context.chatSummary.notificationsMuted
+                !$machine.context.chatSummary.notificationsMuted
             )
             .then((resp) => {
                 if (resp !== "success") {
-                    machine.send({ type: "TOGGLE_MUTE_NOTIFICATIONS" });
+                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                        values: { operation: $_(op) },
+                    });
+                } else {
+                    toastStore.showSuccessToast("toggleMuteNotificationsSucceeded", {
+                        values: { operation: $_(op) },
+                    });
                 }
             })
             .catch((err) => {
                 rollbar.error("Error toggling mute notifications", err);
-                machine.send({ type: "TOGGLE_MUTE_NOTIFICATIONS" });
+                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                    values: { operation: $_(op) },
+                });
             });
     }
 </script>
