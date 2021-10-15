@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -9,7 +9,7 @@ use user_canister::send_message::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn send_message(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

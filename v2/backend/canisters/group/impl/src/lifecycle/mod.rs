@@ -12,9 +12,8 @@ fn init_logger(enable_trace: bool) {
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data) {
-    let runtime_state = RuntimeState::new(env, data);
+    let regular_jobs = regular_jobs::build();
+    let runtime_state = RuntimeState::new(env, data, regular_jobs);
 
     RUNTIME_STATE.with(|state| *state.borrow_mut() = Some(runtime_state));
-
-    regular_jobs::run();
 }

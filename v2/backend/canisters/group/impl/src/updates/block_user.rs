@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::block_user::{Response::*, *};
 use ic_cdk_macros::update;
@@ -10,7 +10,7 @@ use user_canister::c2c_remove_from_group;
 #[update]
 #[instrument(level = "trace")]
 async fn block_user(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

@@ -1,6 +1,6 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::make_admin::Response::*;
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::make_admin::*;
 use ic_cdk_macros::update;
@@ -10,7 +10,7 @@ use types::{ParticipantsPromotedToAdmin, Role};
 #[update]
 #[instrument(level = "trace")]
 fn make_admin(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| make_admin_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

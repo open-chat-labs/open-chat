@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use user_canister::c2c_delete_messages::{Response::*, *};
@@ -6,7 +6,7 @@ use user_canister::c2c_delete_messages::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn c2c_delete_messages(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| c2c_delete_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

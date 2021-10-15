@@ -1,5 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::c2c_leave_group::{Response::*, *};
 use ic_cdk_macros::update;
@@ -10,7 +10,7 @@ use types::ParticipantLeft;
 #[update]
 #[instrument(level = "trace")]
 fn c2c_leave_group(_args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| c2c_leave_group_impl(state.borrow_mut().as_mut().unwrap()))
 }

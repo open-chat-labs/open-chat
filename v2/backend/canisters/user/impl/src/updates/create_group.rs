@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
 use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
@@ -9,7 +9,7 @@ use user_canister::create_group::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 async fn create_group(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

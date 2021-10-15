@@ -1,6 +1,5 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
-use crate::regular_jobs::RegularJobStatuses;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
@@ -9,6 +8,7 @@ use std::collections::HashSet;
 use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
+use utils::regular_jobs::RegularJobs;
 
 mod lifecycle;
 mod model;
@@ -32,11 +32,12 @@ thread_local! {
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
     }
 
     pub fn is_caller_owner(&self) -> bool {
@@ -63,7 +64,6 @@ struct Data {
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
     pub user_cycles_balance: Timestamped<Cycles>,
-    pub regular_job_statuses: RegularJobStatuses,
     pub test_mode: bool,
 }
 
@@ -89,8 +89,16 @@ impl Data {
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
             user_cycles_balance: Timestamped::new(0, now),
-            regular_job_statuses: RegularJobStatuses::default(),
             test_mode,
         }
     }
+}
+
+fn run_regular_jobs() {
+    fn run_regular_jobs_impl(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.regular_jobs.try_run_next(now, &mut runtime_state.data);
+    }
+
+    RUNTIME_STATE.with(|state| run_regular_jobs_impl(state.borrow_mut().as_mut().unwrap()));
 }

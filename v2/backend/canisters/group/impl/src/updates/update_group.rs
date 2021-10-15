@@ -1,6 +1,6 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::update_group::Response::*;
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
 use group_canister::update_group::*;
 use group_canister::{MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_NAME_LENGTH};
@@ -15,7 +15,7 @@ use types::{
 #[update]
 #[instrument(level = "trace")]
 async fn update_group(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

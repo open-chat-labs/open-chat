@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use types::ChatId;
@@ -9,7 +9,7 @@ use utils::range_set::{convert_to_message_index_ranges, insert_ranges, RangeSet}
 #[update]
 #[instrument(level = "trace")]
 fn mark_read(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| mark_read_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

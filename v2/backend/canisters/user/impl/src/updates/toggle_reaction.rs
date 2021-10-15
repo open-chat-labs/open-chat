@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ToggleReactionResult;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -9,7 +9,7 @@ use user_canister::toggle_reaction::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn toggle_reaction(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     if args.reaction.is_valid() {
         RUNTIME_STATE.with(|state| toggle_reaction_impl(args, state.borrow_mut().as_mut().unwrap()))

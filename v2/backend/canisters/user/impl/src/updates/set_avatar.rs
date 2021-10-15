@@ -1,5 +1,5 @@
 use crate::updates::set_avatar::Response::*;
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use types::{Avatar, CanisterId, FieldTooLongResult, MAX_AVATAR_SIZE};
@@ -8,7 +8,7 @@ use user_canister::set_avatar::*;
 #[update]
 #[instrument(level = "trace")]
 fn set_avatar(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| set_avatar_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

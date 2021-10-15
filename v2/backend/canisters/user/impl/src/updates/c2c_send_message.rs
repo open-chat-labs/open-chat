@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
@@ -10,7 +10,7 @@ use utils::rand::get_random_item;
 #[update]
 #[instrument(level = "trace")]
 async fn c2c_send_message(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     let sender_user_id = match RUNTIME_STATE.with(|state| get_sender_status(state.borrow().as_ref().unwrap())) {
         SenderStatus::Ok(user_id) => user_id,

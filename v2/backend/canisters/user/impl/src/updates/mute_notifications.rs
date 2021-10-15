@@ -1,4 +1,4 @@
-use crate::{regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use group_canister::c2c_toggle_mute_notifications;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -8,7 +8,7 @@ use user_canister::mute_notifications::*;
 #[update]
 #[instrument(level = "trace")]
 fn mute_notifications(args: Args) -> Response {
-    regular_jobs::run();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| toggle_mute_notifications_impl(args.chat_id, true, state.borrow_mut().as_mut().unwrap()))
 }
@@ -16,7 +16,7 @@ fn mute_notifications(args: Args) -> Response {
 #[update]
 #[instrument(level = "trace")]
 fn unmute_notifications(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| toggle_mute_notifications_impl(args.chat_id, false, state.borrow_mut().as_mut().unwrap()))
 }

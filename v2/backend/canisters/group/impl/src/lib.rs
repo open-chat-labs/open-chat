@@ -1,6 +1,5 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::participants::Participants;
-use crate::regular_jobs::RegularJobStatuses;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
@@ -9,6 +8,7 @@ use std::cell::RefCell;
 use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
+use utils::regular_jobs::RegularJobs;
 
 mod lifecycle;
 mod model;
@@ -32,11 +32,12 @@ thread_local! {
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
     }
 
     pub fn is_caller_participant(&self) -> bool {
@@ -60,7 +61,6 @@ struct Data {
     pub wasm_version: Version,
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
-    pub regular_job_statuses: RegularJobStatuses,
     pub test_mode: bool,
 }
 
@@ -100,8 +100,16 @@ impl Data {
             wasm_version,
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
-            regular_job_statuses: RegularJobStatuses::default(),
             test_mode,
         }
     }
+}
+
+fn run_regular_jobs() {
+    fn run_regular_jobs_impl(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.regular_jobs.try_run_next(now, &mut runtime_state.data);
+    }
+
+    RUNTIME_STATE.with(|state| run_regular_jobs_impl(state.borrow_mut().as_mut().unwrap()));
 }
