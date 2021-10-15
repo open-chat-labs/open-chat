@@ -26,3 +26,5 @@ export type NotificationStatus =
     | "soft-denied"
     | "hard-denied"
     | "granted";
+
+export type ToggleMuteNotificationResponse = "success" | "chat_not_found";

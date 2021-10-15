@@ -35,9 +35,10 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const Cycles = IDL.Nat;
   const CyclesContent = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
-    'amount' : IDL.Nat,
+    'amount' : Cycles,
   });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
@@ -119,7 +120,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const V1CyclesContent = IDL.Record({
     'caption' : IDL.Opt(IDL.Text),
-    'amount' : IDL.Nat,
+    'amount' : Cycles,
   });
   const V1MessageContent = IDL.Variant({
     'File' : V1FileContent,

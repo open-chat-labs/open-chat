@@ -11,6 +11,8 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import Bell from "svelte-material-icons/Bell.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import MenuIcon from "../MenuIcon.svelte";
@@ -34,6 +36,10 @@
 
     function clearSelection() {
         dispatch("clearSelection");
+    }
+
+    function toggleMuteNotifications() {
+        dispatch("toggleMuteNotifications");
     }
 
     function blockUser() {
@@ -222,6 +228,17 @@
                             </MenuItem>
                         {/if}
                     </Menu>
+                {/if}
+                {#if selectedChatSummary.notificationsMuted}
+                    <MenuItem on:click={toggleMuteNotifications}>
+                        <Bell size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <div slot="text">{$_("unmuteNotifications")}</div>
+                    </MenuItem>
+                {:else}
+                    <MenuItem on:click={toggleMuteNotifications}>
+                        <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
+                        <div slot="text">{$_("muteNotifications")}</div>
+                    </MenuItem>
                 {/if}
             </div>
         </MenuIcon>

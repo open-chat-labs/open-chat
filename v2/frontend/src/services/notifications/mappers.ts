@@ -3,15 +3,32 @@ import type {
     GroupNotification,
     Notification,
     SubscriptionExistsResponse,
+    ToggleMuteNotificationResponse,
 } from "../../domain/notifications";
 import { UnsupportedValueError } from "../../utils/error";
 import { message } from "../common/chatMappers";
+import type { ApiToggleMuteNotificationsResponse } from "../user/candid/idl";
 import type {
     ApiDirectMessageNotification,
     ApiGroupMessageNotification,
     ApiNotification,
     ApiSubscriptionExistsResponse,
 } from "./candid/idl";
+
+export function toggleMuteNotificationsResponse(
+    candid: ApiToggleMuteNotificationsResponse
+): ToggleMuteNotificationResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    throw new UnsupportedValueError(
+        `Unexpected ApiToggleMuteNotificationsResponse type received`,
+        candid
+    );
+}
 
 export function subscriptionExistsResponse(
     candid: ApiSubscriptionExistsResponse

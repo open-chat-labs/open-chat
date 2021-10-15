@@ -239,6 +239,7 @@ function mergeUpdatedDirectChat(
     chat.readByThem = updatedChat.readByThem ?? chat.readByThem;
     chat.latestMessage = updatedChat.latestMessage ?? chat.latestMessage;
     chat.latestEventIndex = updatedChat.latestEventIndex ?? chat.latestEventIndex;
+    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     return chat;
 }
 
@@ -340,6 +341,7 @@ function mergeUpdatedGroupChat(
         removed: updatedChat.participantsRemoved,
     });
     chat.blobReference = updatedChat.avatarBlobReference ?? chat.blobReference;
+    chat.notificationsMuted = updatedChat.notificationsMuted ?? chat.notificationsMuted;
     return chat;
 }
 

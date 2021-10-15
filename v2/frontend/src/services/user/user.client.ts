@@ -48,6 +48,8 @@ import { DataClient } from "../data/data.client";
 import type { BlobReference } from "../../domain/data/data";
 import type { UserSummary } from "../../domain/user/user";
 import type { SearchAllMessagesResponse } from "../../domain/search/search";
+import type { ToggleMuteNotificationResponse } from "../../domain/notifications";
+import { toggleMuteNotificationsResponse } from "../notifications/mappers";
 
 const MAX_RECURSION = 10;
 
@@ -314,6 +316,19 @@ export class UserClient extends CandidService implements IUserClient {
                 max_results: maxResults,
             }),
             searchAllMessageResponse
+        );
+    }
+
+    toggleMuteNotifications(
+        chatId: string,
+        muted: boolean
+    ): Promise<ToggleMuteNotificationResponse> {
+        return this.handleResponse(
+            this.userService.toggle_mute_notifications({
+                chat_id: Principal.fromText(chatId),
+                mute: muted,
+            }),
+            toggleMuteNotificationsResponse
         );
     }
 }

@@ -56,6 +56,7 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
+import type { ToggleMuteNotificationResponse } from "../domain/notifications";
 
 function buildIdenticonUrl(userId: string) {
     const identicon = new Identicon(md5(userId), {
@@ -518,5 +519,13 @@ export class ServiceContainer implements MarkMessagesRead {
 
     removeSubscription(userId: string, subscription: PushSubscription): Promise<void> {
         return this._notificationClient.removeSubscription(userId, subscription);
+    }
+
+    toggleMuteNotifications(
+        chatId: string,
+        muted: boolean
+    ): Promise<ToggleMuteNotificationResponse> {
+        console.log("Setting muted to: ", muted);
+        return this.userClient.toggleMuteNotifications(chatId, muted);
     }
 }

@@ -364,6 +364,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chatsAdded: candid.Success.chats_added.map(chatSummary),
             chatsRemoved: new Set(candid.Success.chats_removed.map((p) => p.toString())),
             timestamp: candid.Success.timestamp,
+            cyclesBalance: optional(candid.Success.cycles_balance, identity),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -393,6 +394,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 blobId,
                 canisterId: chatId,
             })),
+            notificationsMuted: optional(candid.Group.notifications_muted, identity),
         };
     }
     if ("Direct" in candid) {
@@ -408,6 +410,7 @@ function updatedChatSummary(candid: ApiChatSummaryUpdates): ChatSummaryUpdates {
                 event: message(ev.event),
             })),
             latestEventIndex: optional(candid.Direct.latest_event_index, identity),
+            notificationsMuted: optional(candid.Direct.notifications_muted, identity),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummaryUpdate type received", candid);
@@ -440,6 +443,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
                 blobId,
                 canisterId: candid.Group.chat_id.toString(),
             })),
+            notificationsMuted: candid.Group.notifications_muted,
         };
     }
     if ("Direct" in candid) {
@@ -456,6 +460,7 @@ function chatSummary(candid: ApiChatSummary): ChatSummary {
             readByMe: candid.Direct.read_by_me,
             readByThem: candid.Direct.read_by_them,
             dateCreated: candid.Direct.date_created,
+            notificationsMuted: candid.Direct.notifications_muted,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiChatSummary type received", candid);

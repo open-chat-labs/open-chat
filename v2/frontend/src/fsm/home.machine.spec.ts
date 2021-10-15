@@ -15,6 +15,7 @@ const directChat: DirectChatSummary = {
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),
+    notificationsMuted: false,
 };
 
 const homeContext: HomeContext = {

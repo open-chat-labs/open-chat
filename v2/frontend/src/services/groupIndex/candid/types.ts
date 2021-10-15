@@ -41,7 +41,8 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
-export interface CyclesContent { 'caption' : [] | [string], 'amount' : bigint }
+export type Cycles = bigint;
+export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -61,12 +62,14 @@ export interface DirectChatEventWrapper {
 export interface DirectChatSummary {
   'date_created' : TimestampMillis,
   'them' : UserId,
+  'notifications_muted' : boolean,
   'read_by_me' : Array<MessageIndexRange>,
   'latest_event_index' : EventIndex,
   'read_by_them' : Array<MessageIndexRange>,
   'latest_message' : MessageEventWrapper,
 }
 export interface DirectChatSummaryUpdates {
+  'notifications_muted' : [] | [boolean],
   'read_by_me' : [] | [Array<MessageIndexRange>],
   'latest_event_index' : [] | [EventIndex],
   'chat_id' : ChatId,
@@ -120,6 +123,7 @@ export interface GroupChatSummary {
   'participants' : Array<Participant>,
   'min_visible_event_index' : EventIndex,
   'name' : string,
+  'notifications_muted' : boolean,
   'description' : string,
   'last_updated' : TimestampMillis,
   'read_by_me' : Array<MessageIndexRange>,
@@ -134,6 +138,7 @@ export interface GroupChatSummaryUpdates {
   'participants_added_or_updated' : Array<Participant>,
   'participants_removed' : Array<UserId>,
   'name' : [] | [string],
+  'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
   'read_by_me' : [] | [Array<MessageIndexRange>],
@@ -316,7 +321,7 @@ export interface UserSummary {
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],
-  'amount' : bigint,
+  'amount' : Cycles,
 }
 export interface V1DirectMessageNotification {
   'sender' : UserId,

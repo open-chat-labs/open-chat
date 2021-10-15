@@ -57,6 +57,7 @@ const directChat: DirectChatSummary = {
     latestMessage: undefined,
     latestEventIndex: 0,
     dateCreated: BigInt(0),
+    notificationsMuted: false,
 };
 
 const groupChat: GroupChatSummary = {
@@ -73,6 +74,7 @@ const groupChat: GroupChatSummary = {
     latestMessage: undefined,
     participants: [],
     latestEventIndex: 0,
+    notificationsMuted: false,
 };
 
 const directContext: ChatContext = {

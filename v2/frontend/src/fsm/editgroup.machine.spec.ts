@@ -24,6 +24,7 @@ const groupChat: GroupChatSummary = {
             role: "admin",
         },
     ],
+    notificationsMuted: false,
 };
 
 const testContext: EditGroupContext = {

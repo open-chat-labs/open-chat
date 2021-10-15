@@ -68,6 +68,8 @@
     "enableNotificationsMenu": "Enable notifications",
     "disableNotificationsMenu": "Disable notifications",
     "notificationsDisabled": "Notifications disabled",
+    "unmuteNotifications": "Unmute notifications",
+    "muteNotifications": "Mute notifications",
     "yesPlease": "Yes please",
     "noThanks": "No thanks",
     "new": "new",
