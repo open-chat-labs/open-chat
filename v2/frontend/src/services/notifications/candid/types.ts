@@ -280,11 +280,15 @@ export type PushV1GroupMessageNotificationResponse = { 'Success' : null };
 export interface RemoveNotificationsArgs { 'up_to_notification_index' : bigint }
 export type RemoveNotificationsResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
+export interface RemoveSubscriptionArgs { 'p256dh_key' : string }
+export type RemoveSubscriptionResponse = { 'Success' : null };
 export interface RemoveSubscriptionsArgs {
   'subscriptions_by_user' : Array<
     { 'user_id' : UserId, 'p256dh_keys' : Array<string> }
   >,
 }
+export type RemoveSubscriptionsForUserArgs = {};
+export type RemoveSubscriptionsForUserResponse = { 'Success' : null };
 export type RemoveSubscriptionsResponse = { 'NotAuthorized' : null } |
   { 'Success' : null };
 export interface ReplyContext {
@@ -416,9 +420,15 @@ export interface _SERVICE {
   'remove_notifications' : (arg_0: RemoveNotificationsArgs) => Promise<
       RemoveNotificationsResponse
     >,
+  'remove_subscription' : (arg_0: RemoveSubscriptionArgs) => Promise<
+      RemoveSubscriptionResponse
+    >,
   'remove_subscriptions' : (arg_0: RemoveSubscriptionsArgs) => Promise<
       RemoveSubscriptionsResponse
     >,
+  'remove_subscriptions_for_user' : (
+      arg_0: RemoveSubscriptionsForUserArgs,
+    ) => Promise<RemoveSubscriptionsForUserResponse>,
   'subscription_exists' : (arg_0: SubscriptionExistsArgs) => Promise<
       SubscriptionExistsResponse
     >,

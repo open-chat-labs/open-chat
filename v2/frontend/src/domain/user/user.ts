@@ -21,7 +21,6 @@ export type UserLookup = Record<string, PartialUserSummary>;
 export type User = {
     userId: string;
     username: string;
-    accountBalance: bigint;
 };
 
 export type UsersArgs = {
@@ -99,7 +98,6 @@ export type CreatedUser = {
     kind: "created_user";
     username: string;
     userId: string;
-    accountBalance: bigint;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
 };
 

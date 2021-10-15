@@ -7,7 +7,10 @@ import type {
 } from "../../domain/notifications";
 import { UnsupportedValueError } from "../../utils/error";
 import { message } from "../common/chatMappers";
-import type { ApiToggleMuteNotificationsResponse } from "../user/candid/idl";
+import type {
+    ApiMuteNotificationsResponse,
+    ApiUnmuteNotificationsResponse,
+} from "../user/candid/idl";
 import type {
     ApiDirectMessageNotification,
     ApiGroupMessageNotification,
@@ -15,8 +18,8 @@ import type {
     ApiSubscriptionExistsResponse,
 } from "./candid/idl";
 
-export function toggleMuteNotificationsResponse(
-    candid: ApiToggleMuteNotificationsResponse
+export function muteNotificationsResponse(
+    candid: ApiMuteNotificationsResponse | ApiUnmuteNotificationsResponse
 ): ToggleMuteNotificationResponse {
     if ("Success" in candid) {
         return "success";

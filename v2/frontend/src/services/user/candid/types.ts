@@ -311,6 +311,9 @@ export interface MetricsResponse {
   'video_message_count' : bigint,
 }
 export type Milliseconds = bigint;
+export interface MuteNotificationsArgs { 'chat_id' : ChatId }
+export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export type Notification = {
     'DirectMessageNotification' : DirectMessageNotification
   } |
@@ -427,12 +430,6 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
-export interface ToggleMuteNotificationsArgs {
-  'mute' : boolean,
-  'chat_id' : ChatId,
-}
-export type ToggleMuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export interface ToggleReactionArgs {
   'user_id' : UserId,
   'message_id' : MessageId,
@@ -445,6 +442,9 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'Removed' : EventIndex };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
+export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
+export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
@@ -558,6 +558,9 @@ export interface _SERVICE {
   'leave_group' : (arg_0: LeaveGroupArgs) => Promise<LeaveGroupResponse>,
   'mark_read' : (arg_0: MarkReadArgs) => Promise<MarkReadResponse>,
   'metrics' : (arg_0: MetricsArgs) => Promise<MetricsResponse>,
+  'mute_notifications' : (arg_0: MuteNotificationsArgs) => Promise<
+      MuteNotificationsResponse
+    >,
   'put_chunk' : (arg_0: PutChunkArgs) => Promise<PutChunkResponse>,
   'search_all_messages' : (arg_0: SearchAllMessagesArgs) => Promise<
       SearchAllMessagesResponse
@@ -567,12 +570,12 @@ export interface _SERVICE {
     >,
   'send_message' : (arg_0: SendMessageArgs) => Promise<SendMessageResponse>,
   'set_avatar' : (arg_0: SetAvatarArgs) => Promise<SetAvatarResponse>,
-  'toggle_mute_notifications' : (arg_0: ToggleMuteNotificationsArgs) => Promise<
-      ToggleMuteNotificationsResponse
-    >,
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
+  'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
+      UnmuteNotificationsResponse
+    >,
   'updates' : (arg_0: UpdatesArgs) => Promise<UpdatesResponse>,
 }

@@ -69,7 +69,6 @@ export type CurrentUserResponse = {
       'user_id' : UserId,
       'avatar_id' : [] | [bigint],
       'canister_upgrade_status' : CanisterUpgradeStatus,
-      'account_balance' : bigint,
     }
   } |
   { 'UserNotFound' : null };

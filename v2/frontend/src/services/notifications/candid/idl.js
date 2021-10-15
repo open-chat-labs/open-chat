@@ -218,6 +218,8 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
   });
+  const RemoveSubscriptionArgs = IDL.Record({ 'p256dh_key' : IDL.Text });
+  const RemoveSubscriptionResponse = IDL.Variant({ 'Success' : IDL.Null });
   const RemoveSubscriptionsArgs = IDL.Record({
     'subscriptions_by_user' : IDL.Vec(
       IDL.Record({ 'user_id' : UserId, 'p256dh_keys' : IDL.Vec(IDL.Text) })
@@ -225,6 +227,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveSubscriptionsResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
+  const RemoveSubscriptionsForUserArgs = IDL.Record({});
+  const RemoveSubscriptionsForUserResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
   const SubscriptionExistsArgs = IDL.Record({
@@ -271,9 +277,19 @@ export const idlFactory = ({ IDL }) => {
         [RemoveNotificationsResponse],
         [],
       ),
+    'remove_subscription' : IDL.Func(
+        [RemoveSubscriptionArgs],
+        [RemoveSubscriptionResponse],
+        [],
+      ),
     'remove_subscriptions' : IDL.Func(
         [RemoveSubscriptionsArgs],
         [RemoveSubscriptionsResponse],
+        [],
+      ),
+    'remove_subscriptions_for_user' : IDL.Func(
+        [RemoveSubscriptionsForUserArgs],
+        [RemoveSubscriptionsForUserResponse],
         [],
       ),
     'subscription_exists' : IDL.Func(

@@ -216,6 +216,11 @@ export const idlFactory = ({ IDL }) => {
     'wasm_memory_used' : IDL.Nat64,
     'video_message_count' : IDL.Nat64,
   });
+  const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
+  const MuteNotificationsResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const PutChunkArgs = IDL.Record({
     'total_chunks' : IDL.Nat32,
     'blob_id' : IDL.Nat,
@@ -292,14 +297,6 @@ export const idlFactory = ({ IDL }) => {
     'AvatarTooBig' : FieldTooLongResult,
     'Success' : IDL.Nat,
   });
-  const ToggleMuteNotificationsArgs = IDL.Record({
-    'mute' : IDL.Bool,
-    'chat_id' : ChatId,
-  });
-  const ToggleMuteNotificationsResponse = IDL.Variant({
-    'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-  });
   const ToggleReactionArgs = IDL.Record({
     'user_id' : UserId,
     'message_id' : MessageId,
@@ -314,6 +311,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const UnmuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
+  const UnmuteNotificationsResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const GroupChatUpdatesSince = IDL.Record({
     'updates_since' : TimestampMillis,
     'chat_id' : ChatId,
@@ -419,6 +421,11 @@ export const idlFactory = ({ IDL }) => {
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'metrics' : IDL.Func([MetricsArgs], [MetricsResponse], ['query']),
+    'mute_notifications' : IDL.Func(
+        [MuteNotificationsArgs],
+        [MuteNotificationsResponse],
+        [],
+      ),
     'put_chunk' : IDL.Func([PutChunkArgs], [PutChunkResponse], []),
     'search_all_messages' : IDL.Func(
         [SearchAllMessagesArgs],
@@ -432,17 +439,17 @@ export const idlFactory = ({ IDL }) => {
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
-    'toggle_mute_notifications' : IDL.Func(
-        [ToggleMuteNotificationsArgs],
-        [ToggleMuteNotificationsResponse],
-        [],
-      ),
     'toggle_reaction' : IDL.Func(
         [ToggleReactionArgs],
         [ToggleReactionResponse],
         [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
+    'unmute_notifications' : IDL.Func(
+        [UnmuteNotificationsArgs],
+        [UnmuteNotificationsResponse],
+        [],
+      ),
     'updates' : IDL.Func([UpdatesArgs], [UpdatesResponse], ['query']),
   });
 };

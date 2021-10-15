@@ -525,7 +525,6 @@ export class ServiceContainer implements MarkMessagesRead {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
-        console.log("Setting muted to: ", muted);
         return this.userClient.toggleMuteNotifications(chatId, muted);
     }
 }

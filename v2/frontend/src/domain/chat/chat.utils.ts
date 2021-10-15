@@ -196,12 +196,7 @@ export function getMessageContent(
           } as TextContent);
 }
 
-export const blobbyContentTypes = [
-    "file_content",
-    "image_content",
-    "video_content",
-    "audio_content",
-];
+const blobbyContentTypes = ["file_content", "image_content", "video_content", "audio_content"];
 
 export function createMessage(
     userId: string,
