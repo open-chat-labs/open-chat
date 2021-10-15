@@ -28,7 +28,6 @@
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
-        getMinVisibleMessageIndex,
         groupEvents,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";

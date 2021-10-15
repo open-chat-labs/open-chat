@@ -5,7 +5,9 @@ describe("mark messages read", () => {
     beforeEach(() => {
         jest.useFakeTimers();
         unconfirmed.clear();
-        waiting.clear();
+        if (waiting["abc"] !== undefined) {
+            waiting["abc"].clear();
+        }
         state["abc"] = [];
         serverState["abc"] = [];
     });
@@ -18,21 +20,21 @@ describe("mark messages read", () => {
     test("mark unconfirmed message as read", () => {
         unconfirmed.add(BigInt(100));
         markRead.markMessageRead("abc", 200, BigInt(100));
-        expect(waiting.has(BigInt(100))).toBe(true);
+        expect(waiting["abc"].has(BigInt(100))).toBe(true);
     });
 
     test("mark confirmed message as read", () => {
         state["abc"] = [{ from: 199, to: 199 }];
         markRead.markMessageRead("abc", 200, BigInt(500));
-        expect(waiting.has(BigInt(500))).toBe(false);
+        expect(waiting["abc"].has(BigInt(500))).toBe(false);
         expect(state["abc"]).toEqual([{ from: 199, to: 200 }]);
     });
 
     test("confirm message", () => {
-        waiting.add(BigInt(100));
+        waiting["abc"].add(BigInt(100));
         markRead.markMessageRead("abc", 200, BigInt(100));
         markRead.confirmMessage("abc", 200, BigInt(100));
-        expect(waiting.has(BigInt(100))).toBe(false);
+        expect(waiting["abc"].has(BigInt(100))).toBe(false);
         expect(state["abc"]).toEqual([{ from: 200, to: 200 }]);
     });
 
@@ -70,10 +72,10 @@ describe("mark messages read", () => {
         });
         describe("when some messages are unconfirmed", () => {
             test("with multiple gaps", () => {
-                waiting.add(BigInt(0));
-                waiting.add(BigInt(1));
-                waiting.add(BigInt(2));
-                waiting.add(BigInt(3));
+                waiting["abc"].add(BigInt(0));
+                waiting["abc"].add(BigInt(1));
+                waiting["abc"].add(BigInt(2));
+                waiting["abc"].add(BigInt(3));
                 serverState["abc"] = [{ from: 10, to: 30 }];
                 state["abc"] = [
                     { from: 40, to: 50 },

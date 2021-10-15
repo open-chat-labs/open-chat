@@ -21,7 +21,7 @@ import type {
     IndexRange,
     LocalReaction,
 } from "./chat";
-import { dedupe, groupWhile } from "../../utils/list";
+import { dedupe, groupWhile, zip } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -279,6 +279,22 @@ export function compareMessageRange(a: MessageIndexRange, b: MessageIndexRange):
         return a.to - b.to;
     }
     return a.from - b.from;
+}
+
+// Note that this function assumes that the ranges have already been optimally collapsed to the
+// minimun number of ranges
+export function messageIndexRangesAreEqual(
+    a: MessageIndexRange[],
+    b: MessageIndexRange[]
+): boolean {
+    if (a.length !== b.length) return false;
+
+    a.sort(compareMessageRange);
+    b.sort(compareMessageRange);
+
+    return zip(a, b).reduce<boolean>((same, [rangeA, rangeB]) => {
+        return same && compareMessageRange(rangeA, rangeB) === 0;
+    }, true);
 }
 
 export function mergeMessageIndexRanges(

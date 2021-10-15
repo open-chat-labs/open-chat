@@ -44,6 +44,10 @@
         dispatch("toggleMuteNotifications");
     }
 
+    function markAllRead() {
+        dispatch("markAllRead");
+    }
+
     function blockUser() {
         if (selectedChatSummary.kind === "direct_chat") {
             dispatch("blockUser", { userId: selectedChatSummary.them });
@@ -235,6 +239,17 @@
                         <MenuItem on:click={toggleMuteNotifications}>
                             <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("muteNotifications")}</div>
+                        </MenuItem>
+                    {/if}
+                    {#if unreadMessages > 0}
+                        <MenuItem on:click={markAllRead}>
+                            <CheckboxMultipleMarked size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem disabled={true} on:click={markAllRead}>
+                            <CheckboxMultipleMarked size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
                         </MenuItem>
                     {/if}
                 </Menu>

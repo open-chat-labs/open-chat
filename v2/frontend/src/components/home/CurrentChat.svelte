@@ -55,6 +55,16 @@
                 });
             });
     }
+
+    function markAllRead() {
+        const latestMessageIndex = $machine.context.chatSummary.latestMessage?.event.messageIndex;
+        if (latestMessageIndex) {
+            $machine.context.markRead.markRangeRead($machine.context.chatSummary.chatId, {
+                from: getMinVisibleMessageIndex($machine.context.chatSummary),
+                to: latestMessageIndex,
+            });
+        }
+    }
 </script>
 
 <div class="wrapper">
@@ -65,6 +75,7 @@
         on:clearSelection
         on:blockUser
         on:unblockUser
+        on:markAllRead={markAllRead}
         on:toggleMuteNotifications={toggleMuteNotifications}
         on:addParticipants={addParticipants}
         on:showGroupDetails={showGroupDetails}
