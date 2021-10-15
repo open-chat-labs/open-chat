@@ -17,7 +17,7 @@ fn remove_subscriptions_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
             runtime_state
                 .data
                 .subscriptions
-                .remove(user.user_id, HashSet::from_iter(user.p256dh_keys));
+                .remove_set(user.user_id, HashSet::from_iter(user.p256dh_keys));
         }
         Success
     } else {

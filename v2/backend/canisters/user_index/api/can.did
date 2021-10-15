@@ -164,7 +164,6 @@ type CurrentUserResponse =
         Created: record {
             user_id: UserId;
             username: text;
-            account_balance: nat;
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
         };

@@ -1,15 +1,12 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::ChatId;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub chat_id: ChatId,
-    pub mute: bool,
+    pub p256dh_key: String,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
 pub enum Response {
     Success,
-    ChatNotFound,
 }
