@@ -21,11 +21,12 @@ async fn c2c_create_group(args: Args) -> Response {
     };
 
     let wasm_arg = candid::encode_one(canister_args.init_canister_args).unwrap();
+    let cycles_to_use = canister_args.cycles_to_use;
     match canister::create_and_install(
         canister_args.canister_id,
         canister_args.canister_wasm.module,
         wasm_arg,
-        canister_args.cycles_to_use,
+        cycles_to_use,
     )
     .await
     {
@@ -34,12 +35,15 @@ async fn c2c_create_group(args: Args) -> Response {
             let wasm_version = canister_args.canister_wasm.version;
             RUNTIME_STATE.with(|state| {
                 commit(
-                    is_public,
-                    chat_id,
-                    name,
-                    description,
-                    avatar_id,
-                    wasm_version,
+                    CommitArgs {
+                        is_public,
+                        chat_id,
+                        name,
+                        description,
+                        avatar_id,
+                        wasm_version,
+                        cycles: cycles_to_use,
+                    },
                     state.borrow_mut().as_mut().unwrap(),
                 )
             });
@@ -103,27 +107,35 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
     }
 }
 
-fn commit(
+struct CommitArgs {
     is_public: bool,
     chat_id: ChatId,
     name: String,
     description: String,
     avatar_id: Option<u128>,
     wasm_version: Version,
-    runtime_state: &mut RuntimeState,
-) {
+    cycles: Cycles,
+}
+
+fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    if is_public {
-        runtime_state
-            .data
-            .public_groups
-            .handle_group_created(chat_id, name, description, avatar_id, now, wasm_version);
+    if args.is_public {
+        runtime_state.data.public_groups.handle_group_created(
+            args.chat_id,
+            args.name,
+            args.description,
+            args.avatar_id,
+            now,
+            args.wasm_version,
+        );
     } else {
         runtime_state
             .data
             .private_groups
-            .handle_group_created(chat_id, now, wasm_version);
+            .handle_group_created(args.chat_id, now, args.wasm_version);
     }
+
+    runtime_state.data.total_cycles_spent_on_canisters += args.cycles;
 }
 
 fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

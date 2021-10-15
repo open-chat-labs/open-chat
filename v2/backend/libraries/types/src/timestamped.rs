@@ -22,3 +22,12 @@ impl<T: CandidType + Debug + Clone> Timestamped<T> {
         }
     }
 }
+
+impl<T: CandidType + Debug + Clone + Default> Default for Timestamped<T> {
+    fn default() -> Self {
+        Timestamped {
+            value: T::default(),
+            timestamp: TimestampMillis::default(),
+        }
+    }
+}
