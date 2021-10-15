@@ -53,6 +53,8 @@ import {
     JoinGroupResponse,
     SearchAllMessagesResponse,
     MessageMatch,
+    MuteNotificationsResponse,
+    UnmuteNotificationsResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -108,6 +110,8 @@ export {
     JoinGroupResponse as ApiJoinGroupResponse,
     SearchAllMessagesResponse as ApiSearchAllMessagesResponse,
     MessageMatch as ApiMessageMatch,
+    MuteNotificationsResponse as ApiMuteNotificationsResponse,
+    UnmuteNotificationsResponse as ApiUnmuteNotificationsResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

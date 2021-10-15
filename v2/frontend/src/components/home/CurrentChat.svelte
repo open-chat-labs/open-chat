@@ -5,6 +5,9 @@
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
     import { getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
+    import { rollbar } from "../../utils/logging";
+    import { toastStore } from "../../stores/toast";
+    import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
@@ -26,6 +29,32 @@
     function addParticipants() {
         machine.send({ type: "ADD_PARTICIPANT" });
     }
+
+    function toggleMuteNotifications() {
+        const op = $machine.context.chatSummary.notificationsMuted ? "unmuted" : "muted";
+        $machine.context.serviceContainer
+            .toggleMuteNotifications(
+                $machine.context.chatSummary.chatId,
+                !$machine.context.chatSummary.notificationsMuted
+            )
+            .then((resp) => {
+                if (resp !== "success") {
+                    toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                        values: { operation: $_(op) },
+                    });
+                } else {
+                    toastStore.showSuccessToast("toggleMuteNotificationsSucceeded", {
+                        values: { operation: $_(op) },
+                    });
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Error toggling mute notifications", err);
+                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
+                    values: { operation: $_(op) },
+                });
+            });
+    }
 </script>
 
 <div class="wrapper">
@@ -36,6 +65,7 @@
         on:clearSelection
         on:blockUser
         on:unblockUser
+        on:toggleMuteNotifications={toggleMuteNotifications}
         on:addParticipants={addParticipants}
         on:showGroupDetails={showGroupDetails}
         on:showParticipants={showParticipants}

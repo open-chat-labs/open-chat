@@ -43,6 +43,7 @@ const defaultDirectChat: DirectChatSummary = {
     },
     latestEventIndex: 0,
     dateCreated: BigInt(0),
+    notificationsMuted: false,
 };
 
 const defaultGroupChat: GroupChatSummary = {
@@ -59,28 +60,7 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
-};
-
-const groupChatWithMessage: GroupChatSummary = {
-    ...defaultGroupChat,
-    minVisibleMessageIndex: 20,
-    minVisibleEventIndex: 10,
-    latestMessage: {
-        event: {
-            kind: "message",
-            sender: "abscdefg",
-            messageId: newMessageId(),
-            messageIndex: 100,
-            content: {
-                kind: "text_content",
-                text: "some message",
-            },
-            reactions: [],
-            edited: false,
-        },
-        timestamp: BigInt(0),
-        index: 0,
-    },
+    notificationsMuted: false,
 };
 
 function directChatId(id: number): DirectChatSummary {

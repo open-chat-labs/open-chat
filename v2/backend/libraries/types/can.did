@@ -108,6 +108,7 @@ type DirectChatSummary =
         date_created: TimestampMillis;
         read_by_me: vec MessageIndexRange;
         read_by_them: vec MessageIndexRange;
+        notifications_muted: bool;
     };
 
 type DirectChatSummaryUpdates =
@@ -117,6 +118,7 @@ type DirectChatSummaryUpdates =
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
         read_by_them: opt vec MessageIndexRange;
+        notifications_muted: opt bool;
     };
 
 type DirectMessageNotification =
@@ -189,6 +191,7 @@ type GroupChatSummary =
         latest_event_index: EventIndex;
         joined: TimestampMillis;
         read_by_me: vec MessageIndexRange;
+        notifications_muted: bool;
     };
 
 type GroupChatSummaryUpdates =
@@ -203,6 +206,7 @@ type GroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         read_by_me: opt vec MessageIndexRange;
+        notifications_muted: opt bool;
     };
 
 type GroupDescriptionChanged =

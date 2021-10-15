@@ -13,7 +13,7 @@
             class="message"
             class:failure={$toastStore.type === ToastType.Failure}
             class:success={$toastStore.type === ToastType.Success}>
-            <div class="text">{$_($toastStore.text)}</div>
+            <div class="text">{$_($toastStore.text, $toastStore.args)}</div>
             {#if $toastStore.type === ToastType.Failure}
                 <div class="close" on:click={toastStore.hideToast}>
                     <Close size={"1.2em"} color={"var(--button-txt)"} />
