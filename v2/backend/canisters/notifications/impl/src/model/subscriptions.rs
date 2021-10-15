@@ -52,10 +52,21 @@ impl Subscriptions {
         })
     }
 
-    pub fn remove(&mut self, user_id: UserId, p256dh_keys: HashSet<String>) {
+    pub fn remove_set(&mut self, user_id: UserId, p256dh_keys: HashSet<String>) {
         if let Occupied(e) = self.subscriptions.entry(user_id) {
             let subscriptions = e.into_mut();
             subscriptions.retain(|s| !p256dh_keys.contains(&s.value().keys.p256dh));
+        }
+    }
+
+    pub fn remove_all(&mut self, user_id: UserId) {
+        self.subscriptions.remove(&user_id);
+    }
+
+    pub fn remove(&mut self, user_id: UserId, p256dh_key: String) {
+        if let Occupied(e) = self.subscriptions.entry(user_id) {
+            let subscriptions = e.into_mut();
+            subscriptions.retain(|s| s.value().keys.p256dh != p256dh_key);
         }
     }
 
