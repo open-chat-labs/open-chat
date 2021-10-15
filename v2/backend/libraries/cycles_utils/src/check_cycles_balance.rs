@@ -1,39 +1,31 @@
-use crate::{State, STATE};
 use canister_client_macros::generate_c2c_call;
 use ic_cdk::api::call::CallResult;
 use tracing::error;
-use types::{CanisterId, Cycles, Milliseconds};
+use types::{CanisterId, Cycles};
 
-const MIN_NOTIFICATION_INTERVAL: Milliseconds = 60 * 1000; // 1 minute
+const FREEZE_THRESHOLD_SECONDS: u32 = 30 * 24 * 60 * 60; // 30 days
+const GB_STORAGE_PER_SECOND_FEE: Cycles = 127_000;
 
-pub fn check_cycles_balance() {
-    if let ShouldNotifyResult::Yes(canister_id) = STATE.with(|state| should_notify(&mut state.borrow_mut())) {
-        ic_cdk::block_on(send_notification(canister_id));
+pub fn check_cycles_balance(user_cycles_balance: Cycles, top_up_canister_id: CanisterId) {
+    if should_notify(user_cycles_balance) {
+        ic_cdk::block_on(send_notification(top_up_canister_id));
     }
 }
 
-enum ShouldNotifyResult {
-    Yes(CanisterId),
-    No,
+fn should_notify(user_cycles_balance: Cycles) -> bool {
+    let total_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
+    let canister_cycles_balance = total_cycles_balance.saturating_sub(user_cycles_balance);
+    let freeze_threshold = get_approx_freeze_threshold_cycles();
+
+    canister_cycles_balance < 2 * freeze_threshold
 }
 
-fn should_notify(state: &mut State) -> ShouldNotifyResult {
-    if state.in_progress {
-        return ShouldNotifyResult::No;
-    }
+fn get_approx_freeze_threshold_cycles() -> Cycles {
+    let approx_memory_usage = utils::memory::used();
 
-    let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-    if cycles_balance > state.low_balance_threshold {
-        return ShouldNotifyResult::No;
-    }
+    let one_gib = 1 << 30;
 
-    let now = ic_cdk::api::time();
-    if now < state.last_notified + MIN_NOTIFICATION_INTERVAL {
-        return ShouldNotifyResult::No;
-    }
-
-    state.in_progress = true;
-    ShouldNotifyResult::Yes(state.top_up_canister_id)
+    approx_memory_usage as u128 * GB_STORAGE_PER_SECOND_FEE * FREEZE_THRESHOLD_SECONDS as u128 / one_gib
 }
 
 async fn send_notification(canister_id: CanisterId) {
@@ -43,17 +35,6 @@ async fn send_notification(canister_id: CanisterId) {
             error!(?response, "Failed to notify low balance");
         }
     }
-
-    // We mark as complete regardless of if the top up succeeded or not.
-    // If it failed the balance will still be low so it will simply retry on the next update call
-    // that occurs after the minimum interval has passed.
-    STATE.with(|state| mark_notification_completed(&mut state.borrow_mut()));
-}
-
-fn mark_notification_completed(state: &mut State) {
-    let now = ic_cdk::api::time();
-    state.in_progress = false;
-    state.last_notified = now;
 }
 
 // This is needed because the 'generate_update_call' macro looks for 'c2c_notify_low_balance::Args'

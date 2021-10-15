@@ -1,7 +1,6 @@
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::{EditMessageArgs, EditMessageResult};
-use cycles_utils::check_cycles_balance;
 use group_canister::edit_message::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -9,7 +8,7 @@ use tracing::instrument;
 #[update]
 #[instrument(level = "trace")]
 fn edit_message(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| edit_message_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

@@ -1,5 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
-use cycles_utils::check_cycles_balance;
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use group_canister::c2c_leave_group;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -9,7 +8,7 @@ use user_canister::leave_group::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 async fn leave_group(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     if let Err(response) = RUNTIME_STATE.with(|state| prepare(state.borrow().as_ref().unwrap())) {
         return response;

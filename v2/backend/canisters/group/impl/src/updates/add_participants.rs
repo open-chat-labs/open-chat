@@ -1,8 +1,7 @@
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use candid::Principal;
 use chat_events::ChatEventInternal;
-use cycles_utils::check_cycles_balance;
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -12,7 +11,7 @@ use user_canister::c2c_try_add_to_group;
 #[update]
 #[instrument(level = "trace")]
 async fn add_participants(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     let prepare_result = match RUNTIME_STATE.with(|state| prepare(&args, state.borrow().as_ref().unwrap())) {
         Ok(ok) => ok,

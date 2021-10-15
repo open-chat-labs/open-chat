@@ -1,8 +1,7 @@
 use crate::model::participants::AddResult;
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
-use cycles_utils::check_cycles_balance;
 use group_canister::c2c_join_group::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -12,7 +11,7 @@ use types::{EventIndex, MessageIndex, ParticipantJoined};
 #[update]
 #[instrument(level = "trace")]
 fn c2c_join_group(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| c2c_join_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

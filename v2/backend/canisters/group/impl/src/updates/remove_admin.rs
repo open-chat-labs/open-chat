@@ -1,8 +1,7 @@
 use crate::updates::handle_activity_notification;
 use crate::updates::remove_admin::Response::*;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::ChatEventInternal;
-use cycles_utils::check_cycles_balance;
 use group_canister::remove_admin::*;
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -11,7 +10,7 @@ use types::{ParticipantsDismissedAsAdmin, Role};
 #[update]
 #[instrument(level = "trace")]
 fn remove_admin(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| remove_admin_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

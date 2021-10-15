@@ -1,6 +1,5 @@
 use crate::updates::handle_activity_notification;
-use crate::{RuntimeState, RUNTIME_STATE};
-use cycles_utils::check_cycles_balance;
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -8,7 +7,7 @@ use tracing::instrument;
 #[update]
 #[instrument(level = "trace")]
 fn delete_messages(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| delete_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

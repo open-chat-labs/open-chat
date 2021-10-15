@@ -1,4 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use types::{Cycles, Timestamped};
 
@@ -9,6 +9,8 @@ fn wallet_receive() {
 
 #[update]
 fn receive_cycles() {
+    run_regular_jobs();
+
     let cycles_available = ic_cdk::api::call::msg_cycles_available();
     let cycles_taken = ic_cdk::api::call::msg_cycles_accept(cycles_available);
 

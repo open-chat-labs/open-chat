@@ -1,6 +1,5 @@
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::DeleteMessageResult;
-use cycles_utils::check_cycles_balance;
 use ic_cdk_macros::update;
 use tracing::instrument;
 use types::{CanisterId, MessageId};
@@ -10,7 +9,7 @@ use user_canister::delete_messages::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn delete_messages(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| delete_messages_impl(args, state.borrow_mut().as_mut().unwrap()))
 }

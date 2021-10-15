@@ -6,6 +6,7 @@ pub mod env;
 pub mod event_stream;
 pub mod memory;
 pub mod rand;
+pub mod regular_jobs;
 pub mod time;
 
 #[cfg(feature = "range-set")]

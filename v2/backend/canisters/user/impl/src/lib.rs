@@ -8,14 +8,15 @@ use std::collections::HashSet;
 use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
+use utils::regular_jobs::RegularJobs;
 
 mod lifecycle;
 mod model;
 mod queries;
+mod regular_jobs;
 mod updates;
 
 const MAX_STORAGE: u64 = 2 * 1024 * 1024 * 1024; // 2GB
-const LOW_CYCLES_BALANCE_THRESHOLD: Cycles = 100_000_000_000; // 0.1T
 const STATE_VERSION: StateVersion = StateVersion::V1;
 
 #[derive(CandidType, Deserialize)]
@@ -31,11 +32,12 @@ thread_local! {
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
     }
 
     pub fn is_caller_owner(&self) -> bool {
@@ -90,4 +92,13 @@ impl Data {
             test_mode,
         }
     }
+}
+
+fn run_regular_jobs() {
+    fn run_regular_jobs_impl(runtime_state: &mut RuntimeState) {
+        let now = runtime_state.env.now();
+        runtime_state.regular_jobs.run(now, &mut runtime_state.data);
+    }
+
+    RUNTIME_STATE.with(|state| run_regular_jobs_impl(state.borrow_mut().as_mut().unwrap()));
 }

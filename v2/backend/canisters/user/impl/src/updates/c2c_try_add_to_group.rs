@@ -1,5 +1,4 @@
-use crate::{RuntimeState, RUNTIME_STATE};
-use cycles_utils::check_cycles_balance;
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
 use user_canister::c2c_try_add_to_group::{Response::*, *};
@@ -7,7 +6,7 @@ use user_canister::c2c_try_add_to_group::{Response::*, *};
 #[update]
 #[instrument(level = "trace")]
 fn c2c_try_add_to_group(args: Args) -> Response {
-    check_cycles_balance();
+    run_regular_jobs();
 
     RUNTIME_STATE.with(|state| c2c_try_add_to_group_impl(args, state.borrow_mut().as_mut().unwrap()))
 }
