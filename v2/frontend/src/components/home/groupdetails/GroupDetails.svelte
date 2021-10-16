@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { ActorRefFrom } from "xstate";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -7,47 +6,35 @@
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import type { EditGroupMachine, UpdatedAvatar } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-
-    export let machine: ActorRefFrom<EditGroupMachine>;
+    import type { UpdatedGroup } from "../../../fsm/editGroup";
+    import type { GroupChatSummary, UpdateGroupResponse } from "../../../domain/chat/chat";
+    import { createEventDispatcher } from "svelte";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
+    const dispatch = createEventDispatcher();
 
-    let groupAvatar: UpdatedAvatar | undefined = $machine.context.updatedGroup.avatar
-        ? $machine.context.updatedGroup.avatar
-        : $machine.context.chatSummary.blobUrl
-        ? {
-              blobUrl: $machine.context.chatSummary.blobUrl,
-              blobData: $machine.context.chatSummary.blobData,
-          }
-        : undefined;
+    export let updatedGroup: UpdatedGroup;
+    export let chat: GroupChatSummary;
+    export let userId: string;
+    export let api: ServiceContainer;
 
-    let groupName = $machine.context.updatedGroup.name;
-    let groupDesc = $machine.context.updatedGroup.desc;
-    let isPublic = $machine.context.chatSummary.public;
     let showConfirmation = false;
     let confirmed = false;
+    let saving = false;
 
-    $: nameDirty = groupName !== $machine.context.chatSummary.name;
-    $: descDirty = groupDesc !== $machine.context.chatSummary.description;
-    $: avatarDirty = groupAvatar?.blobUrl !== $machine.context.chatSummary.blobUrl;
+    $: nameDirty = updatedGroup.name !== chat.name;
+    $: descDirty = updatedGroup.desc !== chat.description;
+    $: avatarDirty = updatedGroup.avatar?.blobUrl !== chat.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
-    $: saving = $machine.matches({ group_details: "saving_group" });
 
-    $: updatedGroup = {
-        name: nameDirty ? groupName : $machine.context.chatSummary.name,
-        desc: descDirty ? groupDesc : $machine.context.chatSummary.description,
-        avatar: avatarDirty ? groupAvatar : undefined,
-    };
-
-    $: canEdit =
-        $machine.context.chatSummary.participants.find(
-            (p) => p.userId === $machine.context.user?.userId
-        )?.role === "admin";
+    $: canEdit = chat.participants.find((p) => p.userId === userId)?.role === "admin";
 
     function close() {
         if (dirty && !confirmed) {
@@ -55,24 +42,55 @@
             showConfirmation = true;
         } else {
             showConfirmation = false;
-            machine.send({ type: "CLOSE_GROUP_DETAILS" });
+            dispatch("close");
         }
     }
 
     function showParticipants() {
-        machine.send({ type: "SYNC_CHAT_DETAILS", data: updatedGroup });
-        machine.send({ type: "SHOW_PARTICIPANTS" });
+        dispatch("showParticipants");
     }
 
     function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        groupAvatar = {
+        updatedGroup.avatar = {
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
     }
 
     function updateGroup() {
-        machine.send({ type: "SAVE_GROUP_DETAILS", data: updatedGroup });
+        saving = true;
+        api.updateGroup(
+            chat.chatId,
+            updatedGroup.name,
+            updatedGroup.desc,
+            updatedGroup.avatar?.blobData
+        )
+            .then((resp) => {
+                const err = groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                } else {
+                    chat.name = updatedGroup.name;
+                    chat.description = updatedGroup.desc;
+                    chat.blobUrl = updatedGroup.avatar?.blobUrl;
+                    dispatch("close");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("Update group failed: ", err);
+                toastStore.showFailureToast("groupUpdateFailed");
+            })
+            .finally(() => (showConfirmation = saving = false));
+    }
+
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "unchanged") return undefined;
+        if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "internal_error") return "groupUpdateFailed";
+        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
     }
 </script>
 
@@ -83,7 +101,7 @@
         <div class="sub-section photo">
             <EditableAvatar
                 disabled={saving}
-                image={avatarUrl(groupAvatar, "../assets/group.svg")}
+                image={avatarUrl(updatedGroup.avatar, "../assets/group.svg")}
                 on:imageSelected={groupAvatarSelected} />
             <p class="photo-legend">{$_("addGroupPhoto")}</p>
         </div>
@@ -92,7 +110,7 @@
             invalid={false}
             disabled={saving || !canEdit}
             autofocus={false}
-            bind:value={groupName}
+            bind:value={updatedGroup.name}
             minlength={MIN_LENGTH}
             maxlength={MAX_LENGTH}
             countdown={true}
@@ -100,20 +118,20 @@
 
         <TextArea
             disabled={saving || !canEdit}
-            bind:value={groupDesc}
+            bind:value={updatedGroup.desc}
             invalid={false}
             maxlength={MAX_DESC_LENGTH}
             placeholder={$_("newGroupDesc")} />
 
         <div class="sub-section">
-            {#if isPublic}
+            {#if chat.public}
                 <h4>{$_("publicGroup")}</h4>
             {:else}
                 <h4>{$_("privateGroup")}</h4>
             {/if}
 
             <div class="info">
-                {#if isPublic}
+                {#if chat.public}
                     <p>
                         {$_("publicGroupInfo")}
                     </p>

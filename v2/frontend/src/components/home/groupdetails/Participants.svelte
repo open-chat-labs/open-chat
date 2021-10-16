@@ -1,56 +1,41 @@
 <script lang="ts">
     import Participant from "./Participant.svelte";
     import ParticipantsHeader from "./ParticipantsHeader.svelte";
-    import type { ActorRefFrom } from "xstate";
     import VirtualList from "../../VirtualList.svelte";
-    import type { FullParticipant } from "../../../domain/chat/chat";
-    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
+    import type { FullParticipant, GroupChatSummary } from "../../../domain/chat/chat";
     import { userStore } from "../../../stores/user";
+    import { createEventDispatcher } from "svelte";
 
-    export let machine: ActorRefFrom<EditGroupMachine>;
+    export let chat: GroupChatSummary;
+    export let userId: string;
+    export let closeIcon: "close" | "back";
+
+    const dispatch = createEventDispatcher();
 
     function close() {
-        machine.send({ type: "HIDE_PARTICIPANTS" });
+        dispatch("close");
     }
 
     function addParticipants() {
-        machine.send({ type: "ADD_PARTICIPANT" });
+        dispatch("addParticipants");
     }
 
-    $: knownUsers =
-        $machine.context.chatSummary.kind === "group_chat"
-            ? $machine.context.chatSummary.participants.reduce<FullParticipant[]>((users, p) => {
-                  const user = $userStore[p.userId];
-                  if (user) {
-                      users.push({
-                          ...user,
-                          ...p,
-                      });
-                  }
-                  return users;
-              }, [])
-            : [];
+    $: knownUsers = chat.participants.reduce<FullParticipant[]>((users, p) => {
+        const user = $userStore[p.userId];
+        if (user) {
+            users.push({
+                ...user,
+                ...p,
+            });
+        }
+        return users;
+    }, []);
 
-    $: me = knownUsers.find((u) => u.userId === $machine.context.user!.userId);
+    $: me = knownUsers.find((u) => u.userId === userId);
 
-    $: others = knownUsers.filter((u) => u.userId !== $machine.context.user!.userId);
+    $: others = knownUsers.filter((u) => u.userId !== userId);
 
-    $: publicGroup =
-        $machine.context.chatSummary.kind === "group_chat" && $machine.context.chatSummary.public;
-
-    $: closeIcon = ($machine.context.history.length <= 1 ? "close" : "back") as "close" | "back";
-
-    function dismissAsAdmin(ev: CustomEvent<string>): void {
-        machine.send({ type: "DISMISS_AS_ADMIN", data: ev.detail });
-    }
-
-    function makeAdmin(ev: CustomEvent<string>): void {
-        machine.send({ type: "MAKE_ADMIN", data: ev.detail });
-    }
-
-    function removeParticipant(ev: CustomEvent<string>): void {
-        machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail });
-    }
+    $: publicGroup = chat.public;
 </script>
 
 <ParticipantsHeader
@@ -71,8 +56,8 @@
         myRole={me?.role ?? "standard"}
         on:blockUser
         on:chatWith
-        on:dismissAsAdmin={dismissAsAdmin}
-        on:makeAdmin={makeAdmin}
-        on:removeParticipant={removeParticipant}
+        on:dismissAsAdmin
+        on:makeAdmin
+        on:removeParticipant
         on:close={close} />
 </VirtualList>
