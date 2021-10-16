@@ -240,6 +240,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                       events: replaceAffected(
                           ctx.chatSummary.chatId,
                           replaceLocal(
+                              ctx.user!.userId,
                               ctx.chatSummary.chatId,
                               ctx.markRead,
                               ctx.events,

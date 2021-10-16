@@ -622,6 +622,7 @@ function partitionEvents(
 }
 
 export function replaceLocal(
+    userId: string,
     chatId: string,
     messageReadTracker: MessageReadTracker,
     onClient: EventWrapper<ChatEvent>[],
@@ -639,7 +640,12 @@ export function replaceLocal(
         const idNum = BigInt(id);
         unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+            if (e.event.sender === userId) {
+                // make double sure that our own messages are marked read
+                messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+            } else {
+                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+            }
         }
         clientMsgs[id] = e;
     });
