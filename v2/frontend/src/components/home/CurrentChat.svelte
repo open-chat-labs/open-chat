@@ -18,18 +18,6 @@
         $machine.context.chatSummary.latestMessage?.event.messageIndex
     );
 
-    function showGroupDetails() {
-        machine.send({ type: "SHOW_GROUP_DETAILS" });
-    }
-
-    function showParticipants() {
-        machine.send({ type: "SHOW_PARTICIPANTS" });
-    }
-
-    function addParticipants() {
-        machine.send({ type: "ADD_PARTICIPANT" });
-    }
-
     function toggleMuteNotifications() {
         const op = $machine.context.chatSummary.notificationsMuted ? "unmuted" : "muted";
         $machine.context.serviceContainer
@@ -77,9 +65,9 @@
         on:unblockUser
         on:markAllRead={markAllRead}
         on:toggleMuteNotifications={toggleMuteNotifications}
-        on:addParticipants={addParticipants}
-        on:showGroupDetails={showGroupDetails}
-        on:showParticipants={showParticipants}
+        on:addParticipants
+        on:showGroupDetails
+        on:showParticipants
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
     <CurrentChatMessages on:messageRead on:chatWith {machine} {unreadMessages} />
