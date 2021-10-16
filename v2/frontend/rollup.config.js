@@ -57,9 +57,7 @@ if (process.env.DFX_NETWORK) {
 
 const production = !process.env.ROLLUP_WATCH;
 
-const SERVICE_WORKER = "build/sw.js";
-const RAW_PATH = production ? "_/raw/" : "";
-const WEBPUSH_SERVICE_WORKER_PATH = RAW_PATH + SERVICE_WORKER;
+const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
@@ -68,10 +66,6 @@ function serve() {
     return dev({
         dirs: ["./public"],
         proxy: [
-            {
-                from: "/_/raw",
-                to: "http://localhost:5001",
-            },
             {
                 from: "/api/*",
                 to: `http://${dfxJson.networks.local.bind}`,
@@ -90,7 +84,7 @@ export default [
     {
         input: "./src/sw/index.ts",
         output: {
-            file: "public/build/sw.js",
+            file: "public/_/raw/sw.js",
             sourcemap: true,
             format: "iife",
         },
