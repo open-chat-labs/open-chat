@@ -409,7 +409,6 @@ dependencies = [
  "ic-agent 0.7.0",
  "ic-utils",
  "notifications_canister",
- "notifications_canister_client",
  "serde",
  "types",
  "user_canister",
@@ -440,8 +439,6 @@ name = "canister_logger"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
- "ic-cdk-macros",
  "serde",
  "tracing",
  "tracing-attributes",
@@ -949,7 +946,6 @@ name = "group_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "serde",
  "serde_bytes",
  "types",
@@ -1011,7 +1007,6 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "serde",
  "types",
 ]
@@ -1635,7 +1630,6 @@ name = "notifications_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "serde",
  "types",
 ]
@@ -2513,7 +2507,6 @@ dependencies = [
  "futures",
  "garcon",
  "ic-agent 0.6.0",
- "ic-cdk",
  "notifications_canister",
  "openssl",
  "serde",
@@ -2521,7 +2514,6 @@ dependencies = [
  "tokio",
  "tracing",
  "types",
- "utils",
  "web-push",
 ]
 
@@ -2677,14 +2669,12 @@ dependencies = [
  "futures",
  "garcon",
  "ic-agent 0.6.0",
- "ic-cdk",
  "lambda_runtime",
  "openssl",
  "serde",
  "tokio",
  "types",
  "user_index_canister",
- "utils",
 ]
 
 [[package]]
@@ -3174,7 +3164,6 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "lzma-rs",
  "serde",
  "serde_bytes",
@@ -3248,7 +3237,6 @@ name = "user_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "serde",
  "serde_bytes",
  "types",
@@ -3311,7 +3299,6 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "ic-cdk",
  "serde",
  "serde_bytes",
  "types",
@@ -3376,7 +3363,6 @@ dependencies = [
  "range-set",
  "serde",
  "serde_bytes",
- "serde_cbor",
  "smallvec 0.6.14",
  "tracing",
  "types",
