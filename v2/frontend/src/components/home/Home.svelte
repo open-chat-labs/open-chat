@@ -29,6 +29,7 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
+    import type { EditGroupState } from "../../stores/editGroup";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -212,11 +213,7 @@
 
     $: selectedChat = $machine.context.selectedChat;
 
-    $: groupChat = selectedChat
-        ? selectedChat.kind === "group_chat"
-            ? selectedChat
-            : undefined
-        : undefined;
+    $: groupChat = selectedChat && selectedChat.kind === "group_chat" ? selectedChat : undefined;
 
     $: actorKey = $machine.context.selectedChat?.chatId.toString();
 
@@ -224,9 +221,11 @@
 
     $: x = $rtlStore ? -300 : 300;
 
-    $: editGroupMachine =
-        selectedChatActor &&
-        ($selectedChatActor.children.editGroupMachine as ActorRefFrom<EditGroupMachine>);
+    $: userId = $machine.context.user!.userId;
+
+    $: api = $machine.context.serviceContainer!;
+
+    let editGroupState: EditGroupState = "not_editing";
 
     $: blocked =
         selectedChat !== undefined &&
@@ -269,14 +268,17 @@
 {/if}
 
 {#if selectedChatActor !== undefined}
-    <Overlay active={editGroupMachine !== undefined}>
-        {#if editGroupMachine !== undefined && groupChat !== undefined}
+    <Overlay active={editGroupState !== "not_editing"}>
+        {#if editGroupState !== "not_editing" && groupChat}
             <div
                 transition:fly={{ x, duration: 200, easing: sineInOut }}
                 class="right-wrapper"
                 class:rtl={$rtlStore}>
                 <RightPanel
-                    machine={editGroupMachine}
+                    {api}
+                    {userId}
+                    chat={groupChat}
+                    {editGroupState}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser} />
             </div>

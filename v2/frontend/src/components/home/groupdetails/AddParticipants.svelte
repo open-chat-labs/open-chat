@@ -1,35 +1,58 @@
 <script lang="ts">
-    import type { ActorRefFrom } from "xstate";
     import SectionHeader from "../../SectionHeader.svelte";
     import Loading from "../../Loading.svelte";
     import Button from "../../Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
-    import type { EditGroupMachine } from "../../../fsm/editgroup.machine";
-    export let machine: ActorRefFrom<EditGroupMachine>;
     import { _ } from "svelte-i18n";
     import SelectUsers from "../SelectUsers.svelte";
     import type { UserSummary } from "../../../domain/user/user";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import { createEventDispatcher } from "svelte";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import type { GroupChatSummary } from "../../../domain/chat/chat";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
 
-    $: busy = $machine.matches({ add_participants: "saving_participants" });
+    export let api: ServiceContainer;
+    export let chat: GroupChatSummary;
+    export let closeIcon: "close" | "back";
 
-    $: closeIcon = $machine.context.history.length <= 1 ? "close" : "back";
+    const dispatch = createEventDispatcher();
+    let busy = false;
+    let usersToAdd: UserSummary[] = [];
 
     function cancelAddParticipant() {
-        machine.send({ type: "CANCEL_ADD_PARTICIPANT" });
+        dispatch("cancelAddParticipants");
     }
 
     function complete() {
-        machine.send({ type: "SAVE_PARTICIPANTS" });
+        busy = true;
+        api.addParticipants(
+            chat.chatId,
+            usersToAdd.map((u) => u.userId)
+        )
+            .then((resp) => {
+                if (resp.kind === "add_participants_success") {
+                    cancelAddParticipant();
+                    usersToAdd = [];
+                } else {
+                    toastStore.showFailureToast("addParticipantsFailed");
+                }
+            })
+            .catch((err) => {
+                rollbar.error("AddParticipantsFailed", err);
+                toastStore.showFailureToast("addParticipantsFailed");
+            })
+            .finally(() => (busy = false));
     }
 
     function deleteUser(ev: CustomEvent<UserSummary>) {
-        machine.send({ type: "UNSELECT_PARTICIPANT", data: ev.detail });
+        usersToAdd = usersToAdd.filter((u) => u.userId !== ev.detail.userId);
     }
 
     function selectUser(ev: CustomEvent<UserSummary>) {
-        machine.send({ type: "SELECT_PARTICIPANT", data: ev.detail });
+        usersToAdd.push(ev.detail);
     }
 </script>
 
@@ -46,23 +69,23 @@
     </span>
 </SectionHeader>
 
-{#if $machine.matches({ add_participants: "choosing_participants" })}
+{#if !busy}
     <div class="find-user">
         <SelectUsers
-            api={$machine.context.serviceContainer}
+            {api}
             on:selectUser={selectUser}
             on:deleteUser={deleteUser}
-            selectedUsers={$machine.context.usersToAdd} />
+            selectedUsers={usersToAdd} />
     </div>
 {/if}
 
-{#if $machine.matches({ add_participants: "saving_participants" })}
+{#if busy}
     <Loading />
 {/if}
 
 <div class="cta">
     <Button
-        disabled={busy || $machine.context.usersToAdd.length === 0}
+        disabled={busy || usersToAdd.length === 0}
         loading={busy}
         on:click={complete}
         fill={true}>{$_("addParticipants")}</Button>

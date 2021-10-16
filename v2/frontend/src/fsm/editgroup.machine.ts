@@ -16,16 +16,6 @@ import { userStore } from "../stores/user";
 
 export type Mode = "show_participants" | "add_participants" | "group_details";
 
-export type UpdatedAvatar = {
-    blobUrl?: string;
-    blobData?: Uint8Array;
-};
-
-export type UpdatedGroup = {
-    name: string;
-    desc: string;
-    avatar?: UpdatedAvatar;
-};
 export interface EditGroupContext {
     serviceContainer: ServiceContainer;
     chatSummary: GroupChatSummary;

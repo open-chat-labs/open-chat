@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { ActorRefFrom } from "xstate";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -7,11 +6,9 @@
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import type { EditGroupMachine, UpdatedAvatar } from "../../../fsm/editgroup.machine";
     import { _ } from "svelte-i18n";
     import { avatarUrl } from "../../../domain/user/user.utils";
-
-    export let machine: ActorRefFrom<EditGroupMachine>;
+    import type { UpdatedAvatar } from "../../../stores/editGroup";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
