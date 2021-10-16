@@ -32,6 +32,9 @@
             on:messageRead
             on:blockUser
             on:leaveGroup
+            on:addParticipants
+            on:showGroupDetails
+            on:showParticipants
             on:chatWith />
     {/if}
 </Panel>

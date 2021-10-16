@@ -17,7 +17,6 @@
     import { push, replace } from "svelte-spa-router";
     import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
-    import type { EditGroupMachine } from "../../fsm/editgroup.machine";
     import type {
         GroupSearchResponse,
         MessageMatch,
@@ -29,7 +28,7 @@
     import { rtcConnectionsManager } from "../../domain/webrtc/RtcConnectionsManager";
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
-    import type { EditGroupState } from "../../stores/editGroup";
+    import type { EditGroupState } from "../../fsm/editGroup";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -211,6 +210,18 @@
         }
     }
 
+    function addParticipants() {
+        editGroupHistory = [...editGroupHistory, "add_participants"];
+    }
+
+    function showParticipants() {
+        editGroupHistory = [...editGroupHistory, "show_participants"];
+    }
+
+    function showGroupDetails() {
+        editGroupHistory = [...editGroupHistory, "group_details"];
+    }
+
     $: selectedChat = $machine.context.selectedChat;
 
     $: groupChat = selectedChat && selectedChat.kind === "group_chat" ? selectedChat : undefined;
@@ -225,7 +236,7 @@
 
     $: api = $machine.context.serviceContainer!;
 
-    let editGroupState: EditGroupState = "not_editing";
+    let editGroupHistory: EditGroupState[] = [];
 
     $: blocked =
         selectedChat !== undefined &&
@@ -261,6 +272,9 @@
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
+                on:addParticipants={addParticipants}
+                on:showGroupDetails={showGroupDetails}
+                on:showParticipants={showParticipants}
                 on:messageRead={messageRead}
                 machine={selectedChatActor} />
         {/if}
@@ -268,8 +282,8 @@
 {/if}
 
 {#if selectedChatActor !== undefined}
-    <Overlay active={editGroupState !== "not_editing"}>
-        {#if editGroupState !== "not_editing" && groupChat}
+    <Overlay active={editGroupHistory.length > 0}>
+        {#if editGroupHistory.length > 0 && groupChat}
             <div
                 transition:fly={{ x, duration: 200, easing: sineInOut }}
                 class="right-wrapper"
@@ -278,7 +292,9 @@
                     {api}
                     {userId}
                     chat={groupChat}
-                    {editGroupState}
+                    bind:editGroupHistory
+                    on:addParticipants={addParticipants}
+                    on:showParticipants={showParticipants}
                     on:chatWith={chatWith}
                     on:blockUser={blockUser} />
             </div>

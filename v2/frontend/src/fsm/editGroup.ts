@@ -1,8 +1,4 @@
-export type EditGroupState =
-    | "not_editing"
-    | "group_details"
-    | "add_participants"
-    | "show_participants";
+export type EditGroupState = "group_details" | "add_participants" | "show_participants";
 
 export type UpdatedAvatar = {
     blobUrl?: string;

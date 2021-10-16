@@ -10,7 +10,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher } from "svelte";
     import type { ServiceContainer } from "../../../services/serviceContainer";
-    import type { GroupChatSummary } from "../../../domain/chat/chat";
+    import type { GroupChatSummary, ParticipantRole } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
 
@@ -26,8 +26,21 @@
         dispatch("cancelAddParticipants");
     }
 
+    function rollback() {
+        chat.participants = chat.participants.filter((p) => {
+            !usersToAdd.map((u) => u.userId).includes(p.userId);
+        });
+    }
+
     function complete() {
         busy = true;
+        chat.participants = [
+            ...usersToAdd.map((u) => ({
+                userId: u.userId,
+                role: "standard" as ParticipantRole,
+            })),
+            ...chat.participants,
+        ];
         api.addParticipants(
             chat.chatId,
             usersToAdd.map((u) => u.userId)
@@ -38,11 +51,13 @@
                     usersToAdd = [];
                 } else {
                     toastStore.showFailureToast("addParticipantsFailed");
+                    rollback();
                 }
             })
             .catch((err) => {
                 rollbar.error("AddParticipantsFailed", err);
                 toastStore.showFailureToast("addParticipantsFailed");
+                rollback();
             })
             .finally(() => (busy = false));
     }
@@ -52,7 +67,7 @@
     }
 
     function selectUser(ev: CustomEvent<UserSummary>) {
-        usersToAdd.push(ev.detail);
+        usersToAdd = [...usersToAdd, ev.detail];
     }
 </script>
 

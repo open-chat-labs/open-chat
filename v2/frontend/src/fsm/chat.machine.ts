@@ -9,7 +9,6 @@ import type {
     MessageContent,
     ChatEvent,
     SendMessageSuccess,
-    GroupChatSummary,
     Message,
     LocalReaction,
 } from "../domain/chat/chat";
@@ -33,7 +32,6 @@ import {
 import type { UserSummary } from "../domain/user/user";
 import { missingUserIds } from "../domain/user/user.utils";
 import type { ServiceContainer } from "../services/serviceContainer";
-import { editGroupMachine } from "./editgroup.machine";
 import { toastStore } from "../stores/toast";
 import { chatStore } from "../stores/chat";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -74,10 +72,8 @@ export type ChatEvents =
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
-    | { type: "SHOW_GROUP_DETAILS" }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
-    | { type: "SHOW_PARTICIPANTS" }
     | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
     | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
     | { type: "REMOVE_MESSAGE"; data: { userId: string; messageId: bigint } }
@@ -106,7 +102,6 @@ export type ChatEvents =
           data: { message: Message; userId: string };
       }
     | { type: "CANCEL_REPLY_TO" }
-    | { type: "ADD_PARTICIPANT" }
     | { type: "TOGGLE_MUTE_NOTIFICATIONS" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
     | { type: "LOAD_PREVIOUS_MESSAGES" };
@@ -582,9 +577,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         };
                     }),
                 },
-                SHOW_GROUP_DETAILS: ".showing_group",
-                SHOW_PARTICIPANTS: ".showing_group",
-                ADD_PARTICIPANT: ".showing_group",
                 TOGGLE_MUTE_NOTIFICATIONS: {
                     actions: assign((ctx, _ev) => ({
                         chatSummary: {
@@ -664,51 +656,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         },
                     },
                 },
-                showing_group: {
-                    invoke: {
-                        id: "editGroupMachine",
-                        src: editGroupMachine,
-                        data: (ctx, ev) => {
-                            if (ctx.chatSummary.kind !== "group_chat") {
-                                throw new Error("Cannot edit a direct chat");
-                            }
-                            return {
-                                serviceContainer: ctx.serviceContainer,
-                                chatSummary: ctx.chatSummary, // this is a blatant lie to the compiler but it doesn't seem to mind lol / sigh
-                                updatedGroup: {
-                                    name: ctx.chatSummary.name,
-                                    desc: ctx.chatSummary.description,
-                                },
-                                history: [
-                                    ev.type === "ADD_PARTICIPANT"
-                                        ? "add_participants"
-                                        : ev.type === "SHOW_PARTICIPANTS"
-                                        ? "show_participants"
-                                        : "group_details",
-                                ],
-                                user: ctx.user,
-                                error: undefined,
-                                usersToAdd: [],
-                            };
-                        },
-                        onDone: {
-                            target: "#ui_idle",
-                            actions: assign((ctx, ev: DoneInvokeEvent<GroupChatSummary>) => {
-                                if (ctx.chatSummary.kind === "group_chat" && ev.data) {
-                                    return {
-                                        chatSummary: ev.data,
-                                    };
-                                }
-                                return {};
-                            }),
-                        },
-                        onError: {
-                            // todo - can this really *fail* or would we just deal with it in the sub machine?
-                            target: "#ui_idle",
-                        },
-                    },
-                },
-                selecting_emojii: {},
             },
         },
     },

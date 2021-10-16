@@ -269,22 +269,6 @@ describe("chat machine transitions", () => {
         );
         expect(ctx.replyingTo).toBe(undefined);
     });
-    test("show participants", () => {
-        testTransition(
-            chatMachine.withContext(groupContext),
-            { user_states: "idle" },
-            { type: "SHOW_GROUP_DETAILS" },
-            { user_states: "showing_group" }
-        );
-    });
-    test("add participants", () => {
-        testTransition(
-            chatMachine.withContext(groupContext),
-            { user_states: "idle" },
-            { type: "ADD_PARTICIPANT" },
-            { user_states: "showing_group" }
-        );
-    });
     test("clear focus index", () => {
         const ctx = testTransition(
             chatMachine.withContext({ ...directContext, focusIndex: 123 }),

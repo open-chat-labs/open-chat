@@ -3,20 +3,29 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
-    import type { EditGroupState } from "../../stores/editGroup";
+    import type { EditGroupState, UpdatedGroup } from "../../fsm/editGroup";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import type { ServiceContainer } from "../../services/serviceContainer";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
 
     export let api: ServiceContainer;
-    export let editGroupState: EditGroupState;
+    export let editGroupHistory: EditGroupState[];
     export let chat: GroupChatSummary;
     export let userId: string;
 
-    // let's handle all the api interactions here
-    // we will also need to hold the temporary state for edited group here as well
-    // and that's all completely fine and sooooo much simpler
+    $: lastState = editGroupHistory[editGroupHistory.length - 1];
+
+    let updatedGroup: UpdatedGroup = {
+        name: chat.name,
+        desc: chat.description,
+        avatar: chat.blobUrl
+            ? {
+                  blobUrl: chat.blobUrl,
+                  blobData: chat.blobData,
+              }
+            : undefined,
+    };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
         api.dismissAsAdmin(chat.chatId, ev.detail)
@@ -47,6 +56,7 @@
     }
 
     function removeParticipant(ev: CustomEvent<string>): void {
+        chat.participants = chat.participants.filter((p) => p.userId !== ev.detail);
         api.removeParticipant(chat.chatId, ev.detail)
             .then((resp) => {
                 if (resp !== "success") {
@@ -60,32 +70,29 @@
             });
     }
 
-    function cancelAddParticipants(): void {
-        // machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail });
-    }
-
-    function cancelShowParticipants(): void {
-        // machine.send({ type: "REMOVE_PARTICIPANT", data: ev.detail });
+    function pop() {
+        editGroupHistory = editGroupHistory.slice(0, editGroupHistory.length - 1);
     }
 </script>
 
 <Panel right>
-    {#if editGroupState === "group_details"}
-        <GroupDetails />
-    {:else if editGroupState === "add_participants"}
+    {#if lastState === "group_details"}
+        <GroupDetails {api} {userId} {updatedGroup} {chat} on:close={pop} on:showParticipants />
+    {:else if lastState === "add_participants"}
         <AddParticipants
-            closeIcon={"close"}
+            closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
             {chat}
             {api}
-            on:cancelAddParticipants={cancelAddParticipants} />
-    {:else if editGroupState === "show_participants"}
+            on:cancelAddParticipants={pop} />
+    {:else if lastState === "show_participants"}
         <Participants
-            closeIcon={"close"}
+            closeIcon={editGroupHistory.length > 1 ? "back" : "close"}
             {chat}
             {userId}
-            on:close={cancelShowParticipants}
+            on:close={pop}
             on:blockUser
             on:chatWith
+            on:addParticipants
             on:dismissAsAdmin={dismissAsAdmin}
             on:removeParticipant={removeParticipant}
             on:makeAdmin={makeAdmin} />
