@@ -19,7 +19,7 @@ type MessageRangesByChat = Record<string, MessageIndexRange[]>;
 export type MessageReadTracker = {
     markRangeRead: (chatId: string, range: MessageIndexRange) => void;
     markMessageRead: (chatId: string, messageIndex: number, messageId: bigint) => void;
-    confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => void;
+    confirmMessage: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
     syncWithServer: (chatId: string, ranges: MessageIndexRange[]) => void;
     unreadMessageCount: (
         chatId: string,
@@ -94,14 +94,16 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
         state[chatId] = mergeMessageIndexRanges(state[chatId], [range]);
     }
 
-    function confirmMessage(chatId: string, messageIndex: number, messageId: bigint) {
+    function confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
         // this is called when a message is confirmed so that we can move it from
         // the unconfirmed read to the confirmed read. This means that it will get
         // marked as read on the back end
         if (waiting[chatId] !== undefined && waiting[chatId].has(messageId)) {
             waiting[chatId].delete(messageId);
             markMessageRead(chatId, messageIndex, messageId);
+            return true;
         }
+        return false;
     }
 
     function syncWithServer(chatId: string, ranges: MessageIndexRange[]) {
@@ -171,7 +173,7 @@ export const fakeMessageReadTracker: MessageReadTracker = {
         return undefined;
     },
     confirmMessage: (_chatId: string, _messageIndex: number, _messageId: bigint) => {
-        return undefined;
+        return false;
     },
     syncWithServer: (_chatId: string, _ranges: MessageIndexRange[]) => {
         return undefined;

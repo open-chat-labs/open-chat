@@ -640,11 +640,14 @@ export function replaceLocal(
         const idNum = BigInt(id);
         unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            if (e.event.sender === userId) {
+            const confirmed = messageReadTracker.confirmMessage(
+                chatId,
+                e.event.messageIndex,
+                idNum
+            );
+            if (e.event.sender === userId && !confirmed) {
                 // make double sure that our own messages are marked read
                 messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
-            } else {
-                messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
             }
         }
         clientMsgs[id] = e;
