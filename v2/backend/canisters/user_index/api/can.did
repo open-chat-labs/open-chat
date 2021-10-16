@@ -17,6 +17,7 @@ type SubmitPhoneNumberResponse =
         AlreadyRegistered;
         AlreadyRegisteredByOther;
         InvalidPhoneNumber;
+        UserLimitReached;
     };
 
 type ConfirmPhoneNumberArgs = 

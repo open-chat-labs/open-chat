@@ -13,4 +13,5 @@ pub enum Response {
     AlreadyRegistered,
     AlreadyRegisteredByOther,
     InvalidPhoneNumber,
+    UserLimitReached,
 }
