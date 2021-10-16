@@ -1,10 +1,9 @@
 use candid::CandidType;
-#[cfg(feature = "phonenumber")]
-use phonenumber::PhoneNumber as _PhoneNumber;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-#[cfg(feature = "phonenumber")]
-use std::str::FromStr;
+
+const MIN_LENGTH: usize = 3;
+const MAX_LENGTH: usize = 15;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct PhoneNumber {
@@ -23,9 +22,10 @@ impl PhoneNumber {
         self.number.retain(|c| !c.is_whitespace());
     }
 
-    #[cfg(feature = "phonenumber")]
     pub fn is_valid(&self) -> bool {
-        _PhoneNumber::from_str(&self.to_string()).is_ok()
+        self.country_code > 0
+            && (MIN_LENGTH..=MAX_LENGTH).contains(&self.number.len())
+            && self.number.chars().all(|c| c.is_ascii_digit())
     }
 }
 
