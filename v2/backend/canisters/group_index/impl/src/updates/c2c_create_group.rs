@@ -33,6 +33,7 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
             let wasm_version = canister_args.canister_wasm.version;
+            let canister_created = canister_args.canister_id.is_none();
             RUNTIME_STATE.with(|state| {
                 commit(
                     CommitArgs {
@@ -43,6 +44,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         avatar_id,
                         wasm_version,
                         cycles: cycles_to_use,
+                        canister_created,
                     },
                     state.borrow_mut().as_mut().unwrap(),
                 )
@@ -115,6 +117,7 @@ struct CommitArgs {
     avatar_id: Option<u128>,
     wasm_version: Version,
     cycles: Cycles,
+    canister_created: bool,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -135,7 +138,9 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             .handle_group_created(args.chat_id, now, args.wasm_version);
     }
 
-    runtime_state.data.total_cycles_spent_on_canisters += args.cycles;
+    if args.canister_created {
+        runtime_state.data.total_cycles_spent_on_canisters += args.cycles;
+    }
 }
 
 fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

@@ -186,11 +186,11 @@ impl BlobStorage {
         }
     }
 
-    pub fn get_blob_count(&self) -> u32 {
+    pub fn blob_count(&self) -> u32 {
         self.blobs.len() as u32
     }
 
-    pub fn get_total_bytes(&self) -> u64 {
+    pub fn total_bytes(&self) -> u64 {
         self.total_bytes
     }
 }
