@@ -14,11 +14,11 @@ import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
 // import copy from 'rollup-plugin-copy';
-// import cleaner from 'rollup-plugin-cleaner';
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
 import * as fs from "fs";
 import * as path from "path";
+import * as rimraf from "rimraf";
 
 dotenv.config();
 
@@ -57,9 +57,7 @@ if (process.env.DFX_NETWORK) {
 
 const production = !process.env.ROLLUP_WATCH;
 
-const SERVICE_WORKER = "build/sw.js";
-const RAW_PATH = production ? "_/raw/" : "";
-const WEBPUSH_SERVICE_WORKER_PATH = RAW_PATH + SERVICE_WORKER;
+const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/sw.js";
 
 console.log("PROD", production);
 console.log("URL", process.env.INTERNET_IDENTITY_URL);
@@ -68,10 +66,6 @@ function serve() {
     return dev({
         dirs: ["./public"],
         proxy: [
-            {
-                from: "/_/raw",
-                to: "http://localhost:5001",
-            },
             {
                 from: "/api/*",
                 to: `http://${dfxJson.networks.local.bind}`,
@@ -82,11 +76,15 @@ function serve() {
     });
 }
 
+if (production) {
+    rimraf.sync(path.join(__dirname, "public", "build"));
+}
+
 export default [
     {
         input: "./src/sw/index.ts",
         output: {
-            file: "public/build/sw.js",
+            file: "public/_/raw/sw.js",
             sourcemap: true,
             format: "iife",
         },

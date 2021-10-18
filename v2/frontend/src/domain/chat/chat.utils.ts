@@ -21,7 +21,7 @@ import type {
     IndexRange,
     LocalReaction,
 } from "./chat";
-import { dedupe, groupWhile } from "../../utils/list";
+import { dedupe, groupWhile, zip } from "../../utils/list";
 import { areOnSameDay } from "../../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
@@ -279,6 +279,22 @@ export function compareMessageRange(a: MessageIndexRange, b: MessageIndexRange):
         return a.to - b.to;
     }
     return a.from - b.from;
+}
+
+// Note that this function assumes that the ranges have already been optimally collapsed to the
+// minimun number of ranges
+export function messageIndexRangesAreEqual(
+    a: MessageIndexRange[],
+    b: MessageIndexRange[]
+): boolean {
+    if (a.length !== b.length) return false;
+
+    a.sort(compareMessageRange);
+    b.sort(compareMessageRange);
+
+    return zip(a, b).reduce<boolean>((same, [rangeA, rangeB]) => {
+        return same && compareMessageRange(rangeA, rangeB) === 0;
+    }, true);
 }
 
 export function mergeMessageIndexRanges(
@@ -606,6 +622,7 @@ function partitionEvents(
 }
 
 export function replaceLocal(
+    userId: string,
     chatId: string,
     messageReadTracker: MessageReadTracker,
     onClient: EventWrapper<ChatEvent>[],
@@ -623,7 +640,15 @@ export function replaceLocal(
         const idNum = BigInt(id);
         unconfirmed.delete(idNum);
         if (e.event.kind === "message") {
-            messageReadTracker.confirmMessage(chatId, e.event.messageIndex, idNum);
+            const confirmed = messageReadTracker.confirmMessage(
+                chatId,
+                e.event.messageIndex,
+                idNum
+            );
+            if (e.event.sender === userId && !confirmed) {
+                // make double sure that our own messages are marked read
+                messageReadTracker.markMessageRead(chatId, e.event.messageIndex, e.event.messageId);
+            }
         }
         clientMsgs[id] = e;
     });

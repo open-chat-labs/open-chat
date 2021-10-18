@@ -3,6 +3,7 @@ const dark10 = "#2b2b2b";
 const dark15 = "#383838";
 const dark20 = "#454545";
 const dark25 = "#525252";
+const dark45 = "#666666";
 const dark60 = "#ababab";
 
 // these are the gradients used in the logo (from light to dark)
@@ -128,6 +129,7 @@ export interface Theme {
     menu: {
         bg: string;
         txt: string;
+        "disabled-txt": string;
         bd: string;
         hv: string;
         sh: string;
@@ -321,6 +323,7 @@ const defaultTheme = {
     menu: {
         bg: "#efefef",
         txt: "#191919",
+        "disabled-txt": "#999999",
         bd: "#cccccc",
         hv: "#e2e2e2",
         sh: "0px 13px 13px 0px rgba(85, 85, 85, 0.5)",
@@ -512,6 +515,7 @@ export const themes: Themes = {
         menu: {
             bg: dark15,
             txt: dark60,
+            "disabled-txt": dark45,
             bd: dark20,
             hv: "#424242",
             // sh: "0px 0px 30px 10px rgba(8,93,140,0.3)",

@@ -15,6 +15,7 @@ import {
     insertIndexIntoRanges,
     mergeChatUpdates,
     mergeMessageIndexRanges,
+    messageIndexRangesAreEqual,
     newMessageId,
     userIdsFromChatSummaries,
 } from "./chat.utils";
@@ -187,6 +188,65 @@ describe("merging message index ranges", () => {
             { from: 0, to: 35 },
             { from: 40, to: 50 },
         ]);
+    });
+});
+
+describe("message ranges are equal", () => {
+    test("ranges are not equal length", () => {
+        const a = [{ from: 0, to: 10 }];
+        const b = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+        ];
+        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal length but not equal", () => {
+        const a = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+        ];
+        const b = [
+            { from: 0, to: 10 },
+            { from: 11, to: 21 },
+        ];
+        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
+    });
+    test("ranges are equal", () => {
+        const a = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+        ];
+        const b = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+        ];
+        expect(messageIndexRangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges are equal again", () => {
+        const a = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+            { from: 100, to: 250 },
+        ];
+        const b = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+            { from: 100, to: 250 },
+        ];
+        expect(messageIndexRangesAreEqual(a, b)).toBe(true);
+    });
+    test("ranges differ only in the 'to' property", () => {
+        const a = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+            { from: 100, to: 250 },
+        ];
+        const b = [
+            { from: 0, to: 10 },
+            { from: 11, to: 20 },
+            { from: 100, to: 260 },
+        ];
+        expect(messageIndexRangesAreEqual(a, b)).toBe(false);
     });
 });
 

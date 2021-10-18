@@ -1,9 +1,22 @@
-<div class="menu-item" on:click role="menuitem">
-    <span class="icon">
-        <slot name="icon" />
-    </span>
-    <slot name="text" />
-</div>
+<script lang="ts">
+    export let disabled: boolean = false;
+</script>
+
+{#if disabled}
+    <div class:disabled class="menu-item" role="menuitem">
+        <span class="icon">
+            <slot name="icon" />
+        </span>
+        <slot name="text" />
+    </div>
+{:else}
+    <div class="menu-item" on:click role="menuitem">
+        <span class="icon">
+            <slot name="icon" />
+        </span>
+        <slot name="text" />
+    </div>
+{/if}
 
 <style type="text/scss">
     .menu-item {
@@ -24,6 +37,11 @@
 
         .icon {
             flex: 0 0 30px;
+        }
+
+        &.disabled {
+            color: var(--menu-disabled-txt);
+            cursor: not-allowed;
         }
     }
 </style>

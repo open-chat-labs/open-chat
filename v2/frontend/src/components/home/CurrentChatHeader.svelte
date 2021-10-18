@@ -6,6 +6,7 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -31,6 +32,7 @@
     export let selectedChatSummary: ChatSummary;
     export let user: UserSummary | undefined;
     export let blocked: boolean;
+    export let unreadMessages: number;
 
     $: isGroup = selectedChatSummary.kind === "group_chat";
 
@@ -40,6 +42,10 @@
 
     function toggleMuteNotifications() {
         dispatch("toggleMuteNotifications");
+    }
+
+    function markAllRead() {
+        dispatch("markAllRead");
     }
 
     function blockUser() {
@@ -233,6 +239,17 @@
                         <MenuItem on:click={toggleMuteNotifications}>
                             <BellOff size={"1.2em"} color={"#aaa"} slot="icon" />
                             <div slot="text">{$_("muteNotifications")}</div>
+                        </MenuItem>
+                    {/if}
+                    {#if unreadMessages > 0}
+                        <MenuItem on:click={markAllRead}>
+                            <CheckboxMultipleMarked size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
+                        </MenuItem>
+                    {:else}
+                        <MenuItem disabled={true}>
+                            <CheckboxMultipleMarked size={"1.2em"} color={"#aaa"} slot="icon" />
+                            <div slot="text">{$_("markAllRead")}</div>
                         </MenuItem>
                     {/if}
                 </Menu>

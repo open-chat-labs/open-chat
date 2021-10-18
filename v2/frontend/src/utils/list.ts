@@ -40,3 +40,12 @@ export function dedupe<A>(eq: (a: A, b: A) => boolean, things: A[]): A[] {
 
     return output;
 }
+
+export function zip<A, B>(a: A[], b: B[]): [A, B][] {
+    const l = Math.min(a.length, b.length);
+    const res: [A, B][] = [];
+    for (let i = 0; i < l; i++) {
+        res.push([a[i], b[i]]);
+    }
+    return res;
+}

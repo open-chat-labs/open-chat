@@ -28,7 +28,6 @@
     } from "../../domain/chat/chat";
     import {
         getFirstUnreadMessageIndex,
-        getMinVisibleMessageIndex,
         groupEvents,
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
@@ -46,6 +45,7 @@
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let unreadMessages: number;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -326,12 +326,6 @@
     }
 
     $: groupedEvents = groupEvents($machine.context.events);
-
-    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
-        $machine.context.chatSummary.chatId,
-        getMinVisibleMessageIndex($machine.context.chatSummary),
-        $machine.context.chatSummary.latestMessage?.event.messageIndex
-    );
 
     $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
 

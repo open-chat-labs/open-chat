@@ -4,12 +4,19 @@
     import Footer from "./Footer.svelte";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
+    import { getMinVisibleMessageIndex } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { toastStore } from "../../stores/toast";
     import { _ } from "svelte-i18n";
 
     export let machine: ActorRefFrom<ChatMachine>;
     export let blocked: boolean;
+
+    $: unreadMessages = $machine.context.markRead.unreadMessageCount(
+        $machine.context.chatSummary.chatId,
+        getMinVisibleMessageIndex($machine.context.chatSummary),
+        $machine.context.chatSummary.latestMessage?.event.messageIndex
+    );
 
     function toggleMuteNotifications() {
         const op = $machine.context.chatSummary.notificationsMuted ? "unmuted" : "muted";
@@ -36,22 +43,34 @@
                 });
             });
     }
+
+    function markAllRead() {
+        const latestMessageIndex = $machine.context.chatSummary.latestMessage?.event.messageIndex;
+        if (latestMessageIndex) {
+            $machine.context.markRead.markRangeRead($machine.context.chatSummary.chatId, {
+                from: getMinVisibleMessageIndex($machine.context.chatSummary),
+                to: latestMessageIndex,
+            });
+        }
+    }
 </script>
 
 <div class="wrapper">
     <CurrentChatHeader
         user={$machine.context.user}
         {blocked}
+        {unreadMessages}
         on:clearSelection
         on:blockUser
         on:unblockUser
+        on:markAllRead={markAllRead}
         on:toggleMuteNotifications={toggleMuteNotifications}
         on:addParticipants
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
-    <CurrentChatMessages on:messageRead on:chatWith {machine} />
+    <CurrentChatMessages on:messageRead on:chatWith {machine} {unreadMessages} />
     <Footer {machine} />
 </div>
 

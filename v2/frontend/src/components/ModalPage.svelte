@@ -1,6 +1,7 @@
 <script lang="ts">
     export let minHeight: string | undefined = undefined;
     export let bgClass:
+        | "none"
         | "underwater"
         | "woods"
         | "sunset"
