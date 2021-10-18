@@ -17,7 +17,7 @@ fn submit_phone_number(args: Args) -> Response {
 
 fn submit_phone_number_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let test_mode = runtime_state.data.test_mode;
-    if runtime_state.data.users.len() > if test_mode { TEST_USER_LIMIT } else { USER_LIMIT } {
+    if runtime_state.data.users.len() >= if test_mode { TEST_USER_LIMIT } else { USER_LIMIT } {
         return UserLimitReached;
     }
 
