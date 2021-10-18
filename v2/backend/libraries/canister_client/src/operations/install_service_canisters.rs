@@ -46,7 +46,7 @@ async fn install_service_canisters_impl(
     principal: Principal,
     canister_ids: &CanisterIds,
     management_canister: &Canister<'_, ManagementCanister>,
-    test_mode: bool
+    test_mode: bool,
 ) {
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, false);
     let user_canister_wasm = get_canister_wasm(CanisterName::User, true);
