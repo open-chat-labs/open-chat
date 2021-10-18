@@ -1,7 +1,7 @@
 #!/bin/sh
 
 IDENTITY=$1
-TEST_MODE=1
+TEST_MODE=true
 
 # Pass in the dfx identity name
 # eg './deploy-local openchat'
