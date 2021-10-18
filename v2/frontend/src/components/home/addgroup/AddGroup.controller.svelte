@@ -1,0 +1,98 @@
+<script lang="ts">
+    import NewGroup from "./NewGroup.svelte";
+    import ChooseParticipants from "./ChooseParticipants.svelte";
+    import type { NewGroupState } from "../../../fsm/newGroup";
+    import type { CandidateGroupChat, CreateGroupResponse } from "../../../domain/chat/chat";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+    import { toastStore } from "../../../stores/toast";
+    import { rollbar } from "../../../utils/logging";
+    import { push } from "svelte-spa-router";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
+
+    export let api: ServiceContainer;
+
+    let newGroupState: NewGroupState = "group_form";
+    let creatingCanister = false;
+    let addingParticipants = false;
+    let canisterId: string | undefined;
+    let candidateGroup: CandidateGroupChat = {
+        name: "",
+        description: "",
+        historyVisible: false,
+        isPublic: false,
+        participants: [],
+    };
+
+    function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "description_too_long") return "groupDescTooLong";
+        if (resp.kind === "internal_error") return "groupCreationFailed";
+        if (resp.kind === "invalid_name") return "groupNameInvalid";
+        if (resp.kind === "name_too_long") return "groupNameTooLong";
+        if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+        if (resp.kind === "throttled") return "groupCreationFailed";
+    }
+
+    function chooseParticipants() {
+        if (canisterId === undefined) {
+            creatingCanister = true;
+            newGroupState = "choosing_participants";
+            api.createGroupChat(candidateGroup)
+                .then((resp) => {
+                    if (resp.kind !== "success") {
+                        const err = groupCreationErrorMessage(resp);
+                        if (err) toastStore.showFailureToast(err);
+                        newGroupState = "group_form";
+                    } else {
+                        canisterId = resp.canisterId;
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Unable to create group", err);
+                    toastStore.showFailureToast("groupCreationFailed");
+                    newGroupState = "group_form";
+                })
+                .finally(() => (creatingCanister = false));
+        }
+    }
+
+    function complete() {
+        if (canisterId !== undefined) {
+            addingParticipants = true;
+            api.addParticipants(
+                canisterId,
+                candidateGroup.participants.map((p) => p.user.userId)
+            )
+                .then((resp) => {
+                    if (resp.kind === "add_participants_success") {
+                        push(`/${canisterId}`); // trigger the selection of the chat
+                        dispatch("groupCreated");
+                    } else {
+                        toastStore.showFailureToast("addParticipantsFailed");
+                    }
+                })
+                .catch((err) => {
+                    rollbar.error("Unable to add participants to group", err);
+                    toastStore.showFailureToast("addParticipantsFailed");
+                })
+                .finally(() => (addingParticipants = false));
+        }
+    }
+</script>
+
+{#if newGroupState === "group_form"}
+    <NewGroup
+        {creatingCanister}
+        bind:candidateGroup
+        on:cancelNewGroup
+        on:chooseParticipants={chooseParticipants} />
+{:else if newGroupState === "choosing_participants"}
+    <ChooseParticipants
+        {api}
+        {creatingCanister}
+        {addingParticipants}
+        bind:candidateGroup
+        on:complete={complete} />
+{/if}

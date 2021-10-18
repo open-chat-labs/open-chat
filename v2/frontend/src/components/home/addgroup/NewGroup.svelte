@@ -1,61 +1,46 @@
 <script lang="ts">
-    import type { ActorRefFrom } from "xstate";
     import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
-    import Avatar from "../Avatar.svelte";
-    import EditableAvatar from "../EditableAvatar.svelte";
-    import { AvatarSize, UserStatus } from "../../domain/user/user";
-    import Input from "../Input.svelte";
-    import TextArea from "../TextArea.svelte";
-    import Button from "../Button.svelte";
-    import Checkbox from "../Checkbox.svelte";
-    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
-    import type { DataContent } from "../../domain/data/data";
-    import { avatarUrl } from "../../domain/user/user.utils";
+    import Avatar from "../../Avatar.svelte";
+    import EditableAvatar from "../../EditableAvatar.svelte";
+    import { AvatarSize, UserStatus } from "../../../domain/user/user";
+    import Input from "../../Input.svelte";
+    import TextArea from "../../TextArea.svelte";
+    import Button from "../../Button.svelte";
+    import Checkbox from "../../Checkbox.svelte";
+    import { avatarUrl } from "../../../domain/user/user.utils";
+    import { createEventDispatcher } from "svelte";
+    import type { CandidateGroupChat } from "../../../domain/chat/chat";
 
+    const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
     const MAX_DESC_LENGTH = 1024;
 
-    export let machine: ActorRefFrom<AddGroupMachine>;
+    export let candidateGroup: CandidateGroupChat;
+    export let creatingCanister: boolean;
 
-    let groupName: string = $machine.context.candidateGroup.name;
-    let groupDesc: string = $machine.context.candidateGroup.description;
-    let historyVisible: boolean = $machine.context.candidateGroup.historyVisible;
-    let isPublic: boolean = $machine.context.candidateGroup.isPublic;
-    let groupAvatar: DataContent | undefined = $machine.context.candidateGroup.avatar;
-
-    $: valid = groupName.length > MIN_LENGTH && groupName.length <= MAX_LENGTH;
+    $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
 
     function cancel() {
-        machine.send({ type: "CANCEL_NEW_GROUP" });
+        dispatch("cancelNewGroup");
     }
 
     function chooseParticipants() {
-        machine.send({
-            type: "CHOOSE_PARTICIPANTS",
-            data: {
-                name: groupName,
-                description: groupDesc,
-                historyVisible,
-                isPublic,
-                participants: $machine.context.candidateGroup.participants,
-                avatar: groupAvatar,
-            },
-        });
+        dispatch("chooseParticipants");
     }
 
     function toggleScope() {
-        isPublic = !isPublic;
-        if (isPublic) {
-            historyVisible = true;
+        candidateGroup.isPublic = !candidateGroup.isPublic;
+        if (candidateGroup.isPublic) {
+            candidateGroup.historyVisible = true;
         }
     }
 
     function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        groupAvatar = {
+        candidateGroup.avatar = {
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
@@ -76,7 +61,7 @@
     <div class="form-fields">
         <div class="sub-section photo">
             <EditableAvatar
-                image={avatarUrl(groupAvatar, "../assets/group.svg")}
+                image={avatarUrl(candidateGroup.avatar, "../assets/group.svg")}
                 on:imageSelected={groupAvatarSelected} />
             <p class="photo-legend">{$_("addGroupPhoto")}</p>
         </div>
@@ -84,7 +69,7 @@
         <Input
             invalid={false}
             autofocus={false}
-            bind:value={groupName}
+            bind:value={candidateGroup.name}
             minlength={MIN_LENGTH}
             maxlength={MAX_LENGTH}
             countdown={true}
@@ -92,7 +77,7 @@
 
         <TextArea
             invalid={false}
-            bind:value={groupDesc}
+            bind:value={candidateGroup.description}
             maxlength={MAX_DESC_LENGTH}
             placeholder={$_("newGroupDesc")} />
 
@@ -100,24 +85,24 @@
             <div class="scope">
                 <span
                     class="scope-label"
-                    class:selected={!isPublic}
-                    on:click={() => (isPublic = false)}>{$_("private")}</span>
+                    class:selected={!candidateGroup.isPublic}
+                    on:click={() => (candidateGroup.isPublic = false)}>{$_("private")}</span>
 
                 <Checkbox
                     id="is-public"
                     toggle={true}
                     on:change={toggleScope}
                     label={$_("isPublic")}
-                    checked={isPublic} />
+                    checked={candidateGroup.isPublic} />
 
                 <span
                     class="scope-label"
-                    class:selected={isPublic}
-                    on:click={() => (isPublic = true)}>{$_("public")}</span>
+                    class:selected={candidateGroup.isPublic}
+                    on:click={() => (candidateGroup.isPublic = true)}>{$_("public")}</span>
             </div>
 
             <div class="info">
-                {#if isPublic}
+                {#if candidateGroup.isPublic}
                     <p>
                         {$_("publicGroupInfo")}
                     </p>
@@ -136,13 +121,14 @@
             <div class="history">
                 <Checkbox
                     id="history-visible"
-                    disabled={isPublic}
-                    on:change={() => (historyVisible = !historyVisible)}
+                    disabled={candidateGroup.isPublic}
+                    on:change={() =>
+                        (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
                     label={$_("historyVisible")}
-                    checked={historyVisible} />
+                    checked={candidateGroup.historyVisible} />
             </div>
             <div class="info">
-                {#if historyVisible}
+                {#if candidateGroup.historyVisible}
                     <p>
                         {$_("historyOnInfo")}
                     </p>
@@ -155,10 +141,7 @@
         </div>
     </div>
     <div class="cta">
-        <Button
-            fill={true}
-            disabled={!valid || $machine.matches({ canister_creation: "creating" })}
-            loading={$machine.matches({ canister_creation: "creating" })}
+        <Button fill={true} disabled={!valid || creatingCanister} loading={creatingCanister}
             >{$_("submitNewGroup")}</Button>
     </div>
 </form>

@@ -11,12 +11,7 @@ import {
     spawn,
 } from "xstate";
 import type { ServiceContainer } from "../services/serviceContainer";
-import type {
-    ChatSummary,
-    DirectChatSummary,
-    EnhancedReplyContext,
-    GroupChatSummary,
-} from "../domain/chat/chat";
+import type { ChatSummary, DirectChatSummary, EnhancedReplyContext } from "../domain/chat/chat";
 import {
     updateArgsFromChats,
     userIdsFromChatSummaries,
@@ -29,7 +24,6 @@ import { log, pure, send } from "xstate/lib/actions";
 import { ChatEvents, chatMachine, ChatMachine } from "./chat.machine";
 import { push } from "svelte-spa-router";
 import { background } from "../stores/background";
-import { addGroupMachine, nullGroup } from "./addgroup.machine";
 import type { DataContent } from "../domain/data/data";
 import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import { unconfirmed, unconfirmedReadByThem } from "../stores/unconfirmed";
@@ -70,7 +64,6 @@ export interface HomeContext {
 export type HomeEvents =
     | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
     | { type: "NEW_CHAT" }
-    | { type: "NEW_GROUP" }
     | {
           type: "REMOTE_USER_TOGGLED_REACTION";
           data: RemoteUserToggledReaction;
@@ -111,9 +104,7 @@ export type HomeEvents =
     | { type: "LEAVE_GROUP"; data: string }
     | { type: "USERS_UPDATED"; data: UserUpdateResponse }
     | { type: "done.invoke.getUpdates"; data: ChatsResponse }
-    | { type: "error.platform.getUpdates"; data: Error }
-    | { type: "done.invoke.addGroupMachine"; data: GroupChatSummary }
-    | { type: "error.platform.addGroupMachine"; data: Error };
+    | { type: "error.platform.getUpdates"; data: Error };
 
 type ChatsIndex = Record<string, ActorRefFrom<ChatMachine>>;
 
@@ -615,11 +606,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                     target: ".new_chat",
                     actions: log("received new chat"),
                 },
-                NEW_GROUP: {
-                    internal: true,
-                    target: ".new_group",
-                    actions: log("received new group"),
-                },
                 MESSAGE_READ_BY_ME: {
                     /**
                      * 1) mark the message as read
@@ -738,31 +724,6 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                 no_chat_selected: {},
                 chat_selected: {
                     entry: log("entering the chat_selected state"),
-                },
-                new_group: {
-                    invoke: {
-                        id: "addGroupMachine",
-                        src: addGroupMachine,
-                        data: (ctx, _) => {
-                            return {
-                                user: ctx.user,
-                                serviceContainer: ctx.serviceContainer,
-                                candidateGroup: nullGroup,
-                                error: undefined,
-                            };
-                        },
-                        onDone: { target: "no_chat_selected" },
-                        onError: {
-                            // todo - as in many other cases, this needs sorting out properly
-                            internal: true,
-                            target: "..unexpected_error",
-                            actions: [
-                                assign({
-                                    error: (_, { data }) => data,
-                                }),
-                            ],
-                        },
-                    },
                 },
                 new_chat: {
                     entry: log("entering new chat"),
