@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct Transaction {
+    pub index: u32,
     pub timestamp: TimestampMillis,
     pub currency: Currency,
     pub transfer: Transfer,

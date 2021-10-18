@@ -1,6 +1,6 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
-use types::{Currency, Cycles, Deposit, Timestamped, Transaction, Transfer};
+use types::{Currency, Cycles, Deposit, Timestamped, Transfer};
 
 #[update]
 fn wallet_receive() {
@@ -24,12 +24,8 @@ fn receive_cycles_impl(cycles: Cycles, runtime_state: &mut RuntimeState) {
     let from = runtime_state.env.caller().to_string();
     let new_cycles_balance = runtime_state.data.user_cycles_balance.value + cycles;
 
-    let transaction = Transaction {
-        timestamp: now,
-        currency: Currency::Cycles,
-        transfer: Transfer::Deposit(Deposit { from, amount: cycles }),
-    };
+    let transfer = Transfer::Deposit(Deposit { from, amount: cycles });
 
-    runtime_state.data.transactions.add(transaction);
+    runtime_state.data.transactions.add(Currency::Cycles, transfer, now);
     runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
 }

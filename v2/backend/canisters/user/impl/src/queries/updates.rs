@@ -293,14 +293,16 @@ fn finalize(
         }
     }
 
+    let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
     let cycles_balance = runtime_state.data.user_cycles_balance.if_set_after(updates_since).copied();
 
     SuccessResult {
+        timestamp: now,
         chats_added,
         chats_updated,
         chats_removed: Vec::new(), // TODO
-        timestamp: now,
+        transactions,
         blocked_users,
         cycles_balance,
     }

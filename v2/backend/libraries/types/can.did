@@ -67,6 +67,12 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
+type Currency =
+    variant {
+        ICP;
+        Cycles;
+    };
+
 type CyclesContent =
     record {
         amount: Cycles;
@@ -77,6 +83,12 @@ type DeletedContent =
     record {
         deleted_by: UserId;
         timestamp: TimestampMillis;
+    };
+
+type Deposit =
+    record {
+        from: text;
+        amount: nat;
     };
 
 type DirectChatCreated =
@@ -325,6 +337,14 @@ type NotificationEnvelope =
         notification: Notification;
     };
 
+type PartialUserSummary =
+    record {
+        user_id: UserId;
+        username: opt text;
+        seconds_since_last_online: nat32;
+        avatar_id: opt nat;
+    };
+
 type Participant =
     record {
         user_id: UserId;
@@ -366,10 +386,24 @@ type ParticipantsRemoved =
         removed_by: UserId;
     };
 
+type Receive =
+    record {
+        from_user: UserId;
+        from: text;
+        amount: nat;
+    };
+
 type Role =
     variant {
         Admin;
         Participant;
+    };
+
+type Send =
+    record {
+        to_user: UserId;
+        to: text;
+        amount: nat;
     };
 
 type Subscription =
@@ -395,18 +429,26 @@ type TextContent =
         text: text;
     };
 
+type Transaction =
+    record {
+        index: nat32;
+        timestamp: TimestampMillis;
+        currency: Currency;
+        transfer: Transfer;
+    };
+
+type Transfer =
+    variant {
+        Deposit: Deposit;
+        Withdrawal: Withdrawal;
+        Send: Send;
+        Receive: Receive;
+    };
+
 type UserSummary =
     record {
         user_id: UserId;
         username: text;
-        seconds_since_last_online: nat32;
-        avatar_id: opt nat;
-    };
-
-type PartialUserSummary =
-    record {
-        user_id: UserId;
-        username: opt text;
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
     };
@@ -416,6 +458,12 @@ type Version =
         major: nat32;
         minor: nat32;
         patch: nat32;
+    };
+
+type Withdrawal =
+    record {
+        to: text;
+        amount: nat;
     };
 
 // TODO Delete the V1 stuff below

@@ -2,9 +2,7 @@ use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{
-    CanisterId, Currency, Cycles, MessageContent, MessageIndex, Send, TimestampMillis, Timestamped, Transaction, Transfer,
-};
+use types::{CanisterId, Currency, Cycles, MessageContent, MessageIndex, Send, TimestampMillis, Timestamped, Transfer};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -81,16 +79,12 @@ fn handle_transaction_if_present(args: &Args, now: TimestampMillis, data: &mut D
             return Err(InsufficientCycles);
         }
         let new_cycles_balance = data.user_cycles_balance.value - c.amount;
-        let transaction = Transaction {
-            timestamp: now,
-            currency: Currency::Cycles,
-            transfer: Transfer::Send(Send {
-                to_user: args.recipient,
-                to: args.recipient.to_string(),
-                amount: c.amount,
-            }),
-        };
-        data.transactions.add(transaction);
+        let transfer = Transfer::Send(Send {
+            to_user: args.recipient,
+            to: args.recipient.to_string(),
+            amount: c.amount,
+        });
+        data.transactions.add(Currency::Cycles, transfer, now);
         data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
         Ok(c.amount)
     } else {
