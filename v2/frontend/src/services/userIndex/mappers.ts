@@ -84,7 +84,9 @@ export function submitPhoneNumberResponse(
     if ("InvalidPhoneNumber" in candid) {
         return { kind: "invalid_phone_number" };
     }
-
+    if ("UserLimitReached" in candid) {
+        return { kind: "user_limit_reached" };
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiSubmitPhoneNumberResponse type received",
         candid

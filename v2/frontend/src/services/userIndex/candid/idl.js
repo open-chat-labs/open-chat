@@ -128,6 +128,7 @@ export const idlFactory = ({ IDL }) => {
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
+    'UserLimitReached' : IDL.Null,
     'Success' : IDL.Null,
     'AlreadyRegisteredByOther' : IDL.Null,
     'InvalidPhoneNumber' : IDL.Null,

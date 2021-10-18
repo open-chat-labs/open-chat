@@ -341,6 +341,7 @@ export type SmsMessagesResponse = {
   };
 export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
 export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
+  { 'UserLimitReached' : null } |
   { 'Success' : null } |
   { 'AlreadyRegisteredByOther' : null } |
   { 'InvalidPhoneNumber' : null };
