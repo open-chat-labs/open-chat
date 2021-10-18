@@ -24,18 +24,21 @@ fn remove_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             match runtime_state.data.participants.get_by_user_id_mut(&args.user_id) {
                 None => UserNotInGroup,
                 Some(participant) => {
-                    participant.role = Role::Participant;
+                    if matches!(participant.role, Role::Admin) {
+                        participant.role = Role::Participant;
+                        runtime_state.data.accumulated_metrics.admins -= 1;
 
-                    let event = ParticipantsDismissedAsAdmin {
-                        user_ids: vec![args.user_id],
-                        dismissed_by: caller_user_id,
-                    };
-                    runtime_state
-                        .data
-                        .events
-                        .push_event(ChatEventInternal::ParticipantsDismissedAsAdmin(Box::new(event)), now);
+                        let event = ParticipantsDismissedAsAdmin {
+                            user_ids: vec![args.user_id],
+                            dismissed_by: caller_user_id,
+                        };
+                        runtime_state
+                            .data
+                            .events
+                            .push_event(ChatEventInternal::ParticipantsDismissedAsAdmin(Box::new(event)), now);
 
-                    handle_activity_notification(runtime_state);
+                        handle_activity_notification(runtime_state);
+                    }
                     Success
                 }
             }

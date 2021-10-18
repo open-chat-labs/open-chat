@@ -105,7 +105,7 @@ mod upgrade_canisters {
 
 mod topup_canister_pool {
     use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, RUNTIME_STATE};
-    use types::CanisterId;
+    use types::{CanisterId, Cycles};
     use utils::canister;
     use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
@@ -123,11 +123,13 @@ mod topup_canister_pool {
     async fn add_new_canister() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if let Ok(canister_id) = canister::create(cycles_required).await {
-            RUNTIME_STATE.with(|state| add_canister_to_pool(state.borrow_mut().as_mut().unwrap(), canister_id));
+            RUNTIME_STATE
+                .with(|state| add_canister_to_pool(canister_id, cycles_required, state.borrow_mut().as_mut().unwrap()));
         }
     }
 
-    fn add_canister_to_pool(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
+    fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
+        runtime_state.data.total_cycles_spent_on_canisters += cycles;
     }
 }

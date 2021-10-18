@@ -24,18 +24,21 @@ fn make_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             match runtime_state.data.participants.get_by_user_id_mut(&args.user_id) {
                 None => UserNotInGroup,
                 Some(participant) => {
-                    participant.role = Role::Admin;
+                    if !matches!(participant.role, Role::Admin) {
+                        participant.role = Role::Admin;
+                        runtime_state.data.accumulated_metrics.admins += 1;
 
-                    let event = ParticipantsPromotedToAdmin {
-                        user_ids: vec![args.user_id],
-                        promoted_by: caller_user_id,
-                    };
-                    runtime_state
-                        .data
-                        .events
-                        .push_event(ChatEventInternal::ParticipantsPromotedToAdmin(Box::new(event)), now);
+                        let event = ParticipantsPromotedToAdmin {
+                            user_ids: vec![args.user_id],
+                            promoted_by: caller_user_id,
+                        };
+                        runtime_state
+                            .data
+                            .events
+                            .push_event(ChatEventInternal::ParticipantsPromotedToAdmin(Box::new(event)), now);
 
-                    handle_activity_notification(runtime_state);
+                        handle_activity_notification(runtime_state);
+                    }
                     Success
                 }
             }
