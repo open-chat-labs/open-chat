@@ -49,15 +49,6 @@ pub enum MessageContent {
     Cycles(CycleContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
-pub enum MessageContentType {
-    Text,
-    Image,
-    Video,
-    File,
-    Cycles,
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Message {
     id: u32,

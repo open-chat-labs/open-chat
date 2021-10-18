@@ -137,6 +137,10 @@ impl Participants {
             None
         }
     }
+
+    pub fn len(&self) -> u32 {
+        self.user_id_to_principal_map.len() as u32
+    }
 }
 
 pub enum AddResult {

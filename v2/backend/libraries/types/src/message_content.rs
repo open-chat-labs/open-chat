@@ -69,15 +69,6 @@ pub struct DeletedContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum MessageContentType {
-    Text,
-    Image,
-    Video,
-    File,
-    Cycles,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
