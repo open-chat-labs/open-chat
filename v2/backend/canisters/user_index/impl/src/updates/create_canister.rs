@@ -34,12 +34,14 @@ async fn create_canister(_args: Args) -> Response {
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
             let wasm_version = init_ok.canister_wasm.version;
+            let canister_created = init_ok.canister_id.is_none();
             RUNTIME_STATE.with(|state| {
                 commit(
                     caller,
                     canister_id,
                     wasm_version,
                     cycles,
+                    canister_created,
                     state.borrow_mut().as_mut().unwrap(),
                 )
             });
@@ -117,7 +119,14 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cycles: Cycles, runtime_state: &mut RuntimeState) {
+fn commit(
+    caller: Principal,
+    canister_id: CanisterId,
+    wasm_version: Version,
+    cycles: Cycles,
+    canister_created: bool,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
@@ -157,7 +166,9 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cyc
         }
     }
 
-    runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    if canister_created {
+        runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
 }
 
 fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
