@@ -17,7 +17,7 @@ mod queries;
 mod updates;
 
 const MIN_CYCLES_BALANCE: Cycles = 5_000_000_000_000; // 5T
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 150_000_000_000; // 0.15T cycles
+const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 500_000_000_000; // 0.5T cycles
 const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const STATE_VERSION: StateVersion = StateVersion::V1;
