@@ -110,9 +110,9 @@ mod topup_canister_pool {
     pub fn run() {
         let is_full = RUNTIME_STATE.with(|state| is_pool_full(state.borrow().as_ref().unwrap()));
         if !is_full {
-            let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
             let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-            if cycles_balance - cycles_to_use.saturating_sub(cycles_to_use) > MIN_CYCLES_BALANCE {
+            let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+            if cycles_balance.saturating_sub(cycles_to_use) > MIN_CYCLES_BALANCE {
                 ic_cdk::block_on(add_new_canister(cycles_to_use));
             }
         }
