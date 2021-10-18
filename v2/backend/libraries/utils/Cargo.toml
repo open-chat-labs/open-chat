@@ -14,7 +14,6 @@ rand = "0.7.3"
 range-set = { git = "https://github.com/hpeebles/range-set", rev = "d64d0b95c5a397273b490bd37d81ddbff9c3e4a3", features = ["serde"], optional = true }
 serde = "1.0.126"
 serde_bytes = "0.11.5"
-serde_cbor = "0.11.2"
 smallvec = { version = "0.6.*", features = ["serde"] }
 tracing = "0.1.29"
 types = { path = "../types" }
