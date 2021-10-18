@@ -59,7 +59,7 @@ impl Transactions {
             let range = &self.transactions[..=start];
             Box::new(range.iter().rev())
         };
-        
+
         iter.take(max_transactions as usize)
             .enumerate()
             .map(|(i, t)| Transaction {
