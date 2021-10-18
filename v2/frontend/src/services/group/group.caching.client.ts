@@ -46,6 +46,11 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
+    chatEventsWindow(messageIndex: number): Promise<EventsResponse<GroupChatEvent>> {
+        // todo - come back and sort out caching
+        return this.client.chatEventsWindow(messageIndex);
+    }
+
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,

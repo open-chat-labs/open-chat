@@ -94,9 +94,6 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        // todo the problem here is that the height is affected by loading images
-        // I'm going to wait until we load images via their own urls before trying any
-        // harder to fix this.
         setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
@@ -122,32 +119,31 @@
         }
     }
 
-    function scrollToElement(element: HTMLElement | null, behavior: ScrollBehavior = "auto") {
+    function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
         element?.scrollIntoView({ behavior, block: "center" });
     }
 
-    function scrollToIndex(index: number) {
-        const element = document.getElementById(`event-${index}`);
-        if (!element) {
-            messagesDiv.scrollTop = 0;
-            onScroll();
-        } else {
+    function scrollToMessageIndex(index: number) {
+        const element = document.querySelector(`[data-index='${index}']`);
+        if (element) {
             scrollToElement(element);
             setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        } else {
+            console.log("Unable to find element for message index: ", index);
         }
     }
 
     function resetScroll() {
         if (initialised) {
-            if ($machine.context.focusIndex) {
-                scrollToIndex($machine.context.focusIndex);
+            if ($machine.context.focusMessageIndex !== undefined) {
+                scrollToMessageIndex($machine.context.focusMessageIndex);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
         } else {
-            if ($machine.context.focusIndex) {
-                scrollToIndex($machine.context.focusIndex);
+            if ($machine.context.focusMessageIndex !== undefined) {
+                scrollToMessageIndex($machine.context.focusMessageIndex);
             } else {
                 scrollBottom();
             }
@@ -226,8 +222,9 @@
             });
     }
 
-    function goToMessage(ev: CustomEvent<number>) {
-        machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
+    function goToMessageIndex(ev: CustomEvent<number>) {
+        // TODO - iff the message index cannot be found, fire off an event to trigger load of the data
+        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -350,6 +347,10 @@
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
+                    console.log(
+                        "just loaded previous messages: ",
+                        $machine.context.focusMessageIndex
+                    );
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
@@ -443,7 +444,8 @@
                     {/if}
                     <ChatEvent
                         {observer}
-                        focused={$machine.context.focusIndex === evt.index}
+                        focused={evt.event.kind === "message" &&
+                            evt.event.messageIndex === $machine.context.focusMessageIndex}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
@@ -458,7 +460,7 @@
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}
-                        on:goToMessage={goToMessage}
+                        on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={selectReaction}
                         event={evt} />
                 {/each}

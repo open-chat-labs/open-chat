@@ -58,7 +58,7 @@
     let userStatus = getUserStatus(userLookup, senderId);
     let metaData = messageMetaData(msg.content);
     let showEmojiPicker = false;
-    let debug = false;
+    let debug = true;
 
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = fillMessage(msg);
@@ -95,6 +95,7 @@
             content: msg.content,
             sender,
             messageId: msg.messageId,
+            messageIndex: msg.messageIndex,
         };
     }
 
@@ -176,7 +177,7 @@
             class:rtl={$rtlStore}>
             {#if msg.repliesTo !== undefined && !deleted}
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                    <RepliesTo {chatId} {user} on:goToMessage repliesTo={msg.repliesTo} />
+                    <RepliesTo {chatId} {user} on:goToMessageIndex repliesTo={msg.repliesTo} />
                 {:else}
                     <UnresolvedReply on:goToMessage repliesTo={msg.repliesTo} />
                 {/if}

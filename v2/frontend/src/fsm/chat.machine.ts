@@ -50,6 +50,7 @@ export interface ChatContext {
     error?: Error;
     events: EventWrapper<ChatEvent>[];
     focusIndex?: number; // this is the index of a message that we want to scroll to
+    focusMessageIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
     localReactions: Record<string, LocalReaction[]>;
@@ -71,6 +72,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_EVENT_INDEX"; data: number }
+    | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
@@ -121,25 +123,38 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
+    ev: ChatEvents,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
     startIndex: number,
     ascending: boolean
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(
-            indexRangeForChat(chatSummary),
-            chatSummary.them,
-            startIndex,
-            ascending
-        );
+        if (ev.type === "GO_TO_MESSAGE_INDEX") {
+            return serviceContainer.directChatEventsWindow(chatSummary.them, startIndex);
+        } else {
+            return serviceContainer.directChatEvents(
+                indexRangeForChat(chatSummary),
+                chatSummary.them,
+                startIndex,
+                ascending
+            );
+        }
     }
-    const events = serviceContainer
-        .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
-        .then((resp) => {
-            return resp;
-        });
-    return events;
+    if (ev.type === "GO_TO_MESSAGE_INDEX") {
+        return serviceContainer.groupChatEventsWindow(chatSummary.chatId, startIndex);
+    } else {
+        return serviceContainer
+            .groupChatEvents(
+                indexRangeForChat(chatSummary),
+                chatSummary.chatId,
+                startIndex,
+                ascending
+            )
+            .then((resp) => {
+                return resp;
+            });
+    }
 }
 
 export function moreMessagesAvailable(ctx: ChatContext): boolean {
@@ -194,7 +209,11 @@ export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boo
     if (ev.type === "CHAT_UPDATED") {
         return newMessageCriteria(ctx);
     } else {
-        return previousMessagesCriteria(ctx);
+        if (ev.type === "GO_TO_MESSAGE_INDEX") {
+            return [ctx.focusMessageIndex!, false];
+        } else {
+            return previousMessagesCriteria(ctx);
+        }
     }
 }
 
@@ -207,7 +226,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             const [, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
-                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
+                    ? loadEvents(
+                          ev,
+                          ctx.serviceContainer!,
+                          ctx.chatSummary,
+                          criteria[0],
+                          criteria[1]
+                      )
                     : undefined,
             ]);
 
@@ -234,23 +259,31 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     },
     actions: {
         assignEventsResponse: assign((ctx, ev) => {
-            return ev.type === "done.invoke.loadEventsAndUsers" && ev.data !== undefined
-                ? {
-                      initialised: true,
-                      events: replaceAffected(
-                          ctx.chatSummary.chatId,
-                          replaceLocal(
-                              ctx.user!.userId,
-                              ctx.chatSummary.chatId,
-                              ctx.markRead,
-                              ctx.events,
-                              ev.data.events
-                          ),
-                          ev.data.affectedEvents,
-                          ctx.localReactions
-                      ),
-                  }
-                : {};
+            if (ev.type !== "done.invoke.loadEventsAndUsers" || ev.data === undefined) {
+                return {};
+            }
+            if (ctx.focusMessageIndex !== undefined) {
+                // we are going to throw away any *other* events we may already have loaded
+                return {
+                    initialised: true,
+                    events: ev.data.events,
+                };
+            }
+            return {
+                initialised: true,
+                events: replaceAffected(
+                    ctx.chatSummary.chatId,
+                    replaceLocal(
+                        ctx.user!.userId,
+                        ctx.chatSummary.chatId,
+                        ctx.markRead,
+                        ctx.events,
+                        ev.data.events
+                    ),
+                    ev.data.affectedEvents,
+                    ctx.localReactions
+                ),
+            };
         }),
     },
 };
@@ -588,7 +621,10 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
-                    actions: assign((_, _ev) => ({ focusIndex: undefined })),
+                    actions: assign((_, _ev) => ({
+                        focusIndex: undefined,
+                        focusMessageIndex: undefined,
+                    })),
                 },
                 REPLY_TO: {
                     actions: assign((_, ev) => ({ replyingTo: ev.data })),
@@ -604,6 +640,14 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                     target: ".loading_previous_messages",
                     actions: assign((_, ev) => ({
                         focusIndex: ev.data,
+                    })),
+                },
+                // this will only be called if the message with the required message index is
+                // not already rendered. If it *is* we can simply scroll to it. If not, we need to load it first.
+                GO_TO_MESSAGE_INDEX: {
+                    target: ".loading_previous_messages",
+                    actions: assign((_, ev) => ({
+                        focusMessageIndex: ev.data,
                     })),
                 },
                 ATTACH_FILE: {

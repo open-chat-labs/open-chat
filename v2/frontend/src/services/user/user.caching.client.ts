@@ -63,6 +63,14 @@ export class CachingUserClient implements IUserClient {
         );
     }
 
+    chatEventsWindow(
+        userId: string,
+        messageIndex: number
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        // todo - come back and sort out caching
+        return this.client.chatEventsWindow(userId, messageIndex);
+    }
+
     async chatEvents(
         eventIndexRange: IndexRange,
         userId: string,

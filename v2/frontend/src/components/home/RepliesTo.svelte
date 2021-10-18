@@ -16,13 +16,13 @@
     export let user: UserSummary | undefined;
     export let repliesTo: RehydratedReplyContext;
 
-    let debug = false;
+    let debug = true;
 
     $: me = repliesTo.senderId === user?.userId;
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
-            dispatch("goToMessage", repliesTo.eventIndex);
+            dispatch("goToMessageIndex", repliesTo.messageIndex);
         } else {
             push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);
         }
