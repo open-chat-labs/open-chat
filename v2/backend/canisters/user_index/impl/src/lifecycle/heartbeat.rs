@@ -18,6 +18,8 @@ mod topup_canister_pool {
         if !is_full {
             let cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
             let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+
+            // Only create the new canister if it won't result in the cycles balance being too low
             if cycles_balance.saturating_sub(cycles_to_use) > MIN_CYCLES_BALANCE {
                 ic_cdk::block_on(add_new_canister(cycles_to_use));
             }
