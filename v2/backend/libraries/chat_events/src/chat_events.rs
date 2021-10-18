@@ -581,6 +581,18 @@ impl ChatEvents {
         None
     }
 
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.events.is_empty()
+    }
+
+    pub fn latest(&self) -> Option<&EventWrapper<ChatEventInternal>> {
+        self.events.last()
+    }
+
     fn get_internal(&self, event_index: EventIndex) -> Option<&EventWrapper<ChatEventInternal>> {
         let index = self.get_index(event_index)?;
 

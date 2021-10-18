@@ -28,10 +28,12 @@ fn toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             .toggle_reaction(participant.user_id, args.message_id, args.reaction, now)
         {
             ToggleReactionResult::Added(e) => {
+                runtime_state.data.accumulated_metrics.total_reactions += 1;
                 handle_activity_notification(runtime_state);
                 Added(e)
             }
             ToggleReactionResult::Removed(e) => {
+                runtime_state.data.accumulated_metrics.total_reactions -= 1;
                 handle_activity_notification(runtime_state);
                 Removed(e)
             }
