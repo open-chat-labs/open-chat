@@ -50,4 +50,33 @@ impl Transactions {
                 .collect()
         }
     }
+
+    pub fn from_index(&self, start: usize, ascending: bool, max_transactions: u8) -> Vec<Transaction> {
+        let iter: Box<dyn Iterator<Item = &TransactionInternal>> = if ascending {
+            let range = &self.transactions[start..];
+            Box::new(range.iter())
+        } else {
+            let range = &self.transactions[..=start];
+            Box::new(range.iter().rev())
+        };
+        
+        iter.take(max_transactions as usize)
+            .enumerate()
+            .map(|(i, t)| Transaction {
+                index: if ascending { start + i } else { start - i } as u32,
+                timestamp: t.timestamp,
+                currency: t.currency,
+                transfer: t.transfer.clone(),
+            })
+            .collect()
+    }
+
+    pub fn latest_index(&self) -> Option<u32> {
+        let count = self.transactions.len() as u32;
+        if count == 0 {
+            None
+        } else {
+            Some(count - 1)
+        }
+    }
 }

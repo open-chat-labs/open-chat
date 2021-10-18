@@ -5,4 +5,5 @@ pub mod events_window;
 pub mod http_request;
 pub mod search_all_messages;
 pub mod search_messages;
+pub mod transactions;
 pub mod updates;
