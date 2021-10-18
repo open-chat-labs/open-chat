@@ -1,6 +1,13 @@
 {
+  "user_index": {
+    "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai"
+  },
+  "group_index": {
+    "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai"
+  },
   "notifications": {
-    "ic": "6vuwk-zaaaa-aaaaf-aaagq-cai"
+    "ic_v1": "6vuwk-zaaaa-aaaaf-aaagq-cai",
+    "ic": "4glvk-ryaaa-aaaaf-aaaia-cai"
   },
   "website": {
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai"

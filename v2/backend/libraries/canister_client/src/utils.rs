@@ -33,6 +33,7 @@ pub fn build_identity(identity: TestIdentity) -> BasicIdentity {
 }
 
 pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
+    let mainnet = is_mainnet(&url);
     let transport = ReqwestHttpReplicaV2Transport::create(url).expect("Failed to create Reqwest transport");
     let timeout = std::time::Duration::from_secs(60 * 5);
 
@@ -43,7 +44,9 @@ pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
         .build()
         .expect("Failed to build IC agent");
 
-    agent.fetch_root_key().await.expect("Couldn't fetch root key");
+    if !mainnet {
+        agent.fetch_root_key().await.expect("Couldn't fetch root key");
+    }
 
     agent
 }
@@ -84,4 +87,8 @@ pub fn delay() -> garcon::Delay {
         .throttle(std::time::Duration::from_millis(500))
         .timeout(std::time::Duration::from_secs(60 * 5))
         .build()
+}
+
+pub fn is_mainnet(url: &str) -> bool {
+    url.contains("ic0.app")
 }

@@ -7,7 +7,7 @@ use ic_utils::interfaces::ManagementCanister;
 use ic_utils::Canister;
 use types::CanisterId;
 
-pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String) -> CanisterIds {
+pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
@@ -29,23 +29,24 @@ pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: 
         notifications: notifications_canister_id,
     };
 
-    install_service_canisters_impl(principal, &canister_ids, &management_canister).await;
+    install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
 
     canister_ids
 }
 
-pub async fn install_service_canisters(identity: BasicIdentity, url: String, canister_ids: CanisterIds) {
+pub async fn install_service_canisters(identity: BasicIdentity, url: String, canister_ids: CanisterIds, test_mode: bool) {
     let principal = identity.sender().unwrap();
     let agent = build_ic_agent(url, identity).await;
     let management_canister = build_management_canister(&agent);
 
-    install_service_canisters_impl(principal, &canister_ids, &management_canister).await;
+    install_service_canisters_impl(principal, &canister_ids, &management_canister, test_mode).await;
 }
 
 async fn install_service_canisters_impl(
     principal: Principal,
     canister_ids: &CanisterIds,
     management_canister: &Canister<'_, ManagementCanister>,
+    test_mode: bool
 ) {
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, false);
     let user_canister_wasm = get_canister_wasm(CanisterName::User, true);
@@ -55,7 +56,7 @@ async fn install_service_canisters_impl(
         user_canister_wasm,
         group_index_canister_id: canister_ids.group_index,
         notifications_canister_id: canister_ids.notifications,
-        test_mode: true,
+        test_mode,
     };
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, false);
@@ -64,13 +65,13 @@ async fn install_service_canisters_impl(
         service_principals: vec![principal],
         group_canister_wasm,
         notifications_canister_id: canister_ids.notifications,
-        test_mode: true,
+        test_mode,
     };
 
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, false);
     let notifications_init_args = notifications_canister::init::Args {
         push_service_principals: Vec::new(),
-        test_mode: true,
+        test_mode,
     };
 
     futures::future::join3(
