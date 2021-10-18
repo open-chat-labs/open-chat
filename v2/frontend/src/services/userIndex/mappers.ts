@@ -122,6 +122,7 @@ export function createCanisterResponse(candid: ApiCreateCanisterResponse): Creat
     if ("InternalError" in candid) return "internal_error";
     if ("UserUnconfirmed" in candid) return "user_unconfirmed";
     if ("UserNotFound" in candid) return "user_not_found";
+    if ("CyclesBalanceTooLow" in candid) return "cycles_balance_too_low";
 
     throw new UnsupportedValueError("Unexpected ApiCreateCanisterResponse type received", candid);
 }

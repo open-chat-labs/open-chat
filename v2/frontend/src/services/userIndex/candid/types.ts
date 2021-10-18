@@ -45,9 +45,10 @@ export type CreateCanisterArgs = {};
 export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'Success' : CanisterId } |
   { 'CreationInProgress' : null } |
-  { 'InternalError' : null } |
+  { 'InternalError' : string } |
   { 'UserUnconfirmed' : null } |
-  { 'UserNotFound' : null };
+  { 'UserNotFound' : null } |
+  { 'CyclesBalanceTooLow' : null };
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Unconfirmed' : { 'phone_number' : PhoneNumber }

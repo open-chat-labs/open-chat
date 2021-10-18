@@ -57,6 +57,7 @@ export type CreateCanisterResponse =
     | "creation_in_progress"
     | "internal_error"
     | "user_unconfirmed"
+    | "cycles_balance_too_low"
     | "user_not_found";
 
 export type UpgradeCanisterResponse =

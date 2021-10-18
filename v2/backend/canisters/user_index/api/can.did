@@ -56,7 +56,8 @@ type CreateCanisterResponse =
         UserUnconfirmed;
         UserAlreadyCreated;
         CreationInProgress;
-        InternalError;
+        CyclesBalanceTooLow;
+        InternalError: text;
     };
 
 type SetUsernameArgs =
