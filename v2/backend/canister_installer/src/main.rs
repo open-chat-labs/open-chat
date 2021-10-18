@@ -16,13 +16,15 @@ async fn main() {
 
     let identity = get_dfx_identity(&opts.controller);
 
-    install_service_canisters(identity, opts.url, canister_ids).await;
+    install_service_canisters(identity, opts.url, canister_ids, opts.test_mode).await;
 }
 
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     url: String,
+    #[clap(parse(try_from_str))]
+    test_mode: bool,
     controller: String,
     user_index: CanisterId,
     group_index: CanisterId,
