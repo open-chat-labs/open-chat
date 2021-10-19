@@ -27,7 +27,8 @@ pub async fn send(recipient: AccountIdentifier, amount_e8s: u64) -> Result<SendR
         to: recipient,
         created_at_time: None,
     })
-    .await.map(|block_height| SendResult {
+    .await
+    .map(|block_height| SendResult {
         block_height,
         fee_e8s: ICP_TRANSACTION_FEE_E8S,
     })
