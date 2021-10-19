@@ -12,6 +12,7 @@ pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
+    admin_count: u32,
 }
 
 impl Participants {
@@ -29,6 +30,7 @@ impl Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
+            admin_count: 1,
         }
     }
 
@@ -141,12 +143,58 @@ impl Participants {
     pub fn len(&self) -> u32 {
         self.user_id_to_principal_map.len() as u32
     }
+
+    pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if matches!(p.role, Role::Admin) {
+                    MakeAdminResult::AlreadyAdmin
+                } else {
+                    p.role = Role::Admin;
+                    self.admin_count += 1;
+                    MakeAdminResult::Success
+                }
+            }
+            None => MakeAdminResult::NotInGroup,
+        }
+    }
+
+    pub fn remove_admin(&mut self, user_id: &UserId) -> RemoveAdminResult {
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if matches!(p.role, Role::Admin) {
+                    p.role = Role::Participant;
+                    self.admin_count -= 1;
+                    RemoveAdminResult::Success
+                } else {
+                    RemoveAdminResult::NotAdmin
+                }
+            }
+            None => RemoveAdminResult::NotInGroup,
+        }
+    }
+
+    pub fn admin_count(&self) -> u32 {
+        self.admin_count
+    }
 }
 
 pub enum AddResult {
     Success,
     AlreadyInGroup,
     Blocked,
+}
+
+pub enum MakeAdminResult {
+    Success,
+    NotInGroup,
+    AlreadyAdmin,
+}
+
+pub enum RemoveAdminResult {
+    Success,
+    NotInGroup,
+    NotAdmin,
 }
 
 #[derive(CandidType, Deserialize)]

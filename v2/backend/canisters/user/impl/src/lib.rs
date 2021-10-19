@@ -1,5 +1,6 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
+use crate::model::transactions::Transactions;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
@@ -64,6 +65,7 @@ struct Data {
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
     pub user_cycles_balance: Timestamped<Cycles>,
+    pub transactions: Transactions,
     pub test_mode: bool,
 }
 
@@ -89,6 +91,7 @@ impl Data {
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
             user_cycles_balance: Timestamped::new(0, now),
+            transactions: Transactions::default(),
             test_mode,
         }
     }

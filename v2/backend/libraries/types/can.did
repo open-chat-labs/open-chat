@@ -67,6 +67,53 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
+type Cryptocurrency =
+    variant {
+        ICP;
+        Cycles;
+    };
+
+type CryptocurrencyDeposit =
+    record {
+        from: text;
+        amount: nat;
+    };
+
+type CryptocurrencyReceive =
+    record {
+        from_user: UserId;
+        from: text;
+        amount: nat;
+    };
+
+type CryptocurrencySend =
+    record {
+        to_user: UserId;
+        to: text;
+        amount: nat;
+    };
+
+type CryptocurrencyTransaction =
+    record {
+        currency: Cryptocurrency;
+        block_height: opt nat64;
+        transfer: CryptocurrencyTransfer;
+    };
+
+type CryptocurrencyTransfer =
+    variant {
+        Deposit: CryptocurrencyDeposit;
+        Withdrawal: CryptocurrencyWithdrawal;
+        Send: CryptocurrencySend;
+        Receive: CryptocurrencyReceive;
+    };
+
+type CryptocurrencyWithdrawal =
+    record {
+        to: text;
+        amount: nat;
+    };
+
 type CyclesContent =
     record {
         amount: Cycles;
@@ -325,6 +372,14 @@ type NotificationEnvelope =
         notification: Notification;
     };
 
+type PartialUserSummary =
+    record {
+        user_id: UserId;
+        username: opt text;
+        seconds_since_last_online: nat32;
+        avatar_id: opt nat;
+    };
+
 type Participant =
     record {
         user_id: UserId;
@@ -395,18 +450,22 @@ type TextContent =
         text: text;
     };
 
+type Transaction =
+    variant {
+        Cryptocurrency: CryptocurrencyTransaction;
+    };
+
+type TransactionWrapper =
+    record {
+        index: nat32;
+        timestamp: TimestampMillis;
+        transaction: Transaction;
+    };
+
 type UserSummary =
     record {
         user_id: UserId;
         username: text;
-        seconds_since_last_online: nat32;
-        avatar_id: opt nat;
-    };
-
-type PartialUserSummary =
-    record {
-        user_id: UserId;
-        username: opt text;
         seconds_since_last_online: nat32;
         avatar_id: opt nat;
     };
