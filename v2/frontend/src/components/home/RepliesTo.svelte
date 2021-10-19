@@ -24,7 +24,7 @@
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", repliesTo.messageIndex);
         } else {
-            push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);
+            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
     }
 

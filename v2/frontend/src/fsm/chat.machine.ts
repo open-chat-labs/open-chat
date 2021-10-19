@@ -136,7 +136,11 @@ function loadEvents(
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
         if (ev.type === "GO_TO_MESSAGE_INDEX") {
-            return serviceContainer.directChatEventsWindow(chatSummary.them, startIndex);
+            return serviceContainer.directChatEventsWindow(
+                indexRangeForChat(chatSummary),
+                chatSummary.them,
+                startIndex
+            );
         } else {
             return serviceContainer.directChatEvents(
                 indexRangeForChat(chatSummary),
@@ -147,7 +151,11 @@ function loadEvents(
         }
     }
     if (ev.type === "GO_TO_MESSAGE_INDEX") {
-        return serviceContainer.groupChatEventsWindow(chatSummary.chatId, startIndex);
+        return serviceContainer.groupChatEventsWindow(
+            indexRangeForChat(chatSummary),
+            chatSummary.chatId,
+            startIndex
+        );
     } else {
         return serviceContainer.groupChatEvents(
             indexRangeForChat(chatSummary),

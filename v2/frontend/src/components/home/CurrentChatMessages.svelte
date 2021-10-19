@@ -58,9 +58,9 @@
     let scrollHeight = 0;
     let scrollTop = 0;
     let currentChatId = "";
-    let fromBottom = 0;
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
+    let fromBottomVal: number = 0;
 
     onMount(() => {
         const options = {
@@ -160,15 +160,21 @@
             ) {
                 machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
             }
-            fromBottom =
-                messagesDiv.scrollHeight -
-                Math.abs(messagesDiv.scrollTop) -
-                messagesDiv.clientHeight;
 
-            if (fromBottom < MESSAGE_LOAD_THRESHOLD && moreNewMessagesAvailable($machine.context)) {
+            fromBottomVal = fromBottom();
+            if (
+                fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
+                moreNewMessagesAvailable($machine.context)
+            ) {
                 machine.send({ type: "LOAD_NEW_MESSAGES" });
             }
         }
+    }
+
+    function fromBottom(): number {
+        return messagesDiv
+            ? messagesDiv.scrollHeight - Math.abs(messagesDiv.scrollTop) - messagesDiv.clientHeight
+            : 0;
     }
 
     function formatDate(timestamp: bigint): string {
@@ -350,6 +356,7 @@
         }
 
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
+            fromBottomVal = fromBottom();
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
                     console.log(
@@ -360,7 +367,7 @@
                     chatStore.clear();
                     break;
                 case "loaded_new_messages":
-                    if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD) {
                         scrollBottom("smooth");
                     }
                     chatStore.clear();
@@ -368,14 +375,14 @@
                 case "sending_message":
                     // if we are within the from bottom threshold *or* if the new message
                     // was sent by us, then scroll to the bottom
-                    if (fromBottom < FROM_BOTTOM_THRESHOLD || $chatStore.sentByMe) {
+                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.sentByMe) {
                         scrollBottom("smooth");
                     }
                     chatStore.clear();
                     break;
                 case "chat_updated":
                     if (
-                        fromBottom < MESSAGE_LOAD_THRESHOLD &&
+                        fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
                         moreNewMessagesAvailable($machine.context)
                     ) {
                         machine.send({ type: "LOAD_NEW_MESSAGES" });
@@ -487,7 +494,7 @@
     {/each}
 </div>
 
-{#if fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
+{#if fromBottomVal > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
     <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>

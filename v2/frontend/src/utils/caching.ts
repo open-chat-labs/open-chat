@@ -170,6 +170,9 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                 if (ascEvt.event.kind === "message") {
                     numMessages += 1;
                 }
+            } else {
+                console.log("Couldn't find index: ", ascIdx);
+                break;
             }
             ascIdx += 1;
         }
@@ -186,6 +189,9 @@ async function aggregateEventsWindow<T extends ChatEvent>(
                 if (descEvt.event.kind === "message") {
                     numMessages += 1;
                 }
+            } else {
+                console.log("Couldn't find index: ", descIdx);
+                break;
             }
             descIdx -= 1;
         }
