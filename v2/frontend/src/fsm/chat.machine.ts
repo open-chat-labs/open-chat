@@ -236,6 +236,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {
         notUpToDate: (ctx, ev) =>
             ev.type === "SEND_MESSAGE" &&
+            ctx.events.length > 0 &&
             ctx.events[ctx.events.length - 1]?.index < ctx.chatSummary.latestEventIndex &&
             ev.data.userId === ctx.user?.userId &&
             ctx.chatSummary.latestMessage !== undefined,
