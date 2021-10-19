@@ -16,8 +16,9 @@ import type {
     CurrentUserResponse,
     PhoneNumber,
     ResendCodeResponse,
+    CreateCanisterResponse,
 } from "../domain/user/user";
-import { log } from "xstate/lib/actions";
+import { log, pure } from "xstate/lib/actions";
 
 const CANISTER_CREATION_INTERVAL = 1000;
 
@@ -46,7 +47,7 @@ export type RegisterEvents =
     | { type: "error.platform.setUsername"; data: Error }
     | { type: "done.invoke.getUser"; data: CurrentUserResponse }
     | { type: "error.platform.getUser"; data: Error }
-    | { type: "done.invoke.createCanister" }
+    | { type: "done.invoke.createCanister"; data: CreateCanisterResponse }
     | { type: "error.platform.createCanister"; data: Error }
     | { type: "done.invoke.resendCode"; data: ResendCodeResponse }
     | { type: "error.platform.resendCode"; data: Error };
@@ -63,7 +64,17 @@ const liveConfig: Partial<MachineOptions<RegisterContext, RegisterEvents>> = {
             return ctx.currentUser?.kind === "confirmed_pending_username";
         },
         isAwaitingCanister: (ctx, _) => {
-            return ctx.currentUser?.kind === "confirmed_user";
+            return (
+                ctx.currentUser?.kind === "confirmed_user" &&
+                ctx.currentUser.canisterCreationStatus === "in_progress"
+            );
+        },
+        requiresCanisterCreation: (ctx, _) => {
+            return (
+                (ctx.currentUser?.kind === "confirmed_user" ||
+                    ctx.currentUser?.kind === "confirmed_pending_username") &&
+                ctx.currentUser?.canisterCreationStatus === "pending"
+            );
         },
         phoneAlreadyRegistered: (_, ev) => {
             return (
@@ -155,6 +166,7 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                 { target: "awaiting_registration_code", cond: "isAwaitingCode" },
                 { target: "awaiting_username", cond: "isAwaitingUsername" },
                 { target: "awaiting_canister", cond: "isAwaitingCanister" },
+                { target: "checking_user_readiness", cond: "requiresCanisterCreation" },
             ],
         },
         awaiting_canister: {
@@ -405,7 +417,15 @@ export const schema: MachineConfig<RegisterContext, any, RegisterEvents> = {
                     invoke: {
                         id: "createCanister",
                         src: "createCanister",
-                        onDone: "loading_user",
+                        onDone: {
+                            actions: pure((_ctx, ev: DoneInvokeEvent<CreateCanisterResponse>) => {
+                                if (ev.data !== "success") {
+                                    console.log("Create user canister failed: ", ev.data);
+                                }
+                                return undefined;
+                            }),
+                            target: "loading_user",
+                        },
                         onError: {
                             target: "..unexpected_error",
                             actions: assign({

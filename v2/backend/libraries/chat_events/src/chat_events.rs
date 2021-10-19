@@ -16,6 +16,7 @@ pub struct ChatEvents {
     message_index_map: HashMap<MessageIndex, EventIndex>,
     latest_message_event_index: Option<EventIndex>,
     latest_message_index: Option<MessageIndex>,
+    metrics: Metrics,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -128,6 +129,20 @@ pub enum ToggleReactionResult {
     MessageNotFound,
 }
 
+#[derive(CandidType, Deserialize, Debug, Default, Clone)]
+pub struct Metrics {
+    pub text_messages: u64,
+    pub image_messages: u64,
+    pub video_messages: u64,
+    pub audio_messages: u64,
+    pub file_messages: u64,
+    pub cycles_messages: u64,
+    pub deleted_messages: u64,
+    pub total_edits: u64,
+    pub replies_messages: u64,
+    pub total_reactions: u64,
+}
+
 impl ChatEvents {
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
@@ -138,6 +153,7 @@ impl ChatEvents {
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
+            metrics: Metrics::default(),
         };
 
         events.push_event(ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
@@ -160,6 +176,7 @@ impl ChatEvents {
             message_index_map: HashMap::new(),
             latest_message_event_index: None,
             latest_message_index: None,
+            metrics: Metrics::default(),
         };
 
         events.push_event(
@@ -175,6 +192,20 @@ impl ChatEvents {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
+        match args.content {
+            MessageContent::Text(_) => self.metrics.text_messages += 1,
+            MessageContent::Image(_) => self.metrics.image_messages += 1,
+            MessageContent::Video(_) => self.metrics.video_messages += 1,
+            MessageContent::Audio(_) => self.metrics.audio_messages += 1,
+            MessageContent::File(_) => self.metrics.file_messages += 1,
+            MessageContent::Cycles(_) => self.metrics.cycles_messages += 1,
+            MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
+        }
+
+        if args.replies_to.is_some() {
+            self.metrics.replies_messages += 1;
+        }
+
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {
             message_index,
@@ -226,6 +257,7 @@ impl ChatEvents {
                 } else {
                     message.content = args.content;
                     message.last_updated = Some(args.now);
+                    self.metrics.total_edits += 1;
                     self.push_event(ChatEventInternal::MessageEdited(Box::new(args.message_id)), args.now);
                     EditMessageResult::Success
                 }
@@ -254,6 +286,7 @@ impl ChatEvents {
                         timestamp: now,
                     });
                     message.last_updated = Some(now);
+                    self.metrics.deleted_messages += 1;
                     self.push_event(ChatEventInternal::MessageDeleted(Box::new(message_id)), now);
                     DeleteMessageResult::Success
                 }
@@ -295,9 +328,11 @@ impl ChatEvents {
                 };
 
                 return if added {
+                    self.metrics.total_reactions += 1;
                     let new_event_index = self.push_event(ChatEventInternal::MessageReactionAdded(Box::new(message_id)), now);
                     ToggleReactionResult::Added(new_event_index)
                 } else {
+                    self.metrics.total_reactions -= 1;
                     let new_event_index = self.push_event(ChatEventInternal::MessageReactionRemoved(Box::new(message_id)), now);
                     ToggleReactionResult::Removed(new_event_index)
                 };
@@ -579,6 +614,10 @@ impl ChatEvents {
             }
         }
         None
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        self.metrics.clone()
     }
 
     pub fn len(&self) -> usize {

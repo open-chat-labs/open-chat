@@ -28,7 +28,6 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         match runtime_state.data.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
-                runtime_state.data.accumulated_metrics.total_edits += 1;
                 handle_activity_notification(runtime_state);
                 Success
             }

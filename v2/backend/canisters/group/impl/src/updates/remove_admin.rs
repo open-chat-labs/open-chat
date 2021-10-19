@@ -1,3 +1,4 @@
+use crate::model::participants::RemoveAdminResult;
 use crate::updates::handle_activity_notification;
 use crate::updates::remove_admin::Response::*;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
@@ -5,7 +6,7 @@ use chat_events::ChatEventInternal;
 use group_canister::remove_admin::*;
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{ParticipantsDismissedAsAdmin, Role};
+use types::ParticipantsDismissedAsAdmin;
 
 #[update]
 #[instrument(level = "trace")]
@@ -21,26 +22,22 @@ fn remove_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
         let caller_user_id = caller_participant.user_id;
         if caller_participant.role.can_remove_admin() {
-            match runtime_state.data.participants.get_by_user_id_mut(&args.user_id) {
-                None => UserNotInGroup,
-                Some(participant) => {
-                    if matches!(participant.role, Role::Admin) {
-                        participant.role = Role::Participant;
-                        runtime_state.data.accumulated_metrics.admins -= 1;
+            match runtime_state.data.participants.remove_admin(&args.user_id) {
+                RemoveAdminResult::Success => {
+                    let event = ParticipantsDismissedAsAdmin {
+                        user_ids: vec![args.user_id],
+                        dismissed_by: caller_user_id,
+                    };
+                    runtime_state
+                        .data
+                        .events
+                        .push_event(ChatEventInternal::ParticipantsDismissedAsAdmin(Box::new(event)), now);
 
-                        let event = ParticipantsDismissedAsAdmin {
-                            user_ids: vec![args.user_id],
-                            dismissed_by: caller_user_id,
-                        };
-                        runtime_state
-                            .data
-                            .events
-                            .push_event(ChatEventInternal::ParticipantsDismissedAsAdmin(Box::new(event)), now);
-
-                        handle_activity_notification(runtime_state);
-                    }
+                    handle_activity_notification(runtime_state);
                     Success
                 }
+                RemoveAdminResult::NotInGroup => UserNotInGroup,
+                RemoveAdminResult::NotAdmin => Success,
             }
         } else {
             NotAuthorized
