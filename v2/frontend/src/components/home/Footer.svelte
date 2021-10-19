@@ -64,12 +64,10 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
-            // const nextMessageIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
             const nextMessageIndex = getNextMessageIndex(
                 $machine.context.chatSummary,
                 $machine.context.events
             );
-            // const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
             const nextEventIndex = getNextEventIndex(
                 $machine.context.chatSummary,
                 $machine.context.events

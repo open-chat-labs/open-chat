@@ -112,7 +112,6 @@
                 ? firstUnreadMessageIndex
                 : $machine.context.chatSummary.latestMessage?.event.messageIndex;
         if (idx !== undefined) {
-            console.log("Scrolling to idx: ", idx);
             scrollToMessageIndex(idx);
         }
     }
@@ -358,10 +357,6 @@
             fromBottomVal = fromBottom();
             switch ($chatStore.event) {
                 case "loaded_previous_messages":
-                    console.log(
-                        "just loaded previous messages: ",
-                        $machine.context.focusMessageIndex
-                    );
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
