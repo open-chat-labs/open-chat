@@ -49,7 +49,6 @@ export interface ChatContext {
     user?: UserSummary;
     error?: Error;
     events: EventWrapper<ChatEvent>[];
-    focusIndex?: number; // this is the index of a message that we want to scroll to
     focusMessageIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
@@ -77,7 +76,6 @@ export type ChatEvents =
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
-    | { type: "GO_TO_EVENT_INDEX"; data: number }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "START_TYPING" }
@@ -151,16 +149,12 @@ function loadEvents(
     if (ev.type === "GO_TO_MESSAGE_INDEX") {
         return serviceContainer.groupChatEventsWindow(chatSummary.chatId, startIndex);
     } else {
-        return serviceContainer
-            .groupChatEvents(
-                indexRangeForChat(chatSummary),
-                chatSummary.chatId,
-                startIndex,
-                ascending
-            )
-            .then((resp) => {
-                return resp;
-            });
+        return serviceContainer.groupChatEvents(
+            indexRangeForChat(chatSummary),
+            chatSummary.chatId,
+            startIndex,
+            ascending
+        );
     }
 }
 
@@ -231,7 +225,17 @@ export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boo
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
-    guards: {},
+    guards: {
+        notUpToDate: (ctx, ev) =>
+            ev.type === "SEND_MESSAGE" &&
+            ctx.events[ctx.events.length - 1]?.index < ctx.chatSummary.latestEventIndex &&
+            ev.data.userId === ctx.user?.userId &&
+            ctx.chatSummary.latestMessage !== undefined,
+
+        upToDate: (ctx, _) =>
+            ctx.events[ctx.events.length - 1]?.index >= ctx.chatSummary.latestEventIndex &&
+            ctx.chatSummary.latestMessage !== undefined,
+    },
     services: {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
@@ -275,13 +279,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             if (ev.type !== "done.invoke.loadEventsAndUsers" || ev.data === undefined) {
                 return {};
             }
-            if (ctx.focusMessageIndex !== undefined) {
-                // we are going to throw away any *other* events we may already have loaded
-                return {
-                    initialised: true,
-                    events: ev.data.events,
-                };
-            }
             return {
                 initialised: true,
                 events: replaceAffected(
@@ -290,7 +287,7 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
                         ctx.user!.userId,
                         ctx.chatSummary.chatId,
                         ctx.markRead,
-                        ctx.events,
+                        ctx.focusMessageIndex === undefined ? ctx.events : [],
                         ev.data.events
                     ),
                     ev.data.affectedEvents,
@@ -414,12 +411,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 SEND_MESSAGE: [
                     {
-                        // if we do not have the most recent messages loaded
-                        cond: (ctx, _) =>
-                            ctx.events[ctx.events.length - 1]?.index <
-                                ctx.chatSummary.latestEventIndex &&
-                            ctx.chatSummary.latestMessage !== undefined,
+                        cond: "notUpToDate",
                         actions: [
+                            // set focus to the last confirmed message
                             assign((ctx, ev) => {
                                 return {
                                     focusMessageIndex:
@@ -427,6 +421,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     sendingMessage: ev,
                                 };
                             }),
+                            // load the message window around that message
                             send((ctx, _) => {
                                 return {
                                     type: "GO_TO_MESSAGE_INDEX",
@@ -436,10 +431,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         ],
                     },
                     {
-                        cond: (ctx, _) =>
-                            ctx.events[ctx.events.length - 1]?.index >=
-                                ctx.chatSummary.latestEventIndex &&
-                            ctx.chatSummary.latestMessage !== undefined,
+                        cond: "upToDate",
                         actions: assign((ctx, ev) => {
                             if (ctx.editingEvent) {
                                 return {
@@ -488,6 +480,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     chatId: ctx.chatSummary.chatId,
                                     event: "sending_message",
                                     messageIndex: ev.data.messageEvent.event.messageIndex,
+                                    sentByMe,
                                 });
                                 const chatSummary = sentByMe
                                     ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
@@ -678,7 +671,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
                     actions: assign((_, _ev) => ({
-                        focusIndex: undefined,
                         focusMessageIndex: undefined,
                     })),
                 },
@@ -691,12 +683,6 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 CANCEL_REPLY_TO: {
                     actions: assign((_, _ev) => ({ replyingTo: undefined })),
-                },
-                GO_TO_EVENT_INDEX: {
-                    target: ".loading_previous_messages",
-                    actions: assign((_, ev) => ({
-                        focusIndex: ev.data,
-                    })),
                 },
                 // this will only be called if the message with the required message index is
                 // not already rendered. If it *is* we can simply scroll to it. If not, we need to load it first.

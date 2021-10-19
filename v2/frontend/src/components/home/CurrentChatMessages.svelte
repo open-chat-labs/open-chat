@@ -113,6 +113,7 @@
                 ? firstUnreadMessageIndex
                 : $machine.context.chatSummary.latestMessage?.event.messageIndex;
         if (idx !== undefined) {
+            console.log("Scrolling to idx: ", idx);
             scrollToMessageIndex(idx);
         }
     }
@@ -365,7 +366,11 @@
                     chatStore.clear();
                     break;
                 case "sending_message":
-                    tick().then(() => scrollBottom());
+                    // if we are within the from bottom threshold *or* if the new message
+                    // was sent by us, then scroll to the bottom
+                    if (fromBottom < FROM_BOTTOM_THRESHOLD || $chatStore.sentByMe) {
+                        scrollBottom("smooth");
+                    }
                     chatStore.clear();
                     break;
                 case "chat_updated":
@@ -482,7 +487,7 @@
     {/each}
 </div>
 
-{#if fromBottom > FROM_BOTTOM_THRESHOLD}
+{#if fromBottom > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
     <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>

@@ -102,6 +102,7 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     async chatEventsWindow(
+        _eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>> {

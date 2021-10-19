@@ -68,7 +68,7 @@ export interface HomeContext {
 }
 
 export type HomeEvents =
-    | { type: "SELECT_CHAT"; data: { chatId: string; eventIndex: string | undefined } }
+    | { type: "SELECT_CHAT"; data: { chatId: string; messageIndex: string | undefined } }
     | { type: "NEW_CHAT" }
     | { type: "NEW_GROUP" }
     | {
@@ -96,7 +96,7 @@ export type HomeEvents =
           data: RemoteUserReadMessage;
       }
     | { type: "CREATE_DIRECT_CHAT"; data: string }
-    | { type: "GO_TO_EVENT_INDEX"; data: number }
+    | { type: "GO_TO_MESSAGE_INDEX"; data: number }
     | { type: "CANCEL_NEW_CHAT" }
     | { type: "CREATE_CHAT_WITH_USER"; data: UserSummary }
     | { type: "CLEAR_SELECTED_CHAT" }
@@ -542,7 +542,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                         }),
                     ],
                 },
-                GO_TO_EVENT_INDEX: {
+                GO_TO_MESSAGE_INDEX: {
                     actions: pure((ctx, ev) => {
                         if (ctx.selectedChat !== undefined) {
                             const actor = ctx.chatsIndex[ctx.selectedChat.chatId];
@@ -586,8 +586,8 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                                       }
                                                     : undefined,
                                                 events: [],
-                                                focusIndex: ev.data.eventIndex
-                                                    ? Number(ev.data.eventIndex)
+                                                focusMessageIndex: ev.data.messageIndex
+                                                    ? Number(ev.data.messageIndex)
                                                     : undefined,
                                                 replyingTo: ctx.replyingTo,
                                                 localReactions: {},

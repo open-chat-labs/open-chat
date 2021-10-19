@@ -29,6 +29,7 @@ export interface IUserClient {
     userId: string;
     getUpdates(chatSummaries: ChatSummary[], args: UpdateArgs): Promise<MergedUpdatesResponse>;
     chatEventsWindow(
+        eventIndexRange: IndexRange,
         userId: string,
         messageIndex: number
     ): Promise<EventsResponse<DirectChatEvent>>;

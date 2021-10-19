@@ -5,9 +5,9 @@
     import { identityService } from "../../fsm/identity.machine";
     const { state, send } = identityService;
 
-    export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
+    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
-        eventIndex: undefined,
+        messageIndex: undefined,
     };
 
     function logout() {

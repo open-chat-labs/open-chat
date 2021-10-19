@@ -190,7 +190,6 @@ export const idlFactory = ({ IDL }) => {
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(GroupChatEventWrapper),
     'events' : IDL.Vec(GroupChatEventWrapper),
-    'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,

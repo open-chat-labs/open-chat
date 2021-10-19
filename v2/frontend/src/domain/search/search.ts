@@ -10,6 +10,7 @@ export type GroupMatch = DataContent & {
 export type MessageMatch = {
     chatId: string;
     eventIndex: number;
+    messageIndex: number;
     content: MessageContent;
     sender: string;
     score: number;

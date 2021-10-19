@@ -271,21 +271,21 @@ describe("chat machine transitions", () => {
     });
     test("clear focus index", () => {
         const ctx = testTransition(
-            chatMachine.withContext({ ...directContext, focusIndex: 123 }),
+            chatMachine.withContext({ ...directContext, focusMessageIndex: 123 }),
             { user_states: "idle" },
             { type: "CLEAR_FOCUS_INDEX" },
             { user_states: "idle" }
         );
-        expect(ctx.focusIndex).toBe(undefined);
+        expect(ctx.focusMessageIndex).toBe(undefined);
     });
     test("clear focus index", () => {
         const ctx = testTransition(
             chatMachine.withContext(directContext),
             { user_states: "idle" },
-            { type: "GO_TO_EVENT_INDEX", data: 123 },
+            { type: "GO_TO_MESSAGE_INDEX", data: 123 },
             { user_states: "loading_previous_messages" }
         );
-        expect(ctx.focusIndex).toBe(123);
+        expect(ctx.focusMessageIndex).toBe(123);
     });
 });
 
@@ -306,6 +306,7 @@ function repliesTo(): EnhancedReplyContext {
         },
         senderId: "abcdefg",
         eventIndex: 0,
+        messageIndex: 0,
         messageId: newMessageId(),
         chatId: "chatId",
     };
@@ -321,6 +322,7 @@ function repliesToGroup(): EnhancedReplyContext {
         senderId: "abcdef",
         eventIndex: 0,
         messageId: newMessageId(),
+        messageIndex: 0,
         chatId: "chatId",
     };
 }

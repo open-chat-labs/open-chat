@@ -4,6 +4,7 @@ export type ChatState = {
     chatId: string;
     messageIndex?: number;
     event: ChatLifecycleEvent;
+    sentByMe?: boolean;
 };
 
 export type ChatLifecycleEvent =
