@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure, sendParent } from "xstate/lib/actions";
+import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -57,11 +57,17 @@ export interface ChatContext {
     editingEvent?: EventWrapper<Message>;
     markRead: MessageReadTracker;
     initialised: boolean;
+    sendingMessage?: SendMessageEvent;
 }
 
 type LoadEventsResponse = {
     events: EventWrapper<ChatEvent>[];
     affectedEvents: EventWrapper<ChatEvent>[];
+};
+
+type SendMessageEvent = {
+    type: "SEND_MESSAGE";
+    data: { messageEvent: EventWrapper<Message>; userId: string };
 };
 
 export type ChatEvents =
@@ -76,7 +82,7 @@ export type ChatEvents =
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
-    | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
+    | SendMessageEvent
     | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
     | { type: "REMOVE_MESSAGE"; data: { userId: string; messageId: bigint } }
     | {
@@ -106,7 +112,8 @@ export type ChatEvents =
     | { type: "CANCEL_REPLY_TO" }
     | { type: "TOGGLE_MUTE_NOTIFICATIONS" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
-    | { type: "LOAD_PREVIOUS_MESSAGES" };
+    | { type: "LOAD_PREVIOUS_MESSAGES" }
+    | { type: "LOAD_NEW_MESSAGES" };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -157,7 +164,7 @@ function loadEvents(
     }
 }
 
-export function moreMessagesAvailable(ctx: ChatContext): boolean {
+export function morePreviousMessagesAvailable(ctx: ChatContext): boolean {
     return earliestIndex(ctx) > earliestAvailableEventIndex(ctx);
 }
 
@@ -168,6 +175,12 @@ export function earliestAvailableEventIndex(ctx: ChatContext): number {
 // we need to be clearer about what this means
 export function earliestIndex(ctx: ChatContext): number {
     return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
+}
+
+export function moreNewMessagesAvailable(ctx: ChatContext): boolean {
+    const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
+    console.log(lastLoaded, ctx.chatSummary.latestEventIndex);
+    return lastLoaded === undefined || lastLoaded < ctx.chatSummary.latestEventIndex;
 }
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
@@ -206,7 +219,7 @@ export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | 
 }
 
 export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
-    if (ev.type === "CHAT_UPDATED") {
+    if (ev.type === "LOAD_NEW_MESSAGES") {
         return newMessageCriteria(ctx);
     } else {
         if (ev.type === "GO_TO_MESSAGE_INDEX") {
@@ -315,19 +328,25 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
             on: {
-                CHAT_UPDATED: {
+                LOAD_NEW_MESSAGES: {
                     cond: (ctx, _ev) => ctx.initialised,
                     target: ".loading",
                     internal: true,
-                    actions: assign((_, ev) => {
-                        return {
-                            // todo - this is a problem because it may update the
-                            // latestEventIndex and the latestMessageIndex
-                            // this means that we might be creating messages using the same
-                            // indexes over and over.
-                            chatSummary: ev.data,
-                        };
-                    }),
+                },
+                // update the chat and trigger an event that we can pick up in the UI
+                CHAT_UPDATED: {
+                    actions: [
+                        assign((_, ev) => {
+                            return { chatSummary: ev.data };
+                        }),
+                        pure((ctx, _ev) => {
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: "chat_updated",
+                            });
+                            return undefined;
+                        }),
+                    ],
                 },
             },
             states: {
@@ -393,62 +412,99 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         return undefined;
                     }),
                 },
-                SEND_MESSAGE: {
-                    actions: assign((ctx, ev) => {
-                        if (ctx.editingEvent) {
-                            return {
-                                events: ctx.events.map((e) => {
-                                    if (
-                                        e.event.kind === "message" &&
-                                        e.event.messageId === ev.data.messageEvent.event.messageId
-                                    ) {
-                                        return ev.data.messageEvent;
-                                    }
-                                    return e;
-                                }),
-                                replyingTo: undefined,
-                                fileToAttach: undefined,
-                                editingEvent: undefined,
-                            };
-                        } else {
-                            // this message may have come in via webrtc
-                            unconfirmed.add(ev.data.messageEvent.event.messageId);
-                            const sentByMe = ev.data.userId === ctx.user?.userId;
-                            if (sentByMe) {
-                                rtcConnectionsManager.sendMessage(
-                                    userIdsFromChatSummary(ctx.chatSummary),
-                                    {
-                                        kind: "remote_user_sent_message",
-                                        chatType: ctx.chatSummary.kind,
-                                        chatId: ctx.chatSummary.chatId,
-                                        messageEvent: serialiseMessageForRtc(ev.data.messageEvent),
-                                        userId: ev.data.userId,
-                                    }
-                                );
-                                // mark our own messages as read manually since we will not be observing them
-                                ctx.markRead.markMessageRead(
-                                    ctx.chatSummary.chatId,
-                                    ev.data.messageEvent.event.messageIndex,
-                                    ev.data.messageEvent.event.messageId
-                                );
+                SEND_MESSAGE: [
+                    {
+                        // if we do not have the most recent messages loaded
+                        cond: (ctx, _) =>
+                            ctx.events[ctx.events.length - 1]?.index <
+                                ctx.chatSummary.latestEventIndex &&
+                            ctx.chatSummary.latestMessage !== undefined,
+                        actions: [
+                            assign((ctx, ev) => {
+                                return {
+                                    focusMessageIndex:
+                                        ctx.chatSummary.latestMessage!.event.messageIndex,
+                                    sendingMessage: ev,
+                                };
+                            }),
+                            send((ctx, _) => {
+                                return {
+                                    type: "GO_TO_MESSAGE_INDEX",
+                                    data: ctx.chatSummary.latestMessage!.event.messageIndex,
+                                };
+                            }),
+                        ],
+                    },
+                    {
+                        cond: (ctx, _) =>
+                            ctx.events[ctx.events.length - 1]?.index >=
+                                ctx.chatSummary.latestEventIndex &&
+                            ctx.chatSummary.latestMessage !== undefined,
+                        actions: assign((ctx, ev) => {
+                            if (ctx.editingEvent) {
+                                return {
+                                    events: ctx.events.map((e) => {
+                                        if (
+                                            e.event.kind === "message" &&
+                                            e.event.messageId ===
+                                                ev.data.messageEvent.event.messageId
+                                        ) {
+                                            return ev.data.messageEvent;
+                                        }
+                                        return e;
+                                    }),
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                    editingEvent: undefined,
+                                    sendingMessage: undefined,
+                                    focusMessageIndex: undefined,
+                                };
+                            } else {
+                                unconfirmed.add(ev.data.messageEvent.event.messageId);
+
+                                // this message may have come in via webrtc
+                                const sentByMe = ev.data.userId === ctx.user?.userId;
+                                if (sentByMe) {
+                                    rtcConnectionsManager.sendMessage(
+                                        userIdsFromChatSummary(ctx.chatSummary),
+                                        {
+                                            kind: "remote_user_sent_message",
+                                            chatType: ctx.chatSummary.kind,
+                                            chatId: ctx.chatSummary.chatId,
+                                            messageEvent: serialiseMessageForRtc(
+                                                ev.data.messageEvent
+                                            ),
+                                            userId: ev.data.userId,
+                                        }
+                                    );
+                                    // mark our own messages as read manually since we will not be observing them
+                                    ctx.markRead.markMessageRead(
+                                        ctx.chatSummary.chatId,
+                                        ev.data.messageEvent.event.messageIndex,
+                                        ev.data.messageEvent.event.messageId
+                                    );
+                                }
+                                chatStore.set({
+                                    chatId: ctx.chatSummary.chatId,
+                                    event: "sending_message",
+                                    messageIndex: ev.data.messageEvent.event.messageIndex,
+                                });
+                                const chatSummary = sentByMe
+                                    ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
+                                    : ctx.chatSummary;
+                                return {
+                                    chatSummary,
+                                    events: [...ctx.events, ev.data.messageEvent],
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                    editingEvent: undefined,
+                                    sendingMessage: undefined,
+                                    focusMessageIndex: undefined,
+                                };
                             }
-                            chatStore.set({
-                                chatId: ctx.chatSummary.chatId,
-                                event: "sending_message",
-                            });
-                            const chatSummary = sentByMe
-                                ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
-                                : ctx.chatSummary;
-                            return {
-                                chatSummary,
-                                events: [...ctx.events, ev.data.messageEvent],
-                                replyingTo: undefined,
-                                fileToAttach: undefined,
-                                editingEvent: undefined,
-                            };
-                        }
-                    }),
-                },
+                        }),
+                    },
+                ],
                 EDIT_EVENT: {
                     actions: assign((ctx, ev) => ({
                         editingEvent: ev.data,
@@ -677,11 +733,15 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     actions: [
                                         "assignEventsResponse",
                                         pure((ctx, _ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                            chatStore.set({
-                                                chatId: ctx.chatSummary.chatId,
-                                                event: "loaded_previous_messages",
-                                            });
-                                            return undefined;
+                                            if (ctx.sendingMessage !== undefined) {
+                                                return send(ctx.sendingMessage);
+                                            } else {
+                                                chatStore.set({
+                                                    chatId: ctx.chatSummary.chatId,
+                                                    event: "loaded_previous_messages",
+                                                });
+                                                return undefined;
+                                            }
                                         }),
                                     ],
                                 },

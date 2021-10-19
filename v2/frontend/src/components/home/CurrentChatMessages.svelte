@@ -6,7 +6,10 @@
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
-    import { moreMessagesAvailable } from "../../fsm/chat.machine";
+    import {
+        moreNewMessagesAvailable,
+        morePreviousMessagesAvailable,
+    } from "../../fsm/chat.machine";
     import type { ChatEvents } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
@@ -105,17 +108,12 @@
     }
 
     function scrollToNew() {
-        // todo - at this point we should *probably* fire off a message to update the lastReadByMe
-        // the problem is that will make the new legend immediately disappear which is not quite what we
-        // want. We'll come back to that.
-        if (unreadMessages > 0) {
-            // todo - this is no good because the first unread message may not have been rendered yet
-            // it's tempting to re-use the goToMessage func, but that uses *event* index
-            // it *must* use event index as it potentially has to load new events and loading events
-            // is done via event index range
-            scrollToElement(document.getElementById("new-msgs"), "smooth");
-        } else {
-            scrollBottom("smooth");
+        const idx =
+            unreadMessages > 0
+                ? firstUnreadMessageIndex
+                : $machine.context.chatSummary.latestMessage?.event.messageIndex;
+        if (idx !== undefined) {
+            scrollToMessageIndex(idx);
         }
     }
 
@@ -129,7 +127,9 @@
             scrollToElement(element);
             setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
         } else {
-            console.log("Unable to find element for message index: ", index);
+            // todo - this is a bit dangerous as it could cause an infinite recursion
+            // if we are looking for a message that simply isn't there.
+            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: index });
         }
     }
 
@@ -155,7 +155,7 @@
         if ($machine.matches({ user_states: "idle" })) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
-                moreMessagesAvailable($machine.context)
+                morePreviousMessagesAvailable($machine.context)
             ) {
                 machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
             }
@@ -163,6 +163,10 @@
                 messagesDiv.scrollHeight -
                 Math.abs(messagesDiv.scrollTop) -
                 messagesDiv.clientHeight;
+
+            if (fromBottom < MESSAGE_LOAD_THRESHOLD && moreNewMessagesAvailable($machine.context)) {
+                machine.send({ type: "LOAD_NEW_MESSAGES" });
+            }
         }
     }
 
@@ -361,7 +365,16 @@
                     chatStore.clear();
                     break;
                 case "sending_message":
-                    scrollBottom("smooth");
+                    tick().then(() => scrollBottom());
+                    chatStore.clear();
+                    break;
+                case "chat_updated":
+                    if (
+                        fromBottom < MESSAGE_LOAD_THRESHOLD &&
+                        moreNewMessagesAvailable($machine.context)
+                    ) {
+                        machine.send({ type: "LOAD_NEW_MESSAGES" });
+                    }
                     chatStore.clear();
                     break;
             }

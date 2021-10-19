@@ -10,12 +10,15 @@
     import {
         createMessage,
         getMessageContent,
+        getNextEventIndex,
+        getNextMessageIndex,
         latestLoadedEventIndex,
         latestLoadedMessageIndex,
     } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
+    import { openMessageCache } from "../../utils/caching";
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
@@ -64,8 +67,16 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
-            const nextMessageIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
-            const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
+            // const nextMessageIndex = (latestLoadedMessageIndex($machine.context.events) ?? -1) + 1;
+            const nextMessageIndex = getNextMessageIndex(
+                $machine.context.chatSummary,
+                $machine.context.events
+            );
+            // const nextEventIndex = (latestLoadedEventIndex($machine.context.events) ?? 0) + 1;
+            const nextEventIndex = getNextEventIndex(
+                $machine.context.chatSummary,
+                $machine.context.events
+            );
 
             const msg = createMessage(
                 $machine.context.user!.userId,
