@@ -138,9 +138,11 @@ pub struct Metrics {
     pub file_messages: u64,
     pub cycles_messages: u64,
     pub deleted_messages: u64,
+    pub replies: u64,
     pub total_edits: u64,
-    pub replies_messages: u64,
     pub total_reactions: u64,
+    pub total_events: u64,
+    pub last_active: TimestampMillis,
 }
 
 impl ChatEvents {
@@ -203,7 +205,7 @@ impl ChatEvents {
         }
 
         if args.replies_to.is_some() {
-            self.metrics.replies_messages += 1;
+            self.metrics.replies += 1;
         }
 
         let message_index = self.next_message_index();
@@ -617,7 +619,10 @@ impl ChatEvents {
     }
 
     pub fn metrics(&self) -> Metrics {
-        self.metrics.clone()
+        let mut metrics = self.metrics.clone();
+        metrics.last_active = self.latest().map_or(0, |e| e.timestamp);
+        metrics.total_events = self.events.len() as u64;
+        metrics
     }
 
     pub fn len(&self) -> usize {

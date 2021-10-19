@@ -64,7 +64,10 @@ impl GroupChats {
         }
     }
 
-    #[allow(dead_code)]
+    pub fn groups_created(&self) -> u32 {
+        self.groups_created
+    }
+
     pub fn len(&self) -> usize {
         self.group_chats.len()
     }
