@@ -5,7 +5,7 @@ use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
 use types::{
     CanisterId, Cryptocurrency, CryptocurrencyReceive, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles,
-    DirectMessageNotification, MessageContent, TimestampMillis, Timestamped, Transaction, UserId,
+    DirectMessageNotification, MessageContent, TimestampMillis, Timestamped, Transaction, TransactionStatus, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
@@ -129,7 +129,7 @@ fn handle_transaction_if_present(content: &MessageContent, sender: UserId, now: 
                     amount: c.amount,
                 }),
             });
-            data.transactions.add(transaction, now);
+            data.transactions.add(transaction, now, TransactionStatus::Complete);
             data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
         }
         MessageContent::ICP(c) => {
@@ -142,7 +142,7 @@ fn handle_transaction_if_present(content: &MessageContent, sender: UserId, now: 
                     amount: c.amount_e8s.into(),
                 }),
             });
-            data.transactions.add(transaction, now);
+            data.transactions.add(transaction, now, TransactionStatus::Complete);
         }
         _ => {}
     }

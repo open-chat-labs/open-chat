@@ -2,6 +2,7 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use types::{
     Cryptocurrency, CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles, Timestamped, Transaction,
+    TransactionStatus,
 };
 
 #[update]
@@ -32,6 +33,9 @@ fn receive_cycles_impl(cycles: Cycles, runtime_state: &mut RuntimeState) {
         transfer: CryptocurrencyTransfer::Deposit(CryptocurrencyDeposit { from, amount: cycles }),
     });
 
-    runtime_state.data.transactions.add(transaction, now);
+    runtime_state
+        .data
+        .transactions
+        .add(transaction, now, TransactionStatus::Complete);
     runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
 }

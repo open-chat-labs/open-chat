@@ -66,8 +66,8 @@ pub struct CycleContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct IcpContent {
     pub amount_e8s: u64,
-    pub block_height: BlockHeight,
     pub caption: Option<String>,
+    pub block_height: BlockHeight,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

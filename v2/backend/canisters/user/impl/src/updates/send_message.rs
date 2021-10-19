@@ -1,44 +1,50 @@
-use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::instrument;
 use types::{
-    CanisterId, Cryptocurrency, CryptocurrencySend, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles, MessageContent,
-    MessageIndex, TimestampMillis, Timestamped, Transaction, UserId,
+    BlockHeight, CanisterId, Cryptocurrency, CryptocurrencySend, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles,
+    MessageContent, MessageIndex, Timestamped, Transaction, TransactionStatus, UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
+use utils::consts::ICP_TRANSACTION_FEE_E8S;
 
 #[update]
 #[instrument(level = "trace")]
-async fn send_message(args: Args) -> Response {
+async fn send_message(mut args: Args) -> Response {
     run_regular_jobs();
 
-    let transaction = match send_transaction_if_required(&args).await {
-        Ok(t) => t,
-        Err(error) => return TransactionFailed(error),
-    };
-
-    RUNTIME_STATE.with(|state| send_message_impl(args, transaction, state.borrow_mut().as_mut().unwrap()))
-}
-
-fn send_message_impl(args: Args, transaction: Option<Transaction>, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_owner();
-
-    if runtime_state.data.blocked_users.contains(&args.recipient) {
-        return RecipientBlocked;
+    if let Err(response) = RUNTIME_STATE.with(|state| validate_request(&args.recipient, state.borrow().as_ref().unwrap())) {
+        return response;
     }
 
+    // If the message includes an ICP transaction we must handle that transaction before we send the
+    // message to the recipient.
+    if let MessageContent::ICP(c) = &mut args.content {
+        match send_icp_transaction(args.recipient, c.amount_e8s).await {
+            Ok(block_height) => {
+                // Assign the block height on the request
+                c.block_height = block_height;
+            }
+            Err(error) => {
+                return TransactionFailed(error);
+            }
+        };
+    }
+
+    RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
+}
+
+fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    let mut cycles_to_send: Cycles = 0;
-    if let Some(transaction) = transaction {
-        runtime_state.data.transactions.add(transaction, now);
-    } else if let MessageContent::Cycles(c) = &args.content {
-        if !prepare_and_log_cycles_transaction(args.recipient, c.amount, now, &mut runtime_state.data) {
-            return TransactionFailed("Insufficient cycles".to_owned());
-        }
-        cycles_to_send = c.amount;
+    let mut cycles_transaction = None;
+    if let MessageContent::Cycles(c) = &args.content {
+        match prepare_cycles_transaction(args.recipient, c.amount, runtime_state) {
+            Ok(ct) => cycles_transaction = Some(ct),
+            Err(response) => return response,
+        };
     }
 
     let my_user_id = runtime_state.env.canister_id().into();
@@ -57,7 +63,7 @@ fn send_message_impl(args: Args, transaction: Option<Transaction>, runtime_state
             .push_message(true, args.recipient, None, push_message_args);
 
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
-    ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args, cycles_to_send));
+    ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args, cycles_transaction));
 
     Success(SuccessResult {
         chat_id,
@@ -65,6 +71,16 @@ fn send_message_impl(args: Args, transaction: Option<Transaction>, runtime_state
         message_index: message.message_index,
         timestamp: now,
     })
+}
+
+fn validate_request(recipient: &UserId, runtime_state: &RuntimeState) -> Result<(), Response> {
+    runtime_state.trap_if_caller_not_owner();
+
+    if !runtime_state.data.blocked_users.contains(recipient) {
+        Ok(())
+    } else {
+        Err(RecipientBlocked)
+    }
 }
 
 fn build_c2c_args(args: Args, message_index: MessageIndex) -> (CanisterId, c2c_send_message::Args) {
@@ -79,51 +95,131 @@ fn build_c2c_args(args: Args, message_index: MessageIndex) -> (CanisterId, c2c_s
     (args.recipient.into(), c2c_args)
 }
 
-async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_message::Args, cycles: Cycles) {
-    // Note: We ignore any Block response - it means the sender won't know they're blocked
+async fn send_to_recipients_canister(
+    canister_id: CanisterId,
+    args: c2c_send_message::Args,
+    cycles_transaction: Option<CyclesTransaction>,
+) {
+    let (cycles_transaction_index, cycles_to_send) = cycles_transaction.map_or((None, 0), |ct| (Some(ct.index), ct.cycles));
+
+    // Note: We ignore any Block responses - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
-    let _ = user_canister_c2c_client::c2c_send_message(canister_id, &args, cycles).await;
-}
-
-async fn send_transaction_if_required(args: &Args) -> Result<Option<Transaction>, String> {
-    match &args.content {
-        MessageContent::ICP(c) => {
-            let address = ledger_utils::calculate_address(args.recipient);
-            match ledger_utils::send(address, c.amount_e8s).await {
-                Ok(result) => Ok(Some(Transaction::Cryptocurrency(CryptocurrencyTransaction {
-                    currency: Cryptocurrency::ICP,
-                    block_height: Some(result.block_height),
-                    transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
-                        to_user: args.recipient,
-                        to: address.to_string(),
-                        amount: c.amount_e8s.into(),
-                        fee: result.fee_e8s.into(),
-                    }),
-                }))),
-                Err(error) => Err(error),
+    match user_canister_c2c_client::c2c_send_message(canister_id, &args, cycles_to_send).await {
+        Ok(_) => {
+            if let Some(index) = cycles_transaction_index {
+                RUNTIME_STATE.with(|state| mark_transaction_complete(index, None, state.borrow_mut().as_mut().unwrap()));
             }
         }
-        _ => Ok(None),
+        Err(error) => {
+            if let Some(index) = cycles_transaction_index {
+                RUNTIME_STATE.with(|state| {
+                    handle_failed_cycles_transfer(
+                        index,
+                        format!("{:?}", error),
+                        cycles_to_send,
+                        state.borrow_mut().as_mut().unwrap(),
+                    );
+                });
+            }
+        }
     }
 }
 
-fn prepare_and_log_cycles_transaction(recipient: UserId, amount: Cycles, now: TimestampMillis, data: &mut Data) -> bool {
-    if let Some(new_cycles_balance) = data.user_cycles_balance.value.checked_sub(amount) {
-        let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
-            currency: Cryptocurrency::Cycles,
-            block_height: None,
-            transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
-                to_user: recipient,
-                to: recipient.to_string(),
-                amount,
-                fee: 0,
-            }),
-        });
-        data.transactions.add(transaction, now);
-        data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
-        true
-    } else {
-        false
+async fn send_icp_transaction(recipient: UserId, amount_e8s: u64) -> Result<BlockHeight, String> {
+    let address = ledger_utils::calculate_address(recipient);
+    let fee = ICP_TRANSACTION_FEE_E8S;
+    let mut transaction = CryptocurrencyTransaction {
+        currency: Cryptocurrency::ICP,
+        block_height: None,
+        transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+            to_user: recipient,
+            to: address.to_string(),
+            amount: amount_e8s.into(),
+            fee: fee.into(),
+        }),
+    };
+
+    let index = RUNTIME_STATE.with(|state| {
+        record_transaction(
+            Transaction::Cryptocurrency(transaction.clone()),
+            TransactionStatus::Pending,
+            state.borrow_mut().as_mut().unwrap(),
+        )
+    });
+
+    match ledger_utils::send(address, amount_e8s, fee).await {
+        Ok(block_height) => {
+            transaction.block_height = Some(block_height);
+            RUNTIME_STATE.with(|state| {
+                mark_transaction_complete(
+                    index,
+                    Some(Transaction::Cryptocurrency(transaction)),
+                    state.borrow_mut().as_mut().unwrap(),
+                )
+            });
+            Ok(block_height)
+        }
+        Err(error) => {
+            RUNTIME_STATE.with(|state| mark_transaction_failed(index, error.clone(), state.borrow_mut().as_mut().unwrap()));
+            Err(error)
+        }
     }
+}
+
+struct CyclesTransaction {
+    index: u32,
+    cycles: Cycles,
+}
+
+fn prepare_cycles_transaction(
+    recipient: UserId,
+    cycles: Cycles,
+    runtime_state: &mut RuntimeState,
+) -> Result<CyclesTransaction, Response> {
+    let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+        currency: Cryptocurrency::Cycles,
+        block_height: None,
+        transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+            to_user: recipient,
+            to: recipient.to_string(),
+            amount: cycles,
+            fee: 0,
+        }),
+    });
+
+    if let Some(new_cycles_balance) = runtime_state.data.user_cycles_balance.value.checked_sub(cycles) {
+        let now = runtime_state.env.now();
+        runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+        let index = record_transaction(transaction, TransactionStatus::Pending, runtime_state);
+        Ok(CyclesTransaction { index, cycles })
+    } else {
+        Err(TransactionFailed("Insufficient cycles".to_owned()))
+    }
+}
+
+fn handle_failed_cycles_transfer(index: u32, error: String, cycles: Cycles, runtime_state: &mut RuntimeState) {
+    let now = runtime_state.env.now();
+    let new_cycles_balance = runtime_state.data.user_cycles_balance.value + cycles;
+    runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+    mark_transaction_failed(index, error, runtime_state);
+}
+
+fn record_transaction(transaction: Transaction, status: TransactionStatus, runtime_state: &mut RuntimeState) -> u32 {
+    let now = runtime_state.env.now();
+    runtime_state.data.transactions.add(transaction, now, status)
+}
+
+fn mark_transaction_complete(index: u32, transaction: Option<Transaction>, runtime_state: &mut RuntimeState) {
+    runtime_state
+        .data
+        .transactions
+        .update(index, TransactionStatus::Complete, transaction);
+}
+
+fn mark_transaction_failed(index: u32, error: String, runtime_state: &mut RuntimeState) {
+    runtime_state
+        .data
+        .transactions
+        .update(index, TransactionStatus::Failed(error), None);
 }

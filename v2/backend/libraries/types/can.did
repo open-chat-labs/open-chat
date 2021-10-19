@@ -1,3 +1,4 @@
+type BlockHeight = nat64;
 type CanisterId = principal;
 type ChatId = CanisterId;
 type Cycles = nat;
@@ -267,6 +268,7 @@ type IcpContent =
     record {
         amount_e8s: nat64;
         caption: opt text;
+        block_height: BlockHeight;
     };
 
 type AvatarChanged =
@@ -462,10 +464,18 @@ type Transaction =
         Cryptocurrency: CryptocurrencyTransaction;
     };
 
+type TransactionStatus =
+    variant {
+        Pending;
+        Complete;
+        Failed: text;
+    };
+
 type TransactionWrapper =
     record {
         index: nat32;
         timestamp: TimestampMillis;
+        status: TransactionStatus;
         transaction: Transaction;
     };
 

@@ -1,4 +1,4 @@
-use crate::UserId;
+use crate::{BlockHeight, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -11,7 +11,7 @@ pub enum Cryptocurrency {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct CryptocurrencyTransaction {
     pub currency: Cryptocurrency,
-    pub block_height: Option<u64>,
+    pub block_height: Option<BlockHeight>,
     pub transfer: CryptocurrencyTransfer,
 }
 
