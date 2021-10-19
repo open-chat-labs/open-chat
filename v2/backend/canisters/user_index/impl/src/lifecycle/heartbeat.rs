@@ -1,4 +1,8 @@
+use crate::{RuntimeState, MIN_CYCLES_BALANCE, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk_macros::heartbeat;
+use types::{CanisterId, Cycles};
+use utils::canister;
+use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 #[heartbeat]
 fn heartbeat() {
@@ -7,15 +11,17 @@ fn heartbeat() {
 }
 
 mod topup_canister_pool {
-    use crate::{RuntimeState, RUNTIME_STATE, USER_CANISTER_INITIAL_CYCLES_BALANCE};
-    use types::{CanisterId, Cycles};
-    use utils::canister;
-    use utils::consts::CREATE_CANISTER_CYCLES_FEE;
+    use super::*;
 
     pub fn run() {
         let is_full = RUNTIME_STATE.with(|state| is_pool_full(state.borrow().as_ref().unwrap()));
         if !is_full {
-            ic_cdk::block_on(add_new_canister());
+            let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+
+            // Only create the new canister if it won't result in the cycles balance being too low
+            if cycles_utils::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
+                ic_cdk::block_on(add_new_canister(cycles_to_use));
+            }
         }
     }
 
@@ -23,11 +29,9 @@ mod topup_canister_pool {
         runtime_state.data.canister_pool.is_full()
     }
 
-    async fn add_new_canister() {
-        let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if let Ok(canister_id) = canister::create(cycles_required).await {
-            RUNTIME_STATE
-                .with(|state| add_canister_to_pool(canister_id, cycles_required, state.borrow_mut().as_mut().unwrap()));
+    async fn add_new_canister(cycles_to_use: Cycles) {
+        if let Ok(canister_id) = canister::create(cycles_to_use).await {
+            RUNTIME_STATE.with(|state| add_canister_to_pool(canister_id, cycles_to_use, state.borrow_mut().as_mut().unwrap()));
         }
     }
 
@@ -38,7 +42,7 @@ mod topup_canister_pool {
 }
 
 mod calculate_user_metrics {
-    use crate::{RuntimeState, RUNTIME_STATE};
+    use super::*;
 
     pub fn run() {
         RUNTIME_STATE.with(|state| calculate_metrics(state.borrow_mut().as_mut().unwrap()));

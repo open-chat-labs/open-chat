@@ -71,11 +71,15 @@ struct CreateCanisterArgs {
 }
 
 fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
-    let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-    let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-    if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
-        return Err(CyclesBalanceTooLow);
-    }
+    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
+        let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        if !cycles_utils::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+            return Err(CyclesBalanceTooLow);
+        }
+        cycles_required
+    } else {
+        0
+    };
 
     let now = runtime_state.env.now();
     let user_id = runtime_state.env.caller().into();
@@ -103,7 +107,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
         Ok(CreateCanisterArgs {
             canister_id,
             canister_wasm,
-            cycles_to_use: cycles_required,
+            cycles_to_use,
             init_canister_args,
         })
     }
