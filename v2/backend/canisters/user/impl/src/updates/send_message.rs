@@ -19,8 +19,8 @@ async fn send_message(mut args: Args) -> Response {
         return response;
     }
 
-    // If the message includes an ICP transaction we must handle that transaction before we send the
-    // message to the recipient.
+    // If the message includes an ICP transaction we must process that transaction before we send
+    // the message to the recipient.
     if let MessageContent::ICP(c) = &mut args.content {
         match send_icp_transaction(args.recipient, c.amount_e8s).await {
             Ok(block_height) => {
