@@ -15,7 +15,6 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     RecipientBlocked,
-    InsufficientCycles,
     TransactionFailed(String),
 }
 

@@ -22,6 +22,7 @@ type SendMessageResponse =
         MessageTooLong: nat32;
         InvalidRequest;
         RecipientBlocked;
+        TransactionFailed: text;
     };
 
 type EditMessageArgs =

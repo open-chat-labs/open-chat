@@ -36,7 +36,7 @@ fn send_message_impl(args: Args, transaction: Option<Transaction>, runtime_state
         runtime_state.data.transactions.add(transaction, now);
     } else if let MessageContent::Cycles(c) = &args.content {
         if !prepare_and_log_cycles_transaction(args.recipient, c.amount, now, &mut runtime_state.data) {
-            return InsufficientCycles;
+            return TransactionFailed("Insufficient cycles".to_owned());
         }
         cycles_to_send = c.amount;
     }
