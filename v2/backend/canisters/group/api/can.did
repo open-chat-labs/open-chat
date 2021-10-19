@@ -150,7 +150,6 @@ type MakeAdminResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserNotInGroup;
-        AdminLimitReached;
     }; 
 
 type RemoveAdminArgs =

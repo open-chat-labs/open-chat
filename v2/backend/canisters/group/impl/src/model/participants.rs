@@ -6,14 +6,13 @@ use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
 const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
-const MAX_ADMINS_PER_GROUP: u16 = 1000;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
-    admin_count: u16,
+    admin_count: u32,
 }
 
 impl Participants {
@@ -146,13 +145,10 @@ impl Participants {
     }
 
     pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
-        let admin_count = self.admin_count;
         match self.get_by_user_id_mut(user_id) {
             Some(p) => {
                 if matches!(p.role, Role::Admin) {
                     MakeAdminResult::AlreadyAdmin
-                } else if admin_count >= MAX_ADMINS_PER_GROUP {
-                    MakeAdminResult::AdminLimitReached
                 } else {
                     p.role = Role::Admin;
                     self.admin_count += 1;
@@ -178,7 +174,7 @@ impl Participants {
         }
     }
 
-    pub fn admin_count(&self) -> u16 {
+    pub fn admin_count(&self) -> u32 {
         self.admin_count
     }
 }
@@ -193,7 +189,6 @@ pub enum MakeAdminResult {
     Success,
     NotInGroup,
     AlreadyAdmin,
-    AdminLimitReached,
 }
 
 pub enum RemoveAdminResult {

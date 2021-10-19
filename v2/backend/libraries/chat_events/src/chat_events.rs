@@ -192,23 +192,19 @@ impl ChatEvents {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
-        fn update_metrics(metrics: &mut Metrics, content: &MessageContent, reply: bool) {
-            match content {
-                MessageContent::Text(_) => metrics.text_messages += 1,
-                MessageContent::Image(_) => metrics.image_messages += 1,
-                MessageContent::Video(_) => metrics.video_messages += 1,
-                MessageContent::Audio(_) => metrics.audio_messages += 1,
-                MessageContent::File(_) => metrics.file_messages += 1,
-                MessageContent::Cycles(_) => metrics.cycles_messages += 1,
-                MessageContent::Deleted(_) => metrics.deleted_messages += 1,
-            }
-
-            if reply {
-                metrics.replies_messages += 1;
-            }
+        match args.content {
+            MessageContent::Text(_) => self.metrics.text_messages += 1,
+            MessageContent::Image(_) => self.metrics.image_messages += 1,
+            MessageContent::Video(_) => self.metrics.video_messages += 1,
+            MessageContent::Audio(_) => self.metrics.audio_messages += 1,
+            MessageContent::File(_) => self.metrics.file_messages += 1,
+            MessageContent::Cycles(_) => self.metrics.cycles_messages += 1,
+            MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
         }
 
-        update_metrics(&mut self.metrics, &args.content, args.replies_to.is_some());
+        if args.replies_to.is_some() {
+            self.metrics.replies_messages += 1;
+        }
 
         let message_index = self.next_message_index();
         let message_internal = MessageInternal {

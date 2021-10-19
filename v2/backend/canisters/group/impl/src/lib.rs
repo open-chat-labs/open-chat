@@ -144,7 +144,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub participants: u32,
-    pub admins: u16,
+    pub admins: u32,
     pub events: u64,
     pub text_messages: u64,
     pub image_messages: u64,

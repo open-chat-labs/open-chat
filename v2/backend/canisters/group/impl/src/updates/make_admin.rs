@@ -38,7 +38,6 @@ fn make_admin_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 }
                 MakeAdminResult::NotInGroup => UserNotInGroup,
                 MakeAdminResult::AlreadyAdmin => Success,
-                MakeAdminResult::AdminLimitReached => AdminLimitReached,
             }
         } else {
             NotAuthorized
