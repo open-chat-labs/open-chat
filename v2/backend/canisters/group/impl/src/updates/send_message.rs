@@ -1,12 +1,11 @@
 use crate::updates::handle_activity_notification;
-use crate::AccumulatedMetrics;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use group_canister::send_message::{Response::*, *};
 use ic_cdk_macros::update;
 use notifications_canister::push_group_message_notification;
 use tracing::instrument;
-use types::{CanisterId, GroupMessageNotification, MessageContent, UserId};
+use types::{CanisterId, GroupMessageNotification, UserId};
 use utils::rand::get_random_item;
 
 #[update]
@@ -22,12 +21,6 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(participant) = runtime_state.data.participants.get_by_principal_mut(&caller) {
         let now = runtime_state.env.now();
         let sender = participant.user_id;
-
-        update_metrics(
-            &mut runtime_state.data.accumulated_metrics,
-            &args.content,
-            args.replies_to.is_some(),
-        );
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -73,20 +66,4 @@ async fn push_notification(canister_id: CanisterId, recipients: Vec<UserId>, not
         notification,
     };
     let _ = notifications_canister_c2c_client::push_group_message_notification(canister_id, &args).await;
-}
-
-fn update_metrics(accumulated_metrics: &mut AccumulatedMetrics, content: &MessageContent, reply: bool) {
-    match content {
-        MessageContent::Text(_) => accumulated_metrics.text_messages += 1,
-        MessageContent::Image(_) => accumulated_metrics.image_messages += 1,
-        MessageContent::Video(_) => accumulated_metrics.video_messages += 1,
-        MessageContent::Audio(_) => accumulated_metrics.audio_messages += 1,
-        MessageContent::File(_) => accumulated_metrics.file_messages += 1,
-        MessageContent::Cycles(_) => accumulated_metrics.cycles_messages += 1,
-        MessageContent::Deleted(_) => accumulated_metrics.deleted_messages += 1,
-    }
-
-    if reply {
-        accumulated_metrics.replies_messages += 1;
-    }
 }

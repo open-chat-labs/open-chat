@@ -1,6 +1,5 @@
 use crate::updates::handle_activity_notification;
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
-use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
 use tracing::instrument;
@@ -19,16 +18,12 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let now = runtime_state.env.now();
 
         for message_id in args.message_ids.into_iter() {
-            let result = runtime_state.data.events.delete_message(
+            runtime_state.data.events.delete_message(
                 participant.user_id,
                 participant.role.can_delete_messages(),
                 message_id,
                 now,
             );
-
-            if matches!(result, DeleteMessageResult::Success) {
-                runtime_state.data.accumulated_metrics.deleted_messages += 1;
-            }
         }
 
         handle_activity_notification(runtime_state);
