@@ -33,6 +33,7 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
             let wasm_version = canister_args.canister_wasm.version;
+            let canister_created = canister_args.canister_id.is_none();
             RUNTIME_STATE.with(|state| {
                 commit(
                     CommitArgs {
@@ -43,6 +44,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         avatar_id,
                         wasm_version,
                         cycles: cycles_to_use,
+                        canister_created,
                     },
                     state.borrow_mut().as_mut().unwrap(),
                 )
@@ -69,11 +71,15 @@ struct CreateCanisterArgs {
 }
 
 fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCanisterArgs, Response> {
-    let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-    let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-    if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
-        return Err(CyclesBalanceTooLow);
-    }
+    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
+        let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        if !cycles_utils::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+            return Err(CyclesBalanceTooLow);
+        }
+        cycles_required
+    } else {
+        0
+    };
 
     let now = runtime_state.env.now();
     let user_id = runtime_state.env.caller().into();
@@ -101,7 +107,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<CreateCaniste
         Ok(CreateCanisterArgs {
             canister_id,
             canister_wasm,
-            cycles_to_use: cycles_required,
+            cycles_to_use,
             init_canister_args,
         })
     }
@@ -115,6 +121,7 @@ struct CommitArgs {
     avatar_id: Option<u128>,
     wasm_version: Version,
     cycles: Cycles,
+    canister_created: bool,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -135,7 +142,9 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             .handle_group_created(args.chat_id, now, args.wasm_version);
     }
 
-    runtime_state.data.total_cycles_spent_on_canisters += args.cycles;
+    if args.canister_created {
+        runtime_state.data.total_cycles_spent_on_canisters += args.cycles;
+    }
 }
 
 fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

@@ -3,11 +3,12 @@ use crate::model::participants::Participants;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use chat_events::GroupChatEvents;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{Avatar, CanisterId, ChatId, Milliseconds, TimestampMillis, UserId, Version};
+use types::{Avatar, CanisterId, ChatId, Cycles, Milliseconds, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
+use utils::memory;
 use utils::regular_jobs::RegularJobs;
 
 mod lifecycle;
@@ -42,6 +43,37 @@ impl RuntimeState {
 
     pub fn is_caller_participant(&self) -> bool {
         self.data.participants.get(self.env.caller()).is_some()
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        let last_active = self.data.events.latest().map_or(0, |e| e.timestamp);
+        let blob_metrics = self.data.blob_storage.metrics();
+        let chat_metrics = self.data.events.metrics();
+        Metrics {
+            memory_used: memory::used(),
+            now: self.env.now(),
+            cycles_balance: self.env.cycles_balance(),
+            wasm_version: self.data.wasm_version,
+            participants: self.data.participants.len() as u32,
+            admins: self.data.participants.admin_count(),
+            events: self.data.events.len() as u64,
+            text_messages: chat_metrics.text_messages,
+            image_messages: chat_metrics.image_messages,
+            video_messages: chat_metrics.video_messages,
+            audio_messages: chat_metrics.audio_messages,
+            file_messages: chat_metrics.file_messages,
+            cycles_messages: chat_metrics.cycles_messages,
+            deleted_messages: chat_metrics.deleted_messages,
+            total_edits: chat_metrics.total_edits,
+            replies_messages: chat_metrics.replies_messages,
+            total_reactions: chat_metrics.total_reactions,
+            last_active,
+            image_bytes: blob_metrics.image_bytes,
+            video_bytes: blob_metrics.video_bytes,
+            audio_bytes: blob_metrics.audio_bytes,
+            total_blobs: blob_metrics.blob_count,
+            total_blob_bytes: blob_metrics.total_bytes,
+        }
     }
 }
 
@@ -103,6 +135,33 @@ impl Data {
             test_mode,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct Metrics {
+    pub now: TimestampMillis,
+    pub memory_used: u64,
+    pub cycles_balance: Cycles,
+    pub wasm_version: Version,
+    pub participants: u32,
+    pub admins: u32,
+    pub events: u64,
+    pub text_messages: u64,
+    pub image_messages: u64,
+    pub video_messages: u64,
+    pub audio_messages: u64,
+    pub file_messages: u64,
+    pub cycles_messages: u64,
+    pub deleted_messages: u64,
+    pub total_edits: u64,
+    pub replies_messages: u64,
+    pub total_reactions: u64,
+    pub last_active: TimestampMillis,
+    pub total_blobs: u32,
+    pub total_blob_bytes: u64,
+    pub image_bytes: u64,
+    pub video_bytes: u64,
+    pub audio_bytes: u64,
 }
 
 fn run_regular_jobs() {

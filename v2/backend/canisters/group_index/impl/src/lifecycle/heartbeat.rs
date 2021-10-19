@@ -1,7 +1,9 @@
 use crate::model::canisters_requiring_upgrade::FailedUpgrade;
-use crate::{RuntimeState, RUNTIME_STATE};
+use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MIN_CYCLES_BALANCE, RUNTIME_STATE};
 use ic_cdk_macros::heartbeat;
-use types::{CanisterWasm, ChatId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Version};
+use utils::canister;
+use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 
 const MAX_CANISTER_UPGRADES_PER_HEARTBEAT: u32 = 3;
 
@@ -13,7 +15,6 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
-    use utils::canister;
 
     pub fn run() {
         let chats_to_upgrade = RUNTIME_STATE.with(|state| get_next_batch(state.borrow_mut().as_mut().unwrap()));
@@ -104,15 +105,17 @@ mod upgrade_canisters {
 }
 
 mod topup_canister_pool {
-    use crate::{RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, RUNTIME_STATE};
-    use types::CanisterId;
-    use utils::canister;
-    use utils::consts::CREATE_CANISTER_CYCLES_FEE;
+    use super::*;
 
     pub fn run() {
         let is_full = RUNTIME_STATE.with(|state| is_pool_full(state.borrow().as_ref().unwrap()));
         if !is_full {
-            ic_cdk::block_on(add_new_canister());
+            let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+
+            // Only create the new canister if it won't result in the cycles balance being too low
+            if cycles_utils::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
+                ic_cdk::block_on(add_new_canister(cycles_to_use));
+            }
         }
     }
 
@@ -120,14 +123,14 @@ mod topup_canister_pool {
         runtime_state.data.canister_pool.is_full()
     }
 
-    async fn add_new_canister() {
-        let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if let Ok(canister_id) = canister::create(cycles_required).await {
-            RUNTIME_STATE.with(|state| add_canister_to_pool(state.borrow_mut().as_mut().unwrap(), canister_id));
+    async fn add_new_canister(cycles_to_use: Cycles) {
+        if let Ok(canister_id) = canister::create(cycles_to_use).await {
+            RUNTIME_STATE.with(|state| add_canister_to_pool(canister_id, cycles_to_use, state.borrow_mut().as_mut().unwrap()));
         }
     }
 
-    fn add_canister_to_pool(runtime_state: &mut RuntimeState, canister_id: CanisterId) {
+    fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
         runtime_state.data.canister_pool.push(canister_id);
+        runtime_state.data.total_cycles_spent_on_canisters += cycles;
     }
 }

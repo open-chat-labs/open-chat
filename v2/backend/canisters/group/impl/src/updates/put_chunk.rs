@@ -16,7 +16,6 @@ fn put_chunk(args: Args) -> Response {
 fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.is_caller_participant() {
         let now = runtime_state.env.now();
-
         match runtime_state.data.blob_storage.put_chunk(
             args.blob_id,
             args.mime_type,
@@ -25,8 +24,7 @@ fn put_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             args.bytes,
             now,
         ) {
-            PutChunkResult::Success => Success,
-            PutChunkResult::Complete => Success,
+            PutChunkResult::Success | PutChunkResult::Complete => Success,
             PutChunkResult::BlobAlreadyExists => BlobAlreadyExists,
             PutChunkResult::ChunkAlreadyExists => ChunkAlreadyExists,
             PutChunkResult::ChunkTooBig => ChunkTooBig,

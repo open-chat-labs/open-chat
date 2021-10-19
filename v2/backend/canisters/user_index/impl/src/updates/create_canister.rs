@@ -27,19 +27,21 @@ async fn create_canister(_args: Args) -> Response {
     // and skip canister creation
     let caller = init_ok.caller;
     let wasm_arg = candid::encode_one(init_ok.init_canister_args).unwrap();
-    let cycles = CREATE_CANISTER_CYCLES_FEE + USER_CANISTER_INITIAL_CYCLES_BALANCE;
-    match canister::create_and_install(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles).await {
+    let cycles_to_use = init_ok.cycles_to_use;
+    match canister::create_and_install(init_ok.canister_id, init_ok.canister_wasm.module, wasm_arg, cycles_to_use).await {
         Ok(canister_id) => {
             // The canister create/install succeeded.
             // If the confirmed user record has a username then change the stored user from Confirmed to Created
             // otherwise set the user's CanisterCreationStatus to Created.
             let wasm_version = init_ok.canister_wasm.version;
+            let canister_created = init_ok.canister_id.is_none();
             RUNTIME_STATE.with(|state| {
                 commit(
                     caller,
                     canister_id,
                     wasm_version,
-                    cycles,
+                    cycles_to_use,
+                    canister_created,
                     state.borrow_mut().as_mut().unwrap(),
                 )
             });
@@ -63,6 +65,7 @@ struct InitOk {
     caller: Principal,
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
+    cycles_to_use: Cycles,
     init_canister_args: InitUserCanisterArgs,
 }
 
@@ -75,17 +78,23 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
             User::Created(_) => UserAlreadyCreated,
             User::Confirmed(confirmed_user) => match confirmed_user.canister_creation_status {
                 CanisterCreationStatusInternal::Pending(canister_id) => {
-                    let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-                    let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-                    if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
-                        return Err(CyclesBalanceTooLow);
-                    }
+                    let create_new_canister = canister_id.is_none() && runtime_state.data.canister_pool.is_empty();
+                    let cycles_to_use = if create_new_canister {
+                        let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+                        if !cycles_utils::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+                            return Err(CyclesBalanceTooLow);
+                        }
+                        cycles_required
+                    } else {
+                        0
+                    };
 
                     let user_principal = confirmed_user.principal;
                     let mut user = user.clone();
                     user.set_canister_creation_status(CanisterCreationStatusInternal::InProgress);
                     match runtime_state.data.users.update(user) {
                         UpdateUserResult::Success => {
+                            let canister_id = canister_id.or_else(|| runtime_state.data.canister_pool.pop());
                             let canister_wasm = runtime_state.data.user_canister_wasm.clone();
                             let init_canister_args = InitUserCanisterArgs {
                                 owner: user_principal,
@@ -94,12 +103,12 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                                 wasm_version: canister_wasm.version,
                                 test_mode: runtime_state.data.test_mode,
                             };
-                            let canister_id = canister_id.or_else(|| runtime_state.data.canister_pool.pop());
 
                             return Ok(InitOk {
                                 caller,
                                 canister_id,
                                 canister_wasm,
+                                cycles_to_use,
                                 init_canister_args,
                             });
                         }
@@ -117,7 +126,14 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
     Err(response)
 }
 
-fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cycles: Cycles, runtime_state: &mut RuntimeState) {
+fn commit(
+    caller: Principal,
+    canister_id: CanisterId,
+    wasm_version: Version,
+    cycles: Cycles,
+    canister_created: bool,
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         if let User::Confirmed(confirmed_user) = user {
@@ -157,7 +173,9 @@ fn commit(caller: Principal, canister_id: CanisterId, wasm_version: Version, cyc
         }
     }
 
-    runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    if canister_created {
+        runtime_state.data.total_cycles_spent_on_canisters += cycles;
+    }
 }
 
 fn rollback(caller: Principal, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {

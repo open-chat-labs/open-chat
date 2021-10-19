@@ -84,7 +84,9 @@ export function submitPhoneNumberResponse(
     if ("InvalidPhoneNumber" in candid) {
         return { kind: "invalid_phone_number" };
     }
-
+    if ("UserLimitReached" in candid) {
+        return { kind: "user_limit_reached" };
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiSubmitPhoneNumberResponse type received",
         candid
@@ -120,6 +122,7 @@ export function createCanisterResponse(candid: ApiCreateCanisterResponse): Creat
     if ("InternalError" in candid) return "internal_error";
     if ("UserUnconfirmed" in candid) return "user_unconfirmed";
     if ("UserNotFound" in candid) return "user_not_found";
+    if ("CyclesBalanceTooLow" in candid) return "cycles_balance_too_low";
 
     throw new UnsupportedValueError("Unexpected ApiCreateCanisterResponse type received", candid);
 }

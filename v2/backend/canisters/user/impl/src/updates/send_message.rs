@@ -1,8 +1,11 @@
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{CanisterId, Cycles, MessageContent, MessageIndex, Timestamped};
+use types::{
+    CanisterId, Cryptocurrency, CryptocurrencySend, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles, MessageContent,
+    MessageIndex, TimestampMillis, Timestamped, Transaction,
+};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -23,15 +26,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let now = runtime_state.env.now();
 
-    let cycles_amount_to_send = if let MessageContent::Cycles(c) = &args.content {
-        if runtime_state.data.user_cycles_balance.value < c.amount {
-            return InsufficientCycles;
-        }
-        let new_cycles_balance = runtime_state.data.user_cycles_balance.value - c.amount;
-        runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
-        c.amount
-    } else {
-        0
+    let cycles_amount_to_send = match handle_transaction_if_present(&args, now, &mut runtime_state.data) {
+        Ok(cycles) => cycles,
+        Err(response) => return response,
     };
 
     let my_user_id = runtime_state.env.canister_id().into();
@@ -77,4 +74,27 @@ async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_mes
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
     let _ = user_canister_c2c_client::c2c_send_message(canister_id, &args, cycles).await;
+}
+
+fn handle_transaction_if_present(args: &Args, now: TimestampMillis, data: &mut Data) -> Result<Cycles, Response> {
+    if let MessageContent::Cycles(c) = &args.content {
+        if let Some(new_cycles_balance) = data.user_cycles_balance.value.checked_sub(c.amount) {
+            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+                currency: Cryptocurrency::Cycles,
+                block_height: None,
+                transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+                    to_user: args.recipient,
+                    to: args.recipient.to_string(),
+                    amount: c.amount,
+                }),
+            });
+            data.transactions.add(transaction, now);
+            data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+            Ok(c.amount)
+        } else {
+            Err(InsufficientCycles)
+        }
+    } else {
+        Ok(0)
+    }
 }
