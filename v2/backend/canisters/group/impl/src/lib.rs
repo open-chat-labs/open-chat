@@ -46,7 +46,6 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let last_active = self.data.events.latest().map_or(0, |e| e.timestamp);
         let blob_metrics = self.data.blob_storage.metrics();
         let chat_metrics = self.data.events.metrics();
         Metrics {
@@ -56,7 +55,7 @@ impl RuntimeState {
             wasm_version: self.data.wasm_version,
             participants: self.data.participants.len() as u32,
             admins: self.data.participants.admin_count(),
-            events: self.data.events.len() as u64,
+            events: chat_metrics.total_events,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -65,9 +64,9 @@ impl RuntimeState {
             cycles_messages: chat_metrics.cycles_messages,
             deleted_messages: chat_metrics.deleted_messages,
             total_edits: chat_metrics.total_edits,
-            replies_messages: chat_metrics.replies_messages,
+            replies: chat_metrics.replies,
             total_reactions: chat_metrics.total_reactions,
-            last_active,
+            last_active: chat_metrics.last_active,
             image_bytes: blob_metrics.image_bytes,
             video_bytes: blob_metrics.video_bytes,
             audio_bytes: blob_metrics.audio_bytes,
@@ -154,7 +153,7 @@ pub struct Metrics {
     pub cycles_messages: u64,
     pub deleted_messages: u64,
     pub total_edits: u64,
-    pub replies_messages: u64,
+    pub replies: u64,
     pub total_reactions: u64,
     pub last_active: TimestampMillis,
     pub total_blobs: u32,
