@@ -135,10 +135,6 @@
         push("/");
     }
 
-    function newGroup() {
-        machine.send({ type: "NEW_GROUP" });
-    }
-
     function newChat() {
         machine.send({ type: "NEW_CHAT" });
     }
@@ -259,7 +255,6 @@
                 on:chatWith={chatWith}
                 on:logout={logout}
                 on:loadMessage={loadMessage}
-                on:newGroup={newGroup}
                 on:newchat={newChat} />
         {/if}
         {#if params.chatId != null || $screenWidth !== ScreenWidth.ExtraSmall}
