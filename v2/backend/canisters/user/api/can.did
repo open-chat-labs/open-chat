@@ -297,7 +297,7 @@ type TransactionsResponse =
 
 type TransactionsSuccessResult =
     record {
-        transactions: vec Transaction;
+        transactions: vec TransactionWrapper;
         latest_transaction_index: opt nat32;
     };
 
