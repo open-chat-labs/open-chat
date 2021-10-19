@@ -263,6 +263,12 @@ type GroupDescriptionChanged =
         changed_by: UserId;
     };
 
+type IcpContent =
+    record {
+        amount_e8s: nat64;
+        caption: opt text;
+    };
+
 type AvatarChanged =
     record {
         new_avatar: nat;
@@ -334,6 +340,7 @@ type MessageContent =
         Audio: AudioContent;
         File: FileContent;
         Cycles: CyclesContent;
+        ICP: IcpContent;
         Deleted: DeletedContent;
     };
 

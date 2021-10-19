@@ -44,6 +44,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                     username: u.username.clone(),
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
+                    icp_address: ledger_utils::calculate_address(u.user_id),
                 })
             }
         }

@@ -33,6 +33,7 @@ pub struct CryptocurrencyDeposit {
 pub struct CryptocurrencyWithdrawal {
     pub to: String,
     pub amount: u128,
+    pub fee: u128,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
@@ -40,6 +41,7 @@ pub struct CryptocurrencySend {
     pub to_user: UserId,
     pub to: String,
     pub amount: u128,
+    pub fee: u128,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]

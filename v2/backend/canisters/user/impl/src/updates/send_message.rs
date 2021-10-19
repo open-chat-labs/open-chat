@@ -4,20 +4,25 @@ use ic_cdk_macros::update;
 use tracing::instrument;
 use types::{
     CanisterId, Cryptocurrency, CryptocurrencySend, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles, MessageContent,
-    MessageIndex, TimestampMillis, Timestamped, Transaction,
+    MessageIndex, TimestampMillis, Timestamped, Transaction, UserId,
 };
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
 #[update]
 #[instrument(level = "trace")]
-fn send_message(args: Args) -> Response {
+async fn send_message(args: Args) -> Response {
     run_regular_jobs();
 
-    RUNTIME_STATE.with(|state| send_message_impl(args, state.borrow_mut().as_mut().unwrap()))
+    let transaction = match send_transaction_if_required(&args).await {
+        Ok(t) => t,
+        Err(error) => return TransactionFailed(error),
+    };
+
+    RUNTIME_STATE.with(|state| send_message_impl(args, transaction, state.borrow_mut().as_mut().unwrap()))
 }
 
-fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn send_message_impl(args: Args, transaction: Option<Transaction>, runtime_state: &mut RuntimeState) -> Response {
     runtime_state.trap_if_caller_not_owner();
 
     if runtime_state.data.blocked_users.contains(&args.recipient) {
@@ -26,10 +31,15 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
     let now = runtime_state.env.now();
 
-    let cycles_amount_to_send = match handle_transaction_if_present(&args, now, &mut runtime_state.data) {
-        Ok(cycles) => cycles,
-        Err(response) => return response,
-    };
+    let mut cycles_to_send: Cycles = 0;
+    if let Some(transaction) = transaction {
+        runtime_state.data.transactions.add(transaction, now);
+    } else if let MessageContent::Cycles(c) = &args.content {
+        if !prepare_and_log_cycles_transaction(args.recipient, c.amount, now, &mut runtime_state.data) {
+            return InsufficientCycles;
+        }
+        cycles_to_send = c.amount;
+    }
 
     let my_user_id = runtime_state.env.canister_id().into();
     let push_message_args = PushMessageArgs {
@@ -47,7 +57,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             .push_message(true, args.recipient, None, push_message_args);
 
     let (canister_id, c2c_args) = build_c2c_args(args, message.message_index);
-    ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args, cycles_amount_to_send));
+    ic_cdk::block_on(send_to_recipients_canister(canister_id, c2c_args, cycles_to_send));
 
     Success(SuccessResult {
         chat_id,
@@ -76,25 +86,44 @@ async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_mes
     let _ = user_canister_c2c_client::c2c_send_message(canister_id, &args, cycles).await;
 }
 
-fn handle_transaction_if_present(args: &Args, now: TimestampMillis, data: &mut Data) -> Result<Cycles, Response> {
-    if let MessageContent::Cycles(c) = &args.content {
-        if let Some(new_cycles_balance) = data.user_cycles_balance.value.checked_sub(c.amount) {
-            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
-                currency: Cryptocurrency::Cycles,
-                block_height: None,
-                transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
-                    to_user: args.recipient,
-                    to: args.recipient.to_string(),
-                    amount: c.amount,
-                }),
-            });
-            data.transactions.add(transaction, now);
-            data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
-            Ok(c.amount)
-        } else {
-            Err(InsufficientCycles)
+async fn send_transaction_if_required(args: &Args) -> Result<Option<Transaction>, String> {
+    match &args.content {
+        MessageContent::ICP(c) => {
+            let address = ledger_utils::calculate_address(args.recipient);
+            match ledger_utils::send(address, c.amount_e8s).await {
+                Ok(result) => Ok(Some(Transaction::Cryptocurrency(CryptocurrencyTransaction {
+                    currency: Cryptocurrency::ICP,
+                    block_height: Some(result.block_height),
+                    transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+                        to_user: args.recipient,
+                        to: address.to_string(),
+                        amount: c.amount_e8s.into(),
+                        fee: result.fee_e8s.into(),
+                    }),
+                }))),
+                Err(error) => Err(error),
+            }
         }
+        _ => Ok(None),
+    }
+}
+
+fn prepare_and_log_cycles_transaction(recipient: UserId, amount: Cycles, now: TimestampMillis, data: &mut Data) -> bool {
+    if let Some(new_cycles_balance) = data.user_cycles_balance.value.checked_sub(amount) {
+        let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+            currency: Cryptocurrency::Cycles,
+            block_height: None,
+            transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+                to_user: recipient,
+                to: recipient.to_string(),
+                amount,
+                fee: 0,
+            }),
+        });
+        data.transactions.add(transaction, now);
+        data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+        true
     } else {
-        Ok(0)
+        false
     }
 }

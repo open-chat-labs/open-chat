@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 candid = "0.7.7"
+ledger-canister = { git = "https://github.com/dfinity/ic", rev = "bd3b73e075aea1cc81b23b38ccfb138ca4ab17ab" }
 serde = "1.0.126"
 serde_bytes = "0.11"
 types = { path = "../../../libraries/types" }

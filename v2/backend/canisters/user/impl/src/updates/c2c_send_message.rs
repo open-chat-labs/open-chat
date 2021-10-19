@@ -62,9 +62,7 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let Err(response) = handle_transaction_if_present(&args, sender, now, &mut runtime_state.data) {
-        return response;
-    }
+    handle_transaction_if_present(&args.content, sender, now, &mut runtime_state.data);
 
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
@@ -107,30 +105,45 @@ async fn push_notification(canister_id: CanisterId, recipient: UserId, notificat
     let _ = notifications_canister_c2c_client::push_direct_message_notification(canister_id, &args).await;
 }
 
-fn handle_transaction_if_present(args: &Args, sender: UserId, now: TimestampMillis, data: &mut Data) -> Result<(), Response> {
-    if let MessageContent::Cycles(c) = &args.content {
-        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
-        if cycles_available < c.amount {
-            return Err(InsufficientCycles);
+fn handle_transaction_if_present(content: &MessageContent, sender: UserId, now: TimestampMillis, data: &mut Data) {
+    match &content {
+        MessageContent::Cycles(c) => {
+            let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
+            if cycles_available < c.amount {
+                // This should never happen...
+                panic!("Message does not contain the stated number of cycles");
+            }
+            let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
+            if cycles_accepted != c.amount {
+                // This can only happen if accepting the cycles results in the canister exceeding the
+                // max cycles limit which in reality should never happen.
+                panic!("Unable to accept cycles")
+            }
+            let new_cycles_balance = data.user_cycles_balance.value + c.amount;
+            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+                currency: Cryptocurrency::Cycles,
+                block_height: None,
+                transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
+                    from_user: sender,
+                    from: sender.to_string(),
+                    amount: c.amount,
+                }),
+            });
+            data.transactions.add(transaction, now);
+            data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
         }
-        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
-        if cycles_accepted != c.amount {
-            // This can only happen if accepting the cycles results in the canister exceeding the
-            // max cycles limit which in reality should never happen.
-            panic!("Unable to accept cycles")
+        MessageContent::ICP(c) => {
+            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+                currency: Cryptocurrency::ICP,
+                block_height: Some(c.block_height),
+                transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
+                    from_user: sender,
+                    from: ledger_utils::calculate_address(sender).to_string(),
+                    amount: c.amount_e8s.into(),
+                }),
+            });
+            data.transactions.add(transaction, now);
         }
-        let new_cycles_balance = data.user_cycles_balance.value + c.amount;
-        let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
-            currency: Cryptocurrency::Cycles,
-            block_height: None,
-            transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
-                from_user: sender,
-                from: sender.to_string(),
-                amount: c.amount,
-            }),
-        });
-        data.transactions.add(transaction, now);
-        data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+        _ => {}
     }
-    Ok(())
 }

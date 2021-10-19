@@ -1,4 +1,5 @@
 use candid::CandidType;
+use ledger_canister::AccountIdentifier;
 use serde::Deserialize;
 use types::{CanisterCreationStatus, CanisterUpgradeStatus, PhoneNumber, UserId};
 
@@ -36,4 +37,5 @@ pub struct CreatedResult {
     pub username: String,
     pub avatar_id: Option<u128>,
     pub canister_upgrade_status: CanisterUpgradeStatus,
+    pub icp_address: AccountIdentifier,
 }

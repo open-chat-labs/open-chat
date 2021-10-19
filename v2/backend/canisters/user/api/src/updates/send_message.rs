@@ -16,6 +16,7 @@ pub enum Response {
     Success(SuccessResult),
     RecipientBlocked,
     InsufficientCycles,
+    TransactionFailed(String),
 }
 
 #[derive(CandidType, Deserialize, Debug)]
