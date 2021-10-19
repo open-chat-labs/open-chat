@@ -2,7 +2,10 @@ use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use tracing::instrument;
-use types::{CanisterId, Currency, Cycles, MessageContent, MessageIndex, Send, TimestampMillis, Timestamped, Transfer};
+use types::{
+    CanisterId, Cryptocurrency, CryptocurrencySend, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles, MessageContent,
+    MessageIndex, TimestampMillis, Timestamped, Transaction,
+};
 use user_canister::c2c_send_message;
 use user_canister::send_message::{Response::*, *};
 
@@ -75,18 +78,22 @@ async fn send_to_recipients_canister(canister_id: CanisterId, args: c2c_send_mes
 
 fn handle_transaction_if_present(args: &Args, now: TimestampMillis, data: &mut Data) -> Result<Cycles, Response> {
     if let MessageContent::Cycles(c) = &args.content {
-        if data.user_cycles_balance.value < c.amount {
-            return Err(InsufficientCycles);
+        if let Some(new_cycles_balance) = data.user_cycles_balance.value.checked_sub(c.amount) {
+            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+                currency: Cryptocurrency::Cycles,
+                block_height: None,
+                transfer: CryptocurrencyTransfer::Send(CryptocurrencySend {
+                    to_user: args.recipient,
+                    to: args.recipient.to_string(),
+                    amount: c.amount,
+                }),
+            });
+            data.transactions.add(transaction, now);
+            data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+            Ok(c.amount)
+        } else {
+            Err(InsufficientCycles)
         }
-        let new_cycles_balance = data.user_cycles_balance.value - c.amount;
-        let transfer = Transfer::Send(Send {
-            to_user: args.recipient,
-            to: args.recipient.to_string(),
-            amount: c.amount,
-        });
-        data.transactions.add(Currency::Cycles, transfer, now);
-        data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
-        Ok(c.amount)
     } else {
         Ok(0)
     }

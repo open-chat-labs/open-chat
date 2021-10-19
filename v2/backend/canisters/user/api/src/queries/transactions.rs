@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::Transaction;
+use types::TransactionWrapper;
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
@@ -16,6 +16,6 @@ pub enum Response {
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub transactions: Vec<Transaction>,
+    pub transactions: Vec<TransactionWrapper>,
     pub latest_transaction_index: Option<u32>,
 }

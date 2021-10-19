@@ -4,8 +4,8 @@ use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
 use types::{
-    CanisterId, Currency, Cycles, DirectMessageNotification, MessageContent, Receive, TimestampMillis, Timestamped, Transfer,
-    UserId,
+    CanisterId, Cryptocurrency, CryptocurrencyReceive, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles,
+    DirectMessageNotification, MessageContent, TimestampMillis, Timestamped, Transaction, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
@@ -120,12 +120,16 @@ fn handle_transaction_if_present(args: &Args, sender: UserId, now: TimestampMill
             panic!("Unable to accept cycles")
         }
         let new_cycles_balance = data.user_cycles_balance.value + c.amount;
-        let transfer = Transfer::Receive(Receive {
-            from_user: sender,
-            from: sender.to_string(),
-            amount: c.amount,
+        let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+            currency: Cryptocurrency::Cycles,
+            block_height: None,
+            transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
+                from_user: sender,
+                from: sender.to_string(),
+                amount: c.amount,
+            }),
         });
-        data.transactions.add(Currency::Cycles, transfer, now);
+        data.transactions.add(transaction, now);
         data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
     }
     Ok(())

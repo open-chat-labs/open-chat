@@ -67,10 +67,51 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
-type Currency =
+type Cryptocurrency =
     variant {
         ICP;
         Cycles;
+    };
+
+type CryptocurrencyDeposit =
+    record {
+        from: text;
+        amount: nat;
+    };
+
+type CryptocurrencyReceive =
+    record {
+        from_user: UserId;
+        from: text;
+        amount: nat;
+    };
+
+type CryptocurrencySend =
+    record {
+        to_user: UserId;
+        to: text;
+        amount: nat;
+    };
+
+type CryptocurrencyTransaction =
+    record {
+        currency: Cryptocurrency;
+        block_height: opt nat64;
+        transfer: CryptocurrencyTransfer;
+    };
+
+type CryptocurrencyTransfer =
+    variant {
+        Deposit: CryptocurrencyDeposit;
+        Withdrawal: CryptocurrencyWithdrawal;
+        Send: CryptocurrencySend;
+        Receive: CryptocurrencyReceive;
+    };
+
+type CryptocurrencyWithdrawal =
+    record {
+        to: text;
+        amount: nat;
     };
 
 type CyclesContent =
@@ -83,12 +124,6 @@ type DeletedContent =
     record {
         deleted_by: UserId;
         timestamp: TimestampMillis;
-    };
-
-type Deposit =
-    record {
-        from: text;
-        amount: nat;
     };
 
 type DirectChatCreated =
@@ -386,24 +421,10 @@ type ParticipantsRemoved =
         removed_by: UserId;
     };
 
-type Receive =
-    record {
-        from_user: UserId;
-        from: text;
-        amount: nat;
-    };
-
 type Role =
     variant {
         Admin;
         Participant;
-    };
-
-type Send =
-    record {
-        to_user: UserId;
-        to: text;
-        amount: nat;
     };
 
 type Subscription =
@@ -430,19 +451,15 @@ type TextContent =
     };
 
 type Transaction =
+    variant {
+        Cryptocurrency: CryptocurrencyTransaction;
+    };
+
+type TransactionWrapper =
     record {
         index: nat32;
         timestamp: TimestampMillis;
-        currency: Currency;
-        transfer: Transfer;
-    };
-
-type Transfer =
-    variant {
-        Deposit: Deposit;
-        Withdrawal: Withdrawal;
-        Send: Send;
-        Receive: Receive;
+        transaction: Transaction;
     };
 
 type UserSummary =
@@ -458,12 +475,6 @@ type Version =
         major: nat32;
         minor: nat32;
         patch: nat32;
-    };
-
-type Withdrawal =
-    record {
-        to: text;
-        amount: nat;
     };
 
 // TODO Delete the V1 stuff below

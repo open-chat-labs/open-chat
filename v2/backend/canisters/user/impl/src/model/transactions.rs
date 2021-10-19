@@ -1,30 +1,38 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{Currency, TimestampMillis, Transaction, Transfer};
+use types::{TimestampMillis, Transaction, TransactionWrapper};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Transactions {
-    transactions: Vec<TransactionInternal>,
+    transactions: Vec<TransactionWrapperInternal>,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
-struct TransactionInternal {
-    pub timestamp: TimestampMillis,
-    pub currency: Currency,
-    pub transfer: Transfer,
+struct TransactionWrapperInternal {
+    timestamp: TimestampMillis,
+    transaction: Transaction,
+}
+
+impl TransactionWrapperInternal {
+    pub fn hydrate(&self, index: u32) -> TransactionWrapper {
+        TransactionWrapper {
+            index,
+            timestamp: self.timestamp,
+            transaction: self.transaction.clone(),
+        }
+    }
 }
 
 impl Transactions {
-    pub fn add(&mut self, currency: Currency, transfer: Transfer, now: TimestampMillis) {
-        let transaction = TransactionInternal {
-            currency,
+    pub fn add(&mut self, transaction: Transaction, now: TimestampMillis) {
+        let wrapper = TransactionWrapperInternal {
             timestamp: now,
-            transfer,
+            transaction,
         };
-        self.transactions.push(transaction);
+        self.transactions.push(wrapper);
     }
 
-    pub fn most_recent(&self, since: TimestampMillis, max_results: u8) -> Vec<Transaction> {
+    pub fn most_recent(&self, since: TimestampMillis, max_results: u8) -> Vec<TransactionWrapper> {
         if self.transactions.is_empty() {
             Vec::new()
         } else {
@@ -41,18 +49,13 @@ impl Transactions {
             self.transactions[start_index..]
                 .iter()
                 .enumerate()
-                .map(|(i, t)| Transaction {
-                    index: (start_index + i) as u32,
-                    currency: t.currency,
-                    timestamp: t.timestamp,
-                    transfer: t.transfer.clone(),
-                })
+                .map(|(i, t)| t.hydrate(i as u32))
                 .collect()
         }
     }
 
-    pub fn from_index(&self, start: usize, ascending: bool, max_transactions: u8) -> Vec<Transaction> {
-        let iter: Box<dyn Iterator<Item = &TransactionInternal>> = if ascending {
+    pub fn from_index(&self, start: usize, ascending: bool, max_transactions: u8) -> Vec<TransactionWrapper> {
+        let iter: Box<dyn Iterator<Item = &TransactionWrapperInternal>> = if ascending {
             let range = &self.transactions[start..];
             Box::new(range.iter())
         } else {
@@ -62,12 +65,7 @@ impl Transactions {
 
         iter.take(max_transactions as usize)
             .enumerate()
-            .map(|(i, t)| Transaction {
-                index: if ascending { start + i } else { start - i } as u32,
-                timestamp: t.timestamp,
-                currency: t.currency,
-                transfer: t.transfer.clone(),
-            })
+            .map(|(i, t)| t.hydrate(if ascending { start + i } else { start - i } as u32))
             .collect()
     }
 
