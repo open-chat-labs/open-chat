@@ -57,6 +57,7 @@ export type CreateCanisterResponse =
     | "creation_in_progress"
     | "internal_error"
     | "user_unconfirmed"
+    | "cycles_balance_too_low"
     | "user_not_found";
 
 export type UpgradeCanisterResponse =
@@ -119,12 +120,14 @@ export type SubmitPhoneNumberResponse =
     | RegisterSuccess
     | AlreadyRegistered
     | AlreadyRegisteredByOther
+    | UserLimitReached
     | InvalidPhoneNumber;
 
 export type RegisterSuccess = { kind: "success" };
 export type AlreadyRegistered = { kind: "already_registered" };
 export type AlreadyRegisteredByOther = { kind: "already_registered_by_other" };
 export type InvalidPhoneNumber = { kind: "invalid_phone_number" };
+export type UserLimitReached = { kind: "user_limit_reached" };
 
 export type ConfirmPhoneNumberResponse =
     | "success"

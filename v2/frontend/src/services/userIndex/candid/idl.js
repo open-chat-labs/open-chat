@@ -19,9 +19,10 @@ export const idlFactory = ({ IDL }) => {
     'UserAlreadyCreated' : IDL.Null,
     'Success' : CanisterId,
     'CreationInProgress' : IDL.Null,
-    'InternalError' : IDL.Null,
+    'InternalError' : IDL.Text,
     'UserUnconfirmed' : IDL.Null,
     'UserNotFound' : IDL.Null,
+    'CyclesBalanceTooLow' : IDL.Null,
   });
   const CurrentUserArgs = IDL.Record({});
   const PhoneNumber = IDL.Record({
@@ -128,6 +129,7 @@ export const idlFactory = ({ IDL }) => {
   const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
   const SubmitPhoneNumberResponse = IDL.Variant({
     'AlreadyRegistered' : IDL.Null,
+    'UserLimitReached' : IDL.Null,
     'Success' : IDL.Null,
     'AlreadyRegisteredByOther' : IDL.Null,
     'InvalidPhoneNumber' : IDL.Null,

@@ -1,0 +1,101 @@
+<script lang="ts">
+    import Loading from "../../Loading.svelte";
+    import Button from "../../Button.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import { _ } from "svelte-i18n";
+    import Avatar from "../../Avatar.svelte";
+    import { AvatarSize, UserStatus } from "../../../domain/user/user";
+    import type { UserSummary } from "../../../domain/user/user";
+    import SelectUsers from "../SelectUsers.svelte";
+    import type { CandidateGroupChat } from "../../../domain/chat/chat";
+    import { createEventDispatcher } from "svelte";
+    import type { ServiceContainer } from "../../../services/serviceContainer";
+
+    const dispatch = createEventDispatcher();
+
+    export let candidateGroup: CandidateGroupChat;
+    export let creatingCanister: boolean;
+    export let addingParticipants: boolean;
+    export let api: ServiceContainer;
+
+    $: numParticipants = candidateGroup.participants.length;
+    $: selectedUsers = candidateGroup.participants.map((p) => p.user);
+    $: busy = creatingCanister || addingParticipants;
+
+    function deleteParticipant(ev: CustomEvent<UserSummary>): void {
+        candidateGroup.participants = candidateGroup.participants.filter(
+            (p) => p.user.userId !== ev.detail.userId
+        );
+    }
+
+    function addParticipant(ev: CustomEvent<UserSummary>): void {
+        candidateGroup.participants = [
+            ...candidateGroup.participants,
+            {
+                role: "standard",
+                user: ev.detail,
+            },
+        ];
+    }
+
+    function complete() {
+        dispatch("complete");
+    }
+</script>
+
+<SectionHeader>
+    <h4>{$_("chooseParticipants")}</h4>
+    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
+</SectionHeader>
+
+<div class="participants">
+    <div class="form-fields">
+        {#if !addingParticipants}
+            <SelectUsers
+                {api}
+                on:deleteUser={deleteParticipant}
+                on:selectUser={addParticipant}
+                {selectedUsers} />
+        {:else}
+            <Loading />
+        {/if}
+    </div>
+
+    <div class="cta">
+        <Button disabled={busy} loading={busy} on:click={complete} fill={true}
+            >{$_(numParticipants === 0 ? "skip" : "confirmParticipants")}</Button>
+    </div>
+</div>
+
+<style type="text/scss">
+    h4 {
+        flex: 1;
+        padding: 0 $sp4;
+    }
+
+    .cta {
+        flex: 0 0 57px;
+    }
+
+    .participants {
+        flex: 1;
+        background-color: var(--section-bg);
+        color: var(--section-txt);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        overflow: auto;
+        @include size-below(xs) {
+            background-color: transparent;
+        }
+    }
+
+    .form-fields {
+        padding: $sp4;
+        flex: auto;
+        overflow: auto;
+        @include size-below(xs) {
+            padding: $sp3;
+        }
+    }
+</style>

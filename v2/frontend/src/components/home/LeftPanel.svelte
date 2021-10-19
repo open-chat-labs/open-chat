@@ -2,11 +2,9 @@
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
     import NewChat from "./NewChat.svelte";
-    import NewGroup from "./NewGroup.svelte";
-    import ChooseParticipants from "./ChooseParticipants.svelte";
+    import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import type { ActorRefFrom } from "xstate";
     import type { HomeMachine } from "../../fsm/home.machine";
-    import type { AddGroupMachine } from "../../fsm/addgroup.machine";
     import type {
         GroupSearchResponse,
         SearchAllMessagesResponse,
@@ -21,32 +19,24 @@
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
 
-    $: addGroupMachine = $machine.children.addGroupMachine as ActorRefFrom<AddGroupMachine>;
-
+    $: api = $machine.context.serviceContainer!;
     $: newChat = $machine.matches({ loaded_chats: "new_chat" });
-
-    $: newGroup =
-        addGroupMachine !== undefined &&
-        $addGroupMachine.matches({ data_collection: "group_form" });
-
-    $: choosingParticipants =
-        addGroupMachine !== undefined &&
-        ($addGroupMachine.matches({ data_collection: "choosing_participants" }) ||
-            $addGroupMachine.matches({ data_collection: "adding_participants" }));
+    let addingGroup: boolean = false;
 </script>
 
 <Panel left>
     {#if newChat}
         <NewChat {machine} />
-    {:else if newGroup}
-        <NewGroup machine={addGroupMachine} />
-    {:else if choosingParticipants}
-        <ChooseParticipants machine={addGroupMachine} />
+    {:else if addingGroup}
+        <NewGroup
+            {api}
+            on:cancelNewGroup={() => (addingGroup = false)}
+            on:groupCreated={() => (addingGroup = false)} />
     {:else}
         <ChatList
             on:loadMessage
             on:chatWith
-            on:newGroup
+            on:newGroup={() => (addingGroup = true)}
             on:newchat
             on:logout
             on:searchEntered
