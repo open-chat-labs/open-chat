@@ -50,12 +50,7 @@
     $: displayDate = getDisplayDate(chatSummary);
 </script>
 
-<a
-    role="button"
-    class="chat-summary"
-    class:selected
-    href={`/#/${chatSummary.chatId}`}
-    title={JSON.stringify(chatSummary.readByMe)}>
+<a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
         <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>

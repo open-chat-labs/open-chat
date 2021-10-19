@@ -16,7 +16,7 @@
     export let user: UserSummary | undefined;
     export let repliesTo: RehydratedReplyContext;
 
-    let debug = true;
+    let debug = false;
 
     $: me = repliesTo.senderId === user?.userId;
 

@@ -77,6 +77,7 @@ export type ChatEvents =
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
     | { type: "GO_TO_MESSAGE_INDEX"; data: number }
+    | { type: "SET_FOCUS_MESSAGE_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
@@ -181,7 +182,6 @@ export function earliestIndex(ctx: ChatContext): number {
 
 export function moreNewMessagesAvailable(ctx: ChatContext): boolean {
     const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
-    console.log(lastLoaded, ctx.chatSummary.latestEventIndex);
     return lastLoaded === undefined || lastLoaded < ctx.chatSummary.latestEventIndex;
 }
 
@@ -236,7 +236,6 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     guards: {
         notUpToDate: (ctx, ev) =>
             ev.type === "SEND_MESSAGE" &&
-            ctx.events.length > 0 &&
             ctx.events[ctx.events.length - 1]?.index < ctx.chatSummary.latestEventIndex &&
             ev.data.userId === ctx.user?.userId &&
             ctx.chatSummary.latestMessage !== undefined,
@@ -424,6 +423,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         actions: [
                             // set focus to the last confirmed message
                             assign((ctx, ev) => {
+                                console.log("are we ending up here");
                                 return {
                                     focusMessageIndex:
                                         ctx.chatSummary.latestMessage!.event.messageIndex,
@@ -697,6 +697,11 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 // not already rendered. If it *is* we can simply scroll to it. If not, we need to load it first.
                 GO_TO_MESSAGE_INDEX: {
                     target: ".loading_previous_messages",
+                    actions: assign((_, ev) => ({
+                        focusMessageIndex: ev.data,
+                    })),
+                },
+                SET_FOCUS_MESSAGE_INDEX: {
                     actions: assign((_, ev) => ({
                         focusMessageIndex: ev.data,
                     })),

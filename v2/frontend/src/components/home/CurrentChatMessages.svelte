@@ -13,7 +13,6 @@
     import type { ChatEvents } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
-    import Loading from "../Loading.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { chatStore } from "../../stores/chat";
@@ -125,6 +124,7 @@
     function scrollToMessageIndex(index: number) {
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
+            machine.send({ type: "SET_FOCUS_MESSAGE_INDEX", data: index });
             scrollToElement(element);
             setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
         } else {
@@ -234,8 +234,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<number>) {
-        // TODO - iff the message index cannot be found, fire off an event to trigger load of the data
-        machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail });
+        scrollToMessageIndex(ev.detail);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -376,7 +375,9 @@
                     // if we are within the from bottom threshold *or* if the new message
                     // was sent by us, then scroll to the bottom
                     if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.sentByMe) {
-                        scrollBottom("smooth");
+                        // smooth scroll doesn't work here when we are leaping from the top
+                        // which means we are stuck with abrupt scroll which is disappointing
+                        scrollBottom();
                     }
                     chatStore.clear();
                     break;
@@ -452,11 +453,6 @@
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
-    {#if $machine.matches({ user_states: "loading_previous_messages" })}
-        <div class="spinner">
-            <Loading />
-        </div>
-    {/if}
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -557,10 +553,6 @@
         .unread-label {
             @include font(book, normal, fs-70);
         }
-    }
-
-    .spinner {
-        height: 100px;
     }
 
     .to-bottom {

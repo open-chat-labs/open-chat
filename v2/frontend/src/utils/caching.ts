@@ -5,7 +5,6 @@ import type {
     EventWrapper,
     IndexRange,
     MergedUpdatesResponse,
-    Message,
 } from "../domain/chat/chat";
 import { rollbar } from "./logging";
 
@@ -130,20 +129,22 @@ export async function getCachedMessagesWindow<T extends ChatEvent>(
     );
 
     if (complete) {
-        console.log("cache hit: ", events.length, +new Date() - start);
+        console.log("cache hit: ", events, +new Date() - start);
     }
+
+    events.sort((a, b) => a.index - b.index);
 
     // if we are retrieving completely from the cache, affectedEvents is always empty
     return complete ? { events, affectedEvents: [] } : undefined;
 }
 
 async function loadEventByIndex<T extends ChatEvent>(
-    db: Database,
+    db: IDBPDatabase<ChatSchema>,
     chatId: string,
     idx: number
 ): Promise<EventWrapper<T> | undefined> {
     const key = createCacheKey(chatId, idx);
-    return (await db).get("chat_messages", key) as Promise<EventWrapper<T> | undefined>;
+    return db.get("chat_messages", key) as Promise<EventWrapper<T> | undefined>;
 }
 
 async function aggregateEventsWindow<T extends ChatEvent>(
@@ -156,6 +157,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     let descIdx = middleIndex;
     let ascIdx = middleIndex + 1;
     const events: EventWrapper<T>[] = [];
+    const resolvedDb = await db;
 
     while (numMessages < MAX_MSGS) {
         // if we have exceeded the range of this chat then we have succeeded
@@ -164,7 +166,11 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         }
 
         if (ascIdx <= max) {
-            const ascEvt: EventWrapper<T> | undefined = await loadEventByIndex(db, chatId, ascIdx);
+            const ascEvt: EventWrapper<T> | undefined = await loadEventByIndex(
+                resolvedDb,
+                chatId,
+                ascIdx
+            );
             if (ascEvt !== undefined) {
                 events.push(ascEvt);
                 if (ascEvt.event.kind === "message") {
@@ -179,7 +185,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
 
         if (descIdx >= min) {
             const descEvt: EventWrapper<T> | undefined = await loadEventByIndex(
-                db,
+                resolvedDb,
                 chatId,
                 descIdx
             );
@@ -212,6 +218,7 @@ async function aggregateEvents<T extends ChatEvent>(
     let numMessages = 0;
     let currentIndex = startIndex;
     const events: EventWrapper<T>[] = [];
+    const resolvedDb = await db;
 
     while (numMessages < MAX_MSGS) {
         // if we have exceeded the range of this chat then we have succeeded
@@ -220,7 +227,7 @@ async function aggregateEvents<T extends ChatEvent>(
         }
 
         const key = createCacheKey(chatId, currentIndex);
-        const evt = await (await db).get("chat_messages", key);
+        const evt = await resolvedDb.get("chat_messages", key);
         if (evt) {
             if (evt.event.kind === "message") {
                 numMessages += 1;
