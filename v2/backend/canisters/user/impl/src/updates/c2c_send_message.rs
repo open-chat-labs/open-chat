@@ -1,9 +1,12 @@
-use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
+use crate::{run_regular_jobs, Data, RuntimeState, RUNTIME_STATE};
 use chat_events::PushMessageArgs;
 use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
-use types::{CanisterId, Cycles, DirectMessageNotification, MessageContent, Timestamped, UserId};
+use types::{
+    CanisterId, Cryptocurrency, CryptocurrencyReceive, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles,
+    DirectMessageNotification, MessageContent, TimestampMillis, Timestamped, Transaction, UserId,
+};
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
 
@@ -33,14 +36,14 @@ enum SenderStatus {
 }
 
 fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
-    let sender_user_id = runtime_state.env.caller().into();
+    let sender = runtime_state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&sender_user_id) {
+    if runtime_state.data.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if runtime_state.data.direct_chats.get(&sender_user_id.into()).is_some() {
-        SenderStatus::Ok(sender_user_id)
+    } else if runtime_state.data.direct_chats.get(&sender.into()).is_some() {
+        SenderStatus::Ok(sender)
     } else {
-        SenderStatus::UnknownUser(runtime_state.data.user_index_canister_id, sender_user_id)
+        SenderStatus::UnknownUser(runtime_state.data.user_index_canister_id, sender)
     }
 }
 
@@ -56,27 +59,16 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let MessageContent::Cycles(c) = &args.content {
-        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
-        if cycles_available < c.amount {
-            return InsufficientCycles;
-        }
-        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
-        if cycles_accepted != c.amount {
-            // This can only happen if accepting the cycles results in the canister exceeding the
-            // max cycles limit which in reality should never happen.
-            panic!("Unable to accept cycles")
-        }
-        let new_cycles_balance = runtime_state.data.user_cycles_balance.value + c.amount;
-        runtime_state.data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+    if let Err(response) = handle_transaction_if_present(&args, sender, now, &mut runtime_state.data) {
+        return response;
     }
 
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
-        sender: sender_user_id,
+        sender,
         content: args.content,
         replies_to: args.replies_to,
         now,
@@ -86,7 +78,7 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
         runtime_state
             .data
             .direct_chats
-            .push_message(false, sender_user_id, Some(args.sender_message_index), push_message_args);
+            .push_message(false, sender, Some(args.sender_message_index), push_message_args);
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
         if !chat.notifications_muted.value {
@@ -94,7 +86,7 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
 
             if let Some(canister_id) = get_random_item(&runtime_state.data.notification_canister_ids, random) {
                 let notification = DirectMessageNotification {
-                    sender: sender_user_id,
+                    sender,
                     sender_name: args.sender_name,
                     message,
                 };
@@ -113,4 +105,32 @@ fn c2c_send_message_impl(sender_user_id: UserId, args: Args, runtime_state: &mut
 async fn push_notification(canister_id: CanisterId, recipient: UserId, notification: DirectMessageNotification) {
     let args = push_direct_message_notification::Args { recipient, notification };
     let _ = notifications_canister_c2c_client::push_direct_message_notification(canister_id, &args).await;
+}
+
+fn handle_transaction_if_present(args: &Args, sender: UserId, now: TimestampMillis, data: &mut Data) -> Result<(), Response> {
+    if let MessageContent::Cycles(c) = &args.content {
+        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
+        if cycles_available < c.amount {
+            return Err(InsufficientCycles);
+        }
+        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
+        if cycles_accepted != c.amount {
+            // This can only happen if accepting the cycles results in the canister exceeding the
+            // max cycles limit which in reality should never happen.
+            panic!("Unable to accept cycles")
+        }
+        let new_cycles_balance = data.user_cycles_balance.value + c.amount;
+        let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
+            currency: Cryptocurrency::Cycles,
+            block_height: None,
+            transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
+                from_user: sender,
+                from: sender.to_string(),
+                amount: c.amount,
+            }),
+        });
+        data.transactions.add(transaction, now);
+        data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+    }
+    Ok(())
 }
