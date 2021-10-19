@@ -81,8 +81,7 @@ fn initialize(runtime_state: &mut RuntimeState) -> Result<InitOk, Response> {
                     let create_new_canister = canister_id.is_none() && runtime_state.data.canister_pool.is_empty();
                     let cycles_to_use = if create_new_canister {
                         let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-                        let current_cycles_balance: Cycles = ic_cdk::api::canister_balance().into();
-                        if current_cycles_balance.saturating_sub(cycles_required) < MIN_CYCLES_BALANCE {
+                        if !cycles_utils::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
                             return Err(CyclesBalanceTooLow);
                         }
                         cycles_required
