@@ -46,32 +46,33 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let am = &self.data.accumulated_metrics;
         let last_active = self.data.events.latest().map_or(0, |e| e.timestamp);
+        let blob_metrics = self.data.blob_storage.metrics();
+        let chat_metrics = self.data.events.metrics();
         Metrics {
             memory_used: memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: self.data.wasm_version,
             participants: self.data.participants.len() as u32,
-            admins: am.admins,
+            admins: self.data.participants.admin_count(),
             events: self.data.events.len() as u64,
-            text_messages: am.text_messages,
-            image_messages: am.image_messages,
-            video_messages: am.video_messages,
-            audio_messages: am.audio_messages,
-            file_messages: am.file_messages,
-            cycles_messages: am.cycles_messages,
-            deleted_messages: am.deleted_messages,
-            total_edits: am.total_edits,
-            replies_messages: am.replies_messages,
-            total_reactions: am.total_reactions,
+            text_messages: chat_metrics.text_messages,
+            image_messages: chat_metrics.image_messages,
+            video_messages: chat_metrics.video_messages,
+            audio_messages: chat_metrics.audio_messages,
+            file_messages: chat_metrics.file_messages,
+            cycles_messages: chat_metrics.cycles_messages,
+            deleted_messages: chat_metrics.deleted_messages,
+            total_edits: chat_metrics.total_edits,
+            replies_messages: chat_metrics.replies_messages,
+            total_reactions: chat_metrics.total_reactions,
             last_active,
-            image_bytes: am.image_bytes,
-            video_bytes: am.video_bytes,
-            audio_bytes: am.audio_bytes,
-            total_blobs: self.data.blob_storage.blob_count(),
-            total_blob_bytes: self.data.blob_storage.total_bytes(),
+            image_bytes: blob_metrics.image_bytes,
+            video_bytes: blob_metrics.video_bytes,
+            audio_bytes: blob_metrics.audio_bytes,
+            total_blobs: blob_metrics.blob_count,
+            total_blob_bytes: blob_metrics.total_bytes,
         }
     }
 }
@@ -93,7 +94,6 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub blob_storage: BlobStorage,
     pub test_mode: bool,
-    pub accumulated_metrics: AccumulatedMetrics,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -133,53 +133,7 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             blob_storage: BlobStorage::new(MAX_STORAGE),
             test_mode,
-            accumulated_metrics: AccumulatedMetrics::new(),
         }
-    }
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct AccumulatedMetrics {
-    pub admins: u16,
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub cycles_messages: u64,
-    pub deleted_messages: u64,
-    pub total_edits: u64,
-    pub replies_messages: u64,
-    pub total_reactions: u64,
-    pub image_bytes: u64,
-    pub video_bytes: u64,
-    pub audio_bytes: u64,
-}
-
-impl AccumulatedMetrics {
-    pub fn new() -> AccumulatedMetrics {
-        AccumulatedMetrics {
-            admins: 1,
-            text_messages: 0,
-            image_messages: 0,
-            video_messages: 0,
-            audio_messages: 0,
-            file_messages: 0,
-            cycles_messages: 0,
-            deleted_messages: 0,
-            total_edits: 0,
-            replies_messages: 0,
-            total_reactions: 0,
-            image_bytes: 0,
-            video_bytes: 0,
-            audio_bytes: 0,
-        }
-    }
-}
-
-impl Default for AccumulatedMetrics {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -190,7 +144,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub participants: u32,
-    pub admins: u16, // TODO: Should probably limit the number of admins
+    pub admins: u16,
     pub events: u64,
     pub text_messages: u64,
     pub image_messages: u64,

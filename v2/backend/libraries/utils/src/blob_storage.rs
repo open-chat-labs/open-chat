@@ -11,8 +11,11 @@ const MAX_CHUNK_SIZE: u64 = 1024 * 1024; // 1MB
 pub struct BlobStorage {
     blobs: HashMap<u128, Blob>,
     pending_blobs: HashMap<u128, PendingBlob>,
-    total_bytes: u64,
     max_bytes: u64,
+    total_bytes: u64,
+    image_bytes: u64,
+    video_bytes: u64,
+    audio_bytes: u64,
 }
 
 #[derive(Default, CandidType, Deserialize)]
@@ -96,8 +99,11 @@ impl BlobStorage {
         BlobStorage {
             blobs: HashMap::default(),
             pending_blobs: HashMap::default(),
-            total_bytes: 0,
             max_bytes,
+            total_bytes: 0,
+            image_bytes: 0,
+            video_bytes: 0,
+            audio_bytes: 0,
         }
     }
 
@@ -127,6 +133,8 @@ impl BlobStorage {
         if (self.total_bytes + byte_count) > self.max_bytes {
             return PutChunkResult::Full;
         }
+
+        self.update_metrics(&mime_type, byte_count);
 
         let pending_blob_to_insert = match self.pending_blobs.entry(blob_id) {
             Vacant(e) => {
@@ -186,13 +194,35 @@ impl BlobStorage {
         }
     }
 
-    pub fn blob_count(&self) -> u32 {
-        self.blobs.len() as u32
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            blob_count: self.blobs.len() as u32,
+            total_bytes: self.total_bytes,
+            image_bytes: self.image_bytes,
+            video_bytes: self.video_bytes,
+            audio_bytes: self.audio_bytes,
+        }
     }
 
-    pub fn total_bytes(&self) -> u64 {
-        self.total_bytes
+    fn update_metrics(&mut self, mime_type: &str, byte_count: u64) {
+        if mime_type.starts_with("image") {
+            self.image_bytes += byte_count;
+        } else if mime_type.starts_with("video") {
+            self.video_bytes += byte_count;
+        } else if mime_type.starts_with("audio") {
+            self.audio_bytes += byte_count;
+        }
+
+        self.total_bytes += byte_count;
     }
+}
+
+pub struct Metrics {
+    pub blob_count: u32,
+    pub total_bytes: u64,
+    pub image_bytes: u64,
+    pub video_bytes: u64,
+    pub audio_bytes: u64,
 }
 
 fn count_bytes<'a>(chunks: impl Iterator<Item = &'a ByteBuf>) -> u64 {

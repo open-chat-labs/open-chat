@@ -6,12 +6,14 @@ use types::{EventIndex, MessageIndex, Participant, Role, TimestampMillis, UserId
 
 const MAX_PARTICIPANTS_PER_PUBLIC_GROUP: u32 = 100_000;
 const MAX_PARTICIPANTS_PER_PRIVATE_GROUP: u32 = 200;
+const MAX_ADMINS_PER_GROUP: u16 = 1000;
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
+    admin_count: u16,
 }
 
 impl Participants {
@@ -29,6 +31,7 @@ impl Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
+            admin_count: 1,
         }
     }
 
@@ -141,12 +144,62 @@ impl Participants {
     pub fn len(&self) -> u32 {
         self.user_id_to_principal_map.len() as u32
     }
+
+    pub fn make_admin(&mut self, user_id: &UserId) -> MakeAdminResult {
+        let admin_count = self.admin_count;
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if matches!(p.role, Role::Admin) {
+                    MakeAdminResult::AlreadyAdmin
+                } else if admin_count >= MAX_ADMINS_PER_GROUP {
+                    MakeAdminResult::AdminLimitReached
+                } else {
+                    p.role = Role::Admin;
+                    self.admin_count += 1;
+                    MakeAdminResult::Success
+                }
+            }
+            None => MakeAdminResult::NotInGroup,
+        }
+    }
+
+    pub fn remove_admin(&mut self, user_id: &UserId) -> RemoveAdminResult {
+        match self.get_by_user_id_mut(user_id) {
+            Some(p) => {
+                if matches!(p.role, Role::Admin) {
+                    p.role = Role::Participant;
+                    self.admin_count -= 1;
+                    RemoveAdminResult::Success
+                } else {
+                    RemoveAdminResult::NotAdmin
+                }
+            }
+            None => RemoveAdminResult::NotInGroup,
+        }
+    }
+
+    pub fn admin_count(&self) -> u16 {
+        self.admin_count
+    }
 }
 
 pub enum AddResult {
     Success,
     AlreadyInGroup,
     Blocked,
+}
+
+pub enum MakeAdminResult {
+    Success,
+    NotInGroup,
+    AlreadyAdmin,
+    AdminLimitReached,
+}
+
+pub enum RemoveAdminResult {
+    Success,
+    NotInGroup,
+    NotAdmin,
 }
 
 #[derive(CandidType, Deserialize)]
