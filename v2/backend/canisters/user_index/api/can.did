@@ -168,6 +168,7 @@ type CurrentUserResponse =
             username: text;
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
+            icp_address: AccountIdentifier;
         };
     };
 

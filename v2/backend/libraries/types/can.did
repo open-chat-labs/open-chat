@@ -1,3 +1,4 @@
+type AccountIdentifier = text;
 type BlockHeight = nat64;
 type CanisterId = principal;
 type ChatId = CanisterId;
