@@ -134,7 +134,16 @@ impl BlobStorage {
             return PutChunkResult::Full;
         }
 
-        self.update_metrics(&mime_type, byte_count);
+        let mime_type = mime_type.to_lowercase();
+
+        // Update metrics
+        if mime_type.starts_with("image") {
+            self.image_bytes += byte_count;
+        } else if mime_type.starts_with("video") {
+            self.video_bytes += byte_count;
+        } else if mime_type.starts_with("audio") {
+            self.audio_bytes += byte_count;
+        }
 
         let pending_blob_to_insert = match self.pending_blobs.entry(blob_id) {
             Vacant(e) => {
@@ -202,18 +211,6 @@ impl BlobStorage {
             video_bytes: self.video_bytes,
             audio_bytes: self.audio_bytes,
         }
-    }
-
-    fn update_metrics(&mut self, mime_type: &str, byte_count: u64) {
-        if mime_type.starts_with("image") {
-            self.image_bytes += byte_count;
-        } else if mime_type.starts_with("video") {
-            self.video_bytes += byte_count;
-        } else if mime_type.starts_with("audio") {
-            self.audio_bytes += byte_count;
-        }
-
-        self.total_bytes += byte_count;
     }
 }
 
