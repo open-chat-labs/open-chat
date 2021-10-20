@@ -201,7 +201,7 @@ impl ChatEvents {
             MessageContent::Video(_) => self.metrics.video_messages += 1,
             MessageContent::Audio(_) => self.metrics.audio_messages += 1,
             MessageContent::File(_) => self.metrics.file_messages += 1,
-            MessageContent::CryptocurrencyTransfer(c) => match c.transfer {
+            MessageContent::Cryptocurrency(c) => match c.transfer {
                 CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
                 CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
             },

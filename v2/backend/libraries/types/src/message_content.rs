@@ -10,7 +10,7 @@ pub enum MessageContent {
     Video(VideoContent),
     Audio(AudioContent),
     File(FileContent),
-    CryptocurrencyTransfer(CryptocurrencyTransferContent),
+    Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
 }
 
@@ -57,7 +57,7 @@ pub struct FileContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyTransferContent {
+pub struct CryptocurrencyContent {
     pub transfer: CryptocurrencyTransfer,
     pub caption: Option<String>,
 }

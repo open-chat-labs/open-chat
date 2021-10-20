@@ -23,7 +23,7 @@ impl From<&MessageContent> for Document {
             MessageContent::Text(c) => {
                 document.add_field(c.text.to_owned(), 1.0);
             }
-            MessageContent::CryptocurrencyTransfer(c) => {
+            MessageContent::Cryptocurrency(c) => {
                 match &c.transfer {
                     CryptocurrencyTransfer::Cycles(c) => {
                         document.add_field("cycles".to_owned(), 0.1);

@@ -69,7 +69,7 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
-type CryptocurrencyTransferContent =
+type CryptocurrencyContent =
     record {
         transfer: CryptocurrencyTransfer;
         caption: opt text;
@@ -288,7 +288,7 @@ type MessageContent =
         Video: VideoContent;
         Audio: AudioContent;
         File: FileContent;
-        CryptocurrencyTransfer: CryptocurrencyTransferContent;
+        Cryptocurrency: CryptocurrencyContent;
         Deleted: DeletedContent;
     };
 

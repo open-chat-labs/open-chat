@@ -64,13 +64,13 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
 fn c2c_send_message_impl(sender: UserId, mut args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let MessageContent::CryptocurrencyTransfer(ct) = &mut args.content {
+    if let MessageContent::Cryptocurrency(c) = &mut args.content {
         // If the request contains a pending cycles transfer, accept the cycles and then update
         // the request to contain the completed cycles transfer.
-        if let CryptocurrencyTransfer::Cycles(c) = &mut ct.transfer {
-            *c = CyclesTransfer::Completed(accept_cycles(sender, c, now, &mut runtime_state.data));
+        if let CryptocurrencyTransfer::Cycles(cycles_transfer) = &mut c.transfer {
+            *cycles_transfer = CyclesTransfer::Completed(accept_cycles(sender, cycles_transfer, now, &mut runtime_state.data));
         }
-        runtime_state.data.transactions.add(ct.transfer.clone(), now);
+        runtime_state.data.transactions.add(c.transfer.clone(), now);
     }
 
     let push_message_args = PushMessageArgs {

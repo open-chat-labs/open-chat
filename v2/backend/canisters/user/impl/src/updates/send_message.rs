@@ -24,8 +24,8 @@ async fn send_message(mut args: Args) -> Response {
     // If the message includes a cryptocurrency transfer (other than Cycles) we must process that
     // before we send the message to the recipient. Cycles are sent contained in the message itself
     // and so do not require a separate transfer.
-    if let MessageContent::CryptocurrencyTransfer(ct) = &mut args.content {
-        if let CryptocurrencyTransfer::ICP(transfer) = &mut ct.transfer {
+    if let MessageContent::Cryptocurrency(c) = &mut args.content {
+        if let CryptocurrencyTransfer::ICP(transfer) = &mut c.transfer {
             if let ICPTransfer::Pending(pending_transfer) = transfer {
                 match send_icp(args.recipient, pending_transfer).await {
                     Ok(completed_transfer) => {
@@ -49,8 +49,8 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let recipient = args.recipient;
 
     let mut cycles_transfer = None;
-    if let MessageContent::CryptocurrencyTransfer(ct) = &args.content {
-        if let CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(pending_transfer)) = &ct.transfer {
+    if let MessageContent::Cryptocurrency(c) = &args.content {
+        if let CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(pending_transfer)) = &c.transfer {
             match handle_cycles(pending_transfer.clone(), runtime_state) {
                 Ok(ct) => cycles_transfer = Some(ct),
                 Err(response) => return response,
@@ -87,8 +87,8 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> Result<(), Res
     runtime_state.trap_if_caller_not_owner();
 
     let mut error_message = None;
-    if let MessageContent::CryptocurrencyTransfer(ct) = &args.content {
-        match &ct.transfer {
+    if let MessageContent::Cryptocurrency(c) = &args.content {
+        match &c.transfer {
             CryptocurrencyTransfer::Cycles(CyclesTransfer::Pending(pending_transfer)) => {
                 if pending_transfer.recipient != args.recipient {
                     error_message = Some("Transfer recipient does not match message recipient".to_owned());
