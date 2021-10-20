@@ -139,9 +139,11 @@ pub struct Metrics {
     pub cycles_messages: u64,
     pub icp_messages: u64,
     pub deleted_messages: u64,
+    pub replies: u64,
     pub total_edits: u64,
-    pub replies_messages: u64,
     pub total_reactions: u64,
+    pub total_events: u64,
+    pub last_active: TimestampMillis,
 }
 
 impl ChatEvents {
@@ -207,7 +209,7 @@ impl ChatEvents {
         }
 
         if args.replies_to.is_some() {
-            self.metrics.replies_messages += 1;
+            self.metrics.replies += 1;
         }
 
         let message_index = self.next_message_index();
@@ -442,7 +444,7 @@ impl ChatEvents {
                     document.set_age(now - e.timestamp);
                     match document.calculate_score(&query) {
                         0 => None,
-                        n => Some((n, m, e.index)),
+                        n => Some((n, m)),
                     }
                 }
                 _ => None,
@@ -456,7 +458,7 @@ impl ChatEvents {
             .take(max_results as usize)
             .map(|m| MessageMatch {
                 chat_id: self.chat_id,
-                event_index: m.2,
+                message_index: m.1.message_index,
                 sender: m.1.sender,
                 content: m.1.content.clone(),
                 score: m.0,
@@ -621,7 +623,10 @@ impl ChatEvents {
     }
 
     pub fn metrics(&self) -> Metrics {
-        self.metrics.clone()
+        let mut metrics = self.metrics.clone();
+        metrics.last_active = self.latest().map_or(0, |e| e.timestamp);
+        metrics.total_events = self.events.len() as u64;
+        metrics
     }
 
     pub fn len(&self) -> usize {

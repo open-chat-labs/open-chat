@@ -362,7 +362,7 @@ type UpdatedMessage =
 type MessageMatch =
     record {
         chat_id: ChatId;
-        event_index: EventIndex;
+        message_index: MessageIndex;
         content: MessageContent;
         sender: UserId;
         score: nat32;
