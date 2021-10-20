@@ -1,13 +1,14 @@
 use crate::model::subscriptions::Subscriptions;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::NotificationEnvelope;
+use types::{Cycles, NotificationEnvelope, TimestampMillis};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
+use utils::memory;
 
 mod lifecycle;
 mod model;
@@ -40,6 +41,17 @@ impl RuntimeState {
     pub fn is_caller_push_service(&self) -> bool {
         self.data.push_service_principals.contains(&self.env.caller())
     }
+
+    pub fn metrics(&self) -> Metrics {
+        Metrics {
+            memory_used: memory::used(),
+            now: self.env.now(),
+            cycles_balance: self.env.cycles_balance(),
+            queued_notifications: self.data.notifications.len() as u32,
+            subscriptions: self.data.subscriptions.total(),
+            users: self.data.subscriptions.users(),
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize)]
@@ -59,4 +71,14 @@ impl Data {
             test_mode,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct Metrics {
+    pub now: TimestampMillis,
+    pub memory_used: u64,
+    pub cycles_balance: Cycles,
+    pub queued_notifications: u32,
+    pub subscriptions: u64,
+    pub users: u64,
 }
