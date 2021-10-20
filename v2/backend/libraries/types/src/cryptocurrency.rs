@@ -2,10 +2,16 @@ use crate::{BlockHeight, CanisterId, Cycles, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Deserialize, Copy, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum Cryptocurrency {
     ICP,
     Cycles,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CryptocurrencyAccount {
+    pub currency: Cryptocurrency,
+    pub address: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

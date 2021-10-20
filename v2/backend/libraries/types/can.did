@@ -446,6 +446,12 @@ type Cryptocurrency =
         Cycles;
     };
 
+type CryptocurrencyAccount =
+    record {
+        currency: Cryptocurrency;
+        address: String;
+    };
+
 type CryptocurrencyTransaction =
     variant {
         Deposit: CryptocurrencyDeposit;

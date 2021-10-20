@@ -1,7 +1,7 @@
 use crate::model::user::User;
 use crate::{RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::query;
-use types::CanisterUpgradeStatus;
+use types::{CanisterUpgradeStatus, Cryptocurrency, CryptocurrencyAccount};
 use user_index_canister::current_user::{Response::*, *};
 
 #[query]
@@ -38,13 +38,17 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
                 } else {
                     CanisterUpgradeStatus::NotRequired
                 };
+                let icp_account = CryptocurrencyAccount {
+                    currency: Cryptocurrency::ICP,
+                    address: ledger_utils::calculate_address(u.user_id).to_hex(),
+                };
 
                 Created(CreatedResult {
                     user_id: u.user_id,
                     username: u.username.clone(),
                     canister_upgrade_status,
                     avatar_id: u.avatar_id,
-                    icp_address: ledger_utils::calculate_address(u.user_id),
+                    cryptocurrency_accounts: vec![icp_account],
                 })
             }
         }
