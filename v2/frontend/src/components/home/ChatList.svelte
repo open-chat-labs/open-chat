@@ -1,6 +1,6 @@
 <script lang="ts">
     import CurrentUser from "./CurrentUser.svelte";
-    import Search from "./Search.svelte";
+    import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import NewMessageFab from "./NewMessageFab.svelte";

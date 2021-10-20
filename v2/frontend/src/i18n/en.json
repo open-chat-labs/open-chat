@@ -72,6 +72,7 @@
     "muteNotifications": "Mute notifications",
     "toggleMuteNotificationsFailed": "Notifications could not be {operation}",
     "toggleMuteNotificationsSucceeded": "Notifications successfully {operation}",
+    "filterParticipants": "filter participants",
     "markAllRead": "Mark all as read",
     "muted": "muted",
     "unmuted": "unmuted",
