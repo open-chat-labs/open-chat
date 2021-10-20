@@ -20,8 +20,8 @@ type SendMessageResponse =
         RecipientNotFound;
         BalanceExceeded;
         MessageTooLong: nat32;
-        InvalidRequest;
         RecipientBlocked;
+        InvalidRequest: text,
         TransactionFailed: text;
     };
 
