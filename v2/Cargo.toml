@@ -29,6 +29,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/cycles_utils",
     "backend/libraries/http_request",
+    "backend/libraries/ledger_utils",
     "backend/libraries/search",
     "backend/libraries/types",
     "backend/libraries/utils",

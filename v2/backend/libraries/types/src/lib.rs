@@ -68,6 +68,7 @@ pub use version::*;
 
 pub mod v1_message;
 
+pub type BlockHeight = u64;
 pub type CanisterId = Principal;
 pub type Milliseconds = u64;
 pub type TimestampMillis = u64;

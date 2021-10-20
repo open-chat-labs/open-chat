@@ -1,3 +1,5 @@
 use types::Cycles;
 
 pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 100_000_000_000; // 0.1T cycles
+pub const ICP_TRANSACTION_FEE_E8S: u64 = 10_000;
+pub const DEFAULT_MEMO: u64 = 5715144129571733504; // OPENCHAT (0x4f50454e43484154)

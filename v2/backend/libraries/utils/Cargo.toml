@@ -17,6 +17,3 @@ serde_bytes = "0.11.5"
 smallvec = { version = "0.6.*", features = ["serde"] }
 tracing = "0.1.29"
 types = { path = "../types" }
-
-[features]
-default = ["range-set"]

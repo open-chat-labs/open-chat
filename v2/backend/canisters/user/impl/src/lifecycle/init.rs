@@ -21,7 +21,6 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notification_canister_ids,
         args.wasm_version,
-        env.now(),
         args.test_mode,
     );
 
