@@ -4,6 +4,7 @@ import type { Writable } from "svelte/store";
 export function createSetStore<T>(store: Writable<Set<T>>) {
     return {
         subscribe: store.subscribe,
+        set: store.set,
         add: (id: T): void =>
             store.update((ids) => {
                 ids.add(id);

@@ -18,6 +18,7 @@
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { MessageReadTracker } from "../../stores/markRead";
+    import { blockedUsers } from "../../stores/blockedUsers";
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
@@ -30,6 +31,7 @@
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
+                blocked: $blockedUsers.has(chatSummary.them),
             };
         }
         return {
@@ -37,6 +39,7 @@
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
             typing: false,
+            blocked: false,
         };
     }
 
@@ -52,7 +55,11 @@
 
 <a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
+        <Avatar
+            blocked={chat.blocked}
+            url={chat.avatarUrl}
+            status={chat.userStatus}
+            size={AvatarSize.Small} />
     </div>
     <div class="details">
         <div class="name-date">

@@ -41,6 +41,7 @@ import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { closeNotificationsForChat } from "../utils/notifications";
+import { blockedUsers } from "../stores/blockedUsers";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -167,6 +168,7 @@ async function getUpdates(
         );
 
         userStore.addMany(usersResponse.users);
+        blockedUsers.merge(chatsResponse.blockedUsers);
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,

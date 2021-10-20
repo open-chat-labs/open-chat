@@ -14,6 +14,7 @@
     import Progress from "../Progress.svelte";
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let blocked: boolean;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -44,7 +45,9 @@
     }
 
     onMount(() => {
-        inp.focus();
+        if (inp) {
+            inp.focus();
+        }
     });
 
     function onInput() {
@@ -130,59 +133,67 @@
             inp.focus();
         }
     }
-</script>
-
-<div class="message-entry">
-    <div class="emoji" on:click={toggleEmojiPicker}>
-        {#if showEmojiPicker}
-            <HoverIcon>
-                <Close size={"1.2em"} color={"#aaa"} />
-            </HoverIcon>
-        {:else}
-            <HoverIcon>
-                <EmoticonHappyOutline size={"1.2em"} color={"#aaa"} />
-            </HoverIcon>
-        {/if}
-    </div>
-    <div class="attach">
-        <FileAttacher
-            open={$machine.context.fileToAttach !== undefined}
-            on:fileSelected
-            on:close={clearAttachment} />
-    </div>
-
-    {#if recording}
-        <Progress percent={percentRecorded} />
-    {/if}
-    <div
-        tabindex={0}
-        bind:this={inp}
-        on:blur={saveSelection}
-        class="textbox"
-        class:recording
-        class:dragging
-        contenteditable={true}
-        on:paste
-        placeholder={$machine.context.fileToAttach !== undefined
+    $: placeholder =
+        $machine.context.fileToAttach !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
-            : $_("enterMessage")}
-        spellcheck={true}
-        on:dragover={() => (dragging = true)}
-        on:dragenter={() => (dragging = true)}
-        on:dragleave={() => (dragging = false)}
-        on:drop={onDrop}
-        on:input={onInput}
-        on:keypress={keyPress} />
-    <div class="record">
-        <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
-    </div>
-    <div class="send" on:click={sendMessage}>
-        <HoverIcon>
-            <Send size={"1.2em"} color={"#aaa"} />
-        </HoverIcon>
-    </div>
+            : $_("enterMessage");
+</script>
+
+<div class="message-entry">
+    {#if blocked}
+        <div class="blocked">
+            {$_("userIsBlocked")}
+        </div>
+    {:else}
+        <div class="emoji" on:click={toggleEmojiPicker}>
+            {#if showEmojiPicker}
+                <HoverIcon>
+                    <Close size={"1.2em"} color={"#aaa"} />
+                </HoverIcon>
+            {:else}
+                <HoverIcon>
+                    <EmoticonHappyOutline size={"1.2em"} color={"#aaa"} />
+                </HoverIcon>
+            {/if}
+        </div>
+        <div class="attach">
+            <FileAttacher
+                open={$machine.context.fileToAttach !== undefined}
+                on:fileSelected
+                on:close={clearAttachment} />
+        </div>
+
+        {#if recording}
+            <Progress percent={percentRecorded} />
+        {/if}
+        <div
+            tabindex={0}
+            bind:this={inp}
+            on:blur={saveSelection}
+            class="textbox"
+            class:recording
+            class:dragging
+            contenteditable={true}
+            on:paste
+            {placeholder}
+            spellcheck={true}
+            on:dragover={() => (dragging = true)}
+            on:dragenter={() => (dragging = true)}
+            on:dragleave={() => (dragging = false)}
+            on:drop={onDrop}
+            on:input={onInput}
+            on:keypress={keyPress} />
+        <div class="record">
+            <AudioAttacher bind:percentRecorded bind:recording on:audioCaptured />
+        </div>
+        <div class="send" on:click={sendMessage}>
+            <HoverIcon>
+                <Send size={"1.2em"} color={"#aaa"} />
+            </HoverIcon>
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -234,5 +245,15 @@
         &.recording {
             display: none;
         }
+    }
+
+    .blocked {
+        height: 42px;
+        color: var(--entry-input-txt);
+        @include font(book, normal, fs-100);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
 </style>

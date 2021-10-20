@@ -19,6 +19,7 @@
     const dispatch = createEventDispatcher();
 
     export let machine: ActorRefFrom<ChatMachine>;
+    export let blocked: boolean;
 
     let showEmojiPicker = false;
 
@@ -195,6 +196,7 @@
         bind:showEmojiPicker
         on:paste={onPaste}
         on:drop={onDrop}
+        {blocked}
         on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
