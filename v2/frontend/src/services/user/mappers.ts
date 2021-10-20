@@ -80,8 +80,7 @@ export function searchAllMessageResponse(
 function messageMatch(candid: ApiMessageMatch): MessageMatch {
     return {
         chatId: candid.chat_id.toString(),
-        eventIndex: candid.event_index,
-        messageIndex: candid.event_index, // todo - we need to get messageIndex added to the server type
+        messageIndex: candid.message_index, // todo - we need to get messageIndex added to the server type
         content: messageContent(candid.content),
         sender: candid.sender.toString(),
         score: candid.score,

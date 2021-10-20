@@ -266,7 +266,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
-    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),

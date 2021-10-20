@@ -49,6 +49,29 @@ export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null } |
   { 'CyclesBalanceTooLow' : null };
+export type Cryptocurrency = { 'ICP' : null } |
+  { 'Cycles' : null };
+export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
+export interface CryptocurrencyReceive {
+  'from_user' : UserId,
+  'from' : string,
+  'amount' : bigint,
+}
+export interface CryptocurrencySend {
+  'to' : string,
+  'to_user' : UserId,
+  'amount' : bigint,
+}
+export interface CryptocurrencyTransaction {
+  'currency' : Cryptocurrency,
+  'block_height' : [] | [bigint],
+  'transfer' : CryptocurrencyTransfer,
+}
+export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
+  { 'Send' : CryptocurrencySend } |
+  { 'Withdrawal' : CryptocurrencyWithdrawal } |
+  { 'Receive' : CryptocurrencyReceive };
+export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Unconfirmed' : { 'phone_number' : PhoneNumber }
@@ -249,7 +272,7 @@ export interface MessageMatch {
   'sender' : UserId,
   'score' : number,
   'chat_id' : ChatId,
-  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -358,6 +381,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export interface TransactionWrapper {
+  'transaction' : Transaction,
+  'timestamp' : TimestampMillis,
+  'index' : number,
+}
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,
