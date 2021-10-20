@@ -81,6 +81,7 @@ export type RehydratedReplyContext = {
     content: MessageContent;
     senderId: string;
     messageId: bigint;
+    messageIndex: number;
     eventIndex: number;
     chatId: string;
 };

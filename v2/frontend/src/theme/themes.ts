@@ -1,4 +1,5 @@
 const darkBase = "#121212";
+const dark05 = "#191919";
 const dark10 = "#2b2b2b";
 const dark15 = "#383838";
 const dark20 = "#454545";
@@ -474,7 +475,7 @@ export const themes: Themes = {
         },
 
         panel: {
-            bg: "#2b2b2b",
+            bg: dark05,
             left: {
                 bg: "rgba(0,0,0,0.1)",
             },

@@ -25,6 +25,7 @@ import {
     getCachedChats,
     getCachedMessages,
     getCachedMessagesByIndex,
+    getCachedMessagesWindow,
     setCachedChats,
     setCachedMessages,
 } from "../../utils/caching";
@@ -59,6 +60,25 @@ export class CachingUserClient implements IUserClient {
             cachedMsgs ??
             this.client
                 .chatEventsByIndex(eventIndexes, userId)
+                .then(setCachedMessages(this.db, userId))
+        );
+    }
+
+    async chatEventsWindow(
+        eventIndexRange: IndexRange,
+        userId: string,
+        messageIndex: number
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        const cachedMsgs = await getCachedMessagesWindow<DirectChatEvent>(
+            this.db,
+            eventIndexRange,
+            userId,
+            messageIndex
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEventsWindow(eventIndexRange, userId, messageIndex)
                 .then(setCachedMessages(this.db, userId))
         );
     }

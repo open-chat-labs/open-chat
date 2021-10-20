@@ -155,7 +155,6 @@ export type EventsResponse = { 'CallerNotInGroup' : null } |
 export interface EventsSuccessResult {
   'affected_events' : Array<GroupChatEventWrapper>,
   'events' : Array<GroupChatEventWrapper>,
-  'latest_event_index' : EventIndex,
 }
 export interface EventsWindowArgs {
   'mid_point' : MessageIndex,

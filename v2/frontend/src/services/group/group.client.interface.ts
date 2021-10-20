@@ -17,6 +17,10 @@ import type {
 
 export interface IGroupClient {
     chatEventsByIndex(eventIndexes: number[]): Promise<EventsResponse<GroupChatEvent>>;
+    chatEventsWindow(
+        eventIndexRange: IndexRange,
+        messageIndex: number
+    ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,

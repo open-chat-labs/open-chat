@@ -55,6 +55,7 @@ export function initMarkRead(api: MarkMessagesRead): MessageReadTracker {
         }, [] as MarkReadRequest);
 
         if (req.length > 0) {
+            console.log("Sending mark read to server: ", req);
             api.markMessagesRead(req);
         }
     }

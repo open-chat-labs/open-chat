@@ -68,7 +68,7 @@ describe("home machine transitions", () => {
                 markRead: fakeMessageReadTracker,
             }),
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: { chatId: "abcdefg", eventIndex: undefined } },
+            { type: "SELECT_CHAT", data: { chatId: "abcdefg", messageIndex: undefined } },
             {
                 loaded_chats: "chat_selected",
             }
@@ -79,7 +79,7 @@ describe("home machine transitions", () => {
         const ctx = testTransition(
             homeMachine.withContext(homeContext),
             { loaded_chats: "no_chat_selected" },
-            { type: "SELECT_CHAT", data: { chatId: "qwxyz", eventIndex: undefined } },
+            { type: "SELECT_CHAT", data: { chatId: "qwxyz", messageIndex: undefined } },
             {
                 loaded_chats: "no_chat_selected",
             }
