@@ -232,7 +232,7 @@
                         {#await messageSearchResults then resp}
                             {#if resp.kind == "success" && resp.matches.length > 0}
                                 <h3 class="search-subtitle">{$_("messages")}</h3>
-                                {#each resp.matches as msg, _i (`${msg.chatId}_${msg.eventIndex}`)}
+                                {#each resp.matches as msg, _i (`${msg.chatId}_${msg.messageIndex}`)}
                                     <div
                                         animate:flip={{ duration: 600, easing: elasticOut }}
                                         out:fade|local={{ duration: 150 }}>

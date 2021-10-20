@@ -35,6 +35,29 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export type Cryptocurrency = { 'ICP' : null } |
+  { 'Cycles' : null };
+export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
+export interface CryptocurrencyReceive {
+  'from_user' : UserId,
+  'from' : string,
+  'amount' : bigint,
+}
+export interface CryptocurrencySend {
+  'to' : string,
+  'to_user' : UserId,
+  'amount' : bigint,
+}
+export interface CryptocurrencyTransaction {
+  'currency' : Cryptocurrency,
+  'block_height' : [] | [bigint],
+  'transfer' : CryptocurrencyTransfer,
+}
+export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
+  { 'Send' : CryptocurrencySend } |
+  { 'Withdrawal' : CryptocurrencyWithdrawal } |
+  { 'Receive' : CryptocurrencyReceive };
+export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
 export type Cycles = bigint;
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeletedContent {
@@ -203,7 +226,7 @@ export interface MessageMatch {
   'sender' : UserId,
   'score' : number,
   'chat_id' : ChatId,
-  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
 }
 export type Milliseconds = bigint;
 export type Notification = {
@@ -315,6 +338,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export interface TransactionWrapper {
+  'transaction' : Transaction,
+  'timestamp' : TimestampMillis,
+  'index' : number,
+}
 export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,

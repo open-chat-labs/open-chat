@@ -28,6 +28,7 @@ import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
 import { unconfirmed } from "../../stores/unconfirmed";
 import type { MessageReadTracker } from "../../stores/markRead";
+import type { ChatEvents } from "../../fsm/chat.machine";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -404,6 +405,28 @@ export function groupEvents(events: EventWrapper<ChatEvent>[]): EventWrapper<Cha
 
 export function earliestLoadedEventIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
     return events[0]?.index;
+}
+
+export function getNextMessageIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
+    // first get the next index according to the chat
+    const chatIdx = (chat.latestMessage?.event.messageIndex ?? 0) + 1;
+
+    // then get the next index according to the loaded events
+    const loadedIdx = (latestLoadedMessageIndex(events) ?? 0) + 1;
+
+    // pick the max
+    return Math.max(chatIdx, loadedIdx);
+}
+
+export function getNextEventIndex(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): number {
+    // first get the next index according to the chat
+    const chatIdx = chat.latestEventIndex + 1;
+
+    // then get the next index according to the loaded events
+    const loadedIdx = (latestLoadedEventIndex(events) ?? 0) + 1;
+
+    // pick the max
+    return Math.max(chatIdx, loadedIdx);
 }
 
 export function latestLoadedMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {

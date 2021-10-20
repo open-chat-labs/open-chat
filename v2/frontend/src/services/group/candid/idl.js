@@ -190,7 +190,6 @@ export const idlFactory = ({ IDL }) => {
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(GroupChatEventWrapper),
     'events' : IDL.Vec(GroupChatEventWrapper),
-    'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
     'CallerNotInGroup' : IDL.Null,
@@ -267,7 +266,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
-    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),

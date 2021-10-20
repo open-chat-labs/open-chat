@@ -30,9 +30,9 @@
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     export let machine: ActorRefFrom<HomeMachine>;
-    export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
+    export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
-        eventIndex: undefined,
+        messageIndex: undefined,
     };
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
@@ -78,7 +78,8 @@
                         type: "SELECT_CHAT",
                         data: {
                             chatId: params.chatId,
-                            eventIndex: params.eventIndex == null ? undefined : params.eventIndex,
+                            messageIndex:
+                                params.messageIndex == null ? undefined : params.messageIndex,
                         },
                     });
                 }
@@ -200,9 +201,9 @@
     }
 
     function loadMessage(ev: CustomEvent<MessageMatch>): void {
-        push(`/${ev.detail.chatId}/${ev.detail.eventIndex}`);
+        push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         if (ev.detail.chatId === $machine.context.selectedChat?.chatId) {
-            machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail.eventIndex });
+            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: ev.detail.messageIndex });
         }
     }
 

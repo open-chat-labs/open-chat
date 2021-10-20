@@ -22,9 +22,9 @@
 
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
-            dispatch("goToMessage", repliesTo.eventIndex);
+            dispatch("goToMessageIndex", repliesTo.messageIndex);
         } else {
-            push(`/${repliesTo.chatId}/${repliesTo.eventIndex}`);
+            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
     }
 

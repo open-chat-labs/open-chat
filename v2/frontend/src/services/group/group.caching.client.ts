@@ -18,6 +18,7 @@ import {
     ChatSchema,
     getCachedMessages,
     getCachedMessagesByIndex,
+    getCachedMessagesWindow,
     setCachedMessages,
 } from "../../utils/caching";
 
@@ -42,6 +43,24 @@ export class CachingGroupClient implements IGroupClient {
             cachedMsgs ??
             this.client
                 .chatEventsByIndex(eventIndexes)
+                .then(setCachedMessages(this.db, this.chatId))
+        );
+    }
+
+    async chatEventsWindow(
+        eventIndexRange: IndexRange,
+        messageIndex: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        const cachedMsgs = await getCachedMessagesWindow<GroupChatEvent>(
+            this.db,
+            eventIndexRange,
+            this.chatId,
+            messageIndex
+        );
+        return (
+            cachedMsgs ??
+            this.client
+                .chatEventsWindow(eventIndexRange, messageIndex)
                 .then(setCachedMessages(this.db, this.chatId))
         );
     }
