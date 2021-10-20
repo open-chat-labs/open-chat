@@ -1,13 +1,16 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
 
+let initialised = false;
 const store = writable(new Set<string>());
 export const blockedUsers = {
     ...createSetStore(store),
-    merge: (inbound: Set<string>) =>
-        store.update((current) => {
-            // if a user is in the inbound but not in the current that means we unblocked locally
-            // anything that is in inbound but not in current should be added
-            return current;
-        }),
+    set: (val: Set<string>): void => {
+        // we only want to set this once from the server
+        // from then on we will maintain it locally
+        if (!initialised) {
+            store.set(val);
+            initialised = true;
+        }
+    },
 };

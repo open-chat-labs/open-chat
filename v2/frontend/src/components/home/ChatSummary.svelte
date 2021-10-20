@@ -31,7 +31,6 @@
                 avatarUrl: getAvatarUrl($userStore[chatSummary.them]),
                 userStatus: getUserStatus($userStore, chatSummary.them),
                 typing: $typing[chatSummary.chatId]?.has(chatSummary.them),
-                blocked: $blockedUsers.has(chatSummary.them),
             };
         }
         return {
@@ -39,7 +38,6 @@
             userStatus: UserStatus.None,
             avatarUrl: getAvatarUrl(chatSummary, "../assets/group.svg"),
             typing: false,
-            blocked: false,
         };
     }
 
@@ -51,15 +49,14 @@
         chatSummary.latestMessage?.event.messageIndex
     );
     $: displayDate = getDisplayDate(chatSummary);
+    $: isTyping =
+        chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
+    $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
 </script>
 
 <a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar
-            blocked={chat.blocked}
-            url={chat.avatarUrl}
-            status={chat.userStatus}
-            size={AvatarSize.Small} />
+        <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
         <div class="name-date">
@@ -68,7 +65,7 @@
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
-        {#if chat.typing}
+        {#if isTyping}
             <Typing />
         {:else}
             <div class="chat-msg">{lastMessage}</div>

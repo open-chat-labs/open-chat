@@ -199,13 +199,12 @@ export function putChunkResponse(candid: ApiPutChunkResponse): PutChunkResponse 
     throw new UnsupportedValueError("Unexpected ApiPutChunkResponse type received", candid);
 }
 
-export function blockResponse(
-    candid: ApiBlockUserResponse | ApiUnblockUserResponse
-): BlockUserResponse | UnblockUserResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    throw new UnsupportedValueError("Unexpected ApiBlockResponse type received", candid);
+export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {
+    return "success";
+}
+
+export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserResponse {
+    return "success";
 }
 
 export function editMessageResponse(candid: ApiEditMessageResponse): EditMessageResponse {

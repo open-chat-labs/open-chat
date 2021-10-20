@@ -127,6 +127,10 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'promoted_by' : UserId,
   });
+  const UsersBlocked = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'blocked_by' : UserId,
+  });
   const ParticipantsRemoved = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'removed_by' : UserId,
@@ -150,6 +154,10 @@ export const idlFactory = ({ IDL }) => {
     'user_ids' : IDL.Vec(UserId),
     'dismissed_by' : UserId,
   });
+  const UsersUnblocked = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'unblocked_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupNameChanged = IDL.Record({
     'changed_by' : UserId,
@@ -171,10 +179,12 @@ export const idlFactory = ({ IDL }) => {
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin,
+    'UsersBlocked' : UsersBlocked,
     'MessageReactionAdded' : UpdatedMessage,
     'ParticipantsRemoved' : ParticipantsRemoved,
     'Message' : Message,
     'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin,
+    'UsersUnblocked' : UsersUnblocked,
     'ParticipantLeft' : ParticipantLeft,
     'MessageDeleted' : UpdatedMessage,
     'GroupNameChanged' : GroupNameChanged,
@@ -267,7 +277,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
-    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),

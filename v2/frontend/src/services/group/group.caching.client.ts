@@ -11,6 +11,7 @@ import type {
     IndexRange,
     DeleteMessageResponse,
     EditMessageResponse,
+    BlockUserResponse,
 } from "../../domain/chat/chat";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -100,5 +101,9 @@ export class CachingGroupClient implements IGroupClient {
 
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse> {
         return this.client.deleteMessage(messageId);
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.client.blockUser(userId);
     }
 }

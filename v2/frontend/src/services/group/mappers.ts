@@ -25,13 +25,40 @@ import type {
     ToggleReactionResponse,
     DeleteMessageResponse,
     EditMessageResponse,
+    BlockUserResponse,
 } from "../../domain/chat/chat";
 import { UnsupportedValueError } from "../../utils/error";
 import type { Principal } from "@dfinity/principal";
 import { message, updatedMessage } from "../common/chatMappers";
+import type { ApiBlockUserResponse } from "../group/candid/idl";
 
 function principalToString(p: Principal): string {
     return p.toString();
+}
+
+export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("GroupNotPublic" in candid) {
+        return "group_not_public";
+    }
+    if ("UserNotInGroup" in candid) {
+        return "user_not_in_group";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CannotBlockSelf" in candid) {
+        return "cannot_block_self";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
@@ -359,11 +386,24 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             message: updatedMessage(candid.MessageReactionRemoved),
         };
     }
-    // todo - we know there are other event types that we are not dealing with yet
-    // ParticipantJoined
-    // GroupDescChanged
-    // GroupNameChanged
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
+
+    if ("UsersBlocked" in candid) {
+        return {
+            kind: "users_blocked",
+            userIds: candid.UsersBlocked.user_ids.map((p) => p.toString()),
+            blockedBy: candid.UsersBlocked.blocked_by.toString(),
+        };
+    }
+
+    if ("UsersUnblocked" in candid) {
+        return {
+            kind: "users_unblocked",
+            userIds: candid.UsersUnblocked.user_ids.map((p) => p.toString()),
+            unblockedBy: candid.UsersUnblocked.unblocked_by.toString(),
+        };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
 function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {

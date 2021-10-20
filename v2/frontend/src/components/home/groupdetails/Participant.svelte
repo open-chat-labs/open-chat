@@ -23,6 +23,7 @@
     export let me: boolean;
     export let participant: FullParticipant;
     export let myRole: ParticipantRole;
+    export let publicGroup: boolean;
 
     function removeUser() {
         dispatch("removeParticipant", participant.userId);
@@ -64,7 +65,7 @@
     <h4 class="details">
         {me ? $_("you") : participant.username ?? $_("unknownUser")}
     </h4>
-    {#if !me}
+    {#if !me && myRole === "admin"}
         <span class="menu">
             <MenuIcon>
                 <span slot="icon">
@@ -74,32 +75,29 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        {#if myRole === "admin"}
+                        {#if participant.role === "admin"}
+                            <MenuItem on:click={dismissAsAdmin}>
+                                <AccountRemoveOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("dismissAsAdmin")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if participant.role === "standard"}
+                            <MenuItem on:click={makeAdmin}>
+                                <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("makeAdmin")}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if publicGroup}
+                            <MenuItem on:click={blockUser}>
+                                <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
+                                <div slot="text">{$_("blockUser")}</div>
+                            </MenuItem>
+                        {:else}
                             <MenuItem on:click={removeUser}>
                                 <MinusCircleOutline size={"1.2em"} color={"#aaa"} slot="icon" />
                                 <div slot="text">{$_("remove")}</div>
                             </MenuItem>
-                            {#if participant.role === "admin"}
-                                <MenuItem on:click={dismissAsAdmin}>
-                                    <AccountRemoveOutline
-                                        size={"1.2em"}
-                                        color={"#aaa"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("dismissAsAdmin")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if participant.role === "standard"}
-                                <MenuItem on:click={makeAdmin}>
-                                    <AccountPlusOutline size={"1.2em"} color={"#aaa"} slot="icon" />
-                                    <div slot="text">{$_("makeAdmin")}</div>
-                                </MenuItem>
-                            {/if}
                         {/if}
-                        <!-- TODO need to know if the participant is blocked or not -->
-                        <MenuItem on:click={blockUser}>
-                            <Cancel size={"1.2em"} color={"#aaa"} slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
-                        </MenuItem>
                     </Menu>
                 </span>
             </MenuIcon>

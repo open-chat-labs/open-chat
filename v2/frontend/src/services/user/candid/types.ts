@@ -59,6 +59,29 @@ export type CreateGroupResponse = {
   { 'MaxGroupsCreated' : number } |
   { 'InternalError' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
+export type Cryptocurrency = { 'ICP' : null } |
+  { 'Cycles' : null };
+export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
+export interface CryptocurrencyReceive {
+  'from_user' : UserId,
+  'from' : string,
+  'amount' : bigint,
+}
+export interface CryptocurrencySend {
+  'to' : string,
+  'to_user' : UserId,
+  'amount' : bigint,
+}
+export interface CryptocurrencyTransaction {
+  'currency' : Cryptocurrency,
+  'block_height' : [] | [bigint],
+  'transfer' : CryptocurrencyTransfer,
+}
+export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
+  { 'Send' : CryptocurrencySend } |
+  { 'Withdrawal' : CryptocurrencyWithdrawal } |
+  { 'Receive' : CryptocurrencyReceive };
+export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
 export type Cycles = bigint;
 export interface CyclesContent { 'caption' : [] | [string], 'amount' : Cycles }
 export interface DeleteMessagesArgs {
@@ -163,10 +186,12 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
+  { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -291,7 +316,7 @@ export interface MessageMatch {
   'sender' : UserId,
   'score' : number,
   'chat_id' : ChatId,
-  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -440,6 +465,22 @@ export type ToggleReactionResponse = { 'MessageNotFound' : null } |
   { 'InvalidReaction' : null } |
   { 'Added' : EventIndex } |
   { 'Removed' : EventIndex };
+export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export interface TransactionWrapper {
+  'transaction' : Transaction,
+  'timestamp' : TimestampMillis,
+  'index' : number,
+}
+export interface TransactionsArgs {
+  'max_transactions' : number,
+  'ascending' : boolean,
+  'start_index' : number,
+}
+export type TransactionsResponse = { 'Success' : TransactionsSuccessResult };
+export interface TransactionsSuccessResult {
+  'latest_transaction_index' : [] | [number],
+  'transactions' : Array<TransactionWrapper>,
+}
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null };
 export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
@@ -458,6 +499,7 @@ export type UpdatesResponse = {
       'chats_added' : Array<ChatSummary>,
       'chats_removed' : Array<ChatId>,
       'timestamp' : TimestampMillis,
+      'transactions' : Array<Transaction>,
     }
   };
 export interface UpdatesSince {
@@ -470,6 +512,14 @@ export interface UserSummary {
   'user_id' : UserId,
   'avatar_id' : [] | [bigint],
   'seconds_since_last_online' : number,
+}
+export interface UsersBlocked {
+  'user_ids' : Array<UserId>,
+  'blocked_by' : UserId,
+}
+export interface UsersUnblocked {
+  'user_ids' : Array<UserId>,
+  'unblocked_by' : UserId,
 }
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
@@ -573,6 +623,7 @@ export interface _SERVICE {
   'toggle_reaction' : (arg_0: ToggleReactionArgs) => Promise<
       ToggleReactionResponse
     >,
+  'transactions' : (arg_0: TransactionsArgs) => Promise<TransactionsResponse>,
   'unblock_user' : (arg_0: UnblockUserArgs) => Promise<UnblockUserResponse>,
   'unmute_notifications' : (arg_0: UnmuteNotificationsArgs) => Promise<
       UnmuteNotificationsResponse

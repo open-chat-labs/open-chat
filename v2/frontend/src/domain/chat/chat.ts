@@ -138,6 +138,8 @@ export type GroupChatEvent =
     | ReactionAdded
     | ReactionRemoved
     | GroupDescChanged
+    | UsersBlocked
+    | UsersUnblocked
     | ParticipantsDismissedAsAdmin;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -200,6 +202,18 @@ export type ReactionRemoved = {
 export type StaleMessage = {
     eventIndex: number;
     messageId: bigint;
+};
+
+export type UsersBlocked = {
+    kind: "users_blocked";
+    userIds: string[];
+    blockedBy: string;
+};
+
+export type UsersUnblocked = {
+    kind: "users_unblocked";
+    userIds: string[];
+    unblockedBy: string;
 };
 
 export type ParticipantsRemoved = {
@@ -513,9 +527,21 @@ export type RemoveParticipantResponse =
     | "cannot_remove_self"
     | "internal_error";
 
-export type BlockUserResponse = "success";
+export type BlockUserResponse =
+    | "success"
+    | "group_not_public"
+    | "user_not_in_group"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "internal_error"
+    | "cannot_block_self";
 
-export type UnblockUserResponse = "success";
+export type UnblockUserResponse =
+    | "success"
+    | "group_not_public"
+    | "cannot_unblock_self"
+    | "caller_not_on_group"
+    | "not_authorised";
 
 export type LeaveGroupResponse = "success" | "group_not_found" | "internal_error" | "not_in_group";
 

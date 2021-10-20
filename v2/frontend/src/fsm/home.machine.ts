@@ -168,7 +168,7 @@ async function getUpdates(
         );
 
         userStore.addMany(usersResponse.users);
-        blockedUsers.merge(chatsResponse.blockedUsers);
+        blockedUsers.set(chatsResponse.blockedUsers);
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,
@@ -223,6 +223,15 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
                 const parsedMsg = message as WebRtcMessage;
+                if (
+                    ctx.selectedChat !== undefined &&
+                    ctx.selectedChat.kind === "direct_chat" &&
+                    ctx.selectedChat.them === parsedMsg.userId &&
+                    get(blockedUsers).has(parsedMsg.userId)
+                ) {
+                    return;
+                }
+
                 const fromChat = findChatByChatType(ctx, parsedMsg);
 
                 if (parsedMsg.kind === "remote_user_typing") {

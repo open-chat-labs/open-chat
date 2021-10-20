@@ -29,6 +29,7 @@
     import { userStore } from "../../stores/user";
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
+    import { rollbar } from "../../utils/logging";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; eventIndex: string | undefined | null } = {
         chatId: null,
@@ -142,7 +143,7 @@
     function blockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.add(ev.detail.userId);
         $machine.context
-            .serviceContainer!.blockUser(ev.detail.userId)
+            .serviceContainer!.blockUserFromDirectChat(ev.detail.userId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("blockUserSucceeded");
@@ -150,13 +151,17 @@
                     toastStore.showFailureToast("blockUserFailed");
                 }
             })
-            .catch((_err) => toastStore.showFailureToast("blockUserFailed"));
+            .catch((err) => {
+                toastStore.showFailureToast("blockUserFailed");
+                rollbar.error("Error blocking user", err);
+                blockedUsers.delete(ev.detail.userId);
+            });
     }
 
     function unblockUser(ev: CustomEvent<{ userId: string }>) {
         blockedUsers.delete(ev.detail.userId);
         $machine.context
-            .serviceContainer!.unblockUser(ev.detail.userId)
+            .serviceContainer!.unblockUserFromDirectChat(ev.detail.userId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("unblockUserSucceeded");
@@ -164,7 +169,11 @@
                     toastStore.showFailureToast("unblockUserFailed");
                 }
             })
-            .catch((_err) => toastStore.showFailureToast("unblockUserFailed"));
+            .catch((err) => {
+                toastStore.showFailureToast("unblockUserFailed");
+                rollbar.error("Error unblocking user", err);
+                blockedUsers.add(ev.detail.userId);
+            });
     }
 
     function leaveGroup(ev: CustomEvent<string>) {

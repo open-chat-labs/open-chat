@@ -49,6 +49,29 @@ export type CreateCanisterResponse = { 'UserAlreadyCreated' : null } |
   { 'UserUnconfirmed' : null } |
   { 'UserNotFound' : null } |
   { 'CyclesBalanceTooLow' : null };
+export type Cryptocurrency = { 'ICP' : null } |
+  { 'Cycles' : null };
+export interface CryptocurrencyDeposit { 'from' : string, 'amount' : bigint }
+export interface CryptocurrencyReceive {
+  'from_user' : UserId,
+  'from' : string,
+  'amount' : bigint,
+}
+export interface CryptocurrencySend {
+  'to' : string,
+  'to_user' : UserId,
+  'amount' : bigint,
+}
+export interface CryptocurrencyTransaction {
+  'currency' : Cryptocurrency,
+  'block_height' : [] | [bigint],
+  'transfer' : CryptocurrencyTransfer,
+}
+export type CryptocurrencyTransfer = { 'Deposit' : CryptocurrencyDeposit } |
+  { 'Send' : CryptocurrencySend } |
+  { 'Withdrawal' : CryptocurrencyWithdrawal } |
+  { 'Receive' : CryptocurrencyReceive };
+export interface CryptocurrencyWithdrawal { 'to' : string, 'amount' : bigint }
 export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Unconfirmed' : { 'phone_number' : PhoneNumber }
@@ -135,10 +158,12 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
+  { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -249,7 +274,7 @@ export interface MessageMatch {
   'sender' : UserId,
   'score' : number,
   'chat_id' : ChatId,
-  'event_index' : EventIndex,
+  'message_index' : MessageIndex,
 }
 export type MetricsArgs = {};
 export interface MetricsResponse {
@@ -358,6 +383,12 @@ export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
 export interface TextContent { 'text' : string }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type Transaction = { 'Cryptocurrency' : CryptocurrencyTransaction };
+export interface TransactionWrapper {
+  'transaction' : Transaction,
+  'timestamp' : TimestampMillis,
+  'index' : number,
+}
 export interface TransferCyclesArgs {
   'recipient' : UserId,
   'sender' : UserId,
@@ -402,12 +433,20 @@ export interface UsersArgs {
   'users' : Array<UserId>,
   'updated_since' : [] | [TimestampMillis],
 }
+export interface UsersBlocked {
+  'user_ids' : Array<UserId>,
+  'blocked_by' : UserId,
+}
 export type UsersResponse = {
     'Success' : {
       'timestamp' : TimestampMillis,
       'users' : Array<PartialUserSummary>,
     }
   };
+export interface UsersUnblocked {
+  'user_ids' : Array<UserId>,
+  'unblocked_by' : UserId,
+}
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],

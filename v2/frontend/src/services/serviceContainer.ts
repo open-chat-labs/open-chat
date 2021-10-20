@@ -457,11 +457,15 @@ export class ServiceContainer implements MarkMessagesRead {
         return this.getGroupClient(chatId).removeParticipant(userId);
     }
 
-    blockUser(userId: string): Promise<BlockUserResponse> {
+    blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
         return this.userClient.blockUser(userId);
     }
 
-    unblockUser(userId: string): Promise<UnblockUserResponse> {
+    blockUserFromGroupChat(chatId: string, userId: string): Promise<BlockUserResponse> {
+        return this.getGroupClient(chatId).blockUser(userId);
+    }
+
+    unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
         return this.userClient.unblockUser(userId);
     }
 

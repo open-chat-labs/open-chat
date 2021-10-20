@@ -245,7 +245,7 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'score' : IDL.Nat32,
     'chat_id' : ChatId,
-    'event_index' : EventIndex,
+    'message_index' : MessageIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({
     'matches' : IDL.Vec(MessageMatch),
@@ -308,6 +308,56 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'Added' : EventIndex,
     'Removed' : EventIndex,
+  });
+  const TransactionsArgs = IDL.Record({
+    'max_transactions' : IDL.Nat8,
+    'ascending' : IDL.Bool,
+    'start_index' : IDL.Nat32,
+  });
+  const Cryptocurrency = IDL.Variant({ 'ICP' : IDL.Null, 'Cycles' : IDL.Null });
+  const CryptocurrencyDeposit = IDL.Record({
+    'from' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  const CryptocurrencySend = IDL.Record({
+    'to' : IDL.Text,
+    'to_user' : UserId,
+    'amount' : IDL.Nat,
+  });
+  const CryptocurrencyWithdrawal = IDL.Record({
+    'to' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  const CryptocurrencyReceive = IDL.Record({
+    'from_user' : UserId,
+    'from' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  const CryptocurrencyTransfer = IDL.Variant({
+    'Deposit' : CryptocurrencyDeposit,
+    'Send' : CryptocurrencySend,
+    'Withdrawal' : CryptocurrencyWithdrawal,
+    'Receive' : CryptocurrencyReceive,
+  });
+  const CryptocurrencyTransaction = IDL.Record({
+    'currency' : Cryptocurrency,
+    'block_height' : IDL.Opt(IDL.Nat64),
+    'transfer' : CryptocurrencyTransfer,
+  });
+  const Transaction = IDL.Variant({
+    'Cryptocurrency' : CryptocurrencyTransaction,
+  });
+  const TransactionWrapper = IDL.Record({
+    'transaction' : Transaction,
+    'timestamp' : TimestampMillis,
+    'index' : IDL.Nat32,
+  });
+  const TransactionsSuccessResult = IDL.Record({
+    'latest_transaction_index' : IDL.Opt(IDL.Nat32),
+    'transactions' : IDL.Vec(TransactionWrapper),
+  });
+  const TransactionsResponse = IDL.Variant({
+    'Success' : TransactionsSuccessResult,
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({ 'Success' : IDL.Null });
@@ -398,6 +448,7 @@ export const idlFactory = ({ IDL }) => {
       'chats_added' : IDL.Vec(ChatSummary),
       'chats_removed' : IDL.Vec(ChatId),
       'timestamp' : TimestampMillis,
+      'transactions' : IDL.Vec(Transaction),
     }),
   });
   return IDL.Service({
@@ -443,6 +494,11 @@ export const idlFactory = ({ IDL }) => {
         [ToggleReactionArgs],
         [ToggleReactionResponse],
         [],
+      ),
+    'transactions' : IDL.Func(
+        [TransactionsArgs],
+        [TransactionsResponse],
+        ['query'],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'unmute_notifications' : IDL.Func(
