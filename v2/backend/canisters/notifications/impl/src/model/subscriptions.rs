@@ -9,6 +9,7 @@ use types::{Subscription, SubscriptionInfo, TimestampMillis, UserId};
 #[derive(CandidType, Deserialize, Default)]
 pub struct Subscriptions {
     subscriptions: HashMap<UserId, Vec<Subscription>>,
+    total: u64,
 }
 
 impl Subscriptions {
@@ -39,6 +40,8 @@ impl Subscriptions {
                 e.insert(vec![Subscription::new(subscription, now)]);
             }
         }
+
+        self.total += 1;
     }
 
     pub fn contains_any(&self, user_ids: &[UserId], max_age: Duration, now: TimestampMillis) -> bool {
@@ -54,20 +57,29 @@ impl Subscriptions {
 
     pub fn remove_set(&mut self, user_id: UserId, p256dh_keys: HashSet<String>) {
         if let Occupied(e) = self.subscriptions.entry(user_id) {
-            let subscriptions = e.into_mut();
-            subscriptions.retain(|s| !p256dh_keys.contains(&s.value().keys.p256dh));
+            let mut removed = 0;
+            e.into_mut().retain(|s| {
+                if p256dh_keys.contains(&s.value().keys.p256dh) {
+                    removed += 1;
+                    false
+                } else {
+                    true
+                }
+            });
+            self.total -= removed;
         }
     }
 
     pub fn remove_all(&mut self, user_id: UserId) {
-        self.subscriptions.remove(&user_id);
+        if let Some(removed) = self.subscriptions.remove(&user_id) {
+            self.total -= removed.len() as u64;
+        }
     }
 
     pub fn remove(&mut self, user_id: UserId, p256dh_key: String) {
-        if let Occupied(e) = self.subscriptions.entry(user_id) {
-            let subscriptions = e.into_mut();
-            subscriptions.retain(|s| s.value().keys.p256dh != p256dh_key);
-        }
+        let mut keys = HashSet::new();
+        keys.insert(p256dh_key);
+        self.remove_set(user_id, keys);
     }
 
     pub fn exists(&self, user_id: &UserId, p256dh_key: String) -> bool {
@@ -75,6 +87,14 @@ impl Subscriptions {
             Some(subscriptions) => subscriptions.iter().any(|s| s.value().keys.p256dh == p256dh_key),
             None => false,
         }
+    }
+
+    pub fn users(&self) -> u64 {
+        self.subscriptions.len() as u64
+    }
+
+    pub fn total(&self) -> u64 {
+        self.total
     }
 }
 

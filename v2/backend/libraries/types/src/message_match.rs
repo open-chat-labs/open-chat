@@ -1,4 +1,4 @@
-use crate::{ChatId, EventIndex, MessageContent, UserId};
+use crate::{ChatId, MessageContent, MessageIndex, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -6,7 +6,7 @@ use serde::Deserialize;
 pub struct MessageMatch {
     pub chat_id: ChatId,
     pub sender: UserId,
-    pub event_index: EventIndex,
+    pub message_index: MessageIndex,
     pub content: MessageContent,
     pub score: u32,
 }
