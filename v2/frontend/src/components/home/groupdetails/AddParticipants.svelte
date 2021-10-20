@@ -50,7 +50,11 @@
                     cancelAddParticipant();
                     usersToAdd = [];
                 } else {
+                    // todo - we are not very gracefully handling a number of partial and complete failure
+                    // conditions here. Prefer to wait to see what participants and blocked users end up
+                    // looking like before handling that better.
                     toastStore.showFailureToast("addParticipantsFailed");
+                    rollbar.warn("AddParticipantsFailed", resp);
                     rollback();
                 }
             })
