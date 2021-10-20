@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Search from "../../Search.svelte";
     import Participant from "./Participant.svelte";
     import ParticipantsHeader from "./ParticipantsHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
@@ -10,6 +11,8 @@
     export let userId: string;
     export let closeIcon: "close" | "back";
 
+    let searchTerm = "";
+
     const dispatch = createEventDispatcher();
 
     function close() {
@@ -18,6 +21,12 @@
 
     function addParticipants() {
         dispatch("addParticipants");
+    }
+
+    function matchesSearch(searchTerm: string, user: FullParticipant): boolean {
+        if (searchTerm === "") return true;
+        if (user.username === undefined) return true;
+        return user.username.toLowerCase().includes(searchTerm.toLowerCase());
     }
 
     $: knownUsers = chat.participants.reduce<FullParticipant[]>((users, p) => {
@@ -33,9 +42,11 @@
 
     $: me = knownUsers.find((u) => u.userId === userId);
 
-    $: others = knownUsers.filter((u) => u.userId !== userId);
+    $: others = knownUsers.filter((u) => {
+        return matchesSearch(searchTerm, u) && u.userId !== userId;
+    });
 
-    $: publicGroup = chat.public;
+    let publicGroup = chat.public;
 </script>
 
 <ParticipantsHeader
@@ -44,6 +55,10 @@
     {me}
     on:close={close}
     on:addParticipants={addParticipants} />
+
+<div class="search">
+    <Search searching={false} bind:searchTerm placeholder={"filterParticipants"} />
+</div>
 
 {#if me !== undefined}
     <Participant me={true} participant={me} myRole={me.role} on:blockUser on:chatWith />
@@ -61,3 +76,9 @@
         on:removeParticipant
         on:close={close} />
 </VirtualList>
+
+<style type="text/scss">
+    .search {
+        padding: 0 $sp3;
+    }
+</style>
