@@ -440,7 +440,7 @@ impl ChatEvents {
                     document.set_age(now - e.timestamp);
                     match document.calculate_score(&query) {
                         0 => None,
-                        n => Some((n, m, e.index)),
+                        n => Some((n, m)),
                     }
                 }
                 _ => None,
@@ -454,7 +454,7 @@ impl ChatEvents {
             .take(max_results as usize)
             .map(|m| MessageMatch {
                 chat_id: self.chat_id,
-                event_index: m.2,
+                message_index: m.1.message_index,
                 sender: m.1.sender,
                 content: m.1.content.clone(),
                 score: m.0,
