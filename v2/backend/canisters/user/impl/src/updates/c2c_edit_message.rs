@@ -2,6 +2,7 @@ use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
 use tracing::instrument;
+use types::UserId;
 use user_canister::edit_message::{Response::*, *};
 
 #[update]
@@ -13,14 +14,17 @@ fn c2c_edit_messages(args: Args) -> Response {
 }
 
 fn c2c_edit_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+    let caller: UserId = runtime_state.env.caller().into();
+
+    if runtime_state.data.blocked_users.contains(&caller) {
+        return UserBlocked;
+    }
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
-        let caller_user_id = caller.into();
         let now = runtime_state.env.now();
 
         let edit_message_args = EditMessageArgs {
-            sender: caller_user_id,
+            sender: caller,
             message_id: args.message_id,
             content: args.content,
             now,

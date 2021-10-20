@@ -16,4 +16,5 @@ pub enum Response {
     InvalidReaction,
     MessageNotFound,
     ChatNotFound,
+    UserBlocked,
 }
