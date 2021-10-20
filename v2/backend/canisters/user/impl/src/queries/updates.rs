@@ -295,7 +295,11 @@ fn finalize(
 
     let transactions = runtime_state.data.transactions.most_recent(updates_since, 20);
     let blocked_users = runtime_state.data.blocked_users.iter().copied().collect();
-    let cycles_balance = runtime_state.data.user_cycles_balance.if_set_after(updates_since).copied();
+    let cycles_balance = if runtime_state.data.user_cycles_balance.last_updated() > updates_since {
+        Some(runtime_state.data.user_cycles_balance.value())
+    } else {
+        None
+    };
 
     SuccessResult {
         timestamp: now,

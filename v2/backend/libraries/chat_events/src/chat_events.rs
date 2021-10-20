@@ -137,6 +137,7 @@ pub struct Metrics {
     pub audio_messages: u64,
     pub file_messages: u64,
     pub cycles_messages: u64,
+    pub icp_messages: u64,
     pub deleted_messages: u64,
     pub replies: u64,
     pub total_edits: u64,
@@ -194,13 +195,16 @@ impl ChatEvents {
     }
 
     pub fn push_message(&mut self, args: PushMessageArgs) -> (EventIndex, Message) {
-        match args.content {
+        match &args.content {
             MessageContent::Text(_) => self.metrics.text_messages += 1,
             MessageContent::Image(_) => self.metrics.image_messages += 1,
             MessageContent::Video(_) => self.metrics.video_messages += 1,
             MessageContent::Audio(_) => self.metrics.audio_messages += 1,
             MessageContent::File(_) => self.metrics.file_messages += 1,
-            MessageContent::Cycles(_) => self.metrics.cycles_messages += 1,
+            MessageContent::Cryptocurrency(c) => match c.transfer {
+                CryptocurrencyTransfer::Cycles(_) => self.metrics.cycles_messages += 1,
+                CryptocurrencyTransfer::ICP(_) => self.metrics.icp_messages += 1,
+            },
             MessageContent::Deleted(_) => self.metrics.deleted_messages += 1,
         }
 

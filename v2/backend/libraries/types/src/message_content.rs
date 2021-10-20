@@ -1,4 +1,4 @@
-use crate::{CanisterId, Cycles, TimestampMillis, UserId};
+use crate::{CanisterId, CryptocurrencyTransfer, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
@@ -10,7 +10,7 @@ pub enum MessageContent {
     Video(VideoContent),
     Audio(AudioContent),
     File(FileContent),
-    Cycles(CycleContent),
+    Cryptocurrency(CryptocurrencyContent),
     Deleted(DeletedContent),
 }
 
@@ -57,8 +57,8 @@ pub struct FileContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CycleContent {
-    pub amount: Cycles,
+pub struct CryptocurrencyContent {
+    pub transfer: CryptocurrencyTransfer,
     pub caption: Option<String>,
 }
 
