@@ -355,7 +355,7 @@
 
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
             fromBottomVal = fromBottom();
-            switch ($chatStore.event) {
+            switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
                     tick().then(resetScroll);
                     chatStore.clear();
@@ -369,10 +369,10 @@
                 case "sending_message":
                     // if we are within the from bottom threshold *or* if the new message
                     // was sent by us, then scroll to the bottom
-                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.sentByMe) {
+                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.event.sentByMe) {
                         // smooth scroll doesn't work here when we are leaping from the top
                         // which means we are stuck with abrupt scroll which is disappointing
-                        scrollBottom();
+                        scrollBottom($chatStore.event.scroll);
                     }
                     chatStore.clear();
                     break;

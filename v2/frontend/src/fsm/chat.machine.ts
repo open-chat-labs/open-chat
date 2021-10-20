@@ -347,7 +347,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         pure((ctx, _ev) => {
                             chatStore.set({
                                 chatId: ctx.chatSummary.chatId,
-                                event: "chat_updated",
+                                event: { kind: "chat_updated" },
                             });
                             return undefined;
                         }),
@@ -371,7 +371,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     ) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
-                                            event: "loaded_new_messages",
+                                            event: { kind: "loaded_new_messages" },
                                         });
                                     }
                                     return undefined;
@@ -487,9 +487,13 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                 }
                                 chatStore.set({
                                     chatId: ctx.chatSummary.chatId,
-                                    event: "sending_message",
-                                    messageIndex: ev.data.messageEvent.event.messageIndex,
-                                    sentByMe,
+                                    event: {
+                                        kind: "sending_message",
+                                        messageIndex: ev.data.messageEvent.event.messageIndex,
+                                        sentByMe,
+                                        scroll:
+                                            ctx.sendingMessage === undefined ? "smooth" : "auto",
+                                    },
                                 });
                                 const chatSummary = sentByMe
                                     ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
@@ -738,7 +742,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                             } else {
                                                 chatStore.set({
                                                     chatId: ctx.chatSummary.chatId,
-                                                    event: "loaded_previous_messages",
+                                                    event: { kind: "loaded_previous_messages" },
                                                 });
                                                 return undefined;
                                             }
