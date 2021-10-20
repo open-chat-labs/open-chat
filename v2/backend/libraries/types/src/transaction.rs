@@ -1,6 +1,5 @@
 use crate::{
-    CryptocurrencyTransaction, CryptocurrencyTransfer, DepositCryptocurrencyTransaction, TimestampMillis,
-    WithdrawCryptocurrencyTransaction,
+    CryptocurrencyDeposit, CryptocurrencyTransaction, CryptocurrencyTransfer, CryptocurrencyWithdrawal, TimestampMillis,
 };
 use candid::CandidType;
 use serde::Deserialize;
@@ -24,15 +23,15 @@ pub enum TransactionStatus {
     Failed(String),
 }
 
-impl From<DepositCryptocurrencyTransaction> for Transaction {
-    fn from(t: DepositCryptocurrencyTransaction) -> Self {
+impl From<CryptocurrencyDeposit> for Transaction {
+    fn from(t: CryptocurrencyDeposit) -> Self {
         Transaction::Cryptocurrency(CryptocurrencyTransaction::Deposit(t))
     }
 }
 
-impl From<WithdrawCryptocurrencyTransaction> for Transaction {
-    fn from(t: WithdrawCryptocurrencyTransaction) -> Self {
-        Transaction::Cryptocurrency(CryptocurrencyTransaction::Withdraw(t))
+impl From<CryptocurrencyWithdrawal> for Transaction {
+    fn from(t: CryptocurrencyWithdrawal) -> Self {
+        Transaction::Cryptocurrency(CryptocurrencyTransaction::Withdrawal(t))
     }
 }
 

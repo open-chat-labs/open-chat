@@ -10,25 +10,25 @@ pub enum Cryptocurrency {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptocurrencyTransaction {
-    Deposit(DepositCryptocurrencyTransaction),
-    Withdraw(WithdrawCryptocurrencyTransaction),
+    Deposit(CryptocurrencyDeposit),
+    Withdrawal(CryptocurrencyWithdrawal),
     Transfer(CryptocurrencyTransfer),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum DepositCryptocurrencyTransaction {
-    Cycles(DepositCyclesTransaction),
-    ICP(DepositICPTransaction),
+pub enum CryptocurrencyDeposit {
+    Cycles(CyclesDeposit),
+    ICP(ICPDeposit),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum WithdrawCryptocurrencyTransaction {
-    Cycles(WithdrawCyclesTransaction),
-    ICP(WithdrawICPTransaction),
+pub enum CryptocurrencyWithdrawal {
+    Cycles(CyclesWithdrawal),
+    ICP(ICPWithdrawal),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum DepositCyclesTransaction {
+pub enum CyclesDeposit {
     Completed(CompletedCyclesDeposit),
 }
 
@@ -39,7 +39,7 @@ pub struct CompletedCyclesDeposit {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum DepositICPTransaction {
+pub enum ICPDeposit {
     Completed(CompletedICPDeposit),
 }
 
@@ -53,14 +53,20 @@ pub struct CompletedICPDeposit {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum WithdrawCyclesTransaction {
-    Pending(CyclesWithdrawal),
-    Completed(CyclesWithdrawal),
+pub enum CyclesWithdrawal {
+    Pending(PendingCyclesWithdrawal),
+    Completed(CompletedCyclesWithdrawal),
     Failed(FailedCyclesWithdrawal),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CyclesWithdrawal {
+pub struct PendingCyclesWithdrawal {
+    pub to: CanisterId,
+    pub cycles: Cycles,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedCyclesWithdrawal {
     pub to: CanisterId,
     pub cycles: Cycles,
 }
@@ -73,7 +79,7 @@ pub struct FailedCyclesWithdrawal {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum WithdrawICPTransaction {
+pub enum ICPWithdrawal {
     Pending(PendingICPWithdrawal),
     Completed(CompletedICPWithdrawal),
     Failed(FailedICPWithdrawal),

@@ -448,24 +448,24 @@ type Cryptocurrency =
 
 type CryptocurrencyTransaction =
     variant {
-        Deposit: DepositCryptocurrencyTransaction;
-        Withdraw: WithdrawCryptocurrencyTransaction;
+        Deposit: CryptocurrencyDeposit;
+        Withdrawal: CryptocurrencyWithdrawal;
         Transfer: CryptocurrencyTransfer;
     };
 
-type DepositCryptocurrencyTransaction =
+type CryptocurrencyDeposit =
     variant {
-        Cycles: DepositCyclesTransaction;
-        ICP: DepositICPTransaction;
+        Cycles: CyclesDeposit;
+        ICP: ICPDeposit;
     };
 
-type WithdrawCryptocurrencyTransaction =
+type CryptocurrencyWithdrawal =
     variant {
-        Cycles: WithdrawCyclesTransaction;
-        ICP: WithdrawICPTransaction;
+        Cycles: CyclesWithdrawal;
+        ICP: ICPWithdrawal;
     };
 
-type DepositCyclesTransaction =
+type CyclesDeposit =
     variant {
         Completed: CompletedCyclesDeposit;
     };
@@ -476,7 +476,7 @@ type CompletedCyclesDeposit =
         cycles: Cycles;
     };
 
-type DepositICPTransaction =
+type ICPDeposit =
     variant {
         Completed: CompletedICPDeposit;
     };
@@ -490,14 +490,20 @@ type CompletedICPDeposit =
         block_height: BlockHeight;
     };
 
-type WithdrawCyclesTransaction =
+type CyclesWithdrawal =
     variant {
-        Pending: CyclesWithdrawal;
-        Completed: CyclesWithdrawal;
+        Pending: PendingCyclesWithdrawal;
+        Completed: CompletedCyclesWithdrawal;
         Failed: FailedCyclesWithdrawal;
     };
 
-type CyclesWithdrawal =
+type PendingCyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+    };
+
+type CompletedCyclesWithdrawal =
     record {
         to: CanisterId;
         cycles: Cycles;
@@ -510,7 +516,7 @@ type FailedCyclesWithdrawal =
         error_message: text;
     };
 
-type WithdrawICPTransaction =
+type ICPWithdrawal =
     variant {
         Pending: PendingICPWithdrawal;
         Completed: CompletedICPWithdrawal;
