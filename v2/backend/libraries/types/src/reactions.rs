@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-const MAX_REACTION_LENGTH_BYTES: usize = 6;
+const MAX_REACTION_LENGTH_BYTES: usize = 8;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Reaction(String);
