@@ -1,6 +1,7 @@
 use crate::{run_regular_jobs, RuntimeState, RUNTIME_STATE};
 use ic_cdk_macros::update;
 use tracing::instrument;
+use types::UserId;
 use user_canister::c2c_delete_messages::{Response::*, *};
 
 #[update]
@@ -12,14 +13,17 @@ fn c2c_delete_messages(args: Args) -> Response {
 }
 
 fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+    let caller: UserId = runtime_state.env.caller().into();
+
+    if runtime_state.data.blocked_users.contains(&caller) {
+        return UserBlocked;
+    }
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
-        let caller_user_id = caller.into();
         let now = runtime_state.env.now();
 
         for message_id in args.message_ids.into_iter() {
-            chat.events.delete_message(caller_user_id, false, message_id, now);
+            chat.events.delete_message(caller, false, message_id, now);
         }
 
         Success
