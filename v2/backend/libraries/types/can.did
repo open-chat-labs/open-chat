@@ -476,7 +476,6 @@ type TransactionWrapper =
     record {
         index: nat32;
         timestamp: TimestampMillis;
-        status: TransactionStatus;
         transaction: Transaction;
     };
 

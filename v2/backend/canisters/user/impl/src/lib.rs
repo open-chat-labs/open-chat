@@ -1,12 +1,13 @@
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::transactions::Transactions;
+use crate::model::user_cycles_balance::UserCyclesBalance;
 use candid::{CandidType, Principal};
 use canister_logger::LogMessagesWrapper;
 use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{Avatar, CanisterId, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -64,7 +65,7 @@ struct Data {
     pub wasm_version: Version,
     pub blob_storage: BlobStorage,
     pub avatar: Option<Avatar>,
-    pub user_cycles_balance: Timestamped<Cycles>,
+    pub user_cycles_balance: UserCyclesBalance,
     pub transactions: Transactions,
     pub test_mode: bool,
 }
@@ -76,7 +77,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notification_canister_ids: Vec<CanisterId>,
         wasm_version: Version,
-        now: TimestampMillis,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -90,7 +90,7 @@ impl Data {
             wasm_version,
             blob_storage: BlobStorage::new(MAX_STORAGE),
             avatar: None,
-            user_cycles_balance: Timestamped::new(0, now),
+            user_cycles_balance: UserCyclesBalance::default(),
             transactions: Transactions::default(),
             test_mode,
         }

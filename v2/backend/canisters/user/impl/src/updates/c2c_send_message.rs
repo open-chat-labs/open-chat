@@ -4,8 +4,8 @@ use ic_cdk_macros::update;
 use notifications_canister::push_direct_message_notification;
 use tracing::instrument;
 use types::{
-    CanisterId, Cryptocurrency, CryptocurrencyReceive, CryptocurrencyTransaction, CryptocurrencyTransfer, Cycles,
-    DirectMessageNotification, MessageContent, TimestampMillis, Timestamped, Transaction, TransactionStatus, UserId,
+    CanisterId, CompletedCyclesTransfer, CryptocurrencyTransfer, Cycles, CyclesTransfer, DirectMessageNotification,
+    MessageContent, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_message::{Response::*, *};
 use utils::rand::get_random_item;
@@ -59,10 +59,19 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
+// The args are mutable because if the message contains a pending cycles transfer, we accept the
+// cycles and then update the args with the completed cycles transfer.
+fn c2c_send_message_impl(sender: UserId, mut args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    handle_transaction_if_present(&args.content, sender, now, &mut runtime_state.data);
+    if let MessageContent::CryptocurrencyTransfer(ct) = &mut args.content {
+        // If the request contains a pending cycles transfer, accept the cycles and then update
+        // the request to contain the completed cycles transfer.
+        if let CryptocurrencyTransfer::Cycles(c) = &mut ct.transfer {
+            *c = CyclesTransfer::Completed(accept_cycles(sender, c, now, &mut runtime_state.data));
+        }
+        runtime_state.data.transactions.add(ct.transfer.clone(), now);
+    }
 
     let push_message_args = PushMessageArgs {
         message_id: args.message_id,
@@ -105,45 +114,22 @@ async fn push_notification(canister_id: CanisterId, recipient: UserId, notificat
     let _ = notifications_canister_c2c_client::push_direct_message_notification(canister_id, &args).await;
 }
 
-fn handle_transaction_if_present(content: &MessageContent, sender: UserId, now: TimestampMillis, data: &mut Data) {
-    match &content {
-        MessageContent::Cycles(c) => {
-            let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
-            if cycles_available < c.amount {
-                // This should never happen...
-                panic!("Message does not contain the stated number of cycles");
-            }
-            let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.amount as u64).into();
-            if cycles_accepted != c.amount {
-                // This can only happen if accepting the cycles results in the canister exceeding the
-                // max cycles limit which in reality should never happen.
-                panic!("Unable to accept cycles")
-            }
-            let new_cycles_balance = data.user_cycles_balance.value + c.amount;
-            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
-                currency: Cryptocurrency::Cycles,
-                block_height: None,
-                transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
-                    from_user: sender,
-                    from: sender.to_string(),
-                    amount: c.amount,
-                }),
-            });
-            data.transactions.add(transaction, now, TransactionStatus::Complete);
-            data.user_cycles_balance = Timestamped::new(new_cycles_balance, now);
+fn accept_cycles(sender: UserId, transfer: &CyclesTransfer, now: TimestampMillis, data: &mut Data) -> CompletedCyclesTransfer {
+    if let CyclesTransfer::Pending(c) = transfer {
+        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
+        if cycles_available < c.cycles {
+            // This should never happen...
+            panic!("Message does not contain the stated number of cycles");
         }
-        MessageContent::ICP(c) => {
-            let transaction = Transaction::Cryptocurrency(CryptocurrencyTransaction {
-                currency: Cryptocurrency::ICP,
-                block_height: Some(c.block_height),
-                transfer: CryptocurrencyTransfer::Receive(CryptocurrencyReceive {
-                    from_user: sender,
-                    from: ledger_utils::calculate_address(sender).to_string(),
-                    amount: c.amount_e8s.into(),
-                }),
-            });
-            data.transactions.add(transaction, now, TransactionStatus::Complete);
+        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.cycles as u64).into();
+        if cycles_accepted != c.cycles {
+            // This can only happen if accepting the cycles results in the canister exceeding the
+            // max cycles limit which in reality should never happen.
+            panic!("Unable to accept cycles")
         }
-        _ => {}
+        data.user_cycles_balance.add(cycles_accepted, now);
+        c.completed(sender)
+    } else {
+        panic!("Invalid request. Request contains a completed cycles transfer, only pending transfers are allowed");
     }
 }

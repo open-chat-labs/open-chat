@@ -1,6 +1,6 @@
-use crate::{BlockHeight, UserId};
+use crate::{BlockHeight, CanisterId, Cycles, UserId};
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Deserialize, Copy, Clone, Debug)]
 pub enum Cryptocurrency {
@@ -8,45 +8,227 @@ pub enum Cryptocurrency {
     Cycles,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyTransaction {
-    pub currency: Cryptocurrency,
-    pub block_height: Option<BlockHeight>,
-    pub transfer: CryptocurrencyTransfer,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CryptocurrencyTransaction {
+    Deposit(DepositCryptocurrencyTransaction),
+    Withdraw(WithdrawCryptocurrencyTransaction),
+    Transfer(CryptocurrencyTransfer),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum DepositCryptocurrencyTransaction {
+    Cycles(DepositCyclesTransaction),
+    ICP(DepositICPTransaction),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WithdrawCryptocurrencyTransaction {
+    Cycles(WithdrawCyclesTransaction),
+    ICP(WithdrawICPTransaction),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum DepositCyclesTransaction {
+    Completed(CompletedCyclesDeposit),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedCyclesDeposit {
+    pub from: CanisterId,
+    pub cycles: Cycles,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum DepositICPTransaction {
+    Completed(CompletedICPDeposit),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedICPDeposit {
+    pub from_address: String,
+    pub amount_e8s: u64,
+    pub fee_e8s: u64,
+    pub memo: u64,
+    pub block_height: BlockHeight,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WithdrawCyclesTransaction {
+    Pending(CyclesWithdrawal),
+    Completed(CyclesWithdrawal),
+    Failed(FailedCyclesWithdrawal),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CyclesWithdrawal {
+    pub to: CanisterId,
+    pub cycles: Cycles,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FailedCyclesWithdrawal {
+    pub to: CanisterId,
+    pub cycles: Cycles,
+    pub error_message: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WithdrawICPTransaction {
+    Pending(PendingICPWithdrawal),
+    Completed(CompletedICPWithdrawal),
+    Failed(FailedICPWithdrawal),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PendingICPWithdrawal {
+    pub to: String,
+    pub amount_e8s: u64,
+    pub fee_e8s: Option<u64>,
+    pub memo: Option<u64>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedICPWithdrawal {
+    pub to: String,
+    pub amount_e8s: u64,
+    pub fee_e8s: u64,
+    pub memo: u64,
+    pub block_height: BlockHeight,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FailedICPWithdrawal {
+    pub to: String,
+    pub amount_e8s: u64,
+    pub fee_e8s: u64,
+    pub memo: u64,
+    pub error_message: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptocurrencyTransfer {
-    Deposit(CryptocurrencyDeposit),
-    Withdrawal(CryptocurrencyWithdrawal),
-    Send(CryptocurrencySend),
-    Receive(CryptocurrencyReceive),
+    Cycles(CyclesTransfer),
+    ICP(ICPTransfer),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyDeposit {
-    pub from: String,
-    pub amount: u128,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum CyclesTransfer {
+    Pending(PendingCyclesTransfer),
+    Completed(CompletedCyclesTransfer),
+    Failed(FailedCyclesTransfer),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyWithdrawal {
-    pub to: String,
-    pub amount: u128,
-    pub fee: u128,
+impl CyclesTransfer {
+    pub fn cycles(&self) -> Cycles {
+        match self {
+            Self::Pending(t) => t.cycles,
+            Self::Completed(t) => t.cycles,
+            Self::Failed(t) => t.cycles,
+        }
+    }
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct CryptocurrencySend {
-    pub to_user: UserId,
-    pub to: String,
-    pub amount: u128,
-    pub fee: u128,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PendingCyclesTransfer {
+    pub recipient: UserId,
+    pub cycles: Cycles,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct CryptocurrencyReceive {
-    pub from_user: UserId,
-    pub from: String,
-    pub amount: u128,
+impl PendingCyclesTransfer {
+    pub fn completed(&self, sender: UserId) -> CompletedCyclesTransfer {
+        CompletedCyclesTransfer {
+            sender,
+            recipient: self.recipient,
+            cycles: self.cycles,
+        }
+    }
+
+    pub fn failed(&self, error_message: String) -> FailedCyclesTransfer {
+        FailedCyclesTransfer {
+            recipient: self.recipient,
+            cycles: self.cycles,
+            error_message,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedCyclesTransfer {
+    pub sender: UserId,
+    pub recipient: UserId,
+    pub cycles: Cycles,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FailedCyclesTransfer {
+    pub recipient: UserId,
+    pub cycles: Cycles,
+    pub error_message: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum ICPTransfer {
+    Pending(PendingICPTransfer),
+    Completed(CompletedICPTransfer),
+    Failed(FailedICPTransfer),
+}
+
+impl ICPTransfer {
+    pub fn amount_e8s(&self) -> u64 {
+        match self {
+            Self::Pending(t) => t.amount_e8s,
+            Self::Completed(t) => t.amount_e8s,
+            Self::Failed(t) => t.amount_e8s,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PendingICPTransfer {
+    pub recipient: UserId,
+    pub amount_e8s: u64,
+    pub fee_e8s: Option<u64>,
+    pub memo: Option<u64>,
+}
+
+impl PendingICPTransfer {
+    pub fn completed(&self, sender: UserId, fee_e8s: u64, memo: u64, block_height: BlockHeight) -> CompletedICPTransfer {
+        CompletedICPTransfer {
+            sender,
+            recipient: self.recipient,
+            amount_e8s: self.amount_e8s,
+            fee_e8s,
+            memo,
+            block_height,
+        }
+    }
+
+    pub fn failed(&self, fee_e8s: u64, memo: u64, error_message: String) -> FailedICPTransfer {
+        FailedICPTransfer {
+            recipient: self.recipient,
+            amount_e8s: self.amount_e8s,
+            fee_e8s,
+            memo,
+            error_message,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CompletedICPTransfer {
+    pub sender: UserId,
+    pub recipient: UserId,
+    pub amount_e8s: u64,
+    pub fee_e8s: u64,
+    pub memo: u64,
+    pub block_height: BlockHeight,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct FailedICPTransfer {
+    pub recipient: UserId,
+    pub amount_e8s: u64,
+    pub fee_e8s: u64,
+    pub memo: u64,
+    pub error_message: String,
 }

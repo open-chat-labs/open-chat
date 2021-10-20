@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::Deserialize;
-use types::{TimestampMillis, Transaction, TransactionStatus, TransactionWrapper};
+use types::{TimestampMillis, Transaction, TransactionWrapper};
 
 #[derive(CandidType, Deserialize, Default)]
 pub struct Transactions {
@@ -10,7 +10,6 @@ pub struct Transactions {
 #[derive(CandidType, Deserialize, Debug)]
 struct TransactionWrapperInternal {
     timestamp: TimestampMillis,
-    status: TransactionStatus,
     transaction: Transaction,
 }
 
@@ -19,30 +18,24 @@ impl TransactionWrapperInternal {
         TransactionWrapper {
             index,
             timestamp: self.timestamp,
-            status: self.status.clone(),
             transaction: self.transaction.clone(),
         }
     }
 }
 
 impl Transactions {
-    pub fn add(&mut self, transaction: Transaction, now: TimestampMillis, status: TransactionStatus) -> u32 {
+    pub fn add<T: Into<Transaction>>(&mut self, transaction: T, now: TimestampMillis) -> u32 {
         let index = self.transactions.len() as u32;
         let wrapper = TransactionWrapperInternal {
             timestamp: now,
-            status,
-            transaction,
+            transaction: transaction.into(),
         };
         self.transactions.push(wrapper);
         index
     }
 
-    pub fn update(&mut self, index: u32, status: TransactionStatus, transaction: Option<Transaction>) {
-        let wrapper = &mut self.transactions[index as usize];
-        wrapper.status = status;
-        if let Some(transaction) = transaction {
-            wrapper.transaction = transaction;
-        }
+    pub fn update<T: Into<Transaction>>(&mut self, index: u32, transaction: T) {
+        self.transactions[index as usize].transaction = transaction.into();
     }
 
     pub fn most_recent(&self, since: TimestampMillis, max_results: u8) -> Vec<TransactionWrapper> {

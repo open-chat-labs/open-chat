@@ -4,17 +4,15 @@ use ic_nns_constants::LEDGER_CANISTER_ID;
 use ledger_canister::{AccountIdentifier, BlockHeight, ICPTs, Memo, SendArgs};
 use types::UserId;
 
-const OPEN_CHAT_MEMO: u64 = 5715144129571733504; // OPENCHAT (0x4f50454e43484154)
-
 pub fn calculate_address(user_id: UserId) -> AccountIdentifier {
     let principal_id = PrincipalId(user_id.into());
 
     AccountIdentifier::new(principal_id, None)
 }
 
-pub async fn send(recipient: AccountIdentifier, amount_e8s: u64, fee_e8s: u64) -> Result<BlockHeight, String> {
+pub async fn send(recipient: AccountIdentifier, amount_e8s: u64, fee_e8s: u64, memo: u64) -> Result<BlockHeight, String> {
     send_internal(SendArgs {
-        memo: Memo(OPEN_CHAT_MEMO),
+        memo: Memo(memo),
         amount: ICPTs::from_e8s(amount_e8s),
         fee: ICPTs::from_e8s(fee_e8s),
         from_subaccount: None,
