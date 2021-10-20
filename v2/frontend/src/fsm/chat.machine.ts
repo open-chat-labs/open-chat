@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createMachine, DoneInvokeEvent, MachineConfig, MachineOptions } from "xstate";
-import { assign, pure, sendParent } from "xstate/lib/actions";
+import { assign, pure, send, sendParent } from "xstate/lib/actions";
 import type {
     ChatSummary,
     EventsResponse,
@@ -49,18 +49,24 @@ export interface ChatContext {
     user?: UserSummary;
     error?: Error;
     events: EventWrapper<ChatEvent>[];
-    focusIndex?: number; // this is the index of a message that we want to scroll to
+    focusMessageIndex?: number; // this is the index of a message that we want to scroll to
     replyingTo?: EnhancedReplyContext;
     fileToAttach?: MessageContent;
     localReactions: Record<string, LocalReaction[]>;
     editingEvent?: EventWrapper<Message>;
     markRead: MessageReadTracker;
     initialised: boolean;
+    sendingMessage?: SendMessageEvent;
 }
 
 type LoadEventsResponse = {
     events: EventWrapper<ChatEvent>[];
     affectedEvents: EventWrapper<ChatEvent>[];
+};
+
+type SendMessageEvent = {
+    type: "SEND_MESSAGE";
+    data: { messageEvent: EventWrapper<Message>; userId: string };
 };
 
 export type ChatEvents =
@@ -70,11 +76,12 @@ export type ChatEvents =
       }
     | { type: "error.platform.loadEventsAndUsers"; data: Error }
     | { type: "error.platform.sendMessage"; data: Error }
-    | { type: "GO_TO_EVENT_INDEX"; data: number }
+    | { type: "GO_TO_MESSAGE_INDEX"; data: number }
+    | { type: "SET_FOCUS_MESSAGE_INDEX"; data: number }
     | { type: "EDIT_EVENT"; data: EventWrapper<Message> }
     | { type: "START_TYPING" }
     | { type: "STOP_TYPING" }
-    | { type: "SEND_MESSAGE"; data: { messageEvent: EventWrapper<Message>; userId: string } }
+    | SendMessageEvent
     | { type: "TOGGLE_REACTION"; data: { messageId: bigint; reaction: string; userId: string } }
     | { type: "REMOVE_MESSAGE"; data: { userId: string; messageId: bigint } }
     | {
@@ -104,7 +111,8 @@ export type ChatEvents =
     | { type: "CANCEL_REPLY_TO" }
     | { type: "TOGGLE_MUTE_NOTIFICATIONS" }
     | { type: "CHAT_UPDATED"; data: ChatSummary }
-    | { type: "LOAD_PREVIOUS_MESSAGES" };
+    | { type: "LOAD_PREVIOUS_MESSAGES" }
+    | { type: "LOAD_NEW_MESSAGES" };
 
 async function loadUsersForChat(
     serviceContainer: ServiceContainer,
@@ -121,28 +129,45 @@ async function loadUsersForChat(
 }
 
 function loadEvents(
+    ev: ChatEvents,
     serviceContainer: ServiceContainer,
     chatSummary: ChatSummary,
     startIndex: number,
     ascending: boolean
 ): Promise<EventsResponse<ChatEvent>> {
     if (chatSummary.kind === "direct_chat") {
-        return serviceContainer.directChatEvents(
+        if (ev.type === "GO_TO_MESSAGE_INDEX") {
+            return serviceContainer.directChatEventsWindow(
+                indexRangeForChat(chatSummary),
+                chatSummary.them,
+                startIndex
+            );
+        } else {
+            return serviceContainer.directChatEvents(
+                indexRangeForChat(chatSummary),
+                chatSummary.them,
+                startIndex,
+                ascending
+            );
+        }
+    }
+    if (ev.type === "GO_TO_MESSAGE_INDEX") {
+        return serviceContainer.groupChatEventsWindow(
             indexRangeForChat(chatSummary),
-            chatSummary.them,
+            chatSummary.chatId,
+            startIndex
+        );
+    } else {
+        return serviceContainer.groupChatEvents(
+            indexRangeForChat(chatSummary),
+            chatSummary.chatId,
             startIndex,
             ascending
         );
     }
-    const events = serviceContainer
-        .groupChatEvents(indexRangeForChat(chatSummary), chatSummary.chatId, startIndex, ascending)
-        .then((resp) => {
-            return resp;
-        });
-    return events;
 }
 
-export function moreMessagesAvailable(ctx: ChatContext): boolean {
+export function morePreviousMessagesAvailable(ctx: ChatContext): boolean {
     return earliestIndex(ctx) > earliestAvailableEventIndex(ctx);
 }
 
@@ -153,6 +178,11 @@ export function earliestAvailableEventIndex(ctx: ChatContext): number {
 // we need to be clearer about what this means
 export function earliestIndex(ctx: ChatContext): number {
     return earliestLoadedEventIndex(ctx.events) ?? ctx.chatSummary.latestEventIndex;
+}
+
+export function moreNewMessagesAvailable(ctx: ChatContext): boolean {
+    const lastLoaded = latestLoadedEventIndex(ctx.events, get(unconfirmed));
+    return lastLoaded === undefined || lastLoaded < ctx.chatSummary.latestEventIndex;
 }
 
 export function newMessageCriteria(ctx: ChatContext): [number, boolean] | undefined {
@@ -191,15 +221,29 @@ export function previousMessagesCriteria(ctx: ChatContext): [number, boolean] | 
 }
 
 export function requiredCriteria(ctx: ChatContext, ev: ChatEvents): [number, boolean] | undefined {
-    if (ev.type === "CHAT_UPDATED") {
+    if (ev.type === "LOAD_NEW_MESSAGES") {
         return newMessageCriteria(ctx);
     } else {
-        return previousMessagesCriteria(ctx);
+        if (ev.type === "GO_TO_MESSAGE_INDEX") {
+            return [ctx.focusMessageIndex!, false];
+        } else {
+            return previousMessagesCriteria(ctx);
+        }
     }
 }
 
 const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
-    guards: {},
+    guards: {
+        notUpToDate: (ctx, ev) =>
+            ev.type === "SEND_MESSAGE" &&
+            ctx.events[ctx.events.length - 1]?.index < ctx.chatSummary.latestEventIndex &&
+            ev.data.userId === ctx.user?.userId &&
+            ctx.chatSummary.latestMessage !== undefined,
+
+        upToDate: (ctx, _) =>
+            ctx.events[ctx.events.length - 1]?.index >= ctx.chatSummary.latestEventIndex &&
+            ctx.chatSummary.latestMessage !== undefined,
+    },
     services: {
         loadEventsAndUsers: async (ctx, ev) => {
             const criteria = requiredCriteria(ctx, ev);
@@ -207,7 +251,13 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
             const [, eventsResponse] = await Promise.all([
                 loadUsersForChat(ctx.serviceContainer, ctx.chatSummary),
                 criteria
-                    ? loadEvents(ctx.serviceContainer!, ctx.chatSummary, criteria[0], criteria[1])
+                    ? loadEvents(
+                          ev,
+                          ctx.serviceContainer!,
+                          ctx.chatSummary,
+                          criteria[0],
+                          criteria[1]
+                      )
                     : undefined,
             ]);
 
@@ -234,23 +284,24 @@ const liveConfig: Partial<MachineOptions<ChatContext, ChatEvents>> = {
     },
     actions: {
         assignEventsResponse: assign((ctx, ev) => {
-            return ev.type === "done.invoke.loadEventsAndUsers" && ev.data !== undefined
-                ? {
-                      initialised: true,
-                      events: replaceAffected(
-                          ctx.chatSummary.chatId,
-                          replaceLocal(
-                              ctx.user!.userId,
-                              ctx.chatSummary.chatId,
-                              ctx.markRead,
-                              ctx.events,
-                              ev.data.events
-                          ),
-                          ev.data.affectedEvents,
-                          ctx.localReactions
-                      ),
-                  }
-                : {};
+            if (ev.type !== "done.invoke.loadEventsAndUsers" || ev.data === undefined) {
+                return {};
+            }
+            return {
+                initialised: true,
+                events: replaceAffected(
+                    ctx.chatSummary.chatId,
+                    replaceLocal(
+                        ctx.user!.userId,
+                        ctx.chatSummary.chatId,
+                        ctx.markRead,
+                        ctx.focusMessageIndex === undefined ? ctx.events : [],
+                        ev.data.events
+                    ),
+                    ev.data.affectedEvents,
+                    ctx.localReactions
+                ),
+            };
         }),
     },
 };
@@ -282,19 +333,25 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
             meta: "This is a parallel state that controls the loading of *new* messages triggered by polling",
             initial: "idle",
             on: {
-                CHAT_UPDATED: {
+                LOAD_NEW_MESSAGES: {
                     cond: (ctx, _ev) => ctx.initialised,
                     target: ".loading",
                     internal: true,
-                    actions: assign((_, ev) => {
-                        return {
-                            // todo - this is a problem because it may update the
-                            // latestEventIndex and the latestMessageIndex
-                            // this means that we might be creating messages using the same
-                            // indexes over and over.
-                            chatSummary: ev.data,
-                        };
-                    }),
+                },
+                // update the chat and trigger an event that we can pick up in the UI
+                CHAT_UPDATED: {
+                    actions: [
+                        assign((_, ev) => {
+                            return { chatSummary: ev.data };
+                        }),
+                        pure((ctx, _ev) => {
+                            chatStore.set({
+                                chatId: ctx.chatSummary.chatId,
+                                event: { kind: "chat_updated" },
+                            });
+                            return undefined;
+                        }),
+                    ],
                 },
             },
             states: {
@@ -314,7 +371,7 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     ) {
                                         chatStore.set({
                                             chatId: ctx.chatSummary.chatId,
-                                            event: "loaded_new_messages",
+                                            event: { kind: "loaded_new_messages" },
                                         });
                                     }
                                     return undefined;
@@ -360,62 +417,100 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                         return undefined;
                     }),
                 },
-                SEND_MESSAGE: {
-                    actions: assign((ctx, ev) => {
-                        if (ctx.editingEvent) {
-                            return {
-                                events: ctx.events.map((e) => {
-                                    if (
-                                        e.event.kind === "message" &&
-                                        e.event.messageId === ev.data.messageEvent.event.messageId
-                                    ) {
-                                        return ev.data.messageEvent;
-                                    }
-                                    return e;
-                                }),
-                                replyingTo: undefined,
-                                fileToAttach: undefined,
-                                editingEvent: undefined,
-                            };
-                        } else {
-                            // this message may have come in via webrtc
-                            unconfirmed.add(ev.data.messageEvent.event.messageId);
-                            const sentByMe = ev.data.userId === ctx.user?.userId;
-                            if (sentByMe) {
-                                rtcConnectionsManager.sendMessage(
-                                    userIdsFromChatSummary(ctx.chatSummary),
-                                    {
-                                        kind: "remote_user_sent_message",
-                                        chatType: ctx.chatSummary.kind,
-                                        chatId: ctx.chatSummary.chatId,
-                                        messageEvent: serialiseMessageForRtc(ev.data.messageEvent),
-                                        userId: ev.data.userId,
-                                    }
-                                );
-                                // mark our own messages as read manually since we will not be observing them
-                                ctx.markRead.markMessageRead(
-                                    ctx.chatSummary.chatId,
-                                    ev.data.messageEvent.event.messageIndex,
-                                    ev.data.messageEvent.event.messageId
-                                );
+                SEND_MESSAGE: [
+                    {
+                        cond: "notUpToDate",
+                        actions: [
+                            // set focus to the last confirmed message
+                            assign((ctx, ev) => {
+                                console.log("are we ending up here");
+                                return {
+                                    focusMessageIndex:
+                                        ctx.chatSummary.latestMessage!.event.messageIndex,
+                                    sendingMessage: ev,
+                                };
+                            }),
+                            // load the message window around that message
+                            send((ctx, _) => {
+                                return {
+                                    type: "GO_TO_MESSAGE_INDEX",
+                                    data: ctx.chatSummary.latestMessage!.event.messageIndex,
+                                };
+                            }),
+                        ],
+                    },
+                    {
+                        cond: "upToDate",
+                        actions: assign((ctx, ev) => {
+                            if (ctx.editingEvent) {
+                                return {
+                                    events: ctx.events.map((e) => {
+                                        if (
+                                            e.event.kind === "message" &&
+                                            e.event.messageId ===
+                                                ev.data.messageEvent.event.messageId
+                                        ) {
+                                            return ev.data.messageEvent;
+                                        }
+                                        return e;
+                                    }),
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                    editingEvent: undefined,
+                                    sendingMessage: undefined,
+                                    focusMessageIndex: undefined,
+                                };
+                            } else {
+                                unconfirmed.add(ev.data.messageEvent.event.messageId);
+
+                                // this message may have come in via webrtc
+                                const sentByMe = ev.data.userId === ctx.user?.userId;
+                                if (sentByMe) {
+                                    rtcConnectionsManager.sendMessage(
+                                        userIdsFromChatSummary(ctx.chatSummary),
+                                        {
+                                            kind: "remote_user_sent_message",
+                                            chatType: ctx.chatSummary.kind,
+                                            chatId: ctx.chatSummary.chatId,
+                                            messageEvent: serialiseMessageForRtc(
+                                                ev.data.messageEvent
+                                            ),
+                                            userId: ev.data.userId,
+                                        }
+                                    );
+                                    // mark our own messages as read manually since we will not be observing them
+                                    ctx.markRead.markMessageRead(
+                                        ctx.chatSummary.chatId,
+                                        ev.data.messageEvent.event.messageIndex,
+                                        ev.data.messageEvent.event.messageId
+                                    );
+                                }
+                                chatStore.set({
+                                    chatId: ctx.chatSummary.chatId,
+                                    event: {
+                                        kind: "sending_message",
+                                        messageIndex: ev.data.messageEvent.event.messageIndex,
+                                        sentByMe,
+                                        scroll:
+                                            ctx.sendingMessage === undefined ? "smooth" : "auto",
+                                    },
+                                });
+                                const chatSummary = sentByMe
+                                    ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
+                                    : ctx.chatSummary;
+                                return {
+                                    chatSummary,
+                                    events: [...ctx.events, ev.data.messageEvent],
+                                    replyingTo: undefined,
+                                    fileToAttach: undefined,
+                                    editingEvent: undefined,
+                                    sendingMessage: undefined,
+                                    focusMessageIndex: undefined,
+                                };
                             }
-                            chatStore.set({
-                                chatId: ctx.chatSummary.chatId,
-                                event: "sending_message",
-                            });
-                            const chatSummary = sentByMe
-                                ? setLastMessageOnChat(ctx.chatSummary, ev.data.messageEvent)
-                                : ctx.chatSummary;
-                            return {
-                                chatSummary,
-                                events: [...ctx.events, ev.data.messageEvent],
-                                replyingTo: undefined,
-                                fileToAttach: undefined,
-                                editingEvent: undefined,
-                            };
-                        }
-                    }),
-                },
+                        }),
+                    },
+                ],
                 EDIT_EVENT: {
                     actions: assign((ctx, ev) => ({
                         editingEvent: ev.data,
@@ -588,7 +683,9 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 },
                 LOAD_PREVIOUS_MESSAGES: ".loading_previous_messages",
                 CLEAR_FOCUS_INDEX: {
-                    actions: assign((_, _ev) => ({ focusIndex: undefined })),
+                    actions: assign((_, _ev) => ({
+                        focusMessageIndex: undefined,
+                    })),
                 },
                 REPLY_TO: {
                     actions: assign((_, ev) => ({ replyingTo: ev.data })),
@@ -600,10 +697,17 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                 CANCEL_REPLY_TO: {
                     actions: assign((_, _ev) => ({ replyingTo: undefined })),
                 },
-                GO_TO_EVENT_INDEX: {
+                // this will only be called if the message with the required message index is
+                // not already rendered. If it *is* we can simply scroll to it. If not, we need to load it first.
+                GO_TO_MESSAGE_INDEX: {
                     target: ".loading_previous_messages",
                     actions: assign((_, ev) => ({
-                        focusIndex: ev.data,
+                        focusMessageIndex: ev.data,
+                    })),
+                },
+                SET_FOCUS_MESSAGE_INDEX: {
+                    actions: assign((_, ev) => ({
+                        focusMessageIndex: ev.data,
                     })),
                 },
                 ATTACH_FILE: {
@@ -633,11 +737,15 @@ export const schema: MachineConfig<ChatContext, any, ChatEvents> = {
                                     actions: [
                                         "assignEventsResponse",
                                         pure((ctx, _ev: DoneInvokeEvent<LoadEventsResponse>) => {
-                                            chatStore.set({
-                                                chatId: ctx.chatSummary.chatId,
-                                                event: "loaded_previous_messages",
-                                            });
-                                            return undefined;
+                                            if (ctx.sendingMessage !== undefined) {
+                                                return send(ctx.sendingMessage);
+                                            } else {
+                                                chatStore.set({
+                                                    chatId: ctx.chatSummary.chatId,
+                                                    event: { kind: "loaded_previous_messages" },
+                                                });
+                                                return undefined;
+                                            }
                                         }),
                                     ],
                                 },

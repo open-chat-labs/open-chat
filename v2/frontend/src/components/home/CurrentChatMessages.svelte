@@ -6,11 +6,13 @@
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
-    import { moreMessagesAvailable } from "../../fsm/chat.machine";
+    import {
+        moreNewMessagesAvailable,
+        morePreviousMessagesAvailable,
+    } from "../../fsm/chat.machine";
     import type { ChatEvents } from "../../fsm/chat.machine";
     import type { ChatMachine } from "../../fsm/chat.machine";
     import type { ActorRefFrom } from "xstate";
-    import Loading from "../Loading.svelte";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { chatStore } from "../../stores/chat";
@@ -55,9 +57,9 @@
     let scrollHeight = 0;
     let scrollTop = 0;
     let currentChatId = "";
-    let fromBottom = 0;
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
+    let fromBottomVal: number = 0;
 
     onMount(() => {
         const options = {
@@ -94,9 +96,6 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        // todo the problem here is that the height is affected by loading images
-        // I'm going to wait until we load images via their own urls before trying any
-        // harder to fix this.
         setTimeout(() => {
             if (messagesDiv) {
                 messagesDiv.scrollTo({
@@ -108,46 +107,43 @@
     }
 
     function scrollToNew() {
-        // todo - at this point we should *probably* fire off a message to update the lastReadByMe
-        // the problem is that will make the new legend immediately disappear which is not quite what we
-        // want. We'll come back to that.
-        if (unreadMessages > 0) {
-            // todo - this is no good because the first unread message may not have been rendered yet
-            // it's tempting to re-use the goToMessage func, but that uses *event* index
-            // it *must* use event index as it potentially has to load new events and loading events
-            // is done via event index range
-            scrollToElement(document.getElementById("new-msgs"), "smooth");
-        } else {
-            scrollBottom("smooth");
+        const idx =
+            unreadMessages > 0
+                ? firstUnreadMessageIndex
+                : $machine.context.chatSummary.latestMessage?.event.messageIndex;
+        if (idx !== undefined) {
+            scrollToMessageIndex(idx);
         }
     }
 
-    function scrollToElement(element: HTMLElement | null, behavior: ScrollBehavior = "auto") {
+    function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
         element?.scrollIntoView({ behavior, block: "center" });
     }
 
-    function scrollToIndex(index: number) {
-        const element = document.getElementById(`event-${index}`);
-        if (!element) {
-            messagesDiv.scrollTop = 0;
-            onScroll();
-        } else {
+    function scrollToMessageIndex(index: number) {
+        const element = document.querySelector(`[data-index='${index}']`);
+        if (element) {
+            machine.send({ type: "SET_FOCUS_MESSAGE_INDEX", data: index });
             scrollToElement(element);
             setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+        } else {
+            // todo - this is a bit dangerous as it could cause an infinite recursion
+            // if we are looking for a message that simply isn't there.
+            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: index });
         }
     }
 
     function resetScroll() {
         if (initialised) {
-            if ($machine.context.focusIndex) {
-                scrollToIndex($machine.context.focusIndex);
+            if ($machine.context.focusMessageIndex !== undefined) {
+                scrollToMessageIndex($machine.context.focusMessageIndex);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
         } else {
-            if ($machine.context.focusIndex) {
-                scrollToIndex($machine.context.focusIndex);
+            if ($machine.context.focusMessageIndex !== undefined) {
+                scrollToMessageIndex($machine.context.focusMessageIndex);
             } else {
                 scrollBottom();
             }
@@ -159,15 +155,25 @@
         if ($machine.matches({ user_states: "idle" })) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
-                moreMessagesAvailable($machine.context)
+                morePreviousMessagesAvailable($machine.context)
             ) {
                 machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
             }
-            fromBottom =
-                messagesDiv.scrollHeight -
-                Math.abs(messagesDiv.scrollTop) -
-                messagesDiv.clientHeight;
+
+            fromBottomVal = fromBottom();
+            if (
+                fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
+                moreNewMessagesAvailable($machine.context)
+            ) {
+                machine.send({ type: "LOAD_NEW_MESSAGES" });
+            }
         }
+    }
+
+    function fromBottom(): number {
+        return messagesDiv
+            ? messagesDiv.scrollHeight - Math.abs(messagesDiv.scrollTop) - messagesDiv.clientHeight
+            : 0;
     }
 
     function formatDate(timestamp: bigint): string {
@@ -226,8 +232,8 @@
             });
     }
 
-    function goToMessage(ev: CustomEvent<number>) {
-        machine.send({ type: "GO_TO_EVENT_INDEX", data: ev.detail });
+    function goToMessageIndex(ev: CustomEvent<number>) {
+        scrollToMessageIndex(ev.detail);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -348,19 +354,35 @@
         }
 
         if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
-            switch ($chatStore.event) {
+            fromBottomVal = fromBottom();
+            switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
                     tick().then(resetScroll);
                     chatStore.clear();
                     break;
                 case "loaded_new_messages":
-                    if (fromBottom < FROM_BOTTOM_THRESHOLD) {
+                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD) {
                         scrollBottom("smooth");
                     }
                     chatStore.clear();
                     break;
                 case "sending_message":
-                    scrollBottom("smooth");
+                    // if we are within the from bottom threshold *or* if the new message
+                    // was sent by us, then scroll to the bottom
+                    if (fromBottomVal < FROM_BOTTOM_THRESHOLD || $chatStore.event.sentByMe) {
+                        // smooth scroll doesn't work here when we are leaping from the top
+                        // which means we are stuck with abrupt scroll which is disappointing
+                        scrollBottom($chatStore.event.scroll);
+                    }
+                    chatStore.clear();
+                    break;
+                case "chat_updated":
+                    if (
+                        fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
+                        moreNewMessagesAvailable($machine.context)
+                    ) {
+                        machine.send({ type: "LOAD_NEW_MESSAGES" });
+                    }
                     chatStore.clear();
                     break;
             }
@@ -426,11 +448,6 @@
 </script>
 
 <div bind:this={messagesDiv} class="chat-messages" on:scroll={onScroll}>
-    {#if $machine.matches({ user_states: "loading_previous_messages" })}
-        <div class="spinner">
-            <Loading />
-        </div>
-    {/if}
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -443,7 +460,8 @@
                     {/if}
                     <ChatEvent
                         {observer}
-                        focused={$machine.context.focusIndex === evt.index}
+                        focused={evt.event.kind === "message" &&
+                            evt.event.messageIndex === $machine.context.focusMessageIndex}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}
@@ -458,7 +476,7 @@
                         on:replyPrivatelyTo={replyPrivatelyTo}
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}
-                        on:goToMessage={goToMessage}
+                        on:goToMessageIndex={goToMessageIndex}
                         on:selectReaction={selectReaction}
                         event={evt} />
                 {/each}
@@ -467,7 +485,7 @@
     {/each}
 </div>
 
-{#if fromBottom > FROM_BOTTOM_THRESHOLD}
+{#if fromBottomVal > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
     <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>
@@ -530,10 +548,6 @@
         .unread-label {
             @include font(book, normal, fs-70);
         }
-    }
-
-    .spinner {
-        height: 100px;
     }
 
     .to-bottom {

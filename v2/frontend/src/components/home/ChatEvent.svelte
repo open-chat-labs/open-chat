@@ -51,7 +51,7 @@
         {last}
         {admin}
         on:chatWith
-        on:goToMessage
+        on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
         on:selectReaction

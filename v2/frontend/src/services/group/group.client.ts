@@ -60,6 +60,20 @@ export class GroupClient extends CandidService implements IGroupClient {
         );
     }
 
+    async chatEventsWindow(
+        _eventIndexRange: IndexRange,
+        messageIndex: number
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        return this.handleResponse(
+            this.groupService.events_window({
+                max_messages: 20,
+                max_events: 200,
+                mid_point: messageIndex,
+            }),
+            getEventsResponse
+        );
+    }
+
     async chatEvents(
         eventIndexRange: IndexRange,
         startIndex: number,
