@@ -7,7 +7,7 @@ use canister_logger::LogMessagesWrapper;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, UserId, Version};
+use types::{Avatar, CanisterId, Cycles, TimestampMillis, UserId, Version};
 use utils::blob_storage::BlobStorage;
 use utils::env::Environment;
 use utils::memory;
