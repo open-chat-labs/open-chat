@@ -190,10 +190,6 @@ impl UserMap {
             .filter_map(move |p| self.users_by_principal.get(p))
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &User> {
-        self.users_by_principal.values()
-    }
-
     pub fn metrics(&self) -> Metrics {
         self.cached_metrics.value.clone()
     }

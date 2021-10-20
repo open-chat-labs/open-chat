@@ -5,7 +5,6 @@ use user_index_canister::*;
 
 // Queries
 generate_query_call!(current_user);
-generate_query_call!(metrics);
 generate_query_call!(search);
 generate_query_call!(sms_messages);
 generate_query_call!(user);
