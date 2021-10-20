@@ -15,7 +15,8 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     RecipientBlocked,
-    InsufficientCycles,
+    InvalidRequest(String),
+    TransactionFailed(String),
 }
 
 #[derive(CandidType, Deserialize, Debug)]

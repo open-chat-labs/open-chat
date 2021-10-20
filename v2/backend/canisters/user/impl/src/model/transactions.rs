@@ -24,12 +24,18 @@ impl TransactionWrapperInternal {
 }
 
 impl Transactions {
-    pub fn add(&mut self, transaction: Transaction, now: TimestampMillis) {
+    pub fn add<T: Into<Transaction>>(&mut self, transaction: T, now: TimestampMillis) -> u32 {
+        let index = self.transactions.len() as u32;
         let wrapper = TransactionWrapperInternal {
             timestamp: now,
-            transaction,
+            transaction: transaction.into(),
         };
         self.transactions.push(wrapper);
+        index
+    }
+
+    pub fn update<T: Into<Transaction>>(&mut self, index: u32, transaction: T) {
+        self.transactions[index as usize].transaction = transaction.into();
     }
 
     pub fn most_recent(&self, since: TimestampMillis, max_results: u8) -> Vec<TransactionWrapper> {
