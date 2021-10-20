@@ -21,7 +21,7 @@ type SendMessageResponse =
         BalanceExceeded;
         MessageTooLong: nat32;
         RecipientBlocked;
-        InvalidRequest: text,
+        InvalidRequest: text;
         TransactionFailed: text;
     };
 

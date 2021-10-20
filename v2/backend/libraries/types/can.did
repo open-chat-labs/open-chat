@@ -69,56 +69,9 @@ type ConfirmationCodeSms =
          confirmation_code: text;
     };
 
-type Cryptocurrency =
-    variant {
-        ICP;
-        Cycles;
-    };
-
-type CryptocurrencyDeposit =
+type CryptocurrencyTransferContent =
     record {
-        from: text;
-        amount: nat;
-    };
-
-type CryptocurrencyReceive =
-    record {
-        from_user: UserId;
-        from: text;
-        amount: nat;
-    };
-
-type CryptocurrencySend =
-    record {
-        to_user: UserId;
-        to: text;
-        amount: nat;
-    };
-
-type CryptocurrencyTransaction =
-    record {
-        currency: Cryptocurrency;
-        block_height: opt nat64;
         transfer: CryptocurrencyTransfer;
-    };
-
-type CryptocurrencyTransfer =
-    variant {
-        Deposit: CryptocurrencyDeposit;
-        Withdrawal: CryptocurrencyWithdrawal;
-        Send: CryptocurrencySend;
-        Receive: CryptocurrencyReceive;
-    };
-
-type CryptocurrencyWithdrawal =
-    record {
-        to: text;
-        amount: nat;
-    };
-
-type CyclesContent =
-    record {
-        amount: Cycles;
         caption: opt text;
     };
 
@@ -265,13 +218,6 @@ type GroupDescriptionChanged =
         changed_by: UserId;
     };
 
-type IcpContent =
-    record {
-        amount_e8s: nat64;
-        caption: opt text;
-        block_height: BlockHeight;
-    };
-
 type AvatarChanged =
     record {
         new_avatar: nat;
@@ -342,8 +288,7 @@ type MessageContent =
         Video: VideoContent;
         Audio: AudioContent;
         File: FileContent;
-        Cycles: CyclesContent;
-        ICP: IcpContent;
+        CryptocurrencyTransfer: CryptocurrencyTransferContent;
         Deleted: DeletedContent;
     };
 
@@ -492,6 +437,177 @@ type Version =
         major: nat32;
         minor: nat32;
         patch: nat32;
+    };
+
+// Cryptocurrency.rs
+type Cryptocurrency =
+    variant {
+        ICP;
+        Cycles;
+    };
+
+type CryptocurrencyTransaction =
+    variant {
+        Deposit: DepositCryptocurrencyTransaction;
+        Withdraw: WithdrawCryptocurrencyTransaction;
+        Transfer: CryptocurrencyTransfer;
+    };
+
+type DepositCryptocurrencyTransaction =
+    variant {
+        Cycles: DepositCyclesTransaction;
+        ICP: DepositICPTransaction;
+    };
+
+type WithdrawCryptocurrencyTransaction =
+    variant {
+        Cycles: WithdrawCyclesTransaction;
+        ICP: WithdrawICPTransaction;
+    };
+
+type DepositCyclesTransaction =
+    variant {
+        Completed: CompletedCyclesDeposit;
+    };
+
+type CompletedCyclesDeposit =
+    record {
+        from: CanisterId;
+        cycles: Cycles;
+    };
+
+type DepositICPTransaction =
+    variant {
+        Completed: CompletedICPDeposit;
+    };
+
+type CompletedICPDeposit =
+    record {
+        from_address: text;
+        amount_e8s: nat64;
+        fee_e8s: nat64;
+        memo: nat64;
+        block_height: BlockHeight;
+    };
+
+type WithdrawCyclesTransaction =
+    variant {
+        Pending: CyclesWithdrawal;
+        Completed: CyclesWithdrawal;
+        Failed: FailedCyclesWithdrawal;
+    };
+
+type CyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+    };
+
+type FailedCyclesWithdrawal =
+    record {
+        to: CanisterId;
+        cycles: Cycles;
+        error_message: text;
+    };
+
+type WithdrawICPTransaction =
+    variant {
+        Pending: PendingICPWithdrawal;
+        Completed: CompletedICPWithdrawal;
+        Failed: FailedICPWithdrawal;
+    };
+
+type PendingICPWithdrawal =
+    record {
+        to: text;
+        amount_e8s: nat64;
+        fee_e8s: opt nat64;
+        memo: opt nat64;
+    };
+
+type CompletedICPWithdrawal =
+    record {
+        to: text;
+        amount_e8s: nat64;
+        fee_e8s: nat64;
+        memo: nat64;
+        block_height: BlockHeight;
+    };
+
+type FailedICPWithdrawal =
+    record {
+        to: text;
+        amount_e8s: nat64;
+        fee_e8s: nat64;
+        memo: nat64;
+        error_message: text;
+    };
+
+type CryptocurrencyTransfer =
+    variant {
+        Cycles: CyclesTransfer;
+        ICP: ICPTransfer;
+    };
+
+type CyclesTransfer =
+    variant {
+        Pending: PendingCyclesTransfer;
+        Completed: CompletedCyclesTransfer;
+        Failed: FailedCyclesTransfer;
+    };
+
+type PendingCyclesTransfer =
+    record {
+        recipient: UserId;
+        cycles: Cycles;
+    };
+
+type CompletedCyclesTransfer =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        cycles: Cycles;
+    };
+
+type FailedCyclesTransfer =
+    record {
+        recipient: UserId;
+        cycles: Cycles;
+        error_message: text;
+    };
+
+type ICPTransfer =
+    variant {
+        Pending: PendingICPTransfer;
+        Completed: CompletedICPTransfer;
+        Failed: FailedICPTransfer;
+    };
+
+type PendingICPTransfer =
+    record {
+        recipient: UserId;
+        amount_e8s: nat64;
+        fee_e8s: opt nat64;
+        memo: opt nat64;
+    };
+
+type CompletedICPTransfer =
+    record {
+        sender: UserId;
+        recipient: UserId;
+        amount_e8s: nat64;
+        fee_e8s: nat64;
+        memo: nat64;
+        block_height: BlockHeight;
+    };
+
+type FailedICPTransfer =
+    record {
+        recipient: UserId;
+        amount_e8s: nat64;
+        fee_e8s: nat64;
+        memo: nat64;
+        error_message: text;
     };
 
 // TODO Delete the V1 stuff below
