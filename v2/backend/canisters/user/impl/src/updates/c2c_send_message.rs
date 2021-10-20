@@ -59,16 +59,12 @@ async fn verify_user(user_index_canister_id: CanisterId, user_id: UserId) -> boo
     }
 }
 
-// The args are mutable because if the message contains a pending cycles transfer, we accept the
-// cycles and then update the args with the completed cycles transfer.
-fn c2c_send_message_impl(sender: UserId, mut args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_send_message_impl(sender: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    if let MessageContent::Cryptocurrency(c) = &mut args.content {
-        // If the request contains a pending cycles transfer, accept the cycles and then update
-        // the request to contain the completed cycles transfer.
-        if let CryptocurrencyTransfer::Cycles(cycles_transfer) = &mut c.transfer {
-            *cycles_transfer = CyclesTransfer::Completed(accept_cycles(sender, cycles_transfer, now, &mut runtime_state.data));
+    if let MessageContent::Cryptocurrency(c) = &args.content {
+        if let CryptocurrencyTransfer::Cycles(CyclesTransfer::Completed(cycles_transfer)) = &c.transfer {
+            accept_cycles(cycles_transfer, now, &mut runtime_state.data);
         }
         runtime_state.data.transactions.add(c.transfer.clone(), now);
     }
@@ -114,22 +110,17 @@ async fn push_notification(canister_id: CanisterId, recipient: UserId, notificat
     let _ = notifications_canister_c2c_client::push_direct_message_notification(canister_id, &args).await;
 }
 
-fn accept_cycles(sender: UserId, transfer: &CyclesTransfer, now: TimestampMillis, data: &mut Data) -> CompletedCyclesTransfer {
-    if let CyclesTransfer::Pending(c) = transfer {
-        let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
-        if cycles_available < c.cycles {
-            // This should never happen...
-            panic!("Message does not contain the stated number of cycles");
-        }
-        let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(c.cycles as u64).into();
-        if cycles_accepted != c.cycles {
-            // This can only happen if accepting the cycles results in the canister exceeding the
-            // max cycles limit which in reality should never happen.
-            panic!("Unable to accept cycles")
-        }
-        data.user_cycles_balance.add(cycles_accepted, now);
-        c.completed(sender)
-    } else {
-        panic!("Invalid request. Request contains a completed cycles transfer, only pending transfers are allowed");
+fn accept_cycles(transfer: &CompletedCyclesTransfer, now: TimestampMillis, data: &mut Data) {
+    let cycles_available: Cycles = ic_cdk::api::call::msg_cycles_available().into();
+    if cycles_available < transfer.cycles {
+        // This should never happen...
+        panic!("Message does not contain the stated number of cycles");
     }
+    let cycles_accepted: Cycles = ic_cdk::api::call::msg_cycles_accept(transfer.cycles as u64).into();
+    if cycles_accepted != transfer.cycles {
+        // This can only happen if accepting the cycles results in the canister exceeding the
+        // max cycles limit which in reality should never happen.
+        panic!("Unable to accept cycles")
+    }
+    data.user_cycles_balance.add(cycles_accepted, now);
 }
