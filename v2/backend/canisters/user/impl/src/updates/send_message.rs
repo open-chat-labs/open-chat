@@ -92,7 +92,7 @@ fn send_message_impl(args: Args, cycles_transfer: Option<CyclesTransferDetails>,
 fn validate_caller_and_recipient(recipient: &UserId, runtime_state: &RuntimeState) -> Result<(), Response> {
     runtime_state.trap_if_caller_not_owner();
 
-    if runtime_state.data.blocked_users.contains(&recipient) {
+    if runtime_state.data.blocked_users.contains(recipient) {
         Err(RecipientBlocked)
     } else {
         Ok(())
