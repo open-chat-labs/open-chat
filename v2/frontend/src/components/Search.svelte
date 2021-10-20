@@ -7,6 +7,7 @@
     const dispatch = createEventDispatcher();
     export let searchTerm = "";
     export let searching: boolean;
+    export let placeholder: string = "searchPlaceholder";
 
     function performSearch() {
         dispatch("searchEntered", searchTerm);
@@ -23,11 +24,7 @@
             <Magnify color={"#ccc"} />
         {/if}
     </span>
-    <input
-        spellcheck="false"
-        bind:value={searchTerm}
-        type="text"
-        placeholder={$_("searchPlaceholder")} />
+    <input spellcheck="false" bind:value={searchTerm} type="text" placeholder={$_(placeholder)} />
     {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
