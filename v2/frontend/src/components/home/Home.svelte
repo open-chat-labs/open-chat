@@ -30,6 +30,7 @@
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     import { rollbar } from "../../utils/logging";
+    import type { EnhancedReplyContext } from "../../domain/chat/chat";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -220,6 +221,10 @@
         editGroupHistory = [...editGroupHistory, "add_participants"];
     }
 
+    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
+        machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
+    }
+
     function showParticipants() {
         editGroupHistory = [...editGroupHistory, "show_participants"];
     }
@@ -230,11 +235,8 @@
 
     $: selectedChat = $machine.context.selectedChat;
 
-    $: groupChat = selectedChat && selectedChat.kind === "group_chat" ? selectedChat : undefined;
-
-    $: actorKey = $machine.context.selectedChat?.chatId.toString();
-
-    $: selectedChatActor = actorKey ? $machine.context.chatsIndex[actorKey] : undefined;
+    $: groupChat =
+        selectedChat && selectedChat.chat.kind === "group_chat" ? selectedChat.chat : undefined;
 
     $: x = $rtlStore ? -300 : 300;
 
@@ -244,10 +246,7 @@
 
     let editGroupHistory: EditGroupState[] = [];
 
-    $: blocked =
-        selectedChat !== undefined &&
-        selectedChat.kind === "direct_chat" &&
-        $blockedUsers.has(selectedChat.them);
+    $: blocked = selectedChat ? selectedChat.isBlockedUser() : false;
 </script>
 
 {#if $machine.context.user}
@@ -277,16 +276,17 @@
                 on:unblockUser={unblockUser}
                 on:leaveGroup={leaveGroup}
                 on:chatWith={chatWith}
+                on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addParticipants={addParticipants}
                 on:showGroupDetails={showGroupDetails}
                 on:showParticipants={showParticipants}
                 on:messageRead={messageRead}
-                machine={selectedChatActor} />
+                controller={selectedChat} />
         {/if}
     </main>
 {/if}
 
-{#if selectedChatActor !== undefined}
+{#if selectedChat !== undefined}
     <Overlay active={editGroupHistory.length > 0}>
         {#if editGroupHistory.length > 0 && groupChat}
             <div

@@ -2,29 +2,23 @@
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
     import { messageContentFromFile } from "../../utils/media";
     import { toastStore } from "../../stores/toast";
     import type { EventWrapper, Message, MessageContent } from "../../domain/chat/chat";
-    import {
-        createMessage,
-        getMessageContent,
-        getNextEventIndex,
-        getNextMessageIndex,
-    } from "../../domain/chat/chat.utils";
+    import { getMessageContent } from "../../domain/chat/chat.utils";
     import { rollbar } from "../../utils/logging";
     import { createEventDispatcher } from "svelte";
     import Loading from "../Loading.svelte";
+    import type { ChatController } from "../../fsm/chat.controller";
     const dispatch = createEventDispatcher();
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let controller: ChatController;
     export let blocked: boolean;
 
     let showEmojiPicker = false;
 
     function cancelReply() {
-        machine.send({ type: "CANCEL_REPLY_TO" });
+        controller.cancelReply();
     }
 
     function editMessageWithAttachment(
@@ -39,8 +33,8 @@
                 content: getMessageContent(textContent ?? undefined, fileToAttach),
             };
 
-            $machine.context.serviceContainer
-                .editMessage($machine.context.chatSummary, msg!)
+            controller.api
+                .editMessage(controller.chat, msg!)
                 .then((resp) => {
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
@@ -53,10 +47,7 @@
                 });
 
             const event = { ...editingEvent, event: msg! };
-            machine.send({
-                type: "SEND_MESSAGE",
-                data: { messageEvent: event, userId: $machine.context.user!.userId },
-            });
+            controller.sendMessage(event, controller.user.userId);
         }
     }
 
@@ -65,87 +56,51 @@
         fileToAttach: MessageContent | undefined
     ) {
         if (textContent || fileToAttach) {
-            const nextMessageIndex = getNextMessageIndex(
-                $machine.context.chatSummary,
-                $machine.context.events
-            );
-            const nextEventIndex = getNextEventIndex(
-                $machine.context.chatSummary,
-                $machine.context.events
-            );
+            const nextEventIndex = controller.getNextEventIndex();
 
-            const msg = createMessage(
-                $machine.context.user!.userId,
-                nextMessageIndex,
-                textContent ?? undefined,
-                $machine.context.replyingTo,
-                fileToAttach
-            );
-            $machine.context.serviceContainer
-                .sendMessage($machine.context.chatSummary, $machine.context.user!, msg!)
+            const msg = controller.createMessage(textContent, fileToAttach);
+            controller.api
+                .sendMessage(controller.chat, controller.user, msg!)
                 .then((resp) => {
                     if (resp.kind === "success") {
-                        machine.send({ type: "UPDATE_MESSAGE", data: { candidate: msg!, resp } });
+                        controller.updateMessage(msg, resp);
                     } else {
                         rollbar.warn("Error response sending message", resp);
                         toastStore.showFailureToast("errorSendingMessage");
-                        machine.send({
-                            type: "REMOVE_MESSAGE",
-                            data: {
-                                messageId: msg!.messageId,
-                                userId: $machine.context.user!.userId,
-                            },
-                        });
+                        controller.removeMessage(msg.messageId, controller.user.userId);
                         // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                         dispatch("messageConfirmed", msg!.messageId);
                     }
                 })
                 .catch((err) => {
                     toastStore.showFailureToast("errorSendingMessage");
-                    machine.send({
-                        type: "REMOVE_MESSAGE",
-                        data: {
-                            messageId: msg!.messageId,
-                            userId: $machine.context.user!.userId,
-                        },
-                    });
+                    controller.removeMessage(msg.messageId, controller.user.userId);
                     rollbar.error("Exception sending message", err);
                     // note this is not really marking the message confirmed so much as removing it from the unconfirmed list
                 });
 
             const event = { event: msg!, index: nextEventIndex, timestamp: BigInt(+new Date()) };
-            machine.send({
-                type: "SEND_MESSAGE",
-                data: { messageEvent: event, userId: $machine.context.user!.userId },
-            });
+            controller.sendMessage(event, controller.user.userId);
         }
     }
 
     function sendMessage(ev: CustomEvent<string | null>) {
-        if ($machine.context.editingEvent !== undefined) {
-            editMessageWithAttachment(
-                ev.detail,
-                $machine.context.fileToAttach,
-                $machine.context.editingEvent
-            );
+        if (controller.editingEvent !== undefined) {
+            editMessageWithAttachment(ev.detail, controller.fileToAttach, controller.editingEvent);
         } else {
-            sendMessageWithAttachment(ev.detail, $machine.context.fileToAttach);
+            sendMessageWithAttachment(ev.detail, controller.fileToAttach);
         }
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
         if (ev.detail.kind === "file_content") {
-            if ($machine.context.editingEvent !== undefined) {
-                editMessageWithAttachment(
-                    null,
-                    $machine.context.fileToAttach,
-                    $machine.context.editingEvent
-                );
+            if (controller.editingEvent !== undefined) {
+                editMessageWithAttachment(null, controller.fileToAttach, controller.editingEvent);
             } else {
-                sendMessageWithAttachment(null, $machine.context.fileToAttach);
+                sendMessageWithAttachment(null, controller.fileToAttach);
             }
         } else {
-            machine.send({ type: "ATTACH_FILE", data: ev.detail });
+            controller.attachFile(ev.detail);
         }
     }
 
@@ -154,7 +109,7 @@
         if (!file) return;
 
         messageContentFromFile(file)
-            .then((content) => machine.send({ type: "ATTACH_FILE", data: content }))
+            .then((content) => controller.attachFile(content))
             .catch((err) => toastStore.showFailureToast(err));
     }
 
@@ -177,16 +132,16 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if $machine.context.replyingTo}
+        {#if controller.replyingTo}
             <ReplyingTo
                 on:cancelReply={cancelReply}
-                user={$machine.context.user}
-                replyingTo={$machine.context.replyingTo} />
+                user={controller.user}
+                replyingTo={controller.replyingTo} />
         {/if}
-        {#if $machine.context.fileToAttach !== undefined}
-            {#if $machine.context.fileToAttach.kind === "image_content" || $machine.context.fileToAttach.kind === "audio_content" || $machine.context.fileToAttach.kind === "video_content"}
-                <DraftMediaMessage draft={$machine.context.fileToAttach} />
-            {:else if $machine.context.fileToAttach.kind === "cycles_content"}
+        {#if controller.fileToAttach !== undefined}
+            {#if controller.fileToAttach.kind === "image_content" || controller.fileToAttach.kind === "audio_content" || controller.fileToAttach.kind === "video_content"}
+                <DraftMediaMessage draft={controller.fileToAttach} />
+            {:else if controller.fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>
             {/if}
         {/if}
@@ -206,7 +161,7 @@
         on:sendMessage={sendMessage}
         on:fileSelected={fileSelected}
         on:audioCaptured={fileSelected}
-        {machine} />
+        {controller} />
 </div>
 
 <style type="text/scss">

@@ -5,9 +5,8 @@
     import { ScreenWidth, screenWidth } from "../../stores/screenWidth";
     import NoChatSelected from "./NoChatSelected.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
-    export let machine: ActorRefFrom<ChatMachine> | undefined;
+    import type { ChatController } from "../../fsm/chat.controller";
+    export let controller: ChatController | undefined;
     export let loadingChats: boolean = false;
     export let blocked: boolean;
 </script>
@@ -19,19 +18,20 @@
         {:else}
             <Loading />
         {/if}
-    {:else if machine === undefined}
+    {:else if controller === undefined}
         <div class="no-chat" in:fade>
             <NoChatSelected on:newchat />
         </div>
     {:else}
         <CurrentChat
             {blocked}
-            {machine}
+            {controller}
             on:unblockUser
             on:clearSelection
             on:messageRead
             on:blockUser
             on:leaveGroup
+            on:replyPrivatelyTo
             on:addParticipants
             on:showGroupDetails
             on:showParticipants
