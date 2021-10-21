@@ -34,7 +34,6 @@
         messageIsReadByThem,
     } from "../../domain/chat/chat.utils";
     import { pop } from "../../utils/transition";
-    import { UnsupportedValueError } from "../../utils/error";
     import { toastStore } from "../../stores/toast";
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import { userStore } from "../../stores/user";
@@ -310,25 +309,7 @@
         if (first.event.kind === "group_chat_created") {
             return `${first.event.created_by}_${first.index}`;
         }
-        if (
-            first.event.kind === "participants_added" ||
-            first.event.kind === "participant_left" ||
-            first.event.kind === "participants_promoted_to_admin" ||
-            first.event.kind === "participants_dismissed_as_admin" ||
-            first.event.kind === "participants_removed" ||
-            first.event.kind === "participant_joined" ||
-            first.event.kind === "avatar_changed" ||
-            first.event.kind === "desc_changed" ||
-            first.event.kind === "reaction_added" ||
-            first.event.kind === "reaction_removed" ||
-            first.event.kind === "message_deleted" ||
-            first.event.kind === "message_edited" ||
-            first.event.kind === "name_changed"
-        ) {
-            return `${first.timestamp}_${first.index}`;
-        }
-
-        throw new UnsupportedValueError("Unexpected event type received", first.event);
+        return `${first.timestamp}_${first.index}`;
     }
 
     $: groupedEvents = groupEvents($machine.context.events);
@@ -393,28 +374,10 @@
         if (evt.event.kind === "message") {
             return evt.event.sender === $machine.context.user?.userId;
         }
-        if (
-            evt.event.kind === "direct_chat_created" ||
-            evt.event.kind === "participants_added" ||
-            evt.event.kind === "participants_removed" ||
-            evt.event.kind === "participant_left" ||
-            evt.event.kind === "participant_joined" ||
-            evt.event.kind === "avatar_changed" ||
-            evt.event.kind === "desc_changed" ||
-            evt.event.kind === "name_changed" ||
-            evt.event.kind === "reaction_added" ||
-            evt.event.kind === "reaction_removed" ||
-            evt.event.kind === "message_deleted" ||
-            evt.event.kind === "message_edited" ||
-            evt.event.kind === "participants_dismissed_as_admin" ||
-            evt.event.kind === "participants_promoted_to_admin"
-        ) {
-            return false;
-        }
         if (evt.event.kind === "group_chat_created") {
             return evt.event.created_by === $machine.context.user?.userId;
         }
-        throw new UnsupportedValueError("Unexpected event type received", evt.event);
+        return false;
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {

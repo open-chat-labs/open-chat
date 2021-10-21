@@ -18,6 +18,7 @@
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
     import type { MessageReadTracker } from "../../stores/markRead";
+    import { blockedUsers } from "../../stores/blockedUsers";
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
@@ -48,11 +49,14 @@
         chatSummary.latestMessage?.event.messageIndex
     );
     $: displayDate = getDisplayDate(chatSummary);
+    $: isTyping =
+        chatSummary.kind === "direct_chat" && $typing[chatSummary.chatId]?.has(chatSummary.them);
+    $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
 </script>
 
 <a role="button" class="chat-summary" class:selected href={`/#/${chatSummary.chatId}`}>
     <div class="avatar">
-        <Avatar url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
+        <Avatar {blocked} url={chat.avatarUrl} status={chat.userStatus} size={AvatarSize.Small} />
     </div>
     <div class="details">
         <div class="name-date">
@@ -61,7 +65,7 @@
             https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
             <p class="chat-date">{formatMessageDate(new Date(Number(displayDate)))}</p>
         </div>
-        {#if chat.typing}
+        {#if isTyping}
             <Typing />
         {:else}
             <div class="chat-msg">{lastMessage}</div>

@@ -73,6 +73,21 @@
     function pop() {
         editGroupHistory = editGroupHistory.slice(0, editGroupHistory.length - 1);
     }
+
+    function blockUser(ev: CustomEvent<{ userId: string }>) {
+        api.blockUserFromGroupChat(chat.chatId, ev.detail.userId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast("blockUserSucceeded");
+                } else {
+                    toastStore.showFailureToast("blockUserFailed");
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("blockUserFailed");
+                rollbar.error("Error blocking user", err);
+            });
+    }
 </script>
 
 <Panel right>
@@ -90,7 +105,7 @@
             {chat}
             {userId}
             on:close={pop}
-            on:blockUser
+            on:blockUser={blockUser}
             on:chatWith
             on:addParticipants
             on:dismissAsAdmin={dismissAsAdmin}

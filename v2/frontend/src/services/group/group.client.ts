@@ -14,6 +14,7 @@ import type {
     IndexRange,
     DeleteMessageResponse,
     EditMessageResponse,
+    BlockUserResponse,
 } from "../../domain/chat/chat";
 import { CandidService } from "../candidService";
 import {
@@ -26,6 +27,7 @@ import {
     toggleReactionResponse,
     deleteMessageResponse,
     editMessageResponse,
+    blockUserResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -225,6 +227,15 @@ export class GroupClient extends CandidService implements IGroupClient {
                 message_ids: [messageId],
             }),
             deleteMessageResponse
+        );
+    }
+
+    blockUser(userId: string): Promise<BlockUserResponse> {
+        return this.handleResponse(
+            this.groupService.block_user({
+                user_id: Principal.fromText(userId),
+            }),
+            blockUserResponse
         );
     }
 }

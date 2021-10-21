@@ -158,10 +158,12 @@ export type GroupChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'ParticipantsPromotedToAdmin' : ParticipantsPromotedToAdmin } |
+  { 'UsersBlocked' : UsersBlocked } |
   { 'MessageReactionAdded' : UpdatedMessage } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'Message' : Message } |
   { 'ParticipantsDismissedAsAdmin' : ParticipantsDismissedAsAdmin } |
+  { 'UsersUnblocked' : UsersUnblocked } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'MessageDeleted' : UpdatedMessage } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -431,12 +433,20 @@ export interface UsersArgs {
   'users' : Array<UserId>,
   'updated_since' : [] | [TimestampMillis],
 }
+export interface UsersBlocked {
+  'user_ids' : Array<UserId>,
+  'blocked_by' : UserId,
+}
 export type UsersResponse = {
     'Success' : {
       'timestamp' : TimestampMillis,
       'users' : Array<PartialUserSummary>,
     }
   };
+export interface UsersUnblocked {
+  'user_ids' : Array<UserId>,
+  'unblocked_by' : UserId,
+}
 export type V1ChatId = bigint;
 export interface V1CyclesContent {
   'caption' : [] | [string],

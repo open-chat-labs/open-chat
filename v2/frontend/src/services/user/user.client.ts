@@ -38,6 +38,7 @@ import {
     sendMessageResponse,
     setAvatarResponse,
     toggleReactionResponse,
+    unblockResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { enoughVisibleMessages, mergeChatUpdates, nextIndex } from "../../domain/chat/chat.utils";
@@ -266,7 +267,7 @@ export class UserClient extends CandidService implements IUserClient {
             this.userService.unblock_user({
                 user_id: Principal.fromText(userId),
             }),
-            blockResponse
+            unblockResponse
         );
     }
 

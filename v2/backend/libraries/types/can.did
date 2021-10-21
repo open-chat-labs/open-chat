@@ -169,6 +169,8 @@ type GroupChatEvent =
         MessageDeleted: UpdatedMessage;
         MessageReactionAdded: UpdatedMessage;
         MessageReactionRemoved: UpdatedMessage;
+        UsersBlocked: UsersBlocked;
+        UsersUnblocked: UsersUnblocked;
     };
 
 type GroupChatEventWrapper =
@@ -374,6 +376,18 @@ type ParticipantsRemoved =
     record {
         user_ids: vec UserId;
         removed_by: UserId;
+    };
+
+type UsersBlocked =
+    record {
+        user_ids: vec UserId;
+        blocked_by: UserId;
+    };
+
+type UsersUnblocked =
+    record {
+        user_ids: vec UserId;
+        unblocked_by: UserId;
     };
 
 type Role =
