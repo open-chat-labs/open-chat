@@ -8,6 +8,7 @@ pub struct Args {}
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
+    LastAdmin,
 }
 
 #[derive(CandidType, Deserialize, Debug)]

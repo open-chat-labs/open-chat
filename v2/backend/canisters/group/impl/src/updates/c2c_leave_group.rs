@@ -19,18 +19,25 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    match runtime_state.data.participants.remove(caller) {
-        true => {
-            let event = ParticipantLeft { user_id: caller };
-            runtime_state
-                .data
-                .events
-                .push_event(ChatEventInternal::ParticipantLeft(Box::new(event)), now);
+    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
+        Some(p) => p,
+        None => return CallerNotInGroup,
+    };
 
-            handle_activity_notification(runtime_state);
-
-            Success(SuccessResult {})
-        }
-        false => CallerNotInGroup,
+    if participant.role.is_admin() && runtime_state.data.participants.admin_count() <= 1 {
+        return LastAdmin;
     }
+
+    runtime_state.data.participants.remove(caller);
+    
+    let event = ParticipantLeft { user_id: caller };
+    
+    runtime_state
+        .data
+        .events
+        .push_event(ChatEventInternal::ParticipantLeft(Box::new(event)), now);
+
+    handle_activity_notification(runtime_state);
+
+    Success(SuccessResult {})
 }
