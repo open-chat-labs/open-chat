@@ -1,17 +1,33 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onDestroy } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { VideoContent } from "../../domain/chat/chat";
+    import { calculateHeight } from "../../utils/layout";
     import Caption from "./Caption.svelte";
 
     export let content: VideoContent;
 
     let landscape = content.height < content.width;
-    let style = landscape ? `width: ${content.width}px` : `height: ${content.height}px`;
 
     let videoPlayer: HTMLVideoElement;
+
+    let height = 0;
+
+    onMount(() => {
+        height = calculateHeight(
+            document.getElementById("chat-messages")?.offsetWidth ?? 0,
+            content
+        );
+    });
+
+    function resize() {
+        height = calculateHeight(
+            document.getElementById("chat-messages")?.offsetWidth ?? 0,
+            content
+        );
+    }
 
     onDestroy(() => {
         content.videoData.blobUrl && URL.revokeObjectURL(content.videoData.blobUrl);
@@ -19,11 +35,13 @@
     });
 </script>
 
+<svelte:window on:resize={resize} />
+
 <div class="video">
     <video
         bind:this={videoPlayer}
         preload="none"
-        {style}
+        style={`height: ${height}px`}
         poster={content.imageData.blobUrl}
         class:landscape
         controls>
@@ -46,15 +64,11 @@
         video {
             max-width: none;
             width: auto;
-            height: 100%;
-            max-height: calc(var(--vh, 1vh) * 50);
             display: block;
 
             &.landscape {
                 max-width: calc(var(--vh, 1vh) * 50);
                 width: 100%;
-                height: auto;
-                max-height: none;
             }
         }
     }
