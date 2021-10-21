@@ -9,31 +9,24 @@
     export let content: ImageContent;
 
     let obj: HTMLElement;
-
     let landscape = content.height < content.width;
-
     let height = 0;
 
-    onMount(() => {
-        height = calculateHeight(
-            document.getElementById("chat-messages")?.offsetWidth ?? 0,
-            content
-        );
-    });
-
-    function resize() {
+    function recalculateHeight() {
         height = calculateHeight(
             document.getElementById("chat-messages")?.offsetWidth ?? 0,
             content
         );
     }
 
+    onMount(recalculateHeight);
+
     onDestroy(() => {
         content.blobUrl && URL.revokeObjectURL(content.blobUrl);
     });
 </script>
 
-<svelte:window on:resize={resize} />
+<svelte:window on:resize={recalculateHeight} />
 
 {#if content.blobUrl !== undefined}
     <!-- This looks a bit odd, but it should display the thumbnail if the main image fails to load -->

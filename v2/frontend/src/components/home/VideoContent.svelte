@@ -10,24 +10,17 @@
     export let content: VideoContent;
 
     let landscape = content.height < content.width;
-
     let videoPlayer: HTMLVideoElement;
-
     let height = 0;
 
-    onMount(() => {
-        height = calculateHeight(
-            document.getElementById("chat-messages")?.offsetWidth ?? 0,
-            content
-        );
-    });
-
-    function resize() {
+    function recalculateHeight() {
         height = calculateHeight(
             document.getElementById("chat-messages")?.offsetWidth ?? 0,
             content
         );
     }
+
+    onMount(recalculateHeight);
 
     onDestroy(() => {
         content.videoData.blobUrl && URL.revokeObjectURL(content.videoData.blobUrl);
@@ -35,7 +28,7 @@
     });
 </script>
 
-<svelte:window on:resize={resize} />
+<svelte:window on:resize={recalculateHeight} />
 
 <div class="video">
     <video
