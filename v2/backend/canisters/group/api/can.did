@@ -163,6 +163,7 @@ type RemoveAdminResponse =
         CallerNotInGroup;
         NotAuthorized;
         UserNotInGroup;
+        CannotRemoveSelf;
     };
 
 type PutChunkArgs =
