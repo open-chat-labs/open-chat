@@ -104,6 +104,20 @@
         changedBy={event.event.dismissedBy}
         resourceKey={"dismissedBy"}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "users_blocked"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.blockedBy}
+        resourceKey={"blockedBy"}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "users_unblocked"}
+    <ParticipantsChangedEvent
+        {user}
+        changed={event.event.userIds}
+        changedBy={event.event.unblockedBy}
+        resourceKey={"unblockedBy"}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "name_changed"}
     <GroupChangedEvent
         {user}

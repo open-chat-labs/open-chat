@@ -71,7 +71,7 @@
         on:leaveGroup
         selectedChatSummary={$machine.context.chatSummary} />
     <CurrentChatMessages on:messageRead on:chatWith {machine} {unreadMessages} />
-    <Footer {machine} />
+    <Footer {blocked} {machine} />
 </div>
 
 <style type="text/scss">

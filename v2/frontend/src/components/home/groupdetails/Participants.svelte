@@ -61,7 +61,13 @@
 </div>
 
 {#if me !== undefined}
-    <Participant me={true} participant={me} myRole={me.role} on:blockUser on:chatWith />
+    <Participant
+        {publicGroup}
+        me={true}
+        participant={me}
+        myRole={me.role}
+        on:blockUser
+        on:chatWith />
 {/if}
 
 <VirtualList keyFn={(user) => user.userId} items={others} let:item>
@@ -69,6 +75,7 @@
         me={false}
         participant={item}
         myRole={me?.role ?? "standard"}
+        {publicGroup}
         on:blockUser
         on:chatWith
         on:dismissAsAdmin

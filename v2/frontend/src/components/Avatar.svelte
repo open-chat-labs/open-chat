@@ -4,6 +4,7 @@
     export let url: string | undefined;
     export let status: UserStatus = UserStatus.Offline;
     export let size: AvatarSize = AvatarSize.Medium;
+    export let blocked: boolean = false;
 </script>
 
 <div
@@ -14,6 +15,7 @@
     class:small={size === AvatarSize.Small}
     class:medium={size === AvatarSize.Medium}
     class:large={size === AvatarSize.Large}
+    class:blocked
     style="background-image: url({url});" />
 
 <style type="text/scss">
@@ -48,6 +50,18 @@
         &.large {
             width: 100px;
             height: 100px;
+        }
+
+        &.blocked::after {
+            content: "";
+            width: 4px;
+            height: 100%;
+            background-color: red;
+            position: absolute;
+            left: calc(50% - 2px);
+            top: 0;
+            transform: rotate(45deg);
+            transform-origin: 50% 50%;
         }
     }
 </style>

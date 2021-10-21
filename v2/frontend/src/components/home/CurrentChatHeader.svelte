@@ -169,7 +169,7 @@
         </div>
     {/if}
     <div class="avatar">
-        <Avatar status={chat.userStatus} url={chat.avatarUrl} size={AvatarSize.Small} />
+        <Avatar {blocked} status={chat.userStatus} url={chat.avatarUrl} size={AvatarSize.Small} />
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
@@ -182,7 +182,9 @@
             {/if}
         </div>
         <div class="chat-subtext" title={chat.subtext}>
-            {#if chat.typing}
+            {#if blocked}
+                {$_("blocked")}
+            {:else if chat.typing}
                 <Typing />
             {:else}
                 {chat.subtext}

@@ -12,6 +12,7 @@ import type {
     Message,
     DeleteMessageResponse,
     EditMessageResponse,
+    BlockUserResponse,
 } from "../../domain/chat/chat";
 
 export interface IGroupClient {
@@ -36,4 +37,5 @@ export interface IGroupClient {
     updateGroup(name: string, desc: string, avatar?: Uint8Array): Promise<UpdateGroupResponse>;
     toggleReaction(messageId: bigint, reaction: string): Promise<ToggleReactionResponse>;
     deleteMessage(messageId: bigint): Promise<DeleteMessageResponse>;
+    blockUser(userId: string): Promise<BlockUserResponse>;
 }

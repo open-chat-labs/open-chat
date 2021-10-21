@@ -41,6 +41,7 @@ import { typing } from "../stores/typing";
 import type { MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { closeNotificationsForChat } from "../utils/notifications";
+import { blockedUsers } from "../stores/blockedUsers";
 
 const ONE_MINUTE = 60 * 1000;
 const CHAT_UPDATE_INTERVAL = 5000;
@@ -167,6 +168,7 @@ async function getUpdates(
         );
 
         userStore.addMany(usersResponse.users);
+        blockedUsers.set(chatsResponse.blockedUsers);
         return {
             chatSummaries: chatsResponse.chatSummaries,
             chatUpdatesSince: chatsResponse.timestamp,
@@ -221,6 +223,15 @@ const liveConfig: Partial<MachineOptions<HomeContext, HomeEvents>> = {
         webRtcMessageHandler: (ctx, _ev) => (callback, _receive) => {
             rtcConnectionsManager.subscribe((message: unknown) => {
                 const parsedMsg = message as WebRtcMessage;
+                if (
+                    ctx.selectedChat !== undefined &&
+                    ctx.selectedChat.kind === "direct_chat" &&
+                    ctx.selectedChat.them === parsedMsg.userId &&
+                    get(blockedUsers).has(parsedMsg.userId)
+                ) {
+                    return;
+                }
+
                 const fromChat = findChatByChatType(ctx, parsedMsg);
 
                 if (parsedMsg.kind === "remote_user_typing") {
