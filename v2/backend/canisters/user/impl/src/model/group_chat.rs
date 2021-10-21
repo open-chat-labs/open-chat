@@ -35,8 +35,6 @@ impl From<&GroupChat> for GroupChatSummaryUpdates {
             name: None,
             description: None,
             avatar_id: None,
-            participants_added_or_updated: vec![],
-            participants_removed: vec![],
             latest_message: None,
             latest_event_index: None,
             read_by_me: Some(convert_to_message_index_ranges(s.read_by_me.value.clone())),

@@ -203,6 +203,27 @@ type UpdateGroupResponse =
         InternalError;
     };
 
+type SelectedUpdatesArgs =
+    record {
+        updates_since: opt TimestampMillis;
+    };
+
+type SelectedUpdatesSuccess =
+    record {
+        timestamp: TimestampMillis;
+        participants_added_or_updated: vec Participant;
+        participants_removed: vec UserId;
+        blocked_users_added: vec UserId;
+        blocked_users_removed: vec UserId;
+    };
+
+type SelectedUpdatesResponse =
+    variant {
+        Success: SelectedUpdatesSuccess;
+        SuccessNoUpdates;
+        CallerNotInGroup;
+    };
+
 type SummaryArgs =
     record {
     };
@@ -327,6 +348,7 @@ service: {
     toggle_reaction: (ToggleReactionArgs) -> (ToggleReactionResponse);
     put_chunk: (PutChunkArgs) -> (PutChunkResponse);
 
+    selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 

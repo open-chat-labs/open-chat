@@ -5,5 +5,6 @@ mod events_range;
 mod events_window;
 mod http_request;
 mod search_messages;
+mod selected_updates;
 mod summary;
 mod summary_updates;
