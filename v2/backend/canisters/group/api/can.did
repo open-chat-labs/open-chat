@@ -310,25 +310,6 @@ type SearchMessagesSuccessResult =
         matches: vec MessageMatch;
     };
 
-type MetricsArgs =
-    record {
-    };
-
-type MetricsResponse = 
-    record {
-        text_message_count: nat64;
-        image_message_count: nat64;
-        video_message_count: nat64;
-        file_message_count: nat64;
-        cycles_balance: int64;
-        bytes_used: nat64;
-        blob_bytes_used: nat64;
-        chunk_count: nat32;
-        timestamp: TimestampMillis;
-        caller_id: principal;
-        wasm_memory_used: nat64;
-    };
-
 service: {
     // Admin only
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
@@ -358,5 +339,4 @@ service: {
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
-    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }

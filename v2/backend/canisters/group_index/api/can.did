@@ -56,25 +56,6 @@ type UpdateGroupCanisterWasmResponse =
         VersionNotHigher;
     };
 
-type MetricsArgs =
-    record {
-    };
-
-type MetricsResponse = 
-    record {
-        public_group_count: nat64;
-        private_group_count: nat64;
-        active_public_group_count: nat64;
-        active_private_group_count: nat64;
-        deleted_public_group_count: nat64;
-        deleted_private_group_count: nat64;
-        cycles_balance: int64;
-        bytes_used: nat64;
-        timestamp: TimestampMillis;
-        caller_id: principal;
-        wasm_memory_used: nat64;
-    };
-
 type InitArgs =
     record {
         service_principals: vec principal;
@@ -85,7 +66,6 @@ type InitArgs =
 
 service: (InitArgs) -> {
     active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
-    metrics: (MetricsArgs) -> (MetricsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
 
     // Update the stored group canister WASM module
