@@ -1,4 +1,4 @@
-use crate::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, MessageIndexRange, Participant, TimestampMillis, UserId};
+use crate::{ChatId, EventIndex, EventWrapper, Message, MessageIndex, MessageIndexRange, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::Deserialize;
 
@@ -44,7 +44,6 @@ pub struct GroupChatSummary {
     pub is_public: bool,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
-    pub participants: Vec<Participant>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
@@ -81,8 +80,6 @@ pub struct GroupChatSummaryUpdates {
     pub name: Option<String>,
     pub description: Option<String>,
     pub avatar_id: Option<u128>,
-    pub participants_added_or_updated: Vec<Participant>,
-    pub participants_removed: Vec<UserId>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub read_by_me: Option<Vec<MessageIndexRange>>,
