@@ -337,28 +337,6 @@ type SearchAllMessagesResponse =
         InvalidTerm;
     }; 
 
-type MetricsArgs =
-    record {
-    };
-
-type MetricsResponse = 
-    record {
-        direct_chat_count: nat32;
-        group_chat_count: nat32;
-        text_message_count: nat64;
-        image_message_count: nat64;
-        video_message_count: nat64;
-        file_message_count: nat64;
-        cycles_message_count: nat64;
-        cycles_balance: int64;
-        bytes_used: nat64;
-        blob_bytes_used: nat64;
-        chunk_count: nat32;
-        timestamp: TimestampMillis;
-        caller_id: principal;
-        wasm_memory_used: nat64;
-    };
-
 type InitArgs = 
     record {
         owner: principal;
@@ -391,6 +369,4 @@ service: (InitArgs) -> {
     updates: (UpdatesArgs) -> (UpdatesResponse) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     search_all_messages: (SearchAllMessagesArgs) -> (SearchAllMessagesResponse) query; // Uses ICQC to search all group chats too
-
-    metrics: (MetricsArgs) -> (MetricsResponse) query;
 }
