@@ -30,7 +30,8 @@
     import { initNotificationStores } from "../../stores/notifications";
     import type { EditGroupState } from "../../fsm/editGroup";
     import { rollbar } from "../../utils/logging";
-    import type { EnhancedReplyContext } from "../../domain/chat/chat";
+    import type { EnhancedReplyContext, GroupChatSummary } from "../../domain/chat/chat";
+    import type { Writable } from "svelte/store";
     export let machine: ActorRefFrom<HomeMachine>;
     export let params: { chatId: string | null; messageIndex: string | undefined | null } = {
         chatId: null,
@@ -235,8 +236,10 @@
 
     $: selectedChat = $machine.context.selectedChat;
 
+    $: chat = selectedChat?.chat;
+
     $: groupChat =
-        selectedChat && selectedChat.chat.kind === "group_chat" ? selectedChat.chat : undefined;
+        chat && $chat.kind === "group_chat" ? (chat as Writable<GroupChatSummary>) : undefined;
 
     $: x = $rtlStore ? -300 : 300;
 

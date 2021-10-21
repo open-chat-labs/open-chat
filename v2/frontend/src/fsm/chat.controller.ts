@@ -56,48 +56,56 @@ export class ChatController {
     private localReactions: Record<string, LocalReaction[]> = {};
     public editingEvent?: EventWrapper<Message>;
     private initialised = false;
+    public loading: Writable<boolean>;
+    public chat: Writable<ChatSummary>;
 
     // private sendingMessage?: SendMessageEvent;
 
     constructor(
         public api: ServiceContainer,
         public user: UserSummary,
-        public chat: ChatSummary,
+        private _chat: ChatSummary,
         private markRead: MessageReadTracker
     ) {
         this.events = writable([]);
+        this.loading = writable(false);
+        this.chat = writable(_chat);
         this.loadPreviousMessages();
     }
 
+    get chatVal(): ChatSummary {
+        return get(this.chat);
+    }
+
     get notificationsMuted(): boolean {
-        return this.chat.notificationsMuted;
+        return this.chatVal.notificationsMuted;
     }
 
     get minVisibleMessageIndex(): number {
-        return getMinVisibleMessageIndex(this.chat);
+        return getMinVisibleMessageIndex(this.chatVal);
     }
 
     get unreadMessageCount(): number {
         return this.markRead.unreadMessageCount(
             this.chatId,
             this.minVisibleMessageIndex,
-            this.chat.latestMessage?.event.messageIndex
+            this.chatVal.latestMessage?.event.messageIndex
         );
     }
 
     get chatId(): string {
-        return this.chat.chatId;
+        return this.chatVal.chatId;
     }
 
     get kind(): "direct_chat" | "group_chat" {
-        return this.chat.kind;
+        return this.chatVal.kind;
     }
 
     private upToDate(): boolean {
         const events = get(this.events);
         return (
-            events[events.length - 1]?.index >= this.chat.latestEventIndex &&
-            this.chat.latestMessage !== undefined
+            events[events.length - 1]?.index >= this.chatVal.latestEventIndex &&
+            this.chatVal.latestMessage !== undefined
         );
     }
 
@@ -122,10 +130,10 @@ export class ChatController {
     }
 
     private async loadEventWindow(messageIndex: number) {
-        const range = indexRangeForChat(this.chat);
+        const range = indexRangeForChat(this.chatVal);
         const eventsPromise: Promise<EventsResponse<ChatEvent>> =
-            this.chat.kind === "direct_chat"
-                ? this.api.directChatEventsWindow(range, this.chat.them, messageIndex)
+            this.chatVal.kind === "direct_chat"
+                ? this.api.directChatEventsWindow(range, this.chatVal.them, messageIndex)
                 : this.api.groupChatEventsWindow(range, this.chatId, messageIndex);
         const [, eventsResponse] = await Promise.all([this.loadUsersForChat(), eventsPromise]);
 
@@ -138,7 +146,7 @@ export class ChatController {
 
     newMessageCriteria(): [number, boolean] | undefined {
         const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
-        if (lastLoaded !== undefined && lastLoaded < this.chat.latestEventIndex) {
+        if (lastLoaded !== undefined && lastLoaded < this.chatVal.latestEventIndex) {
             const from = lastLoaded + 1;
             return [from, true];
         } else {
@@ -152,34 +160,35 @@ export class ChatController {
         if (earliestLoaded !== undefined) {
             return earliestLoaded - 1; // the one before the first one we *have* loaded
         } else {
-            return this.chat.latestEventIndex; //or the latest index if we haven't loaded *any*
+            return this.chatVal.latestEventIndex; //or the latest index if we haven't loaded *any*
         }
     }
 
     previousMessagesCriteria(): [number, boolean] | undefined {
         const start = this.highestUnloadedEventIndex();
-        const min = getMinVisibleEventIndex(this.chat);
+        const min = getMinVisibleEventIndex(this.chatVal);
         return start >= min ? [start, false] : undefined;
     }
 
     loadEvents(startIndex: number, ascending: boolean): Promise<EventsResponse<ChatEvent>> {
-        if (this.chat.kind === "direct_chat") {
+        if (this.chatVal.kind === "direct_chat") {
             return this.api.directChatEvents(
-                indexRangeForChat(this.chat),
-                this.chat.them,
+                indexRangeForChat(this.chatVal),
+                this.chatVal.them,
                 startIndex,
                 ascending
             );
         }
         return this.api.groupChatEvents(
-            indexRangeForChat(this.chat),
-            this.chat.chatId,
+            indexRangeForChat(this.chatVal),
+            this.chatVal.chatId,
             startIndex,
             ascending
         );
     }
 
     public async loadNewMessages(): Promise<void> {
+        this.loading.set(true);
         const criteria = this.newMessageCriteria();
 
         const [, eventsResponse] = await Promise.all([
@@ -188,6 +197,7 @@ export class ChatController {
         ]);
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            this.loading.set(false);
             return undefined;
         }
 
@@ -197,9 +207,11 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_new_messages" },
         });
+        this.loading.set(false);
     }
 
     public async loadPreviousMessages(): Promise<void> {
+        this.loading.set(true);
         const criteria = this.previousMessagesCriteria();
 
         const [, eventsResponse] = await Promise.all([
@@ -208,6 +220,7 @@ export class ChatController {
         ]);
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            this.loading.set(false);
             return undefined;
         }
 
@@ -217,11 +230,13 @@ export class ChatController {
             chatId: this.chatId,
             event: { kind: "loaded_previous_messages" },
         });
+
+        this.loading.set(false);
     }
 
     async loadUsersForChat(): Promise<void> {
-        if (this.chat.kind === "group_chat") {
-            const userIds = userIdsFromChatSummaries([this.chat], true);
+        if (this.chatVal.kind === "group_chat") {
+            const userIds = userIdsFromChatSummaries([this.chatVal], true);
             const { users } = await this.api.getUsers(
                 missingUserIds(get(userStore), userIds),
                 BigInt(0) // timestamp irrelevant for missing users
@@ -234,7 +249,7 @@ export class ChatController {
         let jumping = false;
         if (!this.upToDate()) {
             jumping = true;
-            await this.loadEventWindow(this.chat.latestMessage!.event.messageIndex);
+            await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
         this.replyingTo = undefined;
@@ -260,9 +275,9 @@ export class ChatController {
             // this message may have come in via webrtc
             const sentByMe = userId === this.user.userId;
             if (sentByMe) {
-                rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+                rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
                     kind: "remote_user_sent_message",
-                    chatType: this.chat.kind,
+                    chatType: this.chatVal.kind,
                     chatId: this.chatId,
                     messageEvent: serialiseMessageForRtc(messageEvent),
                     userId: userId,
@@ -283,17 +298,19 @@ export class ChatController {
                     scroll: jumping ? "auto" : "smooth",
                 },
             });
-            this.chat = sentByMe ? setLastMessageOnChat(this.chat, messageEvent) : this.chat;
+            this.chat.update((chat) =>
+                sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
+            );
             this.events.update((events) => [...events, messageEvent]);
         }
     }
 
     undeleteMessage(message: Message, userId: string): void {
         if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
                 kind: "remote_user_undeleted_message",
-                chatType: this.chat.kind,
-                chatId: this.chat.chatId,
+                chatType: this.chatVal.kind,
+                chatId: this.chatVal.chatId,
                 message: message,
                 userId: userId,
             });
@@ -306,10 +323,10 @@ export class ChatController {
 
     deleteMessage(messageId: bigint, userId: string): void {
         if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
                 kind: "remote_user_deleted_message",
-                chatType: this.chat.kind,
-                chatId: this.chat.chatId,
+                chatType: this.chatVal.kind,
+                chatId: this.chatVal.chatId,
                 messageId: messageId,
                 userId: userId,
             });
@@ -325,10 +342,10 @@ export class ChatController {
 
     removeMessage(messageId: bigint, userId: string): void {
         if (userId === this.user.userId) {
-            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+            rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
                 kind: "remote_user_removed_message",
-                chatType: this.chat.kind,
-                chatId: this.chat.chatId,
+                chatType: this.chatVal.kind,
+                chatId: this.chatVal.chatId,
                 messageId: messageId,
                 userId: userId,
             });
@@ -367,10 +384,10 @@ export class ChatController {
                     };
                     overwriteCachedEvents(this.chatId, [updatedEvent]);
                     if (userId === this.user.userId) {
-                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
                             kind: "remote_user_toggled_reaction",
-                            chatType: this.chat.kind,
-                            chatId: this.chat.chatId,
+                            chatType: this.chatVal.kind,
+                            chatId: this.chatVal.chatId,
                             messageId,
                             userId,
                             reaction,
@@ -384,11 +401,11 @@ export class ChatController {
     }
 
     isDirectChatWith(userId: string): boolean {
-        return this.chat.kind === "direct_chat" && this.chat.them === userId;
+        return this.chatVal.kind === "direct_chat" && this.chatVal.them === userId;
     }
 
     isBlockedUser(): boolean {
-        return this.chat.kind === "direct_chat" && get(blockedUsers).has(this.chat.them);
+        return this.chatVal.kind === "direct_chat" && get(blockedUsers).has(this.chatVal.them);
     }
 
     async goToMessageIndex(messageIndex: number): Promise<void> {
@@ -397,10 +414,7 @@ export class ChatController {
     }
 
     chatUpdated(chat: ChatSummary): void {
-        // TODO - double check it's right to clone here
-        this.chat = {
-            ...chat,
-        };
+        this.chat.set(chat);
         chatStore.set({
             chatId: this.chatId,
             event: { kind: "chat_updated" },
@@ -408,10 +422,10 @@ export class ChatController {
     }
 
     markAllRead(): void {
-        const latestMessageIndex = this.chat.latestMessage?.event.messageIndex;
+        const latestMessageIndex = this.chatVal.latestMessage?.event.messageIndex;
         if (latestMessageIndex) {
             this.markRead.markRangeRead(this.chatId, {
-                from: getMinVisibleMessageIndex(this.chat),
+                from: getMinVisibleMessageIndex(this.chatVal),
                 to: latestMessageIndex,
             });
         }
@@ -422,11 +436,11 @@ export class ChatController {
     }
 
     getNextMessageIndex(): number {
-        return getNextMessageIndex(this.chat, get(this.events));
+        return getNextMessageIndex(this.chatVal, get(this.events));
     }
 
     getNextEventIndex(): number {
-        return getNextEventIndex(this.chat, get(this.events));
+        return getNextEventIndex(this.chatVal, get(this.events));
     }
 
     createMessage(textContent: string | null, fileToAttach: MessageContent | undefined): Message {
@@ -464,7 +478,7 @@ export class ChatController {
     }
 
     startTyping(): void {
-        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
             kind: "remote_user_typing",
             chatType: this.kind,
             chatId: this.chatId,
@@ -473,7 +487,7 @@ export class ChatController {
     }
 
     stopTyping(): void {
-        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chatVal), {
             kind: "remote_user_stopped_typing",
             chatType: this.kind,
             chatId: this.chatId,
@@ -498,7 +512,7 @@ export class ChatController {
     }
 
     earliestIndex(): number {
-        return earliestLoadedEventIndex(get(this.events)) ?? this.chat.latestEventIndex;
+        return earliestLoadedEventIndex(get(this.events)) ?? this.chatVal.latestEventIndex;
     }
 
     morePreviousMessagesAvailable(): boolean {
@@ -506,12 +520,12 @@ export class ChatController {
     }
 
     earliestAvailableEventIndex(): number {
-        return this.chat.kind === "group_chat" ? this.chat.minVisibleEventIndex : 0;
+        return this.chatVal.kind === "group_chat" ? this.chatVal.minVisibleEventIndex : 0;
     }
 
     moreNewMessagesAvailable(): boolean {
         const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
-        return lastLoaded === undefined || lastLoaded < this.chat.latestEventIndex;
+        return lastLoaded === undefined || lastLoaded < this.chatVal.latestEventIndex;
     }
 
     replyTo(context: EnhancedReplyContext): void {

@@ -14,6 +14,7 @@
     import type { ServiceContainer } from "../../../services/serviceContainer";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
+    import type { Writable } from "svelte/store";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -21,7 +22,7 @@
     const dispatch = createEventDispatcher();
 
     export let updatedGroup: UpdatedGroup;
-    export let chat: GroupChatSummary;
+    export let chat: Writable<GroupChatSummary>;
     export let userId: string;
     export let api: ServiceContainer;
 
@@ -29,12 +30,11 @@
     let confirmed = false;
     let saving = false;
 
-    $: nameDirty = updatedGroup.name !== chat.name;
-    $: descDirty = updatedGroup.desc !== chat.description;
-    $: avatarDirty = updatedGroup.avatar?.blobUrl !== chat.blobUrl;
+    $: nameDirty = updatedGroup.name !== $chat.name;
+    $: descDirty = updatedGroup.desc !== $chat.description;
+    $: avatarDirty = updatedGroup.avatar?.blobUrl !== $chat.blobUrl;
     $: dirty = nameDirty || descDirty || avatarDirty;
-
-    $: canEdit = chat.participants.find((p) => p.userId === userId)?.role === "admin";
+    $: canEdit = $chat.participants.find((p) => p.userId === userId)?.role === "admin";
 
     function close() {
         if (dirty && !confirmed) {
@@ -60,7 +60,7 @@
     function updateGroup() {
         saving = true;
         api.updateGroup(
-            chat.chatId,
+            $chat.chatId,
             updatedGroup.name,
             updatedGroup.desc,
             updatedGroup.avatar?.blobData
@@ -70,9 +70,12 @@
                 if (err) {
                     toastStore.showFailureToast(err);
                 } else {
-                    chat.name = updatedGroup.name;
-                    chat.description = updatedGroup.desc;
-                    chat.blobUrl = updatedGroup.avatar?.blobUrl;
+                    chat.update((c) => ({
+                        ...c,
+                        name: updatedGroup.name,
+                        description: updatedGroup.desc,
+                        blobUrl: updatedGroup.avatar?.blobUrl,
+                    }));
                     dispatch("close");
                 }
             })
@@ -124,14 +127,14 @@
             placeholder={$_("newGroupDesc")} />
 
         <div class="sub-section">
-            {#if chat.public}
+            {#if $chat.public}
                 <h4>{$_("publicGroup")}</h4>
             {:else}
                 <h4>{$_("privateGroup")}</h4>
             {/if}
 
             <div class="info">
-                {#if chat.public}
+                {#if $chat.public}
                     <p>
                         {$_("publicGroupInfo")}
                     </p>

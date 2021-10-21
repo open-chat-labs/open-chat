@@ -42,7 +42,9 @@
     export let controller: ChatController;
     export let unreadMessages: number;
 
-    let events = controller.events;
+    $: events = controller.events;
+    $: loading = controller.loading;
+    $: chat = controller.chat;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -103,9 +105,7 @@
 
     function scrollToNew() {
         const idx =
-            unreadMessages > 0
-                ? firstUnreadMessageIndex
-                : controller.chat.latestMessage?.event.messageIndex;
+            unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
         }
@@ -147,16 +147,18 @@
     }
 
     function onScroll() {
-        if (
-            messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
-            controller.morePreviousMessagesAvailable()
-        ) {
-            controller.loadPreviousMessages();
-        }
+        if (!$loading) {
+            if (
+                messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
+                controller.morePreviousMessagesAvailable()
+            ) {
+                controller.loadPreviousMessages();
+            }
 
-        fromBottomVal = fromBottom();
-        if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
-            controller.loadPreviousMessages();
+            fromBottomVal = fromBottom();
+            if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
+                controller.loadPreviousMessages();
+            }
         }
     }
 
@@ -190,14 +192,14 @@
         );
 
         const apiPromise =
-            controller.chat.kind === "group_chat"
+            $chat.kind === "group_chat"
                 ? controller.api.toggleGroupChatReaction(
-                      controller.chat.chatId,
+                      $chat.chatId,
                       ev.detail.message.messageId,
                       ev.detail.reaction
                   )
                 : controller.api.toggleDirectChatReaction(
-                      controller.chat.them,
+                      $chat.them,
                       ev.detail.message.messageId,
                       ev.detail.reaction
                   );
@@ -240,9 +242,9 @@
         controller.deleteMessage(ev.detail.messageId, controller.user.userId);
 
         const apiPromise =
-            controller.chat.kind === "group_chat"
+            $chat.kind === "group_chat"
                 ? controller.api.deleteGroupMessage(controller.chatId, ev.detail.messageId)
-                : controller.api.deleteDirectMessage(controller.chat.them, ev.detail.messageId);
+                : controller.api.deleteDirectMessage($chat.them, ev.detail.messageId);
 
         apiPromise
             .then((resp) => {
@@ -290,13 +292,12 @@
 
     $: console.log("Grouped events: ", groupedEvents);
 
-    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex(controller.chat);
+    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
     // todo - this might cause a performance problem
     $: admin =
-        controller.chat.kind === "group_chat" &&
-        controller.chat.participants.find((p) => p.userId === controller.user?.userId)?.role ===
-            "admin";
+        $chat.kind === "group_chat" &&
+        $chat.participants.find((p) => p.userId === controller.user?.userId)?.role === "admin";
 
     $: {
         if (controller.chatId !== currentChatId) {
@@ -364,7 +365,7 @@
 
     function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = messageIsReadByThem(controller.chat, evt.event);
+            const confirmedRead = messageIsReadByThem($chat, evt.event);
             if (confirmedRead) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }

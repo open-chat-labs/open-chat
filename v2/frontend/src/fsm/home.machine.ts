@@ -401,10 +401,10 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
             initial: "no_chat_selected",
             id: "loaded_chats",
             invoke: [
-                {
-                    id: "updateChatsPoller",
-                    src: "updateChatsPoller",
-                },
+                // {
+                //     id: "updateChatsPoller",
+                //     src: "updateChatsPoller",
+                // },
                 {
                     id: "updateUsersPoller",
                     src: "updateUsersPoller",
@@ -556,7 +556,7 @@ export const schema: MachineConfig<HomeContext, any, HomeEvents> = {
                                     replyingTo: undefined,
                                 };
                             }
-                            return { selectedChat: chatSummary };
+                            return { selectedChat: undefined };
                         }),
                     ],
                 },

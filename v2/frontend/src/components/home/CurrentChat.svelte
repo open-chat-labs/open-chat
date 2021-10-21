@@ -39,6 +39,8 @@
     function markAllRead() {
         controller.markAllRead();
     }
+
+    $: chat = controller.chat;
 </script>
 
 <div class="wrapper">
@@ -55,7 +57,7 @@
         on:showGroupDetails
         on:showParticipants
         on:leaveGroup
-        selectedChatSummary={controller.chat} />
+        selectedChatSummary={chat} />
     <CurrentChatMessages
         on:replyPrivatelyTo
         on:messageRead

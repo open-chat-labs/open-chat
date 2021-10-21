@@ -8,27 +8,28 @@
     import type { ServiceContainer } from "../../services/serviceContainer";
     import { toastStore } from "../../stores/toast";
     import { rollbar } from "../../utils/logging";
+    import type { Writable } from "svelte/store";
 
     export let api: ServiceContainer;
     export let editGroupHistory: EditGroupState[];
-    export let chat: GroupChatSummary;
+    export let chat: Writable<GroupChatSummary>;
     export let userId: string;
 
     $: lastState = editGroupHistory[editGroupHistory.length - 1];
 
     let updatedGroup: UpdatedGroup = {
-        name: chat.name,
-        desc: chat.description,
-        avatar: chat.blobUrl
+        name: $chat.name,
+        desc: $chat.description,
+        avatar: $chat.blobUrl
             ? {
-                  blobUrl: chat.blobUrl,
-                  blobData: chat.blobData,
+                  blobUrl: $chat.blobUrl,
+                  blobData: $chat.blobData,
               }
             : undefined,
     };
 
     function dismissAsAdmin(ev: CustomEvent<string>): void {
-        api.dismissAsAdmin(chat.chatId, ev.detail)
+        api.dismissAsAdmin($chat.chatId, ev.detail)
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to dismiss as admin", resp);
@@ -42,7 +43,7 @@
     }
 
     function makeAdmin(ev: CustomEvent<string>): void {
-        api.makeAdmin(chat.chatId, ev.detail)
+        api.makeAdmin($chat.chatId, ev.detail)
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to make admin", resp);
@@ -56,8 +57,11 @@
     }
 
     function removeParticipant(ev: CustomEvent<string>): void {
-        chat.participants = chat.participants.filter((p) => p.userId !== ev.detail);
-        api.removeParticipant(chat.chatId, ev.detail)
+        chat.update((c) => ({
+            ...c,
+            participants: c.participants.filter((p) => p.userId !== ev.detail),
+        }));
+        api.removeParticipant($chat.chatId, ev.detail)
             .then((resp) => {
                 if (resp !== "success") {
                     rollbar.warn("Unable to remove participant", resp);
@@ -75,7 +79,7 @@
     }
 
     function blockUser(ev: CustomEvent<{ userId: string }>) {
-        api.blockUserFromGroupChat(chat.chatId, ev.detail.userId)
+        api.blockUserFromGroupChat($chat.chatId, ev.detail.userId)
             .then((resp) => {
                 if (resp === "success") {
                     toastStore.showSuccessToast("blockUserSucceeded");

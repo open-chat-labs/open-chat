@@ -16,6 +16,7 @@
     export let blocked: boolean;
 
     let showEmojiPicker = false;
+    $: chat = controller.chat;
 
     function cancelReply() {
         controller.cancelReply();
@@ -34,7 +35,7 @@
             };
 
             controller.api
-                .editMessage(controller.chat, msg!)
+                .editMessage($chat, msg!)
                 .then((resp) => {
                     if (resp !== "success") {
                         rollbar.warn("Error response editing", resp);
@@ -60,7 +61,7 @@
 
             const msg = controller.createMessage(textContent, fileToAttach);
             controller.api
-                .sendMessage(controller.chat, controller.user, msg!)
+                .sendMessage($chat, controller.user, msg!)
                 .then((resp) => {
                     if (resp.kind === "success") {
                         controller.updateMessage(msg, resp);
