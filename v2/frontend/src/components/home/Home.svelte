@@ -249,7 +249,7 @@
 
     let editGroupHistory: EditGroupState[] = [];
 
-    $: blocked = selectedChat ? selectedChat.isBlockedUser() : false;
+    $: blocked = chat && $chat.kind === "direct_chat" && $blockedUsers.has($chat.them);
 </script>
 
 {#if $machine.context.user}

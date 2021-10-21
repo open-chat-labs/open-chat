@@ -15,6 +15,9 @@
     export let controller: ChatController;
     export let blocked: boolean;
 
+    $: editingEvent = controller.editingEvent;
+    $: fileToAttach = controller.fileToAttach;
+
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
@@ -30,15 +33,15 @@
     let typingTimer: number | undefined = undefined;
 
     $: {
-        if (controller.editingEvent && !initialisedEdit) {
-            if (controller.editingEvent.event.content.kind === "text_content") {
-                inp.textContent = controller.editingEvent.event.content.text;
+        if ($editingEvent && !initialisedEdit) {
+            if ($editingEvent.event.content.kind === "text_content") {
+                inp.textContent = $editingEvent.event.content.text;
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
             }
         }
-        if (controller.editingEvent === undefined) {
+        if ($editingEvent === undefined) {
             initialisedEdit = false;
         }
     }
@@ -136,7 +139,7 @@
 
     // todo - doubt this will react properly
     $: placeholder =
-        controller.fileToAttach !== undefined
+        $fileToAttach !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
@@ -162,7 +165,7 @@
         </div>
         <div class="attach">
             <FileAttacher
-                open={controller.fileToAttach !== undefined}
+                open={$fileToAttach !== undefined}
                 on:fileSelected
                 on:close={clearAttachment} />
         </div>

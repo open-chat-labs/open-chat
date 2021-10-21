@@ -45,6 +45,7 @@
     $: events = controller.events;
     $: loading = controller.loading;
     $: chat = controller.chat;
+    $: focusMessageIndex = controller.focusMessageIndex;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -130,15 +131,15 @@
 
     function resetScroll() {
         if (initialised) {
-            if (controller.focusMessageIndex !== undefined) {
-                scrollToMessageIndex(controller.focusMessageIndex);
+            if ($focusMessageIndex !== undefined) {
+                scrollToMessageIndex($focusMessageIndex);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
         } else {
-            if (controller.focusMessageIndex !== undefined) {
-                scrollToMessageIndex(controller.focusMessageIndex);
+            if ($focusMessageIndex !== undefined) {
+                scrollToMessageIndex($focusMessageIndex);
             } else {
                 scrollBottom();
             }
@@ -396,7 +397,7 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === controller.focusMessageIndex}
+                            evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
                         readByThem={isReadByThem(evt)}
                         readByMe={isReadByMe(evt)}

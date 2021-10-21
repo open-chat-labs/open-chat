@@ -17,6 +17,9 @@
 
     let showEmojiPicker = false;
     $: chat = controller.chat;
+    $: fileToAttach = controller.fileToAttach;
+    $: editingEvent = controller.editingEvent;
+    $: replyingTo = controller.replyingTo;
 
     function cancelReply() {
         controller.cancelReply();
@@ -86,19 +89,19 @@
     }
 
     function sendMessage(ev: CustomEvent<string | null>) {
-        if (controller.editingEvent !== undefined) {
-            editMessageWithAttachment(ev.detail, controller.fileToAttach, controller.editingEvent);
+        if ($editingEvent !== undefined) {
+            editMessageWithAttachment(ev.detail, $fileToAttach, $editingEvent);
         } else {
-            sendMessageWithAttachment(ev.detail, controller.fileToAttach);
+            sendMessageWithAttachment(ev.detail, $fileToAttach);
         }
     }
 
     function fileSelected(ev: CustomEvent<MessageContent>) {
         if (ev.detail.kind === "file_content") {
-            if (controller.editingEvent !== undefined) {
-                editMessageWithAttachment(null, controller.fileToAttach, controller.editingEvent);
+            if ($editingEvent !== undefined) {
+                editMessageWithAttachment(null, $fileToAttach, $editingEvent);
             } else {
-                sendMessageWithAttachment(null, controller.fileToAttach);
+                sendMessageWithAttachment(null, $fileToAttach);
             }
         } else {
             controller.attachFile(ev.detail);
@@ -133,16 +136,16 @@
 
 <div class="footer">
     <div class="footer-overlay">
-        {#if controller.replyingTo}
+        {#if $replyingTo}
             <ReplyingTo
                 on:cancelReply={cancelReply}
                 user={controller.user}
-                replyingTo={controller.replyingTo} />
+                replyingTo={$replyingTo} />
         {/if}
-        {#if controller.fileToAttach !== undefined}
-            {#if controller.fileToAttach.kind === "image_content" || controller.fileToAttach.kind === "audio_content" || controller.fileToAttach.kind === "video_content"}
-                <DraftMediaMessage draft={controller.fileToAttach} />
-            {:else if controller.fileToAttach.kind === "cycles_content"}
+        {#if $fileToAttach !== undefined}
+            {#if $fileToAttach.kind === "image_content" || $fileToAttach.kind === "audio_content" || $fileToAttach.kind === "video_content"}
+                <DraftMediaMessage draft={$fileToAttach} />
+            {:else if $fileToAttach.kind === "cycles_content"}
                 <div>Cycle transfer preview</div>
             {/if}
         {/if}

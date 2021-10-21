@@ -50,11 +50,11 @@ import { writable } from "svelte/store";
 
 export class ChatController {
     public events: Writable<EventWrapper<ChatEvent>[]>;
-    public focusMessageIndex?: number;
-    public replyingTo?: EnhancedReplyContext;
-    public fileToAttach?: MessageContent;
+    public focusMessageIndex: Writable<number | undefined>;
+    public replyingTo: Writable<EnhancedReplyContext | undefined>;
+    public fileToAttach: Writable<MessageContent | undefined>;
     private localReactions: Record<string, LocalReaction[]> = {};
-    public editingEvent?: EventWrapper<Message>;
+    public editingEvent: Writable<EventWrapper<Message> | undefined>;
     private initialised = false;
     public loading: Writable<boolean>;
     public chat: Writable<ChatSummary>;
@@ -67,8 +67,15 @@ export class ChatController {
         private _chat: ChatSummary,
         private markRead: MessageReadTracker
     ) {
+        // todo - lets make it so that *only* the chat controller updates these writable stores
+        // then we can keep a local copy of the chat so that we don't have to use get(this.chat)
+        // everywhere
         this.events = writable([]);
         this.loading = writable(false);
+        this.focusMessageIndex = writable(undefined);
+        this.replyingTo = writable(undefined);
+        this.fileToAttach = writable(undefined);
+        this.editingEvent = writable(undefined);
         this.chat = writable(_chat);
         this.loadPreviousMessages();
     }
@@ -252,12 +259,12 @@ export class ChatController {
             await this.loadEventWindow(this.chatVal.latestMessage!.event.messageIndex);
         }
 
-        this.replyingTo = undefined;
-        this.fileToAttach = undefined;
-        this.editingEvent = undefined;
-        this.focusMessageIndex = undefined;
+        this.replyingTo.set(undefined);
+        this.fileToAttach.set(undefined);
+        this.editingEvent.set(undefined);
+        this.focusMessageIndex.set(undefined);
 
-        if (this.editingEvent) {
+        if (get(this.editingEvent)) {
             this.events.update((events) => {
                 return events.map((e) => {
                     if (
@@ -289,6 +296,11 @@ export class ChatController {
                     messageEvent.event.messageId
                 );
             }
+            this.events.update((events) => [...events, messageEvent]);
+            this.chat.update((chat) =>
+                sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
+            );
+            console.log("Eventz: ", get(this.events));
             chatStore.set({
                 chatId: this.chatId,
                 event: {
@@ -298,10 +310,6 @@ export class ChatController {
                     scroll: jumping ? "auto" : "smooth",
                 },
             });
-            this.chat.update((chat) =>
-                sentByMe ? setLastMessageOnChat(chat, messageEvent) : chat
-            );
-            this.events.update((events) => [...events, messageEvent]);
         }
     }
 
@@ -409,7 +417,7 @@ export class ChatController {
     }
 
     async goToMessageIndex(messageIndex: number): Promise<void> {
-        this.focusMessageIndex = messageIndex;
+        this.focusMessageIndex.set(messageIndex);
         await this.loadEventWindow(messageIndex);
     }
 
@@ -432,7 +440,7 @@ export class ChatController {
     }
 
     cancelReply(): void {
-        this.replyingTo = undefined;
+        this.replyingTo.set(undefined);
     }
 
     getNextMessageIndex(): number {
@@ -450,7 +458,7 @@ export class ChatController {
             this.user.userId,
             nextMessageIndex,
             textContent ?? undefined,
-            this.replyingTo,
+            get(this.replyingTo),
             fileToAttach
         );
     }
@@ -474,7 +482,7 @@ export class ChatController {
     }
 
     attachFile(content: MessageContent): void {
-        this.fileToAttach = content;
+        this.fileToAttach.set(content);
     }
 
     startTyping(): void {
@@ -496,7 +504,7 @@ export class ChatController {
     }
 
     clearAttachment(): void {
-        this.fileToAttach = undefined;
+        this.fileToAttach.set(undefined);
     }
 
     isRead(messageIndex: number, messageId: bigint): boolean {
@@ -504,11 +512,11 @@ export class ChatController {
     }
 
     setFocusMessageIndex(idx: number): void {
-        this.focusMessageIndex = idx;
+        this.focusMessageIndex.set(idx);
     }
 
     clearFocusMessageIndex(): void {
-        this.focusMessageIndex = undefined;
+        this.focusMessageIndex.set(undefined);
     }
 
     earliestIndex(): number {
@@ -529,20 +537,22 @@ export class ChatController {
     }
 
     replyTo(context: EnhancedReplyContext): void {
-        this.replyingTo = context;
+        this.replyingTo.set(context);
     }
 
     editEvent(event: EventWrapper<Message>): void {
-        this.editingEvent = event;
-        this.fileToAttach =
-            event.event.content.kind !== "text_content" ? event.event.content : undefined;
-        this.replyingTo =
+        this.editingEvent.set(event);
+        this.fileToAttach.set(
+            event.event.content.kind !== "text_content" ? event.event.content : undefined
+        );
+        this.replyingTo.set(
             event.event.repliesTo && event.event.repliesTo.kind === "rehydrated_reply_context"
                 ? {
                       ...event.event.repliesTo,
                       content: event.event.content,
                       sender: get(userStore)[event.event.sender],
                   }
-                : undefined;
+                : undefined
+        );
     }
 }
