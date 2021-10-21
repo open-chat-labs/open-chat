@@ -5,7 +5,7 @@
 // the events will be converted to methods
 // I suspect it will be half the code and 1000% easier to understand
 
-import { get } from "svelte/store";
+import { get, Writable } from "svelte/store";
 import type {
     ChatEvent,
     ChatSummary,
@@ -46,9 +46,10 @@ import type { MessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
+import { writable } from "svelte/store";
 
 export class ChatController {
-    public events: EventWrapper<ChatEvent>[] = [];
+    public events: Writable<EventWrapper<ChatEvent>[]>;
     public focusMessageIndex?: number;
     public replyingTo?: EnhancedReplyContext;
     public fileToAttach?: MessageContent;
@@ -64,6 +65,7 @@ export class ChatController {
         public chat: ChatSummary,
         private markRead: MessageReadTracker
     ) {
+        this.events = writable([]);
         this.loadPreviousMessages();
     }
 
@@ -92,8 +94,9 @@ export class ChatController {
     }
 
     private upToDate(): boolean {
+        const events = get(this.events);
         return (
-            this.events[this.events.length - 1]?.index >= this.chat.latestEventIndex &&
+            events[events.length - 1]?.index >= this.chat.latestEventIndex &&
             this.chat.latestMessage !== undefined
         );
     }
@@ -102,19 +105,20 @@ export class ChatController {
         if (resp === "events_failed") return;
 
         this.initialised = true;
-        this.events = replaceAffected(
-            this.chatId,
-            replaceLocal(
-                this.user.userId,
+        this.events.update((events) => {
+            return replaceAffected(
                 this.chatId,
-                this.markRead,
-                this.focusMessageIndex === undefined ? this.events : [],
-                resp.events
-            ),
-            resp.affectedEvents,
-            this.localReactions
-        );
-        console.log("Events: ", this.events);
+                replaceLocal(
+                    this.user.userId,
+                    this.chatId,
+                    this.markRead,
+                    this.focusMessageIndex === undefined ? events : [],
+                    resp.events
+                ),
+                resp.affectedEvents,
+                this.localReactions
+            );
+        });
     }
 
     private async loadEventWindow(messageIndex: number) {
@@ -133,7 +137,7 @@ export class ChatController {
     }
 
     newMessageCriteria(): [number, boolean] | undefined {
-        const lastLoaded = latestLoadedEventIndex(this.events, get(unconfirmed));
+        const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
         if (lastLoaded !== undefined && lastLoaded < this.chat.latestEventIndex) {
             const from = lastLoaded + 1;
             return [from, true];
@@ -144,7 +148,7 @@ export class ChatController {
     }
 
     highestUnloadedEventIndex(): number {
-        const earliestLoaded = earliestLoadedEventIndex(this.events);
+        const earliestLoaded = earliestLoadedEventIndex(get(this.events));
         if (earliestLoaded !== undefined) {
             return earliestLoaded - 1; // the one before the first one we *have* loaded
         } else {
@@ -188,6 +192,11 @@ export class ChatController {
         }
 
         this.handleEventsResponse(eventsResponse);
+
+        chatStore.set({
+            chatId: this.chatId,
+            event: { kind: "loaded_new_messages" },
+        });
     }
 
     public async loadPreviousMessages(): Promise<void> {
@@ -203,6 +212,11 @@ export class ChatController {
         }
 
         this.handleEventsResponse(eventsResponse);
+
+        chatStore.set({
+            chatId: this.chatId,
+            event: { kind: "loaded_previous_messages" },
+        });
     }
 
     async loadUsersForChat(): Promise<void> {
@@ -229,14 +243,16 @@ export class ChatController {
         this.focusMessageIndex = undefined;
 
         if (this.editingEvent) {
-            this.events = this.events.map((e) => {
-                if (
-                    e.event.kind === "message" &&
-                    e.event.messageId === messageEvent.event.messageId
-                ) {
-                    return messageEvent;
-                }
-                return e;
+            this.events.update((events) => {
+                return events.map((e) => {
+                    if (
+                        e.event.kind === "message" &&
+                        e.event.messageId === messageEvent.event.messageId
+                    ) {
+                        return messageEvent;
+                    }
+                    return e;
+                });
             });
         } else {
             unconfirmed.add(messageEvent.event.messageId);
@@ -268,7 +284,7 @@ export class ChatController {
                 },
             });
             this.chat = sentByMe ? setLastMessageOnChat(this.chat, messageEvent) : this.chat;
-            this.events = [...this.events, messageEvent];
+            this.events.update((events) => [...events, messageEvent]);
         }
     }
 
@@ -283,10 +299,8 @@ export class ChatController {
             });
         }
 
-        this.events = replaceMessageContent(
-            this.events,
-            BigInt(message.messageId),
-            message.content
+        this.events.update((events) =>
+            replaceMessageContent(events, BigInt(message.messageId), message.content)
         );
     }
 
@@ -300,11 +314,13 @@ export class ChatController {
                 userId: userId,
             });
         }
-        this.events = replaceMessageContent(this.events, BigInt(messageId), {
-            kind: "deleted_content",
-            deletedBy: userId,
-            timestamp: BigInt(+new Date()),
-        });
+        this.events.update((events) =>
+            replaceMessageContent(events, BigInt(messageId), {
+                kind: "deleted_content",
+                deletedBy: userId,
+                timestamp: BigInt(+new Date()),
+            })
+        );
     }
 
     removeMessage(messageId: bigint, userId: string): void {
@@ -318,8 +334,8 @@ export class ChatController {
             });
         }
         unconfirmed.delete(messageId);
-        this.events = this.events.filter(
-            (e) => e.event.kind === "message" && e.event.messageId !== messageId
+        this.events.update((events) =>
+            events.filter((e) => e.event.kind === "message" && e.event.messageId !== messageId)
         );
     }
 
@@ -330,39 +346,41 @@ export class ChatController {
             this.localReactions[key] = [];
         }
         const messageReactions = this.localReactions[key];
-        this.events = this.events.map((e) => {
-            if (e.event.kind === "message" && e.event.messageId === messageId) {
-                const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
-                    ? "remove"
-                    : "add";
-                messageReactions.push({
-                    reaction,
-                    timestamp: +new Date(),
-                    kind: addOrRemove,
-                    userId,
-                });
-                const updatedEvent = {
-                    ...e,
-                    event: {
-                        ...e.event,
-                        reactions: toggleReaction(userId, e.event.reactions, reaction),
-                    },
-                };
-                overwriteCachedEvents(this.chatId, [updatedEvent]);
-                if (userId === this.user.userId) {
-                    rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
-                        kind: "remote_user_toggled_reaction",
-                        chatType: this.chat.kind,
-                        chatId: this.chat.chatId,
-                        messageId,
-                        userId,
+        this.events.update((events) =>
+            events.map((e) => {
+                if (e.event.kind === "message" && e.event.messageId === messageId) {
+                    const addOrRemove = containsReaction(userId, reaction, e.event.reactions)
+                        ? "remove"
+                        : "add";
+                    messageReactions.push({
                         reaction,
+                        timestamp: +new Date(),
+                        kind: addOrRemove,
+                        userId,
                     });
+                    const updatedEvent = {
+                        ...e,
+                        event: {
+                            ...e.event,
+                            reactions: toggleReaction(userId, e.event.reactions, reaction),
+                        },
+                    };
+                    overwriteCachedEvents(this.chatId, [updatedEvent]);
+                    if (userId === this.user.userId) {
+                        rtcConnectionsManager.sendMessage(userIdsFromChatSummary(this.chat), {
+                            kind: "remote_user_toggled_reaction",
+                            chatType: this.chat.kind,
+                            chatId: this.chat.chatId,
+                            messageId,
+                            userId,
+                            reaction,
+                        });
+                    }
+                    return updatedEvent;
                 }
-                return updatedEvent;
-            }
-            return e;
-        });
+                return e;
+            })
+        );
     }
 
     isDirectChatWith(userId: string): boolean {
@@ -404,11 +422,11 @@ export class ChatController {
     }
 
     getNextMessageIndex(): number {
-        return getNextMessageIndex(this.chat, this.events);
+        return getNextMessageIndex(this.chat, get(this.events));
     }
 
     getNextEventIndex(): number {
-        return getNextEventIndex(this.chat, this.events);
+        return getNextEventIndex(this.chat, get(this.events));
     }
 
     createMessage(textContent: string | null, fileToAttach: MessageContent | undefined): Message {
@@ -424,19 +442,21 @@ export class ChatController {
     }
 
     updateMessage(candidate: Message, resp: SendMessageSuccess): void {
-        this.events = this.events.map((e) => {
-            if (e.event === candidate) {
-                return {
-                    event: {
-                        ...e.event,
-                        messageIndex: resp.messageIndex,
-                    },
-                    index: resp.eventIndex,
-                    timestamp: resp.timestamp,
-                };
-            }
-            return e;
-        });
+        this.events.update((events) =>
+            events.map((e) => {
+                if (e.event === candidate) {
+                    return {
+                        event: {
+                            ...e.event,
+                            messageIndex: resp.messageIndex,
+                        },
+                        index: resp.eventIndex,
+                        timestamp: resp.timestamp,
+                    };
+                }
+                return e;
+            })
+        );
     }
 
     attachFile(content: MessageContent): void {
@@ -478,7 +498,7 @@ export class ChatController {
     }
 
     earliestIndex(): number {
-        return earliestLoadedEventIndex(this.events) ?? this.chat.latestEventIndex;
+        return earliestLoadedEventIndex(get(this.events)) ?? this.chat.latestEventIndex;
     }
 
     morePreviousMessagesAvailable(): boolean {
@@ -490,7 +510,7 @@ export class ChatController {
     }
 
     moreNewMessagesAvailable(): boolean {
-        const lastLoaded = latestLoadedEventIndex(this.events, get(unconfirmed));
+        const lastLoaded = latestLoadedEventIndex(get(this.events), get(unconfirmed));
         return lastLoaded === undefined || lastLoaded < this.chat.latestEventIndex;
     }
 

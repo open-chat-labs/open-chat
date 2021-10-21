@@ -42,6 +42,8 @@
     export let controller: ChatController;
     export let unreadMessages: number;
 
+    let events = controller.events;
+
     setContext<UserLookup>("userLookup", $userStore);
 
     // sucks that we can lie to the compiler like this so easily
@@ -284,7 +286,7 @@
         return `${first.timestamp}_${first.index}`;
     }
 
-    $: groupedEvents = groupEvents(controller.events);
+    $: groupedEvents = groupEvents($events);
 
     $: console.log("Grouped events: ", groupedEvents);
 
