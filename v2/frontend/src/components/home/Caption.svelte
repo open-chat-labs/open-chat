@@ -7,7 +7,7 @@
 <p class="caption">{caption}</p>
 
 <style type="text/scss">
-    .caption {
+    .caption:not(:empty) {
         margin-bottom: $sp3;
     }
 </style>
