@@ -29,9 +29,9 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     }
 
     runtime_state.data.participants.remove(caller);
-    
+
     let event = ParticipantLeft { user_id: caller };
-    
+
     runtime_state
         .data
         .events
