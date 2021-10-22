@@ -6,13 +6,6 @@
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import { fade } from "svelte/transition";
-    import {
-        moreNewMessagesAvailable,
-        morePreviousMessagesAvailable,
-    } from "../../fsm/chat.machine";
-    import type { ChatEvents } from "../../fsm/chat.machine";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
     import Fab from "../Fab.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { chatStore } from "../../stores/chat";
@@ -38,6 +31,8 @@
     import { unconfirmed, unconfirmedReadByThem } from "../../stores/unconfirmed";
     import { userStore } from "../../stores/user";
     import type { UserLookup } from "../../domain/user/user";
+    import type { ChatController } from "../../fsm/chat.controller";
+    import type { MessageReadState } from "../../stores/markRead";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -45,8 +40,14 @@
 
     const dispatch = createEventDispatcher();
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let controller: ChatController;
     export let unreadMessages: number;
+
+    $: events = controller.events;
+    $: loading = controller.loading;
+    $: chat = controller.chat;
+    $: focusMessageIndex = controller.focusMessageIndex;
+    $: markRead = controller.markRead.store;
 
     setContext<UserLookup>("userLookup", $userStore);
 
@@ -77,7 +78,7 @@
                     if (entry.isIntersecting && messageReadTimers[idx] === undefined) {
                         const timer = setTimeout(() => {
                             dispatch("messageRead", {
-                                chatId: $machine.context.chatSummary.chatId,
+                                chatId: controller.chatId,
                                 messageIndex: idx,
                                 messageId: id,
                             });
@@ -107,9 +108,9 @@
 
     function scrollToNew() {
         const idx =
-            unreadMessages > 0
-                ? firstUnreadMessageIndex
-                : $machine.context.chatSummary.latestMessage?.event.messageIndex;
+            unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
+
+        console.log("scrolling to message index: ", idx);
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
         }
@@ -122,27 +123,27 @@
     function scrollToMessageIndex(index: number) {
         const element = document.querySelector(`[data-index='${index}']`);
         if (element) {
-            machine.send({ type: "SET_FOCUS_MESSAGE_INDEX", data: index });
+            controller.setFocusMessageIndex(index);
             scrollToElement(element);
-            setTimeout(() => machine.send({ type: "CLEAR_FOCUS_INDEX" }), 200);
+            setTimeout(() => controller.clearFocusMessageIndex(), 200);
         } else {
             // todo - this is a bit dangerous as it could cause an infinite recursion
             // if we are looking for a message that simply isn't there.
-            machine.send({ type: "GO_TO_MESSAGE_INDEX", data: index });
+            controller.goToMessageIndex(index).then(() => scrollToMessageIndex(index));
         }
     }
 
     function resetScroll() {
         if (initialised) {
-            if ($machine.context.focusMessageIndex !== undefined) {
-                scrollToMessageIndex($machine.context.focusMessageIndex);
+            if ($focusMessageIndex !== undefined) {
+                scrollToMessageIndex($focusMessageIndex);
             } else {
                 const extraHeight = messagesDiv.scrollHeight - scrollHeight;
                 messagesDiv.scrollTop = scrollTop + extraHeight;
             }
         } else {
-            if ($machine.context.focusMessageIndex !== undefined) {
-                scrollToMessageIndex($machine.context.focusMessageIndex);
+            if ($focusMessageIndex !== undefined) {
+                scrollToMessageIndex($focusMessageIndex);
             } else {
                 scrollBottom();
             }
@@ -151,20 +152,17 @@
     }
 
     function onScroll() {
-        if ($machine.matches({ user_states: "idle" })) {
+        if (!$loading) {
             if (
                 messagesDiv.scrollTop < MESSAGE_LOAD_THRESHOLD &&
-                morePreviousMessagesAvailable($machine.context)
+                controller.morePreviousMessagesAvailable()
             ) {
-                machine.send({ type: "LOAD_PREVIOUS_MESSAGES" });
+                controller.loadPreviousMessages();
             }
 
             fromBottomVal = fromBottom();
-            if (
-                fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
-                moreNewMessagesAvailable($machine.context)
-            ) {
-                machine.send({ type: "LOAD_NEW_MESSAGES" });
+            if (fromBottomVal < MESSAGE_LOAD_THRESHOLD && controller.moreNewMessagesAvailable()) {
+                controller.loadPreviousMessages();
             }
         }
     }
@@ -192,26 +190,21 @@
 
     function selectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
         // optimistic update
-        const toggleArgs: ChatEvents = {
-            type: "TOGGLE_REACTION",
-            data: {
-                messageId: ev.detail.message.messageId,
-                reaction: ev.detail.reaction,
-                userId: $machine.context.user!.userId,
-            },
-        };
-
-        machine.send(toggleArgs);
+        controller.toggleReaction(
+            ev.detail.message.messageId,
+            ev.detail.reaction,
+            controller.user.userId
+        );
 
         const apiPromise =
-            $machine.context.chatSummary.kind === "group_chat"
-                ? $machine.context.serviceContainer.toggleGroupChatReaction(
-                      $machine.context.chatSummary.chatId,
+            $chat.kind === "group_chat"
+                ? controller.api.toggleGroupChatReaction(
+                      $chat.chatId,
                       ev.detail.message.messageId,
                       ev.detail.reaction
                   )
-                : $machine.context.serviceContainer.toggleDirectChatReaction(
-                      $machine.context.chatSummary.them,
+                : controller.api.toggleDirectChatReaction(
+                      $chat.them,
                       ev.detail.message.messageId,
                       ev.detail.reaction
                   );
@@ -220,14 +213,21 @@
             .then((resp) => {
                 if (resp !== "added" && resp !== "removed") {
                     // toggle again to undo
-                    console.log("Reaction failed: ", resp);
-                    machine.send(toggleArgs);
+                    controller.toggleReaction(
+                        ev.detail.message.messageId,
+                        ev.detail.reaction,
+                        controller.user.userId
+                    );
                 }
             })
             .catch((err) => {
                 // toggle again to undo
                 console.log("Reaction failed: ", err);
-                machine.send(toggleArgs);
+                controller.toggleReaction(
+                    ev.detail.message.messageId,
+                    ev.detail.reaction,
+                    controller.user.userId
+                );
             });
     }
 
@@ -236,51 +236,32 @@
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        machine.send({ type: "REPLY_TO", data: ev.detail });
-    }
-
-    function replyPrivatelyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        machine.send({ type: "REPLY_PRIVATELY_TO", data: ev.detail });
+        controller.replyTo(ev.detail);
     }
 
     function editEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        machine.send({ type: "EDIT_EVENT", data: ev.detail });
+        controller.editEvent(ev.detail);
     }
 
     function deleteMessage(ev: CustomEvent<Message>) {
-        machine.send({
-            type: "DELETE_MESSAGE",
-            data: { messageId: ev.detail.messageId, userId: $machine.context.user!.userId },
-        });
+        controller.deleteMessage(ev.detail.messageId, controller.user.userId);
 
         const apiPromise =
-            $machine.context.chatSummary.kind === "group_chat"
-                ? $machine.context.serviceContainer.deleteGroupMessage(
-                      $machine.context.chatSummary.chatId,
-                      ev.detail.messageId
-                  )
-                : $machine.context.serviceContainer.deleteDirectMessage(
-                      $machine.context.chatSummary.them,
-                      ev.detail.messageId
-                  );
+            $chat.kind === "group_chat"
+                ? controller.api.deleteGroupMessage(controller.chatId, ev.detail.messageId)
+                : controller.api.deleteDirectMessage($chat.them, ev.detail.messageId);
 
         apiPromise
             .then((resp) => {
                 // check it worked - undo if it didn't
                 if (resp !== "success") {
                     toastStore.showFailureToast("deleteFailed");
-                    machine.send({
-                        type: "UNDELETE_MESSAGE",
-                        data: { message: ev.detail, userId: $machine.context.user!.userId },
-                    });
+                    controller.undeleteMessage(ev.detail, controller.user.userId);
                 }
             })
             .catch((_err) => {
                 toastStore.showFailureToast("deleteFailed");
-                machine.send({
-                    type: "UNDELETE_MESSAGE",
-                    data: { message: ev.detail, userId: $machine.context.user!.userId },
-                });
+                controller.undeleteMessage(ev.detail, controller.user.userId);
             });
     }
 
@@ -312,20 +293,18 @@
         return `${first.timestamp}_${first.index}`;
     }
 
-    $: groupedEvents = groupEvents($machine.context.events);
+    $: groupedEvents = groupEvents($events);
 
-    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($machine.context.chatSummary);
+    $: firstUnreadMessageIndex = getFirstUnreadMessageIndex($chat);
 
     // todo - this might cause a performance problem
     $: admin =
-        $machine.context.chatSummary.kind === "group_chat" &&
-        $machine.context.chatSummary.participants.find(
-            (p) => p.userId === $machine.context.user?.userId
-        )?.role === "admin";
+        $chat.kind === "group_chat" &&
+        $chat.participants.find((p) => p.userId === controller.user?.userId)?.role === "admin";
 
     $: {
-        if ($machine.context.chatSummary.chatId !== currentChatId) {
-            currentChatId = $machine.context.chatSummary.chatId;
+        if (controller.chatId !== currentChatId) {
+            currentChatId = controller.chatId;
             initialised = false;
         }
 
@@ -334,7 +313,7 @@
             scrollTop = messagesDiv.scrollTop;
         }
 
-        if ($chatStore && $chatStore.chatId === $machine.context.chatSummary.chatId) {
+        if ($chatStore && $chatStore.chatId === controller.chatId) {
             fromBottomVal = fromBottom();
             switch ($chatStore.event.kind) {
                 case "loaded_previous_messages":
@@ -360,9 +339,9 @@
                 case "chat_updated":
                     if (
                         fromBottomVal < MESSAGE_LOAD_THRESHOLD &&
-                        moreNewMessagesAvailable($machine.context)
+                        controller.moreNewMessagesAvailable()
                     ) {
-                        machine.send({ type: "LOAD_NEW_MESSAGES" });
+                        controller.loadNewMessages();
                     }
                     chatStore.clear();
                     break;
@@ -372,36 +351,36 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === $machine.context.user?.userId;
+            return evt.event.sender === controller.user?.userId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === $machine.context.user?.userId;
+            return evt.event.created_by === controller.user?.userId;
         }
         return false;
     }
 
-    function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(unconfirmed: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return !$unconfirmed.has(evt.event.messageId);
+            return !unconfirmed.has(evt.event.messageId);
         }
         return true;
     }
 
-    function isReadByThem(evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByThem(readByThem: Set<bigint>, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            const confirmedRead = messageIsReadByThem($machine.context.chatSummary, evt.event);
-            if (confirmedRead) {
+            const confirmedRead = messageIsReadByThem($chat, evt.event);
+            if (confirmedRead && readByThem.has(evt.event.messageId)) {
                 unconfirmedReadByThem.delete(evt.event.messageId);
             }
-            return confirmedRead || $unconfirmedReadByThem.has(evt.event.messageId);
+            return confirmedRead || readByThem.has(evt.event.messageId);
         }
         return true;
     }
 
-    function isReadByMe(evt: EventWrapper<ChatEventType>): boolean {
+    function isReadByMe(_store: MessageReadState, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return $machine.context.markRead.isRead(
-                $machine.context.chatSummary.chatId,
+            return controller.markRead.isRead(
+                $chat.chatId,
                 evt.event.messageIndex,
                 evt.event.messageId
             );
@@ -424,19 +403,19 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $machine.context.focusMessageIndex}
-                        confirmed={isConfirmed(evt)}
-                        readByThem={isReadByThem(evt)}
-                        readByMe={isReadByMe(evt)}
-                        chatId={$machine.context.chatSummary.chatId}
-                        chatType={$machine.context.chatSummary.kind}
-                        user={$machine.context.user}
+                            evt.event.messageIndex === $focusMessageIndex}
+                        confirmed={isConfirmed($unconfirmed, evt)}
+                        readByThem={isReadByThem($unconfirmedReadByThem, evt)}
+                        readByMe={isReadByMe($markRead, evt)}
+                        chatId={controller.chatId}
+                        chatType={controller.kind}
+                        user={controller.user}
                         me={isMe(evt)}
                         last={i + 1 === userGroup.length}
                         {admin}
                         on:chatWith
                         on:replyTo={replyTo}
-                        on:replyPrivatelyTo={replyPrivatelyTo}
+                        on:replyPrivatelyTo
                         on:deleteMessage={deleteMessage}
                         on:editEvent={editEvent}
                         on:goToMessageIndex={goToMessageIndex}
@@ -449,7 +428,6 @@
 </div>
 
 {#if fromBottomVal > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
-    <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>
             {#if unreadMessages > 0}

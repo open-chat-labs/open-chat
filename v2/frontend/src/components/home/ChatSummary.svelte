@@ -17,12 +17,12 @@
     import Typing from "../Typing.svelte";
     import { typing } from "../../stores/typing";
     import { userStore } from "../../stores/user";
-    import type { MessageReadTracker } from "../../stores/markRead";
+    import type { IMessageReadTracker } from "../../stores/markRead";
     import { blockedUsers } from "../../stores/blockedUsers";
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
-    export let messagesRead: MessageReadTracker;
+    export let messagesRead: IMessageReadTracker;
 
     function normaliseChatSummary(chatSummary: ChatSummary) {
         if (chatSummary.kind === "direct_chat") {

@@ -13,9 +13,10 @@
     import type { GroupChatSummary, ParticipantRole } from "../../../domain/chat/chat";
     import { toastStore } from "../../../stores/toast";
     import { rollbar } from "../../../utils/logging";
+    import type { Writable } from "svelte/store";
 
     export let api: ServiceContainer;
-    export let chat: GroupChatSummary;
+    export let chat: Writable<GroupChatSummary>;
     export let closeIcon: "close" | "back";
 
     const dispatch = createEventDispatcher();
@@ -27,22 +28,28 @@
     }
 
     function rollback() {
-        chat.participants = chat.participants.filter((p) => {
-            !usersToAdd.map((u) => u.userId).includes(p.userId);
-        });
+        chat.update((c) => ({
+            ...c,
+            participants: c.participants.filter((p) => {
+                !usersToAdd.map((u) => u.userId).includes(p.userId);
+            }),
+        }));
     }
 
     function complete() {
         busy = true;
-        chat.participants = [
-            ...usersToAdd.map((u) => ({
-                userId: u.userId,
-                role: "standard" as ParticipantRole,
-            })),
-            ...chat.participants,
-        ];
+        chat.update((c) => ({
+            ...c,
+            participants: [
+                ...usersToAdd.map((u) => ({
+                    userId: u.userId,
+                    role: "standard" as ParticipantRole,
+                })),
+                ...c.participants,
+            ],
+        }));
         api.addParticipants(
-            chat.chatId,
+            $chat.chatId,
             usersToAdd.map((u) => u.userId)
         )
             .then((resp) => {

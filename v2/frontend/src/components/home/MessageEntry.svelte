@@ -8,13 +8,15 @@
     import AudioAttacher from "./AudioAttacher.svelte";
     import { emojiStore } from "../../stores/emoji";
     import { createEventDispatcher } from "svelte";
-    import type { ChatMachine } from "../../fsm/chat.machine";
-    import type { ActorRefFrom } from "xstate";
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
+    import type { ChatController } from "../../fsm/chat.controller";
 
-    export let machine: ActorRefFrom<ChatMachine>;
+    export let controller: ChatController;
     export let blocked: boolean;
+
+    $: editingEvent = controller.editingEvent;
+    $: fileToAttach = controller.fileToAttach;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -31,15 +33,15 @@
     let typingTimer: number | undefined = undefined;
 
     $: {
-        if ($machine.context.editingEvent && !initialisedEdit) {
-            if ($machine.context.editingEvent.event.content.kind === "text_content") {
-                inp.textContent = $machine.context.editingEvent.event.content.text;
+        if ($editingEvent && !initialisedEdit) {
+            if ($editingEvent.event.content.kind === "text_content") {
+                inp.textContent = $editingEvent.event.content.text;
                 selectedRange = undefined;
                 restoreSelection();
                 initialisedEdit = true;
             }
         }
-        if ($machine.context.editingEvent === undefined) {
+        if ($editingEvent === undefined) {
             initialisedEdit = false;
         }
     }
@@ -55,14 +57,14 @@
             const now = +new Date();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
                 lastTypingUpdate = now;
-                machine.send({ type: "START_TYPING" });
+                controller.startTyping();
             }
             if (typingTimer !== undefined) {
                 clearTimeout(typingTimer);
             }
 
             typingTimer = setTimeout(
-                () => machine.send({ type: "STOP_TYPING" }),
+                () => controller.stopTyping(),
                 MARK_TYPING_STOPPED_INTERVAL_MS
             );
         });
@@ -71,7 +73,7 @@
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && !e.shiftKey) {
             sendMessage();
-            machine.send({ type: "STOP_TYPING" });
+            controller.stopTyping();
             e.preventDefault();
         }
     }
@@ -110,7 +112,7 @@
     }
 
     function clearAttachment() {
-        machine.send({ type: "CLEAR_ATTACHMENT" });
+        controller.clearAttachment();
     }
 
     $: {
@@ -124,17 +126,20 @@
         }
     }
 
-    $: {
-        if (
-            $machine.changed &&
-            ($machine.context.replyingTo !== undefined ||
-                $machine.context.fileToAttach !== undefined)
-        ) {
-            inp.focus();
-        }
-    }
+    // TODO - do we even want to focus the input - it's quite distracting on mobile
+    // $: {
+    //     if (
+    //         $machine.changed &&
+    //         ($machine.context.replyingTo !== undefined ||
+    //             $machine.context.fileToAttach !== undefined)
+    //     ) {
+    //         inp.focus();
+    //     }
+    // }
+
+    // todo - doubt this will react properly
     $: placeholder =
-        $machine.context.fileToAttach !== undefined
+        $fileToAttach !== undefined
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
@@ -160,7 +165,7 @@
         </div>
         <div class="attach">
             <FileAttacher
-                open={$machine.context.fileToAttach !== undefined}
+                open={$fileToAttach !== undefined}
                 on:fileSelected
                 on:close={clearAttachment} />
         </div>

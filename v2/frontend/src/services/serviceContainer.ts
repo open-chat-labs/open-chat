@@ -53,7 +53,7 @@ import type { BlobReference, DataContent } from "../domain/data/data";
 import { UnsupportedValueError } from "../utils/error";
 import type { GroupSearchResponse, SearchAllMessagesResponse } from "../domain/search/search";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import type { MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker, MarkMessagesRead, MessageReadTracker } from "../stores/markRead";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { ToggleMuteNotificationResponse } from "../domain/notifications";
@@ -423,7 +423,7 @@ export class ServiceContainer implements MarkMessagesRead {
     getUpdates(
         chatSummaries: ChatSummary[],
         args: UpdateArgs,
-        messagesRead: MessageReadTracker
+        messagesRead: IMessageReadTracker
     ): Promise<MergedUpdatesResponse> {
         return this.userClient.getUpdates(chatSummaries, args).then((resp) => {
             return {
