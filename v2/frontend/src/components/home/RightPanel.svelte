@@ -3,7 +3,7 @@
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddParticipants from "./groupdetails/AddParticipants.svelte";
     import Participants from "./groupdetails/Participants.svelte";
-    import type { EditGroupState, UpdatedGroup } from "../../fsm/editGroup";
+    import type { EditGroupState } from "../../fsm/editGroup";
     import type { GroupChatSummary } from "../../domain/chat/chat";
     import type { ServiceContainer } from "../../services/serviceContainer";
     import type { Writable } from "svelte/store";

@@ -27,8 +27,7 @@ import { v1 as uuidv1 } from "uuid";
 import { UnsupportedValueError } from "../../utils/error";
 import { overwriteCachedEvents } from "../../utils/caching";
 import { unconfirmed } from "../../stores/unconfirmed";
-import type { MessageReadTracker } from "../../stores/markRead";
-import type { ChatEvents } from "../../fsm/chat.machine";
+import type { IMessageReadTracker } from "../../stores/markRead";
 
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 const EVENT_PAGE_SIZE = 20;
@@ -647,7 +646,7 @@ function partitionEvents(
 export function replaceLocal(
     userId: string,
     chatId: string,
-    messageReadTracker: MessageReadTracker,
+    messageReadTracker: IMessageReadTracker,
     onClient: EventWrapper<ChatEvent>[],
     fromServer: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {

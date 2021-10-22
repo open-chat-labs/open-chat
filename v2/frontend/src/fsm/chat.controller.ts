@@ -39,7 +39,7 @@ import { rtcConnectionsManager } from "../domain/webrtc/RtcConnectionsManager";
 import type { ServiceContainer } from "../services/serviceContainer";
 import { blockedUsers } from "../stores/blockedUsers";
 import { chatStore } from "../stores/chat";
-import type { MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { unconfirmed } from "../stores/unconfirmed";
 import { userStore } from "../stores/user";
 import { overwriteCachedEvents } from "../utils/caching";
@@ -68,13 +68,10 @@ export class ChatController {
         public api: ServiceContainer,
         public user: UserSummary,
         private _chat: ChatSummary,
-        public markRead: MessageReadTracker,
+        public markRead: IMessageReadTracker,
         private _replyingTo: EnhancedReplyContext | undefined,
         private _focusMessageIndex: number | undefined
     ) {
-        // todo - lets make it so that *only* the chat controller updates these writable stores
-        // then we can keep a local copy of the chat so that we don't have to use get(this.chat)
-        // everywhere
         this.events = writable([]);
         this.loading = writable(false);
         this.focusMessageIndex = writable(_focusMessageIndex);
@@ -83,9 +80,9 @@ export class ChatController {
         this.editingEvent = writable(undefined);
         this.chat = writable(_chat);
         this.chatId = _chat.chatId;
-        this.loadPreviousMessages();
 
         if (process.env.NODE_ENV !== "test") {
+            this.loadPreviousMessages();
             this.pruneInterval = window.setInterval(() => {
                 this.localReactions = pruneLocalReactions(this.localReactions);
             }, PRUNE_LOCAL_REACTIONS_INTERVAL);

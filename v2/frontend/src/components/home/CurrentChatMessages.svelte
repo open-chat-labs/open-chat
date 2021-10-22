@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { createEventDispatcher, onDestroy, onMount, setContext, tick } from "svelte";
+    import { createEventDispatcher, onMount, setContext, tick } from "svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
@@ -32,8 +32,7 @@
     import { userStore } from "../../stores/user";
     import type { UserLookup } from "../../domain/user/user";
     import type { ChatController } from "../../fsm/chat.controller";
-    import type { MessageReadState, MessageReadTracker } from "../../stores/markRead";
-    import type { Readable } from "svelte/store";
+    import type { MessageReadState } from "../../stores/markRead";
 
     const MESSAGE_LOAD_THRESHOLD = 300;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -110,6 +109,8 @@
     function scrollToNew() {
         const idx =
             unreadMessages > 0 ? firstUnreadMessageIndex : $chat.latestMessage?.event.messageIndex;
+
+        console.log("scrolling to message index: ", idx);
         if (idx !== undefined) {
             scrollToMessageIndex(idx);
         }
@@ -427,7 +428,6 @@
 </div>
 
 {#if fromBottomVal > FROM_BOTTOM_THRESHOLD || unreadMessages > 0}
-    <!-- todo - this should scroll to the first unread message rather than to the bottom probably -->
     <div transition:fade class="to-bottom" class:rtl={$rtlStore}>
         <Fab on:click={() => scrollToNew()}>
             {#if unreadMessages > 0}

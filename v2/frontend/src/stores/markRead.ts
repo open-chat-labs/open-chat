@@ -1,4 +1,4 @@
-import { get, Subscriber, Unsubscriber, Readable, writable, Writable } from "svelte/store";
+import { get, Writable, writable } from "svelte/store";
 import type { MarkReadRequest, MarkReadResponse, MessageIndexRange } from "../domain/chat/chat";
 import {
     indexIsInRanges,
@@ -28,6 +28,7 @@ export interface IMessageReadTracker {
     ) => number;
     isRead: (chatId: string, messageIndex: number, messageId: bigint) => boolean;
     stop: () => void;
+    store: Writable<MessageReadState>;
 }
 
 export type MessageReadState = {
@@ -38,9 +39,9 @@ export type MessageReadState = {
 
 export class MessageReadTracker implements IMessageReadTracker {
     private interval: number | undefined;
-    private serverState: MessageRangesByChat = {};
-    private waiting: Record<string, Set<bigint>> = {};
-    private state: MessageRangesByChat = {};
+    public serverState: MessageRangesByChat = {};
+    public waiting: Record<string, Set<bigint>> = {};
+    public state: MessageRangesByChat = {};
 
     public store = writable<MessageReadState>({
         serverState: {},
@@ -81,7 +82,7 @@ export class MessageReadTracker implements IMessageReadTracker {
         }
     }
 
-    private syncStore() {
+    public syncStore(): void {
         // the store is just required so that svelte can respond to changes
         this.store.set({
             serverState: this.serverState,
@@ -215,4 +216,10 @@ export class FakeMessageReadTracker implements IMessageReadTracker {
     stop(): void {
         return undefined;
     }
+
+    store = writable<MessageReadState>({
+        waiting: {},
+        state: {},
+        serverState: {},
+    });
 }

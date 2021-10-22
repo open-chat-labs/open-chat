@@ -34,7 +34,7 @@ import type {
     WebRtcMessage,
 } from "../domain/webrtc/webrtc";
 import { typing } from "../stores/typing";
-import type { MessageReadTracker } from "../stores/markRead";
+import type { IMessageReadTracker, MessageReadTracker } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { closeNotificationsForChat } from "../utils/notifications";
 import { blockedUsers } from "../stores/blockedUsers";
@@ -55,7 +55,7 @@ export interface HomeContext {
     selectedChat?: ChatController;
     chatUpdatesSince?: bigint; // first time through this will be undefined
     replyingTo?: EnhancedReplyContext;
-    markRead: MessageReadTracker;
+    markRead: IMessageReadTracker;
 }
 
 export type HomeEvents =
@@ -146,7 +146,7 @@ function sendMessageToChatBasedOnUser(
 async function getUpdates(
     user: User,
     serviceContainer: ServiceContainer,
-    messagesRead: MessageReadTracker,
+    messagesRead: IMessageReadTracker,
     chatSummaries: ChatSummary[],
     chatUpdatesSince?: bigint
 ): Promise<ChatsResponse> {
