@@ -4,7 +4,7 @@ use types::{ChatId, ChatSummary, ChatSummaryUpdates, Cycles, TimestampMillis, Tr
 
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Args {
-    pub updates_since: Option<UpdatesSince>,
+    pub updates_since: UpdatesSince,
 }
 
 #[derive(CandidType, Deserialize, Debug)]
